@@ -1,0 +1,6 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <ProjectReference Include="../GitDiwaa.Core/GitDiwaa.Core.csproj" />
+  </ItemGroup>
+</Project>
+

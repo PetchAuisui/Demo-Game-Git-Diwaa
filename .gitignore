@@ -1,0 +1,10 @@
+**/bin/
+**/obj/
+.godot/
+.mono/
+*.user
+*.userprefs
+.DS_Store
+git-workspaces/
+TestResults/
+
