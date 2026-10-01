@@ -8,13 +8,13 @@ internal sealed class GitCommandPolicy
         "branch", "switch", "merge", "clone", "remote", "fetch", "pull", "push"
     };
 
-    private readonly GitWorkspaceManager _workspaceManager;
     private readonly GitSandbox _sandbox;
+    private readonly LocalRemote _remote;
 
-    public GitCommandPolicy(GitWorkspaceManager workspaceManager, GitSandbox sandbox)
+    public GitCommandPolicy(GitSandbox sandbox, LocalRemote remote)
     {
-        _workspaceManager = workspaceManager;
         _sandbox = sandbox;
+        _remote = remote;
     }
 
     public string? Validate(IReadOnlyList<string> arguments)
@@ -198,21 +198,13 @@ internal sealed class GitCommandPolicy
 
     private string? ValidateRemoteUrl(string url)
     {
-        if (url.StartsWith("https://git-diwaa.local/", StringComparison.Ordinal)) return null;
-        if (Path.IsPathRooted(url))
-        {
-            try
-            {
-                _workspaceManager.EnsureInsideRoot(url);
-                return null;
-            }
-            catch (InvalidOperationException)
-            {
-                return "Remote must be inside the Git-Diwaa workspace.";
-            }
-        }
-
-        return "Only Git-Diwaa local remote URLs are allowed.";
+        if (url.Equals(_remote.AliasUrl, StringComparison.Ordinal)) return null;
+        if (Path.IsPathRooted(url) &&
+            Path.GetFullPath(url).Equals(
+                Path.GetFullPath(_remote.BareRepositoryPath),
+                OperatingSystem.IsWindows() ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal))
+            return null;
+        return "Only the local remote registered for this Git-Diwaa session is allowed.";
     }
 
     private static bool IsProcessEscapeOption(string value) =>

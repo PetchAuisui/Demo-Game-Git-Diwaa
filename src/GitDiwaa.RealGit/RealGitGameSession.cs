@@ -11,14 +11,13 @@ internal sealed class RealGitGameSession : IGitGameSession
     private readonly GitRepositoryInspector _inspector;
 
     public RealGitGameSession(
-        GitWorkspaceManager workspaceManager,
         GitSandbox sandbox,
         LocalRemote remote,
         GitProcessRunner processRunner)
     {
         _sandbox = sandbox;
         _remote = remote;
-        _policy = new(workspaceManager, sandbox);
+        _policy = new(sandbox, remote);
         _processRunner = processRunner;
         _inspector = new(sandbox, processRunner);
         Files = new SandboxPlayerFileSystem(sandbox);
@@ -81,4 +80,3 @@ internal sealed class RealGitGameSession : IGitGameSession
             StringComparison.Ordinal)
     };
 }
-

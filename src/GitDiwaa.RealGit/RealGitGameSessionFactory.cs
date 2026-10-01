@@ -22,6 +22,6 @@ public sealed class RealGitGameSessionFactory : IGitGameSessionFactory
             sandbox,
             _processRunner,
             cancellationToken: cancellationToken);
-        return new RealGitGameSession(_workspaceManager, sandbox, remote, _processRunner);
+        return new RealGitGameSession(sandbox, remote, _processRunner);
     }
 }

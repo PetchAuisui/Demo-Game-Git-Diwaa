@@ -46,7 +46,12 @@ internal sealed class SandboxPlayerFileSystem : IPlayerFileSystem
     }
 
     public IReadOnlyList<string> ListFiles() => Directory
-        .EnumerateFiles(_root, "*", SearchOption.AllDirectories)
+        .EnumerateFiles(_root, "*", new EnumerationOptions
+        {
+            RecurseSubdirectories = true,
+            IgnoreInaccessible = true,
+            AttributesToSkip = FileAttributes.ReparsePoint
+        })
         .Where(path => !IsGitMetadata(path))
         .Select(path => Path.GetRelativePath(_root, path))
         .OrderBy(path => path, StringComparer.Ordinal)

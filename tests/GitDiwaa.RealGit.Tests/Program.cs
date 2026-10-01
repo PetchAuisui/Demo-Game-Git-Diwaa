@@ -34,6 +34,7 @@ try
         await RejectAsync("git add ../outside.txt", "escapes");
         await RejectAsync("git --git-dir=/tmp status", "not enabled");
         await RejectAsync("git remote add origin https://example.com/repo.git", "local remote");
+        await RejectAsync("git remote add origin https://git-diwaa.local/other.git", "registered");
     });
 
     await tests.RunAsync("init, files, status, add and commit update snapshot", async () =>
