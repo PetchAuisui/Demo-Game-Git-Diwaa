@@ -4,9 +4,10 @@
 
 ## สถานะปัจจุบัน
 
-- `main` เก็บโครงสร้าง solution, contracts และเอกสารสถาปัตยกรรม
-- ระบบ Real Git จะพัฒนาบน feature branch แยกจาก `main`
+- รอบพัฒนา `feat/git-engine` เพิ่มระบบ Real Git, Terminal CLI และ integration tests สำหรับรวมเข้า `main`
+- สถานะเป็นฐานระบบรุ่นแรกสำหรับทดลองและต่อ UI ยังไม่ครอบคลุมคำสั่งและสถานการณ์ของทุกบทเรียน
 - ยังไม่พัฒนา Godot UI ตามขอบเขตงานรอบนี้
+- ดู [สถานะการทดสอบ ข้อจำกัด และงานถัดไป](docs/implementation-status.md) ก่อนนำไปใช้งานต่อ
 
 ## โครงสร้าง
 
@@ -21,11 +22,56 @@ docs/
 └── architecture.md      ข้อกำหนด ขอบเขต และ data flow
 ```
 
-## ตรวจสอบโครงสร้าง
+## สิ่งที่ต้องมี
+
+- .NET SDK 10
+- Git CLI
+
+ระบบไม่ใช้ NuGet package ภายนอกในรอบนี้
+
+## Restore และ build
 
 ```sh
-dotnet build GitDiwaa.slnx
+dotnet restore src/GitDiwaa.Cli/GitDiwaa.Cli.csproj \
+  --configfile NuGet.Config --disable-build-servers
+dotnet restore tests/GitDiwaa.RealGit.Tests/GitDiwaa.RealGit.Tests.csproj \
+  --configfile NuGet.Config --disable-build-servers
+dotnet build GitDiwaa.slnx --no-restore --disable-build-servers -m:1
 ```
 
-อ่านรายละเอียดที่ [docs/architecture.md](docs/architecture.md)
+## เปิดห้องทดลอง Terminal
 
+```sh
+dotnet run --project src/GitDiwaa.Cli/GitDiwaa.Cli.csproj
+```
+
+ตัวอย่าง one-shot สำหรับตรวจ Git จริงและดู state ที่ UI จะได้รับ:
+
+```sh
+dotnet run --project src/GitDiwaa.Cli/GitDiwaa.Cli.csproj -- \
+  --workspace /tmp/git-diwaa-lab \
+  --attempt demo-1 \
+  --command "git init" \
+  --snapshot
+```
+
+ดู options ทั้งหมด:
+
+```sh
+dotnet run --project src/GitDiwaa.Cli/GitDiwaa.Cli.csproj -- --help
+```
+
+## ทดสอบ
+
+```sh
+dotnet run --project tests/GitDiwaa.RealGit.Tests/GitDiwaa.RealGit.Tests.csproj
+```
+
+ชุดทดสอบสร้าง repository จริงใต้ temporary directory และลบเฉพาะพื้นที่ทดสอบของตัวเองเมื่อจบ
+
+## เอกสาร
+
+- [สถาปัตยกรรม](docs/architecture.md)
+- [สถานะระบบและงานถัดไป](docs/implementation-status.md)
+- [ทดสอบผ่าน Terminal](docs/testing-terminal.md)
+- [แนวทางเชื่อม Godot C# รอบถัดไป](docs/godot-integration.md)

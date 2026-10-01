@@ -2,6 +2,7 @@ namespace GitDiwaa.Core;
 
 public enum GitFileState
 {
+    Unchanged,
     Untracked,
     Added,
     Modified,
@@ -30,4 +31,3 @@ public sealed record GitRepositorySnapshot(
     IReadOnlyList<GitFileStatus> Files,
     IReadOnlyList<GitBranchInfo> Branches,
     IReadOnlyList<GitCommitNode> Commits);
-
