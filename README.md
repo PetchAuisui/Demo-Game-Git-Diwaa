@@ -4,9 +4,10 @@
 
 ## สถานะปัจจุบัน
 
-- `main` เก็บโครงสร้าง solution, contracts และเอกสารสถาปัตยกรรม
-- `codex/real-git-engine` มีระบบ Real Git, Terminal CLI และ integration tests
+- รอบพัฒนา `feat/git-engine` เพิ่มระบบ Real Git, Terminal CLI และ integration tests สำหรับรวมเข้า `main`
+- สถานะเป็นฐานระบบรุ่นแรกสำหรับทดลองและต่อ UI ยังไม่ครอบคลุมคำสั่งและสถานการณ์ของทุกบทเรียน
 - ยังไม่พัฒนา Godot UI ตามขอบเขตงานรอบนี้
+- ดู [สถานะการทดสอบ ข้อจำกัด และงานถัดไป](docs/implementation-status.md) ก่อนนำไปใช้งานต่อ
 
 ## โครงสร้าง
 
@@ -71,5 +72,6 @@ dotnet run --project tests/GitDiwaa.RealGit.Tests/GitDiwaa.RealGit.Tests.csproj
 ## เอกสาร
 
 - [สถาปัตยกรรม](docs/architecture.md)
+- [สถานะระบบและงานถัดไป](docs/implementation-status.md)
 - [ทดสอบผ่าน Terminal](docs/testing-terminal.md)
 - [แนวทางเชื่อม Godot C# รอบถัดไป](docs/godot-integration.md)
