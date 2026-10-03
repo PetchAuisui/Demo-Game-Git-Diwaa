@@ -1,4 +1,4 @@
-[gd_scene load_steps=7 format=3]
+[gd_scene load_steps=6 format=3]
 
 [ext_resource type="Script" path="res://Scripts/SandboxGameView.cs" id="1_script"]
 [ext_resource type="Texture2D" path="res://assets/art/checkpoint-01/tower-hall.png" id="2_background"]
@@ -6,20 +6,6 @@
 [ext_resource type="PackedScene" path="res://Scenes/FilesPanel.tscn" id="4_files"]
 [ext_resource type="PackedScene" path="res://Scenes/GitGraphPanel.tscn" id="5_graph"]
 [ext_resource type="PackedScene" path="res://Scenes/TerminalPanel.tscn" id="6_terminal"]
-
-[sub_resource type="StyleBoxFlat" id="Style_button"]
-bg_color = Color(0.12, 0.14, 0.23, 0.96)
-border_width_left = 2
-border_width_top = 2
-border_width_right = 2
-border_width_bottom = 2
-border_color = Color(0.48, 0.53, 0.78, 1)
-corner_radius_top_left = 9
-corner_radius_top_right = 9
-corner_radius_bottom_right = 9
-corner_radius_bottom_left = 9
-content_margin_left = 21.0
-content_margin_right = 21.0
 
 [node name="SandboxGameView" type="Control"]
 layout_mode = 3
@@ -65,9 +51,9 @@ unique_name_in_owner = true
 layout_mode = 1
 anchors_preset = 0
 anchor_left = 0.02
-anchor_top = 0.49
+anchor_top = 0.16
 anchor_right = 0.265
-anchor_bottom = 0.85
+anchor_bottom = 0.96
 grow_horizontal = 1
 grow_vertical = 1
 
@@ -76,9 +62,9 @@ unique_name_in_owner = true
 layout_mode = 1
 anchors_preset = 0
 anchor_left = 0.735
-anchor_top = 0.14
+anchor_top = 0.16
 anchor_right = 0.98
-anchor_bottom = 0.61
+anchor_bottom = 0.60
 grow_horizontal = 1
 grow_vertical = 1
 
@@ -92,52 +78,3 @@ anchor_right = 0.98
 anchor_bottom = 0.96
 grow_horizontal = 2
 grow_vertical = 2
-
-[node name="ItemsPanel" type="HBoxContainer" parent="."]
-layout_mode = 1
-anchors_preset = 0
-anchor_left = 0.02
-anchor_top = 0.87
-anchor_right = 0.265
-anchor_bottom = 0.96
-theme_override_constants/separation = 8
-
-[node name="Slot1" type="Button" parent="ItemsPanel"]
-layout_mode = 2
-size_flags_horizontal = 3
-theme_override_styles/normal = SubResource("Style_button")
-text = "1"
-tooltip_text = "ช่อง Item 1 — ว่าง"
-disabled = true
-
-[node name="Slot2" type="Button" parent="ItemsPanel"]
-layout_mode = 2
-size_flags_horizontal = 3
-theme_override_styles/normal = SubResource("Style_button")
-text = "2"
-tooltip_text = "ช่อง Item 2 — ว่าง"
-disabled = true
-
-[node name="Slot3" type="Button" parent="ItemsPanel"]
-layout_mode = 2
-size_flags_horizontal = 3
-theme_override_styles/normal = SubResource("Style_button")
-text = "3"
-tooltip_text = "ช่อง Item 3 — ว่าง"
-disabled = true
-
-[node name="Slot4" type="Button" parent="ItemsPanel"]
-layout_mode = 2
-size_flags_horizontal = 3
-theme_override_styles/normal = SubResource("Style_button")
-text = "4"
-tooltip_text = "ช่อง Item 4 — ว่าง"
-disabled = true
-
-[node name="Slot5" type="Button" parent="ItemsPanel"]
-layout_mode = 2
-size_flags_horizontal = 3
-theme_override_styles/normal = SubResource("Style_button")
-text = "5"
-tooltip_text = "ช่อง Item 5 — ว่าง"
-disabled = true

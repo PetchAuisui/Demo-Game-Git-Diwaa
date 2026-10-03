@@ -4,65 +4,39 @@ namespace GitDiwaa.Godot.Components;
 
 /// <summary>
 /// Reusable Top Bar Component for Git-Diwaa Sandbox UI.
-/// Matches the authentic Checkpoint-01 TopBar visual design.
+/// Cleaned up to show only available sandbox systems (brand and mode badge).
+/// Dummy timer and coins removed as requested.
 /// </summary>
 public partial class TopBarPanel : PanelContainer
 {
-    [Signal]
-    public delegate void ResetRequestedEventHandler();
-
     [Export]
     public string GameTitle { get; set; } = "GIT DIWAA";
 
     [Export]
-    public string LevelText { get; set; } = "LVL  1";
+    public string ModeText { get; set; } = "SANDBOX";
 
     private Label _brandLabel = null!;
-    private Label _levelLabel = null!;
-    private Label _timerLabel = null!;
-    private Label _coinLabel = null!;
+    private Label _modeLabel = null!;
 
     public override void _Ready()
     {
         BindNodes();
         _brandLabel.Text = GameTitle;
-        _levelLabel.Text = LevelText;
+        _modeLabel.Text = ModeText;
     }
 
     private void BindNodes()
     {
         _brandLabel = GetNode<Label>("%BrandLabel");
-        _levelLabel = GetNode<Label>("%LevelLabel");
-        _timerLabel = GetNode<Label>("%TimerLabel");
-        _coinLabel = GetNode<Label>("%CoinLabel");
+        _modeLabel = GetNode<Label>("%ModeLabel");
     }
 
-    public void SetTimer(string timeString)
+    public void SetModeText(string modeText)
     {
-        if (_timerLabel != null)
+        ModeText = modeText;
+        if (_modeLabel != null)
         {
-            _timerLabel.Text = $"⏱ {timeString}";
+            _modeLabel.Text = modeText;
         }
-    }
-
-    public void SetCoins(int coins)
-    {
-        if (_coinLabel != null)
-        {
-            _coinLabel.Text = $"◉  {coins} COIN";
-        }
-    }
-
-    public void SetLevel(string levelText)
-    {
-        if (_levelLabel != null)
-        {
-            _levelLabel.Text = levelText;
-        }
-    }
-
-    public void SetCurrentBranch(string branchName)
-    {
-        // Can optionally display branch name in title or label
     }
 }

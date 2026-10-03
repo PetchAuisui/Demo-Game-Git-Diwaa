@@ -41,7 +41,6 @@ public partial class SandboxGameView : Control
         _filesPanel.FileSelected += OnFileSelected;
         _filesPanel.CreateFileRequested += OnCreateFileRequested;
         _gitGraphPanel.CommitSelected += OnCommitSelected;
-        _topBar.ResetRequested += OnResetRequested;
     }
 
     /// <summary>
@@ -344,7 +343,7 @@ public partial class SandboxGameView : Control
                 _gitGraphPanel.SetEmptyState();
             }
 
-            _topBar.SetCurrentBranch(_sandboxService.CurrentBranch);
+            _topBar.SetModeText($"SANDBOX • {_sandboxService.CurrentBranch}");
         }
         catch (Exception ex)
         {
