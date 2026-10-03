@@ -1,0 +1,160 @@
+[gd_scene load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://Scripts/SandboxGameView.cs" id="1_script"]
+[ext_resource type="PackedScene" path="res://Scenes/TopBarPanel.tscn" id="2_topbar"]
+[ext_resource type="PackedScene" path="res://Scenes/FilesPanel.tscn" id="3_files"]
+[ext_resource type="PackedScene" path="res://Scenes/GitGraphPanel.tscn" id="4_graph"]
+[ext_resource type="PackedScene" path="res://Scenes/TerminalPanel.tscn" id="5_terminal"]
+
+[node name="SandboxGameView" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_script")
+
+[node name="Background" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.0823529, 0.0862745, 0.12549, 1)
+
+[node name="DungeonWallDecoration" type="Control" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="GothicWindow" type="ColorRect" parent="DungeonWallDecoration"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -60.0
+offset_top = -220.0
+offset_right = 60.0
+offset_bottom = 60.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.12, 0.13, 0.22, 0.8)
+
+[node name="WindowPane" type="ColorRect" parent="DungeonWallDecoration/GothicWindow"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 4.0
+offset_top = 4.0
+offset_right = -4.0
+offset_bottom = -4.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.18, 0.16, 0.32, 0.6)
+
+[node name="TorchLeft" type="ColorRect" parent="DungeonWallDecoration"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -210.0
+offset_top = -90.0
+offset_right = -198.0
+offset_bottom = -70.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.95, 0.6, 0.2, 1)
+
+[node name="TorchRight" type="ColorRect" parent="DungeonWallDecoration"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = 198.0
+offset_top = -90.0
+offset_right = 210.0
+offset_bottom = -70.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.95, 0.6, 0.2, 1)
+
+[node name="FloorLine" type="ColorRect" parent="DungeonWallDecoration"]
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -120.0
+grow_horizontal = 2
+grow_vertical = 0
+color = Color(0.06, 0.06, 0.09, 0.9)
+
+[node name="UIRoot" type="VBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 0
+
+[node name="TopBar" parent="UIRoot" instance=ExtResource("2_topbar")]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="MainLayout" type="MarginContainer" parent="UIRoot"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/margin_left = 16
+theme_override_constants/margin_top = 12
+theme_override_constants/margin_right = 16
+theme_override_constants/margin_bottom = 12
+
+[node name="LayoutVBox" type="VBoxContainer" parent="UIRoot/MainLayout"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="TopPanelRow" type="HBoxContainer" parent="UIRoot/MainLayout/LayoutVBox"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 16
+
+[node name="FilesPanel" parent="UIRoot/MainLayout/LayoutVBox/TopPanelRow" instance=ExtResource("3_files")]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(300, 220)
+layout_mode = 2
+size_flags_horizontal = 1
+
+[node name="CenterSpacer" type="Control" parent="UIRoot/MainLayout/LayoutVBox/TopPanelRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="GitGraphPanel" parent="UIRoot/MainLayout/LayoutVBox/TopPanelRow" instance=ExtResource("4_graph")]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(320, 220)
+layout_mode = 2
+size_flags_horizontal = 1
+
+[node name="BottomPanelRow" type="HBoxContainer" parent="UIRoot/MainLayout/LayoutVBox"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 16
+
+[node name="TerminalPanel" parent="UIRoot/MainLayout/LayoutVBox/BottomPanelRow" instance=ExtResource("5_terminal")]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 260)
+layout_mode = 2
+size_flags_horizontal = 3

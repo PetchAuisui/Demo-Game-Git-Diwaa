@@ -1,0 +1,80 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://Scripts/Components/TopBarPanel.cs" id="1_script"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_btn_reset"]
+bg_color = Color(0.18, 0.14, 0.12, 0.9)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.90, 0.66, 0.24, 0.7)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+content_margin_left = 10.0
+content_margin_top = 4.0
+content_margin_right = 10.0
+content_margin_bottom = 4.0
+
+[node name="TopBarPanel" type="PanelContainer"]
+custom_minimum_size = Vector2(0, 48)
+offset_right = 1280.0
+offset_bottom = 48.0
+size_flags_horizontal = 3
+script = ExtResource("1_script")
+
+[node name="HBox" type="HBoxContainer" parent="."]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="TitleLabel" type="Label" parent="HBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.965, 0.769, 0.329, 1)
+theme_override_font_sizes/font_size = 18
+text = "GIT DIWAA"
+
+[node name="LevelLabel" type="Label" parent="HBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.29, 0.87, 0.50, 1)
+theme_override_font_sizes/font_size = 14
+text = "LVL 1"
+
+[node name="BranchBadge" type="PanelContainer" parent="HBox"]
+layout_mode = 2
+
+[node name="BranchLabel" type="Label" parent="HBox/BranchBadge"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.22, 0.74, 0.97, 1)
+theme_override_font_sizes/font_size = 12
+text = "branch: main"
+
+[node name="Spacer" type="Control" parent="HBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="TimerLabel" type="Label" parent="HBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.965, 0.769, 0.329, 1)
+theme_override_font_sizes/font_size = 14
+text = "⏱ 48"
+
+[node name="CoinLabel" type="Label" parent="HBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.965, 0.769, 0.329, 1)
+theme_override_font_sizes/font_size = 14
+text = "🪙 0 COIN"
+
+[node name="ResetButton" type="Button" parent="HBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.95, 0.95, 0.95, 1)
+theme_override_font_sizes/font_size = 12
+theme_override_styles/normal = SubResource("StyleBoxFlat_btn_reset")
+text = "🔄 รีเซ็ต Sandbox"

@@ -26,21 +26,27 @@ public sealed class RealGitSandboxService : IGitSandboxService
         if (!string.IsNullOrWhiteSpace(customWorkspaceRoot))
         {
             _workspaceRoot = customWorkspaceRoot;
+            return;
         }
-        else
+
+        try
         {
-            try
-            {
-                var userDir = ProjectSettings.GlobalizePath("user://git-workspaces");
-                _workspaceRoot = string.IsNullOrWhiteSpace(userDir) 
-                    ? Path.Combine(Path.GetTempPath(), "git-diwaa-workspaces") 
-                    : userDir;
-            }
-            catch
-            {
-                _workspaceRoot = Path.Combine(Path.GetTempPath(), "git-diwaa-workspaces");
-            }
+            var preferredRoot = ProjectSettings.GlobalizePath("user://git-workspaces");
+            Directory.CreateDirectory(preferredRoot);
+            var testFile = Path.Combine(preferredRoot, $".test_{Guid.NewGuid():N}");
+            File.WriteAllText(testFile, "test");
+            File.Delete(testFile);
+            _workspaceRoot = preferredRoot;
+            return;
         }
+        catch
+        {
+            // If user:// path cannot be written to, fallback to system temp
+        }
+
+        var tempRoot = Path.Combine(Path.GetTempPath(), "git-diwaa-workspaces");
+        Directory.CreateDirectory(tempRoot);
+        _workspaceRoot = tempRoot;
     }
 
     public async Task InitializeAsync(

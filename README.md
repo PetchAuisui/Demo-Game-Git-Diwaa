@@ -4,10 +4,9 @@
 
 ## สถานะปัจจุบัน
 
-- รอบพัฒนา `feat/git-engine` เพิ่มระบบ Real Git, Terminal CLI และ integration tests สำหรับรวมเข้า `main`
-- สถานะเป็นฐานระบบรุ่นแรกสำหรับทดลองและต่อ UI ยังไม่ครอบคลุมคำสั่งและสถานการณ์ของทุกบทเรียน
-- ยังไม่พัฒนา Godot UI ตามขอบเขตงานรอบนี้
-- ดู [สถานะการทดสอบ ข้อจำกัด และงานถัดไป](docs/implementation-status.md) ก่อนนำไปใช้งานต่อ
+- รอบพัฒนา `feat/godot-sandbox-ui` พัฒนาระบบ Godot C# Sandbox UI ตามโครงสร้าง OOP แบบโมดูล
+- ประกอบด้วยคอมโพเนนต์ Terminal, Files panel, Git Graph panel, Top Bar panel และ Sandbox Orchestrator View
+- ฐานระบบ Real Git engine, Terminal CLI และ integration tests พร้อมใช้งาน
 
 ## โครงสร้าง
 
@@ -15,11 +14,13 @@
 src/
 ├── GitDiwaa.Core/       contracts และ models ที่ CLI/Godot ใช้ร่วมกัน
 ├── GitDiwaa.RealGit/    adapter สำหรับ Git จริงและ sandbox ของผู้เล่น
-└── GitDiwaa.Cli/        โปรแกรมทดสอบผ่าน Terminal
+├── GitDiwaa.Cli/        โปรแกรมทดสอบผ่าน Terminal
+└── GitDiwaa.Godot/      Godot 4 C# Sandbox UI (Terminal, Files, Git Graph)
 tests/
 └── GitDiwaa.RealGit.Tests/  integration tests กับ Git จริง
 docs/
-└── architecture.md      ข้อกำหนด ขอบเขต และ data flow
+├── architecture.md      ข้อกำหนด ขอบเขต และ data flow
+└── godot-integration.md สถาปัตยกรรม Godot C# Sandbox UI
 ```
 
 ## สิ่งที่ต้องมี
@@ -43,6 +44,17 @@ dotnet build GitDiwaa.slnx --no-restore --disable-build-servers -m:1
 
 ```sh
 dotnet run --project src/GitDiwaa.Cli/GitDiwaa.Cli.csproj
+```
+
+## เปิดเกม Godot Sandbox UI
+
+```sh
+/Applications/Godot_mono.app/Contents/MacOS/Godot --path src/GitDiwaa.Godot
+```
+
+หรือทดสอบ headless mode:
+```sh
+/Applications/Godot_mono.app/Contents/MacOS/Godot --headless --path src/GitDiwaa.Godot --quit-after 5
 ```
 
 ตัวอย่าง one-shot สำหรับตรวจ Git จริงและดู state ที่ UI จะได้รับ:

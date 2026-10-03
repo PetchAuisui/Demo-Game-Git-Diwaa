@@ -1,4 +1,4 @@
-[gd_scene load_steps=3 format=3 uid="uid://b8d2g3b9r1m5f"]
+[gd_scene load_steps=3 format=3]
 
 [ext_resource type="Script" path="res://Scripts/Components/FilesPanel.cs" id="1_script"]
 
