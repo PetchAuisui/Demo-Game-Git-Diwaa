@@ -342,8 +342,6 @@ public partial class SandboxGameView : Control
                 _filesPanel.SetFiles(Array.Empty<FileDisplayItem>());
                 _gitGraphPanel.SetEmptyState();
             }
-
-            _topBar.SetModeText($"SANDBOX • {_sandboxService.CurrentBranch}");
         }
         catch (Exception ex)
         {

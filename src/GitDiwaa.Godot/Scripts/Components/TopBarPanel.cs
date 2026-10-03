@@ -4,8 +4,7 @@ namespace GitDiwaa.Godot.Components;
 
 /// <summary>
 /// Reusable Top Bar Component for Git-Diwaa Sandbox UI.
-/// Cleaned up to show only available sandbox systems (brand and mode badge).
-/// Dummy timer and coins removed as requested.
+/// Displays the game title and level badge.
 /// </summary>
 public partial class TopBarPanel : PanelContainer
 {
@@ -13,30 +12,30 @@ public partial class TopBarPanel : PanelContainer
     public string GameTitle { get; set; } = "GIT DIWAA";
 
     [Export]
-    public string ModeText { get; set; } = "SANDBOX";
+    public string LevelText { get; set; } = "LVL  1";
 
     private Label _brandLabel = null!;
-    private Label _modeLabel = null!;
+    private Label _levelLabel = null!;
 
     public override void _Ready()
     {
         BindNodes();
         _brandLabel.Text = GameTitle;
-        _modeLabel.Text = ModeText;
+        _levelLabel.Text = LevelText;
     }
 
     private void BindNodes()
     {
         _brandLabel = GetNode<Label>("%BrandLabel");
-        _modeLabel = GetNode<Label>("%ModeLabel");
+        _levelLabel = GetNode<Label>("%LevelLabel");
     }
 
-    public void SetModeText(string modeText)
+    public void SetLevelText(string levelText)
     {
-        ModeText = modeText;
-        if (_modeLabel != null)
+        LevelText = levelText;
+        if (_levelLabel != null)
         {
-            _modeLabel.Text = modeText;
+            _levelLabel.Text = levelText;
         }
     }
 }

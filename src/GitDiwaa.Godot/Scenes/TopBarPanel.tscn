@@ -34,12 +34,12 @@ theme_override_font_sizes/font_size = 45
 text = "GIT DIWAA"
 vertical_alignment = 1
 
-[node name="ModeLabel" type="Label" parent="TopMargin/Header"]
+[node name="LevelLabel" type="Label" parent="TopMargin/Header"]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_colors/font_color = Color(0.7, 1, 0.67, 1)
 theme_override_font_sizes/font_size = 30
-text = "SANDBOX"
+text = "LVL  1"
 horizontal_alignment = 1
 vertical_alignment = 1
 
