@@ -1,0 +1,87 @@
+[gd_scene load_steps=3 format=3 uid="uid://b8d2g3b9r1m5f"]
+
+[ext_resource type="Script" path="res://Scripts/Components/FilesPanel.cs" id="1_script"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_btn_add"]
+bg_color = Color(0.121569, 0.141176, 0.219608, 0.8)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.231373, 0.258824, 0.380392, 1)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+content_margin_left = 8.0
+content_margin_top = 4.0
+content_margin_right = 8.0
+content_margin_bottom = 4.0
+
+[node name="FilesPanel" type="PanelContainer"]
+custom_minimum_size = Vector2(280, 220)
+offset_right = 320.0
+offset_bottom = 240.0
+size_flags_horizontal = 3
+size_flags_vertical = 3
+script = ExtResource("1_script")
+
+[node name="VBox" type="VBoxContainer" parent="."]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="HeaderBar" type="HBoxContainer" parent="VBox"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="TitleLabel" type="Label" parent="VBox/HeaderBar"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.960784, 0.768627, 0.329412, 1)
+theme_override_font_sizes/font_size = 13
+text = "FILES — พื้นที่ทำงาน"
+
+[node name="CountBadgeLabel" type="Label" parent="VBox/HeaderBar"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.6, 0.64, 0.72, 1)
+theme_override_font_sizes/font_size = 11
+
+[node name="Spacer" type="Control" parent="VBox/HeaderBar"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="CreateFileButton" type="Button" parent="VBox/HeaderBar"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.85, 0.9, 1, 1)
+theme_override_font_sizes/font_size = 11
+theme_override_styles/normal = SubResource("StyleBoxFlat_btn_add")
+text = "+ สร้างไฟล์"
+
+[node name="ContentArea" type="MarginContainer" parent="VBox"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="EmptyLabel" type="Label" parent="VBox/ContentArea"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 1
+theme_override_colors/font_color = Color(0.580392, 0.639216, 0.721569, 1)
+theme_override_font_sizes/font_size = 12
+text = "ยังไม่มีไฟล์"
+vertical_alignment = 0
+
+[node name="ScrollContainer" type="ScrollContainer" parent="VBox/ContentArea"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+
+[node name="FileListContainer" type="VBoxContainer" parent="VBox/ContentArea/ScrollContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/separation = 4
