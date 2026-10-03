@@ -1,11 +1,10 @@
 using Godot;
-using GitDiwaa.Godot.Common;
 
 namespace GitDiwaa.Godot.Components;
 
 /// <summary>
 /// Reusable Top Bar Component for Git-Diwaa Sandbox UI.
-/// Displays game logo, level badge, current branch, coins/timer, and action controls.
+/// Matches the authentic Checkpoint-01 TopBar visual design.
 /// </summary>
 public partial class TopBarPanel : PanelContainer
 {
@@ -16,57 +15,26 @@ public partial class TopBarPanel : PanelContainer
     public string GameTitle { get; set; } = "GIT DIWAA";
 
     [Export]
-    public string LevelText { get; set; } = "LVL 1";
+    public string LevelText { get; set; } = "LVL  1";
 
-    private Label _titleLabel = null!;
+    private Label _brandLabel = null!;
     private Label _levelLabel = null!;
-    private Label _branchLabel = null!;
     private Label _timerLabel = null!;
     private Label _coinLabel = null!;
-    private Button _resetButton = null!;
 
     public override void _Ready()
     {
-        ApplyStyles();
         BindNodes();
-
-        _titleLabel.Text = GameTitle;
+        _brandLabel.Text = GameTitle;
         _levelLabel.Text = LevelText;
-        _resetButton.Pressed += () => EmitSignal(SignalName.ResetRequested);
     }
 
     private void BindNodes()
     {
-        _titleLabel = GetNode<Label>("%TitleLabel");
+        _brandLabel = GetNode<Label>("%BrandLabel");
         _levelLabel = GetNode<Label>("%LevelLabel");
-        _branchLabel = GetNode<Label>("%BranchLabel");
         _timerLabel = GetNode<Label>("%TimerLabel");
         _coinLabel = GetNode<Label>("%CoinLabel");
-        _resetButton = GetNode<Button>("%ResetButton");
-    }
-
-    private void ApplyStyles()
-    {
-        var style = SandboxThemeTokens.CreatePanelStyle(
-            bgColor: new Color(0.12f, 0.11f, 0.10f, 0.98f),
-            borderColor: SandboxThemeTokens.BorderGold,
-            borderWidth: 2,
-            cornerRadius: 0,
-            contentMargin: 8
-        );
-        style.BorderWidthLeft = 0;
-        style.BorderWidthRight = 0;
-        style.BorderWidthTop = 0;
-        style.BorderWidthBottom = 2;
-        AddThemeStyleboxOverride("panel", style);
-    }
-
-    public void SetCurrentBranch(string branchName)
-    {
-        if (_branchLabel != null)
-        {
-            _branchLabel.Text = $"branch: {branchName}";
-        }
     }
 
     public void SetTimer(string timeString)
@@ -81,7 +49,20 @@ public partial class TopBarPanel : PanelContainer
     {
         if (_coinLabel != null)
         {
-            _coinLabel.Text = $"🪙 {coins} COIN";
+            _coinLabel.Text = $"◉  {coins} COIN";
         }
+    }
+
+    public void SetLevel(string levelText)
+    {
+        if (_levelLabel != null)
+        {
+            _levelLabel.Text = levelText;
+        }
+    }
+
+    public void SetCurrentBranch(string branchName)
+    {
+        // Can optionally display branch name in title or label
     }
 }

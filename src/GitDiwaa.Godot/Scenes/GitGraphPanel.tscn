@@ -1,71 +1,57 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene load_steps=4 format=3]
 
 [ext_resource type="Script" path="res://Scripts/Components/GitGraphPanel.cs" id="1_script"]
 
+[sub_resource type="StyleBoxFlat" id="Style_card"]
+bg_color = Color(0.025, 0.031, 0.055, 0.9)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(0.37, 0.42, 0.67, 0.9)
+corner_radius_top_left = 12
+corner_radius_top_right = 12
+corner_radius_bottom_right = 12
+corner_radius_bottom_left = 12
+
+[sub_resource type="SystemFont" id="Font_terminal"]
+font_names = PackedStringArray("Menlo", "Consolas", "DejaVu Sans Mono")
+
 [node name="GitGraphPanel" type="PanelContainer"]
-custom_minimum_size = Vector2(280, 220)
-offset_right = 340.0
-offset_bottom = 240.0
-size_flags_horizontal = 3
-size_flags_vertical = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("Style_card")
 script = ExtResource("1_script")
 
-[node name="VBox" type="VBoxContainer" parent="."]
+[node name="Margin" type="MarginContainer" parent="."]
 layout_mode = 2
-theme_override_constants/separation = 8
+theme_override_constants/margin_left = 18
+theme_override_constants/margin_top = 18
+theme_override_constants/margin_right = 18
+theme_override_constants/margin_bottom = 18
 
-[node name="HeaderBar" type="HBoxContainer" parent="VBox"]
+[node name="Layout" type="VBoxContainer" parent="Margin"]
 layout_mode = 2
-theme_override_constants/separation = 6
+theme_override_constants/separation = 12
 
-[node name="TitleLabel" type="Label" parent="VBox/HeaderBar"]
+[node name="TitleLabel" type="Label" parent="Margin/Layout"]
 unique_name_in_owner = true
 layout_mode = 2
-theme_override_colors/font_color = Color(0.960784, 0.768627, 0.329412, 1)
-theme_override_font_sizes/font_size = 13
+theme_override_colors/font_color = Color(1, 0.79, 0.35, 1)
+theme_override_font_sizes/font_size = 23
 text = "GIT GRAPH"
 
-[node name="CountBadgeLabel" type="Label" parent="VBox/HeaderBar"]
+[node name="GraphOutput" type="RichTextLabel" parent="Margin/Layout"]
 unique_name_in_owner = true
-layout_mode = 2
-theme_override_colors/font_color = Color(0.6, 0.64, 0.72, 1)
-theme_override_font_sizes/font_size = 11
-
-[node name="ContentArea" type="MarginContainer" parent="VBox"]
 layout_mode = 2
 size_flags_vertical = 3
-
-[node name="EmptyContainer" type="VBoxContainer" parent="VBox/ContentArea"]
-unique_name_in_owner = true
-layout_mode = 2
-size_flags_vertical = 1
-theme_override_constants/separation = 4
-
-[node name="EmptyTitleLabel" type="Label" parent="VBox/ContentArea/EmptyContainer"]
-unique_name_in_owner = true
-layout_mode = 2
-theme_override_colors/font_color = Color(0.9, 0.92, 0.95, 1)
-theme_override_font_sizes/font_size = 12
-text = "ยังไม่มี Commit"
-
-[node name="EmptySubtitleLabel" type="Label" parent="VBox/ContentArea/EmptyContainer"]
-unique_name_in_owner = true
-layout_mode = 2
-theme_override_colors/font_color = Color(0.580392, 0.639216, 0.721569, 1)
-theme_override_font_sizes/font_size = 11
-text = "สร้าง repository และ commit แล้วประวัติจะแสดงที่นี่"
-autowrap_mode = 2
-
-[node name="ScrollContainer" type="ScrollContainer" parent="VBox/ContentArea"]
-unique_name_in_owner = true
-visible = false
-layout_mode = 2
-size_flags_vertical = 3
-horizontal_scroll_mode = 0
-
-[node name="CommitListContainer" type="VBoxContainer" parent="VBox/ContentArea/ScrollContainer"]
-unique_name_in_owner = true
-layout_mode = 2
-size_flags_horizontal = 3
-size_flags_vertical = 3
-theme_override_constants/separation = 6
+theme_override_colors/default_color = Color(0.87, 0.9, 0.95, 1)
+theme_override_fonts/normal_font = SubResource("Font_terminal")
+theme_override_font_sizes/normal_font_size = 21
+bbcode_enabled = true
+text = "ยังไม่มี Commit
+สร้าง repository และ commit แล้วประวัติจะแสดงที่นี่"
+selection_enabled = true
