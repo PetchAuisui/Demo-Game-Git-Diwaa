@@ -1,0 +1,71 @@
+[gd_scene load_steps=2 format=3 uid="uid://c5q3x4p9m8w2v"]
+
+[ext_resource type="Script" path="res://Scripts/Components/GitGraphPanel.cs" id="1_script"]
+
+[node name="GitGraphPanel" type="PanelContainer"]
+custom_minimum_size = Vector2(280, 220)
+offset_right = 340.0
+offset_bottom = 240.0
+size_flags_horizontal = 3
+size_flags_vertical = 3
+script = ExtResource("1_script")
+
+[node name="VBox" type="VBoxContainer" parent="."]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="HeaderBar" type="HBoxContainer" parent="VBox"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="TitleLabel" type="Label" parent="VBox/HeaderBar"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.960784, 0.768627, 0.329412, 1)
+theme_override_font_sizes/font_size = 13
+text = "GIT GRAPH"
+
+[node name="CountBadgeLabel" type="Label" parent="VBox/HeaderBar"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.6, 0.64, 0.72, 1)
+theme_override_font_sizes/font_size = 11
+
+[node name="ContentArea" type="MarginContainer" parent="VBox"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="EmptyContainer" type="VBoxContainer" parent="VBox/ContentArea"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 1
+theme_override_constants/separation = 4
+
+[node name="EmptyTitleLabel" type="Label" parent="VBox/ContentArea/EmptyContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.9, 0.92, 0.95, 1)
+theme_override_font_sizes/font_size = 12
+text = "ยังไม่มี Commit"
+
+[node name="EmptySubtitleLabel" type="Label" parent="VBox/ContentArea/EmptyContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.580392, 0.639216, 0.721569, 1)
+theme_override_font_sizes/font_size = 11
+text = "สร้าง repository และ commit แล้วประวัติจะแสดงที่นี่"
+autowrap_mode = 2
+
+[node name="ScrollContainer" type="ScrollContainer" parent="VBox/ContentArea"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+
+[node name="CommitListContainer" type="VBoxContainer" parent="VBox/ContentArea/ScrollContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/separation = 6
