@@ -1,7 +1,9 @@
 **/bin/
 **/obj/
-.godot/
-.mono/
+**/.godot/
+**/.mono/
+**/.local/
+Library/
 *.user
 *.userprefs
 .DS_Store
