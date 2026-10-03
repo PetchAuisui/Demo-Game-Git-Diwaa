@@ -1,4 +1,4 @@
-[gd_scene load_steps=3 format=3]
+[gd_scene load_steps=6 format=3]
 
 [ext_resource type="Script" path="res://Scripts/Components/FilesPanel.cs" id="1_script"]
 
@@ -13,6 +13,54 @@ corner_radius_top_left = 12
 corner_radius_top_right = 12
 corner_radius_bottom_right = 12
 corner_radius_bottom_left = 12
+
+[sub_resource type="StyleBoxFlat" id="Style_button_normal"]
+bg_color = Color(0.12, 0.14, 0.24, 0.95)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.42, 0.48, 0.72, 1)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+content_margin_left = 10.0
+content_margin_top = 6.0
+content_margin_right = 10.0
+content_margin_bottom = 6.0
+
+[sub_resource type="StyleBoxFlat" id="Style_button_hover"]
+bg_color = Color(0.18, 0.22, 0.36, 0.95)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.62, 0.68, 0.95, 1)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+content_margin_left = 10.0
+content_margin_top = 6.0
+content_margin_right = 10.0
+content_margin_bottom = 6.0
+
+[sub_resource type="StyleBoxFlat" id="Style_button_disabled"]
+bg_color = Color(0.06, 0.07, 0.12, 0.6)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.25, 0.28, 0.38, 0.6)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+content_margin_left = 10.0
+content_margin_top = 6.0
+content_margin_right = 10.0
+content_margin_bottom = 6.0
 
 [node name="FilesPanel" type="PanelContainer"]
 anchors_preset = 15
@@ -41,8 +89,135 @@ theme_override_colors/font_color = Color(1, 0.79, 0.35, 1)
 theme_override_font_sizes/font_size = 23
 text = "FILES — พื้นที่ทำงาน"
 
+[node name="ActionsRow" type="HBoxContainer" parent="Margin/Layout"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="AddButton" type="Button" parent="Margin/Layout/ActionsRow"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.95, 0.97, 1, 1)
+theme_override_font_sizes/font_size = 18
+theme_override_styles/normal = SubResource("Style_button_normal")
+theme_override_styles/hover = SubResource("Style_button_hover")
+theme_override_styles/disabled = SubResource("Style_button_disabled")
+text = "+ เพิ่ม"
+
+[node name="EditButton" type="Button" parent="Margin/Layout/ActionsRow"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.95, 0.97, 1, 1)
+theme_override_font_sizes/font_size = 18
+theme_override_styles/normal = SubResource("Style_button_normal")
+theme_override_styles/hover = SubResource("Style_button_hover")
+theme_override_styles/disabled = SubResource("Style_button_disabled")
+disabled = true
+text = "✎ แก้ไข"
+
+[node name="DeleteButton" type="Button" parent="Margin/Layout/ActionsRow"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.98, 0.55, 0.55, 1)
+theme_override_font_sizes/font_size = 18
+theme_override_styles/normal = SubResource("Style_button_normal")
+theme_override_styles/hover = SubResource("Style_button_hover")
+theme_override_styles/disabled = SubResource("Style_button_disabled")
+disabled = true
+text = "🗑 ลบ"
+
 [node name="FilesList" type="ItemList" parent="Margin/Layout"]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_vertical = 3
 theme_override_font_sizes/font_size = 21
+
+[node name="CreateFileDialog" type="ConfirmationDialog" parent="."]
+unique_name_in_owner = true
+title = "สร้างไฟล์ใหม่"
+size = Vector2i(540, 320)
+ok_button_text = "สร้างไฟล์"
+cancel_button_text = "ยกเลิก"
+
+[node name="CreateDialogMargin" type="MarginContainer" parent="CreateFileDialog"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 8.0
+offset_top = 8.0
+offset_right = -8.0
+offset_bottom = -49.0
+theme_override_constants/margin_left = 12
+theme_override_constants/margin_top = 12
+theme_override_constants/margin_right = 12
+theme_override_constants/margin_bottom = 12
+
+[node name="CreateLayout" type="VBoxContainer" parent="CreateFileDialog/CreateDialogMargin"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="NameLabel" type="Label" parent="CreateFileDialog/CreateDialogMargin/CreateLayout"]
+layout_mode = 2
+text = "ชื่อไฟล์ (เช่น main.py, note.txt):"
+
+[node name="CreateNameInput" type="LineEdit" parent="CreateFileDialog/CreateDialogMargin/CreateLayout"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 42)
+layout_mode = 2
+placeholder_text = "ชื่อไฟล์..."
+
+[node name="ContentLabel" type="Label" parent="CreateFileDialog/CreateDialogMargin/CreateLayout"]
+layout_mode = 2
+text = "เนื้อหาเริ่มต้น:"
+
+[node name="CreateContentInput" type="TextEdit" parent="CreateFileDialog/CreateDialogMargin/CreateLayout"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 110)
+layout_mode = 2
+size_flags_vertical = 3
+placeholder_text = "พิมพ์เนื้อหาในไฟล์ที่นี่..."
+
+[node name="EditFileDialog" type="ConfirmationDialog" parent="."]
+unique_name_in_owner = true
+title = "แก้ไขเนื้อหาไฟล์"
+size = Vector2i(580, 400)
+ok_button_text = "บันทึก"
+cancel_button_text = "ยกเลิก"
+
+[node name="EditDialogMargin" type="MarginContainer" parent="EditFileDialog"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 8.0
+offset_top = 8.0
+offset_right = -8.0
+offset_bottom = -49.0
+theme_override_constants/margin_left = 12
+theme_override_constants/margin_top = 12
+theme_override_constants/margin_right = 12
+theme_override_constants/margin_bottom = 12
+
+[node name="EditLayout" type="VBoxContainer" parent="EditFileDialog/EditDialogMargin"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="EditFileLabel" type="Label" parent="EditFileDialog/EditDialogMargin/EditLayout"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "แก้ไขไฟล์:"
+
+[node name="EditContentInput" type="TextEdit" parent="EditFileDialog/EditDialogMargin/EditLayout"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 240)
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="DeleteConfirmDialog" type="ConfirmationDialog" parent="."]
+unique_name_in_owner = true
+title = "ยืนยันการลบไฟล์"
+size = Vector2i(450, 160)
+ok_button_text = "ลบไฟล์"
+cancel_button_text = "ยกเลิก"
+dialog_text = "คุณต้องการลบไฟล์นี้หรือไม่?"
