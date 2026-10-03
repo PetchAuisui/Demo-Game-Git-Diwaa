@@ -1,3 +1,8 @@
 [gd_scene format=3 uid="uid://by0nfc80oygfm"]
 
-[node name="IntroCutscene" type="Node2D" unique_id=1673572604]
+[ext_resource type="Texture2D" uid="uid://c08ejklgpwneq" path="res://assets/cutscene/Libary.png" id="1_ukbh7"]
+
+[node name="Libary" type="Sprite2D" unique_id=2125946042]
+position = Vector2(920, 540)
+scale = Vector2(4, 4)
+texture = ExtResource("1_ukbh7")
