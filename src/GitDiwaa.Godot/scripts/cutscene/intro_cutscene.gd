@@ -43,12 +43,14 @@ extends Sprite2D
 @onready var parchment_shadow: TextureRect = $MagicStoryUI/ParchmentShadow
 @onready var parchment_frame: TextureRect = $MagicStoryUI/ParchmentFrame
 @onready var rune_container: Control = $MagicStoryUI/RuneContainer
+@onready var rune_aura_label: RichTextLabel = $MagicStoryUI/RuneContainer/RuneAuraLabel
 @onready var rune_label: RichTextLabel = $MagicStoryUI/RuneContainer/RuneRichLabel
 @onready var continue_prompt: Label = $MagicStoryUI/RuneContainer/ContinuePrompt
 
 var shards: Array[Sprite2D] = []
 var can_continue: bool = false
 var is_continuing: bool = false
+var tw_ex_bob: Tween = null
 
 signal cutscene_finished
 
@@ -157,8 +159,17 @@ func _reset_cutscene_state() -> void:
 	if rune_container:
 		rune_container.scale = Vector2(0.01, 0.01)
 		rune_container.modulate = Color(1, 1, 1, 0)
+	if rune_aura_label:
+		rune_aura_label.modulate = Color(1, 1, 1, 1)
 	if continue_prompt:
 		continue_prompt.modulate = Color(1, 1, 1, 0)
+	
+	if tw_ex_bob and tw_ex_bob.is_valid():
+		tw_ex_bob.kill()
+	if exclamation_mark:
+		exclamation_mark.visible = false
+		exclamation_mark.scale = Vector2.ZERO
+		exclamation_mark.position = Vector2(0, -56)
 
 ## เรียกเมื่อคัมภีร์แตกสลาย (11.8s)
 func _on_shatter_khampri() -> void:
@@ -167,6 +178,16 @@ func _on_shatter_khampri() -> void:
 	khampri.visible = false
 	if khampri_shadow:
 		khampri_shadow.visible = false
+	
+	# เครื่องหมายบนหัวเวลสะดุ้งกระตุกเล็กน้อยตามแรงระเบิดของคัมภีร์
+	if exclamation_mark and exclamation_mark.visible:
+		var tw_react = create_tween()
+		tw_react.tween_property(exclamation_mark, "position:y", -62.0, 0.08).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+		tw_react.parallel().tween_property(exclamation_mark, "scale", Vector2(1.2, 1.2), 0.08)
+		tw_react.tween_property(exclamation_mark, "position:y", -54.0, 0.08).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+		tw_react.parallel().tween_property(exclamation_mark, "scale", Vector2(0.95, 0.95), 0.08)
+		tw_react.tween_property(exclamation_mark, "position:y", -56.0, 0.12)
+		tw_react.parallel().tween_property(exclamation_mark, "scale", Vector2(1.0, 1.0), 0.12)
 	var origin: Vector2 = khampri.position # (64, 79) ขณะลอยตัวเหนือพื้น
 	
 	# เมื่อคัมภีร์แตก กระดาษยังไม่ปรากฏทันที (จะร่วงหล่นลงมาทีหลังจากเหตุการณ์ดูดเศษซาก)
@@ -225,46 +246,59 @@ func _on_shatter_khampri() -> void:
 			tw_move.tween_property(s, "modulate", Color(1, 1, 1, 1), duration)
 		)
 
-## เศษคัมภีร์แผ่นสุดท้ายที่หลงเหลือ ร่วงหล่นลงมาจากด้านบนเล็กน้อยสู่พื้นไม้ (16.6s -> 17.8s)
+## เศษคัมภีร์แผ่นสุดท้ายที่หลงเหลือ ร่วงหล่นลงมาจากด้านบนเล็กน้อยสู่พื้นไม้ (16.4s -> 17.8s)
 func _on_paper_flutter_down() -> void:
 	if not paper_on_floor:
 		return
 	paper_on_floor.visible = true
-	paper_on_floor.position = Vector2(68.0, 52.0)
-	paper_on_floor.rotation = -0.08
-	paper_on_floor.scale = Vector2(0.095, 0.095)
-	paper_on_floor.modulate = Color(1.3, 1.25, 1.1, 1.0)
+	paper_on_floor.position = Vector2(68.0, 44.0)
+	paper_on_floor.rotation = -0.05
+	paper_on_floor.scale = Vector2(0.08, 0.08)
+	# โผล่มาเป็นเงามืดดำ/ไหม้เกรียมก่อน ไม่ให้ดูวาร์ปมา
+	paper_on_floor.modulate = Color(0.08, 0.08, 0.1, 0.0)
 	
 	if paper_shadow:
 		paper_shadow.visible = true
 		paper_shadow.position = Vector2(68.0, 98.0)
-		paper_shadow.scale = Vector2(0.35, 0.2)
-		paper_shadow.modulate = Color(1, 1, 1, 0.15)
+		paper_shadow.scale = Vector2(0.25, 0.15)
+		paper_shadow.modulate = Color(1, 1, 1, 0.0)
 		var tw_ps_x = create_tween()
+		tw_ps_x.tween_interval(0.2)
 		tw_ps_x.tween_property(paper_shadow, "position:x", 61.0, 0.4).set_trans(Tween.TRANS_SINE)
 		tw_ps_x.tween_property(paper_shadow, "position:x", 66.0, 0.4).set_trans(Tween.TRANS_SINE)
 		tw_ps_x.tween_property(paper_shadow, "position:x", 64.0, 0.4).set_trans(Tween.TRANS_SINE)
 		var tw_ps = create_tween().set_parallel(true)
-		tw_ps.tween_property(paper_shadow, "scale", Vector2(0.55, 0.35), 1.2)
-		tw_ps.tween_property(paper_shadow, "modulate", Color(1, 1, 1, 0.5), 1.2)
+		tw_ps.tween_property(paper_shadow, "scale", Vector2(0.55, 0.35), 1.4)
+		tw_ps.tween_property(paper_shadow, "modulate", Color(1, 1, 1, 0.55), 1.4)
+	
+	# ค่อยๆ ปรากฏเป็นเงามืดดำ (0.15s)
+	var tw_mod = create_tween()
+	tw_mod.tween_property(paper_on_floor, "modulate", Color(0.12, 0.1, 0.15, 0.95), 0.15)
+	# จากนั้นค่อยๆ สลายความมืดคืนสภาพสู่สีกระดาษปกติขณะร่อนลงพื้น (1.25s)
+	tw_mod.tween_property(paper_on_floor, "modulate", Color(0.28, 0.25, 0.3, 1.0), 0.30)
+	tw_mod.tween_property(paper_on_floor, "modulate", Color(0.65, 0.6, 0.55, 1.0), 0.45)
+	tw_mod.tween_property(paper_on_floor, "modulate", Color(1.0, 1.0, 1.0, 1.0), 0.50)
 	
 	var tw = create_tween().set_parallel(true)
+	# ขยายสู่ขนาดปกติ 0.095
+	tw.tween_property(paper_on_floor, "scale", Vector2(0.095, 0.095), 0.3)
+	
 	# ส่ายไปมาซ้ายขวาอย่างเป็นธรรมชาติ
 	var tw_x = create_tween()
+	tw_x.tween_interval(0.2)
 	tw_x.tween_property(paper_on_floor, "position:x", 61.0, 0.4).set_trans(Tween.TRANS_SINE)
 	tw_x.tween_property(paper_on_floor, "position:x", 66.0, 0.4).set_trans(Tween.TRANS_SINE)
 	tw_x.tween_property(paper_on_floor, "position:x", 64.0, 0.4).set_trans(Tween.TRANS_SINE)
 	
 	# ค่อย ๆ ลอยตกลงสู่พื้นไม้
-	tw.tween_property(paper_on_floor, "position:y", 96.0, 1.2).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	tw.tween_property(paper_on_floor, "position:y", 96.0, 1.4).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 	
 	# หมุนส่ายเบา ๆ แล้ววางราบสนิท
 	var tw_rot = create_tween()
+	tw_rot.tween_property(paper_on_floor, "rotation", -0.08, 0.2)
 	tw_rot.tween_property(paper_on_floor, "rotation", 0.06, 0.4)
 	tw_rot.tween_property(paper_on_floor, "rotation", -0.03, 0.4)
 	tw_rot.tween_property(paper_on_floor, "rotation", 0.0, 0.4)
-	
-	tw.tween_property(paper_on_floor, "modulate", Color(1, 1, 1, 1), 1.2)
 	
 	# เมื่อแตะพื้น ให้เรืองแสงกระพริบเบา ๆ (Pulsing glow) ดึงดูดสายตาให้รู้ว่าเป็นของสำคัญ
 	tw.chain().tween_callback(func():
@@ -318,11 +352,16 @@ func _on_reveal_magic_text() -> void:
 	can_continue = true
 	is_continuing = false
 	
-	# ลูปแสงเรืองรองนุ่มนวลบนตัวอักษรมนตราโบราณ
+	# ลูปแสงออร่าเวทมนตร์เรืองรองอ่อน ๆ นุ่มนวล ไม่สว่างจ้าเกินไป
+	if rune_aura_label:
+		rune_aura_label.modulate = Color(1.0, 0.95, 0.85, 0.35)
+		var tw_aura = create_tween().set_loops()
+		tw_aura.tween_property(rune_aura_label, "modulate:a", 0.55, 1.5).set_trans(Tween.TRANS_SINE)
+		tw_aura.tween_property(rune_aura_label, "modulate:a", 0.20, 1.5).set_trans(Tween.TRANS_SINE)
+	
+	# ตัวอักษรหลักคงความสว่างนวลตา คมชัด อ่านง่าย สบายตา
 	if rune_label:
-		var tw_glow = create_tween().set_loops()
-		tw_glow.tween_property(rune_label, "modulate", Color(1.15, 1.1, 0.95, 1.0), 1.5).set_trans(Tween.TRANS_SINE)
-		tw_glow.tween_property(rune_label, "modulate", Color(0.92, 0.88, 0.8, 1.0), 1.5).set_trans(Tween.TRANS_SINE)
+		rune_label.modulate = Color(1.0, 1.0, 1.0, 1.0)
 	
 	# แสงกระพริบแนะนำให้กดไปต่อ
 	if continue_prompt:
@@ -446,9 +485,25 @@ func play_with_tween() -> void:
 		master.visible = false
 		vel.play("shock")
 		exclamation_mark.visible = true
+		exclamation_mark.position = Vector2(0, -50)
 		var tw_ex = create_tween()
-		tw_ex.tween_property(exclamation_mark, "scale", Vector2(1.35, 1.35), 0.08)
-		tw_ex.tween_property(exclamation_mark, "scale", Vector2(1.0, 1.0), 0.08)
+		tw_ex.tween_property(exclamation_mark, "position:y", -60.0, 0.08).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+		tw_ex.parallel().tween_property(exclamation_mark, "scale", Vector2(1.35, 1.35), 0.08)
+		tw_ex.tween_property(exclamation_mark, "position:y", -54.0, 0.10).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+		tw_ex.parallel().tween_property(exclamation_mark, "scale", Vector2(0.95, 0.95), 0.10)
+		tw_ex.tween_property(exclamation_mark, "position:y", -57.5, 0.12).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+		tw_ex.parallel().tween_property(exclamation_mark, "scale", Vector2(1.05, 1.05), 0.12)
+		tw_ex.tween_property(exclamation_mark, "position:y", -56.0, 0.12).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+		tw_ex.parallel().tween_property(exclamation_mark, "scale", Vector2(1.0, 1.0), 0.12)
+		tw_ex.chain().tween_callback(func():
+			if not is_instance_valid(exclamation_mark) or not exclamation_mark.visible:
+				return
+			if tw_ex_bob and tw_ex_bob.is_valid():
+				tw_ex_bob.kill()
+			tw_ex_bob = create_tween().set_loops()
+			tw_ex_bob.tween_property(exclamation_mark, "position:y", -59.5, 0.35).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+			tw_ex_bob.tween_property(exclamation_mark, "position:y", -56.0, 0.35).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+		)
 	)
 	
 	# 5. ปรมาจารย์จมลงหลุมดำจนมิด แล้วคัมภีร์ดีดเด้งสูงเฉียงขวาออกห่างจากเวล (9.38s -> 9.80s)
@@ -535,9 +590,9 @@ func play_with_tween() -> void:
 	tw_suck.tween_interval(15.0)
 	tw_suck.tween_callback(_on_suck_shards)
 	
-	# เศษคัมภีร์แผ่นสุดท้ายร่อนตกลงมาจากด้านบนสู่พื้นไม้ (16.6s)
+	# เศษคัมภีร์แผ่นสุดท้ายร่อนตกลงมาจากด้านบนสู่พื้นไม้ (16.4s)
 	var tw_flutter = create_tween()
-	tw_flutter.tween_interval(16.6)
+	tw_flutter.tween_interval(16.4)
 	tw_flutter.tween_callback(_on_paper_flutter_down)
 	
 	var tw_h2_out = create_tween()
@@ -549,6 +604,8 @@ func play_with_tween() -> void:
 	var tw_walk_paper = create_tween()
 	tw_walk_paper.tween_interval(18.0)
 	tw_walk_paper.tween_callback(func():
+		if tw_ex_bob and tw_ex_bob.is_valid():
+			tw_ex_bob.kill()
 		exclamation_mark.visible = false
 		vel.play("walk_right")
 	)
