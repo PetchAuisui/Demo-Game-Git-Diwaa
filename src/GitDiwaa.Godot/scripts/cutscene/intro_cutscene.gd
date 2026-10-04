@@ -10,6 +10,7 @@ extends Sprite2D
 ## 6. อาจารย์กระโดดสะดุ้งแล้วร่วงผลุบจมหายเข้าไปในใจกลางหลุมดำตรง ๆ (9.0s -> 9.4s)
 ## 7. เวลสะดุ้งเป็นหน้า Shock พร้อมเครื่องหมายตกใจ (!) เด้งป๊อปขึ้นบนหัว (9.4s)
 ## 8. หลุมดำหดเล็กลงแล้วปิดตัวลง (10.2s -> 11.2s)
+## 9. เครื่องหมาย ! หายไป และเวลเปลี่ยนเป็นท่ายืนหายใจกระพริบตา (11.4s)
 
 @export_enum("AnimationPlayer", "ScriptTween") var playback_mode: String = "AnimationPlayer"
 
@@ -30,6 +31,9 @@ func _ready() -> void:
 	if playback_mode == "AnimationPlayer":
 		if not anim_player.is_playing() or anim_player.current_animation != "walk_in":
 			anim_player.play("walk_in")
+		anim_player.animation_finished.connect(func(_anim_name):
+			vel.play("breathe_blink")
+		)
 	else:
 		if anim_player.is_playing():
 			anim_player.stop()
@@ -122,4 +126,13 @@ func play_with_tween() -> void:
 	tw_close.tween_property(black_hole, "scale", Vector2.ZERO, 1.0)
 	tw_close.tween_callback(func():
 		black_hole.visible = false
+	)
+	
+	# 8. หลุมดำปิดเสร็จสิ้น -> เวลหายตกใจ คืนสู่ท่ายืนหายใจกระพริบตา (11.4s)
+	var tw_recover = create_tween()
+	tw_recover.tween_interval(11.2)
+	tw_recover.tween_property(exclamation_mark, "scale", Vector2.ZERO, 0.2)
+	tw_recover.tween_callback(func():
+		exclamation_mark.visible = false
+		vel.play("breathe_blink")
 	)
