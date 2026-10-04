@@ -21,6 +21,9 @@ public partial class FilesPanel : PanelContainer
 
     private Label _titleLabel = null!;
     private Label _feedbackLabel = null!;
+    private Control _workspaceActions = null!;
+    private Control _navigatorSurface = null!;
+    private Control _editorSurface = null!;
     private ItemList _filesList = null!;
     private Button _newFileButton = null!;
     private Button _newFolderButton = null!;
@@ -30,7 +33,6 @@ public partial class FilesPanel : PanelContainer
     private Label _editorPathLabel = null!;
     private Label _dirtyLabel = null!;
     private CodeEdit _editor = null!;
-    private Control _emptyEditorState = null!;
     private Control _editorLayout = null!;
     private Button _saveButton = null!;
     private Button _closeEditorButton = null!;
@@ -88,6 +90,9 @@ public partial class FilesPanel : PanelContainer
     {
         _titleLabel = GetNode<Label>("%TitleLabel");
         _feedbackLabel = GetNode<Label>("%FeedbackLabel");
+        _workspaceActions = GetNode<Control>("%WorkspaceActions");
+        _navigatorSurface = GetNode<Control>("%NavigatorSurface");
+        _editorSurface = GetNode<Control>("%EditorSurface");
         _filesList = GetNode<ItemList>("%FilesList");
         _newFileButton = GetNode<Button>("%NewFileButton");
         _newFolderButton = GetNode<Button>("%NewFolderButton");
@@ -97,7 +102,6 @@ public partial class FilesPanel : PanelContainer
         _editorPathLabel = GetNode<Label>("%EditorPathLabel");
         _dirtyLabel = GetNode<Label>("%DirtyLabel");
         _editor = GetNode<CodeEdit>("%Editor");
-        _emptyEditorState = GetNode<Control>("%EmptyEditorState");
         _editorLayout = GetNode<Control>("%EditorLayout");
         _saveButton = GetNode<Button>("%SaveButton");
         _closeEditorButton = GetNode<Button>("%CloseEditorButton");
@@ -159,7 +163,9 @@ public partial class FilesPanel : PanelContainer
         _editor.Text = content;
         _suppressTextChanged = false;
         _editorPathLabel.Text = filePath;
-        _emptyEditorState.Visible = false;
+        _workspaceActions.Visible = false;
+        _navigatorSurface.Visible = false;
+        _editorSurface.Visible = true;
         _editorLayout.Visible = true;
         UpdateDirtyState();
         _editor.GrabFocus();
@@ -278,8 +284,10 @@ public partial class FilesPanel : PanelContainer
         _suppressTextChanged = true;
         _editor.Clear();
         _suppressTextChanged = false;
+        _workspaceActions.Visible = true;
+        _navigatorSurface.Visible = true;
+        _editorSurface.Visible = false;
         _editorLayout.Visible = false;
-        _emptyEditorState.Visible = true;
         UpdateDirtyState();
     }
 
