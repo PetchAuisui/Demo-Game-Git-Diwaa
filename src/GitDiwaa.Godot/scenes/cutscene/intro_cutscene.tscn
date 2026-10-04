@@ -39,6 +39,7 @@
 [ext_resource type="Texture2D" uid="uid://du7l6oy362lqv" path="res://assets/cutscene/props/khampri/minikhampri20.png" id="37_mini20"]
 [ext_resource type="Texture2D" uid="uid://bngf0cdl4kc1q" path="res://assets/cutscene/props/khampri/paper.png" id="38_paper"]
 [ext_resource type="FontFile" uid="uid://csurxmw2vmws4" path="res://assets/fonts/TA-8-bit.ttf" id="39_ta_8_bit"]
+[ext_resource type="Texture2D" uid="uid://dmykeg4jphdb0" path="res://assets/cutscene/props/khampri/drop_shadow.png" id="40_shadow"]
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_vypf7"]
 atlas = ExtResource("2_sddme")
@@ -499,10 +500,10 @@ tracks/0/path = NodePath("Master:position")
 tracks/0/interp = 1
 tracks/0/loop_wrap = true
 tracks/0/keys = {
-"times": PackedFloat32Array(0, 5.4, 7.8, 7.9, 8, 8.1, 8.2, 8.4, 8.6, 8.8, 9, 9.08, 9.4),
-"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0.5, 2),
+"times": PackedFloat32Array(0, 5.4, 7.8, 7.9, 8, 8.1, 8.2, 8.4, 8.6, 9, 9.08, 9.38),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0.5, 2),
 "update": 0,
-"values": [Vector2(-250, 59), Vector2(40, 59), Vector2(40, 59), Vector2(39, 59), Vector2(41, 59), Vector2(39.5, 59), Vector2(40.5, 59), Vector2(39, 59), Vector2(41, 59), Vector2(40, 59), Vector2(40, 59), Vector2(40, 53), Vector2(40, 97)]
+"values": [Vector2(-250, 59), Vector2(40, 59), Vector2(40, 59), Vector2(39, 59), Vector2(41, 59), Vector2(39.5, 59), Vector2(40.5, 59), Vector2(39, 59), Vector2(41, 59), Vector2(40, 59), Vector2(40, 53), Vector2(40, 97)]
 }
 tracks/1/type = "value"
 tracks/1/imported = false
@@ -511,7 +512,7 @@ tracks/1/path = NodePath("Master:scale")
 tracks/1/interp = 1
 tracks/1/loop_wrap = true
 tracks/1/keys = {
-"times": PackedFloat32Array(0, 9.08, 9.4),
+"times": PackedFloat32Array(0, 9.08, 9.38),
 "transitions": PackedFloat32Array(1, 2, 1),
 "update": 0,
 "values": [Vector2(1, 1), Vector2(1, 1), Vector2(0.1, 0.1)]
@@ -523,7 +524,7 @@ tracks/2/path = NodePath("Master:modulate")
 tracks/2/interp = 1
 tracks/2/loop_wrap = true
 tracks/2/keys = {
-"times": PackedFloat32Array(0, 9.15, 9.4),
+"times": PackedFloat32Array(0, 9.15, 9.38),
 "transitions": PackedFloat32Array(1, 1, 1),
 "update": 0,
 "values": [Color(1, 1, 1, 1), Color(1, 1, 1, 1), Color(0.1, 0.05, 0.2, 0)]
@@ -535,7 +536,7 @@ tracks/3/path = NodePath("Master:visible")
 tracks/3/interp = 1
 tracks/3/loop_wrap = true
 tracks/3/keys = {
-"times": PackedFloat32Array(0, 9.4),
+"times": PackedFloat32Array(0, 9.38),
 "transitions": PackedFloat32Array(1, 1),
 "update": 1,
 "values": [true, false]
@@ -595,10 +596,10 @@ tracks/8/path = NodePath("Vel:position")
 tracks/8/interp = 1
 tracks/8/loop_wrap = true
 tracks/8/keys = {
-"times": PackedFloat32Array(0, 1.8, 6, 9.4, 9.47, 9.6, 18, 20, 24),
+"times": PackedFloat32Array(0, 1.8, 6, 9.38, 9.46, 9.58, 18, 20, 24),
 "transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1, 1),
 "update": 0,
-"values": [Vector2(-250, 59), Vector2(-250, 59), Vector2(-40, 59), Vector2(-40, 59), Vector2(-40, 54), Vector2(-40, 59), Vector2(-40, 59), Vector2(16, 59), Vector2(16, 59)]
+"values": [Vector2(-250, 59), Vector2(-250, 59), Vector2(-40, 59), Vector2(-40, 59), Vector2(-40, 54), Vector2(-40, 59), Vector2(-40, 59), Vector2(50, 59), Vector2(50, 59)]
 }
 tracks/9/type = "value"
 tracks/9/imported = false
@@ -619,7 +620,7 @@ tracks/10/path = NodePath("Vel:animation")
 tracks/10/interp = 1
 tracks/10/loop_wrap = true
 tracks/10/keys = {
-"times": PackedFloat32Array(0, 1.8, 6, 9.4, 18, 20),
+"times": PackedFloat32Array(0, 1.8, 6, 9.38, 18, 20),
 "transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1),
 "update": 1,
 "values": [&"walk_right", &"walk_right", &"breathe_blink", &"shock", &"walk_right", &"breathe_blink"]
@@ -631,7 +632,7 @@ tracks/11/path = NodePath("Vel:frame")
 tracks/11/interp = 1
 tracks/11/loop_wrap = true
 tracks/11/keys = {
-"times": PackedFloat32Array(0, 1.8, 2.2, 2.4, 2.8, 3, 3.4, 3.6, 4, 4.2, 4.6, 4.8, 5.2, 5.4, 5.8, 6, 6.4, 6.6, 7, 7.2, 7.6, 7.8, 8.2, 8.4, 8.8, 9, 9.4, 18, 18.2, 18.4, 18.6, 18.8, 19, 19.2, 19.4, 19.6, 19.8, 20, 20.4, 20.6, 21, 21.2, 21.6, 21.8, 22.2, 22.4, 22.8, 23, 23.4, 23.6, 24),
+"times": PackedFloat32Array(0, 1.8, 2.2, 2.4, 2.8, 3, 3.4, 3.6, 4, 4.2, 4.6, 4.8, 5.2, 5.4, 5.8, 6, 6.4, 6.6, 7, 7.2, 7.6, 7.8, 8.2, 8.4, 8.8, 9, 9.38, 18, 18.2, 18.4, 18.6, 18.8, 19, 19.2, 19.4, 19.6, 19.8, 20, 20.4, 20.6, 21, 21.2, 21.6, 21.8, 22.2, 22.4, 22.8, 23, 23.4, 23.6, 24),
 "transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1),
 "update": 1,
 "values": [0, 0, 1, 2, 3, 4, 5, 0, 1, 2, 3, 4, 5, 0, 1, 0, 1, 2, 3, 4, 5, 0, 1, 2, 3, 4, 0, 0, 1, 2, 3, 4, 5, 0, 1, 2, 3, 0, 1, 2, 3, 4, 5, 0, 1, 2, 3, 4, 5, 0, 0]
@@ -643,7 +644,7 @@ tracks/12/path = NodePath("Vel/ExclamationMark:visible")
 tracks/12/interp = 1
 tracks/12/loop_wrap = true
 tracks/12/keys = {
-"times": PackedFloat32Array(0, 9.4, 18),
+"times": PackedFloat32Array(0, 9.38, 18),
 "transitions": PackedFloat32Array(1, 1, 1),
 "update": 1,
 "values": [false, true, false]
@@ -655,7 +656,7 @@ tracks/13/path = NodePath("Vel/ExclamationMark:scale")
 tracks/13/interp = 1
 tracks/13/loop_wrap = true
 tracks/13/keys = {
-"times": PackedFloat32Array(0, 9.4, 9.48, 9.58, 10, 10.4, 17.8, 18),
+"times": PackedFloat32Array(0, 9.38, 9.46, 9.58, 10, 10.4, 17.8, 18),
 "transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1),
 "update": 0,
 "values": [Vector2(0, 0), Vector2(0, 0), Vector2(1.35, 1.35), Vector2(1, 1), Vector2(1.05, 1.05), Vector2(1, 1), Vector2(1, 1), Vector2(0, 0)]
@@ -667,7 +668,7 @@ tracks/14/path = NodePath("Vel/ExclamationMark:position")
 tracks/14/interp = 1
 tracks/14/loop_wrap = true
 tracks/14/keys = {
-"times": PackedFloat32Array(0, 9.4, 9.48, 9.58, 18),
+"times": PackedFloat32Array(0, 9.38, 9.46, 9.58, 18),
 "transitions": PackedFloat32Array(1, 1, 1, 1, 1),
 "update": 0,
 "values": [Vector2(0, -50), Vector2(0, -50), Vector2(0, -59), Vector2(0, -56), Vector2(0, -56)]
@@ -682,7 +683,7 @@ tracks/15/keys = {
 "times": PackedFloat32Array(0, 10.2, 14.2, 24),
 "transitions": PackedFloat32Array(1, 1, 1, 1),
 "update": 0,
-"values": [Vector2(40, 97), Vector2(40, 97), Vector2(35, 96), Vector2(35, 96)]
+"values": [Vector2(40, 97), Vector2(40, 97), Vector2(64, 96), Vector2(64, 96)]
 }
 tracks/16/type = "value"
 tracks/16/imported = false
@@ -691,7 +692,7 @@ tracks/16/path = NodePath("BlackHole:scale")
 tracks/16/interp = 1
 tracks/16/loop_wrap = true
 tracks/16/keys = {
-"times": PackedFloat32Array(0, 6.8, 7.8, 9.35, 9.8, 10.3, 14.2, 14.8, 17.2, 17.7),
+"times": PackedFloat32Array(0, 6.8, 7.8, 9.38, 9.8, 10.3, 14.2, 14.8, 17.2, 17.7),
 "transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1, 1, 1),
 "update": 0,
 "values": [Vector2(0, 0), Vector2(0, 0), Vector2(1.2, 1), Vector2(1.2, 1), Vector2(1.2, 1), Vector2(0, 0), Vector2(0, 0), Vector2(0.75, 0.65), Vector2(0.75, 0.65), Vector2(0, 0)]
@@ -739,7 +740,7 @@ tracks/20/path = NodePath("Khampri:visible")
 tracks/20/interp = 1
 tracks/20/loop_wrap = true
 tracks/20/keys = {
-"times": PackedFloat32Array(0, 9.35, 11.8),
+"times": PackedFloat32Array(0, 9.38, 11.8),
 "transitions": PackedFloat32Array(1, 1, 1),
 "update": 1,
 "values": [false, true, false]
@@ -751,10 +752,10 @@ tracks/21/path = NodePath("Khampri:position")
 tracks/21/interp = 1
 tracks/21/loop_wrap = true
 tracks/21/keys = {
-"times": PackedFloat32Array(0, 9.35, 9.5, 9.8, 11.2, 11.3, 11.4, 11.5, 11.6, 11.7, 11.8),
-"transitions": PackedFloat32Array(1, 1, 0.5, 2, 1, 1, 1, 1, 1, 1, 1),
+"times": PackedFloat32Array(0, 9.38, 9.56, 9.8, 10.8, 11.1, 11.35, 11.45, 11.55, 11.65, 11.75, 11.8),
+"transitions": PackedFloat32Array(1, 1, 0.5, 2, 1, 1, 1, 1, 1, 1, 1, 1),
 "update": 0,
-"values": [Vector2(38, 56), Vector2(38, 56), Vector2(35, 46), Vector2(30, 96), Vector2(30, 96), Vector2(31.5, 96), Vector2(28.5, 96), Vector2(31.5, 96), Vector2(28.5, 96), Vector2(31, 96), Vector2(30, 96)]
+"values": [Vector2(42, 58), Vector2(42, 58), Vector2(54, 18), Vector2(64, 96), Vector2(64, 96), Vector2(64, 89), Vector2(65.5, 83), Vector2(62.5, 81), Vector2(65.5, 80), Vector2(63, 79.5), Vector2(65, 79), Vector2(64, 79)]
 }
 tracks/22/type = "value"
 tracks/22/imported = false
@@ -763,10 +764,10 @@ tracks/22/path = NodePath("Khampri:rotation")
 tracks/22/interp = 1
 tracks/22/loop_wrap = true
 tracks/22/keys = {
-"times": PackedFloat32Array(0, 24),
-"transitions": PackedFloat32Array(1, 1),
+"times": PackedFloat32Array(0, 9.38, 9.56, 9.8, 10.8, 11.1, 11.25, 11.4, 11.55, 11.65, 11.75, 11.8, 24),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1),
 "update": 0,
-"values": [0.0, 0.0]
+"values": [0.0, 0.0, 0.12, 0.0, 0.0, 0.04, -0.05, 0.07, -0.06, 0.08, -0.05, 0.02, 0.0]
 }
 tracks/23/type = "value"
 tracks/23/imported = false
@@ -775,10 +776,10 @@ tracks/23/path = NodePath("Khampri:scale")
 tracks/23/interp = 1
 tracks/23/loop_wrap = true
 tracks/23/keys = {
-"times": PackedFloat32Array(0, 9.35, 9.8, 11.8),
+"times": PackedFloat32Array(0, 9.38, 9.8, 11.8),
 "transitions": PackedFloat32Array(1, 1, 1, 1),
 "update": 0,
-"values": [Vector2(0.25, 0.25), Vector2(0.25, 0.25), Vector2(0.25, 0.25), Vector2(0.25, 0.25)]
+"values": [Vector2(0.2, 0.2), Vector2(0.2, 0.2), Vector2(0.2, 0.2), Vector2(0.2, 0.2)]
 }
 tracks/24/type = "value"
 tracks/24/imported = false
@@ -787,10 +788,10 @@ tracks/24/path = NodePath("Khampri:modulate")
 tracks/24/interp = 1
 tracks/24/loop_wrap = true
 tracks/24/keys = {
-"times": PackedFloat32Array(0, 11.2, 11.7, 11.8),
-"transitions": PackedFloat32Array(1, 1, 1, 1),
+"times": PackedFloat32Array(0, 10.8, 11.3, 11.6, 11.8),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1),
 "update": 0,
-"values": [Color(1, 1, 1, 1), Color(1, 1, 1, 1), Color(1.8, 1.6, 1, 1), Color(3, 3, 2.5, 1)]
+"values": [Color(1, 1, 1, 1), Color(1, 1, 1, 1), Color(1.8, 1.6, 1.2, 1), Color(2.5, 2.3, 1.8, 1), Color(3.5, 3.2, 2.5, 1)]
 }
 tracks/25/type = "method"
 tracks/25/imported = false
@@ -885,7 +886,7 @@ tracks/31/keys = {
 "times": PackedFloat32Array(0, 16.6, 17, 17.4, 17.8, 20.3, 20.9, 24),
 "transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1),
 "update": 0,
-"values": [Vector2(30, 96), Vector2(34, 52), Vector2(27, 66), Vector2(32, 82), Vector2(30, 96), Vector2(30, 96), Vector2(22, 59), Vector2(22, 59)]
+"values": [Vector2(64, 96), Vector2(68, 52), Vector2(61, 66), Vector2(66, 82), Vector2(64, 96), Vector2(64, 96), Vector2(56, 59), Vector2(56, 59)]
 }
 tracks/32/type = "value"
 tracks/32/imported = false
@@ -906,10 +907,10 @@ tracks/33/path = NodePath("PaperOnFloor:scale")
 tracks/33/interp = 1
 tracks/33/loop_wrap = true
 tracks/33/keys = {
-"times": PackedFloat32Array(0, 16.6, 20.3, 20.9, 24),
-"transitions": PackedFloat32Array(1, 1, 1, 1, 1),
+"times": PackedFloat32Array(0, 16.6, 17.8, 18.4, 19, 19.6, 20.3, 20.9, 24),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1, 1),
 "update": 0,
-"values": [Vector2(0.065, 0.065), Vector2(0.065, 0.065), Vector2(0.065, 0.065), Vector2(0.08, 0.08), Vector2(0.08, 0.08)]
+"values": [Vector2(0.095, 0.095), Vector2(0.095, 0.095), Vector2(0.095, 0.095), Vector2(0.099, 0.099), Vector2(0.095, 0.095), Vector2(0.099, 0.099), Vector2(0.095, 0.095), Vector2(0.12, 0.12), Vector2(0.12, 0.12)]
 }
 tracks/34/type = "value"
 tracks/34/imported = false
@@ -918,10 +919,10 @@ tracks/34/path = NodePath("PaperOnFloor:modulate")
 tracks/34/interp = 1
 tracks/34/loop_wrap = true
 tracks/34/keys = {
-"times": PackedFloat32Array(0, 16.6, 17.8, 20.3, 20.9, 24),
-"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1),
+"times": PackedFloat32Array(0, 16.6, 17.8, 18.4, 19, 19.6, 20.3, 20.9, 24),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1, 1),
 "update": 0,
-"values": [Color(1, 1, 1, 1), Color(1.3, 1.25, 1.1, 1), Color(1, 1, 1, 1), Color(1, 1, 1, 1), Color(2, 1.8, 1.2, 1), Color(2, 1.8, 1.2, 1)]
+"values": [Color(1, 1, 1, 1), Color(1.3, 1.25, 1.1, 1), Color(1, 1, 1, 1), Color(1.45, 1.35, 1.15, 1), Color(1.05, 1, 0.95, 1), Color(1.45, 1.35, 1.15, 1), Color(1.2, 1.15, 1, 1), Color(2, 1.8, 1.2, 1), Color(2, 1.8, 1.2, 1)]
 }
 tracks/35/type = "value"
 tracks/35/imported = false
@@ -934,6 +935,102 @@ tracks/35/keys = {
 "transitions": PackedFloat32Array(1, 1, 1, 1),
 "update": 0,
 "values": [Color(0, 0, 0, 0), Color(0, 0, 0, 0), Color(0, 0, 0, 0.55), Color(0, 0, 0, 0.55)]
+}
+tracks/36/type = "value"
+tracks/36/imported = false
+tracks/36/enabled = true
+tracks/36/path = NodePath("KhampriShadow:visible")
+tracks/36/interp = 1
+tracks/36/loop_wrap = true
+tracks/36/keys = {
+"times": PackedFloat32Array(0, 9.38, 11.8),
+"transitions": PackedFloat32Array(1, 1, 1),
+"update": 1,
+"values": [false, true, false]
+}
+tracks/37/type = "value"
+tracks/37/imported = false
+tracks/37/enabled = true
+tracks/37/path = NodePath("KhampriShadow:position")
+tracks/37/interp = 1
+tracks/37/loop_wrap = true
+tracks/37/keys = {
+"times": PackedFloat32Array(0, 9.38, 9.56, 9.8, 11.8),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1),
+"update": 0,
+"values": [Vector2(42, 98), Vector2(42, 98), Vector2(54, 98), Vector2(64, 98), Vector2(64, 98)]
+}
+tracks/38/type = "value"
+tracks/38/imported = false
+tracks/38/enabled = true
+tracks/38/path = NodePath("KhampriShadow:scale")
+tracks/38/interp = 1
+tracks/38/loop_wrap = true
+tracks/38/keys = {
+"times": PackedFloat32Array(0, 9.38, 9.56, 9.8, 10.8, 11.8),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1),
+"update": 0,
+"values": [Vector2(0.3, 0.2), Vector2(0.3, 0.2), Vector2(0.65, 0.4), Vector2(1.1, 0.7), Vector2(1.1, 0.7), Vector2(0.85, 0.5)]
+}
+tracks/39/type = "value"
+tracks/39/imported = false
+tracks/39/enabled = true
+tracks/39/path = NodePath("KhampriShadow:modulate")
+tracks/39/interp = 1
+tracks/39/loop_wrap = true
+tracks/39/keys = {
+"times": PackedFloat32Array(0, 9.38, 9.56, 9.8, 10.8, 11.8),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1),
+"update": 0,
+"values": [Color(1, 1, 1, 0), Color(1, 1, 1, 0.2), Color(1, 1, 1, 0.35), Color(1, 1, 1, 0.65), Color(1, 1, 1, 0.65), Color(1, 1, 1, 0.4)]
+}
+tracks/40/type = "value"
+tracks/40/imported = false
+tracks/40/enabled = true
+tracks/40/path = NodePath("PaperShadow:visible")
+tracks/40/interp = 1
+tracks/40/loop_wrap = true
+tracks/40/keys = {
+"times": PackedFloat32Array(0, 16.6, 20.9),
+"transitions": PackedFloat32Array(1, 1, 1),
+"update": 1,
+"values": [false, true, false]
+}
+tracks/41/type = "value"
+tracks/41/imported = false
+tracks/41/enabled = true
+tracks/41/path = NodePath("PaperShadow:position")
+tracks/41/interp = 1
+tracks/41/loop_wrap = true
+tracks/41/keys = {
+"times": PackedFloat32Array(0, 16.6, 17, 17.4, 17.8, 20.9),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1),
+"update": 0,
+"values": [Vector2(64, 98), Vector2(68, 98), Vector2(61, 98), Vector2(66, 98), Vector2(64, 98), Vector2(64, 98)]
+}
+tracks/42/type = "value"
+tracks/42/imported = false
+tracks/42/enabled = true
+tracks/42/path = NodePath("PaperShadow:scale")
+tracks/42/interp = 1
+tracks/42/loop_wrap = true
+tracks/42/keys = {
+"times": PackedFloat32Array(0, 16.6, 17, 17.4, 17.8, 20.3, 20.9),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1),
+"update": 0,
+"values": [Vector2(0.55, 0.35), Vector2(0.35, 0.2), Vector2(0.42, 0.25), Vector2(0.48, 0.3), Vector2(0.55, 0.35), Vector2(0.55, 0.35), Vector2(0.2, 0.1)]
+}
+tracks/43/type = "value"
+tracks/43/imported = false
+tracks/43/enabled = true
+tracks/43/path = NodePath("PaperShadow:modulate")
+tracks/43/interp = 1
+tracks/43/loop_wrap = true
+tracks/43/keys = {
+"times": PackedFloat32Array(0, 16.6, 17.8, 20.3, 20.9),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1),
+"update": 0,
+"values": [Color(1, 1, 1, 0), Color(1, 1, 1, 0.2), Color(1, 1, 1, 0.55), Color(1, 1, 1, 0.55), Color(1, 1, 1, 0)]
 }
 
 
@@ -957,16 +1054,30 @@ position = Vector2(30, 92)
 scale = Vector2(1e-05, 1e-05)
 texture = ExtResource("15_black_hole")
 
+[node name="KhampriShadow" type="Sprite2D" parent="." unique_id=9871238]
+visible = false
+modulate = Color(1, 1, 1, 0)
+position = Vector2(64, 98)
+scale = Vector2(1.1, 0.7)
+texture = ExtResource("40_shadow")
+
+[node name="PaperShadow" type="Sprite2D" parent="." unique_id=9871239]
+visible = false
+modulate = Color(1, 1, 1, 0)
+position = Vector2(64, 98)
+scale = Vector2(0.55, 0.35)
+texture = ExtResource("40_shadow")
+
 [node name="Khampri" type="Sprite2D" parent="." unique_id=9871234]
 visible = false
-position = Vector2(40, 50)
-scale = Vector2(0.25, 0.25)
+position = Vector2(42, 58)
+scale = Vector2(0.2, 0.2)
 texture = ExtResource("17_khampri")
 
 [node name="PaperOnFloor" type="Sprite2D" parent="." unique_id=9871237]
 visible = false
-position = Vector2(30, 96)
-scale = Vector2(0.065, 0.065)
+position = Vector2(64, 96)
+scale = Vector2(0.095, 0.095)
 texture = ExtResource("38_paper")
 region_enabled = true
 region_rect = Rect2(103, 43, 240, 209)
@@ -974,121 +1085,121 @@ region_rect = Rect2(103, 43, 240, 209)
 [node name="Shards" type="Node2D" parent="." unique_id=9871235]
 
 [node name="Shard1" type="Sprite2D" parent="Shards" unique_id=2007091327]
-scale = Vector2(0.25, 0.25)
+scale = Vector2(0.2, 0.2)
 texture = ExtResource("18_mini1")
 region_enabled = true
 region_rect = Rect2(6, 7, 38, 23)
 
 [node name="Shard2" type="Sprite2D" parent="Shards" unique_id=579957469]
-scale = Vector2(0.25, 0.25)
+scale = Vector2(0.2, 0.2)
 texture = ExtResource("19_mini2")
 region_enabled = true
 region_rect = Rect2(52, 6, 36, 30)
 
 [node name="Shard3" type="Sprite2D" parent="Shards" unique_id=1222186186]
-scale = Vector2(0.25, 0.25)
+scale = Vector2(0.2, 0.2)
 texture = ExtResource("20_mini3")
 region_enabled = true
 region_rect = Rect2(99, 5, 33, 34)
 
 [node name="Shard4" type="Sprite2D" parent="Shards" unique_id=196794263]
-scale = Vector2(0.25, 0.25)
+scale = Vector2(0.2, 0.2)
 texture = ExtResource("21_mini4")
 region_enabled = true
 region_rect = Rect2(151, 6, 25, 34)
 
 [node name="Shard5" type="Sprite2D" parent="Shards" unique_id=354449387]
-scale = Vector2(0.25, 0.25)
+scale = Vector2(0.2, 0.2)
 texture = ExtResource("22_mini5")
 region_enabled = true
 region_rect = Rect2(192, 6, 27, 35)
 
 [node name="Shard6" type="Sprite2D" parent="Shards" unique_id=668243211]
-scale = Vector2(0.25, 0.25)
+scale = Vector2(0.2, 0.2)
 texture = ExtResource("23_mini6")
 region_enabled = true
 region_rect = Rect2(4, 43, 33, 29)
 
 [node name="Shard7" type="Sprite2D" parent="Shards" unique_id=357502572]
-scale = Vector2(0.25, 0.25)
+scale = Vector2(0.2, 0.2)
 texture = ExtResource("24_mini7")
 region_enabled = true
 region_rect = Rect2(51, 47, 29, 33)
 
 [node name="Shard8" type="Sprite2D" parent="Shards" unique_id=504992300]
-scale = Vector2(0.25, 0.25)
+scale = Vector2(0.2, 0.2)
 texture = ExtResource("25_mini8")
 region_enabled = true
 region_rect = Rect2(102, 50, 24, 29)
 
 [node name="Shard9" type="Sprite2D" parent="Shards" unique_id=160477126]
-scale = Vector2(0.25, 0.25)
+scale = Vector2(0.2, 0.2)
 texture = ExtResource("26_mini9")
 region_enabled = true
 region_rect = Rect2(145, 51, 26, 26)
 
 [node name="Shard10" type="Sprite2D" parent="Shards" unique_id=385723360]
-scale = Vector2(0.25, 0.25)
+scale = Vector2(0.2, 0.2)
 texture = ExtResource("27_mini10")
 region_enabled = true
 region_rect = Rect2(191, 49, 22, 31)
 
 [node name="Shard11" type="Sprite2D" parent="Shards" unique_id=83361749]
-scale = Vector2(0.25, 0.25)
+scale = Vector2(0.2, 0.2)
 texture = ExtResource("28_mini11")
 region_enabled = true
 region_rect = Rect2(5, 97, 25, 30)
 
 [node name="Shard12" type="Sprite2D" parent="Shards" unique_id=2022848349]
-scale = Vector2(0.25, 0.25)
+scale = Vector2(0.2, 0.2)
 texture = ExtResource("29_mini12")
 region_enabled = true
 region_rect = Rect2(46, 101, 33, 25)
 
 [node name="Shard13" type="Sprite2D" parent="Shards" unique_id=994623523]
-scale = Vector2(0.25, 0.25)
+scale = Vector2(0.2, 0.2)
 texture = ExtResource("30_mini13")
 region_enabled = true
 region_rect = Rect2(105, 97, 22, 26)
 
 [node name="Shard14" type="Sprite2D" parent="Shards" unique_id=1463313759]
-scale = Vector2(0.25, 0.25)
+scale = Vector2(0.2, 0.2)
 texture = ExtResource("31_mini14")
 region_enabled = true
 region_rect = Rect2(148, 92, 26, 32)
 
 [node name="Shard15" type="Sprite2D" parent="Shards" unique_id=2098129752]
-scale = Vector2(0.25, 0.25)
+scale = Vector2(0.2, 0.2)
 texture = ExtResource("32_mini15")
 region_enabled = true
 region_rect = Rect2(194, 99, 25, 28)
 
 [node name="Shard16" type="Sprite2D" parent="Shards" unique_id=1828444920]
-scale = Vector2(0.25, 0.25)
+scale = Vector2(0.2, 0.2)
 texture = ExtResource("33_mini16")
 region_enabled = true
 region_rect = Rect2(2, 149, 41, 33)
 
 [node name="Shard17" type="Sprite2D" parent="Shards" unique_id=1762939633]
-scale = Vector2(0.25, 0.25)
+scale = Vector2(0.2, 0.2)
 texture = ExtResource("34_mini17")
 region_enabled = true
 region_rect = Rect2(53, 157, 39, 20)
 
 [node name="Shard18" type="Sprite2D" parent="Shards" unique_id=1804857220]
-scale = Vector2(0.25, 0.25)
+scale = Vector2(0.2, 0.2)
 texture = ExtResource("35_mini18")
 region_enabled = true
 region_rect = Rect2(102, 155, 24, 28)
 
 [node name="Shard19" type="Sprite2D" parent="Shards" unique_id=1573763061]
-scale = Vector2(0.25, 0.25)
+scale = Vector2(0.2, 0.2)
 texture = ExtResource("36_mini19")
 region_enabled = true
 region_rect = Rect2(145, 154, 24, 27)
 
 [node name="Shard20" type="Sprite2D" parent="Shards" unique_id=223356249]
-scale = Vector2(0.25, 0.25)
+scale = Vector2(0.2, 0.2)
 texture = ExtResource("37_mini20")
 region_enabled = true
 region_rect = Rect2(192, 147, 25, 39)
