@@ -17,11 +17,12 @@ public partial class FilesPanel : PanelContainer
     [Signal] public delegate void DeleteEntryRequestedEventHandler(string entryPath, bool isDirectory);
 
     [Export] public string PanelTitle { get; set; } = "FILES — พื้นที่ทำงาน";
-    [Export] public string EmptyMessage { get; set; } = "ยังไม่มีไฟล์ — เริ่มสร้างไฟล์หรือโฟลเดอร์ได้เลย";
+    [Export] public string EmptyMessage { get; set; } = "ยังไม่มีไฟล์ — เริ่มสร้างด้านบน";
 
     private Label _titleLabel = null!;
     private Label _feedbackLabel = null!;
     private Control _workspaceActions = null!;
+    private Control _entryActions = null!;
     private Control _navigatorSurface = null!;
     private Control _editorSurface = null!;
     private ItemList _filesList = null!;
@@ -91,6 +92,7 @@ public partial class FilesPanel : PanelContainer
         _titleLabel = GetNode<Label>("%TitleLabel");
         _feedbackLabel = GetNode<Label>("%FeedbackLabel");
         _workspaceActions = GetNode<Control>("%WorkspaceActions");
+        _entryActions = GetNode<Control>("%EntryActions");
         _navigatorSurface = GetNode<Control>("%NavigatorSurface");
         _editorSurface = GetNode<Control>("%EditorSurface");
         _filesList = GetNode<ItemList>("%FilesList");
@@ -384,6 +386,7 @@ public partial class FilesPanel : PanelContainer
     private void UpdateActionButtons()
     {
         var hasSelection = _selectedPath != null;
+        _entryActions.Visible = hasSelection && _openFilePath == null;
         _openButton.Disabled = !hasSelection || _selectedIsDirectory;
         _renameButton.Disabled = !hasSelection;
         _deleteButton.Disabled = !hasSelection;

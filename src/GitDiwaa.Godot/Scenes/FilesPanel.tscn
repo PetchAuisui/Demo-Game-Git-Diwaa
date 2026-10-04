@@ -117,7 +117,7 @@ theme_override_constants/separation = 12
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_colors/font_color = Color(1, 0.79, 0.35, 1)
-theme_override_font_sizes/font_size = 25
+theme_override_font_sizes/font_size = 28
 text = "FILES — พื้นที่ทำงาน"
 
 [node name="FeedbackLabel" type="Label" parent="Margin/Layout"]
@@ -125,7 +125,7 @@ unique_name_in_owner = true
 visible = false
 layout_mode = 2
 theme_override_colors/font_color = Color(0.45, 0.95, 0.66, 1)
-theme_override_font_sizes/font_size = 16
+theme_override_font_sizes/font_size = 17
 text = "พร้อมใช้งาน"
 autowrap_mode = 2
 
@@ -140,10 +140,10 @@ theme_override_constants/separation = 8
 
 [node name="NewFileButton" type="Button" parent="Margin/Layout/WorkspaceActions/CreateActions"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 46)
+custom_minimum_size = Vector2(0, 54)
 layout_mode = 2
 size_flags_horizontal = 3
-theme_override_font_sizes/font_size = 19
+theme_override_font_sizes/font_size = 22
 theme_override_styles/normal = SubResource("Style_button_normal")
 theme_override_styles/hover = SubResource("Style_button_hover")
 theme_override_styles/disabled = SubResource("Style_button_disabled")
@@ -151,56 +151,14 @@ text = "+ ไฟล์"
 
 [node name="NewFolderButton" type="Button" parent="Margin/Layout/WorkspaceActions/CreateActions"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 46)
+custom_minimum_size = Vector2(0, 54)
 layout_mode = 2
 size_flags_horizontal = 3
-theme_override_font_sizes/font_size = 19
+theme_override_font_sizes/font_size = 22
 theme_override_styles/normal = SubResource("Style_button_normal")
 theme_override_styles/hover = SubResource("Style_button_hover")
 theme_override_styles/disabled = SubResource("Style_button_disabled")
 text = "+ โฟลเดอร์"
-
-[node name="EntryActions" type="HBoxContainer" parent="Margin/Layout/WorkspaceActions"]
-layout_mode = 2
-theme_override_constants/separation = 8
-
-[node name="OpenButton" type="Button" parent="Margin/Layout/WorkspaceActions/EntryActions"]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 42)
-layout_mode = 2
-size_flags_horizontal = 3
-theme_override_colors/font_color = Color(0.7, 1, 0.72, 1)
-theme_override_font_sizes/font_size = 17
-theme_override_styles/normal = SubResource("Style_button_normal")
-theme_override_styles/hover = SubResource("Style_button_hover")
-theme_override_styles/disabled = SubResource("Style_button_disabled")
-disabled = true
-text = "เปิด"
-
-[node name="RenameButton" type="Button" parent="Margin/Layout/WorkspaceActions/EntryActions"]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 42)
-layout_mode = 2
-size_flags_horizontal = 3
-theme_override_font_sizes/font_size = 17
-theme_override_styles/normal = SubResource("Style_button_normal")
-theme_override_styles/hover = SubResource("Style_button_hover")
-theme_override_styles/disabled = SubResource("Style_button_disabled")
-disabled = true
-text = "เปลี่ยนชื่อ"
-
-[node name="DeleteButton" type="Button" parent="Margin/Layout/WorkspaceActions/EntryActions"]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 42)
-layout_mode = 2
-size_flags_horizontal = 3
-theme_override_colors/font_color = Color(1, 0.52, 0.55, 1)
-theme_override_font_sizes/font_size = 17
-theme_override_styles/normal = SubResource("Style_button_normal")
-theme_override_styles/hover = SubResource("Style_button_hover")
-theme_override_styles/disabled = SubResource("Style_button_disabled")
-disabled = true
-text = "ลบ"
 
 [node name="WorkspaceBody" type="Control" parent="Margin/Layout"]
 custom_minimum_size = Vector2(0, 280)
@@ -224,9 +182,52 @@ theme_override_constants/separation = 6
 [node name="NavigatorTitle" type="Label" parent="Margin/Layout/WorkspaceBody/NavigatorSurface/NavigatorLayout"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.68, 0.73, 0.85, 1)
-theme_override_font_sizes/font_size = 15
-text = "WORKSPACE  •  ดับเบิลคลิกเพื่อเปิด"
-autowrap_mode = 2
+theme_override_font_sizes/font_size = 20
+text = "WORKSPACE"
+
+[node name="EntryActions" type="HBoxContainer" parent="Margin/Layout/WorkspaceBody/NavigatorSurface/NavigatorLayout"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="OpenButton" type="Button" parent="Margin/Layout/WorkspaceBody/NavigatorSurface/NavigatorLayout/EntryActions"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 46)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.7, 1, 0.72, 1)
+theme_override_font_sizes/font_size = 18
+theme_override_styles/normal = SubResource("Style_button_normal")
+theme_override_styles/hover = SubResource("Style_button_hover")
+theme_override_styles/disabled = SubResource("Style_button_disabled")
+disabled = true
+text = "เปิด"
+
+[node name="RenameButton" type="Button" parent="Margin/Layout/WorkspaceBody/NavigatorSurface/NavigatorLayout/EntryActions"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 46)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 18
+theme_override_styles/normal = SubResource("Style_button_normal")
+theme_override_styles/hover = SubResource("Style_button_hover")
+theme_override_styles/disabled = SubResource("Style_button_disabled")
+disabled = true
+text = "เปลี่ยนชื่อ"
+
+[node name="DeleteButton" type="Button" parent="Margin/Layout/WorkspaceBody/NavigatorSurface/NavigatorLayout/EntryActions"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 46)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(1, 0.52, 0.55, 1)
+theme_override_font_sizes/font_size = 18
+theme_override_styles/normal = SubResource("Style_button_normal")
+theme_override_styles/hover = SubResource("Style_button_hover")
+theme_override_styles/disabled = SubResource("Style_button_disabled")
+disabled = true
+text = "ลบ"
 
 [node name="FilesList" type="ItemList" parent="Margin/Layout/WorkspaceBody/NavigatorSurface/NavigatorLayout"]
 unique_name_in_owner = true
@@ -234,7 +235,7 @@ layout_mode = 2
 size_flags_vertical = 3
 theme_override_colors/font_color = Color(0.82, 0.85, 0.93, 1)
 theme_override_colors/font_selected_color = Color(1, 0.9, 0.56, 1)
-theme_override_font_sizes/font_size = 18
+theme_override_font_sizes/font_size = 22
 theme_override_styles/panel = SubResource("Style_input")
 allow_reselect = true
 
