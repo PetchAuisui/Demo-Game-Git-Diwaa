@@ -50,6 +50,8 @@ extends Sprite2D
 var shards: Array[Sprite2D] = []
 var can_continue: bool = false
 var is_continuing: bool = false
+var is_fast_forwarding: bool = false
+var can_fast_forward: bool = true
 var tw_ex_bob: Tween = null
 
 signal cutscene_finished
@@ -79,6 +81,7 @@ const SHARD_LANDING_POSITIONS: Array[Vector2] = [
 ]
 
 func _ready() -> void:
+	Engine.time_scale = 1.0
 	_init_shards()
 	_reset_cutscene_state()
 	
@@ -86,19 +89,45 @@ func _ready() -> void:
 		if not anim_player.is_playing() or anim_player.current_animation != "walk_in":
 			anim_player.play("walk_in")
 		anim_player.animation_finished.connect(func(_anim_name):
-			vel.play("breathe_blink")
+			if not is_continuing:
+				vel.play("breathe_blink")
 		)
 	else:
 		if anim_player.is_playing():
 			anim_player.stop()
 		play_with_tween()
 
+func _exit_tree() -> void:
+	Engine.time_scale = 1.0
+
+func _process(_delta: float) -> void:
+	if can_fast_forward and not can_continue and not is_continuing:
+		var wants_ff: bool = Input.is_key_pressed(KEY_SPACE) or \
+			Input.is_key_pressed(KEY_ENTER) or \
+			Input.is_key_pressed(KEY_SHIFT) or \
+			Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT)
+		
+		if wants_ff != is_fast_forwarding:
+			is_fast_forwarding = wants_ff
+			Engine.time_scale = 2.5 if wants_ff else 1.0
+
 func _input(event: InputEvent) -> void:
 	if not can_continue or is_continuing:
 		return
 	if event.is_action_pressed("ui_accept") or \
-	   (event is InputEventKey and event.pressed and not event.echo and (event.keycode == KEY_SPACE or event.keycode == KEY_ENTER)) or \
-	   (event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT):
+	   (event is InputEventKey and event.pressed and not event.echo) or \
+	   (event is InputEventMouseButton and event.pressed) or \
+	   (event is InputEventScreenTouch and event.pressed):
+		get_viewport().set_input_as_handled()
+		_trigger_continue()
+
+func _unhandled_input(event: InputEvent) -> void:
+	if not can_continue or is_continuing:
+		return
+	if event.is_action_pressed("ui_accept") or \
+	   (event is InputEventKey and event.pressed and not event.echo) or \
+	   (event is InputEventMouseButton and event.pressed) or \
+	   (event is InputEventScreenTouch and event.pressed):
 		get_viewport().set_input_as_handled()
 		_trigger_continue()
 
@@ -349,6 +378,9 @@ func _on_pickup_shard() -> void:
 func _on_reveal_magic_text() -> void:
 	if not rune_container:
 		return
+	can_fast_forward = false
+	is_fast_forwarding = false
+	Engine.time_scale = 1.0
 	can_continue = true
 	is_continuing = false
 	
@@ -379,43 +411,73 @@ func _trigger_continue() -> void:
 	is_continuing = true
 	can_continue = false
 	
-	# ปิดข้อความแนะนำ
+	# หยุด AnimationPlayer โดยคงสถานะปัจจุบันไว้ (pause + active = false)
+	# ป้องกันไม่ให้ Godot รีเซ็ตค่าตำแหน่งของเวลกลับไปที่เฟรม 0 (-250)
+	if anim_player:
+		anim_player.pause()
+		anim_player.active = false
+	
+	# ปิดข้อความแนะนำทันที
 	if continue_prompt:
 		var tw_cp = create_tween()
 		tw_cp.tween_property(continue_prompt, "modulate:a", 0.0, 0.2)
 	
+	# 1. เวลหันขวาและเริ่มเดินไปทางขวาทันที (ไม่ดีเลย์) ด้วยท่า walk_right
+	vel.visible = true
+	vel.flip_h = false
+	vel.play("walk_right")
+	if vel.position.x < 0.0:
+		vel.position.x = 50.0
+	
+	var tw_walk_out = create_tween()
+	tw_walk_out.tween_property(vel, "position:x", 260.0, 2.5).set_trans(Tween.TRANS_LINEAR)
+	
+	# 2. สลายตัวหนังสือและแผ่นกระดาษในมือควบคู่กันไป
 	var tw_dissolve = create_tween().set_parallel(true)
 	
-	# 1. กล่องข้อความเวทมนตร์สลายลอยฟุ้งหายไป
+	# กล่องข้อความเวทมนตร์สลายลอยฟุ้งหายไป
 	if rune_container:
-		tw_dissolve.tween_property(rune_container, "modulate:a", 0.0, 0.8).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
-		tw_dissolve.tween_property(rune_container, "scale", Vector2(1.12, 1.12), 0.8).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+		tw_dissolve.tween_property(rune_container, "modulate:a", 0.0, 0.6).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+		tw_dissolve.tween_property(rune_container, "scale", Vector2(1.12, 1.12), 0.6).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 	
-	# 2. พื้นหลังกระดาษและเงาสลายหายไป
+	# พื้นหลังกระดาษและเงาสลายหายไป
 	if parchment_shadow:
-		tw_dissolve.tween_property(parchment_shadow, "modulate:a", 0.0, 0.8)
+		tw_dissolve.tween_property(parchment_shadow, "modulate:a", 0.0, 0.6)
 	if parchment_frame:
-		tw_dissolve.tween_property(parchment_frame, "modulate:a", 0.0, 0.8)
+		tw_dissolve.tween_property(parchment_frame, "modulate:a", 0.0, 0.6)
 	if paper_shadow:
-		tw_dissolve.tween_property(paper_shadow, "modulate:a", 0.0, 0.5)
+		tw_dissolve.tween_property(paper_shadow, "modulate:a", 0.0, 0.4)
 	
-	# 3. แผ่นกระดาษบนมือเวลสลายหายไปพร้อมตัวหนังสือ (เรืองแสงวาบ ลอยขึ้น และสลายเป็นละออง)
+	# แผ่นกระดาษบนมือเวลสลายหายไปพร้อมตัวหนังสือ
 	if paper_on_floor:
-		tw_dissolve.tween_property(paper_on_floor, "modulate", Color(3.0, 2.5, 1.5, 0.0), 0.8)
-		tw_dissolve.tween_property(paper_on_floor, "scale", Vector2(0.16, 0.16), 0.8)
-		tw_dissolve.tween_property(paper_on_floor, "position:y", paper_on_floor.position.y - 10.0, 0.8)
+		tw_dissolve.tween_property(paper_on_floor, "modulate", Color(3.0, 2.5, 1.5, 0.0), 0.6)
+		tw_dissolve.tween_property(paper_on_floor, "scale", Vector2(0.16, 0.16), 0.6)
+		tw_dissolve.tween_property(paper_on_floor, "position:y", paper_on_floor.position.y - 10.0, 0.6)
 	
-	# 4. ฉากหลังสีดำจางลงสู่ปกติ
+	# ฉากหลังสีดำจากการอ่าน จางลงคืนสู่บรรยากาศห้องสมุดปกติ
 	if backdrop:
-		tw_dissolve.tween_property(backdrop, "color", Color(0, 0, 0, 0), 1.0)
+		tw_dissolve.tween_property(backdrop, "color", Color(0, 0, 0, 0), 0.6)
 	
 	tw_dissolve.chain().tween_callback(func():
 		if paper_on_floor:
 			paper_on_floor.visible = false
-		if magic_ui:
-			magic_ui.visible = false
+		if rune_container:
+			rune_container.visible = false
+		if parchment_frame:
+			parchment_frame.visible = false
+		if parchment_shadow:
+			parchment_shadow.visible = false
+	)
+	
+	# 3. ขณะที่เวลเดินไปเกือบสุดห้อง ค่อย ๆ Fade จอดำสนิท เพื่อตัดฉากสู่ภายนอก
+	var tw_fade_out = create_tween()
+	tw_fade_out.tween_interval(1.3)
+	tw_fade_out.tween_property(backdrop, "color", Color(0, 0, 0, 1), 0.8)
+	tw_fade_out.tween_callback(func():
+		Engine.time_scale = 1.0
 		emit_signal("cutscene_finished")
-		print("[IntroCutscene] Cutscene finished.")
+		print("[IntroCutscene] Transitioning to OutsideCutscene...")
+		get_tree().change_scene_to_file("res://scenes/cutscene/outside_cutscene.tscn")
 	)
 
 ## โหมดสำรอง: เล่นด้วย GDScript Tween ล้วน ๆ
