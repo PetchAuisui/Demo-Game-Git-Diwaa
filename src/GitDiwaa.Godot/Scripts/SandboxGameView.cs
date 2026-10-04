@@ -38,8 +38,12 @@ public partial class SandboxGameView : Control
     private void WireEvents()
     {
         _terminalPanel.CommandSubmitted += OnCommandSubmitted;
-        _filesPanel.FileSelected += OnFileSelected;
+        _filesPanel.OpenFileRequested += OnOpenFileRequested;
+        _filesPanel.SaveFileRequested += OnSaveFileRequested;
         _filesPanel.CreateFileRequested += OnCreateFileRequested;
+        _filesPanel.CreateFolderRequested += OnCreateFolderRequested;
+        _filesPanel.RenameEntryRequested += OnRenameEntryRequested;
+        _filesPanel.DeleteEntryRequested += OnDeleteEntryRequested;
         _gitGraphPanel.CommitSelected += OnCommitSelected;
     }
 
@@ -248,34 +252,140 @@ public partial class SandboxGameView : Control
         }
     }
 
-    private async void OnFileSelected(string filePath)
+    private async void OnOpenFileRequested(string filePath)
     {
+        _filesPanel.SetBusy(true);
         try
         {
             var content = await _sandboxService.ReadFileAsync(filePath);
-            _terminalPanel.AppendInfo($"ตรวจสอบไฟล์: {filePath}");
-            if (!string.IsNullOrEmpty(content))
+            if (content == null)
             {
-                _terminalPanel.AppendOutput(content);
+                _filesPanel.ShowFeedback($"ไม่พบไฟล์ '{filePath}'", true);
+                return;
             }
+
+            _filesPanel.ShowFile(filePath, content);
+            _filesPanel.ShowFeedback($"เปิด {filePath} แล้ว");
         }
         catch (Exception ex)
         {
-            _terminalPanel.AppendError($"ไม่สามารถอ่านไฟล์ {filePath}: {ex.Message}");
+            _filesPanel.ShowFeedback($"เปิดไฟล์ไม่สำเร็จ: {ex.Message}", true);
+        }
+        finally
+        {
+            _filesPanel.SetBusy(false);
+        }
+    }
+
+    private async void OnSaveFileRequested(string filePath, string content)
+    {
+        _filesPanel.SetBusy(true);
+        try
+        {
+            await _sandboxService.WriteFileAsync(filePath, content);
+            _filesPanel.MarkSaved(filePath);
+            _filesPanel.ShowFeedback($"บันทึก {filePath} แล้ว — Git status อัปเดตแล้ว");
+            _terminalPanel.AppendInfo($"✓ บันทึกไฟล์ '{filePath}' แล้ว");
+            await RefreshStateAsync();
+        }
+        catch (Exception ex)
+        {
+            _filesPanel.ShowFeedback($"บันทึกไม่สำเร็จ: {ex.Message}", true);
+            _terminalPanel.AppendError($"บันทึกไฟล์ไม่สำเร็จ: {ex.Message}");
+        }
+        finally
+        {
+            _filesPanel.SetBusy(false);
         }
     }
 
     private async void OnCreateFileRequested(string filePath, string content)
     {
+        _filesPanel.SetBusy(true);
         try
         {
+            if (await _sandboxService.ReadFileAsync(filePath) != null)
+                throw new IOException($"มีไฟล์ '{filePath}' อยู่แล้ว");
             await _sandboxService.WriteFileAsync(filePath, content);
-            _terminalPanel.AppendInfo($"สร้างไฟล์ใหม่แล้ว: {filePath}");
+            _filesPanel.ShowFile(filePath, content);
+            _filesPanel.ShowFeedback($"สร้าง {filePath} แล้ว");
+            _terminalPanel.AppendInfo($"✓ สร้างไฟล์ใหม่แล้ว: {filePath}");
             await RefreshStateAsync();
         }
         catch (Exception ex)
         {
-            _terminalPanel.AppendError($"เกิดข้อผิดพลาดในการสร้างไฟล์: {ex.Message}");
+            _filesPanel.ShowFeedback($"สร้างไฟล์ไม่สำเร็จ: {ex.Message}", true);
+            _terminalPanel.AppendError($"สร้างไฟล์ไม่สำเร็จ: {ex.Message}");
+        }
+        finally
+        {
+            _filesPanel.SetBusy(false);
+        }
+    }
+
+    private async void OnCreateFolderRequested(string folderPath)
+    {
+        _filesPanel.SetBusy(true);
+        try
+        {
+            await _sandboxService.CreateDirectoryAsync(folderPath);
+            _filesPanel.ShowFeedback($"สร้างโฟลเดอร์ {folderPath} แล้ว");
+            _terminalPanel.AppendInfo($"✓ สร้างโฟลเดอร์ใหม่แล้ว: {folderPath}");
+            await RefreshStateAsync();
+        }
+        catch (Exception ex)
+        {
+            _filesPanel.ShowFeedback($"สร้างโฟลเดอร์ไม่สำเร็จ: {ex.Message}", true);
+            _terminalPanel.AppendError($"สร้างโฟลเดอร์ไม่สำเร็จ: {ex.Message}");
+        }
+        finally
+        {
+            _filesPanel.SetBusy(false);
+        }
+    }
+
+    private async void OnRenameEntryRequested(string sourcePath, string destinationPath)
+    {
+        _filesPanel.SetBusy(true);
+        try
+        {
+            await _sandboxService.RenameEntryAsync(sourcePath, destinationPath);
+            _filesPanel.NotifyEntryRenamed(sourcePath, destinationPath);
+            _filesPanel.ShowFeedback($"เปลี่ยนชื่อเป็น {destinationPath} แล้ว");
+            _terminalPanel.AppendInfo($"✓ เปลี่ยนชื่อ '{sourcePath}' → '{destinationPath}'");
+            await RefreshStateAsync();
+        }
+        catch (Exception ex)
+        {
+            _filesPanel.ShowFeedback($"เปลี่ยนชื่อไม่สำเร็จ: {ex.Message}", true);
+            _terminalPanel.AppendError($"เปลี่ยนชื่อไม่สำเร็จ: {ex.Message}");
+        }
+        finally
+        {
+            _filesPanel.SetBusy(false);
+        }
+    }
+
+    private async void OnDeleteEntryRequested(string entryPath, bool isDirectory)
+    {
+        _filesPanel.SetBusy(true);
+        try
+        {
+            if (!_sandboxService.DeleteEntry(entryPath, isDirectory))
+                throw new FileNotFoundException($"ไม่พบ '{entryPath}'");
+            _filesPanel.NotifyEntryDeleted(entryPath);
+            _filesPanel.ShowFeedback($"ลบ {entryPath} แล้ว — ตรวจสอบได้ด้วย git status");
+            _terminalPanel.AppendInfo($"✓ ลบ '{entryPath}' แล้ว");
+            await RefreshStateAsync();
+        }
+        catch (Exception ex)
+        {
+            _filesPanel.ShowFeedback($"ลบไม่สำเร็จ: {ex.Message}", true);
+            _terminalPanel.AppendError($"ลบไม่สำเร็จ: {ex.Message}");
+        }
+        finally
+        {
+            _filesPanel.SetBusy(false);
         }
     }
 
@@ -323,8 +433,8 @@ public partial class SandboxGameView : Control
             var snapshot = await _sandboxService.InspectAsync();
             if (snapshot.IsInitialized)
             {
-                var files = await _sandboxService.GetFilesAsync();
-                _filesPanel.SetFiles(files);
+                var entries = await _sandboxService.GetWorkspaceEntriesAsync();
+                _filesPanel.SetEntries(entries);
 
                 var graphResult = await _sandboxService.ExecuteAsync("git log --graph --all --oneline -n 20");
                 if (graphResult.Success && !string.IsNullOrWhiteSpace(graphResult.StandardOutput))
@@ -339,7 +449,7 @@ public partial class SandboxGameView : Control
             }
             else
             {
-                _filesPanel.SetFiles(Array.Empty<FileDisplayItem>());
+                _filesPanel.SetEntries(Array.Empty<WorkspaceEntryDisplayItem>());
                 _gitGraphPanel.SetEmptyState();
             }
         }

@@ -4,51 +4,55 @@ using GitDiwaa.Godot.ViewModels;
 namespace GitDiwaa.Godot.Components;
 
 /// <summary>
-/// Reusable OOP Files Component for Godot.
-/// Uses the authentic ItemList presentation matching Checkpoint-01 with Add, Edit, Delete file actions.
+/// Workspace navigator and embedded text editor. This component owns presentation state only;
+/// repository and filesystem mutations are delegated through signals to the root orchestrator.
 /// </summary>
 public partial class FilesPanel : PanelContainer
 {
-    [Signal]
-    public delegate void FileSelectedEventHandler(string filePath);
+    [Signal] public delegate void OpenFileRequestedEventHandler(string filePath);
+    [Signal] public delegate void SaveFileRequestedEventHandler(string filePath, string content);
+    [Signal] public delegate void CreateFileRequestedEventHandler(string filePath, string content);
+    [Signal] public delegate void CreateFolderRequestedEventHandler(string folderPath);
+    [Signal] public delegate void RenameEntryRequestedEventHandler(string sourcePath, string destinationPath);
+    [Signal] public delegate void DeleteEntryRequestedEventHandler(string entryPath, bool isDirectory);
 
-    [Signal]
-    public delegate void CreateFileRequestedEventHandler(string filePath, string content);
-
-    [Signal]
-    public delegate void EditFileRequestedEventHandler(string filePath, string content);
-
-    [Signal]
-    public delegate void DeleteFileRequestedEventHandler(string filePath);
-
-    [Signal]
-    public delegate void RequestFileContentForEditEventHandler(string filePath);
-
-    [Export]
-    public string PanelTitle { get; set; } = "FILES — พื้นที่ทำงาน";
-
-    [Export]
-    public string EmptyMessage { get; set; } = "ยังไม่มีไฟล์";
+    [Export] public string PanelTitle { get; set; } = "FILES — พื้นที่ทำงาน";
+    [Export] public string EmptyMessage { get; set; } = "ยังไม่มีไฟล์ — เริ่มสร้างไฟล์หรือโฟลเดอร์ได้เลย";
 
     private Label _titleLabel = null!;
+    private Label _feedbackLabel = null!;
     private ItemList _filesList = null!;
-    private Button _addButton = null!;
-    private Button _editButton = null!;
+    private Button _newFileButton = null!;
+    private Button _newFolderButton = null!;
+    private Button _openButton = null!;
+    private Button _renameButton = null!;
     private Button _deleteButton = null!;
-
+    private Label _editorPathLabel = null!;
+    private Label _dirtyLabel = null!;
+    private CodeEdit _editor = null!;
+    private Control _emptyEditorState = null!;
+    private Control _editorLayout = null!;
+    private Button _saveButton = null!;
+    private Button _closeEditorButton = null!;
     private ConfirmationDialog _createFileDialog = null!;
-    private LineEdit _createNameInput = null!;
-    private TextEdit _createContentInput = null!;
-
-    private ConfirmationDialog _editFileDialog = null!;
-    private Label _editFileLabel = null!;
-    private TextEdit _editContentInput = null!;
-
+    private LineEdit _createFileNameInput = null!;
+    private ConfirmationDialog _createFolderDialog = null!;
+    private LineEdit _createFolderNameInput = null!;
+    private ConfirmationDialog _renameDialog = null!;
+    private LineEdit _renameInput = null!;
     private ConfirmationDialog _deleteConfirmDialog = null!;
+    private ConfirmationDialog _discardChangesDialog = null!;
 
-    private readonly List<string> _filePaths = new();
-    private string? _selectedFilePath;
-    private string? _editingFilePath;
+    private readonly List<WorkspaceEntryDisplayItem> _entries = new();
+    private string? _selectedPath;
+    private bool _selectedIsDirectory;
+    private string? _openFilePath;
+    private string _savedContent = string.Empty;
+    private string? _pendingOpenPath;
+    private bool _pendingClose;
+    private bool _suppressTextChanged;
+
+    public bool HasUnsavedChanges => _openFilePath != null && _editor.Text != _savedContent;
 
     public override void _Ready()
     {
@@ -57,168 +61,323 @@ public partial class FilesPanel : PanelContainer
 
         _filesList.ItemSelected += OnItemSelected;
         _filesList.ItemActivated += OnItemActivated;
-
-        _addButton.Pressed += OnAddButtonPressed;
-        _editButton.Pressed += OnEditButtonPressed;
+        _newFileButton.Pressed += () => ShowCreateDialog(_createFileDialog, _createFileNameInput);
+        _newFolderButton.Pressed += () => ShowCreateDialog(_createFolderDialog, _createFolderNameInput);
+        _openButton.Pressed += () =>
+        {
+            if (_selectedPath != null && !_selectedIsDirectory) RequestOpenFile(_selectedPath);
+        };
+        _renameButton.Pressed += OnRenameButtonPressed;
         _deleteButton.Pressed += OnDeleteButtonPressed;
+        _saveButton.Pressed += RequestSave;
+        _closeEditorButton.Pressed += RequestCloseEditor;
+        _editor.TextChanged += UpdateDirtyState;
 
-        _createFileDialog.Confirmed += OnCreateFileDialogConfirmed;
-        _createFileDialog.AboutToPopup += () => _createNameInput.CallDeferred(Control.MethodName.GrabFocus);
+        _createFileDialog.Confirmed += OnCreateFileConfirmed;
+        _createFolderDialog.Confirmed += OnCreateFolderConfirmed;
+        _renameDialog.Confirmed += OnRenameConfirmed;
+        _deleteConfirmDialog.Confirmed += OnDeleteConfirmed;
+        _discardChangesDialog.Confirmed += OnDiscardChangesConfirmed;
 
-        _editFileDialog.Confirmed += OnEditFileDialogConfirmed;
-        _editFileDialog.AboutToPopup += () => _editContentInput.CallDeferred(Control.MethodName.GrabFocus);
-
-        _deleteConfirmDialog.Confirmed += OnDeleteConfirmDialogConfirmed;
-
-        UpdateEmptyState();
+        ShowEmptyEditor();
+        UpdateActionButtons();
+        SetEntries(Array.Empty<WorkspaceEntryDisplayItem>());
     }
 
     private void BindNodes()
     {
         _titleLabel = GetNode<Label>("%TitleLabel");
+        _feedbackLabel = GetNode<Label>("%FeedbackLabel");
         _filesList = GetNode<ItemList>("%FilesList");
-        _addButton = GetNode<Button>("%AddButton");
-        _editButton = GetNode<Button>("%EditButton");
+        _newFileButton = GetNode<Button>("%NewFileButton");
+        _newFolderButton = GetNode<Button>("%NewFolderButton");
+        _openButton = GetNode<Button>("%OpenButton");
+        _renameButton = GetNode<Button>("%RenameButton");
         _deleteButton = GetNode<Button>("%DeleteButton");
-
+        _editorPathLabel = GetNode<Label>("%EditorPathLabel");
+        _dirtyLabel = GetNode<Label>("%DirtyLabel");
+        _editor = GetNode<CodeEdit>("%Editor");
+        _emptyEditorState = GetNode<Control>("%EmptyEditorState");
+        _editorLayout = GetNode<Control>("%EditorLayout");
+        _saveButton = GetNode<Button>("%SaveButton");
+        _closeEditorButton = GetNode<Button>("%CloseEditorButton");
         _createFileDialog = GetNode<ConfirmationDialog>("%CreateFileDialog");
-        _createNameInput = GetNode<LineEdit>("%CreateNameInput");
-        _createContentInput = GetNode<TextEdit>("%CreateContentInput");
-
-        _editFileDialog = GetNode<ConfirmationDialog>("%EditFileDialog");
-        _editFileLabel = GetNode<Label>("%EditFileLabel");
-        _editContentInput = GetNode<TextEdit>("%EditContentInput");
-
+        _createFileNameInput = GetNode<LineEdit>("%CreateFileNameInput");
+        _createFolderDialog = GetNode<ConfirmationDialog>("%CreateFolderDialog");
+        _createFolderNameInput = GetNode<LineEdit>("%CreateFolderNameInput");
+        _renameDialog = GetNode<ConfirmationDialog>("%RenameDialog");
+        _renameInput = GetNode<LineEdit>("%RenameInput");
         _deleteConfirmDialog = GetNode<ConfirmationDialog>("%DeleteConfirmDialog");
+        _discardChangesDialog = GetNode<ConfirmationDialog>("%DiscardChangesDialog");
     }
 
-    public void SetFiles(IEnumerable<FileDisplayItem> files)
+    public void SetEntries(IEnumerable<WorkspaceEntryDisplayItem> entries)
     {
-        _filePaths.Clear();
+        var previousSelection = _selectedPath;
+        _entries.Clear();
+        _entries.AddRange(entries.OrderBy(entry => entry.Path, StringComparer.OrdinalIgnoreCase));
         _filesList.Clear();
-        _selectedFilePath = null;
-        UpdateActionButtons();
 
-        var list = files.ToList();
-        if (list.Count == 0)
+        if (_entries.Count == 0)
         {
-            UpdateEmptyState();
+            _filesList.AddItem(EmptyMessage);
+            _filesList.SetItemDisabled(0, true);
+            _selectedPath = null;
+            _selectedIsDirectory = false;
+            UpdateActionButtons();
             return;
         }
 
-        foreach (var file in list)
+        for (var index = 0; index < _entries.Count; index++)
         {
-            _filePaths.Add(file.Path);
-            var itemText = $"{file.StatusBadge}  {file.Path}";
-            var idx = _filesList.AddItem(itemText);
-            _filesList.SetItemCustomFgColor(idx, file.StatusColor);
-        }
-    }
+            var entry = _entries[index];
+            var depth = entry.Path.Count(character => character == '/');
+            var indent = new string(' ', depth * 3);
+            var marker = entry.IsDirectory ? "▸" : "•";
+            var status = string.IsNullOrEmpty(entry.StatusBadge) ? string.Empty : $" {entry.StatusBadge}";
+            _filesList.AddItem($"{indent}{marker} {entry.Name}{status}");
+            _filesList.SetItemTooltip(index, entry.Path);
+            _filesList.SetItemCustomFgColor(index, entry.StatusColor);
 
-    public void SetFiles(IEnumerable<string> fileNames)
-    {
-        _filePaths.Clear();
-        _filesList.Clear();
-        _selectedFilePath = null;
-        UpdateActionButtons();
-
-        var list = fileNames.ToList();
-        if (list.Count == 0)
-        {
-            UpdateEmptyState();
-            return;
+            if (entry.Path == previousSelection)
+                _filesList.Select(index);
         }
 
-        foreach (var file in list)
+        if (previousSelection != null && _entries.All(entry => entry.Path != previousSelection))
         {
-            _filePaths.Add(file);
-            _filesList.AddItem(file);
+            _selectedPath = null;
+            _selectedIsDirectory = false;
         }
-    }
-
-    private void UpdateEmptyState()
-    {
-        _filesList.Clear();
-        _filesList.AddItem(EmptyMessage);
-        _selectedFilePath = null;
         UpdateActionButtons();
     }
 
-    private void UpdateActionButtons()
+    public void ShowFile(string filePath, string content)
     {
-        var hasSelection = !string.IsNullOrEmpty(_selectedFilePath);
-        _editButton.Disabled = !hasSelection;
-        _deleteButton.Disabled = !hasSelection;
+        _openFilePath = filePath;
+        _savedContent = content;
+        _suppressTextChanged = true;
+        _editor.Text = content;
+        _suppressTextChanged = false;
+        _editorPathLabel.Text = filePath;
+        _emptyEditorState.Visible = false;
+        _editorLayout.Visible = true;
+        UpdateDirtyState();
+        _editor.GrabFocus();
+    }
+
+    public void MarkSaved(string filePath)
+    {
+        if (_openFilePath != filePath) return;
+        _savedContent = _editor.Text;
+        UpdateDirtyState();
+    }
+
+    public void NotifyEntryRenamed(string sourcePath, string destinationPath)
+    {
+        if (_openFilePath == sourcePath || _openFilePath?.StartsWith(sourcePath + "/", StringComparison.Ordinal) == true)
+        {
+            _openFilePath = destinationPath + _openFilePath[sourcePath.Length..];
+            _editorPathLabel.Text = _openFilePath;
+        }
+        if (_selectedPath == sourcePath || _selectedPath?.StartsWith(sourcePath + "/", StringComparison.Ordinal) == true)
+            _selectedPath = destinationPath + _selectedPath[sourcePath.Length..];
+    }
+
+    public void NotifyEntryDeleted(string path)
+    {
+        if (_openFilePath == path || _openFilePath?.StartsWith(path + "/", StringComparison.Ordinal) == true)
+            ShowEmptyEditor();
+    }
+
+    public void ShowFeedback(string message, bool isError = false)
+    {
+        _feedbackLabel.Text = message;
+        _feedbackLabel.Modulate = isError ? new Color(1.0f, 0.48f, 0.52f) : new Color(0.45f, 0.95f, 0.66f);
+        _feedbackLabel.Visible = true;
+    }
+
+    public void SetBusy(bool busy)
+    {
+        _newFileButton.Disabled = busy;
+        _newFolderButton.Disabled = busy;
+        _openButton.Disabled = busy || _selectedPath == null || _selectedIsDirectory;
+        _renameButton.Disabled = busy || _selectedPath == null;
+        _deleteButton.Disabled = busy || _selectedPath == null;
+        _saveButton.Disabled = busy || !HasUnsavedChanges;
+        if (!busy) UpdateActionButtons();
     }
 
     private void OnItemSelected(long index)
     {
-        if (index >= 0 && index < _filePaths.Count)
-        {
-            _selectedFilePath = _filePaths[(int)index];
-            UpdateActionButtons();
-            EmitSignal(SignalName.FileSelected, _selectedFilePath);
-        }
-        else
-        {
-            _selectedFilePath = null;
-            UpdateActionButtons();
-        }
+        if (index < 0 || index >= _entries.Count) return;
+        var entry = _entries[(int)index];
+        _selectedPath = entry.Path;
+        _selectedIsDirectory = entry.IsDirectory;
+        UpdateActionButtons();
+        ShowFeedback(entry.IsDirectory ? $"เลือกโฟลเดอร์ {entry.Path}" : $"เลือกไฟล์ {entry.Path}");
     }
 
     private void OnItemActivated(long index)
     {
-        OnItemSelected(index);
-        OnEditButtonPressed();
+        if (index < 0 || index >= _entries.Count || _entries[(int)index].IsDirectory) return;
+        RequestOpenFile(_entries[(int)index].Path);
     }
 
-    private void OnAddButtonPressed()
+    private void RequestOpenFile(string filePath)
     {
-        _createNameInput.Clear();
-        _createContentInput.Clear();
-        _createFileDialog.PopupCentered();
+        if (_openFilePath == filePath) return;
+        if (HasUnsavedChanges)
+        {
+            _pendingOpenPath = filePath;
+            _pendingClose = false;
+            _discardChangesDialog.DialogText = $"'{_openFilePath}' ยังไม่ได้บันทึก\nต้องการทิ้งการแก้ไขแล้วเปิด '{filePath}' หรือไม่?";
+            _discardChangesDialog.PopupCentered();
+            return;
+        }
+        EmitSignal(SignalName.OpenFileRequested, filePath);
     }
 
-    private void OnCreateFileDialogConfirmed()
+    private void RequestSave()
     {
-        var fileName = _createNameInput.Text.Trim();
-        if (string.IsNullOrEmpty(fileName)) return;
-
-        var content = _createContentInput.Text;
-        EmitSignal(SignalName.CreateFileRequested, fileName, content);
+        if (_openFilePath == null || !HasUnsavedChanges) return;
+        EmitSignal(SignalName.SaveFileRequested, _openFilePath, _editor.Text);
     }
 
-    private void OnEditButtonPressed()
+    private void RequestCloseEditor()
     {
-        if (string.IsNullOrEmpty(_selectedFilePath)) return;
-        EmitSignal(SignalName.RequestFileContentForEdit, _selectedFilePath);
+        if (HasUnsavedChanges)
+        {
+            _pendingClose = true;
+            _pendingOpenPath = null;
+            _discardChangesDialog.DialogText = $"'{_openFilePath}' ยังไม่ได้บันทึก\nต้องการทิ้งการแก้ไขและปิด editor หรือไม่?";
+            _discardChangesDialog.PopupCentered();
+            return;
+        }
+        ShowEmptyEditor();
     }
 
-    public void ShowEditDialog(string filePath, string content)
+    private void OnDiscardChangesConfirmed()
     {
-        _editingFilePath = filePath;
-        _editFileLabel.Text = $"แก้ไขไฟล์: {filePath}";
-        _editContentInput.Text = content;
-        _editFileDialog.PopupCentered();
+        if (_pendingClose)
+        {
+            ShowEmptyEditor();
+        }
+        else if (_pendingOpenPath != null)
+        {
+            var nextPath = _pendingOpenPath;
+            _pendingOpenPath = null;
+            EmitSignal(SignalName.OpenFileRequested, nextPath);
+        }
+        _pendingClose = false;
     }
 
-    private void OnEditFileDialogConfirmed()
+    private void ShowEmptyEditor()
     {
-        if (string.IsNullOrEmpty(_editingFilePath)) return;
-        var content = _editContentInput.Text;
-        EmitSignal(SignalName.EditFileRequested, _editingFilePath, content);
+        _openFilePath = null;
+        _savedContent = string.Empty;
+        _suppressTextChanged = true;
+        _editor.Clear();
+        _suppressTextChanged = false;
+        _editorLayout.Visible = false;
+        _emptyEditorState.Visible = true;
+        UpdateDirtyState();
+    }
+
+    private void UpdateDirtyState()
+    {
+        if (_suppressTextChanged) return;
+        var dirty = HasUnsavedChanges;
+        _dirtyLabel.Visible = dirty;
+        _dirtyLabel.Text = dirty ? "● ยังไม่บันทึก" : string.Empty;
+        _saveButton.Disabled = !dirty;
+        if (_openFilePath != null)
+            _editorPathLabel.Text = dirty ? $"{_openFilePath} *" : _openFilePath;
+    }
+
+    private void ShowCreateDialog(ConfirmationDialog dialog, LineEdit input)
+    {
+        input.Clear();
+        dialog.PopupCentered();
+        input.CallDeferred(Control.MethodName.GrabFocus);
+    }
+
+    private void OnCreateFileConfirmed()
+    {
+        var name = ValidateSimpleName(_createFileNameInput.Text);
+        if (name == null) return;
+        EmitSignal(SignalName.CreateFileRequested, BuildPathInSelectedFolder(name), string.Empty);
+    }
+
+    private void OnCreateFolderConfirmed()
+    {
+        var name = ValidateSimpleName(_createFolderNameInput.Text);
+        if (name == null) return;
+        EmitSignal(SignalName.CreateFolderRequested, BuildPathInSelectedFolder(name));
+    }
+
+    private void OnRenameButtonPressed()
+    {
+        if (_selectedPath == null) return;
+        _renameInput.Text = System.IO.Path.GetFileName(_selectedPath);
+        _renameDialog.DialogText = $"เปลี่ยนชื่อ '{_selectedPath}'";
+        _renameDialog.PopupCentered();
+        _renameInput.CallDeferred(Control.MethodName.GrabFocus);
+    }
+
+    private void OnRenameConfirmed()
+    {
+        if (_selectedPath == null) return;
+        var name = ValidateSimpleName(_renameInput.Text);
+        if (name == null) return;
+        var parent = System.IO.Path.GetDirectoryName(_selectedPath)?.Replace('\\', '/');
+        var destination = string.IsNullOrEmpty(parent) ? name : $"{parent}/{name}";
+        if (destination == _selectedPath)
+        {
+            ShowFeedback("ชื่อใหม่เหมือนชื่อเดิม", true);
+            return;
+        }
+        EmitSignal(SignalName.RenameEntryRequested, _selectedPath, destination);
     }
 
     private void OnDeleteButtonPressed()
     {
-        if (string.IsNullOrEmpty(_selectedFilePath)) return;
-        _deleteConfirmDialog.DialogText = $"คุณต้องการลบไฟล์ '{_selectedFilePath}' หรือไม่?";
+        if (_selectedPath == null) return;
+        var kind = _selectedIsDirectory ? "โฟลเดอร์และไฟล์ทั้งหมดภายใน" : "ไฟล์";
+        _deleteConfirmDialog.DialogText = $"ต้องการลบ{kind} '{_selectedPath}' หรือไม่?\nการเปลี่ยนแปลงนี้จะปรากฏใน Git status";
         _deleteConfirmDialog.PopupCentered();
     }
 
-    private void OnDeleteConfirmDialogConfirmed()
+    private void OnDeleteConfirmed()
     {
-        if (string.IsNullOrEmpty(_selectedFilePath)) return;
-        EmitSignal(SignalName.DeleteFileRequested, _selectedFilePath);
+        if (_selectedPath == null) return;
+        EmitSignal(SignalName.DeleteEntryRequested, _selectedPath, _selectedIsDirectory);
+    }
+
+    private string BuildPathInSelectedFolder(string name)
+    {
+        if (_selectedPath == null) return name;
+        var folder = _selectedIsDirectory
+            ? _selectedPath
+            : System.IO.Path.GetDirectoryName(_selectedPath)?.Replace('\\', '/');
+        return string.IsNullOrEmpty(folder) ? name : $"{folder}/{name}";
+    }
+
+    private string? ValidateSimpleName(string value)
+    {
+        var name = value.Trim();
+        if (string.IsNullOrEmpty(name) || name is "." or ".." || name.Contains('/') || name.Contains('\\'))
+        {
+            ShowFeedback("กรุณาใช้ชื่อเดียวที่ไม่มี / หรือ \\", true);
+            return null;
+        }
+        return name;
+    }
+
+    private void UpdateActionButtons()
+    {
+        var hasSelection = _selectedPath != null;
+        _openButton.Disabled = !hasSelection || _selectedIsDirectory;
+        _renameButton.Disabled = !hasSelection;
+        _deleteButton.Disabled = !hasSelection;
     }
 }
