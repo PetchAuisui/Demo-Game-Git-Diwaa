@@ -25,10 +25,10 @@ corner_radius_top_left = 8
 corner_radius_top_right = 8
 corner_radius_bottom_right = 8
 corner_radius_bottom_left = 8
-content_margin_left = 10.0
-content_margin_top = 10.0
-content_margin_right = 10.0
-content_margin_bottom = 10.0
+content_margin_left = 14.0
+content_margin_top = 14.0
+content_margin_right = 14.0
+content_margin_bottom = 14.0
 
 [sub_resource type="StyleBoxFlat" id="Style_button_normal"]
 bg_color = Color(0.12, 0.14, 0.24, 0.98)
@@ -42,7 +42,9 @@ corner_radius_top_right = 7
 corner_radius_bottom_right = 7
 corner_radius_bottom_left = 7
 content_margin_left = 8.0
+content_margin_top = 7.0
 content_margin_right = 8.0
+content_margin_bottom = 7.0
 
 [sub_resource type="StyleBoxFlat" id="Style_button_hover"]
 bg_color = Color(0.19, 0.23, 0.38, 1)
@@ -56,7 +58,9 @@ corner_radius_top_right = 7
 corner_radius_bottom_right = 7
 corner_radius_bottom_left = 7
 content_margin_left = 8.0
+content_margin_top = 7.0
 content_margin_right = 8.0
+content_margin_bottom = 7.0
 
 [sub_resource type="StyleBoxFlat" id="Style_button_disabled"]
 bg_color = Color(0.06, 0.07, 0.12, 0.7)
@@ -70,7 +74,9 @@ corner_radius_top_right = 7
 corner_radius_bottom_right = 7
 corner_radius_bottom_left = 7
 content_margin_left = 8.0
+content_margin_top = 7.0
 content_margin_right = 8.0
+content_margin_bottom = 7.0
 
 [sub_resource type="StyleBoxFlat" id="Style_input"]
 bg_color = Color(0.018, 0.024, 0.043, 1)
@@ -98,20 +104,20 @@ script = ExtResource("1_script")
 
 [node name="Margin" type="MarginContainer" parent="."]
 layout_mode = 2
-theme_override_constants/margin_left = 14
-theme_override_constants/margin_top = 14
-theme_override_constants/margin_right = 14
-theme_override_constants/margin_bottom = 14
+theme_override_constants/margin_left = 18
+theme_override_constants/margin_top = 18
+theme_override_constants/margin_right = 18
+theme_override_constants/margin_bottom = 18
 
 [node name="Layout" type="VBoxContainer" parent="Margin"]
 layout_mode = 2
-theme_override_constants/separation = 8
+theme_override_constants/separation = 12
 
 [node name="TitleLabel" type="Label" parent="Margin/Layout"]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_colors/font_color = Color(1, 0.79, 0.35, 1)
-theme_override_font_sizes/font_size = 21
+theme_override_font_sizes/font_size = 25
 text = "FILES — พื้นที่ทำงาน"
 
 [node name="FeedbackLabel" type="Label" parent="Margin/Layout"]
@@ -119,24 +125,25 @@ unique_name_in_owner = true
 visible = false
 layout_mode = 2
 theme_override_colors/font_color = Color(0.45, 0.95, 0.66, 1)
-theme_override_font_sizes/font_size = 14
+theme_override_font_sizes/font_size = 16
 text = "พร้อมใช้งาน"
 autowrap_mode = 2
 
 [node name="WorkspaceActions" type="VBoxContainer" parent="Margin/Layout"]
 unique_name_in_owner = true
 layout_mode = 2
-theme_override_constants/separation = 6
+theme_override_constants/separation = 8
 
 [node name="CreateActions" type="HBoxContainer" parent="Margin/Layout/WorkspaceActions"]
 layout_mode = 2
-theme_override_constants/separation = 6
+theme_override_constants/separation = 8
 
 [node name="NewFileButton" type="Button" parent="Margin/Layout/WorkspaceActions/CreateActions"]
 unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 46)
 layout_mode = 2
 size_flags_horizontal = 3
-theme_override_font_sizes/font_size = 15
+theme_override_font_sizes/font_size = 19
 theme_override_styles/normal = SubResource("Style_button_normal")
 theme_override_styles/hover = SubResource("Style_button_hover")
 theme_override_styles/disabled = SubResource("Style_button_disabled")
@@ -144,9 +151,10 @@ text = "+ ไฟล์"
 
 [node name="NewFolderButton" type="Button" parent="Margin/Layout/WorkspaceActions/CreateActions"]
 unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 46)
 layout_mode = 2
 size_flags_horizontal = 3
-theme_override_font_sizes/font_size = 15
+theme_override_font_sizes/font_size = 19
 theme_override_styles/normal = SubResource("Style_button_normal")
 theme_override_styles/hover = SubResource("Style_button_hover")
 theme_override_styles/disabled = SubResource("Style_button_disabled")
@@ -154,14 +162,15 @@ text = "+ โฟลเดอร์"
 
 [node name="EntryActions" type="HBoxContainer" parent="Margin/Layout/WorkspaceActions"]
 layout_mode = 2
-theme_override_constants/separation = 6
+theme_override_constants/separation = 8
 
 [node name="OpenButton" type="Button" parent="Margin/Layout/WorkspaceActions/EntryActions"]
 unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 42)
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_colors/font_color = Color(0.7, 1, 0.72, 1)
-theme_override_font_sizes/font_size = 14
+theme_override_font_sizes/font_size = 17
 theme_override_styles/normal = SubResource("Style_button_normal")
 theme_override_styles/hover = SubResource("Style_button_hover")
 theme_override_styles/disabled = SubResource("Style_button_disabled")
@@ -170,9 +179,10 @@ text = "เปิด"
 
 [node name="RenameButton" type="Button" parent="Margin/Layout/WorkspaceActions/EntryActions"]
 unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 42)
 layout_mode = 2
 size_flags_horizontal = 3
-theme_override_font_sizes/font_size = 14
+theme_override_font_sizes/font_size = 17
 theme_override_styles/normal = SubResource("Style_button_normal")
 theme_override_styles/hover = SubResource("Style_button_hover")
 theme_override_styles/disabled = SubResource("Style_button_disabled")
@@ -181,10 +191,11 @@ text = "เปลี่ยนชื่อ"
 
 [node name="DeleteButton" type="Button" parent="Margin/Layout/WorkspaceActions/EntryActions"]
 unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 42)
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_colors/font_color = Color(1, 0.52, 0.55, 1)
-theme_override_font_sizes/font_size = 14
+theme_override_font_sizes/font_size = 17
 theme_override_styles/normal = SubResource("Style_button_normal")
 theme_override_styles/hover = SubResource("Style_button_hover")
 theme_override_styles/disabled = SubResource("Style_button_disabled")
@@ -213,7 +224,7 @@ theme_override_constants/separation = 6
 [node name="NavigatorTitle" type="Label" parent="Margin/Layout/WorkspaceBody/NavigatorSurface/NavigatorLayout"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.68, 0.73, 0.85, 1)
-theme_override_font_sizes/font_size = 13
+theme_override_font_sizes/font_size = 15
 text = "WORKSPACE  •  ดับเบิลคลิกเพื่อเปิด"
 autowrap_mode = 2
 
@@ -223,7 +234,7 @@ layout_mode = 2
 size_flags_vertical = 3
 theme_override_colors/font_color = Color(0.82, 0.85, 0.93, 1)
 theme_override_colors/font_selected_color = Color(1, 0.9, 0.56, 1)
-theme_override_font_sizes/font_size = 16
+theme_override_font_sizes/font_size = 18
 theme_override_styles/panel = SubResource("Style_input")
 allow_reselect = true
 
@@ -248,7 +259,7 @@ theme_override_constants/separation = 7
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_colors/font_color = Color(0.88, 0.9, 0.97, 1)
-theme_override_font_sizes/font_size = 15
+theme_override_font_sizes/font_size = 17
 text = "file.txt"
 text_overrun_behavior = 3
 
@@ -262,13 +273,13 @@ visible = false
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_colors/font_color = Color(1, 0.79, 0.35, 1)
-theme_override_font_sizes/font_size = 13
+theme_override_font_sizes/font_size = 15
 text = "● ยังไม่บันทึก"
 
 [node name="CloseEditorButton" type="Button" parent="Margin/Layout/WorkspaceBody/EditorSurface/EditorLayout/EditorStatus"]
 unique_name_in_owner = true
 layout_mode = 2
-theme_override_font_sizes/font_size = 14
+theme_override_font_sizes/font_size = 16
 theme_override_styles/normal = SubResource("Style_button_normal")
 theme_override_styles/hover = SubResource("Style_button_hover")
 text = "← ไฟล์"
@@ -282,7 +293,7 @@ theme_override_colors/font_color = Color(0.84, 0.88, 0.96, 1)
 theme_override_colors/caret_color = Color(1, 0.79, 0.35, 1)
 theme_override_colors/selection_color = Color(0.25, 0.31, 0.55, 0.8)
 theme_override_fonts/font = SubResource("Font_code")
-theme_override_font_sizes/font_size = 15
+theme_override_font_sizes/font_size = 17
 theme_override_styles/normal = SubResource("Style_input")
 gutters_draw_line_numbers = true
 highlight_current_line = true
@@ -292,7 +303,7 @@ draw_tabs = true
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_colors/font_color = Color(0.7, 1, 0.72, 1)
-theme_override_font_sizes/font_size = 16
+theme_override_font_sizes/font_size = 18
 theme_override_styles/normal = SubResource("Style_button_normal")
 theme_override_styles/hover = SubResource("Style_button_hover")
 theme_override_styles/disabled = SubResource("Style_button_disabled")
