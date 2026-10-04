@@ -17,9 +17,13 @@ public interface IGitSandboxService : IAsyncDisposable
     Task<GitCommandResult> ExecuteAsync(string commandLine, CancellationToken cancellationToken = default);
     Task<GitRepositorySnapshot> InspectAsync(CancellationToken cancellationToken = default);
     Task<IReadOnlyList<FileDisplayItem>> GetFilesAsync(CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<WorkspaceEntryDisplayItem>> GetWorkspaceEntriesAsync(CancellationToken cancellationToken = default);
     Task<IReadOnlyList<CommitGraphDisplayNode>> GetCommitGraphAsync(CancellationToken cancellationToken = default);
     Task WriteFileAsync(string relativePath, string content, CancellationToken cancellationToken = default);
     Task<string?> ReadFileAsync(string relativePath, CancellationToken cancellationToken = default);
+    Task CreateDirectoryAsync(string relativePath, CancellationToken cancellationToken = default);
+    Task RenameEntryAsync(string sourceRelativePath, string destinationRelativePath, CancellationToken cancellationToken = default);
     bool DeleteFile(string relativePath);
+    bool DeleteEntry(string relativePath, bool isDirectory);
     Task ResetAsync(CancellationToken cancellationToken = default);
 }

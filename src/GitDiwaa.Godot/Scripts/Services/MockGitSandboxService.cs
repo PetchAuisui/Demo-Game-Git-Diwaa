@@ -11,6 +11,8 @@ public sealed class MockGitSandboxService : IGitSandboxService
 {
     private readonly List<FileDisplayItem> _files = new();
     private readonly List<CommitGraphDisplayNode> _commits = new();
+    private readonly Dictionary<string, string> _fileContents = new(StringComparer.Ordinal);
+    private readonly HashSet<string> _directories = new(StringComparer.Ordinal);
     private bool _isInitialized = true;
     private string _currentBranch = "main";
 
@@ -29,6 +31,12 @@ public sealed class MockGitSandboxService : IGitSandboxService
         _files.Add(new FileDisplayItem("README.md", "README.md", GitFileState.Unchanged, GitFileState.Unchanged));
         _files.Add(new FileDisplayItem("src/Game.cs", "Game.cs", GitFileState.Modified, GitFileState.Modified));
         _files.Add(new FileDisplayItem("notes.txt", "notes.txt", GitFileState.Untracked, GitFileState.Untracked));
+        _fileContents.Clear();
+        _fileContents["README.md"] = "# Git-Diwaa\n";
+        _fileContents["src/Game.cs"] = "public sealed class Game { }\n";
+        _fileContents["notes.txt"] = "Learn git status\n";
+        _directories.Clear();
+        _directories.Add("src");
 
         _commits.Clear();
         var baseDate = DateTimeOffset.UtcNow.AddMinutes(-30);
@@ -119,6 +127,20 @@ public sealed class MockGitSandboxService : IGitSandboxService
         return Task.FromResult<IReadOnlyList<FileDisplayItem>>(_files.ToList());
     }
 
+    public Task<IReadOnlyList<WorkspaceEntryDisplayItem>> GetWorkspaceEntriesAsync(
+        CancellationToken cancellationToken = default)
+    {
+        var entries = _directories
+            .Select(path => new WorkspaceEntryDisplayItem(
+                path, System.IO.Path.GetFileName(path), true,
+                GitFileState.Unchanged, GitFileState.Unchanged))
+            .Concat(_files.Select(file => new WorkspaceEntryDisplayItem(
+                file.Path, file.FileName, false, file.IndexState, file.WorkingTreeState)))
+            .OrderBy(entry => entry.Path, StringComparer.Ordinal)
+            .ToArray();
+        return Task.FromResult<IReadOnlyList<WorkspaceEntryDisplayItem>>(entries);
+    }
+
     public Task<IReadOnlyList<CommitGraphDisplayNode>> GetCommitGraphAsync(CancellationToken cancellationToken = default)
     {
         return Task.FromResult<IReadOnlyList<CommitGraphDisplayNode>>(_commits.ToList());
@@ -128,13 +150,73 @@ public sealed class MockGitSandboxService : IGitSandboxService
     {
         var existing = _files.FirstOrDefault(f => f.Path == relativePath);
         if (existing != null) _files.Remove(existing);
-        _files.Add(new FileDisplayItem(relativePath, System.IO.Path.GetFileName(relativePath), GitFileState.Untracked, GitFileState.Untracked));
+        var state = existing == null ? GitFileState.Untracked : GitFileState.Modified;
+        _files.Add(new FileDisplayItem(relativePath, System.IO.Path.GetFileName(relativePath), state, state));
+        _fileContents[relativePath] = content;
+        AddParentDirectories(relativePath);
         return Task.CompletedTask;
     }
 
     public Task<string?> ReadFileAsync(string relativePath, CancellationToken cancellationToken = default)
     {
-        return Task.FromResult<string?>($"Content of {relativePath}");
+        return Task.FromResult(_fileContents.GetValueOrDefault(relativePath));
+    }
+
+    public Task CreateDirectoryAsync(string relativePath, CancellationToken cancellationToken = default)
+    {
+        if (_files.Any(file => file.Path == relativePath) || _directories.Contains(relativePath))
+            throw new IOException($"มีไฟล์หรือโฟลเดอร์ชื่อ '{relativePath}' อยู่แล้ว");
+        _directories.Add(relativePath);
+        AddParentDirectories(relativePath);
+        return Task.CompletedTask;
+    }
+
+    public Task RenameEntryAsync(
+        string sourceRelativePath,
+        string destinationRelativePath,
+        CancellationToken cancellationToken = default)
+    {
+        if (_files.Any(file => file.Path == destinationRelativePath) || _directories.Contains(destinationRelativePath))
+            throw new IOException($"มีไฟล์หรือโฟลเดอร์ชื่อ '{destinationRelativePath}' อยู่แล้ว");
+
+        var file = _files.FirstOrDefault(item => item.Path == sourceRelativePath);
+        if (file != null)
+        {
+            _files.Remove(file);
+            _files.Add(file with { Path = destinationRelativePath, FileName = System.IO.Path.GetFileName(destinationRelativePath) });
+            _fileContents[destinationRelativePath] = _fileContents[sourceRelativePath];
+            _fileContents.Remove(sourceRelativePath);
+        }
+        else if (_directories.Contains(sourceRelativePath))
+        {
+            var affectedDirectories = _directories
+                .Where(path => path == sourceRelativePath || path.StartsWith(sourceRelativePath + "/", StringComparison.Ordinal))
+                .ToArray();
+            foreach (var path in affectedDirectories)
+            {
+                _directories.Remove(path);
+                _directories.Add(destinationRelativePath + path[sourceRelativePath.Length..]);
+            }
+
+            var affectedFiles = _files
+                .Where(item => item.Path.StartsWith(sourceRelativePath + "/", StringComparison.Ordinal))
+                .ToArray();
+            foreach (var item in affectedFiles)
+            {
+                var newPath = destinationRelativePath + item.Path[sourceRelativePath.Length..];
+                _files.Remove(item);
+                _files.Add(item with { Path = newPath, FileName = System.IO.Path.GetFileName(newPath) });
+                _fileContents[newPath] = _fileContents[item.Path];
+                _fileContents.Remove(item.Path);
+            }
+        }
+        else
+        {
+            throw new FileNotFoundException($"ไม่พบ '{sourceRelativePath}'");
+        }
+
+        AddParentDirectories(destinationRelativePath);
+        return Task.CompletedTask;
     }
 
     public bool DeleteFile(string relativePath)
@@ -143,9 +225,28 @@ public sealed class MockGitSandboxService : IGitSandboxService
         if (existing != null)
         {
             _files.Remove(existing);
+            _fileContents.Remove(relativePath);
             return true;
         }
         return false;
+    }
+
+    public bool DeleteEntry(string relativePath, bool isDirectory)
+    {
+        if (!isDirectory) return DeleteFile(relativePath);
+        if (!_directories.Contains(relativePath)) return false;
+
+        _directories.RemoveWhere(path =>
+            path == relativePath || path.StartsWith(relativePath + "/", StringComparison.Ordinal));
+        var filesToRemove = _files
+            .Where(file => file.Path.StartsWith(relativePath + "/", StringComparison.Ordinal))
+            .ToArray();
+        foreach (var file in filesToRemove)
+        {
+            _files.Remove(file);
+            _fileContents.Remove(file.Path);
+        }
+        return true;
     }
 
     public Task ResetAsync(CancellationToken cancellationToken = default)
@@ -155,4 +256,14 @@ public sealed class MockGitSandboxService : IGitSandboxService
     }
 
     public ValueTask DisposeAsync() => ValueTask.CompletedTask;
+
+    private void AddParentDirectories(string path)
+    {
+        var current = System.IO.Path.GetDirectoryName(path)?.Replace('\\', '/');
+        while (!string.IsNullOrEmpty(current) && current != ".")
+        {
+            _directories.Add(current);
+            current = System.IO.Path.GetDirectoryName(current)?.Replace('\\', '/');
+        }
+    }
 }

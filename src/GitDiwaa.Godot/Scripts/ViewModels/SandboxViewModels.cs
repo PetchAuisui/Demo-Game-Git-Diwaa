@@ -77,6 +77,22 @@ public sealed record FileDisplayItem(
     };
 }
 
+public sealed record WorkspaceEntryDisplayItem(
+    string Path,
+    string Name,
+    bool IsDirectory,
+    GitFileState IndexState,
+    GitFileState WorkingTreeState)
+{
+    public string StatusBadge => IsDirectory
+        ? string.Empty
+        : new FileDisplayItem(Path, Name, IndexState, WorkingTreeState).StatusBadge;
+
+    public Color StatusColor => IsDirectory
+        ? SandboxThemeTokens.TextSecondary
+        : new FileDisplayItem(Path, Name, IndexState, WorkingTreeState).StatusColor;
+}
+
 public sealed record CommitGraphDisplayNode(
     string Id,
     string ShortId,
