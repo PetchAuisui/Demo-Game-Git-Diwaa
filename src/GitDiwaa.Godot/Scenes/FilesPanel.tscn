@@ -1,6 +1,7 @@
-[gd_scene load_steps=9 format=3]
+[gd_scene load_steps=10 format=3]
 
 [ext_resource type="Script" path="res://Scripts/Components/FilesPanel.cs" id="1_script"]
+[ext_resource type="Theme" path="res://Scenes/FileDialogTheme.tres" id="2_dialog_theme"]
 
 [sub_resource type="StyleBoxFlat" id="Style_card"]
 bg_color = Color(0.025, 0.031, 0.055, 0.94)
@@ -314,18 +315,47 @@ text = "บันทึก — อัปเดต Git status"
 [node name="CreateFileDialog" type="ConfirmationDialog" parent="."]
 unique_name_in_owner = true
 title = "สร้างไฟล์ใหม่"
-size = Vector2i(480, 180)
+size = Vector2i(520, 250)
+borderless = true
+theme = ExtResource("2_dialog_theme")
+unresizable = true
 ok_button_text = "สร้างและเปิด"
 cancel_button_text = "ยกเลิก"
-dialog_text = "ชื่อไฟล์ (สร้างในโฟลเดอร์ที่เลือก)"
 
-[node name="CreateFileNameInput" type="LineEdit" parent="CreateFileDialog"]
+[node name="Content" type="MarginContainer" parent="CreateFileDialog"]
+theme_override_constants/margin_left = 4
+theme_override_constants/margin_top = 18
+theme_override_constants/margin_right = 4
+theme_override_constants/margin_bottom = 16
+
+[node name="Layout" type="VBoxContainer" parent="CreateFileDialog/Content"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="Heading" type="Label" parent="CreateFileDialog/Content/Layout"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.79, 0.35, 1)
+theme_override_font_sizes/font_size = 26
+text = "สร้างไฟล์ใหม่"
+
+[node name="NameLabel" type="Label" parent="CreateFileDialog/Content/Layout"]
+layout_mode = 2
+text = "ชื่อไฟล์"
+
+[node name="CreateFileNameInput" type="LineEdit" parent="CreateFileDialog/Content/Layout"]
 unique_name_in_owner = true
-offset_left = 16.0
-offset_top = 72.0
-offset_right = 464.0
-offset_bottom = 112.0
+layout_mode = 2
+custom_minimum_size = Vector2(0, 48)
+size_flags_vertical = 0
 placeholder_text = "เช่น quest.txt"
+
+[node name="CreateFileLocation" type="Label" parent="CreateFileDialog/Content/Layout"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.68, 0.73, 0.85, 1)
+theme_override_font_sizes/font_size = 16
+text = "สร้างใน: /"
+text_overrun_behavior = 3
 
 [node name="CreateFolderDialog" type="ConfirmationDialog" parent="."]
 unique_name_in_owner = true
