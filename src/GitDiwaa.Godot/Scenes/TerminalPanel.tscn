@@ -72,7 +72,7 @@ text = "●  ●  ●    TERMINAL — learner@diwaa:~/checkpoint-01"
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_colors/font_color = Color(0.68, 0.73, 0.85, 1)
-theme_override_font_sizes/font_size = 13
+theme_override_font_sizes/font_size = 15
 text = "Enter รันคำสั่ง • ↑ ↓ ประวัติ • clear ล้างหน้าจอ • Git sandbox"
 autowrap_mode = 2
 
@@ -82,7 +82,7 @@ layout_mode = 2
 size_flags_vertical = 3
 theme_override_colors/default_color = Color(0.87, 0.9, 0.95, 1)
 theme_override_fonts/normal_font = SubResource("Font_terminal")
-theme_override_font_sizes/normal_font_size = 16
+theme_override_font_sizes/normal_font_size = 20
 bbcode_enabled = true
 scroll_following = true
 selection_enabled = true
@@ -96,18 +96,18 @@ unique_name_in_owner = true
 layout_mode = 2
 theme_override_colors/font_color = Color(0.31, 0.95, 0.62, 1)
 theme_override_fonts/font = SubResource("Font_terminal")
-theme_override_font_sizes/font_size = 16
+theme_override_font_sizes/font_size = 18
 text = "learner@diwaa:~ $"
 vertical_alignment = 1
 
 [node name="InputEdit" type="LineEdit" parent="TerminalMargin/TerminalLayout/CommandRow"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 32)
+custom_minimum_size = Vector2(0, 42)
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_colors/font_color = Color(0.95, 0.97, 1, 1)
 theme_override_fonts/font = SubResource("Font_terminal")
-theme_override_font_sizes/font_size = 16
+theme_override_font_sizes/font_size = 20
 theme_override_styles/normal = SubResource("Style_input")
 theme_override_styles/focus = SubResource("Style_input")
 placeholder_text = "git --version"
@@ -116,10 +116,10 @@ clear_button_enabled = true
 
 [node name="EnterButton" type="Button" parent="TerminalMargin/TerminalLayout/CommandRow"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(121, 32)
+custom_minimum_size = Vector2(121, 42)
 layout_mode = 2
 theme_override_colors/font_color = Color(0.97, 0.93, 0.82, 1)
-theme_override_font_sizes/font_size = 13
+theme_override_font_sizes/font_size = 18
 theme_override_styles/normal = SubResource("Style_button")
 text = "Enter ↵"
 
