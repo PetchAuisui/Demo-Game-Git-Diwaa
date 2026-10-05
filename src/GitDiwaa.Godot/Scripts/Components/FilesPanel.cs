@@ -55,10 +55,16 @@ public partial class FilesPanel : PanelContainer
 	private bool _pendingClose;
 	private bool _suppressTextChanged;
 
+	private Texture2D _fileIcon = null!;
+	private Texture2D _folderIcon = null!;
+
 	public bool HasUnsavedChanges => _openFilePath != null && _editor.Text != _savedContent;
 
 	public override void _Ready()
 	{
+		_fileIcon = GD.Load<Texture2D>("res://assets/icons/file.svg");
+		_folderIcon = GD.Load<Texture2D>("res://assets/icons/folder.svg");
+
 		BindNodes();
 		_createFileDialog.GetOkButton().ThemeTypeVariation = "CreateAction";
 		_createFileDialog.GetOkButton().CustomMinimumSize = new Vector2(172, 46);
@@ -153,11 +159,14 @@ public partial class FilesPanel : PanelContainer
 			var entry = _entries[index];
 			var depth = entry.Path.Count(character => character == '/');
 			var indent = new string(' ', depth * 3);
-			var marker = entry.IsDirectory ? "▸" : "•";
 			var status = string.IsNullOrEmpty(entry.StatusBadge) ? string.Empty : $" {entry.StatusBadge}";
-			_filesList.AddItem($"{indent}{marker} {entry.Name}{status}");
+			var icon = entry.IsDirectory ? _folderIcon : _fileIcon;
+			_filesList.AddItem($"{indent}{entry.Name}{status}", icon);
 			_filesList.SetItemTooltip(index, entry.Path);
-			_filesList.SetItemCustomFgColor(index, entry.StatusColor);
+			if (entry.StatusColor.HasValue)
+			{
+				_filesList.SetItemCustomFgColor(index, entry.StatusColor.Value);
+			}
 
 			if (entry.Path == previousSelection)
 				_filesList.Select(index);
@@ -382,7 +391,7 @@ public partial class FilesPanel : PanelContainer
 	{
 		if (_selectedPath == null) return;
 		var kind = _selectedIsDirectory ? "โฟลเดอร์และไฟล์ทั้งหมดภายใน" : "ไฟล์";
-		_deleteConfirmDialog.DialogText = $"ต้องการลบ{kind} '{_selectedPath}' หรือไม่?\nการเปลี่ยนแปลงนี้จะปรากฏใน Git status";
+		_deleteConfirmDialog.DialogText = $"ต้องการลบ{kind} '{_selectedPath}' หรือไม่?";
 		_deleteConfirmDialog.PopupCentered();
 	}
 

@@ -312,7 +312,7 @@ theme_override_styles/normal = SubResource("Style_button_normal")
 theme_override_styles/hover = SubResource("Style_button_hover")
 theme_override_styles/disabled = SubResource("Style_button_disabled")
 disabled = true
-text = "บันทึก — อัปเดต Git status"
+text = "บันทึก"
 
 [node name="CreateFileDialog" type="ConfirmationDialog" parent="."]
 unique_name_in_owner = true

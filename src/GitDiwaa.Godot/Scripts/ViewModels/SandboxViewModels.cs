@@ -36,12 +36,14 @@ public sealed record FileDisplayItem(
         GitFileState.Untracked => "[?]",
         GitFileState.Modified => "[M]",
         GitFileState.Deleted => "[D]",
+        GitFileState.Unknown => "",
         _ => IndexState switch
         {
             GitFileState.Added => "[A]",
             GitFileState.Modified => "[M]",
             GitFileState.Deleted => "[D]",
             GitFileState.Renamed => "[R]",
+            GitFileState.Unknown => "",
             _ => "[✓]"
         }
     };
@@ -51,27 +53,31 @@ public sealed record FileDisplayItem(
         GitFileState.Untracked => "Untracked",
         GitFileState.Modified => "Modified",
         GitFileState.Deleted => "Deleted",
+        GitFileState.Unknown => "Unknown",
         _ => IndexState switch
         {
             GitFileState.Added => "Staged (Added)",
             GitFileState.Modified => "Staged (Modified)",
             GitFileState.Deleted => "Staged (Deleted)",
             GitFileState.Renamed => "Staged (Renamed)",
+            GitFileState.Unknown => "Unknown",
             _ => "Committed"
         }
     };
 
-    public Color StatusColor => WorkingTreeState switch
+    public Color? StatusColor => WorkingTreeState switch
     {
         GitFileState.Untracked => SandboxThemeTokens.StateUntracked,
         GitFileState.Modified => SandboxThemeTokens.StateModified,
         GitFileState.Deleted => SandboxThemeTokens.StateDeleted,
+        GitFileState.Unknown => null,
         _ => IndexState switch
         {
             GitFileState.Added => SandboxThemeTokens.StateAdded,
             GitFileState.Modified => SandboxThemeTokens.StateModified,
             GitFileState.Deleted => SandboxThemeTokens.StateDeleted,
             GitFileState.Renamed => SandboxThemeTokens.StateRenamed,
+            GitFileState.Unknown => null,
             _ => SandboxThemeTokens.TextSecondary
         }
     };
@@ -88,8 +94,8 @@ public sealed record WorkspaceEntryDisplayItem(
         ? string.Empty
         : new FileDisplayItem(Path, Name, IndexState, WorkingTreeState).StatusBadge;
 
-    public Color StatusColor => IsDirectory
-        ? SandboxThemeTokens.TextSecondary
+    public Color? StatusColor => IsDirectory
+        ? null
         : new FileDisplayItem(Path, Name, IndexState, WorkingTreeState).StatusColor;
 }
 
