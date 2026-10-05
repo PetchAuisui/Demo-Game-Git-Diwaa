@@ -6,12 +6,18 @@ public sealed record GitSessionInfo(
     string RepositoryPath,
     string RemoteUrl);
 
+public sealed record PlayerWorkspaceEntry(string Path, bool IsDirectory);
+
 public interface IPlayerFileSystem
 {
     Task WriteAllTextAsync(string relativePath, string content, CancellationToken cancellationToken = default);
     Task<string?> ReadAllTextAsync(string relativePath, CancellationToken cancellationToken = default);
+    void CreateDirectory(string relativePath);
+    void Move(string sourceRelativePath, string destinationRelativePath);
     bool Delete(string relativePath);
+    bool DeleteDirectory(string relativePath, bool recursive = false);
     IReadOnlyList<string> ListFiles();
+    IReadOnlyList<PlayerWorkspaceEntry> ListEntries();
 }
 
 public interface IGitGameSession : IAsyncDisposable
@@ -29,4 +35,3 @@ public interface IGitGameSessionFactory
         string attemptId,
         CancellationToken cancellationToken = default);
 }
-

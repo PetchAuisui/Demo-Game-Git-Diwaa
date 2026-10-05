@@ -1,12 +1,12 @@
-# สถานะระบบ Git รุ่นแรก
+# สถานะระบบ Git และ Godot Workspace
 
-บันทึก ณ 1 ตุลาคม 2026 สำหรับรอบพัฒนา `feat/git-engine`
+บันทึก ณ 4 ตุลาคม 2026
 
 ## ขอบเขตที่พร้อมนำเข้า main
 
-มี Core contracts, Real Git adapter, Terminal CLI และ integration tests โดยยังไม่มี Godot UI ระบบเรียก Git ที่ติดตั้งในเครื่องและสร้างพื้นที่ฝึกแยกต่อ attempt
+มี Core contracts, Real Git adapter, Terminal CLI, Godot Sandbox UI และ integration tests ระบบเรียก Git ที่ติดตั้งในเครื่องและสร้างพื้นที่ฝึกแยกต่อ attempt
 
-ผลตรวจล่าสุดก่อนการปรับเอกสาร: build ผ่าน 0 warnings / 0 errors และ integration tests ผ่าน 10/10 กลุ่มสถานการณ์ ผลนี้ยืนยันเฉพาะกรณีที่ทดสอบ ไม่ได้หมายความว่าทุกคำสั่ง ทุก option หรือทุกระบบปฏิบัติการได้รับการตรวจครบแล้ว
+ผลตรวจล่าสุด: build ผ่าน 0 warnings / 0 errors, integration tests ผ่าน 11/11 กลุ่มสถานการณ์ และ Godot 4.7.2 Mono โหลดโปรเจกต์แบบ headless ได้โดยไม่มี scene/script error ผลนี้ยืนยันเฉพาะกรณีที่ทดสอบ ไม่ได้หมายความว่าทุกคำสั่ง ทุก option หรือทุกระบบปฏิบัติการได้รับการตรวจครบแล้ว
 
 ## หลักฐานจากชุดทดสอบปัจจุบัน
 
@@ -23,6 +23,7 @@
 | Remote | push, fetch และ pull จาก local bare remote ของ session |
 | Clone | clone local bare remote ว่าง |
 | File API | ปฏิเสธ path traversal และการเขียน .git/config |
+| Workspace API | สร้าง/list โฟลเดอร์, rename ไฟล์, ลบ recursive และป้องกัน path ที่ไม่ปลอดภัย |
 | Attempt validation | ปฏิเสธ identifier ไม่ถูกต้องและ attempt ที่มีข้อมูลอยู่แล้ว |
 
 ## ข้อจำกัดที่ต้องทราบ
@@ -33,17 +34,18 @@
 - Clone ยังไม่ได้ทดสอบกับ remote ที่มีไฟล์และประวัติอยู่ก่อน
 - แต่ละ session มี remote ของตัวเอง ยังไม่มี API เตรียม remote ร่วมสำหรับผู้เล่นและ NPC
 - CLI ถามข้อความให้เมื่อพิมพ์ `git commit` เปล่า ส่วน Godot ต้องสร้างขั้นตอนรับข้อความและส่ง `commit -m` เอง
-- Terminal มี `write`, `cat`, `delete`, `files` แต่ยังไม่มี `touch`, `mkdir`, `ls` หรือ `cd`
+- Terminal มี `write`, `cat`, `delete`, `files` แต่ยังไม่มี `touch`, `mkdir`, `ls` หรือ `cd`; การจัดการโฟลเดอร์ทำผ่าน Files/Workspace UI ได้แล้ว
 - เปิด CLI แต่ละครั้งสร้าง attempt ใหม่ ยังไม่มีขั้นตอนเปิด session เดิม ข้อมูลบนดิสก์ไม่ได้ถูกลบเมื่อ dispose
 - Snapshot จำกัดประวัติไว้ 200 commits และยังต้องทดสอบ parser กับชื่อไฟล์/ข้อความพิเศษเพิ่มเติม
 - การแยก workspace เป็นการป้องกันในระดับแอป ยังต้องตรวจ environment ที่ process สืบทอด, symbolic links และกรณีหลบข้อจำกัดเพิ่มเติมก่อนเผยแพร่เกม
-- Core/RealGit ใช้ `net10.0`; การต่อ Godot ต้องตรวจ target framework และแหล่ง NuGet ให้เข้ากันก่อน
+- Empty directory ไม่สร้างการเปลี่ยนแปลงใน Git จนกว่าจะมีไฟล์ภายใน ซึ่งเป็นพฤติกรรมปกติของ Git
+- Editor เป็น text editor สำหรับ UTF-8 text files; ยังไม่มี binary preview, syntax profile ตามนามสกุล, search/replace หรือ multi-tab
 
 ## ลำดับงานหลัง merge
 
 1. เพิ่ม integration tests ของคำสั่งที่เปิดใช้อยู่: conflict/resolve/abort, amend, reset soft/mixed, force push และ pull --rebase พร้อมแก้ปัญหาที่พบ ตรวจ environment isolation และ path handling ในรอบนี้ด้วย
 2. เพิ่มการเตรียม remote ที่มีประวัติและ API สำหรับผู้เล่น/NPC ใช้ remote ร่วมกัน ทดสอบ clone ที่มีข้อมูลและกรณี push ถูกปฏิเสธเมื่อ remote มีงานใหม่
 3. เพิ่มคำสั่งไฟล์ใน Terminal เกม เช่น touch/mkdir/ls และกำหนดพฤติกรรม current directory ก่อนเพิ่ม cd
-4. เชื่อม Godot C#: รับคำสั่งทีละรายการ แสดงผล Terminal และ refresh Files/Branches/Commit Graph จาก session API
+4. เพิ่ม syntax profile, search/replace และ multi-tab ให้ text editor เมื่อ gameplay ต้องใช้ไฟล์หลายไฟล์พร้อมกัน
 
 แต่ละรอบควรแยก feature branch และ commit ตามงานที่ตรวจสอบได้ ไม่ถือว่ารายการในแผนนี้พัฒนาเสร็จแล้ว

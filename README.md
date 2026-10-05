@@ -4,8 +4,9 @@
 
 ## สถานะปัจจุบัน
 
-- รอบพัฒนา `feat/godot-sandbox-ui` พัฒนาระบบ Godot C# Sandbox UI ตามโครงสร้าง OOP แบบโมดูล
+- Godot C# Sandbox UI ใช้โครงสร้าง OOP แบบโมดูลและเชื่อมกับ repository จำลองที่ใช้ Git จริง
 - ประกอบด้วยคอมโพเนนต์ Terminal, Files panel, Git Graph panel, Top Bar panel และ Sandbox Orchestrator View
+- Files/Workspace แสดงโครงสร้างไฟล์และโฟลเดอร์ พร้อมสร้าง เปลี่ยนชื่อ ลบ เปิด แก้ไข บันทึก และแจ้งสถานะ unsaved
 - ฐานระบบ Real Git engine, Terminal CLI และ integration tests พร้อมใช้งาน
 
 ## โครงสร้าง
@@ -80,6 +81,14 @@ dotnet run --project tests/GitDiwaa.RealGit.Tests/GitDiwaa.RealGit.Tests.csproj
 ```
 
 ชุดทดสอบสร้าง repository จริงใต้ temporary directory และลบเฉพาะพื้นที่ทดสอบของตัวเองเมื่อจบ
+
+## ทดสอบ Files/Workspace ด้วยตนเอง
+
+1. เปิด Godot Sandbox UI แล้วใช้ปุ่ม `+ ไฟล์` หรือ `+ โฟลเดอร์`
+2. เลือกไฟล์และกด `เปิด` หรือดับเบิลคลิก จากนั้นแก้ข้อความและตรวจ badge `ยังไม่บันทึก`
+3. กด `บันทึก` แล้วพิมพ์ `git status` ใน Terminal เพื่อยืนยันว่า Git เห็นการเปลี่ยนแปลง
+4. ทดสอบ `เปลี่ยนชื่อ` และ `ลบ` แล้วตรวจ confirmation, feedback และ `git status` อีกครั้ง
+5. ลองเปิดหรือปิด editor ขณะมีเนื้อหาที่ยังไม่บันทึก เพื่อตรวจ dialog ป้องกันข้อมูลสูญหาย
 
 ## เอกสาร
 

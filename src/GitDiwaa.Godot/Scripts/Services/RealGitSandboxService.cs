@@ -103,6 +103,27 @@ public sealed class RealGitSandboxService : IGitSandboxService
         return fileItems;
     }
 
+    public async Task<IReadOnlyList<WorkspaceEntryDisplayItem>> GetWorkspaceEntriesAsync(
+        CancellationToken cancellationToken = default)
+    {
+        EnsureSession();
+        _lastSnapshot = await _session!.InspectAsync(cancellationToken);
+        var statusByPath = _lastSnapshot.Files.ToDictionary(file => file.Path, StringComparer.Ordinal);
+
+        return _session.Files.ListEntries()
+            .Select(entry =>
+            {
+                statusByPath.TryGetValue(entry.Path, out var status);
+                return new WorkspaceEntryDisplayItem(
+                    entry.Path,
+                    Path.GetFileName(entry.Path),
+                    entry.IsDirectory,
+                    status?.IndexState ?? GitFileState.Unchanged,
+                    status?.WorkingTreeState ?? GitFileState.Unchanged);
+            })
+            .ToArray();
+    }
+
     public async Task<IReadOnlyList<CommitGraphDisplayNode>> GetCommitGraphAsync(CancellationToken cancellationToken = default)
     {
         EnsureSession();
@@ -139,11 +160,40 @@ public sealed class RealGitSandboxService : IGitSandboxService
         return await _session!.Files.ReadAllTextAsync(relativePath, cancellationToken);
     }
 
+    public Task CreateDirectoryAsync(
+        string relativePath,
+        CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        EnsureSession();
+        _session!.Files.CreateDirectory(relativePath);
+        return Task.CompletedTask;
+    }
+
+    public Task RenameEntryAsync(
+        string sourceRelativePath,
+        string destinationRelativePath,
+        CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        EnsureSession();
+        _session!.Files.Move(sourceRelativePath, destinationRelativePath);
+        return Task.CompletedTask;
+    }
+
     public bool DeleteFile(string relativePath)
     {
         EnsureSession();
         var deleted = _session!.Files.Delete(relativePath);
         return deleted;
+    }
+
+    public bool DeleteEntry(string relativePath, bool isDirectory)
+    {
+        EnsureSession();
+        return isDirectory
+            ? _session!.Files.DeleteDirectory(relativePath, recursive: true)
+            : _session!.Files.Delete(relativePath);
     }
 
     public async Task ResetAsync(CancellationToken cancellationToken = default)

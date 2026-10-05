@@ -18,7 +18,7 @@ src/GitDiwaa.Godot/
     ├── Common/
     │   └── SandboxThemeTokens.cs    # Design Tokens (Colors, StyleBoxes, Fonts)
     ├── ViewModels/
-    │   └── SandboxViewModels.cs     # FileDisplayItem, CommitGraphDisplayNode, TerminalLogEntry
+    │   └── SandboxViewModels.cs     # Workspace/File, Commit Graph และ Terminal view models
     ├── Services/
     │   ├── IGitSandboxService.cs    # Service Contract สำหรับ UI
     │   ├── RealGitSandboxService.cs # Adapter เชื่อมกับ Real Git Engine
@@ -41,10 +41,12 @@ src/GitDiwaa.Godot/
    - แยกสีแสดงผล: Command Echo (เขียว/ขาว), Standard Output (ขาวเทา), Error (แดง), System Info (ฟ้า/เหลือง)
 
 2. **FilesPanel (`FilesPanel.cs` / `FilesPanel.tscn`)**:
-   - แสดงรายการไฟล์ใน Workspace พร้อม Badge แสดงสถานะ Git (`[?]` Untracked, `[M]` Modified, `[A]` Added/Staged, `[D]` Deleted)
-   - หน้า Empty State แสดง `"ยังไม่มีไฟล์"`
-   - ปุ่มสร้างไฟล์ `+ สร้างไฟล์`
-   - ส่ง Signal `FileSelected(string filePath)` และ `CreateFileRequested(string filePath, string content)`
+   - แสดงไฟล์และโฟลเดอร์ทั้งหมดใน Workspace แบบมีลำดับชั้น พร้อม Badge สถานะ Git (`[?]`, `[M]`, `[A]`, `[D]`, `[R]`)
+   - รองรับสร้างไฟล์, สร้างโฟลเดอร์, เปลี่ยนชื่อ และลบพร้อม confirmation
+   - เปิดไฟล์ด้วยปุ่มหรือดับเบิลคลิกใน embedded `CodeEdit` และบันทึกกลับ repository จริง
+   - แสดง dirty/unsaved state และถามยืนยันก่อนทิ้งการแก้ไขเมื่อเปลี่ยนไฟล์หรือปิด editor
+   - แสดง success/error feedback ใน panel และล็อก action ระหว่าง operation
+   - ส่ง signals สำหรับ open/save/create/create-folder/rename/delete โดยไม่เรียก filesystem จาก UI โดยตรง
 
 3. **GitGraphPanel (`GitGraphPanel.cs` / `GitGraphPanel.tscn`)**:
    - แสดงประวัติ Commit เป็นกราฟ / ไทม์ไลน์
@@ -57,6 +59,17 @@ src/GitDiwaa.Godot/
    - พื้นหลังธีม Dark Fantasy Dungeon (หน้าต่าง Gothic, คบเพลิง Torch Glow)
    - ทำหน้าที่เป็น Mediator เชื่อมระหว่าง UI Panels กับ `IGitSandboxService`
    - ทำงานกับ `RealGitSandboxService` โดยอัตโนมัติ และ Fallback ไปที่ `MockGitSandboxService` ได้อย่างไร้รอยต่อ
+   - refresh Workspace และ Git graph หลัง file operation เพื่อให้ `git status`, `git add` และ `git commit` เห็น state เดียวกัน
+
+## Data flow ของ Files/Workspace
+
+```text
+FilesPanel signal → SandboxGameView → IGitSandboxService
+                                      └→ IPlayerFileSystem ใน Real Git sandbox
+                         refresh ← GitRepositorySnapshot + ListEntries
+```
+
+`SandboxPlayerFileSystem` บังคับให้ path อยู่ภายใน repository, ปฏิเสธ `.git` และ symbolic links และรองรับไฟล์/โฟลเดอร์/rename โดยไม่เปิด path จริงให้ UI จัดการเอง
 
 ## วิธีการรัน
 
@@ -69,4 +82,3 @@ src/GitDiwaa.Godot/
 ```sh
 /Applications/Godot_mono.app/Contents/MacOS/Godot --headless --path src/GitDiwaa.Godot --quit-after 5
 ```
-
