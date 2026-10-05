@@ -10,7 +10,7 @@ public partial class CommitGraphCanvas : Control
     private CommitGraphLayout _layout = new(Array.Empty<CommitGraphDisplayNode>());
     private int _selected = -1;
     private int _hovered = -1;
-    private const float RowHeight = 104;
+    private const float RowHeight = 58;
     private readonly Font _font = new SystemFont { FontNames = ["Noto Sans Thai", "Thonburi", "Tahoma", "Arial"] };
     private static readonly Color[] LaneColors =
     {
@@ -30,14 +30,15 @@ public partial class CommitGraphCanvas : Control
         _layout = layout;
         _selected = layout.Rows.ToList().FindIndex(row => row.Commit.Id == selectedId);
         _hovered = -1;
-        CustomMinimumSize = new Vector2(Math.Max(420, TextX + 280), layout.Rows.Count * RowHeight + 8);
+        CustomMinimumSize = new Vector2(0, layout.Rows.Count * RowHeight + 4);
         QueueRedraw();
     }
 
-    private float CardX => 48 + _layout.LaneCount * 36;
-    private float TextX => CardX + 20;
+    private float LaneSpacing => Math.Min(20, 70f / Math.Max(1, _layout.LaneCount));
+    private float CardX => 24 + _layout.LaneCount * LaneSpacing;
+    private float TextX => CardX + 12;
     private static Color LaneColor(int lane) => LaneColors[lane % LaneColors.Length];
-    private static Vector2 Point(int row, int lane) => new(28 + lane * 36, row * RowHeight + 46);
+    private Vector2 Point(int row, int lane) => new(15 + lane * LaneSpacing, row * RowHeight + 26);
 
     public override void _Draw()
     {
@@ -59,7 +60,7 @@ public partial class CommitGraphCanvas : Control
                     BorderWidthTop = 1, BorderWidthRight = 1, BorderWidthBottom = 1,
                     CornerRadiusTopLeft = 12, CornerRadiusTopRight = 12,
                     CornerRadiusBottomLeft = 12, CornerRadiusBottomRight = 12
-                }, new Rect2(CardX, index * RowHeight + 4, Size.X - CardX - 4, RowHeight - 12));
+                }, new Rect2(CardX, index * RowHeight + 2, Math.Max(0, Size.X - CardX - 4), RowHeight - 6));
         }
         foreach (var edge in _layout.Edges)
         {
@@ -68,28 +69,28 @@ public partial class CommitGraphCanvas : Control
             var midpoint = (from.Y + to.Y) / 2;
             var points = Enumerable.Range(0, 25).Select(step =>
                 from.BezierInterpolate(new Vector2(from.X, midpoint), new Vector2(to.X, midpoint), to, step / 24f)).ToArray();
-            DrawPolyline(points, new Color(LaneColor(edge.FromLane), 0.09f), 11, true);
-            DrawPolyline(points, LaneColor(edge.FromLane), 3.5f, true);
+            DrawPolyline(points, new Color(LaneColor(edge.FromLane), 0.09f), 7, true);
+            DrawPolyline(points, LaneColor(edge.FromLane), 2, true);
         }
         for (var index = 0; index < _layout.Rows.Count; index++)
         {
             var row = _layout.Rows[index];
             var point = Point(index, row.Lane);
             var color = row.Commit.IsCurrentBranchHead ? new Color("ffc959") : LaneColor(row.Lane);
-            DrawCircle(point, 17, new Color(color, row.Commit.IsCurrentBranchHead ? 0.22f : 0.08f));
-            DrawCircle(point, 10, new Color("0c1220"));
-            DrawArc(point, 9, 0, Mathf.Tau, 32, color, 3, true);
-            DrawCircle(point, 4, color);
+            DrawCircle(point, 10, new Color(color, row.Commit.IsCurrentBranchHead ? 0.22f : 0.08f));
+            DrawCircle(point, 6, new Color("0c1220"));
+            DrawArc(point, 5, 0, Mathf.Tau, 24, color, 2, true);
+            DrawCircle(point, 2, color);
             var y = index * RowHeight;
-            DrawString(font, new Vector2(TextX, y + 37), row.Commit.Subject, HorizontalAlignment.Left,
-                Size.X - TextX - 20, 23, new Color("f1f5fc"));
-            DrawString(font, new Vector2(TextX, y + 73), row.Commit.ShortId, HorizontalAlignment.Left,
-                106, 18, new Color("b0c4dd"));
+            DrawString(font, new Vector2(TextX, y + 23), row.Commit.Subject, HorizontalAlignment.Left,
+                Math.Max(0, Size.X - TextX - 12), 16, new Color("f1f5fc"));
+            DrawString(font, new Vector2(TextX, y + 44), row.Commit.ShortId, HorizontalAlignment.Left,
+                74, 13, new Color("b0c4dd"));
             var refs = row.Commit.IsCurrentBranchHead ? "HEAD · " : "";
             refs += string.Join(" · ", row.Commit.Branches);
             if (refs.Length > 0)
             {
-                var width = Math.Max(0, Math.Min(font.GetStringSize(refs, fontSize: 17).X + 24, Size.X - TextX - 130));
+                var width = Math.Max(0, Math.Min(font.GetStringSize(refs, fontSize: 12).X + 16, Size.X - TextX - 86));
                 if (width > 18)
                 {
                     DrawStyleBox(new StyleBoxFlat
@@ -97,14 +98,14 @@ public partial class CommitGraphCanvas : Control
                         BgColor = new Color(color, 0.16f),
                         CornerRadiusTopLeft = 5, CornerRadiusTopRight = 5,
                         CornerRadiusBottomLeft = 5, CornerRadiusBottomRight = 5
-                    }, new Rect2(TextX + 116, y + 51, width, 30));
-                    DrawString(font, new Vector2(TextX + 128, y + 73), refs,
-                        HorizontalAlignment.Left, width - 24, 17, color);
+                    }, new Rect2(TextX + 76, y + 29, width, 20));
+                    DrawString(font, new Vector2(TextX + 84, y + 44), refs,
+                        HorizontalAlignment.Left, width - 16, 12, color);
                 }
             }
             else
-                DrawString(font, new Vector2(TextX + 116, y + 73), row.Commit.Author,
-                    HorizontalAlignment.Left, Size.X - TextX - 130, 17, new Color("8199b8"));
+                DrawString(font, new Vector2(TextX + 76, y + 44), row.Commit.Author,
+                    HorizontalAlignment.Left, Math.Max(0, Size.X - TextX - 86), 12, new Color("8199b8"));
         }
     }
 
