@@ -431,11 +431,13 @@ public partial class SandboxGameView : Control
         try
         {
             var snapshot = await _sandboxService.InspectAsync();
+            
+            // Always show files, even if git is not initialized
+            var entries = await _sandboxService.GetWorkspaceEntriesAsync();
+            _filesPanel.SetEntries(entries);
+
             if (snapshot.IsInitialized)
             {
-                var entries = await _sandboxService.GetWorkspaceEntriesAsync();
-                _filesPanel.SetEntries(entries);
-
                 var graphResult = await _sandboxService.ExecuteAsync("git log --graph --all --oneline -n 20");
                 if (graphResult.Success && !string.IsNullOrWhiteSpace(graphResult.StandardOutput))
                 {
@@ -449,7 +451,6 @@ public partial class SandboxGameView : Control
             }
             else
             {
-                _filesPanel.SetEntries(Array.Empty<WorkspaceEntryDisplayItem>());
                 _gitGraphPanel.SetEmptyState();
             }
         }

@@ -118,8 +118,8 @@ public sealed class RealGitSandboxService : IGitSandboxService
                     entry.Path,
                     Path.GetFileName(entry.Path),
                     entry.IsDirectory,
-                    status?.IndexState ?? GitFileState.Unchanged,
-                    status?.WorkingTreeState ?? GitFileState.Unchanged);
+                    status?.IndexState ?? GitFileState.Unknown,
+                    status?.WorkingTreeState ?? GitFileState.Unknown);
             })
             .ToArray();
     }
