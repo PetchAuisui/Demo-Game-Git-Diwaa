@@ -21,10 +21,32 @@ public partial class GitGraphPanel : PanelContainer
 
 	private Label _titleLabel = null!;
 	private RichTextLabel _graphOutput = null!;
+	private ScrollContainer _scroll = null!;
+	private CommitGraphCanvas _canvas = null!;
+	private Label _details = null!;
 
 	public override void _Ready()
 	{
 		BindNodes();
+		var layout = _graphOutput.GetParent();
+		_scroll = new ScrollContainer { SizeFlagsVertical = SizeFlags.ExpandFill, SizeFlagsHorizontal = SizeFlags.ExpandFill };
+		_canvas = new CommitGraphCanvas { SizeFlagsHorizontal = SizeFlags.ExpandFill };
+		_scroll.AddChild(_canvas);
+		layout.AddChild(_scroll);
+		_details = new Label
+		{
+			Text = "เลือกจุดบันทึกเพื่อดูรายละเอียด",
+			AutowrapMode = TextServer.AutowrapMode.WordSmart,
+			CustomMinimumSize = new Vector2(0, 48)
+		};
+		_details.AddThemeFontSizeOverride("font_size", 15);
+		_details.AddThemeColorOverride("font_color", new Color("a3b2ca"));
+		layout.AddChild(_details);
+		_canvas.Selected += commit =>
+		{
+			_details.Text = $"{commit.ShortId} · {commit.Author} · {commit.AuthoredAt.ToLocalTime():dd MMM yyyy HH:mm}\n{commit.Subject}";
+			_details.TooltipText = $"{commit.Id}\nParents: {string.Join(", ", commit.ParentIds)}";
+		};
 		_titleLabel.Text = PanelTitle;
 		SetEmptyState();
 	}
@@ -37,6 +59,11 @@ public partial class GitGraphPanel : PanelContainer
 
 	public void SetEmptyState()
 	{
+		_titleLabel.Text = PanelTitle;
+		_details.Text = "เลือกจุดบันทึกเพื่อดูรายละเอียด";
+		_scroll.Visible = false;
+		_details.Visible = false;
+		_graphOutput.Visible = true;
 		_graphOutput.Text = EmptyText;
 	}
 
@@ -48,6 +75,9 @@ public partial class GitGraphPanel : PanelContainer
 		}
 		else
 		{
+			_scroll.Visible = false;
+			_details.Visible = false;
+			_graphOutput.Visible = true;
 			_graphOutput.Text = text.TrimEnd();
 		}
 	}
@@ -61,20 +91,11 @@ public partial class GitGraphPanel : PanelContainer
 			return;
 		}
 
-		_graphOutput.Clear();
-		for (int i = 0; i < list.Count; i++)
-		{
-			var commit = list[i];
-			var branchText = commit.Branches.Count > 0 ? $" ({string.Join(", ", commit.Branches)})" : string.Empty;
-			var nodeMarker = commit.IsCurrentBranchHead ? "[color=#ffc959]*[/color]" : "[color=#50f29e]*[/color]";
-			var hashColor = commit.IsCurrentBranchHead ? "#ffc959" : "#38bdf8";
-
-			_graphOutput.AppendText($"{nodeMarker} [color={hashColor}]{commit.ShortId}[/color]{branchText} {commit.Subject}\n");
-			if (i < list.Count - 1)
-			{
-				_graphOutput.AppendText("[color=#485268]|[/color]\n");
-			}
-		}
+		_graphOutput.Visible = false;
+		_scroll.Visible = true;
+		_details.Visible = true;
+		_canvas.SetLayout(new CommitGraphLayout(list));
+		_titleLabel.Text = $"{PanelTitle}  ·  {list.Count} commits";
 	}
 
 	public void SetSnapshot(GitRepositorySnapshot snapshot)
