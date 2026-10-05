@@ -32,6 +32,16 @@ public partial class GitGraphPanel : PanelContainer
 	{
 		BindNodes();
 		var layout = _graphOutput.GetParent();
+		var subtitle = new Label
+		{
+			Text = "COMMIT TIMELINE   /   เส้นทางการผจญภัยของโค้ด",
+			ClipText = true,
+			MouseFilter = MouseFilterEnum.Ignore
+		};
+		subtitle.AddThemeFontSizeOverride("font_size", 17);
+		subtitle.AddThemeColorOverride("font_color", new Color("8da6c6"));
+		layout.AddChild(subtitle);
+		layout.MoveChild(subtitle, 1);
 		_scroll = new ScrollContainer { SizeFlagsVertical = SizeFlags.ExpandFill, SizeFlagsHorizontal = SizeFlags.ExpandFill };
 		_canvas = new CommitGraphCanvas { SizeFlagsHorizontal = SizeFlags.ExpandFill };
 		_scroll.AddChild(_canvas);
@@ -40,20 +50,21 @@ public partial class GitGraphPanel : PanelContainer
 		{
 			Text = "เลือกจุดบันทึกเพื่อดูรายละเอียด",
 			AutowrapMode = TextServer.AutowrapMode.WordSmart,
-			CustomMinimumSize = new Vector2(0, 48)
+			CustomMinimumSize = new Vector2(0, 64),
+			SizeFlagsHorizontal = SizeFlags.ExpandFill
 		};
-		_details.AddThemeFontSizeOverride("font_size", 15);
+		_details.AddThemeFontSizeOverride("font_size", 19);
 		_details.AddThemeColorOverride("font_color", new Color("a3b2ca"));
 		var footer = new PanelContainer();
 		var footerStyle = SandboxThemeTokens.CreateCardStyle();
-		footerStyle.BgColor = new Color("111a2b");
-		footerStyle.BorderColor = new Color("2e3d59");
+		footerStyle.BgColor = new Color("17283c");
+		footerStyle.BorderColor = new Color("526381");
 		footerStyle.BorderWidthLeft = footerStyle.BorderWidthRight = footerStyle.BorderWidthTop = footerStyle.BorderWidthBottom = 1;
 		footerStyle.ContentMarginLeft = footerStyle.ContentMarginRight = 14;
 		footerStyle.ContentMarginTop = footerStyle.ContentMarginBottom = 12;
 		footer.AddThemeStyleboxOverride("panel", footerStyle);
-		var footerLayout = new VBoxContainer();
-		footerLayout.AddThemeConstantOverride("separation", 10);
+		var footerLayout = new HBoxContainer();
+		footerLayout.AddThemeConstantOverride("separation", 20);
 		footer.AddChild(footerLayout);
 		footerLayout.AddChild(_details);
 		layout.AddChild(footer);
@@ -63,9 +74,10 @@ public partial class GitGraphPanel : PanelContainer
 			Text = "คัดลอก Commit ID",
 			TooltipText = "คัดลอก hash เต็มของ commit ที่เลือก",
 			Disabled = true,
-			CustomMinimumSize = new Vector2(0, 38)
+			CustomMinimumSize = new Vector2(190, 50),
+			SizeFlagsVertical = SizeFlags.ShrinkCenter
 		};
-		_copyCommitButton.AddThemeFontSizeOverride("font_size", 16);
+		_copyCommitButton.AddThemeFontSizeOverride("font_size", 19);
 		_copyCommitButton.AddThemeColorOverride("font_color", new Color("ffc959"));
 		var buttonStyle = SandboxThemeTokens.CreateButtonStyle();
 		buttonStyle.BgColor = new Color("202d44");
@@ -76,6 +88,10 @@ public partial class GitGraphPanel : PanelContainer
 		hoverStyle.BorderColor = new Color("ffc959");
 		_copyCommitButton.AddThemeStyleboxOverride("hover", hoverStyle);
 		_copyCommitButton.AddThemeStyleboxOverride("pressed", hoverStyle);
+		var disabledStyle = (StyleBoxFlat)buttonStyle.Duplicate();
+		disabledStyle.BgColor = new Color("1c293b");
+		disabledStyle.BorderColor = new Color("36465b");
+		_copyCommitButton.AddThemeStyleboxOverride("disabled", disabledStyle);
 		footerLayout.AddChild(_copyCommitButton);
 		_details.VisibilityChanged += () => footer.Visible = _details.Visible;
 		_copyCommitButton.Pressed += () =>
