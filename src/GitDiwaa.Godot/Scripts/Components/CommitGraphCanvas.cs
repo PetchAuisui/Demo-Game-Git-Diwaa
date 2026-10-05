@@ -42,21 +42,22 @@ public partial class CommitGraphCanvas : Control
         var font = ThemeDB.FallbackFont;
         for (var index = 0; index < _layout.Rows.Count; index++)
         {
-            if (index == _selected || index == _hovered)
                 DrawStyleBox(new StyleBoxFlat
                 {
-                    BgColor = index == _selected ? new Color("26344e") : new Color("171f33"),
+                    BgColor = index == _selected ? new Color("26344e") : index == _hovered
+                        ? new Color("171f33") : new Color("101625"),
                     CornerRadiusTopLeft = 8, CornerRadiusTopRight = 8,
                     CornerRadiusBottomLeft = 8, CornerRadiusBottomRight = 8
-                }, new Rect2(0, index * RowHeight + 2, Size.X, RowHeight - 4));
+                }, new Rect2(0, index * RowHeight + 3, Size.X, RowHeight - 6));
         }
         foreach (var edge in _layout.Edges)
         {
             var from = Point(edge.FromRow, edge.FromLane);
             var to = Point(edge.ToRow, edge.ToLane);
-            var bendY = to.Y - RowHeight / 2;
-            DrawPolyline(new[] { from, new Vector2(from.X, bendY), new Vector2(to.X, to.Y - 12), to },
-                LaneColor(edge.FromLane).Darkened(0.25f), 2.5f, true);
+            var midpoint = (from.Y + to.Y) / 2;
+            var points = Enumerable.Range(0, 25).Select(step =>
+                from.BezierInterpolate(new Vector2(from.X, midpoint), new Vector2(to.X, midpoint), to, step / 24f)).ToArray();
+            DrawPolyline(points, LaneColor(edge.FromLane).Darkened(0.15f), 3, true);
         }
         for (var index = 0; index < _layout.Rows.Count; index++)
         {
@@ -64,16 +65,34 @@ public partial class CommitGraphCanvas : Control
             var point = Point(index, row.Lane);
             var color = row.Commit.IsCurrentBranchHead ? new Color("ffc959") : LaneColor(row.Lane);
             if (row.Commit.IsCurrentBranchHead) DrawCircle(point, 12, new Color(color, 0.18f));
-            DrawCircle(point, 7, color);
+            DrawCircle(point, 8, new Color("0c1220"));
+            DrawArc(point, 7, 0, Mathf.Tau, 32, color, 2.5f, true);
             DrawCircle(point, 3, new Color("111827"));
             var y = index * RowHeight;
             DrawString(font, new Vector2(TextX, y + 26), row.Commit.Subject, HorizontalAlignment.Left,
                 Size.X - TextX - 12, 18, new Color("e7edf7"));
+            DrawString(font, new Vector2(TextX, y + 52), row.Commit.ShortId, HorizontalAlignment.Left,
+                90, 15, new Color("9eacc3"));
             var refs = row.Commit.IsCurrentBranchHead ? "HEAD · " : "";
             refs += string.Join(" · ", row.Commit.Branches);
-            var metadata = row.Commit.ShortId + (refs.Length > 0 ? "   " + refs : "   " + row.Commit.Author);
-            DrawString(font, new Vector2(TextX, y + 50), metadata, HorizontalAlignment.Left,
-                Size.X - TextX - 12, 14, refs.Length > 0 ? color : new Color("94a3bb"));
+            if (refs.Length > 0)
+            {
+                var width = Math.Max(0, Math.Min(font.GetStringSize(refs, fontSize: 14).X + 18, Size.X - TextX - 106));
+                if (width > 18)
+                {
+                    DrawStyleBox(new StyleBoxFlat
+                    {
+                        BgColor = new Color(color, 0.12f),
+                        CornerRadiusTopLeft = 5, CornerRadiusTopRight = 5,
+                        CornerRadiusBottomLeft = 5, CornerRadiusBottomRight = 5
+                    }, new Rect2(TextX + 94, y + 35, width, 24));
+                    DrawString(font, new Vector2(TextX + 103, y + 52), refs,
+                        HorizontalAlignment.Left, width - 18, 14, color);
+                }
+            }
+            else
+                DrawString(font, new Vector2(TextX + 94, y + 52), row.Commit.Author,
+                    HorizontalAlignment.Left, Size.X - TextX - 106, 14, new Color("7d8da8"));
         }
     }
 

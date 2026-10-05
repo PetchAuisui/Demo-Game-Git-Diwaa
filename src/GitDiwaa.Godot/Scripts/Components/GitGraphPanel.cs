@@ -1,6 +1,7 @@
 using Godot;
 using GitDiwaa.Core;
 using GitDiwaa.Godot.ViewModels;
+using GitDiwaa.Godot.Common;
 
 namespace GitDiwaa.Godot.Components;
 
@@ -43,7 +44,19 @@ public partial class GitGraphPanel : PanelContainer
 		};
 		_details.AddThemeFontSizeOverride("font_size", 15);
 		_details.AddThemeColorOverride("font_color", new Color("a3b2ca"));
-		layout.AddChild(_details);
+		var footer = new PanelContainer();
+		var footerStyle = SandboxThemeTokens.CreateCardStyle();
+		footerStyle.BgColor = new Color("111a2b");
+		footerStyle.BorderColor = new Color("2e3d59");
+		footerStyle.BorderWidthLeft = footerStyle.BorderWidthRight = footerStyle.BorderWidthTop = footerStyle.BorderWidthBottom = 1;
+		footerStyle.ContentMarginLeft = footerStyle.ContentMarginRight = 14;
+		footerStyle.ContentMarginTop = footerStyle.ContentMarginBottom = 12;
+		footer.AddThemeStyleboxOverride("panel", footerStyle);
+		var footerLayout = new VBoxContainer();
+		footerLayout.AddThemeConstantOverride("separation", 10);
+		footer.AddChild(footerLayout);
+		footerLayout.AddChild(_details);
+		layout.AddChild(footer);
 		_copyCommitButton = new Button
 		{
 			Name = "CopyCommitButton",
@@ -54,7 +67,17 @@ public partial class GitGraphPanel : PanelContainer
 		};
 		_copyCommitButton.AddThemeFontSizeOverride("font_size", 16);
 		_copyCommitButton.AddThemeColorOverride("font_color", new Color("ffc959"));
-		layout.AddChild(_copyCommitButton);
+		var buttonStyle = SandboxThemeTokens.CreateButtonStyle();
+		buttonStyle.BgColor = new Color("202d44");
+		buttonStyle.BorderColor = new Color("8b7041");
+		_copyCommitButton.AddThemeStyleboxOverride("normal", buttonStyle);
+		var hoverStyle = (StyleBoxFlat)buttonStyle.Duplicate();
+		hoverStyle.BgColor = new Color("30415d");
+		hoverStyle.BorderColor = new Color("ffc959");
+		_copyCommitButton.AddThemeStyleboxOverride("hover", hoverStyle);
+		_copyCommitButton.AddThemeStyleboxOverride("pressed", hoverStyle);
+		footerLayout.AddChild(_copyCommitButton);
+		_details.VisibilityChanged += () => footer.Visible = _details.Visible;
 		_copyCommitButton.Pressed += () =>
 		{
 			if (_selectedCommit == null) return;
