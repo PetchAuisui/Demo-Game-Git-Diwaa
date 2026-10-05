@@ -24,6 +24,8 @@ public partial class GitGraphPanel : PanelContainer
 	private ScrollContainer _scroll = null!;
 	private CommitGraphCanvas _canvas = null!;
 	private Label _details = null!;
+	private Button _copyCommitButton = null!;
+	private CommitGraphDisplayNode? _selectedCommit;
 
 	public override void _Ready()
 	{
@@ -42,11 +44,24 @@ public partial class GitGraphPanel : PanelContainer
 		_details.AddThemeFontSizeOverride("font_size", 15);
 		_details.AddThemeColorOverride("font_color", new Color("a3b2ca"));
 		layout.AddChild(_details);
-		_canvas.Selected += commit =>
+		_copyCommitButton = new Button
 		{
-			_details.Text = $"{commit.ShortId} · {commit.Author} · {commit.AuthoredAt.ToLocalTime():dd MMM yyyy HH:mm}\n{commit.Subject}";
-			_details.TooltipText = $"{commit.Id}\nParents: {string.Join(", ", commit.ParentIds)}";
+			Name = "CopyCommitButton",
+			Text = "คัดลอก Commit ID",
+			TooltipText = "คัดลอก hash เต็มของ commit ที่เลือก",
+			Disabled = true,
+			CustomMinimumSize = new Vector2(0, 38)
 		};
+		_copyCommitButton.AddThemeFontSizeOverride("font_size", 16);
+		_copyCommitButton.AddThemeColorOverride("font_color", new Color("ffc959"));
+		layout.AddChild(_copyCommitButton);
+		_copyCommitButton.Pressed += () =>
+		{
+			if (_selectedCommit == null) return;
+			DisplayServer.ClipboardSet(_selectedCommit.Id);
+			_copyCommitButton.Text = "✓ คัดลอกแล้ว";
+		};
+		_canvas.Selected += ShowCommitDetails;
 		_titleLabel.Text = PanelTitle;
 		SetEmptyState();
 	}
@@ -59,6 +74,8 @@ public partial class GitGraphPanel : PanelContainer
 
 	public void SetEmptyState()
 	{
+		ShowCommitDetails(null);
+		_copyCommitButton.Visible = false;
 		_titleLabel.Text = PanelTitle;
 		_details.Text = "เลือกจุดบันทึกเพื่อดูรายละเอียด";
 		_scroll.Visible = false;
@@ -75,6 +92,8 @@ public partial class GitGraphPanel : PanelContainer
 		}
 		else
 		{
+			ShowCommitDetails(null);
+			_copyCommitButton.Visible = false;
 			_scroll.Visible = false;
 			_details.Visible = false;
 			_graphOutput.Visible = true;
@@ -94,6 +113,8 @@ public partial class GitGraphPanel : PanelContainer
 		_graphOutput.Visible = false;
 		_scroll.Visible = true;
 		_details.Visible = true;
+		_copyCommitButton.Visible = true;
+		ShowCommitDetails(list.FirstOrDefault(commit => commit.Id == _selectedCommit?.Id));
 		_canvas.SetLayout(new CommitGraphLayout(list));
 		_titleLabel.Text = $"{PanelTitle}  ·  {list.Count} commits";
 	}
@@ -104,5 +125,16 @@ public partial class GitGraphPanel : PanelContainer
 			CommitGraphDisplayNode.FromCoreCommit(c, snapshot.Branches, snapshot.CurrentBranch)
 		);
 		SetCommits(displayNodes);
+	}
+
+	private void ShowCommitDetails(CommitGraphDisplayNode? commit)
+	{
+		_selectedCommit = commit;
+		_copyCommitButton.Disabled = commit == null;
+		_copyCommitButton.Text = "คัดลอก Commit ID";
+		_details.Text = commit == null ? "เลือกจุดบันทึกเพื่อดูรายละเอียด" :
+			$"{commit.ShortId} · {commit.Author} · {commit.AuthoredAt.ToLocalTime():dd MMM yyyy HH:mm}\n{commit.Subject}";
+		_details.TooltipText = commit == null ? string.Empty :
+			$"{commit.Id}\nParents: {string.Join(", ", commit.ParentIds)}";
 	}
 }
