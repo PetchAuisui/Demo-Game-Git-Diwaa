@@ -1,7 +1,9 @@
-[gd_scene load_steps=10 format=3]
+[gd_scene load_steps=12 format=3]
 
 [ext_resource type="Script" path="res://Scripts/Components/FilesPanel.cs" id="1_script"]
 [ext_resource type="Theme" path="res://Scenes/FileDialogTheme.tres" id="2_dialog_theme"]
+[ext_resource type="Texture2D" path="res://assets/icons/file.svg" id="3_file_icon"]
+[ext_resource type="Texture2D" path="res://assets/icons/folder.svg" id="4_folder_icon"]
 
 [sub_resource type="StyleBoxFlat" id="Style_card"]
 bg_color = Color(0.025, 0.031, 0.055, 0.94)
@@ -332,7 +334,18 @@ theme_override_constants/margin_bottom = 16
 layout_mode = 2
 theme_override_constants/separation = 12
 
-[node name="Heading" type="Label" parent="CreateFileDialog/Content/Layout"]
+[node name="Heading" type="HBoxContainer" parent="CreateFileDialog/Content/Layout"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="Icon" type="TextureRect" parent="CreateFileDialog/Content/Layout/Heading"]
+custom_minimum_size = Vector2(28, 28)
+layout_mode = 2
+texture = ExtResource("3_file_icon")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Label" type="Label" parent="CreateFileDialog/Content/Layout/Heading"]
 layout_mode = 2
 theme_override_colors/font_color = Color(1, 0.79, 0.35, 1)
 theme_override_font_sizes/font_size = 26
@@ -360,18 +373,58 @@ text_overrun_behavior = 3
 [node name="CreateFolderDialog" type="ConfirmationDialog" parent="."]
 unique_name_in_owner = true
 title = "สร้างโฟลเดอร์ใหม่"
-size = Vector2i(480, 180)
+size = Vector2i(520, 250)
+borderless = true
+theme = ExtResource("2_dialog_theme")
+unresizable = true
 ok_button_text = "สร้างโฟลเดอร์"
 cancel_button_text = "ยกเลิก"
-dialog_text = "ชื่อโฟลเดอร์ (สร้างในโฟลเดอร์ที่เลือก)"
 
-[node name="CreateFolderNameInput" type="LineEdit" parent="CreateFolderDialog"]
+[node name="Content" type="MarginContainer" parent="CreateFolderDialog"]
+theme_override_constants/margin_left = 4
+theme_override_constants/margin_top = 18
+theme_override_constants/margin_right = 4
+theme_override_constants/margin_bottom = 16
+
+[node name="Layout" type="VBoxContainer" parent="CreateFolderDialog/Content"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="Heading" type="HBoxContainer" parent="CreateFolderDialog/Content/Layout"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="Icon" type="TextureRect" parent="CreateFolderDialog/Content/Layout/Heading"]
+custom_minimum_size = Vector2(28, 28)
+layout_mode = 2
+texture = ExtResource("4_folder_icon")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Label" type="Label" parent="CreateFolderDialog/Content/Layout/Heading"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.38, 0.74, 1, 1)
+theme_override_font_sizes/font_size = 26
+text = "สร้างโฟลเดอร์ใหม่"
+
+[node name="NameLabel" type="Label" parent="CreateFolderDialog/Content/Layout"]
+layout_mode = 2
+text = "ชื่อโฟลเดอร์"
+
+[node name="CreateFolderNameInput" type="LineEdit" parent="CreateFolderDialog/Content/Layout"]
 unique_name_in_owner = true
-offset_left = 16.0
-offset_top = 72.0
-offset_right = 464.0
-offset_bottom = 112.0
+layout_mode = 2
+custom_minimum_size = Vector2(0, 48)
+size_flags_vertical = 0
 placeholder_text = "เช่น quests"
+
+[node name="CreateFolderLocation" type="Label" parent="CreateFolderDialog/Content/Layout"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.68, 0.73, 0.85, 1)
+theme_override_font_sizes/font_size = 16
+text = "สร้างใน: /"
+text_overrun_behavior = 3
 
 [node name="RenameDialog" type="ConfirmationDialog" parent="."]
 unique_name_in_owner = true

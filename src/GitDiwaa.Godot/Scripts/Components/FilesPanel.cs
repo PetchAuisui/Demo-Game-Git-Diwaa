@@ -66,6 +66,14 @@ public partial class FilesPanel : PanelContainer
 		_createFileDialog.RegisterTextEnter(_createFileNameInput);
 		_createFileNameInput.TextChanged += text =>
 			_createFileDialog.GetOkButton().Disabled = string.IsNullOrWhiteSpace(text);
+
+		_createFolderDialog.GetOkButton().ThemeTypeVariation = "CreateAction";
+		_createFolderDialog.GetOkButton().CustomMinimumSize = new Vector2(172, 46);
+		_createFolderDialog.GetCancelButton().CustomMinimumSize = new Vector2(112, 46);
+		_createFolderDialog.RegisterTextEnter(_createFolderNameInput);
+		_createFolderNameInput.TextChanged += text =>
+			_createFolderDialog.GetOkButton().Disabled = string.IsNullOrWhiteSpace(text);
+
 		_titleLabel.Text = PanelTitle;
 
 		_filesList.ItemSelected += OnItemSelected;
@@ -313,11 +321,18 @@ public partial class FilesPanel : PanelContainer
 	private void ShowCreateDialog(ConfirmationDialog dialog, LineEdit input)
 	{
 		input.Clear();
+		dialog.GetOkButton().Disabled = true;
+		var folder = System.IO.Path.GetDirectoryName(BuildPathInSelectedFolder("dummy"))?.Replace('\\', '/');
+
 		if (dialog == _createFileDialog)
 		{
-			_createFileDialog.GetOkButton().Disabled = true;
-			var folder = System.IO.Path.GetDirectoryName(BuildPathInSelectedFolder("new-file"))?.Replace('\\', '/');
 			var location = GetNode<Label>("%CreateFileLocation");
+			location.Text = string.IsNullOrEmpty(folder) ? "ตำแหน่ง: พื้นที่ทำงาน /" : $"ตำแหน่ง: /{folder}";
+			location.TooltipText = location.Text;
+		}
+		else if (dialog == _createFolderDialog)
+		{
+			var location = GetNode<Label>("%CreateFolderLocation");
 			location.Text = string.IsNullOrEmpty(folder) ? "ตำแหน่ง: พื้นที่ทำงาน /" : $"ตำแหน่ง: /{folder}";
 			location.TooltipText = location.Text;
 		}
