@@ -141,7 +141,7 @@ public partial class FilesPanel : PanelContainer
 	{
 		var previousSelection = _selectedPath;
 		_entries.Clear();
-		_entries.AddRange(entries.OrderBy(entry => entry.Path, StringComparer.OrdinalIgnoreCase));
+		_entries.AddRange(SortAsTree(entries));
 		_filesList.Clear();
 
 		if (_entries.Count == 0)
@@ -158,7 +158,7 @@ public partial class FilesPanel : PanelContainer
 		{
 			var entry = _entries[index];
 			var depth = entry.Path.Count(character => character == '/');
-			var indent = new string(' ', depth * 3);
+			var indent = depth == 0 ? string.Empty : new string('\u2003', (depth - 1) * 2) + "\u2514 ";
 			var status = string.IsNullOrEmpty(entry.StatusBadge) ? string.Empty : $" {entry.StatusBadge}";
 			var icon = entry.IsDirectory ? _folderIcon : _fileIcon;
 			_filesList.AddItem($"{indent}{entry.Name}{status}", icon);
@@ -178,6 +178,43 @@ public partial class FilesPanel : PanelContainer
 			_selectedIsDirectory = false;
 		}
 		UpdateActionButtons();
+	}
+
+	/// <summary>
+	/// Orders entries depth-first so every child sits directly under its parent,
+	/// with folders listed before files at each level.
+	/// </summary>
+	private static List<WorkspaceEntryDisplayItem> SortAsTree(IEnumerable<WorkspaceEntryDisplayItem> entries)
+	{
+		var list = entries.ToList();
+		var directories = new HashSet<string>(
+			list.Where(entry => entry.IsDirectory).Select(entry => entry.Path), StringComparer.Ordinal);
+
+		(string Name, bool IsDir)[] Key(WorkspaceEntryDisplayItem entry)
+		{
+			var parts = entry.Path.Split('/');
+			var result = new (string, bool)[parts.Length];
+			for (var i = 0; i < parts.Length; i++)
+			{
+				var isLast = i == parts.Length - 1;
+				result[i] = (parts[i], !isLast || directories.Contains(entry.Path));
+			}
+			return result;
+		}
+
+		var keyed = list.Select(entry => (Entry: entry, Key: Key(entry))).ToList();
+		keyed.Sort((a, b) =>
+		{
+			var length = Math.Min(a.Key.Length, b.Key.Length);
+			for (var i = 0; i < length; i++)
+			{
+				if (a.Key[i].IsDir != b.Key[i].IsDir) return a.Key[i].IsDir ? -1 : 1;
+				var byName = string.Compare(a.Key[i].Name, b.Key[i].Name, StringComparison.OrdinalIgnoreCase);
+				if (byName != 0) return byName;
+			}
+			return a.Key.Length.CompareTo(b.Key.Length);
+		});
+		return keyed.Select(item => item.Entry).ToList();
 	}
 
 	public void ShowFile(string filePath, string content)
