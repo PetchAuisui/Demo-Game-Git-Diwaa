@@ -158,10 +158,9 @@ public partial class FilesPanel : PanelContainer
 		{
 			var entry = _entries[index];
 			var depth = entry.Path.Count(character => character == '/');
-			var indent = depth == 0 ? string.Empty : new string('\u2003', (depth - 1) * 2) + "\u2514 ";
 			var status = string.IsNullOrEmpty(entry.StatusBadge) ? string.Empty : $" {entry.StatusBadge}";
-			var icon = entry.IsDirectory ? _folderIcon : _fileIcon;
-			_filesList.AddItem($"{indent}{entry.Name}{status}", icon);
+			var icon = GetIndentedIcon(entry.IsDirectory, depth);
+			_filesList.AddItem($"{entry.Name}{status}", icon);
 			_filesList.SetItemTooltip(index, entry.Path);
 			if (entry.StatusColor.HasValue)
 			{
@@ -178,6 +177,30 @@ public partial class FilesPanel : PanelContainer
 			_selectedIsDirectory = false;
 		}
 		UpdateActionButtons();
+	}
+
+	private const int IndentPixels = 18;
+	private readonly Dictionary<(bool, int), Texture2D> _indentedIcons = new();
+
+	/// <summary>
+	/// ItemList always draws the icon at the far left, so nesting is expressed by padding
+	/// the icon texture with transparent pixels; the icon then sits right before the name.
+	/// </summary>
+	private Texture2D GetIndentedIcon(bool isDirectory, int depth)
+	{
+		var source = isDirectory ? _folderIcon : _fileIcon;
+		if (depth == 0) return source;
+		if (_indentedIcons.TryGetValue((isDirectory, depth), out var cached)) return cached;
+
+		var image = source.GetImage();
+		if (image.IsCompressed()) image.Decompress();
+		var pad = depth * IndentPixels;
+		var padded = Image.CreateEmpty(image.GetWidth() + pad, image.GetHeight(), false, Image.Format.Rgba8);
+		image.Convert(Image.Format.Rgba8);
+		padded.BlitRect(image, new Rect2I(Vector2I.Zero, image.GetSize()), new Vector2I(pad, 0));
+		var texture = ImageTexture.CreateFromImage(padded);
+		_indentedIcons[(isDirectory, depth)] = texture;
+		return texture;
 	}
 
 	/// <summary>
