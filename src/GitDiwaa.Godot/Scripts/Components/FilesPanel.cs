@@ -84,6 +84,7 @@ public partial class FilesPanel : PanelContainer
 
 		_filesList.ItemSelected += OnItemSelected;
 		_filesList.ItemActivated += OnItemActivated;
+		_filesList.EmptyClicked += OnEmptyClicked;
 		_newFileButton.Pressed += () => ShowCreateDialog(_createFileDialog, _createFileNameInput);
 		_newFolderButton.Pressed += () => ShowCreateDialog(_createFolderDialog, _createFolderNameInput);
 		_openButton.Pressed += () =>
@@ -139,9 +140,16 @@ public partial class FilesPanel : PanelContainer
 
 	public void SetEntries(IEnumerable<WorkspaceEntryDisplayItem> entries)
 	{
+		_allEntries.Clear();
+		_allEntries.AddRange(SortAsTree(entries));
+		RenderEntries();
+	}
+
+	private void RenderEntries()
+	{
 		var previousSelection = _selectedPath;
 		_entries.Clear();
-		_entries.AddRange(entries.OrderBy(entry => entry.Path, StringComparer.OrdinalIgnoreCase));
+		_entries.AddRange(_allEntries.Where(entry => !IsHiddenByCollapsedAncestor(entry.Path)));
 		_filesList.Clear();
 
 		if (_entries.Count == 0)
@@ -158,10 +166,9 @@ public partial class FilesPanel : PanelContainer
 		{
 			var entry = _entries[index];
 			var depth = entry.Path.Count(character => character == '/');
-			var indent = new string(' ', depth * 3);
 			var status = string.IsNullOrEmpty(entry.StatusBadge) ? string.Empty : $" {entry.StatusBadge}";
-			var icon = entry.IsDirectory ? _folderIcon : _fileIcon;
-			_filesList.AddItem($"{indent}{entry.Name}{status}", icon);
+			var icon = GetTreeIcon(entry.IsDirectory, depth, entry.IsDirectory && !_collapsed.Contains(entry.Path));
+			_filesList.AddItem($"{entry.Name}{status}", icon);
 			_filesList.SetItemTooltip(index, entry.Path);
 			if (entry.StatusColor.HasValue)
 			{
@@ -178,6 +185,111 @@ public partial class FilesPanel : PanelContainer
 			_selectedIsDirectory = false;
 		}
 		UpdateActionButtons();
+	}
+
+	private const int IndentPixels = 22;
+	private const int ChevronSlotPixels = 22;
+	private readonly List<WorkspaceEntryDisplayItem> _allEntries = new();
+	private readonly HashSet<string> _collapsed = new(StringComparer.Ordinal);
+	private readonly Dictionary<(bool, int, bool), Texture2D> _treeIcons = new();
+
+	private bool IsHiddenByCollapsedAncestor(string path)
+	{
+		var slash = path.LastIndexOf('/');
+		while (slash > 0)
+		{
+			if (_collapsed.Contains(path[..slash])) return true;
+			slash = path.LastIndexOf('/', slash - 1);
+		}
+		return false;
+	}
+
+	/// <summary>
+	/// ItemList always draws the icon at the far left, so each row's icon texture is composed as
+	/// [indent][chevron slot][icon]: folders get a chevron, files leave the slot blank (VS Code style).
+	/// </summary>
+	private Texture2D GetTreeIcon(bool isDirectory, int depth, bool expanded)
+	{
+		var key = (isDirectory, depth, expanded);
+		if (_treeIcons.TryGetValue(key, out var cached)) return cached;
+
+		var source = (isDirectory ? _folderIcon : _fileIcon).GetImage();
+		if (source.IsCompressed()) source.Decompress();
+		source.Convert(Image.Format.Rgba8);
+
+		var left = depth * IndentPixels;
+		var gap = 2;
+		var width = left + ChevronSlotPixels + gap + source.GetWidth();
+		var height = Math.Max(source.GetHeight(), ChevronSlotPixels);
+		var image = Image.CreateEmpty(width, height, false, Image.Format.Rgba8);
+		if (isDirectory) DrawChevron(image, left, height / 2, expanded);
+		image.BlitRect(source, new Rect2I(Vector2I.Zero, source.GetSize()),
+			new Vector2I(left + ChevronSlotPixels + gap, (height - source.GetHeight()) / 2));
+
+		var texture = ImageTexture.CreateFromImage(image);
+		_treeIcons[key] = texture;
+		return texture;
+	}
+
+	private static void DrawChevron(Image image, int slotX, int centerY, bool expanded)
+	{
+		var color = new Color(0.78f, 0.80f, 0.88f);
+		var cx = slotX + ChevronSlotPixels / 2;
+		for (var i = 0; i < 7; i++)
+		{
+			for (var thickness = 0; thickness < 2; thickness++)
+			{
+				if (expanded)
+				{
+					// "v": arms meet at the bottom.
+					image.SetPixel(cx - 6 + i, centerY - 3 + i - thickness + 1, color);
+					image.SetPixel(cx + 6 - i, centerY - 3 + i - thickness + 1, color);
+				}
+				else
+				{
+					// ">": arms meet at the right.
+					image.SetPixel(cx - 3 + i - thickness + 1, centerY - 6 + i, color);
+					image.SetPixel(cx - 3 + i - thickness + 1, centerY + 6 - i, color);
+				}
+			}
+		}
+	}
+
+	/// <summary>
+	/// Orders entries depth-first so every child sits directly under its parent,
+	/// with folders listed before files at each level.
+	/// </summary>
+	private static List<WorkspaceEntryDisplayItem> SortAsTree(IEnumerable<WorkspaceEntryDisplayItem> entries)
+	{
+		var list = entries.ToList();
+		var directories = new HashSet<string>(
+			list.Where(entry => entry.IsDirectory).Select(entry => entry.Path), StringComparer.Ordinal);
+
+		(string Name, bool IsDir)[] Key(WorkspaceEntryDisplayItem entry)
+		{
+			var parts = entry.Path.Split('/');
+			var result = new (string, bool)[parts.Length];
+			for (var i = 0; i < parts.Length; i++)
+			{
+				var isLast = i == parts.Length - 1;
+				result[i] = (parts[i], !isLast || directories.Contains(entry.Path));
+			}
+			return result;
+		}
+
+		var keyed = list.Select(entry => (Entry: entry, Key: Key(entry))).ToList();
+		keyed.Sort((a, b) =>
+		{
+			var length = Math.Min(a.Key.Length, b.Key.Length);
+			for (var i = 0; i < length; i++)
+			{
+				if (a.Key[i].IsDir != b.Key[i].IsDir) return a.Key[i].IsDir ? -1 : 1;
+				var byName = string.Compare(a.Key[i].Name, b.Key[i].Name, StringComparison.OrdinalIgnoreCase);
+				if (byName != 0) return byName;
+			}
+			return a.Key.Length.CompareTo(b.Key.Length);
+		});
+		return keyed.Select(item => item.Entry).ToList();
 	}
 
 	public void ShowFile(string filePath, string content)
@@ -244,8 +356,25 @@ public partial class FilesPanel : PanelContainer
 		var entry = _entries[(int)index];
 		_selectedPath = entry.Path;
 		_selectedIsDirectory = entry.IsDirectory;
+		if (entry.IsDirectory)
+		{
+			// Click toggles expand/collapse, like a VS Code explorer folder.
+			if (!_collapsed.Remove(entry.Path)) _collapsed.Add(entry.Path);
+			RenderEntries();
+		}
 		UpdateActionButtons();
 		ShowFeedback(entry.IsDirectory ? $"เลือกโฟลเดอร์ {entry.Path}" : $"เลือกไฟล์ {entry.Path}");
+	}
+
+	/// <summary>Clicking blank space clears the selection and returns to the WORKSPACE root.</summary>
+	private void OnEmptyClicked(Vector2 atPosition, long mouseButtonIndex)
+	{
+		if (mouseButtonIndex != (long)MouseButton.Left) return;
+		_filesList.DeselectAll();
+		_selectedPath = null;
+		_selectedIsDirectory = false;
+		UpdateActionButtons();
+		ShowFeedback("เลือก WORKSPACE");
 	}
 
 	private void OnItemActivated(long index)
