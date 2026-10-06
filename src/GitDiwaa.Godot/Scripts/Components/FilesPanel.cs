@@ -84,6 +84,7 @@ public partial class FilesPanel : PanelContainer
 
 		_filesList.ItemSelected += OnItemSelected;
 		_filesList.ItemActivated += OnItemActivated;
+		_filesList.EmptyClicked += OnEmptyClicked;
 		_newFileButton.Pressed += () => ShowCreateDialog(_createFileDialog, _createFileNameInput);
 		_newFolderButton.Pressed += () => ShowCreateDialog(_createFolderDialog, _createFolderNameInput);
 		_openButton.Pressed += () =>
@@ -363,6 +364,17 @@ public partial class FilesPanel : PanelContainer
 		}
 		UpdateActionButtons();
 		ShowFeedback(entry.IsDirectory ? $"เลือกโฟลเดอร์ {entry.Path}" : $"เลือกไฟล์ {entry.Path}");
+	}
+
+	/// <summary>Clicking blank space clears the selection and returns to the WORKSPACE root.</summary>
+	private void OnEmptyClicked(Vector2 atPosition, long mouseButtonIndex)
+	{
+		if (mouseButtonIndex != (long)MouseButton.Left) return;
+		_filesList.DeselectAll();
+		_selectedPath = null;
+		_selectedIsDirectory = false;
+		UpdateActionButtons();
+		ShowFeedback("เลือก WORKSPACE");
 	}
 
 	private void OnItemActivated(long index)
