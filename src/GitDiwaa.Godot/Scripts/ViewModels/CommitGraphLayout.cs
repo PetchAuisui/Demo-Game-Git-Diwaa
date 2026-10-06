@@ -1,7 +1,7 @@
 namespace GitDiwaa.Godot.ViewModels;
 
 public sealed record CommitGraphRow(CommitGraphDisplayNode Commit, int Lane);
-public sealed record CommitGraphEdge(int FromRow, int FromLane, int ToRow, int ToLane);
+public sealed record CommitGraphEdge(int FromRow, int FromLane, int ToRow, int ToLane, bool IsMerge = false);
 
 /// <summary>Assigns lanes from ancestry, keeping each first-parent chain together.</summary>
 public sealed class CommitGraphLayout
@@ -44,9 +44,9 @@ public sealed class CommitGraphLayout
         var indexes = rows.Select((row, index) => (row.Commit.Id, index)).ToDictionary(pair => pair.Id, pair => pair.index);
         var edges = new List<CommitGraphEdge>();
         for (var index = 0; index < rows.Count; index++)
-            foreach (var parent in rows[index].Commit.ParentIds)
+            foreach (var (parent, parentIndex) in rows[index].Commit.ParentIds.Select((id, i) => (id, i)))
                 if (indexes.TryGetValue(parent, out var target))
-                    edges.Add(new(index, rows[index].Lane, target, rows[target].Lane));
+                    edges.Add(new(index, rows[index].Lane, target, rows[target].Lane, parentIndex > 0));
         Rows = rows;
         Edges = edges;
         LaneCount = maxLanes;

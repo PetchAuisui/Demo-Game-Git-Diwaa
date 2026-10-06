@@ -54,8 +54,16 @@ public partial class CommitGraphCanvas : Control
         {
             var from = Point(edge.FromRow, edge.FromLane);
             var to = Point(edge.ToRow, edge.ToLane);
-            var bendY = to.Y - RowHeight / 2;
-            DrawPolyline(new[] { from, new Vector2(from.X, bendY), new Vector2(to.X, to.Y - 12), to },
+            if (edge.IsMerge && edge.FromLane != edge.ToLane)
+            {
+                // Merge edge: leave the merge commit diagonally, then run down the merged branch's lane.
+                var bendY = from.Y + RowHeight / 2;
+                DrawPolyline(new[] { from, new Vector2(from.X, from.Y + 12), new Vector2(to.X, bendY), to },
+                    LaneColor(edge.ToLane).Darkened(0.25f), 2.5f, true);
+                continue;
+            }
+            var forkY = to.Y - RowHeight / 2;
+            DrawPolyline(new[] { from, new Vector2(from.X, forkY), new Vector2(to.X, to.Y - 12), to },
                 LaneColor(edge.FromLane).Darkened(0.25f), 2.5f, true);
         }
         for (var index = 0; index < _layout.Rows.Count; index++)
