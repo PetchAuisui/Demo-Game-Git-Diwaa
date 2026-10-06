@@ -139,9 +139,16 @@ public partial class FilesPanel : PanelContainer
 
 	public void SetEntries(IEnumerable<WorkspaceEntryDisplayItem> entries)
 	{
+		_allEntries.Clear();
+		_allEntries.AddRange(SortAsTree(entries));
+		RenderEntries();
+	}
+
+	private void RenderEntries()
+	{
 		var previousSelection = _selectedPath;
 		_entries.Clear();
-		_entries.AddRange(SortAsTree(entries));
+		_entries.AddRange(_allEntries.Where(entry => !IsHiddenByCollapsedAncestor(entry.Path)));
 		_filesList.Clear();
 
 		if (_entries.Count == 0)
@@ -159,7 +166,7 @@ public partial class FilesPanel : PanelContainer
 			var entry = _entries[index];
 			var depth = entry.Path.Count(character => character == '/');
 			var status = string.IsNullOrEmpty(entry.StatusBadge) ? string.Empty : $" {entry.StatusBadge}";
-			var icon = GetIndentedIcon(entry.IsDirectory, depth);
+			var icon = GetTreeIcon(entry.IsDirectory, depth, entry.IsDirectory && !_collapsed.Contains(entry.Path));
 			_filesList.AddItem($"{entry.Name}{status}", icon);
 			_filesList.SetItemTooltip(index, entry.Path);
 			if (entry.StatusColor.HasValue)
@@ -179,28 +186,72 @@ public partial class FilesPanel : PanelContainer
 		UpdateActionButtons();
 	}
 
-	private const int IndentPixels = 18;
-	private readonly Dictionary<(bool, int), Texture2D> _indentedIcons = new();
+	private const int IndentPixels = 16;
+	private const int ChevronSlotPixels = 16;
+	private readonly List<WorkspaceEntryDisplayItem> _allEntries = new();
+	private readonly HashSet<string> _collapsed = new(StringComparer.Ordinal);
+	private readonly Dictionary<(bool, int, bool), Texture2D> _treeIcons = new();
+
+	private bool IsHiddenByCollapsedAncestor(string path)
+	{
+		var slash = path.LastIndexOf('/');
+		while (slash > 0)
+		{
+			if (_collapsed.Contains(path[..slash])) return true;
+			slash = path.LastIndexOf('/', slash - 1);
+		}
+		return false;
+	}
 
 	/// <summary>
-	/// ItemList always draws the icon at the far left, so nesting is expressed by padding
-	/// the icon texture with transparent pixels; the icon then sits right before the name.
+	/// ItemList always draws the icon at the far left, so each row's icon texture is composed as
+	/// [indent][chevron slot][icon]: folders get a chevron, files leave the slot blank (VS Code style).
 	/// </summary>
-	private Texture2D GetIndentedIcon(bool isDirectory, int depth)
+	private Texture2D GetTreeIcon(bool isDirectory, int depth, bool expanded)
 	{
-		var source = isDirectory ? _folderIcon : _fileIcon;
-		if (depth == 0) return source;
-		if (_indentedIcons.TryGetValue((isDirectory, depth), out var cached)) return cached;
+		var key = (isDirectory, depth, expanded);
+		if (_treeIcons.TryGetValue(key, out var cached)) return cached;
 
-		var image = source.GetImage();
-		if (image.IsCompressed()) image.Decompress();
-		var pad = depth * IndentPixels;
-		var padded = Image.CreateEmpty(image.GetWidth() + pad, image.GetHeight(), false, Image.Format.Rgba8);
-		image.Convert(Image.Format.Rgba8);
-		padded.BlitRect(image, new Rect2I(Vector2I.Zero, image.GetSize()), new Vector2I(pad, 0));
-		var texture = ImageTexture.CreateFromImage(padded);
-		_indentedIcons[(isDirectory, depth)] = texture;
+		var source = (isDirectory ? _folderIcon : _fileIcon).GetImage();
+		if (source.IsCompressed()) source.Decompress();
+		source.Convert(Image.Format.Rgba8);
+
+		var left = depth * IndentPixels;
+		var gap = 4;
+		var width = left + ChevronSlotPixels + gap + source.GetWidth();
+		var height = Math.Max(source.GetHeight(), ChevronSlotPixels);
+		var image = Image.CreateEmpty(width, height, false, Image.Format.Rgba8);
+		if (isDirectory) DrawChevron(image, left, height / 2, expanded);
+		image.BlitRect(source, new Rect2I(Vector2I.Zero, source.GetSize()),
+			new Vector2I(left + ChevronSlotPixels + gap, (height - source.GetHeight()) / 2));
+
+		var texture = ImageTexture.CreateFromImage(image);
+		_treeIcons[key] = texture;
 		return texture;
+	}
+
+	private static void DrawChevron(Image image, int slotX, int centerY, bool expanded)
+	{
+		var color = new Color(0.78f, 0.80f, 0.88f);
+		var cx = slotX + ChevronSlotPixels / 2;
+		for (var i = 0; i < 5; i++)
+		{
+			for (var thickness = 0; thickness < 2; thickness++)
+			{
+				if (expanded)
+				{
+					// "v": arms meet at the bottom.
+					image.SetPixel(cx - 4 + i, centerY - 2 + i - thickness + 1, color);
+					image.SetPixel(cx + 4 - i, centerY - 2 + i - thickness + 1, color);
+				}
+				else
+				{
+					// ">": arms meet at the right.
+					image.SetPixel(cx - 2 + i - thickness + 1, centerY - 4 + i, color);
+					image.SetPixel(cx - 2 + i - thickness + 1, centerY + 4 - i, color);
+				}
+			}
+		}
 	}
 
 	/// <summary>
@@ -304,6 +355,12 @@ public partial class FilesPanel : PanelContainer
 		var entry = _entries[(int)index];
 		_selectedPath = entry.Path;
 		_selectedIsDirectory = entry.IsDirectory;
+		if (entry.IsDirectory)
+		{
+			// Click toggles expand/collapse, like a VS Code explorer folder.
+			if (!_collapsed.Remove(entry.Path)) _collapsed.Add(entry.Path);
+			RenderEntries();
+		}
 		UpdateActionButtons();
 		ShowFeedback(entry.IsDirectory ? $"เลือกโฟลเดอร์ {entry.Path}" : $"เลือกไฟล์ {entry.Path}");
 	}
