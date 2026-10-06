@@ -186,8 +186,8 @@ public partial class FilesPanel : PanelContainer
 		UpdateActionButtons();
 	}
 
-	private const int IndentPixels = 16;
-	private const int ChevronSlotPixels = 16;
+	private const int IndentPixels = 22;
+	private const int ChevronSlotPixels = 22;
 	private readonly List<WorkspaceEntryDisplayItem> _allEntries = new();
 	private readonly HashSet<string> _collapsed = new(StringComparer.Ordinal);
 	private readonly Dictionary<(bool, int, bool), Texture2D> _treeIcons = new();
@@ -217,7 +217,7 @@ public partial class FilesPanel : PanelContainer
 		source.Convert(Image.Format.Rgba8);
 
 		var left = depth * IndentPixels;
-		var gap = 4;
+		var gap = 2;
 		var width = left + ChevronSlotPixels + gap + source.GetWidth();
 		var height = Math.Max(source.GetHeight(), ChevronSlotPixels);
 		var image = Image.CreateEmpty(width, height, false, Image.Format.Rgba8);
@@ -234,21 +234,21 @@ public partial class FilesPanel : PanelContainer
 	{
 		var color = new Color(0.78f, 0.80f, 0.88f);
 		var cx = slotX + ChevronSlotPixels / 2;
-		for (var i = 0; i < 5; i++)
+		for (var i = 0; i < 7; i++)
 		{
 			for (var thickness = 0; thickness < 2; thickness++)
 			{
 				if (expanded)
 				{
 					// "v": arms meet at the bottom.
-					image.SetPixel(cx - 4 + i, centerY - 2 + i - thickness + 1, color);
-					image.SetPixel(cx + 4 - i, centerY - 2 + i - thickness + 1, color);
+					image.SetPixel(cx - 6 + i, centerY - 3 + i - thickness + 1, color);
+					image.SetPixel(cx + 6 - i, centerY - 3 + i - thickness + 1, color);
 				}
 				else
 				{
 					// ">": arms meet at the right.
-					image.SetPixel(cx - 2 + i - thickness + 1, centerY - 4 + i, color);
-					image.SetPixel(cx - 2 + i - thickness + 1, centerY + 4 - i, color);
+					image.SetPixel(cx - 3 + i - thickness + 1, centerY - 6 + i, color);
+					image.SetPixel(cx - 3 + i - thickness + 1, centerY + 6 - i, color);
 				}
 			}
 		}
