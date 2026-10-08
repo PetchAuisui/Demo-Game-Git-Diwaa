@@ -50,7 +50,10 @@ extends Sprite2D
 var shards: Array[Sprite2D] = []
 var can_continue: bool = false
 var is_continuing: bool = false
+var is_fast_forwarding: bool = false
+var can_fast_forward: bool = true
 var tw_ex_bob: Tween = null
+var tw_paper_glow: Tween = null
 
 signal cutscene_finished
 
@@ -97,17 +100,18 @@ func _ready() -> void:
 func _exit_tree() -> void:
 	Engine.time_scale = 1.0
 
-func _input(event: InputEvent) -> void:
-	if not can_continue or is_continuing:
-		return
-	if event.is_action_pressed("ui_accept") or \
-	   (event is InputEventKey and event.pressed and not event.echo) or \
-	   (event is InputEventMouseButton and event.pressed) or \
-	   (event is InputEventScreenTouch and event.pressed):
-		get_viewport().set_input_as_handled()
-		_trigger_continue()
+func _process(_delta: float) -> void:
+	if can_fast_forward and not can_continue and not is_continuing:
+		var wants_ff: bool = Input.is_key_pressed(KEY_SPACE) or \
+			Input.is_key_pressed(KEY_ENTER) or \
+			Input.is_key_pressed(KEY_SHIFT) or \
+			Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT)
+		
+		if wants_ff != is_fast_forwarding:
+			is_fast_forwarding = wants_ff
+			Engine.time_scale = 2.5 if wants_ff else 1.0
 
-func _unhandled_input(event: InputEvent) -> void:
+func _input(event: InputEvent) -> void:
 	if not can_continue or is_continuing:
 		return
 	if event.is_action_pressed("ui_accept") or \
@@ -184,6 +188,12 @@ func _reset_cutscene_state() -> void:
 	
 	if tw_ex_bob and tw_ex_bob.is_valid():
 		tw_ex_bob.kill()
+	if tw_paper_glow and tw_paper_glow.is_valid():
+		tw_paper_glow.kill()
+		tw_paper_glow = null
+	can_fast_forward = true
+	is_fast_forwarding = false
+	Engine.time_scale = 1.0
 	if exclamation_mark:
 		exclamation_mark.visible = false
 		exclamation_mark.scale = Vector2.ZERO
@@ -322,16 +332,18 @@ func _on_paper_flutter_down() -> void:
 	tw.chain().tween_callback(func():
 		if not is_instance_valid(paper_on_floor) or not paper_on_floor.visible:
 			return
-		var tw_glow = create_tween().set_loops()
-		tw_glow.tween_property(paper_on_floor, "modulate", Color(1.45, 1.35, 1.15, 1.0), 0.6).set_trans(Tween.TRANS_SINE)
-		tw_glow.tween_property(paper_on_floor, "modulate", Color(1.05, 1.0, 0.95, 1.0), 0.6).set_trans(Tween.TRANS_SINE)
+		if tw_paper_glow and tw_paper_glow.is_valid():
+			tw_paper_glow.kill()
+		tw_paper_glow = create_tween().set_loops()
+		tw_paper_glow.tween_property(paper_on_floor, "modulate", Color(1.45, 1.35, 1.15, 1.0), 0.6).set_trans(Tween.TRANS_SINE)
+		tw_paper_glow.tween_property(paper_on_floor, "modulate", Color(1.05, 1.0, 0.95, 1.0), 0.6).set_trans(Tween.TRANS_SINE)
 	)
 
 ## เรียกเมื่อวงเวท/หลุมดำรอบสอง (วงเล็ก) ค่อย ๆ ดูดเศษทั้งหมด (15.0s)
 func _on_suck_shards() -> void:
 	var vortex_center: Vector2 = black_hole.position # (35, 96)
 	
-	# ค่อย ๆ ดูดเศษทั้ง 20 ชิ้นหมุนวนเข้าไปในวงเวททีละชิ้นอย่างนุ่มนวล
+	# ค่อย ๆ ดูดเศษทั้ง 16 ชิ้นหมุนวนเข้าไปในวงเวททีละชิ้นอย่างนุ่มนวล
 	for i in range(shards.size()):
 		var s: Sprite2D = shards[i]
 		var delay: float = randf_range(0.0, 1.0)
@@ -353,6 +365,9 @@ func _on_suck_shards() -> void:
 func _on_pickup_shard() -> void:
 	if not paper_on_floor:
 		return
+	if tw_paper_glow and tw_paper_glow.is_valid():
+		tw_paper_glow.kill()
+		tw_paper_glow = null
 	if paper_shadow:
 		var tw_ps = create_tween()
 		tw_ps.tween_property(paper_shadow, "modulate:a", 0.0, 0.5)
@@ -367,6 +382,9 @@ func _on_pickup_shard() -> void:
 func _on_reveal_magic_text() -> void:
 	if not rune_container:
 		return
+	can_fast_forward = false
+	is_fast_forwarding = false
+	Engine.time_scale = 1.0
 	can_continue = true
 	is_continuing = false
 	
@@ -396,6 +414,12 @@ func _trigger_continue() -> void:
 		return
 	is_continuing = true
 	can_continue = false
+	can_fast_forward = false
+	is_fast_forwarding = false
+	Engine.time_scale = 1.0
+	if tw_paper_glow and tw_paper_glow.is_valid():
+		tw_paper_glow.kill()
+		tw_paper_glow = null
 	
 	# หยุด AnimationPlayer โดยคงสถานะปัจจุบันไว้ (pause + active = false)
 	# ป้องกันไม่ให้ Godot รีเซ็ตค่าตำแหน่งของเวลกลับไปที่เฟรม 0 (-250)

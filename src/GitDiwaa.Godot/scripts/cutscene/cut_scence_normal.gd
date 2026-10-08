@@ -16,6 +16,8 @@ extends Node2D
 @export var village_hold_seconds: float = 4.95 # ประมาณ 33 เฟรม (33 * 0.15s)
 
 var is_transitioning: bool = false
+var is_fast_forwarding: bool = false
+var can_fast_forward: bool = true
 
 signal cutscene_finished
 
@@ -27,8 +29,23 @@ func _ready() -> void:
 func _exit_tree() -> void:
 	Engine.time_scale = 1.0
 
+func _process(_delta: float) -> void:
+	# ตรวจสอบการกดค้างเพื่อเร่งสปีด (Fast-forward) แบบ Real-time
+	if can_fast_forward and not is_transitioning:
+		var wants_ff: bool = Input.is_key_pressed(KEY_SPACE) or \
+			Input.is_key_pressed(KEY_ENTER) or \
+			Input.is_key_pressed(KEY_SHIFT) or \
+			Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT)
+		
+		if wants_ff != is_fast_forwarding:
+			is_fast_forwarding = wants_ff
+			Engine.time_scale = 2.5 if wants_ff else 1.0
+
 func _init_scene() -> void:
 	is_transitioning = false
+	can_fast_forward = true
+	is_fast_forwarding = false
+	Engine.time_scale = 1.0
 	
 	village.visible = true
 	village.frame = village_frame_index
@@ -77,10 +94,14 @@ func _on_sky_finished() -> void:
 	if is_transitioning:
 		return
 	is_transitioning = true
+	can_fast_forward = false
+	is_fast_forwarding = false
+	Engine.time_scale = 1.0
 	
 	var tw_fade_out = create_tween()
 	tw_fade_out.tween_property(fade_overlay, "color:a", 1.0, 0.6)
 	tw_fade_out.tween_callback(func():
+		Engine.time_scale = 1.0
 		emit_signal("cutscene_finished")
 		print("[CutsceneNormal] Transitioning to IntroCutscene (Library)...")
 		get_tree().change_scene_to_file("res://scenes/cutscene/intro_cutscene.tscn")

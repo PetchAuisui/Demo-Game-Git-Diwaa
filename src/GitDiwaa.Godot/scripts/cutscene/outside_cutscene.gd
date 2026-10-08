@@ -25,6 +25,8 @@ extends Node2D
 var can_start: bool = false
 var is_starting: bool = false
 var is_tower_forward: bool = true
+var is_fast_forwarding: bool = false
+var can_fast_forward: bool = true
 
 signal cutscene_finished
 
@@ -35,6 +37,18 @@ func _ready() -> void:
 
 func _exit_tree() -> void:
 	Engine.time_scale = 1.0
+
+func _process(_delta: float) -> void:
+	# ตรวจสอบการกดค้างเพื่อเร่งสปีด (Fast-forward) แบบ Real-time
+	if can_fast_forward and not can_start and not is_starting:
+		var wants_ff: bool = Input.is_key_pressed(KEY_SPACE) or \
+			Input.is_key_pressed(KEY_ENTER) or \
+			Input.is_key_pressed(KEY_SHIFT) or \
+			Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT)
+		
+		if wants_ff != is_fast_forwarding:
+			is_fast_forwarding = wants_ff
+			Engine.time_scale = 2.5 if wants_ff else 1.0
 
 func _input(event: InputEvent) -> void:
 	if not can_start or is_starting:
@@ -49,6 +63,9 @@ func _input(event: InputEvent) -> void:
 func _init_scene() -> void:
 	can_start = false
 	is_starting = false
+	can_fast_forward = true
+	is_fast_forwarding = false
+	Engine.time_scale = 1.0
 	is_tower_forward = true
 	
 	storm_sky.visible = true
@@ -156,6 +173,10 @@ func _on_tower_animation_finished() -> void:
 		tower.play_backwards("tower_loop")
 
 func _reveal_game_title() -> void:
+	can_fast_forward = false
+	is_fast_forwarding = false
+	Engine.time_scale = 1.0
+	
 	var tw_title = create_tween()
 	tw_title.tween_property(title_container, "modulate:a", 1.0, 1.2).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 	
@@ -174,6 +195,9 @@ func _trigger_start_level() -> void:
 		return
 	is_starting = true
 	can_start = false
+	can_fast_forward = false
+	is_fast_forwarding = false
+	Engine.time_scale = 1.0
 	
 	var tw_out = create_tween()
 	tw_out.tween_property(fade_overlay, "color", Color(0, 0, 0, 1), 1.0)
@@ -183,4 +207,11 @@ func _trigger_start_level() -> void:
 		print("[CutsceneChaos] เข้าสู่ด่านแรกเรียบร้อย!")
 		if next_scene_path != "" and ResourceLoader.exists(next_scene_path):
 			get_tree().change_scene_to_file(next_scene_path)
+		else:
+			push_warning("[OutsideCutscene] next_scene_path is empty or not found: '%s'. กรุณากำหนด Path ซีนด่านแรกใน Inspector" % next_scene_path)
+			# ค่อยๆ จางจอดำออกเพื่อไม่ให้ผู้เล่นติดอยู่ในจอสีดำสนิท
+			var tw_recover = create_tween()
+			tw_recover.tween_property(fade_overlay, "color:a", 0.0, 0.5)
+			can_start = true
+			is_starting = false
 	)
