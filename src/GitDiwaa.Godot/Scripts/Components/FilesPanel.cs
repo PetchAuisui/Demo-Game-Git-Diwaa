@@ -1,4 +1,5 @@
 using Godot;
+using GitDiwaa.Godot.Common;
 using GitDiwaa.Godot.ViewModels;
 
 namespace GitDiwaa.Godot.Components;
@@ -45,6 +46,9 @@ public partial class FilesPanel : PanelContainer
 	private LineEdit _renameInput = null!;
 	private ConfirmationDialog _deleteConfirmDialog = null!;
 	private ConfirmationDialog _discardChangesDialog = null!;
+	private Label? _renameMessage;
+	private Label? _deleteMessage;
+	private Label? _discardMessage;
 
 	private readonly List<WorkspaceEntryDisplayItem> _entries = new();
 	private string? _selectedPath;
@@ -66,11 +70,13 @@ public partial class FilesPanel : PanelContainer
 		_folderIcon = GD.Load<Texture2D>("res://assets/icons/folder.svg");
 
 		BindNodes();
+		_renameMessage = DialogStyle.Apply(_renameDialog, DialogStyle.Info, "Aa", "เปลี่ยนชื่อ", true, _renameInput);
+		_renameDialog.RegisterTextEnter(_renameInput);
+		_deleteMessage = DialogStyle.Apply(_deleteConfirmDialog, DialogStyle.Danger, "!", "ยืนยันการลบ", true);
+		_discardMessage = DialogStyle.Apply(_discardChangesDialog, DialogStyle.Warning, "!", "มีการแก้ไขที่ยังไม่บันทึก", true);
 		foreach (var d in new[] { _renameDialog, _deleteConfirmDialog, _discardChangesDialog })
 		{
-			d.GetOkButton().ThemeTypeVariation = "CreateAction";
-			d.GetOkButton().CustomMinimumSize = new Vector2(140, 46);
-			d.GetCancelButton().CustomMinimumSize = new Vector2(112, 46);
+			d.Size = new Vector2I(520, 100);
 		}
 		_createFileDialog.GetOkButton().ThemeTypeVariation = "CreateAction";
 		_createFileDialog.GetOkButton().CustomMinimumSize = new Vector2(172, 46);
@@ -396,7 +402,7 @@ public partial class FilesPanel : PanelContainer
 		{
 			_pendingOpenPath = filePath;
 			_pendingClose = false;
-			_discardChangesDialog.DialogText = $"'{_openFilePath}' ยังไม่ได้บันทึก\nต้องการทิ้งการแก้ไขแล้วเปิด '{filePath}' หรือไม่?";
+			_discardMessage!.Text = $"'{_openFilePath}' ยังไม่ได้บันทึก\nต้องการทิ้งการแก้ไขแล้วเปิด '{filePath}' หรือไม่?";
 			_discardChangesDialog.PopupCentered();
 			return;
 		}
@@ -415,7 +421,7 @@ public partial class FilesPanel : PanelContainer
 		{
 			_pendingClose = true;
 			_pendingOpenPath = null;
-			_discardChangesDialog.DialogText = $"'{_openFilePath}' ยังไม่ได้บันทึก\nต้องการทิ้งการแก้ไขและปิด editor หรือไม่?";
+			_discardMessage!.Text = $"'{_openFilePath}' ยังไม่ได้บันทึก\nต้องการทิ้งการแก้ไขและปิด editor หรือไม่?";
 			_discardChangesDialog.PopupCentered();
 			return;
 		}
@@ -502,7 +508,7 @@ public partial class FilesPanel : PanelContainer
 	{
 		if (_selectedPath == null) return;
 		_renameInput.Text = System.IO.Path.GetFileName(_selectedPath);
-		_renameDialog.DialogText = $"เปลี่ยนชื่อ '{_selectedPath}'";
+		_renameMessage!.Text = $"เปลี่ยนชื่อ '{_selectedPath}'";
 		_renameDialog.PopupCentered();
 		_renameInput.CallDeferred(Control.MethodName.GrabFocus);
 	}
@@ -526,7 +532,7 @@ public partial class FilesPanel : PanelContainer
 	{
 		if (_selectedPath == null) return;
 		var kind = _selectedIsDirectory ? "โฟลเดอร์และไฟล์ทั้งหมดภายใน" : "ไฟล์";
-		_deleteConfirmDialog.DialogText = $"ต้องการลบ{kind} '{_selectedPath}' หรือไม่?";
+		_deleteMessage!.Text = $"ต้องการลบ{kind} '{_selectedPath}' หรือไม่?";
 		_deleteConfirmDialog.PopupCentered();
 	}
 
