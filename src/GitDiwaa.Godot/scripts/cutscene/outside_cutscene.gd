@@ -26,6 +26,7 @@ var can_start: bool = false
 var is_starting: bool = false
 var is_fast_forwarding: bool = false
 var can_fast_forward: bool = true
+var is_tower_forward: bool = true
 
 signal cutscene_finished
 
@@ -64,6 +65,7 @@ func _init_scene() -> void:
 	is_starting = false
 	can_fast_forward = true
 	is_fast_forwarding = false
+	is_tower_forward = true
 	
 	sky.visible = true
 	sky.frame = 0
@@ -76,6 +78,8 @@ func _init_scene() -> void:
 	tower.visible = false
 	tower.frame = 0
 	tower.stop()
+	if tower.sprite_frames:
+		tower.sprite_frames.set_animation_loop("tower_loop", false)
 	
 	# เงาใต้เท้าของเวล
 	if vel_shadow:
@@ -132,7 +136,7 @@ func _on_village_finished() -> void:
 	# สลับภาพสู่หอคอยทันทีด้วย Cross-fade 0.4 วินาที
 	tower.visible = true
 	tower.modulate = Color(1, 1, 1, 0)
-	tower.play("tower_loop", 1.0)
+	_start_tower_ping_pong()
 	
 	var tw_tow_in = create_tween()
 	tw_tow_in.tween_property(tower, "modulate:a", 1.0, 0.4)
@@ -154,6 +158,27 @@ func _on_village_finished() -> void:
 	var tw_wait = create_tween()
 	tw_wait.tween_interval(1.5)
 	tw_wait.tween_callback(_reveal_game_title)
+
+## เริ่มเล่นแอนิเมชันหอคอยแบบไป-กลับ (Ping-pong) เพื่อให้เมฆลอยต่อเนื่องนุ่มนวล ไม่ขาดตอน
+func _start_tower_ping_pong() -> void:
+	if not tower:
+		return
+	if tower.sprite_frames:
+		tower.sprite_frames.set_animation_loop("tower_loop", false)
+	is_tower_forward = true
+	if not tower.animation_finished.is_connected(_on_tower_animation_finished):
+		tower.animation_finished.connect(_on_tower_animation_finished)
+	tower.play("tower_loop", 1.0)
+
+## เมื่อแอนิเมชันหอคอยเล่นถึงเฟรมสุดท้ายหรือเฟรมแรก ให้สลับทิศทาง (ไป-กลับ) วนลูปต่อเนื่อง
+func _on_tower_animation_finished() -> void:
+	if not is_instance_valid(tower) or not tower.visible:
+		return
+	is_tower_forward = not is_tower_forward
+	if is_tower_forward:
+		tower.play("tower_loop", 1.0)
+	else:
+		tower.play_backwards("tower_loop")
 
 ## แสดงชื่อเกม "Git Di Waa" โทนสีเงินครามและออร่าม่วงเวทมนตร์
 func _reveal_game_title() -> void:
