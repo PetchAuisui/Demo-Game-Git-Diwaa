@@ -1,12 +1,12 @@
 extends Node2D
 
-## การควบคุม Cutscene นอกหอสมุด (Outside Cutscene)
-## - เล่นแอนิเมชันตามเฟรมจริงที่ตั้งไว้ใน SpriteFrames (150ms ต่อเฟรม = 6.67 FPS, speed_scale = 1.0)
-## - ใช้สัญญาณ animation_finished สลับฉากทันทีที่เฟรมสุดท้ายเล่นจบ ไม่มีการค้างภาพนิ่ง
-## - แผ่นหลังของเวลยืนมองหอคอย พร้อมเงาใต้ฝ่าเท้า (VelShadow) ยึดเกาะพื้นหินอย่างเป็นธรรมชาติ
-## - สีตัวหนังสือชื่อเกม "Git Di Waa" โทนสีเงินคราม-ออร่าม่วงเวทมนตร์ เข้ากับธีมแฟนตาซีและหอคอยทมิฬ
+## การควบคุม Cutscene วิกฤตและหอคอย (Cutscene Chaos)
+## ลำดับเหตุการณ์:
+## 1. ท้องฟ้าพายุไม่ปกติ (storm-clouds เล่นทั้งหมด 60 เฟรม)
+## 2. บ้านเมืองไม่ปกติ (village-normal เริ่มเล่นตั้งแต่เฟรมที่ 20 ถึงจบ 58)
+## 3. หอคอยทมิฬ (เมฆลอยไป-กลับ Ping-pong) + เวลยืนมอง + ไตเติลเกม Git Di Waa
 
-@onready var sky: AnimatedSprite2D = $Sky
+@onready var storm_sky: AnimatedSprite2D = $StormSky
 @onready var village: AnimatedSprite2D = $Village
 @onready var tower: AnimatedSprite2D = $Tower
 @onready var vel_shadow: Sprite2D = $VelShadow
@@ -24,8 +24,6 @@ extends Node2D
 
 var can_start: bool = false
 var is_starting: bool = false
-var is_fast_forwarding: bool = false
-var can_fast_forward: bool = true
 var is_tower_forward: bool = true
 
 signal cutscene_finished
@@ -33,22 +31,10 @@ signal cutscene_finished
 func _ready() -> void:
 	Engine.time_scale = 1.0
 	_init_scene()
-	play_outside_sequence()
+	play_chaos_sequence()
 
 func _exit_tree() -> void:
 	Engine.time_scale = 1.0
-
-func _process(_delta: float) -> void:
-	# ตรวจสอบการกดค้างเพื่อเร่งสปีด (Fast-forward) แบบ Real-time
-	if can_fast_forward and not can_start and not is_starting:
-		var wants_ff: bool = Input.is_key_pressed(KEY_SPACE) or \
-			Input.is_key_pressed(KEY_ENTER) or \
-			Input.is_key_pressed(KEY_SHIFT) or \
-			Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT)
-		
-		if wants_ff != is_fast_forwarding:
-			is_fast_forwarding = wants_ff
-			Engine.time_scale = 2.5 if wants_ff else 1.0
 
 func _input(event: InputEvent) -> void:
 	if not can_start or is_starting:
@@ -63,13 +49,11 @@ func _input(event: InputEvent) -> void:
 func _init_scene() -> void:
 	can_start = false
 	is_starting = false
-	can_fast_forward = true
-	is_fast_forwarding = false
 	is_tower_forward = true
 	
-	sky.visible = true
-	sky.frame = 0
-	sky.stop()
+	storm_sky.visible = true
+	storm_sky.frame = 0
+	storm_sky.stop()
 	
 	village.visible = false
 	village.frame = 0
@@ -81,14 +65,12 @@ func _init_scene() -> void:
 	if tower.sprite_frames:
 		tower.sprite_frames.set_animation_loop("tower_loop", false)
 	
-	# เงาใต้เท้าของเวล
 	if vel_shadow:
 		vel_shadow.visible = false
 		vel_shadow.position = Vector2(960, 1056)
 		vel_shadow.scale = Vector2(4.8, 2.4)
 		vel_shadow.modulate = Color(0, 0, 0, 0)
 	
-	# ตัวเวลหันหลัง
 	vel.visible = false
 	vel.position = Vector2(960, 880)
 	vel.scale = Vector2(4.6, 4.6)
@@ -96,27 +78,26 @@ func _init_scene() -> void:
 	
 	camera.position = Vector2(960, 540)
 	camera.zoom = Vector2(1.0, 1.0)
-	camera.offset = Vector2.ZERO
 	
 	title_container.modulate = Color(1, 1, 1, 0)
+	if subtitle_label:
+		subtitle_label.text = "— ตำนานแห่งหอคอยต้นกำเนิด —"
+	if start_prompt:
+		start_prompt.text = "— กด Space หรือคลิก เพื่อเข้าสู่ด่านแรก —"
 	fade_overlay.color = Color(0, 0, 0, 1)
 	fade_overlay.visible = true
 
-## เล่นคัตซีนตามลำดับแบบ Signal-driven:
-## ท้องฟ้า (เล่นตรงตามชีท 1.0x) -> จบทันทีสลับสู่หมู่บ้าน (1.0x) -> จบทันทีสลับสู่หอคอย
-func play_outside_sequence() -> void:
-	# 1. ค่อย ๆ สว่างขึ้นจากจอดำสู่ท้องฟ้า 0.5 วินาที
+func play_chaos_sequence() -> void:
+	# 1. ค่อย ๆ สว่างขึ้นจากจอดำสู่ท้องฟ้าพายุ 0.5 วินาที
 	var tw = create_tween()
 	tw.tween_property(fade_overlay, "color:a", 0.0, 0.5)
 	tw.tween_callback(func():
-		# เล่นท้องฟ้าด้วยความเร็วปกติ 1.0x (ตามที่ตั้งไว้ในชีท 6.67 FPS = 150ms/frame)
-		sky.play("sky_transition", 1.0)
-		sky.animation_finished.connect(_on_sky_finished, CONNECT_ONE_SHOT)
+		storm_sky.play("storm_sky", 1.0)
+		storm_sky.animation_finished.connect(_on_storm_sky_finished, CONNECT_ONE_SHOT)
 	)
 
-## เมื่อท้องฟ้าเล่นครบ 64 เฟรมเสร็จสิ้น
-func _on_sky_finished() -> void:
-	# สลับภาพสู่หมู่บ้านทันทีด้วย Cross-fade สั้น ๆ 0.35 วินาที
+func _on_storm_sky_finished() -> void:
+	# 2. สลับภาพสู่บ้านเมืองโกลาหล (เล่นแอนิเมชันตั้งแต่เฟรมที่ 20 ถึงจบ 58)
 	village.visible = true
 	village.frame = 0
 	village.modulate = Color(1, 1, 1, 0)
@@ -124,16 +105,14 @@ func _on_sky_finished() -> void:
 	var tw_vil_in = create_tween()
 	tw_vil_in.tween_property(village, "modulate:a", 1.0, 0.35)
 	tw_vil_in.chain().tween_callback(func():
-		sky.visible = false
+		storm_sky.visible = false
 	)
 	
-	# เล่นหมู่บ้านด้วยความเร็วปกติ 1.0x (ตามที่ตั้งไว้ในชีท 6.67 FPS = 150ms/frame)
-	village.play("village_transition", 1.0)
-	village.animation_finished.connect(_on_village_finished, CONNECT_ONE_SHOT)
+	village.play("village_chaos", 1.0)
+	village.animation_finished.connect(_on_village_chaos_finished, CONNECT_ONE_SHOT)
 
-## เมื่อหมู่บ้านเล่นครบ 59 เฟรมเสร็จสิ้น
-func _on_village_finished() -> void:
-	# สลับภาพสู่หอคอยทันทีด้วย Cross-fade 0.4 วินาที
+func _on_village_chaos_finished() -> void:
+	# 3. สลับภาพสู่หอคอยทมิฬ
 	tower.visible = true
 	tower.modulate = Color(1, 1, 1, 0)
 	_start_tower_ping_pong()
@@ -144,7 +123,6 @@ func _on_village_finished() -> void:
 		village.visible = false
 	)
 	
-	# แสดงเวลและเงาหลังเวลหันหลังอย่างนุ่มนวล
 	if vel_shadow:
 		vel_shadow.visible = true
 		var tw_shadow = create_tween()
@@ -154,12 +132,10 @@ func _on_village_finished() -> void:
 	var tw_vel = create_tween()
 	tw_vel.tween_property(vel, "modulate:a", 1.0, 0.7)
 	
-	# พักสายตาชมบรรยากาศหอคอย เวล และเงา 1.5 วินาที ก่อนขึ้นชื่อเกม
 	var tw_wait = create_tween()
 	tw_wait.tween_interval(1.5)
 	tw_wait.tween_callback(_reveal_game_title)
 
-## เริ่มเล่นแอนิเมชันหอคอยแบบไป-กลับ (Ping-pong) เพื่อให้เมฆลอยต่อเนื่องนุ่มนวล ไม่ขาดตอน
 func _start_tower_ping_pong() -> void:
 	if not tower:
 		return
@@ -170,7 +146,6 @@ func _start_tower_ping_pong() -> void:
 		tower.animation_finished.connect(_on_tower_animation_finished)
 	tower.play("tower_loop", 1.0)
 
-## เมื่อแอนิเมชันหอคอยเล่นถึงเฟรมสุดท้ายหรือเฟรมแรก ให้สลับทิศทาง (ไป-กลับ) วนลูปต่อเนื่อง
 func _on_tower_animation_finished() -> void:
 	if not is_instance_valid(tower) or not tower.visible:
 		return
@@ -180,40 +155,32 @@ func _on_tower_animation_finished() -> void:
 	else:
 		tower.play_backwards("tower_loop")
 
-## แสดงชื่อเกม "Git Di Waa" โทนสีเงินครามและออร่าม่วงเวทมนตร์
 func _reveal_game_title() -> void:
-	can_fast_forward = false
-	Engine.time_scale = 1.0
-	
 	var tw_title = create_tween()
 	tw_title.tween_property(title_container, "modulate:a", 1.0, 1.2).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 	
-	# ออร่าเรืองแสงสีม่วงหายใจเบา ๆ นุ่มนวล
 	var tw_title_aura = create_tween().set_loops()
 	tw_title_aura.tween_property(title_label_aura, "modulate:a", 0.75, 1.6).set_trans(Tween.TRANS_SINE)
 	tw_title_aura.tween_property(title_label_aura, "modulate:a", 0.30, 1.6).set_trans(Tween.TRANS_SINE)
 	
-	# ข้อความกดเข้าสู่ด่านแรกกระพริบเบา ๆ
 	var tw_prompt = create_tween().set_loops()
 	tw_prompt.tween_property(start_prompt, "modulate:a", 1.0, 0.8).set_trans(Tween.TRANS_SINE)
 	tw_prompt.tween_property(start_prompt, "modulate:a", 0.35, 0.8).set_trans(Tween.TRANS_SINE)
 	
 	can_start = true
 
-## กดเข้าสู่ด่านแรก
 func _trigger_start_level() -> void:
 	if is_starting:
 		return
 	is_starting = true
 	can_start = false
 	
-	# Fade ดำ นุ่มนวล เพื่อส่งเข้าสู่ด่านแรก
 	var tw_out = create_tween()
 	tw_out.tween_property(fade_overlay, "color", Color(0, 0, 0, 1), 1.0)
 	tw_out.tween_callback(func():
 		Engine.time_scale = 1.0
 		emit_signal("cutscene_finished")
-		print("[OutsideCutscene] เข้าสู่ด่านแรกเรียบร้อย!")
+		print("[CutsceneChaos] เข้าสู่ด่านแรกเรียบร้อย!")
 		if next_scene_path != "" and ResourceLoader.exists(next_scene_path):
 			get_tree().change_scene_to_file(next_scene_path)
 	)

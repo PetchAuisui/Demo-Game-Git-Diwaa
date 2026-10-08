@@ -50,13 +50,14 @@ extends Sprite2D
 var shards: Array[Sprite2D] = []
 var can_continue: bool = false
 var is_continuing: bool = false
-var is_fast_forwarding: bool = false
-var can_fast_forward: bool = true
 var tw_ex_bob: Tween = null
 
 signal cutscene_finished
 
-# พิกัดปลายทางที่เศษทั้ง 20 ชิ้นจะกระจายตกบนพื้นห้องทางด้านขวา (ศูนย์กลางที่คัมภีร์ตก 64, 96 ไม่ลามไปใกล้ตัวเวลที่ -40)
+# โทนสีฟิลเตอร์คัมภีร์และเศษคัมภีร์ให้กลมกลืนกับห้องสมุด (ไม่เด่น/สว่างจ้าเกินไป)
+const BOOK_TINT: Color = Color(0.70, 0.63, 0.55, 1.0)
+
+# พิกัดปลายทางที่เศษทั้ง 16 ชิ้นจะกระจายตกบนพื้นห้องทางด้านขวา (ศูนย์กลางที่คัมภีร์ตก 64, 96 ไม่ลามไปใกล้ตัวเวลที่ -40)
 const SHARD_LANDING_POSITIONS: Array[Vector2] = [
 	Vector2(40.0, 92.0),   # Shard 1 (ปานกลาง - ซ้ายบน)
 	Vector2(54.0, 95.0),   # Shard 2 (ชิ้นใหญ่ หนัก - ตกใกล้ซ้าย)
@@ -74,10 +75,6 @@ const SHARD_LANDING_POSITIONS: Array[Vector2] = [
 	Vector2(88.0, 98.0),   # Shard 14 (ปานกลาง - ขวาล่าง)
 	Vector2(26.0, 102.0),  # Shard 15 (ชิ้นเล็ก - กระเด็นไกล ซ้ายล่าง)
 	Vector2(65.0, 98.0),   # Shard 16 (ชิ้นใหญ่สุด หนักมาก - ตกกระแทกจุดแตก)
-	Vector2(94.0, 88.0),   # Shard 17 (ปานกลาง - ขวาบน)
-	Vector2(38.0, 78.0),   # Shard 18 (ชิ้นเล็ก - ปลิวไกล ซ้ายบน)
-	Vector2(62.0, 73.0),   # Shard 19 (ชิ้นเล็ก - พุ่งโด่งขึ้นบน)
-	Vector2(68.0, 104.0),  # Shard 20 (สันปก ชิ้นใหญ่ - ตกล่างใกล้จุดแตก)
 ]
 
 func _ready() -> void:
@@ -99,17 +96,6 @@ func _ready() -> void:
 
 func _exit_tree() -> void:
 	Engine.time_scale = 1.0
-
-func _process(_delta: float) -> void:
-	if can_fast_forward and not can_continue and not is_continuing:
-		var wants_ff: bool = Input.is_key_pressed(KEY_SPACE) or \
-			Input.is_key_pressed(KEY_ENTER) or \
-			Input.is_key_pressed(KEY_SHIFT) or \
-			Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT)
-		
-		if wants_ff != is_fast_forwarding:
-			is_fast_forwarding = wants_ff
-			Engine.time_scale = 2.5 if wants_ff else 1.0
 
 func _input(event: InputEvent) -> void:
 	if not can_continue or is_continuing:
@@ -136,7 +122,10 @@ func _init_shards() -> void:
 	if shards_container:
 		for child in shards_container.get_children():
 			if child is Sprite2D:
-				shards.append(child)
+				if shards.size() < 16:
+					shards.append(child)
+				else:
+					child.visible = false
 
 func _reset_cutscene_state() -> void:
 	can_continue = false
@@ -152,7 +141,7 @@ func _reset_cutscene_state() -> void:
 		khampri.position = Vector2(42, 58)
 		khampri.rotation = 0.0
 		khampri.scale = Vector2(0.2, 0.2)
-		khampri.modulate = Color(1, 1, 1, 1)
+		khampri.modulate = BOOK_TINT
 	
 	if khampri_shadow:
 		khampri_shadow.visible = false
@@ -169,7 +158,7 @@ func _reset_cutscene_state() -> void:
 	for s in shards:
 		s.visible = false
 		s.scale = Vector2(0.2, 0.2)
-		s.modulate = Color(1, 1, 1, 1)
+		s.modulate = BOOK_TINT
 		s.rotation = 0.0
 	
 	if paper_on_floor:
@@ -223,7 +212,7 @@ func _on_shatter_khampri() -> void:
 	if paper_on_floor:
 		paper_on_floor.visible = false
 	
-	# เศษคัมภีร์ทั้ง 20 ชิ้นแตกกระจายตามมวลจริง: ชิ้นใหญ่เคลื่อนช้าตกใกล้ ชิ้นเล็กกระเด็นไกลบินเร็ว ดีเลย์เหลื่อมล้ำกัน
+	# เศษคัมภีร์ทั้ง 16 ชิ้นแตกกระจายตามมวลจริง: ชิ้นใหญ่เคลื่อนช้าตกใกล้ ชิ้นเล็กกระเด็นไกลบินเร็ว ดีเลย์เหลื่อมล้ำกัน
 	for i in range(shards.size()):
 		var s: Sprite2D = shards[i]
 		s.position = origin
@@ -264,7 +253,7 @@ func _on_shatter_khampri() -> void:
 		tw_launch.tween_callback(func():
 			if not is_instance_valid(s):
 				return
-			s.modulate = Color(1.5, 1.4, 1.2, 1.0)
+			s.modulate = Color(1.15, 1.05, 0.90, 1.0)
 			var tw_move = create_tween().set_parallel(true)
 			tw_move.tween_property(s, "position:x", target.x, duration).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 			
@@ -272,7 +261,7 @@ func _on_shatter_khampri() -> void:
 			tw_y.tween_property(s, "position:y", apex_y, duration * 0.42).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 			tw_y.tween_property(s, "position:y", target.y, duration * 0.58).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
 			
-			tw_move.tween_property(s, "modulate", Color(1, 1, 1, 1), duration)
+			tw_move.tween_property(s, "modulate", BOOK_TINT, duration)
 		)
 
 ## เศษคัมภีร์แผ่นสุดท้ายที่หลงเหลือ ร่วงหล่นลงมาจากด้านบนเล็กน้อยสู่พื้นไม้ (16.4s -> 17.8s)
@@ -378,9 +367,6 @@ func _on_pickup_shard() -> void:
 func _on_reveal_magic_text() -> void:
 	if not rune_container:
 		return
-	can_fast_forward = false
-	is_fast_forwarding = false
-	Engine.time_scale = 1.0
 	can_continue = true
 	is_continuing = false
 	
@@ -618,8 +604,8 @@ func play_with_tween() -> void:
 		if khampri_shadow:
 			tw_float.tween_property(khampri_shadow, "scale", Vector2(0.85, 0.5), 1.0)
 			tw_float.tween_property(khampri_shadow, "modulate:a", 0.40, 1.0)
-		# เรืองแสงเวทมนตร์เข้มข้นขึ้นเรื่อยๆ
-		tw_float.tween_property(khampri, "modulate", Color(3.5, 3.2, 2.5, 1.0), 1.0).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+		# เรืองแสงเวทมนตร์เข้มข้นขึ้นเรื่อยๆ ก่อนแตก
+		tw_float.tween_property(khampri, "modulate", Color(1.8, 1.6, 1.25, 1.0), 1.0).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
 		
 		# หมุนเอียงเบา ๆ ไปมา (Tilt & Wobble)
 		var tw_wobble = create_tween()
@@ -634,7 +620,7 @@ func play_with_tween() -> void:
 		tw_shake.tween_property(khampri, "position:x", 62.5, 0.05)
 	)
 	
-	# 7. คัมภีร์แตกเป็น 20 ชิ้น (11.8s)
+	# 7. คัมภีร์แตกเป็น 16 ชิ้น (11.8s)
 	var tw_shatter = create_tween()
 	tw_shatter.tween_interval(11.8)
 	tw_shatter.tween_callback(_on_shatter_khampri)
@@ -687,7 +673,7 @@ func play_with_tween() -> void:
 	tw_ui.tween_callback(func():
 		var tw_t = create_tween().set_parallel(true)
 		tw_t.tween_property(backdrop, "color", Color(0, 0, 0, 0.85), 0.5)
-		tw_t.tween_property(parchment_frame, "modulate", Color(1, 1, 1, 0.78), 0.5)
+		tw_t.tween_property(parchment_frame, "modulate", Color(1, 1, 1, 1.0), 0.5)
 		if parchment_shadow:
 			tw_t.tween_property(parchment_shadow, "modulate", Color(0, 0, 0, 0.55), 0.5)
 		

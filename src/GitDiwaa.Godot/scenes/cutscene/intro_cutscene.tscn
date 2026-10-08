@@ -33,10 +33,6 @@
 [ext_resource type="Texture2D" uid="uid://cujobgtqpdh8q" path="res://assets/cutscene/props/khampri/minikhampri14.png" id="31_mini14"]
 [ext_resource type="Texture2D" uid="uid://lbxd43tusjvx" path="res://assets/cutscene/props/khampri/minikhampri15.png" id="32_mini15"]
 [ext_resource type="Texture2D" uid="uid://b6yre4fu0rwi2" path="res://assets/cutscene/props/khampri/minikhampri16.png" id="33_mini16"]
-[ext_resource type="Texture2D" uid="uid://bvtq4aeontxra" path="res://assets/cutscene/props/khampri/minikhampri17.png" id="34_mini17"]
-[ext_resource type="Texture2D" uid="uid://bqkhouckfvbcp" path="res://assets/cutscene/props/khampri/minikhampri18.png" id="35_mini18"]
-[ext_resource type="Texture2D" uid="uid://di3uyrprm4rma" path="res://assets/cutscene/props/khampri/minikhampri19.png" id="36_mini19"]
-[ext_resource type="Texture2D" uid="uid://du7l6oy362lqv" path="res://assets/cutscene/props/khampri/minikhampri20.png" id="37_mini20"]
 [ext_resource type="Texture2D" uid="uid://bngf0cdl4kc1q" path="res://assets/cutscene/props/khampri/paper.png" id="38_paper"]
 [ext_resource type="FontFile" uid="uid://csurxmw2vmws4" path="res://assets/fonts/TA-8-bit.ttf" id="39_ta_8_bit"]
 [ext_resource type="Texture2D" uid="uid://dmykeg4jphdb0" path="res://assets/cutscene/props/khampri/drop_shadow.png" id="40_shadow"]
@@ -791,7 +787,7 @@ tracks/24/keys = {
 "times": PackedFloat32Array(0, 10.8, 11.3, 11.6, 11.8),
 "transitions": PackedFloat32Array(1, 1, 1, 1, 1),
 "update": 0,
-"values": [Color(1, 1, 1, 1), Color(1, 1, 1, 1), Color(1.8, 1.6, 1.2, 1), Color(2.5, 2.3, 1.8, 1), Color(3.5, 3.2, 2.5, 1)]
+"values": [Color(0.7, 0.63, 0.55, 1), Color(0.7, 0.63, 0.55, 1), Color(1.15, 1.05, 0.9, 1), Color(1.45, 1.3, 1.05, 1), Color(1.8, 1.6, 1.25, 1)]
 }
 tracks/25/type = "method"
 tracks/25/imported = false
@@ -838,7 +834,7 @@ tracks/27/keys = {
 "times": PackedFloat32Array(0, 20.8, 21.4, 24),
 "transitions": PackedFloat32Array(1, 1, 1, 1),
 "update": 0,
-"values": [Color(1, 1, 1, 0), Color(1, 1, 1, 0), Color(1, 1, 1, 0.78), Color(1, 1, 1, 0.78)]
+"values": [Color(1, 1, 1, 0), Color(1, 1, 1, 0), Color(1, 1, 1, 1), Color(1, 1, 1, 1)]
 }
 tracks/28/type = "value"
 tracks/28/imported = false
@@ -1070,6 +1066,7 @@ texture = ExtResource("40_shadow")
 
 [node name="Khampri" type="Sprite2D" parent="." unique_id=9871234]
 visible = false
+modulate = Color(0.7, 0.63, 0.55, 1)
 position = Vector2(42, 58)
 scale = Vector2(0.2, 0.2)
 texture = ExtResource("17_khampri")
@@ -1085,124 +1082,116 @@ region_rect = Rect2(103, 43, 240, 209)
 [node name="Shards" type="Node2D" parent="." unique_id=9871235]
 
 [node name="Shard1" type="Sprite2D" parent="Shards" unique_id=2007091327]
+modulate = Color(0.7, 0.63, 0.55, 1)
 scale = Vector2(0.2, 0.2)
 texture = ExtResource("18_mini1")
 region_enabled = true
 region_rect = Rect2(6, 7, 38, 23)
 
 [node name="Shard2" type="Sprite2D" parent="Shards" unique_id=579957469]
+modulate = Color(0.7, 0.63, 0.55, 1)
 scale = Vector2(0.2, 0.2)
 texture = ExtResource("19_mini2")
 region_enabled = true
 region_rect = Rect2(52, 6, 36, 30)
 
 [node name="Shard3" type="Sprite2D" parent="Shards" unique_id=1222186186]
+modulate = Color(0.7, 0.63, 0.55, 1)
 scale = Vector2(0.2, 0.2)
 texture = ExtResource("20_mini3")
 region_enabled = true
 region_rect = Rect2(99, 5, 33, 34)
 
 [node name="Shard4" type="Sprite2D" parent="Shards" unique_id=196794263]
+modulate = Color(0.7, 0.63, 0.55, 1)
 scale = Vector2(0.2, 0.2)
 texture = ExtResource("21_mini4")
 region_enabled = true
 region_rect = Rect2(151, 6, 25, 34)
 
 [node name="Shard5" type="Sprite2D" parent="Shards" unique_id=354449387]
+modulate = Color(0.7, 0.63, 0.55, 1)
 scale = Vector2(0.2, 0.2)
 texture = ExtResource("22_mini5")
 region_enabled = true
 region_rect = Rect2(192, 6, 27, 35)
 
 [node name="Shard6" type="Sprite2D" parent="Shards" unique_id=668243211]
+modulate = Color(0.7, 0.63, 0.55, 1)
 scale = Vector2(0.2, 0.2)
 texture = ExtResource("23_mini6")
 region_enabled = true
 region_rect = Rect2(4, 43, 33, 29)
 
 [node name="Shard7" type="Sprite2D" parent="Shards" unique_id=357502572]
+modulate = Color(0.7, 0.63, 0.55, 1)
 scale = Vector2(0.2, 0.2)
 texture = ExtResource("24_mini7")
 region_enabled = true
 region_rect = Rect2(51, 47, 29, 33)
 
 [node name="Shard8" type="Sprite2D" parent="Shards" unique_id=504992300]
+modulate = Color(0.7, 0.63, 0.55, 1)
 scale = Vector2(0.2, 0.2)
 texture = ExtResource("25_mini8")
 region_enabled = true
 region_rect = Rect2(102, 50, 24, 29)
 
 [node name="Shard9" type="Sprite2D" parent="Shards" unique_id=160477126]
+modulate = Color(0.7, 0.63, 0.55, 1)
 scale = Vector2(0.2, 0.2)
 texture = ExtResource("26_mini9")
 region_enabled = true
 region_rect = Rect2(145, 51, 26, 26)
 
 [node name="Shard10" type="Sprite2D" parent="Shards" unique_id=385723360]
+modulate = Color(0.7, 0.63, 0.55, 1)
 scale = Vector2(0.2, 0.2)
 texture = ExtResource("27_mini10")
 region_enabled = true
 region_rect = Rect2(191, 49, 22, 31)
 
 [node name="Shard11" type="Sprite2D" parent="Shards" unique_id=83361749]
+modulate = Color(0.7, 0.63, 0.55, 1)
 scale = Vector2(0.2, 0.2)
 texture = ExtResource("28_mini11")
 region_enabled = true
 region_rect = Rect2(5, 97, 25, 30)
 
 [node name="Shard12" type="Sprite2D" parent="Shards" unique_id=2022848349]
+modulate = Color(0.7, 0.63, 0.55, 1)
 scale = Vector2(0.2, 0.2)
 texture = ExtResource("29_mini12")
 region_enabled = true
 region_rect = Rect2(46, 101, 33, 25)
 
 [node name="Shard13" type="Sprite2D" parent="Shards" unique_id=994623523]
+modulate = Color(0.7, 0.63, 0.55, 1)
 scale = Vector2(0.2, 0.2)
 texture = ExtResource("30_mini13")
 region_enabled = true
 region_rect = Rect2(105, 97, 22, 26)
 
 [node name="Shard14" type="Sprite2D" parent="Shards" unique_id=1463313759]
+modulate = Color(0.7, 0.63, 0.55, 1)
 scale = Vector2(0.2, 0.2)
 texture = ExtResource("31_mini14")
 region_enabled = true
 region_rect = Rect2(148, 92, 26, 32)
 
 [node name="Shard15" type="Sprite2D" parent="Shards" unique_id=2098129752]
+modulate = Color(0.7, 0.63, 0.55, 1)
 scale = Vector2(0.2, 0.2)
 texture = ExtResource("32_mini15")
 region_enabled = true
 region_rect = Rect2(194, 99, 25, 28)
 
 [node name="Shard16" type="Sprite2D" parent="Shards" unique_id=1828444920]
+modulate = Color(0.7, 0.63, 0.55, 1)
 scale = Vector2(0.2, 0.2)
 texture = ExtResource("33_mini16")
 region_enabled = true
 region_rect = Rect2(2, 149, 41, 33)
-
-[node name="Shard17" type="Sprite2D" parent="Shards" unique_id=1762939633]
-scale = Vector2(0.2, 0.2)
-texture = ExtResource("34_mini17")
-region_enabled = true
-region_rect = Rect2(53, 157, 39, 20)
-
-[node name="Shard18" type="Sprite2D" parent="Shards" unique_id=1804857220]
-scale = Vector2(0.2, 0.2)
-texture = ExtResource("35_mini18")
-region_enabled = true
-region_rect = Rect2(102, 155, 24, 28)
-
-[node name="Shard19" type="Sprite2D" parent="Shards" unique_id=1573763061]
-scale = Vector2(0.2, 0.2)
-texture = ExtResource("36_mini19")
-region_enabled = true
-region_rect = Rect2(145, 154, 24, 27)
-
-[node name="Shard20" type="Sprite2D" parent="Shards" unique_id=223356249]
-scale = Vector2(0.2, 0.2)
-texture = ExtResource("37_mini20")
-region_enabled = true
-region_rect = Rect2(192, 147, 25, 39)
 
 [node name="Vel" type="AnimatedSprite2D" parent="." unique_id=1691617125]
 position = Vector2(-22, 72)
