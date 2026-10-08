@@ -66,6 +66,12 @@ public partial class FilesPanel : PanelContainer
 		_folderIcon = GD.Load<Texture2D>("res://assets/icons/folder.svg");
 
 		BindNodes();
+		foreach (var d in new[] { _renameDialog, _deleteConfirmDialog, _discardChangesDialog })
+		{
+			d.GetOkButton().ThemeTypeVariation = "CreateAction";
+			d.GetOkButton().CustomMinimumSize = new Vector2(140, 46);
+			d.GetCancelButton().CustomMinimumSize = new Vector2(112, 46);
+		}
 		_createFileDialog.GetOkButton().ThemeTypeVariation = "CreateAction";
 		_createFileDialog.GetOkButton().CustomMinimumSize = new Vector2(172, 46);
 		_createFileDialog.GetCancelButton().CustomMinimumSize = new Vector2(112, 46);

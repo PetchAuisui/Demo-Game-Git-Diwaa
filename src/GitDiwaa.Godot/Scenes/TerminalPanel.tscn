@@ -1,6 +1,7 @@
 [gd_scene load_steps=6 format=3]
 
 [ext_resource type="Script" path="res://Scripts/Components/TerminalPanel.cs" id="1_script"]
+[ext_resource type="Theme" path="res://Scenes/FileDialogTheme.tres" id="2_dialog_theme"]
 
 [sub_resource type="StyleBoxFlat" id="Style_terminal"]
 bg_color = Color(0.008, 0.011, 0.019, 0.97)
@@ -127,14 +128,17 @@ text = "Enter ↵"
 unique_name_in_owner = true
 title = "Commit message"
 size = Vector2i(780, 225)
+borderless = true
+theme = ExtResource("2_dialog_theme")
+unresizable = true
 ok_button_text = "Commit"
-dialog_text = "กรอกข้อความอธิบาย Commit"
+dialog_text = ""
 
 [node name="CommitInput" type="LineEdit" parent="CommitDialog"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(705, 63)
 offset_left = 30.0
-offset_top = 97.5
+offset_top = 40.0
 offset_right = 750.0
-offset_bottom = 160.5
+offset_bottom = 103.0
 placeholder_text = "เช่น add player profile"
