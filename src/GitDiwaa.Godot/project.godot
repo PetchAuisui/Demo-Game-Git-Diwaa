@@ -12,8 +12,9 @@ config_version=5
 
 config/name="Git-Diwaa"
 config/description="Git-Diwaa: Real Git Learning Sandbox Game"
-run/main_scene="res://Scenes/SandboxGameView.tscn"
+run/main_scene="res://scenes/cutscene/cut_scence_normal.tscn"
 config/features=PackedStringArray("4.7", "C#")
+config/icon="res://icon.svg"
 
 [autoload]
 
