@@ -42,6 +42,9 @@ public partial class TerminalPanel : PanelContainer
         _enterButton.Pressed += SubmitFromInput;
         _inputEdit.GuiInput += OnInputGuiInput;
 
+        DialogStyle.Apply(_commitDialog, DialogStyle.Success, "✓", "Commit message", false, _commitInput);
+        _commitDialog.Size = new Vector2I(780, 100);
+        _commitInput.PlaceholderText = "กรอกข้อความอธิบาย Commit เช่น add player profile";
         _commitDialog.Confirmed += OnCommitDialogConfirmed;
         _commitDialog.AboutToPopup += () => _commitInput.CallDeferred(Control.MethodName.GrabFocus);
 

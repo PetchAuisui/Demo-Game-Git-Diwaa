@@ -438,16 +438,7 @@ public partial class SandboxGameView : Control
 
             if (snapshot.IsInitialized)
             {
-                var graphResult = await _sandboxService.ExecuteAsync("git log --graph --all --oneline -n 20");
-                if (graphResult.Success && !string.IsNullOrWhiteSpace(graphResult.StandardOutput))
-                {
-                    _gitGraphPanel.SetGraphText(graphResult.StandardOutput);
-                }
-                else
-                {
-                    var commits = await _sandboxService.GetCommitGraphAsync();
-                    _gitGraphPanel.SetCommits(commits);
-                }
+                _gitGraphPanel.SetSnapshot(snapshot);
             }
             else
             {

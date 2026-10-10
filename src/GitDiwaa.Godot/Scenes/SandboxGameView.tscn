@@ -43,7 +43,7 @@ unique_name_in_owner = true
 layout_mode = 1
 anchors_preset = 10
 anchor_right = 1.0
-offset_bottom = 117.0
+offset_bottom = 72.0
 grow_horizontal = 2
 
 [node name="FilesPanel" parent="." instance=ExtResource("4_files")]
@@ -51,7 +51,7 @@ unique_name_in_owner = true
 layout_mode = 1
 anchors_preset = 0
 anchor_left = 0.02
-anchor_top = 0.16
+anchor_top = 0.11
 anchor_right = 0.265
 anchor_bottom = 0.96
 grow_horizontal = 1
@@ -62,7 +62,7 @@ unique_name_in_owner = true
 layout_mode = 1
 anchors_preset = 0
 anchor_left = 0.735
-anchor_top = 0.16
+anchor_top = 0.11
 anchor_right = 0.98
 anchor_bottom = 0.60
 grow_horizontal = 1
