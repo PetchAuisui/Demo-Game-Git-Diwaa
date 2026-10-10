@@ -4,10 +4,10 @@
 
 ## สถานะปัจจุบัน
 
-- รอบพัฒนา `feat/git-engine` เพิ่มระบบ Real Git, Terminal CLI และ integration tests สำหรับรวมเข้า `main`
-- สถานะเป็นฐานระบบรุ่นแรกสำหรับทดลองและต่อ UI ยังไม่ครอบคลุมคำสั่งและสถานการณ์ของทุกบทเรียน
-- ยังไม่พัฒนา Godot UI ตามขอบเขตงานรอบนี้
-- ดู [สถานะการทดสอบ ข้อจำกัด และงานถัดไป](docs/implementation-status.md) ก่อนนำไปใช้งานต่อ
+- Godot C# Sandbox UI ใช้โครงสร้าง OOP แบบโมดูลและเชื่อมกับ repository จำลองที่ใช้ Git จริง
+- ประกอบด้วยคอมโพเนนต์ Terminal, Files panel, Git Graph panel, Top Bar panel และ Sandbox Orchestrator View
+- Files/Workspace แสดงโครงสร้างไฟล์และโฟลเดอร์ พร้อมสร้าง เปลี่ยนชื่อ ลบ เปิด แก้ไข บันทึก และแจ้งสถานะ unsaved
+- ฐานระบบ Real Git engine, Terminal CLI และ integration tests พร้อมใช้งาน
 
 ## โครงสร้าง
 
@@ -15,11 +15,13 @@
 src/
 ├── GitDiwaa.Core/       contracts และ models ที่ CLI/Godot ใช้ร่วมกัน
 ├── GitDiwaa.RealGit/    adapter สำหรับ Git จริงและ sandbox ของผู้เล่น
-└── GitDiwaa.Cli/        โปรแกรมทดสอบผ่าน Terminal
+├── GitDiwaa.Cli/        โปรแกรมทดสอบผ่าน Terminal
+└── GitDiwaa.Godot/      Godot 4 C# Sandbox UI (Terminal, Files, Git Graph)
 tests/
 └── GitDiwaa.RealGit.Tests/  integration tests กับ Git จริง
 docs/
-└── architecture.md      ข้อกำหนด ขอบเขต และ data flow
+├── architecture.md      ข้อกำหนด ขอบเขต และ data flow
+└── godot-integration.md สถาปัตยกรรม Godot C# Sandbox UI
 ```
 
 ## สิ่งที่ต้องมี
@@ -45,6 +47,17 @@ dotnet build GitDiwaa.slnx --no-restore --disable-build-servers -m:1
 dotnet run --project src/GitDiwaa.Cli/GitDiwaa.Cli.csproj
 ```
 
+## เปิดเกม Godot Sandbox UI
+
+```sh
+/Applications/Godot_mono.app/Contents/MacOS/Godot --path src/GitDiwaa.Godot
+```
+
+หรือทดสอบ headless mode:
+```sh
+/Applications/Godot_mono.app/Contents/MacOS/Godot --headless --path src/GitDiwaa.Godot --quit-after 5
+```
+
 ตัวอย่าง one-shot สำหรับตรวจ Git จริงและดู state ที่ UI จะได้รับ:
 
 ```sh
@@ -68,6 +81,14 @@ dotnet run --project tests/GitDiwaa.RealGit.Tests/GitDiwaa.RealGit.Tests.csproj
 ```
 
 ชุดทดสอบสร้าง repository จริงใต้ temporary directory และลบเฉพาะพื้นที่ทดสอบของตัวเองเมื่อจบ
+
+## ทดสอบ Files/Workspace ด้วยตนเอง
+
+1. เปิด Godot Sandbox UI แล้วใช้ปุ่ม `+ ไฟล์` หรือ `+ โฟลเดอร์`
+2. เลือกไฟล์และกด `เปิด` หรือดับเบิลคลิก จากนั้นแก้ข้อความและตรวจ badge `ยังไม่บันทึก`
+3. กด `บันทึก` แล้วพิมพ์ `git status` ใน Terminal เพื่อยืนยันว่า Git เห็นการเปลี่ยนแปลง
+4. ทดสอบ `เปลี่ยนชื่อ` และ `ลบ` แล้วตรวจ confirmation, feedback และ `git status` อีกครั้ง
+5. ลองเปิดหรือปิด editor ขณะมีเนื้อหาที่ยังไม่บันทึก เพื่อตรวจ dialog ป้องกันข้อมูลสูญหาย
 
 ## เอกสาร
 

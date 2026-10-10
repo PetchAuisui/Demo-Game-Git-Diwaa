@@ -1,10 +1,13 @@
 **/bin/
 **/obj/
-.godot/
-.mono/
+**/.godot/
+**/.mono/
+# Ignore new C# UID sidecars; keep existing tracked UIDs intact.
+*.cs.uid
+**/.local/
+Library/
 *.user
 *.userprefs
 .DS_Store
 git-workspaces/
 TestResults/
-

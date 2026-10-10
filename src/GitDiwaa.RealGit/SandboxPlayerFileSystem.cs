@@ -36,12 +36,56 @@ internal sealed class SandboxPlayerFileSystem : IPlayerFileSystem
         return File.Exists(path) ? await File.ReadAllTextAsync(path, cancellationToken) : null;
     }
 
+    public void CreateDirectory(string relativePath)
+    {
+        var path = Resolve(relativePath);
+        EnsureNoSymbolicLinks(path);
+        if (File.Exists(path))
+            throw new IOException($"A file already exists at '{relativePath}'.");
+        Directory.CreateDirectory(path);
+    }
+
+    public void Move(string sourceRelativePath, string destinationRelativePath)
+    {
+        var source = Resolve(sourceRelativePath);
+        var destination = Resolve(destinationRelativePath);
+        EnsureNoSymbolicLinks(source);
+        EnsureNoSymbolicLinks(destination);
+
+        if (File.Exists(destination) || Directory.Exists(destination))
+            throw new IOException($"An entry already exists at '{destinationRelativePath}'.");
+
+        Directory.CreateDirectory(Path.GetDirectoryName(destination)!);
+        if (File.Exists(source))
+        {
+            File.Move(source, destination);
+            return;
+        }
+
+        if (Directory.Exists(source))
+        {
+            Directory.Move(source, destination);
+            return;
+        }
+
+        throw new FileNotFoundException($"Workspace entry '{sourceRelativePath}' was not found.");
+    }
+
     public bool Delete(string relativePath)
     {
         var path = Resolve(relativePath);
         EnsureNoSymbolicLinks(path);
         if (!File.Exists(path)) return false;
         File.Delete(path);
+        return true;
+    }
+
+    public bool DeleteDirectory(string relativePath, bool recursive = false)
+    {
+        var path = Resolve(relativePath);
+        EnsureNoSymbolicLinks(path);
+        if (!Directory.Exists(path)) return false;
+        Directory.Delete(path, recursive);
         return true;
     }
 
@@ -55,6 +99,20 @@ internal sealed class SandboxPlayerFileSystem : IPlayerFileSystem
         .Where(path => !IsGitMetadata(path))
         .Select(path => Path.GetRelativePath(_root, path))
         .OrderBy(path => path, StringComparer.Ordinal)
+        .ToArray();
+
+    public IReadOnlyList<PlayerWorkspaceEntry> ListEntries() => Directory
+        .EnumerateFileSystemEntries(_root, "*", new EnumerationOptions
+        {
+            RecurseSubdirectories = true,
+            IgnoreInaccessible = true,
+            AttributesToSkip = FileAttributes.ReparsePoint
+        })
+        .Where(path => !IsGitMetadata(path))
+        .Select(path => new PlayerWorkspaceEntry(
+            Path.GetRelativePath(_root, path).Replace(Path.DirectorySeparatorChar, '/'),
+            Directory.Exists(path)))
+        .OrderBy(entry => entry.Path, StringComparer.Ordinal)
         .ToArray();
 
     private string Resolve(string relativePath)
