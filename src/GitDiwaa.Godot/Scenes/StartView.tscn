@@ -1,16 +1,15 @@
-[gd_scene load_steps=18 format=3]
+[gd_scene format=3 uid="uid://c00kg8d5qqs1b"]
 
-[ext_resource type="Script" path="res://Scripts/Controllers/StartViewController.cs" id="1_controller"]
-[ext_resource type="Texture2D" path="res://assets/art/start_screen/start_bg.png" id="2_bg"]
+[ext_resource type="Script" uid="uid://fktncet4voef" path="res://Scripts/Controllers/StartViewController.cs" id="1_controller"]
+[ext_resource type="Texture2D" uid="uid://c6py6ntqpys64" path="res://assets/art/start_screen/start_bg.png" id="2_bg"]
 [ext_resource type="PackedScene" path="res://Scenes/StartTopBar.tscn" id="3_topbar"]
-[ext_resource type="Texture2D" path="res://assets/art/start_screen/start_logo.png" id="4_logo"]
-[ext_resource type="Texture2D" path="res://assets/art/start_screen/start_scene_preview.png" id="5_preview"]
-[ext_resource type="FontFile" path="res://assets/fonts/ChakraPetch-Bold.ttf" id="6_font_chakra_bold"]
-[ext_resource type="FontFile" path="res://assets/fonts/Silkscreen-Bold.ttf" id="7_font_silkscreen"]
-[ext_resource type="FontFile" path="res://assets/fonts/VT323-Regular.ttf" id="8_font_vt323"]
-[ext_resource type="AudioStream" path="res://assets/audio/bgm_tower_loop.wav" id="9_bgm"]
-[ext_resource type="AudioStream" path="res://assets/audio/sfx_click.wav" id="10_sfx_click"]
-[ext_resource type="AudioStream" path="res://assets/audio/sfx_command.wav" id="11_sfx_cmd"]
+[ext_resource type="Texture2D" uid="uid://2tl18p12rp5x" path="res://assets/art/start_screen/start_logo.png" id="4_logo"]
+[ext_resource type="Texture2D" uid="uid://e7maulpi344" path="res://assets/art/start_screen/start_scene_preview.png" id="5_preview"]
+[ext_resource type="FontFile" uid="uid://deedcfbkojx6k" path="res://assets/fonts/ChakraPetch-Bold.ttf" id="6_font_chakra_bold"]
+[ext_resource type="FontFile" uid="uid://b8g6ela360qq1" path="res://assets/fonts/Silkscreen-Bold.ttf" id="7_font_silkscreen"]
+[ext_resource type="FontFile" uid="uid://kdsopvxcj40" path="res://assets/fonts/VT323-Regular.ttf" id="8_font_vt323"]
+[ext_resource type="AudioStream" uid="uid://cvlamp5b4er6q" path="res://assets/audio/sfx_click.wav" id="10_sfx_click"]
+[ext_resource type="AudioStream" uid="uid://okd1lm33qdyj" path="res://assets/audio/sfx_command.wav" id="11_sfx_cmd"]
 
 [sub_resource type="StyleBoxFlat" id="Style_window_frame"]
 bg_color = Color(0.141, 0.082, 0.043, 1)
@@ -18,14 +17,14 @@ border_width_left = 4
 border_width_top = 4
 border_width_right = 4
 border_width_bottom = 4
-border_color = Color(0.243, 0.153, 0.090, 1)
+border_color = Color(0.243, 0.153, 0.09, 1)
 
 [sub_resource type="StyleBoxFlat" id="Style_window_title"]
-bg_color = Color(0.141, 0.082, 0.043, 1)
 content_margin_left = 16.0
 content_margin_top = 6.0
 content_margin_right = 16.0
 content_margin_bottom = 6.0
+bg_color = Color(0.141, 0.082, 0.043, 1)
 
 [sub_resource type="StyleBoxFlat" id="Style_left_menu"]
 bg_color = Color(0.965, 0.812, 0.478, 1)
@@ -36,16 +35,16 @@ border_width_right = 5
 border_width_bottom = 5
 border_color = Color(0.514, 0.133, 0.027, 1)
 
-[sub_resource type="StyleBoxFlat" id="Style_btn_start_hover"]
-bg_color = Color(0.976, 0.380, 0.208, 1)
-border_width_right = 5
-border_width_bottom = 5
-border_color = Color(0.514, 0.133, 0.027, 1)
-
 [sub_resource type="StyleBoxFlat" id="Style_btn_start_pressed"]
 bg_color = Color(0.722, 0.235, 0.086, 1)
 border_width_left = 3
 border_width_top = 3
+border_color = Color(0.514, 0.133, 0.027, 1)
+
+[sub_resource type="StyleBoxFlat" id="Style_btn_start_hover"]
+bg_color = Color(0.976, 0.38, 0.208, 1)
+border_width_right = 5
+border_width_bottom = 5
 border_color = Color(0.514, 0.133, 0.027, 1)
 
 [sub_resource type="StyleBoxFlat" id="Style_btn_resume_normal"]
@@ -54,16 +53,16 @@ border_width_right = 5
 border_width_bottom = 5
 border_color = Color(0.169, 0.106, 0.055, 1)
 
-[sub_resource type="StyleBoxFlat" id="Style_btn_resume_hover"]
-bg_color = Color(0.980, 0.933, 0.835, 1)
-border_width_right = 5
-border_width_bottom = 5
-border_color = Color(0.169, 0.106, 0.055, 1)
-
 [sub_resource type="StyleBoxFlat" id="Style_btn_resume_pressed"]
-bg_color = Color(0.780, 0.718, 0.596, 1)
+bg_color = Color(0.78, 0.718, 0.596, 1)
 border_width_left = 3
 border_width_top = 3
+border_color = Color(0.169, 0.106, 0.055, 1)
+
+[sub_resource type="StyleBoxFlat" id="Style_btn_resume_hover"]
+bg_color = Color(0.98, 0.933, 0.835, 1)
+border_width_right = 5
+border_width_bottom = 5
 border_color = Color(0.169, 0.106, 0.055, 1)
 
 [sub_resource type="StyleBoxFlat" id="Style_terminal_bg"]
@@ -72,13 +71,13 @@ bg_color = Color(0.043, 0.051, 0.035, 1)
 [sub_resource type="StyleBoxEmpty" id="Style_terminal_input"]
 
 [sub_resource type="StyleBoxFlat" id="Style_bottom_bar"]
-bg_color = Color(0.067, 0.039, 0.024, 1)
 content_margin_left = 36.0
 content_margin_top = 6.0
 content_margin_right = 36.0
 content_margin_bottom = 6.0
+bg_color = Color(0.067, 0.039, 0.024, 1)
 
-[node name="StartView" type="Control"]
+[node name="StartView" type="Control" unique_id=663714489]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -87,7 +86,7 @@ grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_controller")
 
-[node name="Background" type="TextureRect" parent="."]
+[node name="Background" type="TextureRect" parent="." unique_id=1596843002]
 texture_filter = 1
 layout_mode = 1
 anchors_preset = 15
@@ -99,7 +98,7 @@ texture = ExtResource("2_bg")
 expand_mode = 1
 stretch_mode = 6
 
-[node name="Atmosphere" type="ColorRect" parent="."]
+[node name="Atmosphere" type="ColorRect" parent="." unique_id=653970451]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -109,15 +108,11 @@ grow_vertical = 2
 mouse_filter = 2
 color = Color(0.03, 0.02, 0.06, 0.08)
 
-[node name="TopBar" parent="." instance=ExtResource("3_topbar")]
+[node name="TopBar" parent="." unique_id=1990034810 instance=ExtResource("3_topbar")]
 unique_name_in_owner = true
 layout_mode = 1
-anchors_preset = 10
-anchor_right = 1.0
-offset_bottom = 68.0
-grow_horizontal = 2
 
-[node name="WindowAnchor" type="Control" parent="."]
+[node name="WindowAnchor" type="Control" parent="." unique_id=739318305]
 layout_mode = 1
 anchors_preset = 8
 anchor_left = 0.5
@@ -131,7 +126,7 @@ offset_bottom = 430.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="WindowFrame" type="PanelContainer" parent="WindowAnchor"]
+[node name="WindowFrame" type="PanelContainer" parent="WindowAnchor" unique_id=392022383]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -140,31 +135,31 @@ grow_horizontal = 2
 grow_vertical = 2
 theme_override_styles/panel = SubResource("Style_window_frame")
 
-[node name="WindowVBox" type="VBoxContainer" parent="WindowAnchor/WindowFrame"]
+[node name="WindowVBox" type="VBoxContainer" parent="WindowAnchor/WindowFrame" unique_id=880383401]
 layout_mode = 2
 theme_override_constants/separation = 0
 
-[node name="TitleBar" type="PanelContainer" parent="WindowAnchor/WindowFrame/WindowVBox"]
+[node name="TitleBar" type="PanelContainer" parent="WindowAnchor/WindowFrame/WindowVBox" unique_id=236417990]
 custom_minimum_size = Vector2(0, 36)
 layout_mode = 2
 theme_override_styles/panel = SubResource("Style_window_title")
 
-[node name="TitleRow" type="HBoxContainer" parent="WindowAnchor/WindowFrame/WindowVBox/TitleBar"]
+[node name="TitleRow" type="HBoxContainer" parent="WindowAnchor/WindowFrame/WindowVBox/TitleBar" unique_id=974260206]
 layout_mode = 2
 
-[node name="TitleText" type="Label" parent="WindowAnchor/WindowFrame/WindowVBox/TitleBar/TitleRow"]
+[node name="TitleText" type="Label" parent="WindowAnchor/WindowFrame/WindowVBox/TitleBar/TitleRow" unique_id=1244900797]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.72, 0.62, 0.50, 1)
+theme_override_colors/font_color = Color(0.72, 0.62, 0.5, 1)
 theme_override_fonts/font = ExtResource("7_font_silkscreen")
 theme_override_font_sizes/font_size = 15
 text = "▣  EXEC: START_SCREEN.EXE"
 vertical_alignment = 1
 
-[node name="Spacer" type="Control" parent="WindowAnchor/WindowFrame/WindowVBox/TitleBar/TitleRow"]
+[node name="Spacer" type="Control" parent="WindowAnchor/WindowFrame/WindowVBox/TitleBar/TitleRow" unique_id=1156029121]
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="WindowControls" type="Label" parent="WindowAnchor/WindowFrame/WindowVBox/TitleBar/TitleRow"]
+[node name="WindowControls" type="Label" parent="WindowAnchor/WindowFrame/WindowVBox/TitleBar/TitleRow" unique_id=123032340]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.85, 0.55, 0.35, 1)
 theme_override_fonts/font = ExtResource("7_font_silkscreen")
@@ -172,28 +167,28 @@ theme_override_font_sizes/font_size = 15
 text = "□  □  ▪"
 vertical_alignment = 1
 
-[node name="WindowContent" type="HBoxContainer" parent="WindowAnchor/WindowFrame/WindowVBox"]
+[node name="WindowContent" type="HBoxContainer" parent="WindowAnchor/WindowFrame/WindowVBox" unique_id=1289948119]
 layout_mode = 2
 size_flags_vertical = 3
 theme_override_constants/separation = 0
 
-[node name="LeftMenuPanel" type="PanelContainer" parent="WindowAnchor/WindowFrame/WindowVBox/WindowContent"]
+[node name="LeftMenuPanel" type="PanelContainer" parent="WindowAnchor/WindowFrame/WindowVBox/WindowContent" unique_id=1735619678]
 custom_minimum_size = Vector2(490, 0)
 layout_mode = 2
 theme_override_styles/panel = SubResource("Style_left_menu")
 
-[node name="Margin" type="MarginContainer" parent="WindowAnchor/WindowFrame/WindowVBox/WindowContent/LeftMenuPanel"]
+[node name="Margin" type="MarginContainer" parent="WindowAnchor/WindowFrame/WindowVBox/WindowContent/LeftMenuPanel" unique_id=59541445]
 layout_mode = 2
 theme_override_constants/margin_left = 36
 theme_override_constants/margin_top = 28
 theme_override_constants/margin_right = 36
 theme_override_constants/margin_bottom = 24
 
-[node name="VBox" type="VBoxContainer" parent="WindowAnchor/WindowFrame/WindowVBox/WindowContent/LeftMenuPanel/Margin"]
+[node name="VBox" type="VBoxContainer" parent="WindowAnchor/WindowFrame/WindowVBox/WindowContent/LeftMenuPanel/Margin" unique_id=1117149723]
 layout_mode = 2
 theme_override_constants/separation = 16
 
-[node name="LogoRect" type="TextureRect" parent="WindowAnchor/WindowFrame/WindowVBox/WindowContent/LeftMenuPanel/Margin/VBox"]
+[node name="LogoRect" type="TextureRect" parent="WindowAnchor/WindowFrame/WindowVBox/WindowContent/LeftMenuPanel/Margin/VBox" unique_id=473608172]
 texture_filter = 1
 custom_minimum_size = Vector2(260, 160)
 layout_mode = 2
@@ -201,136 +196,144 @@ texture = ExtResource("4_logo")
 expand_mode = 1
 stretch_mode = 5
 
-[node name="Spacer1" type="Control" parent="WindowAnchor/WindowFrame/WindowVBox/WindowContent/LeftMenuPanel/Margin/VBox"]
+[node name="Spacer1" type="Control" parent="WindowAnchor/WindowFrame/WindowVBox/WindowContent/LeftMenuPanel/Margin/VBox" unique_id=732046736]
 custom_minimum_size = Vector2(0, 10)
 layout_mode = 2
 
-[node name="StartCareerBtn" type="Button" parent="WindowAnchor/WindowFrame/WindowVBox/WindowContent/LeftMenuPanel/Margin/VBox"]
+[node name="StartCareerBtn" type="Button" parent="WindowAnchor/WindowFrame/WindowVBox/WindowContent/LeftMenuPanel/Margin/VBox" unique_id=730874627]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 62)
 layout_mode = 2
 focus_neighbor_bottom = NodePath("../ResumeWorkBtn")
-focus_mode = 2
 theme_override_colors/font_color = Color(1, 1, 1, 1)
-theme_override_colors/font_hover_color = Color(1, 1, 1, 1)
 theme_override_colors/font_pressed_color = Color(1, 0.9, 0.85, 1)
+theme_override_colors/font_hover_color = Color(1, 1, 1, 1)
 theme_override_fonts/font = ExtResource("6_font_chakra_bold")
 theme_override_font_sizes/font_size = 22
 theme_override_styles/normal = SubResource("Style_btn_start_normal")
-theme_override_styles/hover = SubResource("Style_btn_start_hover")
 theme_override_styles/pressed = SubResource("Style_btn_start_pressed")
+theme_override_styles/hover = SubResource("Style_btn_start_hover")
 text = "START NEW CAREER →"
 
-[node name="ResumeWorkBtn" type="Button" parent="WindowAnchor/WindowFrame/WindowVBox/WindowContent/LeftMenuPanel/Margin/VBox"]
+[node name="ResumeWorkBtn" type="Button" parent="WindowAnchor/WindowFrame/WindowVBox/WindowContent/LeftMenuPanel/Margin/VBox" unique_id=672344013]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 56)
 layout_mode = 2
 focus_neighbor_top = NodePath("../StartCareerBtn")
 focus_neighbor_bottom = NodePath("../TutorialBtn")
-focus_mode = 2
 theme_override_colors/font_color = Color(0.18, 0.12, 0.08, 1)
-theme_override_colors/font_hover_color = Color(0.18, 0.12, 0.08, 1)
 theme_override_colors/font_pressed_color = Color(0.18, 0.12, 0.08, 1)
+theme_override_colors/font_hover_color = Color(0.18, 0.12, 0.08, 1)
 theme_override_fonts/font = ExtResource("6_font_chakra_bold")
 theme_override_font_sizes/font_size = 20
 theme_override_styles/normal = SubResource("Style_btn_resume_normal")
-theme_override_styles/hover = SubResource("Style_btn_resume_hover")
 theme_override_styles/pressed = SubResource("Style_btn_resume_pressed")
+theme_override_styles/hover = SubResource("Style_btn_resume_hover")
 text = "RESUME WORK 🕒"
 
-[node name="DottedSeparator" type="Label" parent="WindowAnchor/WindowFrame/WindowVBox/WindowContent/LeftMenuPanel/Margin/VBox"]
+[node name="DottedSeparator" type="Label" parent="WindowAnchor/WindowFrame/WindowVBox/WindowContent/LeftMenuPanel/Margin/VBox" unique_id=1344059474]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.722, 0.604, 0.380, 1)
+theme_override_colors/font_color = Color(0.722, 0.604, 0.38, 1)
 theme_override_fonts/font = ExtResource("7_font_silkscreen")
 theme_override_font_sizes/font_size = 12
 text = "--------------------------------------"
 horizontal_alignment = 1
 
-[node name="TutorialBtn" type="Button" parent="WindowAnchor/WindowFrame/WindowVBox/WindowContent/LeftMenuPanel/Margin/VBox"]
+[node name="TutorialBtn" type="Button" parent="WindowAnchor/WindowFrame/WindowVBox/WindowContent/LeftMenuPanel/Margin/VBox" unique_id=1448974232]
 unique_name_in_owner = true
 layout_mode = 2
 focus_neighbor_top = NodePath("../ResumeWorkBtn")
-focus_mode = 2
-flat = true
 theme_override_colors/font_color = Color(0.33, 0.24, 0.15, 1)
-theme_override_colors/font_hover_color = Color(0.871, 0.306, 0.137, 1)
 theme_override_colors/font_pressed_color = Color(0.514, 0.133, 0.027, 1)
+theme_override_colors/font_hover_color = Color(0.871, 0.306, 0.137, 1)
 theme_override_fonts/font = ExtResource("7_font_silkscreen")
 theme_override_font_sizes/font_size = 15
 text = "🗎  TUTORIAL & DOCUMENTATION"
+flat = true
 
-[node name="SpacerBottom" type="Control" parent="WindowAnchor/WindowFrame/WindowVBox/WindowContent/LeftMenuPanel/Margin/VBox"]
+[node name="SpacerBottom" type="Control" parent="WindowAnchor/WindowFrame/WindowVBox/WindowContent/LeftMenuPanel/Margin/VBox" unique_id=1002503397]
 layout_mode = 2
 size_flags_vertical = 3
 
-[node name="NavHintsContainer" type="VBoxContainer" parent="WindowAnchor/WindowFrame/WindowVBox/WindowContent/LeftMenuPanel/Margin/VBox"]
+[node name="NavHintsContainer" type="VBoxContainer" parent="WindowAnchor/WindowFrame/WindowVBox/WindowContent/LeftMenuPanel/Margin/VBox" unique_id=405348502]
 layout_mode = 2
 theme_override_constants/separation = 6
 
-[node name="EnterHint" type="Label" parent="WindowAnchor/WindowFrame/WindowVBox/WindowContent/LeftMenuPanel/Margin/VBox/NavHintsContainer"]
+[node name="EnterHint" type="Label" parent="WindowAnchor/WindowFrame/WindowVBox/WindowContent/LeftMenuPanel/Margin/VBox/NavHintsContainer" unique_id=727265122]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.35, 0.25, 0.15, 1)
 theme_override_fonts/font = ExtResource("7_font_silkscreen")
 theme_override_font_sizes/font_size = 14
 text = "[ENTER]  NAVIGATE"
 
-[node name="SelectHint" type="Label" parent="WindowAnchor/WindowFrame/WindowVBox/WindowContent/LeftMenuPanel/Margin/VBox/NavHintsContainer"]
+[node name="SelectHint" type="Label" parent="WindowAnchor/WindowFrame/WindowVBox/WindowContent/LeftMenuPanel/Margin/VBox/NavHintsContainer" unique_id=600367546]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.35, 0.25, 0.15, 1)
 theme_override_fonts/font = ExtResource("7_font_silkscreen")
 theme_override_font_sizes/font_size = 14
 text = "[↑ ↓]   SELECT"
 
-[node name="RightIllustrationPanel" type="VBoxContainer" parent="WindowAnchor/WindowFrame/WindowVBox/WindowContent"]
+[node name="RightIllustrationPanel" type="VBoxContainer" parent="WindowAnchor/WindowFrame/WindowVBox/WindowContent" unique_id=817027629]
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_constants/separation = 0
 
-[node name="ScenePreviewRect" type="TextureRect" parent="WindowAnchor/WindowFrame/WindowVBox/WindowContent/RightIllustrationPanel"]
-texture_filter = 1
+[node name="ScenePreviewContainer" type="Control" parent="WindowAnchor/WindowFrame/WindowVBox/WindowContent/RightIllustrationPanel"]
+clip_contents = true
 custom_minimum_size = Vector2(0, 480)
 layout_mode = 2
 size_flags_vertical = 3
+
+[node name="ScenePreviewRect" type="TextureRect" parent="WindowAnchor/WindowFrame/WindowVBox/WindowContent/RightIllustrationPanel/ScenePreviewContainer"]
+unique_name_in_owner = true
+texture_filter = 1
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_bottom = 160.0
+grow_horizontal = 2
+grow_vertical = 2
 texture = ExtResource("5_preview")
 expand_mode = 1
 stretch_mode = 6
 
-[node name="SceneDivider" type="ColorRect" parent="WindowAnchor/WindowFrame/WindowVBox/WindowContent/RightIllustrationPanel"]
+[node name="SceneDivider" type="ColorRect" parent="WindowAnchor/WindowFrame/WindowVBox/WindowContent/RightIllustrationPanel" unique_id=62311345]
 custom_minimum_size = Vector2(0, 3)
 layout_mode = 2
 color = Color(0.141, 0.082, 0.043, 1)
 
-[node name="TerminalPanel" type="PanelContainer" parent="WindowAnchor/WindowFrame/WindowVBox/WindowContent/RightIllustrationPanel"]
+[node name="TerminalPanel" type="PanelContainer" parent="WindowAnchor/WindowFrame/WindowVBox/WindowContent/RightIllustrationPanel" unique_id=1473650884]
 custom_minimum_size = Vector2(0, 260)
 layout_mode = 2
 theme_override_styles/panel = SubResource("Style_terminal_bg")
 
-[node name="Margin" type="MarginContainer" parent="WindowAnchor/WindowFrame/WindowVBox/WindowContent/RightIllustrationPanel/TerminalPanel"]
+[node name="Margin" type="MarginContainer" parent="WindowAnchor/WindowFrame/WindowVBox/WindowContent/RightIllustrationPanel/TerminalPanel" unique_id=889619265]
 layout_mode = 2
 theme_override_constants/margin_left = 24
 theme_override_constants/margin_top = 16
 theme_override_constants/margin_right = 24
 theme_override_constants/margin_bottom = 16
 
-[node name="VBox" type="VBoxContainer" parent="WindowAnchor/WindowFrame/WindowVBox/WindowContent/RightIllustrationPanel/TerminalPanel/Margin"]
+[node name="VBox" type="VBoxContainer" parent="WindowAnchor/WindowFrame/WindowVBox/WindowContent/RightIllustrationPanel/TerminalPanel/Margin" unique_id=1540722147]
 layout_mode = 2
 theme_override_constants/separation = 8
 
-[node name="HeaderRow" type="HBoxContainer" parent="WindowAnchor/WindowFrame/WindowVBox/WindowContent/RightIllustrationPanel/TerminalPanel/Margin/VBox"]
+[node name="HeaderRow" type="HBoxContainer" parent="WindowAnchor/WindowFrame/WindowVBox/WindowContent/RightIllustrationPanel/TerminalPanel/Margin/VBox" unique_id=1868446773]
 layout_mode = 2
 
-[node name="TerminalTag" type="Label" parent="WindowAnchor/WindowFrame/WindowVBox/WindowContent/RightIllustrationPanel/TerminalPanel/Margin/VBox/HeaderRow"]
+[node name="TerminalTag" type="Label" parent="WindowAnchor/WindowFrame/WindowVBox/WindowContent/RightIllustrationPanel/TerminalPanel/Margin/VBox/HeaderRow" unique_id=602585112]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.26, 0.57, 0.45, 1)
 theme_override_fonts/font = ExtResource("8_font_vt323")
 theme_override_font_sizes/font_size = 22
 text = "Terminal"
 
-[node name="Spacer" type="Control" parent="WindowAnchor/WindowFrame/WindowVBox/WindowContent/RightIllustrationPanel/TerminalPanel/Margin/VBox/HeaderRow"]
+[node name="Spacer" type="Control" parent="WindowAnchor/WindowFrame/WindowVBox/WindowContent/RightIllustrationPanel/TerminalPanel/Margin/VBox/HeaderRow" unique_id=1766867512]
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="ClockLabel" type="Label" parent="WindowAnchor/WindowFrame/WindowVBox/WindowContent/RightIllustrationPanel/TerminalPanel/Margin/VBox/HeaderRow"]
+[node name="ClockLabel" type="Label" parent="WindowAnchor/WindowFrame/WindowVBox/WindowContent/RightIllustrationPanel/TerminalPanel/Margin/VBox/HeaderRow" unique_id=64444279]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_colors/font_color = Color(0.69, 0.55, 0.34, 1)
@@ -338,7 +341,7 @@ theme_override_fonts/font = ExtResource("8_font_vt323")
 theme_override_font_sizes/font_size = 22
 text = "MT: 15:07:27"
 
-[node name="OutputLog" type="RichTextLabel" parent="WindowAnchor/WindowFrame/WindowVBox/WindowContent/RightIllustrationPanel/TerminalPanel/Margin/VBox"]
+[node name="OutputLog" type="RichTextLabel" parent="WindowAnchor/WindowFrame/WindowVBox/WindowContent/RightIllustrationPanel/TerminalPanel/Margin/VBox" unique_id=1969638442]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_vertical = 3
@@ -352,18 +355,18 @@ text = "> git init
 > git commit -m \"FireBall\""
 scroll_following = true
 
-[node name="PromptRow" type="HBoxContainer" parent="WindowAnchor/WindowFrame/WindowVBox/WindowContent/RightIllustrationPanel/TerminalPanel/Margin/VBox"]
+[node name="PromptRow" type="HBoxContainer" parent="WindowAnchor/WindowFrame/WindowVBox/WindowContent/RightIllustrationPanel/TerminalPanel/Margin/VBox" unique_id=208022134]
 layout_mode = 2
 theme_override_constants/separation = 6
 
-[node name="PromptChevron" type="Label" parent="WindowAnchor/WindowFrame/WindowVBox/WindowContent/RightIllustrationPanel/TerminalPanel/Margin/VBox/PromptRow"]
+[node name="PromptChevron" type="Label" parent="WindowAnchor/WindowFrame/WindowVBox/WindowContent/RightIllustrationPanel/TerminalPanel/Margin/VBox/PromptRow" unique_id=2029329152]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.31, 0.98, 0.46, 1)
 theme_override_fonts/font = ExtResource("8_font_vt323")
 theme_override_font_sizes/font_size = 26
 text = ">"
 
-[node name="CommandInput" type="LineEdit" parent="WindowAnchor/WindowFrame/WindowVBox/WindowContent/RightIllustrationPanel/TerminalPanel/Margin/VBox/PromptRow"]
+[node name="CommandInput" type="LineEdit" parent="WindowAnchor/WindowFrame/WindowVBox/WindowContent/RightIllustrationPanel/TerminalPanel/Margin/VBox/PromptRow" unique_id=1972139635]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
@@ -375,7 +378,7 @@ theme_override_styles/focus = SubResource("Style_terminal_input")
 placeholder_text = "type git command... (e.g. git status)"
 caret_blink = true
 
-[node name="CursorBlock" type="Label" parent="WindowAnchor/WindowFrame/WindowVBox/WindowContent/RightIllustrationPanel/TerminalPanel/Margin/VBox/PromptRow"]
+[node name="CursorBlock" type="Label" parent="WindowAnchor/WindowFrame/WindowVBox/WindowContent/RightIllustrationPanel/TerminalPanel/Margin/VBox/PromptRow" unique_id=145397303]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_colors/font_color = Color(0.31, 0.98, 0.46, 1)
@@ -383,7 +386,7 @@ theme_override_fonts/font = ExtResource("8_font_vt323")
 theme_override_font_sizes/font_size = 26
 text = "█"
 
-[node name="BottomStatusBar" type="PanelContainer" parent="."]
+[node name="BottomStatusBar" type="PanelContainer" parent="." unique_id=1554528865]
 custom_minimum_size = Vector2(0, 36)
 layout_mode = 1
 anchors_preset = 12
@@ -395,45 +398,42 @@ grow_horizontal = 2
 grow_vertical = 0
 theme_override_styles/panel = SubResource("Style_bottom_bar")
 
-[node name="HBox" type="HBoxContainer" parent="BottomStatusBar"]
+[node name="HBox" type="HBoxContainer" parent="BottomStatusBar" unique_id=1956219477]
 layout_mode = 2
 theme_override_constants/separation = 12
 
-[node name="StatusDot" type="Label" parent="BottomStatusBar/HBox"]
+[node name="StatusDot" type="Label" parent="BottomStatusBar/HBox" unique_id=1429992171]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.2, 0.9, 0.3, 1)
 theme_override_fonts/font = ExtResource("8_font_vt323")
 theme_override_font_sizes/font_size = 18
 text = "●"
 
-[node name="StatusText" type="Label" parent="BottomStatusBar/HBox"]
+[node name="StatusText" type="Label" parent="BottomStatusBar/HBox" unique_id=1644794727]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.55, 0.42, 0.31, 1)
 theme_override_fonts/font = ExtResource("8_font_vt323")
 theme_override_font_sizes/font_size = 20
 text = "CONNECTED TO DEVLAB_STUDIO SERVER"
 
-[node name="Spacer" type="Control" parent="BottomStatusBar/HBox"]
+[node name="Spacer" type="Control" parent="BottomStatusBar/HBox" unique_id=192118492]
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="BuildText" type="Label" parent="BottomStatusBar/HBox"]
+[node name="BuildText" type="Label" parent="BottomStatusBar/HBox" unique_id=1697552535]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.55, 0.42, 0.31, 1)
 theme_override_fonts/font = ExtResource("8_font_vt323")
 theme_override_font_sizes/font_size = 20
 text = "BUILD 2026.07.86"
 
-[node name="BgmAudio" type="AudioStreamPlayer" parent="."]
+[node name="BgmAudio" type="AudioStreamPlayer" parent="." unique_id=1072916560]
 unique_name_in_owner = true
-stream = ExtResource("9_bgm")
-volume_db = -8.0
-autoplay = true
 
-[node name="SfxClick" type="AudioStreamPlayer" parent="."]
+[node name="SfxClick" type="AudioStreamPlayer" parent="." unique_id=471127714]
 unique_name_in_owner = true
 stream = ExtResource("10_sfx_click")
 
-[node name="SfxCommand" type="AudioStreamPlayer" parent="."]
+[node name="SfxCommand" type="AudioStreamPlayer" parent="." unique_id=1573878329]
 unique_name_in_owner = true
 stream = ExtResource("11_sfx_cmd")

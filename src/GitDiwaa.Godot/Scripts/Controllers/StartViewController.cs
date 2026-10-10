@@ -20,9 +20,14 @@ public partial class StartViewController : Control
     private AudioStreamPlayer _bgmAudio = null!;
     private AudioStreamPlayer _sfxClick = null!;
     private AudioStreamPlayer _sfxCommand = null!;
+    private TextureRect _scenePreviewRect = null!;
+    private Texture2D[] _previewFrames = Array.Empty<Texture2D>();
 
     private double _cursorBlinkTimer;
     private double _clockUpdateTimer;
+    private double _previewAnimTimer;
+    private int _previewFrameIndex;
+    private const double PreviewFps = 6.67;
     private bool _cursorVisible = true;
 
     public override void _Ready()
@@ -30,6 +35,7 @@ public partial class StartViewController : Control
         BindNodes();
         WireEvents();
         UpdateClock();
+        LoadPreviewAnimation();
         _startCareerBtn.GrabFocus();
     }
 
@@ -45,6 +51,7 @@ public partial class StartViewController : Control
         _bgmAudio = GetNode<AudioStreamPlayer>("%BgmAudio");
         _sfxClick = GetNode<AudioStreamPlayer>("%SfxClick");
         _sfxCommand = GetNode<AudioStreamPlayer>("%SfxCommand");
+        _scenePreviewRect = GetNode<TextureRect>("%ScenePreviewRect");
     }
 
     private void WireEvents()
@@ -58,6 +65,29 @@ public partial class StartViewController : Control
         _tutorialBtn.FocusEntered += OnButtonFocusEntered;
 
         _commandInput.TextSubmitted += OnTerminalCommandSubmitted;
+    }
+
+    private void LoadPreviewAnimation()
+    {
+        SpriteFrames? framesResource = null;
+        if (ResourceLoader.Exists("res://Scenes/tower_preview_frames.tres"))
+        {
+            framesResource = GD.Load<SpriteFrames>("res://Scenes/tower_preview_frames.tres");
+        }
+        else if (ResourceLoader.Exists("res://assets/art/start_screen/tower_preview_frames.tres"))
+        {
+            framesResource = GD.Load<SpriteFrames>("res://assets/art/start_screen/tower_preview_frames.tres");
+        }
+
+        if (framesResource != null && framesResource.HasAnimation("default"))
+        {
+            int count = framesResource.GetFrameCount("default");
+            _previewFrames = new Texture2D[count];
+            for (int i = 0; i < count; i++)
+            {
+                _previewFrames[i] = framesResource.GetFrameTexture("default", i);
+            }
+        }
     }
 
     public override void _Process(double delta)
@@ -77,6 +107,18 @@ public partial class StartViewController : Control
         {
             _clockUpdateTimer = 0.0;
             UpdateClock();
+        }
+
+        // Tower preview animation (6.67 FPS, 0-65 looping)
+        if (_previewFrames.Length > 0 && _scenePreviewRect != null)
+        {
+            _previewAnimTimer += delta;
+            if (_previewAnimTimer >= (1.0 / PreviewFps))
+            {
+                _previewAnimTimer -= (1.0 / PreviewFps);
+                _previewFrameIndex = (_previewFrameIndex + 1) % _previewFrames.Length;
+                _scenePreviewRect.Texture = _previewFrames[_previewFrameIndex];
+            }
         }
     }
 
