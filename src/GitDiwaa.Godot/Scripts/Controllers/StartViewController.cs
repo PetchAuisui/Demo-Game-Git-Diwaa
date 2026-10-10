@@ -142,7 +142,7 @@ public partial class StartViewController : Control
         var timer = GetTree().CreateTimer(0.35);
         timer.Timeout += () =>
         {
-            GetTree().ChangeSceneToFile("res://Scenes/SandboxGameView.tscn");
+            GetTree().ChangeSceneToFile("res://scenes/cutscene/cut_scence_normal.tscn");
         };
     }
 
