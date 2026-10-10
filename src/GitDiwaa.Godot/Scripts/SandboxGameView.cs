@@ -121,6 +121,12 @@ public partial class SandboxGameView : Control
             return;
         }
 
+        if (trimmed.Equals("sandbox-reset", StringComparison.OrdinalIgnoreCase))
+        {
+            OnResetRequested();
+            return;
+        }
+
         if (trimmed.Equals("files", StringComparison.OrdinalIgnoreCase))
         {
             await HandleFilesCommandAsync();
@@ -458,7 +464,7 @@ public partial class SandboxGameView : Control
             restore, reset, branch, switch, merge, clone, remote, pull, push
 
 คำสั่ง UI: write <path> <content>, cat <path>, delete <path>, files,
-           clear, help
+           sandbox-reset, clear, help
 """);
     }
 

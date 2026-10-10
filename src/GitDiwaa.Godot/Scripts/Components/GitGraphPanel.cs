@@ -46,6 +46,7 @@ public partial class GitGraphPanel : PanelContainer
 		{
 			_details.Text = $"{commit.ShortId} · {commit.Author} · {commit.AuthoredAt.ToLocalTime():dd MMM yyyy HH:mm}\n{commit.Subject}";
 			_details.TooltipText = $"{commit.Id}\nParents: {string.Join(", ", commit.ParentIds)}";
+			EmitSignal(SignalName.CommitSelected, commit.Id);
 		};
 		_titleLabel.Text = PanelTitle;
 		SetEmptyState();

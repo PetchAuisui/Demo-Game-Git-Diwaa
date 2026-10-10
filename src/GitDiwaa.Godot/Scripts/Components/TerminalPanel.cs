@@ -46,6 +46,7 @@ public partial class TerminalPanel : PanelContainer
         _commitDialog.Size = new Vector2I(780, 100);
         _commitInput.PlaceholderText = "กรอกข้อความอธิบาย Commit เช่น add player profile";
         _commitDialog.Confirmed += OnCommitDialogConfirmed;
+        _commitInput.TextChanged += text => _commitDialog.GetOkButton().Disabled = string.IsNullOrWhiteSpace(text);
         _commitDialog.AboutToPopup += () => _commitInput.CallDeferred(Control.MethodName.GrabFocus);
 
         _inputEdit.GrabFocus();
@@ -81,6 +82,7 @@ public partial class TerminalPanel : PanelContainer
         if (command == "git commit")
         {
             _commitInput.Clear();
+            _commitDialog.GetOkButton().Disabled = true;
             _commitDialog.PopupCentered();
             return;
         }
@@ -96,7 +98,7 @@ public partial class TerminalPanel : PanelContainer
             AppendError("Commit message cannot be empty.");
             return;
         }
-        var fullCommand = $"git commit -m \"{message.Replace("\"", "\\\"")}\"";
+        var fullCommand = $"git commit -m \"{message.Replace("\\", "\\\\").Replace("\"", "\\\"")}\"";
         SubmitCommand(fullCommand);
     }
 
