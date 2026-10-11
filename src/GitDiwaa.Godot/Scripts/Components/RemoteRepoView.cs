@@ -41,6 +41,7 @@ public partial class RemoteRepoView : Control
         Theme = GitHubTheme.Create();
         SetAnchorsAndOffsetsPreset(LayoutPreset.FullRect);
         MouseFilter = MouseFilterEnum.Stop;
+        GetViewport().GuiReleaseFocus(); // ไม่ให้ช่องพิมพ์ของ terminal ด้านหลังรับคีย์บอร์ดต่อ
 
         var dim = new ColorRect { Color = new Color(0.004f, 0.016f, 0.035f, 0.9f) };
         dim.SetAnchorsAndOffsetsPreset(LayoutPreset.FullRect);
@@ -66,13 +67,23 @@ public partial class RemoteRepoView : Control
         column.AddChild(BuildBody());
     }
 
-    public override void _UnhandledInput(InputEvent @event)
+    /// <summary>
+    /// กด Esc เพื่อกลับ Sandbox ดักใน _Input (ก่อน GUI) เพราะโฟกัสอาจค้างที่ช่องพิมพ์ของ terminal
+    /// ยกเว้นขณะพิมพ์ในช่องของหน้านี้เอง (ให้ Esc ใช้เลิกพิมพ์ก่อน)
+    /// </summary>
+    public override void _Input(InputEvent @event)
     {
-        if (@event.IsActionPressed("ui_cancel"))
+        if (!@event.IsActionPressed("ui_cancel")) return;
+        var focus = GetViewport().GuiGetFocusOwner();
+        if (focus is LineEdit or TextEdit && IsAncestorOf(focus))
         {
+            focus.ReleaseFocus();
             GetViewport().SetInputAsHandled();
-            EmitSignal(SignalName.BackRequested);
+            return;
         }
+
+        GetViewport().SetInputAsHandled();
+        EmitSignal(SignalName.BackRequested);
     }
 
     /// <summary>แถบบนสุด: ปุ่มกลับ Sandbox และช่อง URL เหมือนเบราว์เซอร์ (แสดงที่อยู่ของหน้าปัจจุบัน)</summary>
