@@ -47,3 +47,11 @@
 4. เชื่อม Godot C#: รับคำสั่งทีละรายการ แสดงผล Terminal และ refresh Files/Branches/Commit Graph จาก session API
 
 แต่ละรอบควรแยก feature branch และ commit ตามงานที่ตรวจสอบได้ ไม่ถือว่ารายการในแผนนี้พัฒนาเสร็จแล้ว
+
+## GitHub จำลอง (feature/fake-github-remote)
+
+- `RemoteSeed` สร้างประวัติ remote ต่อด่าน (ตัวอย่าง `Preeyaporn/Khamphi_Projects_one` ตาม Figma) และ URL สมมติ `https://github.com/<owner>/<repo>.git` ซึ่งถูก rewrite ไปยัง bare repository ใน session เท่านั้น
+- URL GitHub จริงถูกปฏิเสธโดย command policy (clone / remote add / remote set-url)
+- `IGitGameSession.RemoteHost` ให้ข้อมูลหน้า Code, Branches และ Pull requests; PR ต้อง approve ก่อน merge และ merge ด้วย Git จริง
+- ข้อจำกัด: PR เก็บในหน่วยความจำ ยังไม่มี comment/review thread, ยังไม่ต่อกับ Godot UI และยังไม่ทดสอบ merge conflict ใน PR
+- ผลทดสอบ: integration tests 13/13 (เพิ่ม 3 กลุ่ม)
