@@ -11,75 +11,93 @@ public partial class RemoteRepoView
     private async Task BuildCommitsAsync()
     {
         var branches = await _host!.ListBranchesAsync();
-        var row = new HBoxContainer();
-        row.AddThemeConstantOverride("separation", 10);
-        row.AddChild(Btn("← Code", () => Go(Page.Code)));
-        row.AddChild(Lbl("Commits", GitHubTheme.Fg, 20));
-        row.AddChild(BranchPicker(branches, name => { _branch = name; Go(Page.Commits); }));
-        _content.AddChild(row);
-
-        var card = Card();
-        var list = new VBoxContainer();
-        list.AddThemeConstantOverride("separation", 8);
-        foreach (var commit in await _host.ListCommitsAsync(_branch, 100))
+        var toolbar = new HBoxContainer();
+        toolbar.AddThemeConstantOverride("separation", 12);
+        toolbar.AddChild(GitHubUi.Text("Commits", GitHubTheme.Fg, 26, bold: true));
+        toolbar.AddChild(GitHubUi.Spacer());
+        toolbar.AddChild(BranchPicker(branches, name =>
         {
-            var line = new HBoxContainer();
-            line.AddThemeConstantOverride("separation", 14);
-            var subject = Lbl(commit.Subject, GitHubTheme.Fg);
-            subject.SizeFlagsHorizontal = SizeFlags.ExpandFill;
-            subject.ClipText = true;
-            line.AddChild(subject);
-            line.AddChild(Lbl(commit.Author, GitHubTheme.FgMuted, 14));
-            line.AddChild(Lbl(commit.ShortId, GitHubTheme.Success, 14));
-            line.AddChild(Lbl(Ago(commit.AuthoredAt), GitHubTheme.FgMuted, 14));
-            list.AddChild(line);
+            _branch = name;
+            Go(Page.Commits);
+        }));
+        _content.AddChild(toolbar);
+
+        var commits = await _host.ListCommitsAsync(_branch, 100);
+        if (commits.Count == 0)
+        {
+            _content.AddChild(GitHubUi.EmptyState(GhIcon.Commit, "ยังไม่มี commit", $"branch {_branch} ยังไม่มีประวัติ"));
+            return;
         }
 
-        card.AddChild(list);
-        _content.AddChild(card);
+        // จัดกลุ่มตามวัน เหมือนหน้า commits ของ GitHub
+        foreach (var day in commits.GroupBy(commit => commit.AuthoredAt.LocalDateTime.Date))
+        {
+            var items = day.ToList();
+            _content.AddChild(GitHubUi.IconText(GhIcon.Commit,
+                $"Commits on {GitHubUi.DateLabel(items[0].AuthoredAt)}", GitHubTheme.FgMuted, 14));
+            var (box, body) = GitHubUi.Box();
+            for (var index = 0; index < items.Count; index++)
+                body.AddChild(CommitRow(items[index], index == items.Count - 1));
+            _content.AddChild(box);
+        }
     }
 
     private async Task BuildBranchesAsync()
     {
+        var branches = await _host!.ListBranchesAsync();
+        _content.AddChild(GitHubUi.Text("Branches", GitHubTheme.Fg, 26, bold: true));
+
+        var defaults = branches.Where(branch => branch.IsDefault).ToList();
+        var others = branches.Where(branch => !branch.IsDefault).ToList();
+        if (defaults.Count > 0) _content.AddChild(BranchSection("Default", defaults));
+        if (others.Count > 0) _content.AddChild(BranchSection("Other branches", others));
+    }
+
+    private Control BranchSection(string title, IReadOnlyList<RemoteBranchInfo> items)
+    {
+        var (box, body) = GitHubUi.Box(GitHubUi.Text(title, GitHubTheme.Fg, 15, bold: true));
+        for (var index = 0; index < items.Count; index++)
+            body.AddChild(BranchRow(items[index], index == items.Count - 1));
+        return box;
+    }
+
+    private Control BranchRow(RemoteBranchInfo branch, bool last)
+    {
         var row = new HBoxContainer();
-        row.AddThemeConstantOverride("separation", 10);
-        row.AddChild(Btn("← Code", () => Go(Page.Code)));
-        row.AddChild(Lbl("Branches", GitHubTheme.Fg, 20));
-        _content.AddChild(row);
+        row.AddThemeConstantOverride("separation", 12);
 
-        var card = Card();
-        var list = new VBoxContainer();
-        list.AddThemeConstantOverride("separation", 8);
-        foreach (var branch in await _host!.ListBranchesAsync())
+        var name = GitHubUi.Btn(branch.Name, () =>
         {
-            var item = branch;
-            var line = new HBoxContainer();
-            line.AddThemeConstantOverride("separation", 14);
-            var name = Btn(item.Name + (item.IsDefault ? "  [default]" : ""), () => { _branch = item.Name; _path = ""; Go(Page.Code); }, flat: true);
-            name.CustomMinimumSize = new Vector2(280, 0);
-            name.Alignment = HorizontalAlignment.Left;
-            line.AddChild(name);
-            var info = Lbl($"{item.LastCommitSubject} · {Ago(item.LastCommitAt)}", GitHubTheme.FgMuted, 14);
-            info.SizeFlagsHorizontal = SizeFlags.ExpandFill;
-            info.ClipText = true;
-            line.AddChild(info);
-            if (!item.IsDefault)
-            {
-                line.AddChild(Lbl($"↑{item.Ahead}  ↓{item.Behind}", GitHubTheme.Attention, 14));
-                line.AddChild(Btn("New pull request", () => { _newPullSource = item.Name; Go(Page.NewPull); }));
-                line.AddChild(Btn("🗑", async () =>
-                {
-                    var ok = await _host.DeleteBranchAsync(item.Name);
-                    Go(Page.Branches, ok ? $"ลบ branch {item.Name} แล้ว"
-                        : $"ลบ {item.Name} ไม่ได้ (มี PR ที่ยังเปิดอยู่)", !ok);
-                }));
-            }
+            _branch = branch.Name;
+            _path = string.Empty;
+            Go(Page.Code);
+        }, GhButtonKind.Link);
+        name.CustomMinimumSize = new Vector2(240, 0);
+        name.Alignment = HorizontalAlignment.Left;
+        row.AddChild(name);
+        if (branch.IsDefault) row.AddChild(GitHubUi.Pill("default", GitHubTheme.FgMuted, GitHubTheme.Border));
 
-            list.AddChild(line);
+        var info = GitHubUi.Text($"{branch.LastCommitSubject} · {GitHubUi.TimeAgo(branch.LastCommitAt)}", GitHubTheme.FgMuted, 14);
+        info.SizeFlagsHorizontal = SizeFlags.ExpandFill;
+        info.ClipText = true;
+        row.AddChild(info);
+
+        if (!branch.IsDefault)
+        {
+            row.AddChild(GitHubUi.Text($"{branch.Behind} behind | {branch.Ahead} ahead", GitHubTheme.FgMuted, 13));
+            row.AddChild(GitHubUi.Btn("New pull request", () =>
+            {
+                _newPullSource = branch.Name;
+                Go(Page.NewPull);
+            }));
+            row.AddChild(GitHubUi.Btn(string.Empty, async () =>
+            {
+                var deleted = await _host!.DeleteBranchAsync(branch.Name);
+                Go(Page.Branches, deleted ? $"ลบ branch {branch.Name} แล้ว" : $"ลบ {branch.Name} ไม่ได้ (มี PR ที่ยังเปิดอยู่)", !deleted);
+            }, GhButtonKind.Ghost, GhIcon.Trash, iconColor: GitHubTheme.Danger));
         }
 
-        card.AddChild(list);
-        _content.AddChild(card);
+        return GitHubUi.ListRow(row, last);
     }
 
     /// <summary>แถว commit แบบ GitHub: ข้อความ ผู้เขียน/เวลา และ hash สั้นพร้อมปุ่มคัดลอก hash เต็ม</summary>

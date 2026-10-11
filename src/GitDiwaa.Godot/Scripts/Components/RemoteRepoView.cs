@@ -16,10 +16,6 @@ public partial class RemoteRepoView : Control
 
     private enum PullTab { Conversation, Commits, Files }
 
-    // ใช้เป็นตัวบอกว่าปุ่มนี้เป็นปุ่มหลัก (สีเขียว) ในโค้ดหน้าเดิมที่ยังไม่ได้ปรับ
-    private static readonly Color Green = GitHubTheme.SuccessEmphasis;
-    private static readonly Color Purple = GitHubTheme.Done;
-
     private IGitRemoteHost? _host;
     private RemoteRepositoryInfo? _repo;
     private Page _page = Page.Code;
@@ -263,24 +259,7 @@ public partial class RemoteRepoView : Control
         };
     }
 
-    // ───────────── ตัวช่วยของหน้าเดิม (ทยอยย้ายไป GitHubUi ทีละหน้า) ─────────────
-
-    private static string StateIcon(PullRequestState state) => state switch
-    {
-        PullRequestState.Open => "🟢",
-        PullRequestState.Merged => "🟣",
-        _ => "🔴"
-    };
-
-    private static string VerdictText(ReviewVerdict verdict) => verdict switch
-    {
-        ReviewVerdict.Approved => "✓ Approved",
-        ReviewVerdict.ChangesRequested => "✗ Changes requested",
-        _ => "💬 Commented"
-    };
-
-    private static string Count(int number, string singular, string plural) =>
-        $"{number} {(number == 1 ? singular : plural)}";
+    // ───────────── ตัวช่วย ─────────────
 
     private static string ParentPath(string path)
     {
@@ -302,16 +281,4 @@ public partial class RemoteRepoView : Control
         picker.ItemSelected += index => onSelected(branches[(int)index].Name);
         return picker;
     }
-
-    private static Label Lbl(string text, Color color, int size = 16, bool wrap = false) =>
-        GitHubUi.Text(text, color, size, wrap: wrap);
-
-    private static Button Btn(string text, Action onPressed, bool flat = false, bool toggle = false, Color? color = null) =>
-        GitHubUi.Btn(text, onPressed,
-            color is not null ? GhButtonKind.Primary : flat ? GhButtonKind.Link : GhButtonKind.Default,
-            toggle: toggle);
-
-    private static PanelContainer Card() => GitHubUi.Card();
-
-    private static string Ago(DateTimeOffset when) => GitHubUi.TimeAgo(when);
 }
