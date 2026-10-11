@@ -18,6 +18,7 @@ public interface IGitGameSession : IAsyncDisposable
 {
     GitSessionInfo Info { get; }
     IPlayerFileSystem Files { get; }
+    IGitRemoteHost RemoteHost { get; }
     Task<GitCommandResult> ExecuteAsync(string commandLine, CancellationToken cancellationToken = default);
     Task<GitRepositorySnapshot> InspectAsync(CancellationToken cancellationToken = default);
 }
