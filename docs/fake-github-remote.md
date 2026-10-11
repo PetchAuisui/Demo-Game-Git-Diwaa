@@ -23,6 +23,20 @@
 | Pull requests | สร้าง PR, commits / ไฟล์ที่เปลี่ยน / diff, review (Approve / Request changes / Comment), merge, ปิด PR, ดู PR ที่ merge แล้วย้อนหลัง |
 | repo ว่าง | `RemoteRepositoryInfo.IsEmpty` ใช้แสดงหน้า Quick setup |
 
+## หน้า Remote Repository ใน Sandbox
+
+เปิดจากปุ่ม **Repo** ที่แถบบนของ Sandbox (`RemoteRepoView`) ใช้ธีมเดียวกับ Sandbox ไม่ยึดตัวอย่างใน Figma
+
+| หน้า | สิ่งที่ทำได้ |
+|---|---|
+| หน้ารวม / Code | เลือก branch, เปิดโฟลเดอร์และไฟล์, commit ล่าสุด, README, URL สำหรับ clone (Copy) |
+| Commits | ประวัติ commit ของ branch ที่เลือก |
+| Branches | รายการ branch พร้อม ahead/behind เทียบ default branch, เปิด PR, ลบ branch |
+| Pull requests | สร้าง PR, ดู commits / ไฟล์ที่เปลี่ยน / diff, review, merge, ปิด PR |
+| repo ว่าง | Quick setup: URL และคำสั่งที่ใช้ใน terminal ของ Sandbox (`git init` … `git push -u origin main` หรือ `git clone`) |
+
+ข้อจำกัดของหน้า UI: เป็น overlay ครอบ Sandbox ต้องกลับไปพิมพ์คำสั่งใน terminal แล้วเปิดหน้าใหม่เพื่อดูผล
+
 ## การทำงาน
 
 1. URL ที่ผู้เล่นเห็นเป็น URL สมมติรูปแบบ GitHub แต่ถูก rewrite (`url.<bare>.insteadOf`) ไปยัง bare repository ในโฟลเดอร์ session เท่านั้น
@@ -45,4 +59,3 @@
 - PR และ review เก็บในหน่วยความจำของ session
 - แก้ conflict ผ่านหน้าเว็บไม่ได้ (แก้ใน terminal)
 - ไม่มี comment รายบรรทัดใน diff และไม่มี authentication / permission จำลอง
-- ยังไม่ต่อกับหน้า Godot (ทำในรอบ UI ของ Sandbox)

@@ -58,5 +58,11 @@
 - URL GitHub จริงถูกปฏิเสธโดย command policy (clone / remote add / remote set-url) และข้อความบอก URL ที่อนุญาต
 - `RemoteHost` รองรับ: branches (ahead/behind), commits, ไฟล์/โฟลเดอร์, ลบ branch, สร้าง PR, diff/commits/ไฟล์ที่เปลี่ยน, review, ตรวจ conflict ก่อน merge, ปิด PR, ดู PR ที่ merge แล้วย้อนหลัง
 - กติกา PR ปรับได้ด้วย `RemoteRules` (ค่าเริ่มต้นเหมาะกับ sandbox คนเดียว: review เป็นทางเลือก รีวิว PR ตัวเองได้)
-- ข้อจำกัด: PR เก็บในหน่วยความจำ ไม่มี comment รายบรรทัด แก้ conflict ผ่านหน้าเว็บไม่ได้ (ต้องแก้ใน terminal) และยังไม่ต่อกับ Godot UI (ทำในรอบ UI ของ Sandbox)
-- ผลทดสอบ: integration tests 19/19
+- ข้อจำกัด: PR เก็บในหน่วยความจำ ไม่มี comment รายบรรทัด และแก้ conflict ผ่านหน้าเว็บไม่ได้ (ต้องแก้ใน terminal)
+- ผลทดสอบ: integration tests 20/20 (รวมเทสต์ workspace จาก main)
+
+### หน้า Remote Repository ใน Sandbox (feature/sandbox-repo-button)
+
+- ปุ่ม Repo ที่แถบบนของ Sandbox เปิด `RemoteRepoView` (Quick setup เมื่อ repo ว่าง, Code, Commits, Branches, Pull requests)
+- `IGitSandboxService.RemoteHost` ส่ง GitHub จำลองของ session ให้หน้า UI (mock service ไม่มี จึงกดปุ่มไม่ได้) และ `RealGitSandboxService` ใช้ชื่อผู้เล่นเป็นเจ้าของ repo (ยังเป็นค่าคงที่ `user` เพราะยังไม่มีหน้า login)
+- ตรวจ flow ในเกมจริงด้วยสคริปต์ที่พิมพ์คำสั่งผ่าน terminal ของ Sandbox แล้วเปิดหน้า repo
