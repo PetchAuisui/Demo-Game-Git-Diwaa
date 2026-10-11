@@ -1,47 +1,84 @@
-# แนวทางเชื่อม Godot C# ในรอบถัดไป
+# สถาปัตยกรรม Godot C# Sandbox UI
 
-รอบปัจจุบันยังไม่สร้าง Godot project หรือ UI แต่ Core API ถูกแยกไว้เพื่อให้ Godot เป็นเพียง host อีกตัวหนึ่งเหมือน CLI
+Godot C# Sandbox UI ได้รับการพัฒนาในรูปแบบ Component-based OOP แยกส่วนชัดเจนเพื่อให้แต่ละ Panel นำไปต่อยอดและนำไปใช้ซ้ำได้
 
-## Project references
+## โครงสร้างโมดูล (OOP Architecture)
 
-Godot C# project ควรอ้างอิง:
-
-```xml
-<ItemGroup>
-  <ProjectReference Include="../GitDiwaa.Core/GitDiwaa.Core.csproj" />
-  <ProjectReference Include="../GitDiwaa.RealGit/GitDiwaa.RealGit.csproj" />
-</ItemGroup>
+```text
+src/GitDiwaa.Godot/
+├── project.godot                     # Godot 4.7 engine configuration
+├── GitDiwaa.Godot.csproj            # C# project อ้างอิง Core & RealGit
+├── Scenes/
+│   ├── SandboxGameView.tscn         # หน้าจอหลัก (Orchestrator Scene)
+│   ├── TopBarPanel.tscn             # Header Bar แสดง Level, Branch, Timer, Coins
+│   ├── FilesPanel.tscn              # Panel แสดงไฟล์ใน Workspace และสถานะ Git
+│   ├── GitGraphPanel.tscn           # Panel แสดง Commit DAG, Branch Badges, ประวัติ
+│   └── TerminalPanel.tscn           # Reusable Terminal Window และ Command Prompt
+└── Scripts/
+    ├── Common/
+    │   └── SandboxThemeTokens.cs    # Design Tokens (Colors, StyleBoxes, Fonts)
+    ├── ViewModels/
+    │   └── SandboxViewModels.cs     # Workspace/File, Commit Graph และ Terminal view models
+    ├── Services/
+    │   ├── IGitSandboxService.cs    # Service Contract สำหรับ UI
+    │   ├── RealGitSandboxService.cs # Adapter เชื่อมกับ Real Git Engine
+    │   └── MockGitSandboxService.cs # Mock Service สำหรับ Preview และ Unit Testing
+    ├── Components/
+    │   ├── TopBarPanel.cs           # Control component สำหรับ Header
+    │   ├── FilesPanel.cs            # Control component สำหรับแสดงและจัดการไฟล์
+    │   ├── GitGraphPanel.cs         # Control component สำหรับแสดง Commit Graph
+    │   └── TerminalPanel.cs         # Control component สำหรับ Terminal & ประวัติคำสั่ง
+    └── SandboxGameView.cs           # Controller / Mediator ประสานงานระหว่าง Panels กับ Service
 ```
 
-## Lifecycle ที่แนะนำ
+## ความสามารถของแต่ละ Component
 
-1. เมื่อเริ่มด่าน ใช้ `ProjectSettings.GlobalizePath("user://git-workspaces")` เป็น workspace root
-2. สร้าง factory หนึ่งตัว และสร้าง session ใหม่ต่อ attempt
-3. ส่งข้อความจาก Terminal UI เข้า `ExecuteAsync`
-4. แสดง `GitCommandResult.Output`
-5. เรียก `InspectAsync` หลังคำสั่งเพื่อ refresh Files, Branches และ Commit Graph
-6. dispose session เมื่อออกจากด่าน
+1. **TerminalPanel (`TerminalPanel.cs` / `TerminalPanel.tscn`)**:
+   - หน้าต่าง Terminal พร้อมปุ่ม dot ตกแต่ง
+   - รองรับการกรอกคำสั่ง Git และ Built-in host commands (`help`, `clear`, `write`, `cat`, `delete`)
+   - ระบบประวัติคำสั่ง (Command History) เลื่อนดูด้วยลูกศรขึ้น/ลง (Up/Down)
+   - ส่ง Signal `CommandSubmitted(string command)`
+   - แยกสีแสดงผล: Command Echo (เขียว/ขาว), Standard Output (ขาวเทา), Error (แดง), System Info (ฟ้า/เหลือง)
 
-ตัวอย่าง C# เชิงโครงสร้าง:
+2. **FilesPanel (`FilesPanel.cs` / `FilesPanel.tscn`)**:
+   - แสดงไฟล์และโฟลเดอร์ทั้งหมดใน Workspace แบบมีลำดับชั้น พร้อม Badge สถานะ Git (`[?]`, `[M]`, `[A]`, `[D]`, `[R]`)
+   - รองรับสร้างไฟล์, สร้างโฟลเดอร์, เปลี่ยนชื่อ และลบพร้อม confirmation
+   - เปิดไฟล์ด้วยปุ่มหรือดับเบิลคลิกใน embedded `CodeEdit` และบันทึกกลับ repository จริง
+   - แสดง dirty/unsaved state และถามยืนยันก่อนทิ้งการแก้ไขเมื่อเปลี่ยนไฟล์หรือปิด editor
+   - แสดง success/error feedback ใน panel และล็อก action ระหว่าง operation
+   - ส่ง signals สำหรับ open/save/create/create-folder/rename/delete โดยไม่เรียก filesystem จาก UI โดยตรง
 
-```csharp
-var root = ProjectSettings.GlobalizePath("user://git-workspaces");
-IGitGameSessionFactory factory = new RealGitGameSessionFactory(root);
-await using var session = await factory.CreateAsync(levelId, attemptId);
+3. **GitGraphPanel (`GitGraphPanel.cs` / `GitGraphPanel.tscn`)**:
+   - แสดงประวัติ Commit เป็นกราฟ / ไทม์ไลน์
+   - แสดง Commit Node Circle (สีทองเมื่อเป็น HEAD ของ branch ปัจจุบัน, สีฟ้าสำหรับ commit ทั่วไป)
+   - เส้นเชื่อมโยง Parent/Child
+   - แสดง Short SHA, Branch Badges (`[main]`, `[feat/...]`), Subject, Author และเวลา
+   - หน้า Empty State แสดง `"ยังไม่มี Commit\nสร้าง repository และ commit แล้วประวัติจะแสดงที่นี่"`
 
-var result = await session.ExecuteAsync(commandFromTerminal);
-var snapshot = await session.InspectAsync();
+4. **SandboxGameView (`SandboxGameView.cs` / `SandboxGameView.tscn`)**:
+   - พื้นหลังธีม Dark Fantasy Dungeon (หน้าต่าง Gothic, คบเพลิง Torch Glow)
+   - ทำหน้าที่เป็น Mediator เชื่อมระหว่าง UI Panels กับ `IGitSandboxService`
+   - ทำงานกับ `RealGitSandboxService` โดยอัตโนมัติ และ Fallback ไปที่ `MockGitSandboxService` ได้อย่างไร้รอยต่อ
+   - refresh Workspace และ Git graph หลัง file operation เพื่อให้ `git status`, `git add` และ `git commit` เห็น state เดียวกัน
+
+## Data flow ของ Files/Workspace
+
+```text
+FilesPanel signal → SandboxGameView → IGitSandboxService
+                                      └→ IPlayerFileSystem ใน Real Git sandbox
+                         refresh ← GitRepositorySnapshot + ListEntries
 ```
 
-Godot layer ไม่ควรเรียก `System.Diagnostics.Process` หรือ parse `git log` เอง เพื่อให้ command policy, timeout, isolation และ parsing อยู่ที่ Real Git adapter จุดเดียว
+`SandboxPlayerFileSystem` บังคับให้ path อยู่ภายใน repository, ปฏิเสธ `.git` และ symbolic links และรองรับไฟล์/โฟลเดอร์/rename โดยไม่เปิด path จริงให้ UI จัดการเอง
 
-## งานที่ยังไม่รวม
+## วิธีการรัน
 
-- Godot scenes/nodes/signals
-- mission validator และ multi-step objective
-- score, timer, streak, stars และ rewards
-- save game และ migration
-- การ render commit graph
-- online remote/authentication
+### ผ่าน Godot Engine
+```sh
+/Applications/Godot_mono.app/Contents/MacOS/Godot --path src/GitDiwaa.Godot
+```
 
-เมื่อเริ่มพัฒนา UI ควรสร้าง adapter สำหรับแปลง `GitRepositorySnapshot` เป็น view model ของแต่ละ panel แทนการผูก Node เข้ากับ record โดยตรง
+### Headless Mode (ทดสอบ)
+```sh
+/Applications/Godot_mono.app/Contents/MacOS/Godot --headless --path src/GitDiwaa.Godot --quit-after 5
+```

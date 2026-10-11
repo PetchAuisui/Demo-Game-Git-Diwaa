@@ -345,6 +345,29 @@ try
             session.Files.WriteAllTextAsync(".git/config", "blocked"));
     });
 
+    await tests.RunAsync("workspace API manages folders and renames safely", async () =>
+    {
+        session.Files.CreateDirectory("quests/act-1");
+        await session.Files.WriteAllTextAsync("quests/act-1/brief.txt", "Find the branch\n");
+
+        var entries = session.Files.ListEntries();
+        Assert.True(entries.Any(entry => entry.Path == "quests" && entry.IsDirectory));
+        Assert.True(entries.Any(entry => entry.Path == "quests/act-1" && entry.IsDirectory));
+        Assert.True(entries.Any(entry => entry.Path == "quests/act-1/brief.txt" && !entry.IsDirectory));
+
+        session.Files.Move("quests/act-1/brief.txt", "quests/act-1/renamed.txt");
+        Assert.Equal("Find the branch\n", await session.Files.ReadAllTextAsync("quests/act-1/renamed.txt"));
+        Assert.False(session.Files.ListFiles().Contains("quests/act-1/brief.txt"));
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() => Task.Run(() =>
+            session.Files.CreateDirectory("../outside-folder")));
+        await Assert.ThrowsAsync<InvalidOperationException>(() => Task.Run(() =>
+            session.Files.Move("quests", ".git/quests")));
+
+        Assert.True(session.Files.DeleteDirectory("quests", recursive: true));
+        Assert.False(session.Files.ListEntries().Any(entry => entry.Path.StartsWith("quests", StringComparison.Ordinal)));
+    });
+
     await tests.RunAsync("attempt identifiers and duplicate attempts are rejected", async () =>
     {
         await Assert.ThrowsAsync<ArgumentException>(() => factory.CreateAsync("../bad", "attempt"));
