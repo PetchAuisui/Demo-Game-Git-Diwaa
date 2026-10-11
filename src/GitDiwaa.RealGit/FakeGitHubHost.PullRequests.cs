@@ -22,8 +22,7 @@ internal sealed partial class FakeGitHubHost
         if (_pullRequests.Any(pr => pr.State == PullRequestState.Open &&
                                     pr.SourceBranch == sourceBranch && pr.TargetBranch == targetBranch))
             throw new InvalidOperationException("A pull request for these branches is already open.");
-        if (branches.Single(branch => branch.Name == sourceBranch).Ahead == 0 &&
-            (await GitAsync(["rev-list", "--count", $"{targetBranch}..{sourceBranch}"], cancellationToken)) == "0")
+        if (await GitAsync(["rev-list", "--count", $"{targetBranch}..{sourceBranch}"], cancellationToken) == "0")
             throw new InvalidOperationException($"There is nothing to compare: {sourceBranch} has no new commits.");
 
         var pullRequest = new PullRequestInfo(

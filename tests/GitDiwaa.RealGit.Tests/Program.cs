@@ -229,6 +229,23 @@ try
         Assert.Equal(PullRequestState.Closed, host.ClosePullRequest(pr.Number)!.State);
     });
 
+    await tests.RunAsync("pull request needs commits beyond its own base branch", async () =>
+    {
+        await using var player = await factory.CreateAsync("act1-pr-base", "player");
+        await PlayerRepo.PublishMainAsync(player);
+        await PlayerRepo.RunAsync(player, "git switch -c feature/a");
+        await PlayerRepo.CommitFileAsync(player, "a.txt", "a\n", "work on a");
+        await PlayerRepo.RunAsync(player, "git push -u origin feature/a");
+        await PlayerRepo.RunAsync(player, "git switch -c feature/b"); // แตกจาก feature/a ยังไม่มี commit ใหม่
+        await PlayerRepo.RunAsync(player, "git push -u origin feature/b");
+
+        var host = player.RemoteHost;
+        await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            host.OpenPullRequestAsync("a into b", "", "user", "feature/a", "feature/b"));
+        var pr = await host.OpenPullRequestAsync("b into main", "", "user", "feature/b", "main");
+        Assert.Equal(1, pr.Number);
+    });
+
     await tests.RunAsync("file API blocks traversal and Git metadata", async () =>
     {
         await Assert.ThrowsAsync<InvalidOperationException>(() =>
@@ -318,5 +335,32 @@ internal static class Assert
         }
 
         throw new InvalidOperationException($"Expected {typeof(TException).Name}.");
+    }
+}
+
+internal static class PlayerRepo
+{
+    public static async Task RunAsync(IGitGameSession session, string command)
+    {
+        var result = await session.ExecuteAsync(command);
+        Assert.True(result.Success, $"{command}\n{result.Output}");
+    }
+
+    public static async Task CommitFileAsync(IGitGameSession session, string path, string content, string message)
+    {
+        await session.Files.WriteAllTextAsync(path, content);
+        await RunAsync(session, $"git add {path}");
+        await RunAsync(session, $"git commit -m \"{message}\"");
+    }
+
+    /// <summary>ตั้งชื่อ, git init, commit แรก แล้ว push main ขึ้น origin เหมือนที่ผู้เล่นทำในเกม</summary>
+    public static async Task PublishMainAsync(IGitGameSession session)
+    {
+        await RunAsync(session, "git config --global user.name \"Git Diwaa Player\"");
+        await RunAsync(session, "git config --global user.email player@git-diwaa.local");
+        await RunAsync(session, "git init");
+        await CommitFileAsync(session, "README.md", "# my-project\n", "first commit");
+        await RunAsync(session, $"git remote add origin {session.Info.RemoteUrl}");
+        await RunAsync(session, "git push -u origin main");
     }
 }
