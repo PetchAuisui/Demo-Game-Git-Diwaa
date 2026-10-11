@@ -48,10 +48,13 @@
 
 แต่ละรอบควรแยก feature branch และ commit ตามงานที่ตรวจสอบได้ ไม่ถือว่ารายการในแผนนี้พัฒนาเสร็จแล้ว
 
-## GitHub จำลอง (feature/fake-github-remote)
+## GitHub จำลอง (feature/github-remote-simulator)
 
-- `RemoteSeed` สร้างประวัติ remote ต่อด่าน (ตัวอย่าง `Preeyaporn/Khamphi_Projects_one` ตาม Figma) และ URL สมมติ `https://github.com/<owner>/<repo>.git` ซึ่งถูก rewrite ไปยัง bare repository ใน session เท่านั้น
-- URL GitHub จริงถูกปฏิเสธโดย command policy (clone / remote add / remote set-url)
-- `IGitGameSession.RemoteHost` ให้ข้อมูลหน้า Code, Branches และ Pull requests; PR ต้อง approve ก่อน merge และ merge ด้วย Git จริง
-- ข้อจำกัด: PR เก็บในหน่วยความจำ ยังไม่มี comment/review thread, ยังไม่ต่อกับ Godot UI และยังไม่ทดสอบ merge conflict ใน PR
-- ผลทดสอบ: integration tests 13/13 (เพิ่ม 3 กลุ่ม)
+รายละเอียดอยู่ใน `docs/fake-github-remote.md`
+
+- remote เริ่มต้นเป็น repo ว่าง `https://github.com/user/my-project.git` (เจ้าของ `user`, กำหนดผ่าน `playerName` ของ factory) ไม่มีข้อมูลตัวอย่างในโค้ดจริง; `RemoteSeed` ใช้ตั้งประวัติเริ่มต้นต่อด่านได้
+- URL GitHub จริงถูกปฏิเสธโดย command policy (clone / remote add / remote set-url) และข้อความบอก URL ที่อนุญาต
+- `RemoteHost` รองรับ: branches (ahead/behind), commits, ไฟล์/โฟลเดอร์, ลบ branch, สร้าง PR, diff/commits/ไฟล์ที่เปลี่ยน, review, ตรวจ conflict ก่อน merge, ปิด PR, ดู PR ที่ merge แล้วย้อนหลัง
+- กติกา PR ปรับได้ด้วย `RemoteRules` (ค่าเริ่มต้นเหมาะกับ sandbox คนเดียว: review เป็นทางเลือก รีวิว PR ตัวเองได้)
+- ข้อจำกัด: PR เก็บในหน่วยความจำ ไม่มี comment รายบรรทัด แก้ conflict ผ่านหน้าเว็บไม่ได้ (ต้องแก้ใน terminal) และยังไม่ต่อกับ Godot UI (ทำในรอบ UI ของ Sandbox)
+- ผลทดสอบ: integration tests 19/19
