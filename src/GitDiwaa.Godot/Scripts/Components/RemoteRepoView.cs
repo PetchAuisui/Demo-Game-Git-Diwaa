@@ -148,12 +148,18 @@ public partial class RemoteRepoView : Control
 
     private async Task BuildCodeAsync()
     {
+        if (_repo!.IsEmpty)
+        {
+            BuildEmptyRepo();
+            return;
+        }
+
         var branches = await _host!.ListBranchesAsync();
         var toolbar = new HBoxContainer();
         toolbar.AddThemeConstantOverride("separation", 10);
         toolbar.AddChild(BranchPicker(branches, name => { _branch = name; _path = ""; Go(Page.Code); }));
-        toolbar.AddChild(Btn($"⑂ {branches.Count} Branches", () => Go(Page.Branches), flat: true));
-        toolbar.AddChild(Btn($"🕒 {_repo!.CommitCount} Commits", () => Go(Page.Commits), flat: true));
+        toolbar.AddChild(Btn($"⑂ {Count(branches.Count, "Branch", "Branches")}", () => Go(Page.Branches), flat: true));
+        toolbar.AddChild(Btn($"🕒 {Count(_repo!.CommitCount, "Commit", "Commits")}", () => Go(Page.Commits), flat: true));
         toolbar.AddChild(new Control { SizeFlagsHorizontal = SizeFlags.ExpandFill });
         toolbar.AddChild(Btn("<> Code ▾", () => { _cloneOpen = !_cloneOpen; Go(Page.Code); }, color: Green));
         _content.AddChild(toolbar);
@@ -231,6 +237,64 @@ public partial class RemoteRepoView : Control
         }
     }
 
+    /// <summary>repo ที่ยังไม่มีอะไรถูก push: หน้า Quick setup บอก URL และคำสั่งที่ใช้ได้ใน terminal ของเกม</summary>
+    private void BuildEmptyRepo()
+    {
+        var repo = _repo!;
+        var card = Card();
+        var box = new VBoxContainer();
+        box.AddThemeConstantOverride("separation", 8);
+        box.AddChild(Lbl("Quick setup — repo นี้ยังว่างอยู่", SandboxThemeTokens.GoldTitle, 22));
+        box.AddChild(Lbl("push งานจากคลังในเครื่องขึ้นมา แล้วไฟล์ branch และ commit จะแสดงที่หน้านี้",
+            SandboxThemeTokens.TextSecondary, wrap: true));
+
+        var urlRow = new HBoxContainer();
+        urlRow.AddThemeConstantOverride("separation", 8);
+        urlRow.AddChild(new LineEdit { Text = repo.CloneUrl, Editable = false, SizeFlagsHorizontal = SizeFlags.ExpandFill });
+        urlRow.AddChild(Btn("Copy URL", () => DisplayServer.ClipboardSet(repo.CloneUrl)));
+        box.AddChild(urlRow);
+
+        box.AddChild(new HSeparator());
+        box.AddChild(Lbl("ครั้งแรก: ตั้งชื่อผู้ใช้ Git (ข้ามได้ถ้าตั้งแล้ว)", SandboxThemeTokens.PrimaryText));
+        box.AddChild(CommandRow($"git config --global user.name \"{repo.Owner}\""));
+        box.AddChild(CommandRow($"git config --global user.email \"{repo.Owner}@example.com\""));
+
+        box.AddChild(new HSeparator());
+        box.AddChild(Lbl("…สร้างโปรเจกต์ใหม่ แล้ว push ขึ้นมา (พิมพ์ใน terminal ของ Sandbox)", SandboxThemeTokens.PrimaryText));
+        foreach (var command in new[]
+                 {
+                     $"write README.md # {repo.Name}",
+                     "git init",
+                     "git add README.md",
+                     "git commit -m \"first commit\"",
+                     $"git remote add origin {repo.CloneUrl}",
+                     "git push -u origin main"
+                 })
+            box.AddChild(CommandRow(command));
+
+        box.AddChild(new HSeparator());
+        box.AddChild(Lbl("…หรือ clone repo ว่างนี้มาทำงานต่อ", SandboxThemeTokens.PrimaryText));
+        box.AddChild(CommandRow($"git clone {repo.CloneUrl}"));
+
+        card.AddChild(box);
+        _content.AddChild(card);
+    }
+
+    private static HBoxContainer CommandRow(string command)
+    {
+        var row = new HBoxContainer();
+        row.AddThemeConstantOverride("separation", 10);
+        var prompt = Lbl("$", SandboxThemeTokens.TextSecondary, 15);
+        prompt.AddThemeFontOverride("font", Mono());
+        row.AddChild(prompt);
+        var text = Lbl(command, SandboxThemeTokens.PromptGreen, 15);
+        text.AddThemeFontOverride("font", Mono());
+        text.SizeFlagsHorizontal = SizeFlags.ExpandFill;
+        row.AddChild(text);
+        row.AddChild(Btn("Copy", () => DisplayServer.ClipboardSet(command)));
+        return row;
+    }
+
     private async Task BuildBlobAsync()
     {
         _content.AddChild(Breadcrumb());
@@ -244,7 +308,9 @@ public partial class RemoteRepoView : Control
         };
         editor.AddThemeFontOverride("font", Mono());
         _content.AddChild(editor);
-        _content.AddChild(Btn("← กลับไปรายการไฟล์", () => { _path = ParentPath(_path); Go(Page.Code); }));
+        var backToFiles = Btn("← กลับไปรายการไฟล์", () => { _path = ParentPath(_path); Go(Page.Code); });
+        backToFiles.SizeFlagsHorizontal = SizeFlags.ShrinkBegin;
+        _content.AddChild(backToFiles);
     }
 
     private VBoxContainer CloneBox()
@@ -407,6 +473,19 @@ public partial class RemoteRepoView : Control
     private async Task BuildNewPullAsync()
     {
         var branches = await _host!.ListBranchesAsync();
+        if (branches.Count < 2)
+        {
+            _content.AddChild(Lbl("Open a pull request", SandboxThemeTokens.GoldTitle, 22));
+            _content.AddChild(Lbl(branches.Count == 0
+                    ? "repo ยังว่าง — push branch ขึ้นมาก่อนจึงจะเปิด pull request ได้"
+                    : "ต้องมีอย่างน้อย 2 branch — สร้างและ push branch ใหม่ก่อน เช่น git switch -c feature/xxx แล้ว git push -u origin feature/xxx",
+                SandboxThemeTokens.TextSecondary, wrap: true));
+            var back = Btn("← Pull requests", () => Go(Page.Pulls));
+            back.SizeFlagsHorizontal = SizeFlags.ShrinkBegin;
+            _content.AddChild(back);
+            return;
+        }
+
         var defaultBranch = branches.FirstOrDefault(b => b.IsDefault)?.Name ?? "main";
         var source = branches.Any(b => b.Name == _newPullSource)
             ? _newPullSource
@@ -628,6 +707,9 @@ public partial class RemoteRepoView : Control
         ReviewVerdict.ChangesRequested => "✗ Changes requested",
         _ => "💬 Commented"
     };
+
+    private static string Count(int number, string singular, string plural) =>
+        $"{number} {(number == 1 ? singular : plural)}";
 
     private static string ParentPath(string path)
     {
