@@ -14,10 +14,12 @@ internal static class RemoteSeeder
         try
         {
             await RunAsync(runner, sandbox, work, ["init", "--initial-branch=main"], null, cancellationToken);
-            var created = new HashSet<string> { "main" };
+            var created = new HashSet<string>();
             foreach (var commit in seed.Commits)
             {
-                if (created.Add(commit.Branch))
+                if (created.Count == 0 && commit.Branch == "main")
+                    created.Add("main");
+                else if (created.Add(commit.Branch))
                     await RunAsync(runner, sandbox, work, ["switch", "-c", commit.Branch, "main"], null, cancellationToken);
                 else
                     await RunAsync(runner, sandbox, work, ["switch", commit.Branch], null, cancellationToken);
