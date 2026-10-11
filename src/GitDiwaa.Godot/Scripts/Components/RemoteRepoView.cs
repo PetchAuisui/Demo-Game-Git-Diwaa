@@ -14,6 +14,8 @@ public partial class RemoteRepoView : Control
 
     private enum Page { Code, Blob, Commits, Branches, Pulls, NewPull, PullDetail }
 
+    private enum PullTab { Conversation, Commits, Files }
+
     // ใช้เป็นตัวบอกว่าปุ่มนี้เป็นปุ่มหลัก (สีเขียว) ในโค้ดหน้าเดิมที่ยังไม่ได้ปรับ
     private static readonly Color Green = GitHubTheme.SuccessEmphasis;
     private static readonly Color Purple = GitHubTheme.Done;
@@ -24,6 +26,7 @@ public partial class RemoteRepoView : Control
     private string _branch = "main";
     private string _path = "";
     private int _pullNumber;
+    private PullTab _pullTab = PullTab.Conversation;
     private bool _showClosed;
     private string _newPullSource = "";
     private string _status = "";

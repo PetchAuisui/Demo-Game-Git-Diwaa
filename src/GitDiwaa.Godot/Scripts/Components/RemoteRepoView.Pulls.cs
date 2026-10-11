@@ -11,55 +11,146 @@ public partial class RemoteRepoView
 
     private void BuildPulls(IReadOnlyList<PullRequestInfo> pulls)
     {
-        var open = pulls.Where(p => p.State == PullRequestState.Open).ToList();
-        var closed = pulls.Where(p => p.State != PullRequestState.Open).ToList();
-        var bar = new HBoxContainer();
-        bar.AddThemeConstantOverride("separation", 10);
-        bar.AddChild(Btn($"🟢 Open ({open.Count})", () => { _showClosed = false; Go(Page.Pulls); }, flat: true));
-        bar.AddChild(Btn($"✓ Closed ({closed.Count})", () => { _showClosed = true; Go(Page.Pulls); }, flat: true));
-        bar.AddChild(new Control { SizeFlagsHorizontal = SizeFlags.ExpandFill });
-        bar.AddChild(Btn("New pull request", () => { _newPullSource = ""; Go(Page.NewPull); }, color: Green));
-        _content.AddChild(bar);
+        var rows = new List<(Control Row, string Title)>();
 
-        var shown = _showClosed ? closed : open;
-        var card = Card();
-        var list = new VBoxContainer();
-        list.AddThemeConstantOverride("separation", 8);
-        if (shown.Count == 0)
-            list.AddChild(Lbl(_showClosed ? "ยังไม่มี pull request ที่ปิดแล้ว" : "ไม่มี pull request ที่เปิดอยู่ — กด New pull request เพื่อสร้าง",
-                GitHubTheme.FgMuted));
-        foreach (var pr in shown.OrderByDescending(p => p.Number))
+        var toolbar = new HBoxContainer();
+        toolbar.AddThemeConstantOverride("separation", 10);
+        var search = new LineEdit
         {
-            var item = pr;
-            var line = new HBoxContainer();
-            line.AddThemeConstantOverride("separation", 12);
-            line.AddChild(Lbl(StateIcon(item.State), GitHubTheme.Fg));
-            var col = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
-            var title = Btn(item.Title, () => { _pullNumber = item.Number; Go(Page.PullDetail); }, flat: true);
-            title.Alignment = HorizontalAlignment.Left;
-            col.AddChild(title);
-            col.AddChild(Lbl($"#{item.Number} เปิดโดย {item.Author} · {item.SourceBranch} → {item.TargetBranch} · {Ago(item.CreatedAt)}",
-                GitHubTheme.FgMuted, 13));
-            line.AddChild(col);
-            if (item.IsApproved) line.AddChild(Lbl("✓ Approved", GitHubTheme.Success, 14));
-            list.AddChild(line);
+            PlaceholderText = "Search pull requests",
+            RightIcon = GitHubIcons.Get(GhIcon.Search, GitHubTheme.FgMuted, 16, 1f),
+            ClearButtonEnabled = true,
+            SizeFlagsHorizontal = SizeFlags.ExpandFill,
+            MouseFilter = MouseFilterEnum.Pass
+        };
+        search.TextChanged += text =>
+        {
+            foreach (var (row, title) in rows)
+                row.Visible = text.Length == 0 || title.Contains(text, StringComparison.OrdinalIgnoreCase);
+        };
+        toolbar.AddChild(search);
+        toolbar.AddChild(GitHubUi.Btn("New pull request", () =>
+        {
+            _newPullSource = string.Empty;
+            Go(Page.NewPull);
+        }, GhButtonKind.Primary));
+        _content.AddChild(toolbar);
+
+        if (pulls.Count == 0)
+        {
+            _content.AddChild(GitHubUi.EmptyState(GhIcon.PullOpen, "Welcome to pull requests!",
+                "Pull requests ใช้เสนอให้นำการเปลี่ยนแปลงจาก branch หนึ่งไปรวมกับอีก branch หนึ่ง " +
+                "ลอง push branch ใหม่ขึ้นมา แล้วกด New pull request"));
+            return;
         }
 
-        card.AddChild(list);
-        _content.AddChild(card);
+        var open = pulls.Where(p => p.State == PullRequestState.Open).ToList();
+        var closed = pulls.Where(p => p.State != PullRequestState.Open).ToList();
+
+        var filters = new HBoxContainer();
+        filters.AddThemeConstantOverride("separation", 4);
+        filters.AddChild(FilterButton($"{open.Count} Open", GhIcon.PullOpen, !_showClosed, () =>
+        {
+            _showClosed = false;
+            Go(Page.Pulls);
+        }));
+        filters.AddChild(FilterButton($"{closed.Count} Closed", GhIcon.Check, _showClosed, () =>
+        {
+            _showClosed = true;
+            Go(Page.Pulls);
+        }));
+        var (box, body) = GitHubUi.Box(filters);
+
+        var shown = (_showClosed ? closed : open).OrderByDescending(p => p.Number).ToList();
+        if (shown.Count == 0)
+        {
+            var empty = new MarginContainer();
+            empty.AddThemeConstantOverride("margin_top", 28);
+            empty.AddThemeConstantOverride("margin_bottom", 28);
+            var message = GitHubUi.Text(_showClosed ? "ยังไม่มี pull request ที่ปิดแล้ว" : "ไม่มี pull request ที่เปิดอยู่",
+                GitHubTheme.FgMuted, 16);
+            message.HorizontalAlignment = HorizontalAlignment.Center;
+            empty.AddChild(message);
+            body.AddChild(empty);
+        }
+
+        for (var index = 0; index < shown.Count; index++)
+        {
+            var item = shown[index];
+            var row = BuildPullRow(item);
+            var listRow = GitHubUi.ListRow(row, index == shown.Count - 1, () =>
+            {
+                _pullNumber = item.Number;
+                _pullTab = PullTab.Conversation;
+                Go(Page.PullDetail);
+            });
+            body.AddChild(listRow);
+            rows.Add((listRow, item.Title));
+        }
+
+        _content.AddChild(box);
+    }
+
+    private static Button FilterButton(string text, GhIcon icon, bool active, Action onPressed)
+    {
+        var button = GitHubUi.Btn(text, onPressed, GhButtonKind.Ghost, icon,
+            iconColor: active ? GitHubTheme.Fg : GitHubTheme.FgMuted);
+        if (active)
+        {
+            button.AddThemeColorOverride("font_color", GitHubTheme.Fg);
+            button.AddThemeFontOverride("font", GitHubTheme.BoldFont);
+        }
+
+        return button;
+    }
+
+    private static Control BuildPullRow(PullRequestInfo pull)
+    {
+        var row = new HBoxContainer();
+        row.AddThemeConstantOverride("separation", 12);
+
+        var state = GitHubUi.StateIcon(pull.State, 18);
+        state.SizeFlagsVertical = SizeFlags.ShrinkBegin;
+        row.AddChild(state);
+
+        var column = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
+        column.AddThemeConstantOverride("separation", 4);
+        column.AddChild(GitHubUi.Text(pull.Title, GitHubTheme.Fg, 16, bold: true));
+
+        var meta = new HBoxContainer();
+        meta.AddThemeConstantOverride("separation", 8);
+        var summary = pull.State switch
+        {
+            PullRequestState.Merged => $"#{pull.Number} by {pull.Author} was merged",
+            PullRequestState.Closed => $"#{pull.Number} by {pull.Author} was closed",
+            _ => $"#{pull.Number} opened {GitHubUi.TimeAgo(pull.CreatedAt)} by {pull.Author}"
+        };
+        meta.AddChild(GitHubUi.Text(summary, GitHubTheme.FgMuted, 13));
+        meta.AddChild(GitHubUi.BranchPill(pull.SourceBranch));
+        meta.AddChild(GitHubUi.Text("→", GitHubTheme.FgMuted, 13));
+        meta.AddChild(GitHubUi.BranchPill(pull.TargetBranch));
+        column.AddChild(meta);
+        row.AddChild(column);
+
+        if (pull.IsApproved && pull.State == PullRequestState.Open)
+            row.AddChild(GitHubUi.IconText(GhIcon.Check, "Approved", GitHubTheme.Success, 13));
+        return row;
     }
 
     private async Task BuildNewPullAsync()
     {
         var branches = await _host!.ListBranchesAsync();
+        _content.AddChild(GitHubUi.Text("Open a pull request", GitHubTheme.Fg, 26, bold: true));
+        _content.AddChild(GitHubUi.Text("เลือก branch ที่มีการเปลี่ยนแปลง (compare) เพื่อนำไปรวมกับ branch ปลายทาง (base)",
+            GitHubTheme.FgMuted));
+
         if (branches.Count < 2)
         {
-            _content.AddChild(Lbl("Open a pull request", GitHubTheme.Fg, 22));
-            _content.AddChild(Lbl(branches.Count == 0
+            _content.AddChild(GitHubUi.EmptyState(GhIcon.Branch, "ยังเปรียบเทียบไม่ได้",
+                branches.Count == 0
                     ? "repo ยังว่าง — push branch ขึ้นมาก่อนจึงจะเปิด pull request ได้"
-                    : "ต้องมีอย่างน้อย 2 branch — สร้างและ push branch ใหม่ก่อน เช่น git switch -c feature/xxx แล้ว git push -u origin feature/xxx",
-                GitHubTheme.FgMuted, wrap: true));
-            var back = Btn("← Pull requests", () => Go(Page.Pulls));
+                    : "ต้องมีอย่างน้อย 2 branch — สร้างและ push branch ใหม่ก่อน เช่น git switch -c feature/xxx แล้ว git push -u origin feature/xxx"));
+            var back = GitHubUi.Btn("Pull requests", () => Go(Page.Pulls), GhButtonKind.Default, GhIcon.ArrowLeft);
             back.SizeFlagsHorizontal = SizeFlags.ShrinkBegin;
             _content.AddChild(back);
             return;
@@ -70,62 +161,100 @@ public partial class RemoteRepoView
             ? _newPullSource
             : branches.FirstOrDefault(b => !b.IsDefault)?.Name ?? defaultBranch;
 
-        _content.AddChild(Lbl("Open a pull request", GitHubTheme.Fg, 22));
-        var card = Card();
-        var form = new VBoxContainer();
-        form.AddThemeConstantOverride("separation", 8);
-
-        var baseRow = new HBoxContainer();
-        baseRow.AddChild(Lbl("base: ", GitHubTheme.FgMuted));
+        // แถบเลือก base ← compare
+        var compare = GitHubUi.Card(16, 12);
+        compare.AddThemeStyleboxOverride("panel", GitHubTheme.Box(GitHubTheme.CanvasSubtle, GitHubTheme.Border, 6, 1, 16, 12));
+        var compareColumn = new VBoxContainer();
+        compareColumn.AddThemeConstantOverride("separation", 10);
+        var pickers = new HBoxContainer();
+        pickers.AddThemeConstantOverride("separation", 10);
+        pickers.AddChild(GitHubUi.Icon(GhIcon.PullOpen, GitHubTheme.FgMuted, 18));
+        pickers.AddChild(GitHubUi.Text("base:", GitHubTheme.FgMuted));
         var basePicker = BranchPicker(branches, _ => { }, defaultBranch);
-        baseRow.AddChild(basePicker);
-        baseRow.AddChild(Lbl("   ←   compare: ", GitHubTheme.FgMuted));
+        pickers.AddChild(basePicker);
+        pickers.AddChild(GitHubUi.Icon(GhIcon.ArrowLeft, GitHubTheme.FgMuted));
+        pickers.AddChild(GitHubUi.Text("compare:", GitHubTheme.FgMuted));
         var comparePicker = BranchPicker(branches, _ => { }, source);
-        baseRow.AddChild(comparePicker);
-        form.AddChild(baseRow);
+        pickers.AddChild(comparePicker);
+        compareColumn.AddChild(pickers);
 
-        var summary = Lbl("", GitHubTheme.Attention, 14);
-        form.AddChild(summary);
+        var summary = new HBoxContainer();
+        summary.AddThemeConstantOverride("separation", 6);
+        compareColumn.AddChild(summary);
         void UpdateSummary()
         {
-            var compare = branches[comparePicker.Selected];
+            foreach (var child in summary.GetChildren())
+            {
+                summary.RemoveChild(child);
+                child.QueueFree();
+            }
+
+            var head = branches[comparePicker.Selected];
             var target = branches[basePicker.Selected];
-            summary.Text = compare.Name == target.Name
-                ? "base และ compare ต้องเป็นคนละ branch"
-                : $"{compare.Name} นำหน้า {defaultBranch} {compare.Ahead} commit (ตามหลัง {compare.Behind})";
+            if (head.Name == target.Name)
+                summary.AddChild(GitHubUi.IconText(GhIcon.Alert, "base และ compare ต้องเป็นคนละ branch", GitHubTheme.Attention, 14));
+            else if (target.IsDefault)
+                summary.AddChild(GitHubUi.IconText(GhIcon.Commit,
+                    $"{head.Name} นำหน้า {target.Name} {GitHubUi.Count(head.Ahead, "commit", "commits")}"
+                    + (head.Behind > 0 ? $" และตามหลัง {head.Behind}" : string.Empty), GitHubTheme.FgMuted, 14));
+            else
+                summary.AddChild(GitHubUi.IconText(GhIcon.Commit, $"เปรียบเทียบ {head.Name} กับ {target.Name}", GitHubTheme.FgMuted, 14));
         }
 
         comparePicker.ItemSelected += _ => UpdateSummary();
         basePicker.ItemSelected += _ => UpdateSummary();
         UpdateSummary();
+        compare.AddChild(compareColumn);
+        _content.AddChild(compare);
 
-        var title = new LineEdit { PlaceholderText = "Title", SizeFlagsHorizontal = SizeFlags.ExpandFill };
-        var body = new TextEdit { PlaceholderText = "Leave a comment", CustomMinimumSize = new Vector2(0, 120) };
-        form.AddChild(title);
-        form.AddChild(body);
+        // ฟอร์มหัวข้อ + รายละเอียด
+        var form = new HBoxContainer();
+        form.AddThemeConstantOverride("separation", 14);
+        var avatar = GitHubUi.Avatar(_repo!.Owner, 40);
+        avatar.SizeFlagsVertical = SizeFlags.ShrinkBegin;
+        form.AddChild(avatar);
 
-        var error = Lbl("", GitHubTheme.Danger, 14);
-        form.AddChild(error);
+        var card = GitHubUi.Card(16, 16);
+        card.SizeFlagsHorizontal = SizeFlags.ExpandFill;
+        var fields = new VBoxContainer();
+        fields.AddThemeConstantOverride("separation", 12);
+        var title = new LineEdit { PlaceholderText = "Title", SizeFlagsHorizontal = SizeFlags.ExpandFill, MouseFilter = MouseFilterEnum.Pass };
+        fields.AddChild(title);
+        var body = new TextEdit
+        {
+            PlaceholderText = "Leave a comment",
+            CustomMinimumSize = new Vector2(0, 150),
+            WrapMode = TextEdit.LineWrappingMode.Boundary
+        };
+        fields.AddChild(body);
+
+        var error = GitHubUi.Text(string.Empty, GitHubTheme.Danger, 14, wrap: true);
+        error.Visible = false;
+        fields.AddChild(error);
         var buttons = new HBoxContainer();
         buttons.AddThemeConstantOverride("separation", 10);
-        buttons.AddChild(Btn("Create pull request", async () =>
+        buttons.AddChild(GitHubUi.Spacer());
+        buttons.AddChild(GitHubUi.Btn("Cancel", () => Go(Page.Pulls)));
+        buttons.AddChild(GitHubUi.Btn("Create pull request", async () =>
         {
             try
             {
                 var pr = await _host.OpenPullRequestAsync(title.Text, body.Text, _repo!.Owner,
                     branches[comparePicker.Selected].Name, branches[basePicker.Selected].Name);
                 _pullNumber = pr.Number;
+                _pullTab = PullTab.Conversation;
                 Go(Page.PullDetail, $"สร้าง pull request #{pr.Number} แล้ว");
             }
             catch (InvalidOperationException ex)
             {
                 error.Text = ex.Message;
+                error.Visible = true;
             }
-        }, color: Green));
-        buttons.AddChild(Btn("ยกเลิก", () => Go(Page.Pulls)));
-        form.AddChild(buttons);
-        card.AddChild(form);
-        _content.AddChild(card);
+        }, GhButtonKind.Primary));
+        fields.AddChild(buttons);
+        card.AddChild(fields);
+        form.AddChild(card);
+        _content.AddChild(form);
     }
 
     private async Task BuildPullDetailAsync()
