@@ -5,7 +5,7 @@ using Godot;
 namespace GitDiwaa.Godot.Components;
 
 /// <summary>
-/// หน้า Remote Repository จำลอง GitHub: Code (เปิดโฟลเดอร์/ไฟล์ได้), Commits, Branches,
+/// หน้า Remote Repository จำลอง GitHub (ธีม dark): Code (เปิดโฟลเดอร์/ไฟล์ได้), Commits, Branches,
 /// Pull requests (สร้าง/ดู diff/review/merge/ปิด) อ่านและสั่งงานผ่าน <see cref="IGitRemoteHost"/> เท่านั้น
 /// </summary>
 public partial class RemoteRepoView : Control
@@ -14,8 +14,9 @@ public partial class RemoteRepoView : Control
 
     private enum Page { Code, Blob, Commits, Branches, Pulls, NewPull, PullDetail }
 
-    private static readonly Color Green = new(0.18f, 0.55f, 0.27f);
-    private static readonly Color Purple = new(0.64f, 0.45f, 0.95f);
+    // ใช้เป็นตัวบอกว่าปุ่มนี้เป็นปุ่มหลัก (สีเขียว) ในโค้ดหน้าเดิมที่ยังไม่ได้ปรับ
+    private static readonly Color Green = GitHubTheme.SuccessEmphasis;
+    private static readonly Color Purple = GitHubTheme.Done;
 
     private IGitRemoteHost? _host;
     private RemoteRepositoryInfo? _repo;
@@ -29,62 +30,135 @@ public partial class RemoteRepoView : Control
     private bool _statusIsError;
     private bool _cloneOpen;
 
-    private Label _titleLabel = null!;
-    private Button _codeTab = null!;
-    private Button _pullTab = null!;
+    private Label _ownerLabel = null!;
+    private Label _repoLabel = null!;
+    private Label _addressPath = null!;
+    private Control _avatarSlot = null!;
+    private HBoxContainer _tabs = null!;
+    private ScrollContainer _scroll = null!;
     private VBoxContainer _content = null!;
 
     public override void _Ready()
     {
+        Theme = GitHubTheme.Create();
         SetAnchorsAndOffsetsPreset(LayoutPreset.FullRect);
         MouseFilter = MouseFilterEnum.Stop;
 
-        var backdrop = new ColorRect { Color = new Color(0.02f, 0.03f, 0.06f, 0.94f) };
-        backdrop.SetAnchorsAndOffsetsPreset(LayoutPreset.FullRect);
-        AddChild(backdrop);
+        var dim = new ColorRect { Color = new Color(0.004f, 0.016f, 0.035f, 0.9f) };
+        dim.SetAnchorsAndOffsetsPreset(LayoutPreset.FullRect);
+        AddChild(dim);
 
         var margin = new MarginContainer();
         margin.SetAnchorsAndOffsetsPreset(LayoutPreset.FullRect);
-        margin.AddThemeConstantOverride("margin_left", 60);
-        margin.AddThemeConstantOverride("margin_right", 60);
+        margin.AddThemeConstantOverride("margin_left", 56);
+        margin.AddThemeConstantOverride("margin_right", 56);
         margin.AddThemeConstantOverride("margin_top", 84);
-        margin.AddThemeConstantOverride("margin_bottom", 40);
+        margin.AddThemeConstantOverride("margin_bottom", 36);
         AddChild(margin);
 
-        var card = new PanelContainer();
-        card.AddThemeStyleboxOverride("panel", Panel(SandboxThemeTokens.CardBg, SandboxThemeTokens.CardBorder, 12, 22));
-        margin.AddChild(card);
+        var window = new PanelContainer { ClipContents = true };
+        window.AddThemeStyleboxOverride("panel", GitHubTheme.Box(GitHubTheme.Canvas, GitHubTheme.Border, 8, 1));
+        margin.AddChild(window);
 
-        var root = new VBoxContainer();
-        root.AddThemeConstantOverride("separation", 10);
-        card.AddChild(root);
+        var column = new VBoxContainer();
+        column.AddThemeConstantOverride("separation", 0);
+        window.AddChild(column);
+        column.AddChild(BuildTopBar());
+        column.AddChild(BuildRepoHeader());
+        column.AddChild(BuildBody());
+    }
 
-        var header = new HBoxContainer();
-        header.AddThemeConstantOverride("separation", 14);
-        header.AddChild(Btn("← กลับ Sandbox", () => EmitSignal(SignalName.BackRequested)));
-        _titleLabel = Lbl("", SandboxThemeTokens.GoldTitle, 24);
-        _titleLabel.SizeFlagsHorizontal = SizeFlags.ExpandFill;
-        header.AddChild(_titleLabel);
-        header.AddChild(Lbl("Public", SandboxThemeTokens.TextSecondary, 14));
-        root.AddChild(header);
+    public override void _UnhandledInput(InputEvent @event)
+    {
+        if (@event.IsActionPressed("ui_cancel"))
+        {
+            GetViewport().SetInputAsHandled();
+            EmitSignal(SignalName.BackRequested);
+        }
+    }
 
-        var tabs = new HBoxContainer();
-        _codeTab = Btn("</> Code", () => Go(Page.Code), toggle: true);
-        _pullTab = Btn("⑂ Pull requests", () => Go(Page.Pulls), toggle: true);
-        tabs.AddChild(_codeTab);
-        tabs.AddChild(_pullTab);
-        root.AddChild(tabs);
-        root.AddChild(new HSeparator());
+    /// <summary>แถบบนสุด: ปุ่มกลับ Sandbox และช่อง URL เหมือนเบราว์เซอร์ (แสดงที่อยู่ของหน้าปัจจุบัน)</summary>
+    private Control BuildTopBar()
+    {
+        var bar = new PanelContainer { MouseFilter = MouseFilterEnum.Pass };
+        var style = GitHubTheme.Underlined(GitHubTheme.CanvasSubtle, GitHubTheme.Border, 1, 16, 10);
+        style.CornerRadiusTopLeft = 7;
+        style.CornerRadiusTopRight = 7;
+        bar.AddThemeStyleboxOverride("panel", style);
 
-        var scroll = new ScrollContainer
+        var row = new HBoxContainer();
+        row.AddThemeConstantOverride("separation", 12);
+        row.AddChild(GitHubUi.Btn("กลับ Sandbox", () => EmitSignal(SignalName.BackRequested), icon: GhIcon.ArrowLeft));
+
+        var address = new PanelContainer
+        {
+            MouseFilter = MouseFilterEnum.Pass,
+            CustomMinimumSize = new Vector2(560, 0),
+            SizeFlagsHorizontal = SizeFlags.ShrinkBegin
+        };
+        address.AddThemeStyleboxOverride("panel", GitHubTheme.Box(GitHubTheme.Canvas, GitHubTheme.Border, 16, 1, 14, 4));
+        var addressRow = new HBoxContainer { MouseFilter = MouseFilterEnum.Ignore };
+        addressRow.AddThemeConstantOverride("separation", 8);
+        addressRow.AddChild(GitHubUi.Icon(GhIcon.Lock, GitHubTheme.FgMuted, 14));
+        addressRow.AddChild(GitHubUi.Text("github.com", GitHubTheme.FgMuted, 14));
+        _addressPath = GitHubUi.Text(string.Empty, GitHubTheme.Fg, 14);
+        addressRow.AddChild(_addressPath);
+        address.AddChild(addressRow);
+        row.AddChild(address);
+
+        row.AddChild(GitHubUi.Spacer());
+        _avatarSlot = new Control { MouseFilter = MouseFilterEnum.Ignore, CustomMinimumSize = new Vector2(28, 28) };
+        row.AddChild(_avatarSlot);
+
+        bar.AddChild(row);
+        return bar;
+    }
+
+    /// <summary>ส่วนหัว repo: ไอคอน เจ้าของ / ชื่อ repo ป้าย Public และแท็บ Code / Pull requests</summary>
+    private Control BuildRepoHeader()
+    {
+        var header = new PanelContainer { MouseFilter = MouseFilterEnum.Pass };
+        header.AddThemeStyleboxOverride("panel", GitHubTheme.Underlined(GitHubTheme.CanvasSubtle, GitHubTheme.Border, 1, 24, 16, 0));
+
+        var column = new VBoxContainer();
+        column.AddThemeConstantOverride("separation", 12);
+
+        var title = new HBoxContainer();
+        title.AddThemeConstantOverride("separation", 8);
+        title.AddChild(GitHubUi.Icon(GhIcon.Repo, GitHubTheme.FgMuted, 18));
+        _ownerLabel = GitHubUi.Text(string.Empty, GitHubTheme.Accent, 20);
+        title.AddChild(_ownerLabel);
+        title.AddChild(GitHubUi.Text("/", GitHubTheme.FgMuted, 20));
+        _repoLabel = GitHubUi.Text(string.Empty, GitHubTheme.Accent, 20, bold: true);
+        title.AddChild(_repoLabel);
+        title.AddChild(GitHubUi.Pill("Public", GitHubTheme.FgMuted, GitHubTheme.Border));
+        column.AddChild(title);
+
+        _tabs = new HBoxContainer();
+        _tabs.AddThemeConstantOverride("separation", 4);
+        column.AddChild(_tabs);
+
+        header.AddChild(column);
+        return header;
+    }
+
+    private Control BuildBody()
+    {
+        _scroll = new ScrollContainer
         {
             SizeFlagsVertical = SizeFlags.ExpandFill,
             HorizontalScrollMode = ScrollContainer.ScrollMode.Disabled
         };
+        var margin = new MarginContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
+        margin.AddThemeConstantOverride("margin_left", 24);
+        margin.AddThemeConstantOverride("margin_right", 24);
+        margin.AddThemeConstantOverride("margin_top", 20);
+        margin.AddThemeConstantOverride("margin_bottom", 40);
         _content = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
-        _content.AddThemeConstantOverride("separation", 10);
-        scroll.AddChild(_content);
-        root.AddChild(scroll);
+        _content.AddThemeConstantOverride("separation", 16);
+        margin.AddChild(_content);
+        _scroll.AddChild(margin);
+        return _scroll;
     }
 
     public void Open(IGitRemoteHost host)
@@ -97,7 +171,12 @@ public partial class RemoteRepoView : Control
     {
         if (page != Page.Code && page != Page.Blob) _cloneOpen = false;
         _page = page;
-        if (message is not null) { _status = message; _statusIsError = error; }
+        if (message is not null)
+        {
+            _status = message;
+            _statusIsError = error;
+        }
+
         await RefreshAsync();
     }
 
@@ -113,17 +192,13 @@ public partial class RemoteRepoView : Control
         try
         {
             _repo = await _host.GetRepositoryAsync();
-            _titleLabel.Text = $"{_repo.Owner} / {_repo.Name}";
-            var pulls = _host.ListPullRequests();
-            _codeTab.ButtonPressed = _page is Page.Code or Page.Blob or Page.Commits or Page.Branches;
-            _pullTab.ButtonPressed = !_codeTab.ButtonPressed;
-            _pullTab.Text = $"⑂ Pull requests ({pulls.Count(p => p.State == PullRequestState.Open)})";
+            ShowRepoHeader(_repo, _host.ListPullRequests().Count(p => p.State == PullRequestState.Open));
             if (!(await _host.ListBranchesAsync()).Any(b => b.Name == _branch)) _branch = _repo.DefaultBranch;
 
             if (_status.Length > 0)
             {
-                _content.AddChild(Lbl(_status, _statusIsError ? SandboxThemeTokens.ErrorText : SandboxThemeTokens.PromptGreen, wrap: true));
-                _status = "";
+                _content.AddChild(GitHubUi.Flash(_status, _statusIsError));
+                _status = string.Empty;
             }
 
             switch (_page)
@@ -132,18 +207,62 @@ public partial class RemoteRepoView : Control
                 case Page.Blob: await BuildBlobAsync(); break;
                 case Page.Commits: await BuildCommitsAsync(); break;
                 case Page.Branches: await BuildBranchesAsync(); break;
-                case Page.Pulls: BuildPulls(pulls); break;
+                case Page.Pulls: BuildPulls(_host.ListPullRequests()); break;
                 case Page.NewPull: await BuildNewPullAsync(); break;
                 case Page.PullDetail: await BuildPullDetailAsync(); break;
             }
         }
         catch (Exception ex)
         {
-            _content.AddChild(Lbl($"โหลดข้อมูล repository ไม่สำเร็จ: {ex.Message}", SandboxThemeTokens.ErrorText));
+            _content.AddChild(GitHubUi.Flash($"โหลดข้อมูล repository ไม่สำเร็จ: {ex.Message}", true));
         }
+
+        _scroll.SetDeferred(ScrollContainer.PropertyName.ScrollVertical, 0);
     }
 
-    // ───────────── UI helpers ─────────────
+    private void ShowRepoHeader(RemoteRepositoryInfo repo, int openPulls)
+    {
+        _ownerLabel.Text = repo.Owner;
+        _repoLabel.Text = repo.Name;
+        _addressPath.Text = AddressPath(repo);
+
+        foreach (var child in _avatarSlot.GetChildren())
+        {
+            _avatarSlot.RemoveChild(child);
+            child.QueueFree();
+        }
+
+        _avatarSlot.AddChild(GitHubUi.Avatar(repo.Owner, 28));
+
+        foreach (var child in _tabs.GetChildren())
+        {
+            _tabs.RemoveChild(child);
+            child.QueueFree();
+        }
+
+        var codeActive = _page is Page.Code or Page.Blob or Page.Commits or Page.Branches;
+        _tabs.AddChild(GitHubUi.Tab("Code", codeActive, () => { _path = string.Empty; Go(Page.Code); }, GhIcon.Code));
+        _tabs.AddChild(GitHubUi.Tab("Pull requests", !codeActive, () => Go(Page.Pulls), GhIcon.PullOpen, openPulls));
+    }
+
+    /// <summary>ส่วนหลัง github.com ของที่อยู่หน้าปัจจุบัน เหมือน URL จริงของ GitHub</summary>
+    private string AddressPath(RemoteRepositoryInfo repo)
+    {
+        var root = $"/{repo.Owner}/{repo.Name}";
+        return _page switch
+        {
+            Page.Code => _path.Length == 0 ? root : $"{root}/tree/{_branch}/{_path}",
+            Page.Blob => $"{root}/blob/{_branch}/{_path}",
+            Page.Commits => $"{root}/commits/{_branch}",
+            Page.Branches => $"{root}/branches",
+            Page.Pulls => $"{root}/pulls",
+            Page.NewPull => $"{root}/compare",
+            Page.PullDetail => $"{root}/pull/{_pullNumber}",
+            _ => root
+        };
+    }
+
+    // ───────────── ตัวช่วยของหน้าเดิม (ทยอยย้ายไป GitHubUi ทีละหน้า) ─────────────
 
     private static string StateIcon(PullRequestState state) => state switch
     {
@@ -171,10 +290,11 @@ public partial class RemoteRepoView : Control
     private OptionButton BranchPicker(IReadOnlyList<RemoteBranchInfo> branches, Action<string> onSelected, string? selected = null)
     {
         selected ??= _branch;
-        var picker = new OptionButton();
+        var picker = new OptionButton { MouseFilter = MouseFilterEnum.Pass };
+        var icon = GitHubIcons.Get(GhIcon.Branch, GitHubTheme.FgMuted);
         for (var index = 0; index < branches.Count; index++)
         {
-            picker.AddItem($"⑂ {branches[index].Name}", index);
+            picker.AddIconItem(icon, branches[index].Name, index);
             if (branches[index].Name == selected) picker.Selected = index;
         }
 
@@ -182,62 +302,15 @@ public partial class RemoteRepoView : Control
         return picker;
     }
 
-    private static Label Lbl(string text, Color color, int size = 16, bool wrap = false)
-    {
-        var label = new Label { Text = text };
-        if (wrap)
-        {
-            label.AutowrapMode = TextServer.AutowrapMode.WordSmart;
-            label.SizeFlagsHorizontal = SizeFlags.ExpandFill;
-        }
+    private static Label Lbl(string text, Color color, int size = 16, bool wrap = false) =>
+        GitHubUi.Text(text, color, size, wrap: wrap);
 
-        label.AddThemeColorOverride("font_color", color);
-        label.AddThemeFontSizeOverride("font_size", size);
-        return label;
-    }
+    private static Button Btn(string text, Action onPressed, bool flat = false, bool toggle = false, Color? color = null) =>
+        GitHubUi.Btn(text, onPressed,
+            color is not null ? GhButtonKind.Primary : flat ? GhButtonKind.Link : GhButtonKind.Default,
+            toggle: toggle);
 
-    private static Button Btn(string text, Action onPressed, bool flat = false, bool toggle = false, Color? color = null)
-    {
-        var button = new Button { Text = text, Flat = flat, ToggleMode = toggle, FocusMode = FocusModeEnum.None };
-        if (color is { } fill)
-        {
-            var style = Panel(fill, fill.Lightened(0.25f), 6, 12);
-            button.AddThemeStyleboxOverride("normal", style);
-            button.AddThemeStyleboxOverride("hover", Panel(fill.Lightened(0.12f), fill.Lightened(0.35f), 6, 12));
-            button.AddThemeStyleboxOverride("pressed", style);
-            button.AddThemeColorOverride("font_color", Colors.White);
-        }
+    private static PanelContainer Card() => GitHubUi.Card();
 
-        button.Pressed += onPressed;
-        return button;
-    }
-
-    private static PanelContainer Card()
-    {
-        var card = new PanelContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
-        card.AddThemeStyleboxOverride("panel", Panel(SandboxThemeTokens.InputBg, SandboxThemeTokens.CardBorder, 8, 14));
-        return card;
-    }
-
-    private static StyleBoxFlat Panel(Color fill, Color border, int radius, int margin) => new()
-    {
-        BgColor = fill,
-        BorderColor = border,
-        BorderWidthLeft = 2, BorderWidthRight = 2, BorderWidthTop = 2, BorderWidthBottom = 2,
-        CornerRadiusTopLeft = radius, CornerRadiusTopRight = radius,
-        CornerRadiusBottomLeft = radius, CornerRadiusBottomRight = radius,
-        ContentMarginLeft = margin, ContentMarginRight = margin,
-        ContentMarginTop = margin * 0.6f, ContentMarginBottom = margin * 0.6f
-    };
-
-    private static SystemFont Mono() => new() { FontNames = ["Menlo", "Consolas", "monospace"] };
-
-    private static string Ago(DateTimeOffset when)
-    {
-        var span = DateTimeOffset.Now - when;
-        if (span.TotalDays >= 1) return $"{(int)span.TotalDays} day{((int)span.TotalDays == 1 ? "" : "s")} ago";
-        if (span.TotalHours >= 1) return $"{(int)span.TotalHours} hour{((int)span.TotalHours == 1 ? "" : "s")} ago";
-        if (span.TotalMinutes >= 1) return $"{(int)span.TotalMinutes} min ago";
-        return "just now";
-    }
+    private static string Ago(DateTimeOffset when) => GitHubUi.TimeAgo(when);
 }

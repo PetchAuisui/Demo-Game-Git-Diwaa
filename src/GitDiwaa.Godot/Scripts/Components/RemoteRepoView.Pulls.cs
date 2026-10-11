@@ -27,21 +27,21 @@ public partial class RemoteRepoView
         list.AddThemeConstantOverride("separation", 8);
         if (shown.Count == 0)
             list.AddChild(Lbl(_showClosed ? "ยังไม่มี pull request ที่ปิดแล้ว" : "ไม่มี pull request ที่เปิดอยู่ — กด New pull request เพื่อสร้าง",
-                SandboxThemeTokens.TextSecondary));
+                GitHubTheme.FgMuted));
         foreach (var pr in shown.OrderByDescending(p => p.Number))
         {
             var item = pr;
             var line = new HBoxContainer();
             line.AddThemeConstantOverride("separation", 12);
-            line.AddChild(Lbl(StateIcon(item.State), SandboxThemeTokens.PrimaryText));
+            line.AddChild(Lbl(StateIcon(item.State), GitHubTheme.Fg));
             var col = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
             var title = Btn(item.Title, () => { _pullNumber = item.Number; Go(Page.PullDetail); }, flat: true);
             title.Alignment = HorizontalAlignment.Left;
             col.AddChild(title);
             col.AddChild(Lbl($"#{item.Number} เปิดโดย {item.Author} · {item.SourceBranch} → {item.TargetBranch} · {Ago(item.CreatedAt)}",
-                SandboxThemeTokens.TextSecondary, 13));
+                GitHubTheme.FgMuted, 13));
             line.AddChild(col);
-            if (item.IsApproved) line.AddChild(Lbl("✓ Approved", SandboxThemeTokens.PromptGreen, 14));
+            if (item.IsApproved) line.AddChild(Lbl("✓ Approved", GitHubTheme.Success, 14));
             list.AddChild(line);
         }
 
@@ -54,11 +54,11 @@ public partial class RemoteRepoView
         var branches = await _host!.ListBranchesAsync();
         if (branches.Count < 2)
         {
-            _content.AddChild(Lbl("Open a pull request", SandboxThemeTokens.GoldTitle, 22));
+            _content.AddChild(Lbl("Open a pull request", GitHubTheme.Fg, 22));
             _content.AddChild(Lbl(branches.Count == 0
                     ? "repo ยังว่าง — push branch ขึ้นมาก่อนจึงจะเปิด pull request ได้"
                     : "ต้องมีอย่างน้อย 2 branch — สร้างและ push branch ใหม่ก่อน เช่น git switch -c feature/xxx แล้ว git push -u origin feature/xxx",
-                SandboxThemeTokens.TextSecondary, wrap: true));
+                GitHubTheme.FgMuted, wrap: true));
             var back = Btn("← Pull requests", () => Go(Page.Pulls));
             back.SizeFlagsHorizontal = SizeFlags.ShrinkBegin;
             _content.AddChild(back);
@@ -70,21 +70,21 @@ public partial class RemoteRepoView
             ? _newPullSource
             : branches.FirstOrDefault(b => !b.IsDefault)?.Name ?? defaultBranch;
 
-        _content.AddChild(Lbl("Open a pull request", SandboxThemeTokens.GoldTitle, 22));
+        _content.AddChild(Lbl("Open a pull request", GitHubTheme.Fg, 22));
         var card = Card();
         var form = new VBoxContainer();
         form.AddThemeConstantOverride("separation", 8);
 
         var baseRow = new HBoxContainer();
-        baseRow.AddChild(Lbl("base: ", SandboxThemeTokens.TextSecondary));
+        baseRow.AddChild(Lbl("base: ", GitHubTheme.FgMuted));
         var basePicker = BranchPicker(branches, _ => { }, defaultBranch);
         baseRow.AddChild(basePicker);
-        baseRow.AddChild(Lbl("   ←   compare: ", SandboxThemeTokens.TextSecondary));
+        baseRow.AddChild(Lbl("   ←   compare: ", GitHubTheme.FgMuted));
         var comparePicker = BranchPicker(branches, _ => { }, source);
         baseRow.AddChild(comparePicker);
         form.AddChild(baseRow);
 
-        var summary = Lbl("", SandboxThemeTokens.StateModified, 14);
+        var summary = Lbl("", GitHubTheme.Attention, 14);
         form.AddChild(summary);
         void UpdateSummary()
         {
@@ -104,7 +104,7 @@ public partial class RemoteRepoView
         form.AddChild(title);
         form.AddChild(body);
 
-        var error = Lbl("", SandboxThemeTokens.ErrorText, 14);
+        var error = Lbl("", GitHubTheme.Danger, 14);
         form.AddChild(error);
         var buttons = new HBoxContainer();
         buttons.AddThemeConstantOverride("separation", 10);
@@ -137,10 +137,10 @@ public partial class RemoteRepoView
         var head = new HBoxContainer();
         head.AddThemeConstantOverride("separation", 12);
         head.AddChild(Btn("← Pull requests", () => Go(Page.Pulls)));
-        var title = Lbl($"{pull.Title}  #{pull.Number}", SandboxThemeTokens.PrimaryText, 22);
+        var title = Lbl($"{pull.Title}  #{pull.Number}", GitHubTheme.Fg, 22);
         title.SizeFlagsHorizontal = SizeFlags.ExpandFill;
         head.AddChild(title);
-        head.AddChild(Lbl($"{StateIcon(pull.State)} {pull.State}", pull.State == PullRequestState.Merged ? Purple : SandboxThemeTokens.PromptGreen));
+        head.AddChild(Lbl($"{StateIcon(pull.State)} {pull.State}", pull.State == PullRequestState.Merged ? Purple : GitHubTheme.Success));
         _content.AddChild(head);
         var summary = pull.State switch
         {
@@ -148,12 +148,12 @@ public partial class RemoteRepoView
             PullRequestState.Closed => $"{pull.Author} wanted to merge {detail.Commits.Count} commit(s) from {pull.SourceBranch} into {pull.TargetBranch}",
             _ => $"{pull.Author} wants to merge {detail.Commits.Count} commit(s) from {pull.SourceBranch} into {pull.TargetBranch}"
         };
-        _content.AddChild(Lbl(summary, SandboxThemeTokens.TextSecondary, 14));
+        _content.AddChild(Lbl(summary, GitHubTheme.FgMuted, 14));
 
         if (!string.IsNullOrWhiteSpace(pull.Body))
         {
             var description = Card();
-            description.AddChild(Lbl(pull.Body, SandboxThemeTokens.PrimaryText, wrap: true));
+            description.AddChild(Lbl(pull.Body, GitHubTheme.Fg, wrap: true));
             _content.AddChild(description);
         }
 
@@ -192,7 +192,7 @@ public partial class RemoteRepoView
         box.AddThemeConstantOverride("separation", 8);
 
         var comment = new LineEdit { PlaceholderText = "ความเห็น review (ไม่บังคับ)" };
-        box.AddChild(Lbl($"Add your review (ในฐานะ {reviewer})", SandboxThemeTokens.GoldTitle, 15));
+        box.AddChild(Lbl($"Add your review (ในฐานะ {reviewer})", GitHubTheme.Fg, 15));
         box.AddChild(comment);
         var actions = new HBoxContainer();
         actions.AddThemeConstantOverride("separation", 10);
@@ -210,9 +210,9 @@ public partial class RemoteRepoView
 
         if (detail.MergeBlockedReason is { } blocked)
             box.AddChild(Lbl(detail.HasConflicts ? $"⚠ {blocked}" : blocked,
-                detail.HasConflicts ? SandboxThemeTokens.ErrorText : SandboxThemeTokens.StateModified, wrap: true));
+                detail.HasConflicts ? GitHubTheme.Danger : GitHubTheme.Attention, wrap: true));
         else
-            box.AddChild(Lbl("✓ This branch has no conflicts with the base branch", SandboxThemeTokens.PromptGreen));
+            box.AddChild(Lbl("✓ This branch has no conflicts with the base branch", GitHubTheme.Success));
 
         var mergeRow = new HBoxContainer();
         mergeRow.AddThemeConstantOverride("separation", 10);
@@ -237,9 +237,9 @@ public partial class RemoteRepoView
     {
         var card = Card();
         var box = new VBoxContainer();
-        box.AddChild(Lbl(heading, SandboxThemeTokens.GoldTitle, 16));
+        box.AddChild(Lbl(heading, GitHubTheme.Fg, 16));
         box.AddChild(new HSeparator());
-        foreach (var line in lines) box.AddChild(Lbl(line, SandboxThemeTokens.PrimaryText, 14, wrap: true));
+        foreach (var line in lines) box.AddChild(Lbl(line, GitHubTheme.Fg, 14, wrap: true));
         card.AddChild(box);
         _content.AddChild(card);
     }
@@ -266,7 +266,7 @@ public partial class RemoteRepoView
             Text = builder.ToString(),
             SizeFlagsHorizontal = SizeFlags.ExpandFill
         };
-        label.AddThemeFontOverride("normal_font", Mono());
+        label.AddThemeFontOverride("normal_font", GitHubTheme.MonoFont);
         label.AddThemeFontSizeOverride("normal_font_size", 14);
         return label;
     }

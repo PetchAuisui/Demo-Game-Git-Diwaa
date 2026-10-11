@@ -1,0 +1,225 @@
+using Godot;
+
+namespace GitDiwaa.Godot.Common;
+
+/// <summary>
+/// สีและสไตล์แบบ GitHub (dark) สำหรับหน้า Remote Repository จำลอง
+/// สร้าง <see cref="Theme"/> ชุดเดียวให้ทุกปุ่ม ช่องกรอก เมนู และแถบเลื่อนในหน้านั้น
+/// </summary>
+public static class GitHubTheme
+{
+    // พื้นผิวและเส้นขอบ
+    public static readonly Color Canvas = new("#0d1117");
+    public static readonly Color CanvasSubtle = new("#161b22");
+    public static readonly Color Border = new("#30363d");
+    public static readonly Color BorderMuted = new("#21262d");
+
+    // ตัวอักษร
+    public static readonly Color Fg = new("#e6edf3");
+    public static readonly Color FgMuted = new("#7d8590");
+    public static readonly Color FgSubtle = new("#6e7681");
+
+    // สีสถานะ
+    public static readonly Color Accent = new("#2f81f7");
+    public static readonly Color AccentHover = new("#58a6ff");
+    public static readonly Color AccentEmphasis = new("#1f6feb");
+    public static readonly Color AccentSubtle = new("#132339");
+    public static readonly Color Success = new("#3fb950");
+    public static readonly Color SuccessEmphasis = new("#238636");
+    public static readonly Color SuccessSubtle = new("#12261e");
+    public static readonly Color Danger = new("#f85149");
+    public static readonly Color DangerEmphasis = new("#da3633");
+    public static readonly Color DangerSubtle = new("#25171c");
+    public static readonly Color Attention = new("#d29922");
+    public static readonly Color Done = new("#a371f7");
+    public static readonly Color DoneEmphasis = new("#8957e5");
+    public static readonly Color TabUnderline = new("#f78166");
+
+    // diff
+    public static readonly Color DiffAdd = new("#12261e");
+    public static readonly Color DiffAddGutter = new("#173c24");
+    public static readonly Color DiffRemove = new("#25171c");
+    public static readonly Color DiffRemoveGutter = new("#532426");
+    public static readonly Color DiffHunk = new("#132339");
+
+    // ชื่อ theme type variation ของปุ่ม
+    public const string PrimaryButton = "GhPrimaryButton";
+    public const string DangerButton = "GhDangerButton";
+    public const string LinkButton = "GhLinkButton";
+    public const string GhostButton = "GhGhostButton";
+
+    private static Font? _mono;
+    private static Font? _bold;
+
+    public static Font MonoFont => _mono ??= new SystemFont
+    {
+        FontNames = ["Menlo", "Consolas", "DejaVu Sans Mono", "monospace"]
+    };
+
+    public static Font BoldFont => _bold ??= new FontVariation
+    {
+        BaseFont = ThemeDB.FallbackFont,
+        VariationEmbolden = 0.5f
+    };
+
+    /// <summary>กล่องพื้นหลังมีเส้นขอบรอบด้าน</summary>
+    public static StyleBoxFlat Box(Color bg, Color border, int radius = 6, int borderWidth = 1, float padH = 0, float padV = 0)
+    {
+        var box = new StyleBoxFlat { BgColor = bg, BorderColor = border };
+        box.SetBorderWidthAll(borderWidth);
+        box.SetCornerRadiusAll(radius);
+        box.ContentMarginLeft = padH + borderWidth;
+        box.ContentMarginRight = padH + borderWidth;
+        box.ContentMarginTop = padV + borderWidth;
+        box.ContentMarginBottom = padV + borderWidth;
+        return box;
+    }
+
+    /// <summary>แถบที่มีเส้นเฉพาะด้านล่าง (หัวตาราง แถวรายการ แท็บ)</summary>
+    public static StyleBoxFlat Underlined(Color bg, Color line, int lineWidth, float padH, float padTop, float? padBottom = null)
+    {
+        return new StyleBoxFlat
+        {
+            BgColor = bg,
+            BorderColor = line,
+            BorderWidthBottom = lineWidth,
+            ContentMarginLeft = padH,
+            ContentMarginRight = padH,
+            ContentMarginTop = padTop,
+            ContentMarginBottom = (padBottom ?? padTop) + lineWidth
+        };
+    }
+
+    public static Theme Create()
+    {
+        var theme = new Theme { DefaultFontSize = 15 };
+        theme.SetColor("font_color", "Label", Fg);
+
+        // ปุ่มทั่วไป
+        foreach (var type in new[] { "Button", "OptionButton" })
+        {
+            SetButton(theme, type,
+                Box(new("#21262d"), new("#363b42"), 6, 1, 14, 5),
+                Box(new("#30363d"), new("#8b949e"), 6, 1, 14, 5),
+                Box(new("#282e33"), new("#8b949e"), 6, 1, 14, 5),
+                Box(new("#21262d"), new("#30363d"), 6, 1, 14, 5),
+                Fg, Fg, new("#484f58"));
+            theme.SetConstant("h_separation", type, 6);
+            theme.SetConstant("icon_max_width", type, 16);
+        }
+
+        // ปุ่มหลักสีเขียว
+        theme.SetTypeVariation(PrimaryButton, "Button");
+        SetButton(theme, PrimaryButton,
+            Box(SuccessEmphasis, new("#2ea043"), 6, 1, 14, 5),
+            Box(new("#2ea043"), new("#3fb950"), 6, 1, 14, 5),
+            Box(new("#1f7a2f"), new("#2ea043"), 6, 1, 14, 5),
+            Box(new(0.137f, 0.525f, 0.212f, 0.45f), new(0.18f, 0.63f, 0.26f, 0.3f), 6, 1, 14, 5),
+            Colors.White, Colors.White, new(1f, 1f, 1f, 0.5f));
+
+        // ปุ่มอันตราย (ตัวแดง โฮเวอร์แล้วเป็นพื้นแดง)
+        theme.SetTypeVariation(DangerButton, "Button");
+        SetButton(theme, DangerButton,
+            Box(new("#21262d"), new("#363b42"), 6, 1, 14, 5),
+            Box(DangerEmphasis, Danger, 6, 1, 14, 5),
+            Box(new("#b62324"), Danger, 6, 1, 14, 5),
+            Box(new("#21262d"), new("#30363d"), 6, 1, 14, 5),
+            Danger, Colors.White, new("#484f58"));
+
+        // ปุ่มลิงก์ (ข้อความสีฟ้า ไม่มีกรอบ)
+        theme.SetTypeVariation(LinkButton, "Button");
+        var plain = Box(Colors.Transparent, Colors.Transparent, 0, 0);
+        SetButton(theme, LinkButton, plain, plain, plain, plain, Accent, AccentHover, FgSubtle);
+
+        // ปุ่มโปร่งใส (ปุ่มไอคอน/ลิงก์รอง) โฮเวอร์แล้วมีพื้น
+        theme.SetTypeVariation(GhostButton, "Button");
+        SetButton(theme, GhostButton,
+            Box(Colors.Transparent, Colors.Transparent, 6, 0, 8, 4),
+            Box(new(0.19f, 0.21f, 0.24f, 0.7f), Colors.Transparent, 6, 0, 8, 4),
+            Box(new(0.19f, 0.21f, 0.24f, 1f), Colors.Transparent, 6, 0, 8, 4),
+            Box(Colors.Transparent, Colors.Transparent, 6, 0, 8, 4),
+            FgMuted, Fg, FgSubtle);
+
+        // ช่องกรอก
+        foreach (var type in new[] { "LineEdit", "TextEdit" })
+        {
+            theme.SetStylebox("normal", type, Box(Canvas, Border, 6, 1, 12, 5));
+            theme.SetStylebox("focus", type, FocusRing());
+            theme.SetStylebox("read_only", type, Box(CanvasSubtle, Border, 6, 1, 12, 5));
+            theme.SetColor("font_color", type, Fg);
+            theme.SetColor("font_readonly_color", type, FgMuted);
+            theme.SetColor("font_uneditable_color", type, FgMuted);
+            theme.SetColor("font_placeholder_color", type, FgSubtle);
+            theme.SetColor("caret_color", type, Fg);
+            theme.SetColor("selection_color", type, new(AccentEmphasis, 0.45f));
+        }
+
+        // เมนูตัวเลือก (เช่น เลือก branch)
+        theme.SetStylebox("panel", "PopupMenu", Box(CanvasSubtle, Border, 8, 1, 4, 4));
+        theme.SetStylebox("hover", "PopupMenu", Box(new("#30363d"), Colors.Transparent, 6, 0, 8, 4));
+        theme.SetStylebox("separator", "PopupMenu", new StyleBoxLine { Color = Border, Thickness = 1 });
+        theme.SetColor("font_color", "PopupMenu", Fg);
+        theme.SetColor("font_hover_color", "PopupMenu", Fg);
+        theme.SetColor("font_disabled_color", "PopupMenu", FgSubtle);
+        theme.SetConstant("v_separation", "PopupMenu", 8);
+
+        // แถบเลื่อนบางๆ
+        foreach (var type in new[] { "VScrollBar", "HScrollBar" })
+        {
+            var vertical = type[0] == 'V';
+            theme.SetStylebox("scroll", type, Thumb(Colors.Transparent, vertical));
+            theme.SetStylebox("scroll_focus", type, Thumb(Colors.Transparent, vertical));
+            theme.SetStylebox("grabber", type, Thumb(new("#484f58"), vertical));
+            theme.SetStylebox("grabber_highlight", type, Thumb(new("#6e7681"), vertical));
+            theme.SetStylebox("grabber_pressed", type, Thumb(new("#8b949e"), vertical));
+        }
+
+        // เส้นคั่น
+        foreach (var type in new[] { "HSeparator", "VSeparator" })
+        {
+            theme.SetStylebox("separator", type, new StyleBoxLine { Color = Border, Thickness = 1, Vertical = type[0] == 'V' });
+            theme.SetConstant("separation", type, 1);
+        }
+
+        theme.SetColor("default_color", "RichTextLabel", Fg);
+        theme.SetColor("selection_color", "RichTextLabel", new(AccentEmphasis, 0.45f));
+        return theme;
+    }
+
+    private static StyleBoxFlat FocusRing()
+    {
+        var ring = Box(Colors.Transparent, AccentEmphasis, 6, 1, 12, 5);
+        ring.DrawCenter = false;
+        return ring;
+    }
+
+    private static StyleBoxFlat Thumb(Color color, bool vertical)
+    {
+        var box = new StyleBoxFlat { BgColor = color };
+        box.SetCornerRadiusAll(5);
+        box.ContentMarginLeft = vertical ? 5 : 0;
+        box.ContentMarginRight = vertical ? 5 : 0;
+        box.ContentMarginTop = vertical ? 0 : 5;
+        box.ContentMarginBottom = vertical ? 0 : 5;
+        return box;
+    }
+
+    private static void SetButton(
+        Theme theme, string type,
+        StyleBox normal, StyleBox hover, StyleBox pressed, StyleBox disabled,
+        Color fg, Color fgHover, Color fgDisabled)
+    {
+        theme.SetStylebox("normal", type, normal);
+        theme.SetStylebox("hover", type, hover);
+        theme.SetStylebox("pressed", type, pressed);
+        theme.SetStylebox("hover_pressed", type, pressed);
+        theme.SetStylebox("disabled", type, disabled);
+        theme.SetStylebox("focus", type, new StyleBoxEmpty());
+        theme.SetColor("font_color", type, fg);
+        theme.SetColor("font_focus_color", type, fg);
+        theme.SetColor("font_hover_color", type, fgHover);
+        theme.SetColor("font_pressed_color", type, fgHover);
+        theme.SetColor("font_hover_pressed_color", type, fgHover);
+        theme.SetColor("font_disabled_color", type, fgDisabled);
+    }
+}

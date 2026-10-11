@@ -37,12 +37,12 @@ public partial class RemoteRepoView
             var bar = Card();
             var row = new HBoxContainer();
             row.AddThemeConstantOverride("separation", 14);
-            row.AddChild(Lbl(latest.Author, SandboxThemeTokens.PrimaryText));
-            var subject = Lbl(latest.Subject, SandboxThemeTokens.SubtitleText);
+            row.AddChild(Lbl(latest.Author, GitHubTheme.Fg));
+            var subject = Lbl(latest.Subject, GitHubTheme.FgMuted);
             subject.SizeFlagsHorizontal = SizeFlags.ExpandFill;
             subject.ClipText = true;
             row.AddChild(subject);
-            row.AddChild(Lbl($"{latest.ShortId}  ·  {Ago(latest.AuthoredAt)}", SandboxThemeTokens.TextSecondary, 14));
+            row.AddChild(Lbl($"{latest.ShortId}  ·  {Ago(latest.AuthoredAt)}", GitHubTheme.FgMuted, 14));
             bar.AddChild(row);
             _content.AddChild(bar);
         }
@@ -69,11 +69,11 @@ public partial class RemoteRepoView
             nameButton.CustomMinimumSize = new Vector2(240, 0);
             nameButton.Alignment = HorizontalAlignment.Left;
             grid.AddChild(nameButton);
-            var message = Lbl(entry.LastCommit?.Subject ?? "", SandboxThemeTokens.SubtitleText, 15);
+            var message = Lbl(entry.LastCommit?.Subject ?? "", GitHubTheme.FgMuted, 15);
             message.SizeFlagsHorizontal = SizeFlags.ExpandFill;
             message.ClipText = true;
             grid.AddChild(message);
-            grid.AddChild(Lbl(entry.LastCommit is null ? "" : Ago(entry.LastCommit.AuthoredAt), SandboxThemeTokens.TextSecondary, 14));
+            grid.AddChild(Lbl(entry.LastCommit is null ? "" : Ago(entry.LastCommit.AuthoredAt), GitHubTheme.FgMuted, 14));
         }
 
         table.AddChild(grid);
@@ -85,13 +85,13 @@ public partial class RemoteRepoView
         {
             var box = Card();
             var inner = new VBoxContainer();
-            inner.AddChild(Lbl("≡ README.md", SandboxThemeTokens.GoldTitle, 14));
+            inner.AddChild(Lbl("≡ README.md", GitHubTheme.Fg, 14));
             inner.AddChild(new HSeparator());
             foreach (var line in readme.TrimEnd().Split('\n'))
             {
-                if (line.StartsWith("# ")) inner.AddChild(Lbl(line[2..], SandboxThemeTokens.PrimaryText, 26));
-                else if (line.StartsWith("## ")) inner.AddChild(Lbl(line[3..], SandboxThemeTokens.PrimaryText, 20));
-                else inner.AddChild(Lbl(line, SandboxThemeTokens.TextSecondary, wrap: true));
+                if (line.StartsWith("# ")) inner.AddChild(Lbl(line[2..], GitHubTheme.Fg, 26));
+                else if (line.StartsWith("## ")) inner.AddChild(Lbl(line[3..], GitHubTheme.Fg, 20));
+                else inner.AddChild(Lbl(line, GitHubTheme.FgMuted, wrap: true));
             }
 
             box.AddChild(inner);
@@ -106,9 +106,9 @@ public partial class RemoteRepoView
         var card = Card();
         var box = new VBoxContainer();
         box.AddThemeConstantOverride("separation", 8);
-        box.AddChild(Lbl("Quick setup — repo นี้ยังว่างอยู่", SandboxThemeTokens.GoldTitle, 22));
+        box.AddChild(Lbl("Quick setup — repo นี้ยังว่างอยู่", GitHubTheme.Fg, 22));
         box.AddChild(Lbl("push งานจากคลังในเครื่องขึ้นมา แล้วไฟล์ branch และ commit จะแสดงที่หน้านี้",
-            SandboxThemeTokens.TextSecondary, wrap: true));
+            GitHubTheme.FgMuted, wrap: true));
 
         var urlRow = new HBoxContainer();
         urlRow.AddThemeConstantOverride("separation", 8);
@@ -117,12 +117,12 @@ public partial class RemoteRepoView
         box.AddChild(urlRow);
 
         box.AddChild(new HSeparator());
-        box.AddChild(Lbl("ครั้งแรก: ตั้งชื่อผู้ใช้ Git (ข้ามได้ถ้าตั้งแล้ว)", SandboxThemeTokens.PrimaryText));
+        box.AddChild(Lbl("ครั้งแรก: ตั้งชื่อผู้ใช้ Git (ข้ามได้ถ้าตั้งแล้ว)", GitHubTheme.Fg));
         box.AddChild(CommandRow($"git config --global user.name \"{repo.Owner}\""));
         box.AddChild(CommandRow($"git config --global user.email \"{repo.Owner}@example.com\""));
 
         box.AddChild(new HSeparator());
-        box.AddChild(Lbl("…สร้างโปรเจกต์ใหม่ แล้ว push ขึ้นมา (พิมพ์ใน terminal ของ Sandbox)", SandboxThemeTokens.PrimaryText));
+        box.AddChild(Lbl("…สร้างโปรเจกต์ใหม่ แล้ว push ขึ้นมา (พิมพ์ใน terminal ของ Sandbox)", GitHubTheme.Fg));
         foreach (var command in new[]
                  {
                      $"write README.md # {repo.Name}",
@@ -135,7 +135,7 @@ public partial class RemoteRepoView
             box.AddChild(CommandRow(command));
 
         box.AddChild(new HSeparator());
-        box.AddChild(Lbl("…หรือ clone repo ว่างนี้มาทำงานต่อ", SandboxThemeTokens.PrimaryText));
+        box.AddChild(Lbl("…หรือ clone repo ว่างนี้มาทำงานต่อ", GitHubTheme.Fg));
         box.AddChild(CommandRow($"git clone {repo.CloneUrl}"));
 
         card.AddChild(box);
@@ -146,11 +146,11 @@ public partial class RemoteRepoView
     {
         var row = new HBoxContainer();
         row.AddThemeConstantOverride("separation", 10);
-        var prompt = Lbl("$", SandboxThemeTokens.TextSecondary, 15);
-        prompt.AddThemeFontOverride("font", Mono());
+        var prompt = Lbl("$", GitHubTheme.FgMuted, 15);
+        prompt.AddThemeFontOverride("font", GitHubTheme.MonoFont);
         row.AddChild(prompt);
-        var text = Lbl(command, SandboxThemeTokens.PromptGreen, 15);
-        text.AddThemeFontOverride("font", Mono());
+        var text = Lbl(command, GitHubTheme.Success, 15);
+        text.AddThemeFontOverride("font", GitHubTheme.MonoFont);
         text.SizeFlagsHorizontal = SizeFlags.ExpandFill;
         row.AddChild(text);
         row.AddChild(Btn("Copy", () => DisplayServer.ClipboardSet(command)));
@@ -168,7 +168,7 @@ public partial class RemoteRepoView
             CustomMinimumSize = new Vector2(0, 420),
             SizeFlagsHorizontal = SizeFlags.ExpandFill
         };
-        editor.AddThemeFontOverride("font", Mono());
+        editor.AddThemeFontOverride("font", GitHubTheme.MonoFont);
         _content.AddChild(editor);
         var backToFiles = Btn("← กลับไปรายการไฟล์", () => { _path = ParentPath(_path); Go(Page.Code); });
         backToFiles.SizeFlagsHorizontal = SizeFlags.ShrinkBegin;
@@ -181,13 +181,13 @@ public partial class RemoteRepoView
         var card = Card();
         var inner = new VBoxContainer();
         inner.AddThemeConstantOverride("separation", 6);
-        inner.AddChild(Lbl("Clone (HTTPS) — ใช้ใน terminal ของเกม", SandboxThemeTokens.GoldTitle, 15));
+        inner.AddChild(Lbl("Clone (HTTPS) — ใช้ใน terminal ของเกม", GitHubTheme.Fg, 15));
         var row = new HBoxContainer();
         var url = new LineEdit { Text = _repo!.CloneUrl, Editable = false, SizeFlagsHorizontal = SizeFlags.ExpandFill };
         row.AddChild(url);
         row.AddChild(Btn("Copy", () => DisplayServer.ClipboardSet($"git clone {_repo.CloneUrl}")));
         inner.AddChild(row);
-        inner.AddChild(Lbl($"git clone {_repo.CloneUrl}", SandboxThemeTokens.PromptGreen, 14));
+        inner.AddChild(Lbl($"git clone {_repo.CloneUrl}", GitHubTheme.Success, 14));
         card.AddChild(inner);
         box.AddChild(card);
         return box;
@@ -203,7 +203,7 @@ public partial class RemoteRepoView
         {
             built = built.Length == 0 ? part : $"{built}/{part}";
             var target = built;
-            row.AddChild(Lbl("/", SandboxThemeTokens.TextSecondary));
+            row.AddChild(Lbl("/", GitHubTheme.FgMuted));
             row.AddChild(Btn(part, () =>
             {
                 _path = target;

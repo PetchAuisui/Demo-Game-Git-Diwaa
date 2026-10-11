@@ -14,7 +14,7 @@ public partial class RemoteRepoView
         var row = new HBoxContainer();
         row.AddThemeConstantOverride("separation", 10);
         row.AddChild(Btn("← Code", () => Go(Page.Code)));
-        row.AddChild(Lbl("Commits", SandboxThemeTokens.GoldTitle, 20));
+        row.AddChild(Lbl("Commits", GitHubTheme.Fg, 20));
         row.AddChild(BranchPicker(branches, name => { _branch = name; Go(Page.Commits); }));
         _content.AddChild(row);
 
@@ -25,13 +25,13 @@ public partial class RemoteRepoView
         {
             var line = new HBoxContainer();
             line.AddThemeConstantOverride("separation", 14);
-            var subject = Lbl(commit.Subject, SandboxThemeTokens.PrimaryText);
+            var subject = Lbl(commit.Subject, GitHubTheme.Fg);
             subject.SizeFlagsHorizontal = SizeFlags.ExpandFill;
             subject.ClipText = true;
             line.AddChild(subject);
-            line.AddChild(Lbl(commit.Author, SandboxThemeTokens.SubtitleText, 14));
-            line.AddChild(Lbl(commit.ShortId, SandboxThemeTokens.PromptGreen, 14));
-            line.AddChild(Lbl(Ago(commit.AuthoredAt), SandboxThemeTokens.TextSecondary, 14));
+            line.AddChild(Lbl(commit.Author, GitHubTheme.FgMuted, 14));
+            line.AddChild(Lbl(commit.ShortId, GitHubTheme.Success, 14));
+            line.AddChild(Lbl(Ago(commit.AuthoredAt), GitHubTheme.FgMuted, 14));
             list.AddChild(line);
         }
 
@@ -44,7 +44,7 @@ public partial class RemoteRepoView
         var row = new HBoxContainer();
         row.AddThemeConstantOverride("separation", 10);
         row.AddChild(Btn("← Code", () => Go(Page.Code)));
-        row.AddChild(Lbl("Branches", SandboxThemeTokens.GoldTitle, 20));
+        row.AddChild(Lbl("Branches", GitHubTheme.Fg, 20));
         _content.AddChild(row);
 
         var card = Card();
@@ -59,13 +59,13 @@ public partial class RemoteRepoView
             name.CustomMinimumSize = new Vector2(280, 0);
             name.Alignment = HorizontalAlignment.Left;
             line.AddChild(name);
-            var info = Lbl($"{item.LastCommitSubject} · {Ago(item.LastCommitAt)}", SandboxThemeTokens.TextSecondary, 14);
+            var info = Lbl($"{item.LastCommitSubject} · {Ago(item.LastCommitAt)}", GitHubTheme.FgMuted, 14);
             info.SizeFlagsHorizontal = SizeFlags.ExpandFill;
             info.ClipText = true;
             line.AddChild(info);
             if (!item.IsDefault)
             {
-                line.AddChild(Lbl($"↑{item.Ahead}  ↓{item.Behind}", SandboxThemeTokens.StateModified, 14));
+                line.AddChild(Lbl($"↑{item.Ahead}  ↓{item.Behind}", GitHubTheme.Attention, 14));
                 line.AddChild(Btn("New pull request", () => { _newPullSource = item.Name; Go(Page.NewPull); }));
                 line.AddChild(Btn("🗑", async () =>
                 {
