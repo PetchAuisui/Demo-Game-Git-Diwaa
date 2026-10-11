@@ -5,6 +5,7 @@ namespace GitDiwaa.RealGit;
 internal sealed partial class FakeGitHubHost
 {
     private readonly Dictionary<int, List<PullRequestReview>> _reviews = [];
+    private readonly Dictionary<int, PullRequestDetail> _mergedDetails = [];
 
     public IReadOnlyList<PullRequestInfo> ListPullRequests() => _pullRequests.ToList();
 
@@ -37,6 +38,10 @@ internal sealed partial class FakeGitHubHost
     {
         var pull = Find(number);
         if (pull is null) return null;
+
+        // หลัง merge แล้ว base..source ว่างเปล่า จึงคืนภาพ commit/ไฟล์/diff ที่บันทึกไว้ตอน merge
+        if (pull.State == PullRequestState.Merged && _mergedDetails.TryGetValue(number, out var snapshot))
+            return snapshot with { Pull = pull };
 
         var commits = new List<RemoteCommitInfo>();
         var files = new List<PullRequestFileChange>();
@@ -115,6 +120,7 @@ internal sealed partial class FakeGitHubHost
 
         var (_, blockedReason) = await CheckMergeAsync(pull, cancellationToken);
         if (blockedReason is not null) return new(false, blockedReason, pull);
+        var beforeMerge = await GetPullRequestAsync(number, cancellationToken);
 
         var work = Path.Combine(_sandbox.AttemptRoot, $"merge-work-{number}");
         try
@@ -138,6 +144,8 @@ internal sealed partial class FakeGitHubHost
         }
 
         var merged = Update(number, item => item with { State = PullRequestState.Merged })!;
+        if (beforeMerge is not null)
+            _mergedDetails[number] = beforeMerge with { Pull = merged, HasConflicts = false, MergeBlockedReason = null };
         return new(true, $"Pull request #{number} merged into {pull.TargetBranch}.", merged);
     }
 

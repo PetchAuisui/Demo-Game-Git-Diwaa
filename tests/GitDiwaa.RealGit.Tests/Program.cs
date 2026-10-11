@@ -250,6 +250,13 @@ try
         Assert.True(merged.Success, merged.Message);
         Assert.Equal(PullRequestState.Merged, host.ListPullRequests().Single().State);
         Assert.True(await host.ReadFileAsync("main", "login.py") is not null);
+
+        var after = (await host.GetPullRequestAsync(pr.Number))!; // merge แล้วยังเห็น commit/ไฟล์/diff ที่เข้าไป
+        Assert.Equal(PullRequestState.Merged, after.Pull.State);
+        Assert.Equal(1, after.Commits.Count);
+        Assert.Equal("login.py", after.Files.Single().Path);
+        Assert.Contains(after.Diff, "+print('login')");
+        Assert.True(after.MergeBlockedReason is null);
         Assert.False((await host.MergePullRequestAsync(pr.Number)).Success);
         Assert.False(await host.DeleteBranchAsync("main"));
         Assert.True(await host.DeleteBranchAsync("feature/login"));
