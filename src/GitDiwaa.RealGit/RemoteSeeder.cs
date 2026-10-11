@@ -9,6 +9,8 @@ internal static class RemoteSeeder
         RemoteSeed seed,
         CancellationToken cancellationToken)
     {
+        if (seed.Commits.Count == 0) return;
+
         var work = Path.Combine(sandbox.AttemptRoot, "seed-work");
         Directory.CreateDirectory(work);
         try

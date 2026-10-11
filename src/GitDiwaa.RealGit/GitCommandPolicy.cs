@@ -204,7 +204,7 @@ internal sealed class GitCommandPolicy
                 Path.GetFullPath(_remote.BareRepositoryPath),
                 OperatingSystem.IsWindows() ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal))
             return null;
-        return "Only the local remote registered for this Git-Diwaa session is allowed.";
+        return $"Only the remote registered for this Git-Diwaa session is allowed: {_remote.AliasUrl}";
     }
 
     private static bool IsProcessEscapeOption(string value) =>

@@ -48,9 +48,9 @@ internal sealed class GitWorkspaceManager
     public async Task<LocalRemote> CreateBareRemoteAsync(
         GitSandbox sandbox,
         GitProcessRunner processRunner,
-        string name = "origin",
-        CancellationToken cancellationToken = default,
-        string? aliasUrl = null)
+        string name,
+        string aliasUrl,
+        CancellationToken cancellationToken = default)
     {
         ValidateIdentifier(name, nameof(name));
         EnsureInsideRoot(sandbox.AttemptRoot);
@@ -67,7 +67,7 @@ internal sealed class GitWorkspaceManager
             cancellationToken);
         if (!init.Success) throw new InvalidOperationException(init.Output);
 
-        var remote = new LocalRemote(name, aliasUrl ?? $"https://git-diwaa.local/{name}.git", barePath);
+        var remote = new LocalRemote(name, aliasUrl, barePath);
         await RegisterRemoteAsync(sandbox, processRunner, remote, cancellationToken);
         return remote;
     }

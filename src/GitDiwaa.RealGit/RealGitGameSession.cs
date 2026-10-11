@@ -14,7 +14,7 @@ internal sealed class RealGitGameSession : IGitGameSession
         GitSandbox sandbox,
         LocalRemote remote,
         GitProcessRunner processRunner,
-        RemoteSeed? seed = null)
+        RemoteSeed seed)
     {
         _sandbox = sandbox;
         _remote = remote;

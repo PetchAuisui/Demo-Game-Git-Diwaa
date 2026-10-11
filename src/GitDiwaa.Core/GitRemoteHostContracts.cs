@@ -7,7 +7,11 @@ public sealed record RemoteRepositoryInfo(
     string CloneUrl,
     string DefaultBranch,
     int BranchCount,
-    int CommitCount);
+    int CommitCount)
+{
+    /// <summary>ยังไม่มี branch ใดถูก push ขึ้นมา (หน้า Quick setup)</summary>
+    public bool IsEmpty => BranchCount == 0;
+}
 
 public sealed record RemoteBranchInfo(
     string Name,

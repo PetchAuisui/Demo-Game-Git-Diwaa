@@ -15,7 +15,7 @@ try
         Assert.False(snapshot.IsInitialized);
         Assert.Equal("act1", session.Info.MissionId);
         Assert.Equal("player", session.Info.AttemptId);
-        Assert.Contains(session.Info.RemoteUrl, "https://git-diwaa.local/");
+        Assert.Equal("https://github.com/user/my-project.git", session.Info.RemoteUrl);
     });
 
     await tests.RunAsync("Git version and config are real and isolated", async () =>
@@ -33,7 +33,7 @@ try
         await RejectAsync("git help", "not enabled");
         await RejectAsync("git add ../outside.txt", "escapes");
         await RejectAsync("git --git-dir=/tmp status", "not enabled");
-        await RejectAsync("git remote add origin https://example.com/repo.git", "local remote");
+        await RejectAsync("git remote add origin https://example.com/repo.git", "https://github.com/user/my-project.git");
         await RejectAsync("git remote add origin https://git-diwaa.local/other.git", "registered");
     });
 
@@ -116,6 +116,52 @@ try
         var clone = await cloneSession.ExecuteAsync($"git clone {cloneSession.Info.RemoteUrl}");
         Assert.True(clone.Success, clone.Output);
         Assert.True((await cloneSession.InspectAsync()).IsInitialized);
+    });
+
+    await tests.RunAsync("default remote is an empty GitHub repository owned by the player", async () =>
+    {
+        await using var empty = await factory.CreateAsync("act1-empty", "player");
+        Assert.Equal("https://github.com/user/my-project.git", empty.Info.RemoteUrl);
+
+        var host = empty.RemoteHost;
+        var repo = await host.GetRepositoryAsync();
+        Assert.Equal("user", repo.Owner);
+        Assert.Equal("my-project", repo.Name);
+        Assert.Equal("https://github.com/user/my-project.git", repo.CloneUrl);
+        Assert.True(repo.IsEmpty);
+        Assert.Equal(0, repo.CommitCount);
+        Assert.Equal(0, (await host.ListBranchesAsync()).Count);
+        Assert.Equal(0, (await host.ListCommitsAsync("main")).Count);
+        Assert.Equal(0, (await host.ListFilesAsync("main")).Count);
+        Assert.True(await host.ReadFileAsync("main", "README.md") is null);
+        Assert.Equal(0, host.ListPullRequests().Count);
+    });
+
+    await tests.RunAsync("pushing from the player repository shows up on the remote host", async () =>
+    {
+        await using var player = await factory.CreateAsync("act1-publish", "player");
+        await PlayerRepo.PublishMainAsync(player);
+
+        var host = player.RemoteHost;
+        var repo = await host.GetRepositoryAsync();
+        Assert.False(repo.IsEmpty);
+        Assert.Equal("main", repo.DefaultBranch);
+        Assert.Equal(1, repo.CommitCount);
+
+        var commit = (await host.ListCommitsAsync("main")).Single();
+        Assert.Equal("first commit", commit.Subject);
+        Assert.Equal("Git Diwaa Player", commit.Author);
+        Assert.Equal("README.md", (await host.ListFilesAsync("main")).Single().Name);
+        Assert.Contains(await host.ReadFileAsync("main", "README.md") ?? "", "my-project");
+    });
+
+    await tests.RunAsync("the player name becomes the owner of the remote repository", async () =>
+    {
+        var aliceFactory = new RealGitGameSessionFactory(testRoot, "alice");
+        await using var alice = await aliceFactory.CreateAsync("act1-alice", "player");
+        Assert.Equal("https://github.com/alice/my-project.git", alice.Info.RemoteUrl);
+        Assert.Equal("alice", (await alice.RemoteHost.GetRepositoryAsync()).Owner);
+        Assert.Throws<ArgumentException>(() => new RealGitGameSessionFactory(testRoot, "../evil"));
     });
 
     await tests.RunAsync("fake GitHub clones seeded history and never reaches the real GitHub", async () =>
@@ -321,6 +367,20 @@ internal static class Assert
     {
         if (!actual.Contains(expected, StringComparison.OrdinalIgnoreCase))
             throw new InvalidOperationException($"Expected text containing '{expected}', got '{actual}'.");
+    }
+
+    public static void Throws<TException>(Action action) where TException : Exception
+    {
+        try
+        {
+            action();
+        }
+        catch (TException)
+        {
+            return;
+        }
+
+        throw new InvalidOperationException($"Expected {typeof(TException).Name}.");
     }
 
     public static async Task ThrowsAsync<TException>(Func<Task> action) where TException : Exception

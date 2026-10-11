@@ -10,10 +10,10 @@ internal sealed partial class FakeGitHubHost : IGitRemoteHost
     private readonly GitSandbox _sandbox;
     private readonly LocalRemote _remote;
     private readonly GitProcessRunner _runner;
-    private readonly RemoteSeed? _seed;
+    private readonly RemoteSeed _seed;
     private readonly List<PullRequestInfo> _pullRequests = [];
 
-    public FakeGitHubHost(GitSandbox sandbox, LocalRemote remote, GitProcessRunner runner, RemoteSeed? seed)
+    public FakeGitHubHost(GitSandbox sandbox, LocalRemote remote, GitProcessRunner runner, RemoteSeed seed)
     {
         _sandbox = sandbox;
         _remote = remote;
@@ -21,8 +21,8 @@ internal sealed partial class FakeGitHubHost : IGitRemoteHost
         _seed = seed;
     }
 
-    private string Owner => _seed?.Owner ?? "git-diwaa";
-    private string RepoName => _seed?.Name ?? _remote.Name;
+    private string Owner => _seed.Owner;
+    private string RepoName => _seed.Name;
 
     public async Task<RemoteRepositoryInfo> GetRepositoryAsync(CancellationToken cancellationToken = default)
     {
@@ -31,7 +31,7 @@ internal sealed partial class FakeGitHubHost : IGitRemoteHost
         var count = 0;
         if (branches.Any(branch => branch.Name == defaultBranch))
             int.TryParse(await GitAsync(["rev-list", "--count", defaultBranch], cancellationToken), out count);
-        return new(Owner, RepoName, _seed?.Description ?? string.Empty,
+        return new(Owner, RepoName, _seed.Description,
             _remote.AliasUrl, defaultBranch, branches.Count, count);
     }
 

@@ -7,37 +7,19 @@ public sealed record SeedCommit(
     DateTimeOffset Date,
     IReadOnlyDictionary<string, string> Files);
 
-/// <summary>ประวัติเริ่มต้นของ GitHub จำลองต่อด่าน</summary>
+/// <summary>สถานะเริ่มต้นของ GitHub จำลอง: เจ้าของ ชื่อ repo และประวัติที่มีอยู่แล้ว (ถ้ามี)</summary>
 public sealed record RemoteSeed(
     string Owner,
     string Name,
     string Description,
     IReadOnlyList<SeedCommit> Commits)
 {
+    public const string DefaultOwner = "user";
+    public const string DefaultName = "my-project";
+
     public string CloneUrl => $"https://github.com/{Owner}/{Name}.git";
 
-    /// <summary>repo ตัวอย่างตามหน้า Figma: Preeyaporn / Khamphi_Projects_one</summary>
-    public static RemoteSeed Khamphi(DateTimeOffset now) => new(
-        "Preeyaporn",
-        "Khamphi_Projects_one",
-        "Diwaa realm repository",
-        [
-            new("main", "Preeyaporn", "Initial commit: add core spellcraft engine and scripts",
-                now.AddDays(-2),
-                new Dictionary<string, string>
-                {
-                    ["README.md"] = "# Khamphi_Projects_one\n\nWelcome to the Diwaa realm repository.\n",
-                    ["spellcraft.py"] = "print('spellcraft engine')\n"
-                }),
-            new("main", "Preeyaporn", "Update documentation for mystical rituals",
-                now.AddDays(-2).AddHours(3),
-                new Dictionary<string, string>
-                {
-                    ["README.md"] = "# Khamphi_Projects_one\n\nWelcome to the Diwaa realm repository.\nSee rituals.md.\n",
-                    ["rituals.md"] = "# Rituals\n"
-                }),
-            new("feature/ward-spell", "Muira", "Add ward spell draft",
-                now.AddDays(-1),
-                new Dictionary<string, string> { ["ward.py"] = "print('ward')\n" })
-        ]);
+    /// <summary>repo ว่างที่ผู้เล่นเป็นเจ้าของ ต้อง push งานขึ้นไปเอง</summary>
+    public static RemoteSeed Empty(string owner = DefaultOwner, string name = DefaultName) =>
+        new(owner, name, string.Empty, []);
 }
