@@ -484,9 +484,13 @@ public partial class RemoteRepoView : Control
         head.AddChild(title);
         head.AddChild(Lbl($"{StateIcon(pull.State)} {pull.State}", pull.State == PullRequestState.Merged ? Purple : SandboxThemeTokens.PromptGreen));
         _content.AddChild(head);
-        _content.AddChild(Lbl(
-            $"{pull.Author} wants to merge {detail.Commits.Count} commit(s) from {pull.SourceBranch} into {pull.TargetBranch}",
-            SandboxThemeTokens.TextSecondary, 14));
+        var summary = pull.State switch
+        {
+            PullRequestState.Merged => $"{pull.Author} merged {detail.Commits.Count} commit(s) from {pull.SourceBranch} into {pull.TargetBranch}",
+            PullRequestState.Closed => $"{pull.Author} wanted to merge {detail.Commits.Count} commit(s) from {pull.SourceBranch} into {pull.TargetBranch}",
+            _ => $"{pull.Author} wants to merge {detail.Commits.Count} commit(s) from {pull.SourceBranch} into {pull.TargetBranch}"
+        };
+        _content.AddChild(Lbl(summary, SandboxThemeTokens.TextSecondary, 14));
 
         if (!string.IsNullOrWhiteSpace(pull.Body))
         {
