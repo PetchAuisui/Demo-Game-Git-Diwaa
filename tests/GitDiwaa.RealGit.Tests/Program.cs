@@ -118,6 +118,69 @@ try
         Assert.True((await cloneSession.InspectAsync()).IsInitialized);
     });
 
+    await tests.RunAsync("fake GitHub clones seeded history and never reaches the real GitHub", async () =>
+    {
+        var seed = RemoteSeed.Khamphi(DateTimeOffset.Now);
+        await using var github = await factory.CreateAsync("act1-clone", "player", seed);
+        Assert.Equal("https://github.com/Preeyaporn/Khamphi_Projects_one.git", github.Info.RemoteUrl);
+
+        var real = await github.ExecuteAsync("git clone https://github.com/torvalds/linux.git");
+        Assert.False(real.Success);
+        Assert.Contains(real.Output, "registered");
+
+        var clone = await github.ExecuteAsync($"git clone {github.Info.RemoteUrl}");
+        Assert.True(clone.Success, clone.Output);
+        Assert.Contains((await github.ExecuteAsync("git remote -v")).Output, "github.com/Preeyaporn/Khamphi_Projects_one.git");
+        Assert.True((await github.InspectAsync()).Commits.Any(commit => commit.Subject.StartsWith("Initial commit")));
+        Assert.False((await github.ExecuteAsync("git remote set-url origin https://github.com/torvalds/linux.git")).Success);
+    });
+
+    await tests.RunAsync("remote host exposes repository, branches, commits and files", async () =>
+    {
+        await using var github = await factory.CreateAsync("act1-host", "player", RemoteSeed.Khamphi(DateTimeOffset.Now));
+        var host = github.RemoteHost;
+
+        var repo = await host.GetRepositoryAsync();
+        Assert.Equal("Preeyaporn", repo.Owner);
+        Assert.Equal("main", repo.DefaultBranch);
+        Assert.Equal(2, repo.BranchCount);
+        Assert.Equal(2, repo.CommitCount);
+
+        var branches = await host.ListBranchesAsync();
+        Assert.True(branches.Any(branch => branch.Name == "feature/ward-spell"));
+        Assert.True(branches.Single(branch => branch.IsDefault).Name == "main");
+
+        var commits = await host.ListCommitsAsync("main");
+        Assert.Equal("Update documentation for mystical rituals", commits[0].Subject);
+        Assert.True(commits[0].AuthoredAt > commits[1].AuthoredAt);
+
+        var files = await host.ListFilesAsync("main");
+        Assert.True(files.Any(file => file.Name == "README.md" && file.LastCommit is not null));
+        Assert.Contains(await host.ReadFileAsync("main", "README.md") ?? "", "Diwaa realm");
+        Assert.True(await host.ReadFileAsync("main", "../etc/passwd") is null);
+    });
+
+    await tests.RunAsync("pull requests require review and merge into the remote", async () =>
+    {
+        await using var github = await factory.CreateAsync("act1-pr", "player", RemoteSeed.Khamphi(DateTimeOffset.Now));
+        var host = github.RemoteHost;
+
+        var pr = await host.OpenPullRequestAsync("Add ward spell", "Muira", "feature/ward-spell", "main");
+        Assert.Equal(1, pr.Number);
+        var blocked = await host.MergePullRequestAsync(pr.Number);
+        Assert.False(blocked.Success);
+        Assert.Contains(blocked.Message, "Review required");
+
+        host.ApprovePullRequest(pr.Number);
+        var merged = await host.MergePullRequestAsync(pr.Number);
+        Assert.True(merged.Success, merged.Message);
+        Assert.Equal(PullRequestState.Merged, host.ListPullRequests().Single().State);
+        Assert.True(await host.ReadFileAsync("main", "ward.py") is not null);
+        Assert.False((await host.MergePullRequestAsync(pr.Number)).Success);
+        await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            host.OpenPullRequestAsync("bad", "Muira", "nope", "main"));
+    });
+
     await tests.RunAsync("file API blocks traversal and Git metadata", async () =>
     {
         await Assert.ThrowsAsync<InvalidOperationException>(() =>
