@@ -160,25 +160,73 @@ try
         Assert.True(await host.ReadFileAsync("main", "../etc/passwd") is null);
     });
 
-    await tests.RunAsync("pull requests require review and merge into the remote", async () =>
+    await tests.RunAsync("pull requests: detail, review rules, merge and branch cleanup", async () =>
     {
         await using var github = await factory.CreateAsync("act1-pr", "player", RemoteSeed.Khamphi(DateTimeOffset.Now));
         var host = github.RemoteHost;
 
-        var pr = await host.OpenPullRequestAsync("Add ward spell", "Muira", "feature/ward-spell", "main");
+        var ward = (await host.ListBranchesAsync()).Single(branch => branch.Name == "feature/ward-spell");
+        Assert.Equal(1, ward.Ahead);
+        Assert.Equal(0, ward.Behind);
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            host.OpenPullRequestAsync("same", "", "Muira", "main", "main"));
+        var pr = await host.OpenPullRequestAsync("Add ward spell", "ward body", "Muira", "feature/ward-spell", "main");
         Assert.Equal(1, pr.Number);
+        await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            host.OpenPullRequestAsync("again", "", "Muira", "feature/ward-spell", "main"));
+
+        var detail = (await host.GetPullRequestAsync(pr.Number))!;
+        Assert.Equal(1, detail.Commits.Count);
+        Assert.Equal("ward.py", detail.Files.Single().Path);
+        Assert.Equal("A", detail.Files.Single().Status);
+        Assert.Contains(detail.Diff, "+print('ward')");
+        Assert.False(detail.HasConflicts);
+
         var blocked = await host.MergePullRequestAsync(pr.Number);
         Assert.False(blocked.Success);
         Assert.Contains(blocked.Message, "Review required");
 
-        host.ApprovePullRequest(pr.Number);
+        Assert.False(host.ReviewPullRequest(pr.Number, "Muira", ReviewVerdict.Approved)!.IsApproved);
+        host.ReviewPullRequest(pr.Number, "Preeyaporn", ReviewVerdict.Approved);
+        Assert.True(host.ListPullRequests().Single().IsApproved);
+        host.ReviewPullRequest(pr.Number, "Preeyaporn", ReviewVerdict.ChangesRequested, "rename file");
+        Assert.False(host.ListPullRequests().Single().IsApproved);
+        host.ReviewPullRequest(pr.Number, "Preeyaporn", ReviewVerdict.Approved);
+
+        Assert.False(await host.DeleteBranchAsync("feature/ward-spell"));
         var merged = await host.MergePullRequestAsync(pr.Number);
         Assert.True(merged.Success, merged.Message);
         Assert.Equal(PullRequestState.Merged, host.ListPullRequests().Single().State);
         Assert.True(await host.ReadFileAsync("main", "ward.py") is not null);
         Assert.False((await host.MergePullRequestAsync(pr.Number)).Success);
+        Assert.False(await host.DeleteBranchAsync("main"));
+        Assert.True(await host.DeleteBranchAsync("feature/ward-spell"));
+        Assert.Equal(1, (await host.ListBranchesAsync()).Count);
+
         await Assert.ThrowsAsync<InvalidOperationException>(() =>
-            host.OpenPullRequestAsync("bad", "Muira", "nope", "main"));
+            host.OpenPullRequestAsync("bad", "", "Muira", "nope", "main"));
+    });
+
+    await tests.RunAsync("pull request reports conflicts and can be closed", async () =>
+    {
+        var now = DateTimeOffset.Now;
+        var seed = RemoteSeed.Khamphi(now) with
+        {
+            Commits = [.. RemoteSeed.Khamphi(now).Commits,
+                new SeedCommit("feature/ward-spell", "Muira", "Edit README on feature", now,
+                    new Dictionary<string, string> { ["README.md"] = "feature version\n" }),
+                new SeedCommit("main", "Preeyaporn", "Edit README on main", now,
+                    new Dictionary<string, string> { ["README.md"] = "main version\n" })]
+        };
+        await using var github = await factory.CreateAsync("act1-conflict", "player", seed);
+        var host = github.RemoteHost;
+        var pr = await host.OpenPullRequestAsync("Conflicting", "", "Muira", "feature/ward-spell", "main");
+        Assert.True((await host.GetPullRequestAsync(pr.Number))!.HasConflicts);
+        host.ReviewPullRequest(pr.Number, "Preeyaporn", ReviewVerdict.Approved);
+        var merge = await host.MergePullRequestAsync(pr.Number);
+        Assert.False(merge.Success);
+        Assert.Equal(PullRequestState.Closed, host.ClosePullRequest(pr.Number)!.State);
     });
 
     await tests.RunAsync("file API blocks traversal and Git metadata", async () =>

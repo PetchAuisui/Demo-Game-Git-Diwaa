@@ -38,13 +38,33 @@ internal sealed partial class FakeGitHubHost : IGitRemoteHost
     public async Task<IReadOnlyList<RemoteBranchInfo>> ListBranchesAsync(CancellationToken cancellationToken = default)
     {
         var output = await GitAsync(
-            ["for-each-ref", $"--format=%(refname:short){Sep}%(objectname)", "refs/heads"], cancellationToken);
+            ["for-each-ref", $"--format=%(refname:short){Sep}%(objectname){Sep}%(contents:subject){Sep}%(committerdate:iso-strict)",
+             "refs/heads"], cancellationToken);
         var rows = output.Split('\n', StringSplitOptions.RemoveEmptyEntries)
             .Select(line => line.Split(Sep))
-            .Select(parts => (Name: parts[0], Id: parts[1]))
             .ToList();
-        var defaultName = rows.Any(row => row.Name == "main") ? "main" : rows.FirstOrDefault().Name;
-        return rows.Select(row => new RemoteBranchInfo(row.Name, row.Id, row.Name == defaultName)).ToList();
+        var defaultName = rows.Any(row => row[0] == "main") ? "main" : rows.FirstOrDefault()?[0];
+        var branches = new List<RemoteBranchInfo>();
+        foreach (var row in rows)
+        {
+            int ahead = 0, behind = 0;
+            if (defaultName is not null && row[0] != defaultName)
+            {
+                var counts = (await GitAsync(
+                    ["rev-list", "--left-right", "--count", $"{defaultName}...{row[0]}"], cancellationToken))
+                    .Split('\t');
+                if (counts.Length == 2)
+                {
+                    int.TryParse(counts[0], out behind);
+                    int.TryParse(counts[1], out ahead);
+                }
+            }
+
+            branches.Add(new(row[0], row[1], row[0] == defaultName, ahead, behind, row[2],
+                DateTimeOffset.Parse(row[3], CultureInfo.InvariantCulture)));
+        }
+
+        return branches;
     }
 
     public async Task<IReadOnlyList<RemoteCommitInfo>> ListCommitsAsync(
@@ -58,20 +78,37 @@ internal sealed partial class FakeGitHubHost : IGitRemoteHost
     }
 
     public async Task<IReadOnlyList<RemoteFileEntry>> ListFilesAsync(
-        string branch, CancellationToken cancellationToken = default)
+        string branch, string path = "", CancellationToken cancellationToken = default)
     {
         RequireRef(branch);
-        var output = await GitAsync(["ls-tree", "-z", "--name-only", branch], cancellationToken);
+        path = path.Trim('/');
+        if (path.Split('/').Contains("..")) return [];
+        var spec = path.Length == 0 ? new[] { "ls-tree", "-z", branch } : ["ls-tree", "-z", branch, "--", path + "/"];
+        var output = await GitAsync(spec, cancellationToken);
         var entries = new List<RemoteFileEntry>();
-        foreach (var name in output.Split('\0', StringSplitOptions.RemoveEmptyEntries))
+        foreach (var record in output.Split('\0', StringSplitOptions.RemoveEmptyEntries))
         {
+            var tab = record.IndexOf('\t');
+            var kind = record[..tab].Split(' ')[1];
+            var fullPath = record[(tab + 1)..];
             var last = await GitAsync(
-                ["log", "-1", branch, $"--format=%H{Sep}%an{Sep}%aI{Sep}%s", "--", name], cancellationToken);
-            var isDirectory = (await GitAsync(["cat-file", "-t", $"{branch}:{name}"], cancellationToken)) == "tree";
-            entries.Add(new(name, isDirectory, string.IsNullOrWhiteSpace(last) ? null : ParseCommit(last)));
+                ["log", "-1", branch, $"--format=%H{Sep}%an{Sep}%aI{Sep}%s", "--", fullPath], cancellationToken);
+            entries.Add(new(System.IO.Path.GetFileName(fullPath), fullPath, kind == "tree",
+                string.IsNullOrWhiteSpace(last) ? null : ParseCommit(last)));
         }
 
-        return entries.OrderByDescending(entry => entry.IsDirectory).ThenBy(entry => entry.Name, StringComparer.Ordinal).ToList();
+        return entries.OrderByDescending(entry => entry.IsDirectory)
+            .ThenBy(entry => entry.Name, StringComparer.Ordinal).ToList();
+    }
+
+    public async Task<bool> DeleteBranchAsync(string branch, CancellationToken cancellationToken = default)
+    {
+        RequireRef(branch);
+        var branches = await ListBranchesAsync(cancellationToken);
+        if (branches.Any(item => item.Name == branch && item.IsDefault)) return false;
+        if (_pullRequests.Any(pr => pr.State == PullRequestState.Open && pr.SourceBranch == branch)) return false;
+        var result = await _runner.RunAsync(_sandbox, _remote.BareRepositoryPath, ["branch", "-D", branch], cancellationToken);
+        return result.Success;
     }
 
     public async Task<string?> ReadFileAsync(string branch, string path, CancellationToken cancellationToken = default)
