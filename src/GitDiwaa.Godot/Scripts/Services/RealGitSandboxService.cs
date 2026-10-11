@@ -13,16 +13,22 @@ namespace GitDiwaa.Godot.Services;
 public sealed class RealGitSandboxService : IGitSandboxService
 {
     private readonly string _workspaceRoot;
+    private readonly string _playerName;
     private IGitGameSessionFactory? _factory;
     private IGitGameSession? _session;
     private GitRepositorySnapshot? _lastSnapshot;
 
     public GitSessionInfo? Info => _session?.Info;
     public bool IsInitialized => _session != null;
+    public IGitRemoteHost? RemoteHost => _session?.RemoteHost;
     public string CurrentBranch => _lastSnapshot?.CurrentBranch ?? "main";
 
-    public RealGitSandboxService(string? customWorkspaceRoot = null)
+    /// <param name="customWorkspaceRoot">โฟลเดอร์เก็บ workspace (ค่าเริ่มต้น user://git-workspaces)</param>
+    /// <param name="playerName">ชื่อผู้เล่น ใช้เป็นเจ้าของ repo บน GitHub จำลอง (ยังไม่มีหน้า login จึงใช้ "user")</param>
+    public RealGitSandboxService(string? customWorkspaceRoot = null, string playerName = RemoteSeed.DefaultOwner)
     {
+        _playerName = playerName;
+
         if (!string.IsNullOrWhiteSpace(customWorkspaceRoot))
         {
             _workspaceRoot = customWorkspaceRoot;
@@ -55,7 +61,7 @@ public sealed class RealGitSandboxService : IGitSandboxService
         CancellationToken cancellationToken = default)
     {
         attemptId ??= $"attempt-{DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()}";
-        _factory = new RealGitGameSessionFactory(_workspaceRoot);
+        _factory = new RealGitGameSessionFactory(_workspaceRoot, _playerName);
 
         if (_session != null)
         {
