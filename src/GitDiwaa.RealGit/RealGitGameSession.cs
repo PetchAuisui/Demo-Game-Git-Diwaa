@@ -13,7 +13,8 @@ internal sealed class RealGitGameSession : IGitGameSession
     public RealGitGameSession(
         GitSandbox sandbox,
         LocalRemote remote,
-        GitProcessRunner processRunner)
+        GitProcessRunner processRunner,
+        RemoteSeed? seed = null)
     {
         _sandbox = sandbox;
         _remote = remote;
@@ -21,6 +22,7 @@ internal sealed class RealGitGameSession : IGitGameSession
         _processRunner = processRunner;
         _inspector = new(sandbox, processRunner);
         Files = new SandboxPlayerFileSystem(sandbox);
+        RemoteHost = new FakeGitHubHost(sandbox, remote, processRunner, seed);
         Info = new(
             sandbox.MissionId,
             sandbox.AttemptId,
@@ -30,6 +32,7 @@ internal sealed class RealGitGameSession : IGitGameSession
 
     public GitSessionInfo Info { get; }
     public IPlayerFileSystem Files { get; }
+    public IGitRemoteHost RemoteHost { get; }
 
     public async Task<GitCommandResult> ExecuteAsync(
         string commandLine,
