@@ -333,6 +333,31 @@ public static class GitHubUi
         return tab;
     }
 
+    /// <summary>แสดงโค้ดทีละบรรทัดพร้อมเลขบรรทัด (หน้าเปิดไฟล์) จำกัดจำนวนบรรทัดเพื่อไม่ให้หน้าหนัก</summary>
+    public static Control CodeLines(IReadOnlyList<string> lines, int max = 500)
+    {
+        var column = new VBoxContainer { MouseFilter = Control.MouseFilterEnum.Pass, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+        column.AddThemeConstantOverride("separation", 0);
+        for (var index = 0; index < Math.Min(lines.Count, max); index++)
+        {
+            var row = new HBoxContainer { MouseFilter = Control.MouseFilterEnum.Pass };
+            row.AddThemeConstantOverride("separation", 16);
+            var number = Text((index + 1).ToString(CultureInfo.InvariantCulture), GitHubTheme.FgSubtle, 13, mono: true);
+            number.CustomMinimumSize = new Vector2(48, 0);
+            number.HorizontalAlignment = HorizontalAlignment.Right;
+            row.AddChild(number);
+            var code = Text(lines[index], GitHubTheme.Fg, 14, mono: true);
+            code.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
+            code.ClipText = true;
+            row.AddChild(code);
+            column.AddChild(row);
+        }
+
+        if (lines.Count > max)
+            column.AddChild(Text($"… ไฟล์ยาว {lines.Count} บรรทัด แสดงเฉพาะ {max} บรรทัดแรก", GitHubTheme.FgMuted, 14));
+        return column;
+    }
+
     public static string TimeAgo(DateTimeOffset when)
     {
         var span = DateTimeOffset.Now - when;

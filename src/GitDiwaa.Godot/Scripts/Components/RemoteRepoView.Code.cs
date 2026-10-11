@@ -17,86 +17,138 @@ public partial class RemoteRepoView
         }
 
         var branches = await _host!.ListBranchesAsync();
+        var latest = (await _host.ListCommitsAsync(_branch, 1)).FirstOrDefault();
+        var files = await _host.ListFilesAsync(_branch, _path);
+
+        var rows = new List<(Control Row, string Name)>();
+        _content.AddChild(BuildCodeToolbar(branches, rows));
+        if (_path.Length > 0) _content.AddChild(Breadcrumb());
+        _content.AddChild(BuildFileTable(latest, files, rows));
+        await AddReadmeAsync();
+    }
+
+    private Control BuildCodeToolbar(IReadOnlyList<RemoteBranchInfo> branches, List<(Control Row, string Name)> rows)
+    {
         var toolbar = new HBoxContainer();
         toolbar.AddThemeConstantOverride("separation", 10);
-        toolbar.AddChild(BranchPicker(branches, name => { _branch = name; _path = ""; Go(Page.Code); }));
-        toolbar.AddChild(Btn($"⑂ {Count(branches.Count, "Branch", "Branches")}", () => Go(Page.Branches), flat: true));
-        toolbar.AddChild(Btn($"🕒 {Count(_repo!.CommitCount, "Commit", "Commits")}", () => Go(Page.Commits), flat: true));
-        toolbar.AddChild(new Control { SizeFlagsHorizontal = SizeFlags.ExpandFill });
-        toolbar.AddChild(Btn("<> Code ▾", () => { _cloneOpen = !_cloneOpen; Go(Page.Code); }, color: Green));
-        _content.AddChild(toolbar);
-
-        if (_cloneOpen) _content.AddChild(CloneBox());
-
-        _content.AddChild(Breadcrumb());
-
-        var commits = await _host.ListCommitsAsync(_branch, 1);
-        if (commits.Count > 0)
+        toolbar.AddChild(BranchPicker(branches, name =>
         {
-            var latest = commits[0];
-            var bar = Card();
-            var row = new HBoxContainer();
-            row.AddThemeConstantOverride("separation", 14);
-            row.AddChild(Lbl(latest.Author, GitHubTheme.Fg));
-            var subject = Lbl(latest.Subject, GitHubTheme.FgMuted);
+            _branch = name;
+            _path = string.Empty;
+            Go(Page.Code);
+        }));
+        toolbar.AddChild(GitHubUi.Btn(
+            GitHubUi.Count(branches.Count, "Branch", "Branches"), () => Go(Page.Branches), GhButtonKind.Ghost, GhIcon.Branch));
+        toolbar.AddChild(GitHubUi.Spacer());
+
+        var search = new LineEdit
+        {
+            PlaceholderText = "Go to file",
+            CustomMinimumSize = new Vector2(260, 0),
+            RightIcon = GitHubIcons.Get(GhIcon.Search, GitHubTheme.FgMuted, 16, 1f),
+            ClearButtonEnabled = true,
+            MouseFilter = MouseFilterEnum.Pass
+        };
+        search.TextChanged += text =>
+        {
+            foreach (var (row, name) in rows)
+                row.Visible = text.Length == 0 || name.Contains(text, StringComparison.OrdinalIgnoreCase);
+        };
+        toolbar.AddChild(search);
+        Button? codeButton = null;
+        codeButton = GitHubUi.Btn("Code ▾", () => ShowCloneMenu(codeButton!), GhButtonKind.Primary, GhIcon.Code);
+        toolbar.AddChild(codeButton);
+        return toolbar;
+    }
+
+    /// <summary>ตารางไฟล์: แถวหัวเป็น commit ล่าสุดของ branch ส่วนแถวไฟล์คลิกได้ทั้งแถว</summary>
+    private Control BuildFileTable(RemoteCommitInfo? latest, IReadOnlyList<RemoteFileEntry> files, List<(Control Row, string Name)> rows)
+    {
+        var header = new HBoxContainer();
+        header.AddThemeConstantOverride("separation", 12);
+        if (latest is not null)
+        {
+            header.AddChild(GitHubUi.Avatar(latest.Author, 22));
+            header.AddChild(GitHubUi.Text(latest.Author, GitHubTheme.Fg, 15, bold: true));
+            var subject = GitHubUi.Text(latest.Subject, GitHubTheme.FgMuted);
             subject.SizeFlagsHorizontal = SizeFlags.ExpandFill;
             subject.ClipText = true;
-            row.AddChild(subject);
-            row.AddChild(Lbl($"{latest.ShortId}  ·  {Ago(latest.AuthoredAt)}", GitHubTheme.FgMuted, 14));
-            bar.AddChild(row);
-            _content.AddChild(bar);
+            header.AddChild(subject);
+            header.AddChild(GitHubUi.Text(latest.ShortId, GitHubTheme.FgMuted, 13, mono: true));
+            header.AddChild(GitHubUi.Text("·", GitHubTheme.FgMuted));
+            header.AddChild(GitHubUi.Text(GitHubUi.TimeAgo(latest.AuthoredAt), GitHubTheme.FgMuted, 14));
+        }
+        else
+        {
+            header.AddChild(GitHubUi.Spacer());
         }
 
-        var table = Card();
-        var grid = new GridContainer { Columns = 3 };
-        grid.AddThemeConstantOverride("h_separation", 24);
-        grid.AddThemeConstantOverride("v_separation", 4);
+        header.AddChild(GitHubUi.Btn(
+            GitHubUi.Count(_repo!.CommitCount, "Commit", "Commits"), () => Go(Page.Commits), GhButtonKind.Ghost, GhIcon.History));
+        var (box, body) = GitHubUi.Box(header);
+
         if (_path.Length > 0)
         {
-            grid.AddChild(Btn("📁 ..", () => { _path = ParentPath(_path); Go(Page.Code); }, flat: true));
-            grid.AddChild(new Control());
-            grid.AddChild(new Control());
+            var up = new HBoxContainer();
+            up.AddThemeConstantOverride("separation", 12);
+            up.AddChild(GitHubUi.Icon(GhIcon.Folder, GitHubTheme.Accent));
+            up.AddChild(GitHubUi.Text("..", GitHubTheme.Fg));
+            body.AddChild(GitHubUi.ListRow(up, files.Count == 0, () =>
+            {
+                _path = ParentPath(_path);
+                Go(Page.Code);
+            }));
         }
 
-        foreach (var file in await _host.ListFilesAsync(_branch, _path))
+        for (var index = 0; index < files.Count; index++)
         {
-            var entry = file;
-            var nameButton = Btn($"{(entry.IsDirectory ? "📁" : "📄")} {entry.Name}", () =>
-            {
-                if (entry.IsDirectory) { _path = entry.Path; Go(Page.Code); }
-                else { _path = entry.Path; Go(Page.Blob); }
-            }, flat: true);
-            nameButton.CustomMinimumSize = new Vector2(240, 0);
-            nameButton.Alignment = HorizontalAlignment.Left;
-            grid.AddChild(nameButton);
-            var message = Lbl(entry.LastCommit?.Subject ?? "", GitHubTheme.FgMuted, 15);
+            var entry = files[index];
+            var row = new HBoxContainer();
+            row.AddThemeConstantOverride("separation", 12);
+            row.AddChild(GitHubUi.Icon(entry.IsDirectory ? GhIcon.Folder : GhIcon.File,
+                entry.IsDirectory ? GitHubTheme.Accent : GitHubTheme.FgMuted));
+            var name = GitHubUi.Text(entry.Name, GitHubTheme.Fg);
+            name.CustomMinimumSize = new Vector2(300, 0);
+            row.AddChild(name);
+            var message = GitHubUi.Text(entry.LastCommit?.Subject ?? string.Empty, GitHubTheme.FgMuted, 14);
             message.SizeFlagsHorizontal = SizeFlags.ExpandFill;
             message.ClipText = true;
-            grid.AddChild(message);
-            grid.AddChild(Lbl(entry.LastCommit is null ? "" : Ago(entry.LastCommit.AuthoredAt), GitHubTheme.FgMuted, 14));
-        }
+            row.AddChild(message);
+            row.AddChild(GitHubUi.Text(entry.LastCommit is null ? string.Empty : GitHubUi.TimeAgo(entry.LastCommit.AuthoredAt),
+                GitHubTheme.FgMuted, 14));
 
-        table.AddChild(grid);
-        _content.AddChild(table);
-
-        var readmePath = _path.Length == 0 ? "README.md" : $"{_path}/README.md";
-        var readme = await _host.ReadFileAsync(_branch, readmePath);
-        if (readme is not null)
-        {
-            var box = Card();
-            var inner = new VBoxContainer();
-            inner.AddChild(Lbl("≡ README.md", GitHubTheme.Fg, 14));
-            inner.AddChild(new HSeparator());
-            foreach (var line in readme.TrimEnd().Split('\n'))
+            var listRow = GitHubUi.ListRow(row, index == files.Count - 1, () =>
             {
-                if (line.StartsWith("# ")) inner.AddChild(Lbl(line[2..], GitHubTheme.Fg, 26));
-                else if (line.StartsWith("## ")) inner.AddChild(Lbl(line[3..], GitHubTheme.Fg, 20));
-                else inner.AddChild(Lbl(line, GitHubTheme.FgMuted, wrap: true));
-            }
-
-            box.AddChild(inner);
-            _content.AddChild(box);
+                _path = entry.Path;
+                Go(entry.IsDirectory ? Page.Code : Page.Blob);
+            });
+            body.AddChild(listRow);
+            rows.Add((listRow, entry.Name));
         }
+
+        return box;
+    }
+
+    private async Task AddReadmeAsync()
+    {
+        var readmePath = _path.Length == 0 ? "README.md" : $"{_path}/README.md";
+        var readme = await _host!.ReadFileAsync(_branch, readmePath);
+        if (readme is null) return;
+
+        var header = new HBoxContainer();
+        header.AddThemeConstantOverride("separation", 8);
+        header.AddChild(GitHubUi.Icon(GhIcon.Book, GitHubTheme.FgMuted));
+        header.AddChild(GitHubUi.Text("README", GitHubTheme.Fg, 14, bold: true));
+        var (box, body) = GitHubUi.Box(header);
+
+        var margin = new MarginContainer { MouseFilter = MouseFilterEnum.Pass };
+        margin.AddThemeConstantOverride("margin_left", 32);
+        margin.AddThemeConstantOverride("margin_right", 32);
+        margin.AddThemeConstantOverride("margin_top", 24);
+        margin.AddThemeConstantOverride("margin_bottom", 28);
+        margin.AddChild(MarkdownView.Render(readme));
+        body.AddChild(margin);
+        _content.AddChild(box);
     }
 
     /// <summary>repo ที่ยังไม่มีอะไรถูก push: หน้า Quick setup บอก URL และคำสั่งที่ใช้ได้ใน terminal ของเกม</summary>
@@ -161,54 +213,82 @@ public partial class RemoteRepoView
     {
         _content.AddChild(Breadcrumb());
         var text = await _host!.ReadFileAsync(_branch, _path);
-        var editor = new TextEdit
-        {
-            Text = text ?? "(ไม่พบไฟล์หรืออ่านไม่ได้)",
-            Editable = false,
-            CustomMinimumSize = new Vector2(0, 420),
-            SizeFlagsHorizontal = SizeFlags.ExpandFill
-        };
-        editor.AddThemeFontOverride("font", GitHubTheme.MonoFont);
-        _content.AddChild(editor);
-        var backToFiles = Btn("← กลับไปรายการไฟล์", () => { _path = ParentPath(_path); Go(Page.Code); });
-        backToFiles.SizeFlagsHorizontal = SizeFlags.ShrinkBegin;
-        _content.AddChild(backToFiles);
+        var lines = (text ?? string.Empty).Replace("\r\n", "\n").TrimEnd('\n').Split('\n');
+
+        var header = new HBoxContainer();
+        header.AddThemeConstantOverride("separation", 10);
+        header.AddChild(GitHubUi.Icon(GhIcon.File, GitHubTheme.FgMuted));
+        header.AddChild(GitHubUi.Text(System.IO.Path.GetFileName(_path), GitHubTheme.Fg, 15, bold: true));
+        header.AddChild(GitHubUi.Text(GitHubUi.Count(lines.Length, "line", "lines"), GitHubTheme.FgMuted, 13));
+        header.AddChild(GitHubUi.Spacer());
+        if (text is not null)
+            header.AddChild(GitHubUi.Btn("Copy", () => DisplayServer.ClipboardSet(text), GhButtonKind.Ghost, GhIcon.Copy));
+        var (box, body) = GitHubUi.Box(header);
+
+        var margin = new MarginContainer { MouseFilter = MouseFilterEnum.Pass };
+        margin.AddThemeConstantOverride("margin_top", 10);
+        margin.AddThemeConstantOverride("margin_bottom", 10);
+        margin.AddThemeConstantOverride("margin_right", 16);
+        margin.AddChild(text is null
+            ? GitHubUi.Text("ไม่พบไฟล์หรืออ่านไม่ได้", GitHubTheme.FgMuted)
+            : GitHubUi.CodeLines(lines));
+        body.AddChild(margin);
+        _content.AddChild(box);
     }
 
-    private VBoxContainer CloneBox()
+    /// <summary>เมนู Clone ที่เปิดจากปุ่ม Code: ลอยใต้ปุ่มและปิดเองเมื่อคลิกข้างนอก เหมือน GitHub</summary>
+    private void ShowCloneMenu(Button anchor)
     {
-        var box = new VBoxContainer();
-        var card = Card();
-        var inner = new VBoxContainer();
-        inner.AddThemeConstantOverride("separation", 6);
-        inner.AddChild(Lbl("Clone (HTTPS) — ใช้ใน terminal ของเกม", GitHubTheme.Fg, 15));
-        var row = new HBoxContainer();
-        var url = new LineEdit { Text = _repo!.CloneUrl, Editable = false, SizeFlagsHorizontal = SizeFlags.ExpandFill };
-        row.AddChild(url);
-        row.AddChild(Btn("Copy", () => DisplayServer.ClipboardSet($"git clone {_repo.CloneUrl}")));
-        inner.AddChild(row);
-        inner.AddChild(Lbl($"git clone {_repo.CloneUrl}", GitHubTheme.Success, 14));
-        card.AddChild(inner);
-        box.AddChild(card);
-        return box;
+        var url = _repo!.CloneUrl;
+        var popup = new PopupPanel();
+        popup.AddThemeStyleboxOverride("panel", GitHubTheme.Box(GitHubTheme.CanvasSubtle, GitHubTheme.Border, 8, 1, 18, 14));
+
+        var column = new VBoxContainer { CustomMinimumSize = new Vector2(540, 0) };
+        column.AddThemeConstantOverride("separation", 10);
+        column.AddChild(GitHubUi.IconText(GhIcon.Code, "Clone", GitHubTheme.Fg, 15, bold: true));
+
+        var urlRow = new HBoxContainer();
+        urlRow.AddThemeConstantOverride("separation", 8);
+        urlRow.AddChild(GitHubUi.Pill("HTTPS", GitHubTheme.Fg, GitHubTheme.Border));
+        urlRow.AddChild(new LineEdit { Text = url, Editable = false, SizeFlagsHorizontal = SizeFlags.ExpandFill });
+        urlRow.AddChild(GitHubUi.Btn(string.Empty, () => DisplayServer.ClipboardSet(url), GhButtonKind.Default, GhIcon.Copy));
+        column.AddChild(urlRow);
+
+        column.AddChild(GitHubUi.Text("พิมพ์คำสั่งนี้ใน terminal ของ Sandbox", GitHubTheme.FgMuted, 13));
+        column.AddChild(GitHubUi.CodeBlock([$"git clone {url}"]));
+        popup.AddChild(column);
+
+        popup.PopupHide += popup.QueueFree;
+        AddChild(popup);
+        var anchorRect = anchor.GetGlobalRect();
+        popup.Popup(new Rect2I((int)anchorRect.End.X - 580, (int)anchorRect.End.Y + 6, 580, 0));
     }
 
     private HBoxContainer Breadcrumb()
     {
         var row = new HBoxContainer();
-        row.AddChild(Btn(_repo!.Name, () => { _path = ""; Go(Page.Code); }, flat: true));
-        var parts = _path.Split('/', StringSplitOptions.RemoveEmptyEntries);
-        var built = "";
-        foreach (var part in parts)
+        row.AddThemeConstantOverride("separation", 6);
+        row.AddChild(GitHubUi.Btn(_repo!.Name, () =>
         {
-            built = built.Length == 0 ? part : $"{built}/{part}";
+            _path = string.Empty;
+            Go(Page.Code);
+        }, GhButtonKind.Link));
+
+        var segments = _path.Split('/', StringSplitOptions.RemoveEmptyEntries);
+        var built = string.Empty;
+        for (var index = 0; index < segments.Length; index++)
+        {
+            built = built.Length == 0 ? segments[index] : $"{built}/{segments[index]}";
             var target = built;
-            row.AddChild(Lbl("/", GitHubTheme.FgMuted));
-            row.AddChild(Btn(part, () =>
-            {
-                _path = target;
-                Go(_page == Page.Blob && target == _path && parts[^1] == part ? Page.Blob : Page.Code);
-            }, flat: true));
+            row.AddChild(GitHubUi.Text("/", GitHubTheme.FgMuted));
+            if (index == segments.Length - 1)
+                row.AddChild(GitHubUi.Text(segments[index], GitHubTheme.Fg, 15, bold: true));
+            else
+                row.AddChild(GitHubUi.Btn(segments[index], () =>
+                {
+                    _path = target;
+                    Go(Page.Code);
+                }, GhButtonKind.Link));
         }
 
         return row;

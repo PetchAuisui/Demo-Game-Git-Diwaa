@@ -14,13 +14,14 @@ public enum GhIcon
 /// </summary>
 public static class GitHubIcons
 {
-    private static readonly Dictionary<(GhIcon Icon, string Color, int Size), Texture2D?> Cache = new();
+    private static readonly Dictionary<(GhIcon Icon, string Color, int Size, float Scale), Texture2D?> Cache = new();
 
-    /// <param name="size">ขนาดที่แสดง (px) ตัว texture เรนเดอร์ 2 เท่าเพื่อให้คมบนจอความละเอียดสูง</param>
-    public static Texture2D? Get(GhIcon icon, Color color, int size = 16)
+    /// <param name="size">ขนาดที่แสดง (px)</param>
+    /// <param name="scale">เรนเดอร์กี่เท่าของ size ปุ่ม/รูปใช้ 2 เท่า (theme จำกัดความกว้างให้) ส่วน LineEdit ใช้ 1</param>
+    public static Texture2D? Get(GhIcon icon, Color color, int size = 16, float scale = 2f)
     {
         var hex = "#" + color.ToHtml(false);
-        var key = (icon, hex, size);
+        var key = (icon, hex, size, scale);
         if (Cache.TryGetValue(key, out var cached)) return cached;
 
         var svg =
@@ -31,7 +32,7 @@ public static class GitHubIcons
 
         var image = new Image();
         Texture2D? texture = null;
-        if (image.LoadSvgFromString(svg, 2f) == Error.Ok) texture = ImageTexture.CreateFromImage(image);
+        if (image.LoadSvgFromString(svg, scale) == Error.Ok) texture = ImageTexture.CreateFromImage(image);
         Cache[key] = texture;
         return texture;
     }

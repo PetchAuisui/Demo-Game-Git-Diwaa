@@ -28,7 +28,6 @@ public partial class RemoteRepoView : Control
     private string _newPullSource = "";
     private string _status = "";
     private bool _statusIsError;
-    private bool _cloneOpen;
 
     private Label _ownerLabel = null!;
     private Label _repoLabel = null!;
@@ -169,7 +168,6 @@ public partial class RemoteRepoView : Control
 
     private async void Go(Page page, string? message = null, bool error = false)
     {
-        if (page != Page.Code && page != Page.Blob) _cloneOpen = false;
         _page = page;
         if (message is not null)
         {

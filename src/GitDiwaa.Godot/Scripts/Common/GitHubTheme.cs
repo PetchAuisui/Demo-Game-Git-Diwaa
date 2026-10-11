@@ -59,7 +59,7 @@ public static class GitHubTheme
     public static Font BoldFont => _bold ??= new FontVariation
     {
         BaseFont = ThemeDB.FallbackFont,
-        VariationEmbolden = 0.5f
+        VariationEmbolden = 0.35f
     };
 
     /// <summary>กล่องพื้นหลังมีเส้นขอบรอบด้าน</summary>
