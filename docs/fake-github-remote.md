@@ -25,15 +25,22 @@
 
 ## หน้า Remote Repository ใน Sandbox
 
-เปิดจากปุ่ม **Repo** ที่แถบบนของ Sandbox (`RemoteRepoView`) ใช้ธีมเดียวกับ Sandbox ไม่ยึดตัวอย่างใน Figma
+เปิดจากปุ่ม **Repo** ที่แถบบนของ Sandbox (`RemoteRepoView`) หน้าตาเลียนแบบ GitHub ธีม dark ไม่ยึดตัวอย่างใน Figma
+มีแถบ URL แสดงที่อยู่ของหน้าปัจจุบัน (เช่น `github.com/user/my-project/pull/1`) กด Esc หรือปุ่ม "กลับ Sandbox" เพื่อกลับ
 
 | หน้า | สิ่งที่ทำได้ |
 |---|---|
-| หน้ารวม / Code | เลือก branch, เปิดโฟลเดอร์และไฟล์, commit ล่าสุด, README, URL สำหรับ clone (Copy) |
-| Commits | ประวัติ commit ของ branch ที่เลือก |
-| Branches | รายการ branch พร้อม ahead/behind เทียบ default branch, เปิด PR, ลบ branch |
-| Pull requests | สร้าง PR, ดู commits / ไฟล์ที่เปลี่ยน / diff, review, merge, ปิด PR |
-| repo ว่าง | Quick setup: URL และคำสั่งที่ใช้ใน terminal ของ Sandbox (`git init` … `git push -u origin main` หรือ `git clone`) |
+| repo ว่าง | Quick setup: URL (Copy) และคำสั่งที่ใช้ใน terminal ของ Sandbox แยกเป็น สร้างใหม่ / push คลังเดิม / clone |
+| Code | เลือก branch, เปิดโฟลเดอร์/ไฟล์ (มีเลขบรรทัดและปุ่ม Copy), commit ล่าสุด, ค้นหาไฟล์ (Go to file), README แสดงเป็น Markdown, เมนู Clone |
+| Commits | ประวัติ commit ของ branch จัดกลุ่มตามวัน |
+| Branches | แยก Default / Other, ahead/behind, เปิด PR, ลบ branch |
+| Pull requests | รายการ (ค้นหา, Open/Closed), เปิด PR (base ← compare), หน้า PR แบบ Conversation / Commits / Files changed (diff), review, merge, ปิด PR, ลบ branch หลัง merge |
+
+โครงโค้ด UI
+- `Scripts/Common/GitHubTheme.cs` พาเลตต์และ Theme (ปุ่ม ช่องกรอก เมนู แถบเลื่อน), `GitHubIcons.cs` ไอคอน SVG
+- `Scripts/Components/GitHubUi.cs` ชิ้นส่วนใช้ซ้ำ (แท็บ กล่องรายการ แถวคลิกได้ ป้ายสถานะ avatar แถบแจ้งผล)
+- `DiffViewer.cs` (diff แบบการ์ดต่อไฟล์), `MarkdownView.cs` (README และคำอธิบาย PR)
+- `RemoteRepoView.cs` โครงหน้าต่างและการนำทาง, `.Code.cs` / `.History.cs` / `.Pulls.cs` แยกตามหน้า
 
 ข้อจำกัดของหน้า UI: เป็น overlay ครอบ Sandbox ต้องกลับไปพิมพ์คำสั่งใน terminal แล้วเปิดหน้าใหม่เพื่อดูผล
 

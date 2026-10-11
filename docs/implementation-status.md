@@ -63,6 +63,6 @@
 
 ### หน้า Remote Repository ใน Sandbox (feature/sandbox-repo-button)
 
-- ปุ่ม Repo ที่แถบบนของ Sandbox เปิด `RemoteRepoView` (Quick setup เมื่อ repo ว่าง, Code, Commits, Branches, Pull requests)
+- ปุ่ม Repo ที่แถบบนของ Sandbox เปิด `RemoteRepoView` หน้าตาเลียนแบบ GitHub dark: Quick setup เมื่อ repo ว่าง, Code (ตารางไฟล์, README Markdown, Go to file, เมนู Clone), Commits, Branches, Pull requests (รายการ, เปิด PR, Conversation / Commits / Files changed, review, merge) พร้อมแถบ URL และกด Esc เพื่อกลับ
 - `IGitSandboxService.RemoteHost` ส่ง GitHub จำลองของ session ให้หน้า UI (mock service ไม่มี จึงกดปุ่มไม่ได้) และ `RealGitSandboxService` ใช้ชื่อผู้เล่นเป็นเจ้าของ repo (ยังเป็นค่าคงที่ `user` เพราะยังไม่มีหน้า login)
-- ตรวจ flow ในเกมจริงด้วยสคริปต์ที่พิมพ์คำสั่งผ่าน terminal ของ Sandbox แล้วเปิดหน้า repo
+- ตรวจ flow ในเกมจริงด้วยสคริปต์ที่พิมพ์คำสั่งผ่าน terminal ของ Sandbox แล้วเปิดหน้า repo, สร้าง PR, review, ดู diff, merge และกด Esc (ยังไม่มีเทสต์อัตโนมัติฝั่ง UI)
