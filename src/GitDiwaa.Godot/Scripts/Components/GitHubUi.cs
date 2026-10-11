@@ -207,6 +207,23 @@ public static class GitHubUi
         _ => Icon(GhIcon.PullClosed, GitHubTheme.Danger, size)
     };
 
+    /// <summary>วงกลมสีพร้อมไอคอนขาว (สถานะในไทม์ไลน์และกล่อง merge)</summary>
+    public static PanelContainer Bubble(GhIcon icon, Color fill, int size = 32)
+    {
+        var bubble = new PanelContainer
+        {
+            CustomMinimumSize = new Vector2(size, size),
+            MouseFilter = Control.MouseFilterEnum.Ignore,
+            SizeFlagsVertical = Control.SizeFlags.ShrinkBegin
+        };
+        bubble.AddThemeStyleboxOverride("panel", GitHubTheme.Box(fill, fill, size / 2, 0));
+        var glyph = Icon(icon, Colors.White, size / 2);
+        glyph.SizeFlagsHorizontal = Control.SizeFlags.ShrinkCenter;
+        glyph.SizeFlagsVertical = Control.SizeFlags.ShrinkCenter;
+        bubble.AddChild(glyph);
+        return bubble;
+    }
+
     public static PanelContainer Counter(int number)
     {
         var counter = new PanelContainer { MouseFilter = Control.MouseFilterEnum.Ignore, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter };

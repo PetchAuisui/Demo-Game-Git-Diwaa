@@ -81,4 +81,28 @@ public partial class RemoteRepoView
         card.AddChild(list);
         _content.AddChild(card);
     }
+
+    /// <summary>แถว commit แบบ GitHub: ข้อความ ผู้เขียน/เวลา และ hash สั้นพร้อมปุ่มคัดลอก hash เต็ม</summary>
+    private static Control CommitRow(RemoteCommitInfo commit, bool last)
+    {
+        var row = new HBoxContainer();
+        row.AddThemeConstantOverride("separation", 12);
+
+        var column = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
+        column.AddThemeConstantOverride("separation", 4);
+        var subject = GitHubUi.Text(commit.Subject, GitHubTheme.Fg, 15, bold: true);
+        subject.ClipText = true;
+        column.AddChild(subject);
+        var meta = new HBoxContainer();
+        meta.AddThemeConstantOverride("separation", 8);
+        meta.AddChild(GitHubUi.Avatar(commit.Author, 18));
+        meta.AddChild(GitHubUi.Text(commit.Author, GitHubTheme.Fg, 13, bold: true));
+        meta.AddChild(GitHubUi.Text($"committed {GitHubUi.TimeAgo(commit.AuthoredAt)}", GitHubTheme.FgMuted, 13));
+        column.AddChild(meta);
+        row.AddChild(column);
+
+        row.AddChild(GitHubUi.Pill(commit.ShortId, GitHubTheme.FgMuted, GitHubTheme.Border, size: 13, mono: true));
+        row.AddChild(GitHubUi.Btn(string.Empty, () => DisplayServer.ClipboardSet(commit.Id), GhButtonKind.Ghost, GhIcon.Copy));
+        return GitHubUi.ListRow(row, last);
+    }
 }

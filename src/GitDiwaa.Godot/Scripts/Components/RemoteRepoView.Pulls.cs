@@ -260,143 +260,305 @@ public partial class RemoteRepoView
     private async Task BuildPullDetailAsync()
     {
         var detail = await _host!.GetPullRequestAsync(_pullNumber);
-        if (detail is null) { Go(Page.Pulls, "ไม่พบ pull request", true); return; }
+        if (detail is null)
+        {
+            Go(Page.Pulls, "ไม่พบ pull request", true);
+            return;
+        }
+
         var pull = detail.Pull;
+        var heading = new HBoxContainer();
+        heading.AddThemeConstantOverride("separation", 12);
+        heading.AddChild(GitHubUi.Text(pull.Title, GitHubTheme.Fg, 28, wrap: true));
+        heading.AddChild(GitHubUi.Text($"#{pull.Number}", GitHubTheme.FgMuted, 28));
+        _content.AddChild(heading);
 
-        var head = new HBoxContainer();
-        head.AddThemeConstantOverride("separation", 12);
-        head.AddChild(Btn("← Pull requests", () => Go(Page.Pulls)));
-        var title = Lbl($"{pull.Title}  #{pull.Number}", GitHubTheme.Fg, 22);
-        title.SizeFlagsHorizontal = SizeFlags.ExpandFill;
-        head.AddChild(title);
-        head.AddChild(Lbl($"{StateIcon(pull.State)} {pull.State}", pull.State == PullRequestState.Merged ? Purple : GitHubTheme.Success));
-        _content.AddChild(head);
-        var summary = pull.State switch
+        var commitText = GitHubUi.Count(detail.Commits.Count, "commit", "commits");
+        var meta = new HBoxContainer();
+        meta.AddThemeConstantOverride("separation", 8);
+        meta.AddChild(GitHubUi.StatePill(pull.State));
+        meta.AddChild(GitHubUi.Text(pull.Author, GitHubTheme.Fg, 15, bold: true));
+        meta.AddChild(GitHubUi.Text(pull.State switch
         {
-            PullRequestState.Merged => $"{pull.Author} merged {detail.Commits.Count} commit(s) from {pull.SourceBranch} into {pull.TargetBranch}",
-            PullRequestState.Closed => $"{pull.Author} wanted to merge {detail.Commits.Count} commit(s) from {pull.SourceBranch} into {pull.TargetBranch}",
-            _ => $"{pull.Author} wants to merge {detail.Commits.Count} commit(s) from {pull.SourceBranch} into {pull.TargetBranch}"
+            PullRequestState.Merged => $"merged {commitText} into",
+            PullRequestState.Closed => $"wanted to merge {commitText} into",
+            _ => $"wants to merge {commitText} into"
+        }, GitHubTheme.FgMuted));
+        meta.AddChild(GitHubUi.BranchPill(pull.TargetBranch));
+        meta.AddChild(GitHubUi.Text("from", GitHubTheme.FgMuted));
+        meta.AddChild(GitHubUi.BranchPill(pull.SourceBranch));
+        _content.AddChild(meta);
+
+        var tabs = new HBoxContainer();
+        tabs.AddThemeConstantOverride("separation", 4);
+        tabs.AddChild(GitHubUi.Tab("Conversation", _pullTab == PullTab.Conversation, () => SwitchPullTab(PullTab.Conversation), GhIcon.Comment));
+        tabs.AddChild(GitHubUi.Tab("Commits", _pullTab == PullTab.Commits, () => SwitchPullTab(PullTab.Commits), GhIcon.Commit, detail.Commits.Count));
+        tabs.AddChild(GitHubUi.Tab("Files changed", _pullTab == PullTab.Files, () => SwitchPullTab(PullTab.Files), GhIcon.File, detail.Files.Count));
+        var tabColumn = new VBoxContainer();
+        tabColumn.AddThemeConstantOverride("separation", 0);
+        tabColumn.AddChild(tabs);
+        tabColumn.AddChild(new HSeparator());
+        _content.AddChild(tabColumn);
+
+        switch (_pullTab)
+        {
+            case PullTab.Commits: BuildPullCommits(detail); break;
+            case PullTab.Files: BuildPullFiles(detail); break;
+            default: await BuildConversationAsync(detail); break;
+        }
+    }
+
+    private void SwitchPullTab(PullTab tab)
+    {
+        _pullTab = tab;
+        Go(Page.PullDetail);
+    }
+
+    // ───────────── Conversation ─────────────
+
+    private async Task BuildConversationAsync(PullRequestDetail detail)
+    {
+        var pull = detail.Pull;
+        _content.AddChild(TimelineComment(pull.Author, "opened this pull request", pull.CreatedAt, pull.Body));
+        foreach (var review in detail.Reviews) _content.AddChild(ReviewEvent(review));
+
+        switch (pull.State)
+        {
+            case PullRequestState.Open:
+                BuildMergeBox(detail);
+                BuildReviewBox(pull);
+                break;
+            case PullRequestState.Merged:
+                await BuildMergedBoxAsync(pull);
+                break;
+            default:
+                var (box, body) = GitHubUi.Box();
+                body.AddChild(StatusRow(GhIcon.PullClosed, GitHubTheme.DangerEmphasis, "This pull request is closed",
+                    "ปิดโดยไม่ได้ merge — เปิด pull request ใหม่ได้ถ้ายังต้องการรวม branch นี้", true));
+                _content.AddChild(box);
+                break;
+        }
+    }
+
+    private static Control TimelineComment(string author, string action, DateTimeOffset when, string? body)
+    {
+        var row = new HBoxContainer();
+        row.AddThemeConstantOverride("separation", 14);
+        var avatar = GitHubUi.Avatar(author, 40);
+        avatar.SizeFlagsVertical = SizeFlags.ShrinkBegin;
+        row.AddChild(avatar);
+
+        var header = new HBoxContainer();
+        header.AddThemeConstantOverride("separation", 8);
+        header.AddChild(GitHubUi.Text(author, GitHubTheme.Fg, 15, bold: true));
+        header.AddChild(GitHubUi.Text($"{action} {GitHubUi.TimeAgo(when)}", GitHubTheme.FgMuted, 14));
+        var (box, content) = GitHubUi.Box(header);
+
+        var margin = new MarginContainer { MouseFilter = MouseFilterEnum.Pass };
+        margin.AddThemeConstantOverride("margin_left", 16);
+        margin.AddThemeConstantOverride("margin_right", 16);
+        margin.AddThemeConstantOverride("margin_top", 14);
+        margin.AddThemeConstantOverride("margin_bottom", 16);
+        margin.AddChild(string.IsNullOrWhiteSpace(body)
+            ? GitHubUi.Text("No description provided.", GitHubTheme.FgMuted)
+            : MarkdownView.Render(body));
+        content.AddChild(margin);
+        row.AddChild(box);
+        return row;
+    }
+
+    private static Control ReviewEvent(PullRequestReview review)
+    {
+        var (icon, fill, verb) = review.Verdict switch
+        {
+            ReviewVerdict.Approved => (GhIcon.Check, GitHubTheme.SuccessEmphasis, "approved these changes"),
+            ReviewVerdict.ChangesRequested => (GhIcon.X, GitHubTheme.DangerEmphasis, "requested changes"),
+            _ => (GhIcon.Comment, GitHubTheme.FgSubtle, "reviewed")
         };
-        _content.AddChild(Lbl(summary, GitHubTheme.FgMuted, 14));
 
-        if (!string.IsNullOrWhiteSpace(pull.Body))
+        var row = new HBoxContainer();
+        row.AddThemeConstantOverride("separation", 14);
+        var slot = new MarginContainer { MouseFilter = MouseFilterEnum.Ignore, SizeFlagsVertical = SizeFlags.ShrinkBegin };
+        slot.AddThemeConstantOverride("margin_left", 4);
+        slot.AddThemeConstantOverride("margin_right", 4);
+        slot.AddChild(GitHubUi.Bubble(icon, fill, 32));
+        row.AddChild(slot);
+
+        var column = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
+        column.AddThemeConstantOverride("separation", 8);
+        var line = new HBoxContainer();
+        line.AddThemeConstantOverride("separation", 8);
+        line.AddChild(GitHubUi.Text(review.Reviewer, GitHubTheme.Fg, 15, bold: true));
+        line.AddChild(GitHubUi.Text($"{verb} {GitHubUi.TimeAgo(review.At)}", GitHubTheme.FgMuted, 14));
+        column.AddChild(line);
+        if (!string.IsNullOrWhiteSpace(review.Body))
         {
-            var description = Card();
-            description.AddChild(Lbl(pull.Body, GitHubTheme.Fg, wrap: true));
-            _content.AddChild(description);
+            var card = GitHubUi.Card(14, 10);
+            card.AddChild(GitHubUi.Text(review.Body, GitHubTheme.Fg, 15, wrap: true));
+            column.AddChild(card);
         }
 
-        if (detail.Commits.Count > 0) AddSection("Commits", detail.Commits.Select(c => $"{c.ShortId}  {c.Subject}  — {c.Author}"));
-        if (detail.Files.Count > 0)
-            AddSection($"Files changed ({detail.Files.Count})",
-                detail.Files.Select(f => $"{f.Status}  {f.Path}   +{f.Additions} −{f.Deletions}"));
-        if (detail.Diff.Length > 0) _content.AddChild(DiffView(detail.Diff));
-        if (detail.Reviews.Count > 0)
-            AddSection("Reviews", detail.Reviews.Select(r =>
-                $"{VerdictText(r.Verdict)}  {r.Reviewer}{(r.Body.Length > 0 ? $": {r.Body}" : "")}"));
+        row.AddChild(column);
+        return row;
+    }
 
-        if (pull.State == PullRequestState.Open) BuildMergeBox(detail);
-        else if (pull.State == PullRequestState.Merged)
-        {
-            var merged = Card();
-            var row = new HBoxContainer();
-            row.AddThemeConstantOverride("separation", 12);
-            row.AddChild(Lbl($"🟣 Pull request merged into {pull.TargetBranch}", Purple));
-            row.AddChild(Btn("Delete branch", async () =>
-            {
-                var ok = await _host.DeleteBranchAsync(pull.SourceBranch);
-                Go(Page.PullDetail, ok ? $"ลบ branch {pull.SourceBranch} แล้ว" : "ลบ branch ไม่ได้", !ok);
-            }));
-            merged.AddChild(row);
-            _content.AddChild(merged);
-        }
+    /// <summary>แถวสถานะในกล่อง merge: วงกลมไอคอน หัวข้อ คำอธิบาย (และปุ่มด้านขวาถ้ามี)</summary>
+    private static Control StatusRow(GhIcon icon, Color fill, string title, string? detail, bool last, Control? action = null)
+    {
+        var row = new HBoxContainer();
+        row.AddThemeConstantOverride("separation", 14);
+        row.AddChild(GitHubUi.Bubble(icon, fill, 32));
+        var text = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
+        text.AddThemeConstantOverride("separation", 2);
+        text.AddChild(GitHubUi.Text(title, GitHubTheme.Fg, 16, bold: true, wrap: true));
+        if (detail is not null) text.AddChild(GitHubUi.Text(detail, GitHubTheme.FgMuted, 14, wrap: true));
+        row.AddChild(text);
+        if (action is not null) row.AddChild(action);
+        return GitHubUi.ListRow(row, last);
     }
 
     private void BuildMergeBox(PullRequestDetail detail)
     {
         var pull = detail.Pull;
-        var reviewer = _repo!.Owner;
-        var card = Card();
-        var box = new VBoxContainer();
-        box.AddThemeConstantOverride("separation", 8);
+        var (box, body) = GitHubUi.Box();
 
-        var comment = new LineEdit { PlaceholderText = "ความเห็น review (ไม่บังคับ)" };
-        box.AddChild(Lbl($"Add your review (ในฐานะ {reviewer})", GitHubTheme.Fg, 15));
-        box.AddChild(comment);
-        var actions = new HBoxContainer();
-        actions.AddThemeConstantOverride("separation", 10);
+        var decision = detail.Reviews.LastOrDefault(review => review.Verdict != ReviewVerdict.Commented);
+        if (decision is { Verdict: ReviewVerdict.Approved })
+            body.AddChild(StatusRow(GhIcon.Check, GitHubTheme.SuccessEmphasis, "Changes approved",
+                $"{decision.Reviewer} approved these changes", false));
+        else if (decision is { Verdict: ReviewVerdict.ChangesRequested })
+            body.AddChild(StatusRow(GhIcon.X, GitHubTheme.DangerEmphasis, "Changes requested",
+                $"{decision.Reviewer} requested changes", false));
+
+        if (detail.HasConflicts)
+            body.AddChild(StatusRow(GhIcon.Alert, GitHubTheme.DangerEmphasis, "This branch has conflicts that must be resolved",
+                "แก้ conflict ใน terminal แล้ว push ขึ้นมาใหม่ จึงจะ merge ได้", false));
+        else if (detail.MergeBlockedReason is { } reason)
+            body.AddChild(StatusRow(GhIcon.Alert, GitHubTheme.Attention, "Merging is blocked", reason, false));
+        else
+            body.AddChild(StatusRow(GhIcon.Check, GitHubTheme.SuccessEmphasis, "This branch has no conflicts with the base branch",
+                "Merging can be performed automatically.", false));
+
+        var footer = new HBoxContainer();
+        footer.AddThemeConstantOverride("separation", 10);
+        var merge = GitHubUi.Btn("Merge pull request", async () =>
+        {
+            var result = await _host!.MergePullRequestAsync(pull.Number);
+            Go(Page.PullDetail, result.Message, !result.Success);
+        }, GhButtonKind.Primary, GhIcon.PullMerged);
+        merge.Disabled = detail.MergeBlockedReason is not null;
+        footer.AddChild(merge);
+        footer.AddChild(GitHubUi.Btn("Close pull request", () =>
+        {
+            var result = _host!.ClosePullRequest(pull.Number);
+            Go(Page.PullDetail, result.Message, !result.Success);
+        }, GhButtonKind.Default, GhIcon.PullClosed));
+        var padded = new MarginContainer();
+        padded.AddThemeConstantOverride("margin_left", 16);
+        padded.AddThemeConstantOverride("margin_right", 16);
+        padded.AddThemeConstantOverride("margin_top", 14);
+        padded.AddThemeConstantOverride("margin_bottom", 14);
+        padded.AddChild(footer);
+        body.AddChild(padded);
+        _content.AddChild(box);
+    }
+
+    private async Task BuildMergedBoxAsync(PullRequestInfo pull)
+    {
+        var branchStillExists = (await _host!.ListBranchesAsync()).Any(branch => branch.Name == pull.SourceBranch);
+        Control? action = null;
+        if (branchStillExists)
+            action = GitHubUi.Btn("Delete branch", async () =>
+            {
+                var deleted = await _host.DeleteBranchAsync(pull.SourceBranch);
+                Go(Page.PullDetail, deleted ? $"ลบ branch {pull.SourceBranch} แล้ว" : "ลบ branch ไม่ได้", !deleted);
+            }, GhButtonKind.Default, GhIcon.Trash);
+
+        var (box, body) = GitHubUi.Box();
+        body.AddChild(StatusRow(GhIcon.PullMerged, GitHubTheme.DoneEmphasis, "Pull request successfully merged and closed",
+            branchStillExists
+                ? $"คุณทำเสร็จแล้ว — ลบ branch {pull.SourceBranch} ได้อย่างปลอดภัย"
+                : $"รวมเข้า {pull.TargetBranch} แล้ว และลบ branch {pull.SourceBranch} ไปแล้ว", true, action));
+        _content.AddChild(box);
+    }
+
+    /// <summary>ฟอร์ม review: ความเห็น + Comment / Request changes / Approve (ผลและเหตุผลมาจาก host)</summary>
+    private void BuildReviewBox(PullRequestInfo pull)
+    {
+        var reviewer = _repo!.Owner;
+        var row = new HBoxContainer();
+        row.AddThemeConstantOverride("separation", 14);
+        var avatar = GitHubUi.Avatar(reviewer, 40);
+        avatar.SizeFlagsVertical = SizeFlags.ShrinkBegin;
+        row.AddChild(avatar);
+
+        var card = GitHubUi.Card(16, 14);
+        var column = new VBoxContainer();
+        column.AddThemeConstantOverride("separation", 10);
+        column.AddChild(GitHubUi.Text("Add your review", GitHubTheme.Fg, 16, bold: true));
+        column.AddChild(GitHubUi.Text($"ในฐานะ {reviewer}", GitHubTheme.FgMuted, 13));
+        var comment = new TextEdit
+        {
+            PlaceholderText = "Leave a comment (ไม่บังคับ)",
+            CustomMinimumSize = new Vector2(0, 84),
+            WrapMode = TextEdit.LineWrappingMode.Boundary
+        };
+        column.AddChild(comment);
+
         void Review(ReviewVerdict verdict)
         {
             var result = _host!.ReviewPullRequest(pull.Number, reviewer, verdict, comment.Text);
             Go(Page.PullDetail, result.Message, !result.Success);
         }
 
-        actions.AddChild(Btn("✓ Approve", () => Review(ReviewVerdict.Approved), color: Green));
-        actions.AddChild(Btn("✗ Request changes", () => Review(ReviewVerdict.ChangesRequested)));
-        actions.AddChild(Btn("💬 Comment", () => Review(ReviewVerdict.Commented)));
-        box.AddChild(actions);
-        box.AddChild(new HSeparator());
-
-        if (detail.MergeBlockedReason is { } blocked)
-            box.AddChild(Lbl(detail.HasConflicts ? $"⚠ {blocked}" : blocked,
-                detail.HasConflicts ? GitHubTheme.Danger : GitHubTheme.Attention, wrap: true));
-        else
-            box.AddChild(Lbl("✓ This branch has no conflicts with the base branch", GitHubTheme.Success));
-
-        var mergeRow = new HBoxContainer();
-        mergeRow.AddThemeConstantOverride("separation", 10);
-        var merge = Btn("Merge pull request", async () =>
-        {
-            var result = await _host!.MergePullRequestAsync(pull.Number);
-            Go(Page.PullDetail, result.Message, !result.Success);
-        }, color: Green);
-        merge.Disabled = detail.MergeBlockedReason is not null;
-        mergeRow.AddChild(merge);
-        mergeRow.AddChild(Btn("Close pull request", () =>
-        {
-            var result = _host!.ClosePullRequest(pull.Number);
-            Go(Page.PullDetail, result.Message, !result.Success);
-        }));
-        box.AddChild(mergeRow);
-        card.AddChild(box);
-        _content.AddChild(card);
+        var buttons = new HBoxContainer();
+        buttons.AddThemeConstantOverride("separation", 10);
+        buttons.AddChild(GitHubUi.Spacer());
+        buttons.AddChild(GitHubUi.Btn("Comment", () => Review(ReviewVerdict.Commented), GhButtonKind.Default, GhIcon.Comment));
+        buttons.AddChild(GitHubUi.Btn("Request changes", () => Review(ReviewVerdict.ChangesRequested), GhButtonKind.Danger));
+        buttons.AddChild(GitHubUi.Btn("Approve", () => Review(ReviewVerdict.Approved), GhButtonKind.Primary, GhIcon.Check));
+        column.AddChild(buttons);
+        card.AddChild(column);
+        row.AddChild(card);
+        _content.AddChild(row);
     }
 
-    private void AddSection(string heading, IEnumerable<string> lines)
-    {
-        var card = Card();
-        var box = new VBoxContainer();
-        box.AddChild(Lbl(heading, GitHubTheme.Fg, 16));
-        box.AddChild(new HSeparator());
-        foreach (var line in lines) box.AddChild(Lbl(line, GitHubTheme.Fg, 14, wrap: true));
-        card.AddChild(box);
-        _content.AddChild(card);
-    }
+    // ───────────── Commits / Files changed ─────────────
 
-    private static RichTextLabel DiffView(string diff)
+    private void BuildPullCommits(PullRequestDetail detail)
     {
-        var builder = new StringBuilder();
-        foreach (var raw in diff.Split('\n'))
+        if (detail.Commits.Count == 0)
         {
-            var line = raw.Replace("[", "[lb]");
-            var color = raw.StartsWith("+++") || raw.StartsWith("---") ? "#9aa3b8"
-                : raw.StartsWith('+') ? "#4ff29e"
-                : raw.StartsWith('-') ? "#fa6678"
-                : raw.StartsWith("@@") ? "#5bc0f0"
-                : "#c8cfdf";
-            builder.Append($"[color={color}]{line}[/color]\n");
+            _content.AddChild(GitHubUi.EmptyState(GhIcon.Commit, "ไม่มี commit ให้แสดง",
+                "PR นี้ไม่มี commit ที่ต่างจาก branch ปลายทางแล้ว"));
+            return;
         }
 
-        var label = new RichTextLabel
+        var (box, body) = GitHubUi.Box();
+        for (var index = 0; index < detail.Commits.Count; index++)
+            body.AddChild(CommitRow(detail.Commits[index], index == detail.Commits.Count - 1));
+        _content.AddChild(box);
+    }
+
+    private void BuildPullFiles(PullRequestDetail detail)
+    {
+        if (detail.Files.Count == 0)
         {
-            BbcodeEnabled = true,
-            FitContent = true,
-            SelectionEnabled = true,
-            Text = builder.ToString(),
-            SizeFlagsHorizontal = SizeFlags.ExpandFill
-        };
-        label.AddThemeFontOverride("normal_font", GitHubTheme.MonoFont);
-        label.AddThemeFontSizeOverride("normal_font_size", 14);
-        return label;
+            _content.AddChild(GitHubUi.EmptyState(GhIcon.File, "ไม่มีไฟล์ที่เปลี่ยน",
+                "ไม่พบความต่างระหว่าง branch ต้นทางกับปลายทาง"));
+            return;
+        }
+
+        var additions = detail.Files.Sum(file => file.Additions);
+        var deletions = detail.Files.Sum(file => file.Deletions);
+        var summary = new HBoxContainer();
+        summary.AddThemeConstantOverride("separation", 8);
+        summary.AddChild(GitHubUi.Text($"Showing {GitHubUi.Count(detail.Files.Count, "changed file", "changed files")} with",
+            GitHubTheme.FgMuted));
+        summary.AddChild(GitHubUi.Text($"{additions} additions", GitHubTheme.Success, 15, bold: true));
+        summary.AddChild(GitHubUi.Text("and", GitHubTheme.FgMuted));
+        summary.AddChild(GitHubUi.Text($"{deletions} deletions", GitHubTheme.Danger, 15, bold: true));
+        _content.AddChild(summary);
+        _content.AddChild(DiffViewer.Build(detail.Diff, detail.Files));
     }
 }
