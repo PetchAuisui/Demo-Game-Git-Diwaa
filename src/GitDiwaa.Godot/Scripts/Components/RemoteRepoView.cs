@@ -454,7 +454,7 @@ public partial class RemoteRepoView : Control
         {
             try
             {
-                var pr = await _host.OpenPullRequestAsync(title.Text, body.Text, "คุณ",
+                var pr = await _host.OpenPullRequestAsync(title.Text, body.Text, _repo!.Owner,
                     branches[comparePicker.Selected].Name, branches[basePicker.Selected].Name);
                 _pullNumber = pr.Number;
                 Go(Page.PullDetail, $"สร้าง pull request #{pr.Number} แล้ว");
@@ -536,14 +536,8 @@ public partial class RemoteRepoView : Control
         actions.AddThemeConstantOverride("separation", 10);
         void Review(ReviewVerdict verdict)
         {
-            if (verdict != ReviewVerdict.Commented && string.Equals(pull.Author, reviewer, StringComparison.OrdinalIgnoreCase))
-            {
-                Go(Page.PullDetail, "อนุมัติหรือขอแก้ PR ของตัวเองไม่ได้", true);
-                return;
-            }
-
-            _host!.ReviewPullRequest(pull.Number, reviewer, verdict, comment.Text);
-            Go(Page.PullDetail);
+            var result = _host!.ReviewPullRequest(pull.Number, reviewer, verdict, comment.Text);
+            Go(Page.PullDetail, result.Message, !result.Success);
         }
 
         actions.AddChild(Btn("✓ Approve", () => Review(ReviewVerdict.Approved), color: Green));
@@ -552,10 +546,9 @@ public partial class RemoteRepoView : Control
         box.AddChild(actions);
         box.AddChild(new HSeparator());
 
-        if (detail.HasConflicts)
-            box.AddChild(Lbl("⚠ This branch has conflicts that must be resolved", SandboxThemeTokens.ErrorText));
-        else if (!pull.IsApproved)
-            box.AddChild(Lbl("Review required — ต้องมีการอนุมัติก่อน merge", SandboxThemeTokens.StateModified));
+        if (detail.MergeBlockedReason is { } blocked)
+            box.AddChild(Lbl(detail.HasConflicts ? $"⚠ {blocked}" : blocked,
+                detail.HasConflicts ? SandboxThemeTokens.ErrorText : SandboxThemeTokens.StateModified, wrap: true));
         else
             box.AddChild(Lbl("✓ This branch has no conflicts with the base branch", SandboxThemeTokens.PromptGreen));
 
@@ -566,12 +559,12 @@ public partial class RemoteRepoView : Control
             var result = await _host!.MergePullRequestAsync(pull.Number);
             Go(Page.PullDetail, result.Message, !result.Success);
         }, color: Green);
-        merge.Disabled = detail.HasConflicts || !pull.IsApproved;
+        merge.Disabled = detail.MergeBlockedReason is not null;
         mergeRow.AddChild(merge);
         mergeRow.AddChild(Btn("Close pull request", () =>
         {
-            _host!.ClosePullRequest(pull.Number);
-            Go(Page.PullDetail);
+            var result = _host!.ClosePullRequest(pull.Number);
+            Go(Page.PullDetail, result.Message, !result.Success);
         }));
         box.AddChild(mergeRow);
         card.AddChild(box);
