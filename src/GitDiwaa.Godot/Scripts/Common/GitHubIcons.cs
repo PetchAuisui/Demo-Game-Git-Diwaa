@@ -5,7 +5,7 @@ namespace GitDiwaa.Godot.Common;
 public enum GhIcon
 {
     Repo, Book, Code, PullOpen, PullMerged, PullClosed, Branch, History, Commit,
-    File, Folder, Check, X, Comment, Copy, Search, ChevronDown, ChevronRight, Trash, Lock, Alert, Plus, ArrowLeft
+    File, Folder, Check, X, Comment, Copy, Search, ChevronDown, ChevronRight, Trash, Lock, Alert, Plus, ArrowLeft, Info
 }
 
 /// <summary>
@@ -84,6 +84,7 @@ public static class GitHubIcons
             "<path d=\"M8 2L14.5 13.5H1.5z\"/><path d=\"M8 6.5v3.25M8 11.5v.25\"/>",
         GhIcon.Plus => "<path d=\"M8 3v10M3 8h10\"/>",
         GhIcon.ArrowLeft => "<path d=\"M13 8H3M7 4L3 8l4 4\"/>",
+        GhIcon.Info => "<circle cx=\"8\" cy=\"8\" r=\"6\"/><path d=\"M8 7.25v3.5M8 5v.25\"/>",
         _ => string.Empty
     };
 }

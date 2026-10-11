@@ -250,6 +250,20 @@ public static class GitHubUi
         return panel;
     }
 
+    /// <summary>แถบข้อมูลสีฟ้า (คำแนะนำ ไม่ใช่ผลลัพธ์ของการกระทำ)</summary>
+    public static PanelContainer Info(string message)
+    {
+        var panel = new PanelContainer { MouseFilter = Control.MouseFilterEnum.Pass, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+        panel.AddThemeStyleboxOverride("panel", GitHubTheme.Box(
+            GitHubTheme.AccentSubtle, new Color(GitHubTheme.Accent, 0.4f), 6, 1, 14, 10));
+        var row = new HBoxContainer { MouseFilter = Control.MouseFilterEnum.Pass };
+        row.AddThemeConstantOverride("separation", 10);
+        row.AddChild(Icon(GhIcon.Info, GitHubTheme.Accent));
+        row.AddChild(Text(message, GitHubTheme.Fg, 15, wrap: true));
+        panel.AddChild(row);
+        return panel;
+    }
+
     /// <summary>บล็อกคำสั่งสีเข้มพร้อมปุ่ม Copy ต่อบรรทัด (ผู้เล่นพิมพ์ทีละบรรทัดใน terminal ของเกม)</summary>
     public static PanelContainer CodeBlock(IEnumerable<string> lines)
     {
