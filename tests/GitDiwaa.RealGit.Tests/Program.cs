@@ -208,7 +208,7 @@ try
 
     await tests.RunAsync("pull requests: detail, review rules, merge and branch cleanup", async () =>
     {
-        await using var github = await factory.CreateAsync("act1-pr", "player", Samples.Seed(DateTimeOffset.Now));
+        await using var github = await factory.CreateAsync("act1-pr", "player", Samples.Seed(DateTimeOffset.Now, Samples.Strict));
         var host = github.RemoteHost;
 
         var login = (await host.ListBranchesAsync()).Single(branch => branch.Name == "feature/login");
@@ -228,17 +228,22 @@ try
         Assert.Equal("A", detail.Files.Single().Status);
         Assert.Contains(detail.Diff, "+print('login')");
         Assert.False(detail.HasConflicts);
+        Assert.Contains(detail.MergeBlockedReason ?? "", "Review required");
 
         var blocked = await host.MergePullRequestAsync(pr.Number);
         Assert.False(blocked.Success);
         Assert.Contains(blocked.Message, "Review required");
 
-        Assert.False(host.ReviewPullRequest(pr.Number, "teammate", ReviewVerdict.Approved)!.IsApproved);
-        host.ReviewPullRequest(pr.Number, "user", ReviewVerdict.Approved);
+        var own = host.ReviewPullRequest(pr.Number, "teammate", ReviewVerdict.Approved);
+        Assert.False(own.Success);
+        Assert.Contains(own.Message, "own pull request");
+        Assert.True(host.ReviewPullRequest(pr.Number, "teammate", ReviewVerdict.Commented, "self note").Success);
+        Assert.True(host.ReviewPullRequest(pr.Number, "user", ReviewVerdict.Approved).Success);
         Assert.True(host.ListPullRequests().Single().IsApproved);
-        host.ReviewPullRequest(pr.Number, "user", ReviewVerdict.ChangesRequested, "rename file");
+        Assert.True(host.ReviewPullRequest(pr.Number, "user", ReviewVerdict.ChangesRequested, "rename file").Success);
         Assert.False(host.ListPullRequests().Single().IsApproved);
         host.ReviewPullRequest(pr.Number, "user", ReviewVerdict.Approved);
+        Assert.True((await host.GetPullRequestAsync(pr.Number))!.MergeBlockedReason is null);
 
         Assert.False(await host.DeleteBranchAsync("feature/login"));
         var merged = await host.MergePullRequestAsync(pr.Number);
@@ -268,11 +273,44 @@ try
         await using var github = await factory.CreateAsync("act1-conflict", "player", seed);
         var host = github.RemoteHost;
         var pr = await host.OpenPullRequestAsync("Conflicting", "", "teammate", "feature/login", "main");
-        Assert.True((await host.GetPullRequestAsync(pr.Number))!.HasConflicts);
+        var detail = (await host.GetPullRequestAsync(pr.Number))!;
+        Assert.True(detail.HasConflicts);
+        Assert.Contains(detail.MergeBlockedReason ?? "", "conflicts");
         host.ReviewPullRequest(pr.Number, "user", ReviewVerdict.Approved);
         var merge = await host.MergePullRequestAsync(pr.Number);
         Assert.False(merge.Success);
-        Assert.Equal(PullRequestState.Closed, host.ClosePullRequest(pr.Number)!.State);
+        Assert.Contains(merge.Message, "conflicts");
+
+        var closed = host.ClosePullRequest(pr.Number);
+        Assert.True(closed.Success);
+        Assert.Equal(PullRequestState.Closed, closed.PullRequest!.State);
+        Assert.False(host.ClosePullRequest(pr.Number).Success);
+    });
+
+    await tests.RunAsync("solo player can review and merge their own pull requests by default", async () =>
+    {
+        await using var solo = await factory.CreateAsync("act1-solo", "player");
+        await PlayerRepo.PublishMainAsync(solo);
+        var host = solo.RemoteHost;
+
+        await PlayerRepo.RunAsync(solo, "git switch -c feature/one");
+        await PlayerRepo.CommitFileAsync(solo, "one.txt", "one\n", "work one");
+        await PlayerRepo.RunAsync(solo, "git push -u origin feature/one");
+        var first = await host.OpenPullRequestAsync("One", "", "user", "feature/one", "main");
+        Assert.True((await host.GetPullRequestAsync(first.Number))!.MergeBlockedReason is null); // review เป็นทางเลือก
+        Assert.True(host.ReviewPullRequest(first.Number, "user", ReviewVerdict.Approved).Success); // รีวิวของตัวเองได้
+        var merged = await host.MergePullRequestAsync(first.Number);
+        Assert.True(merged.Success, merged.Message);
+        Assert.True(await host.ReadFileAsync("main", "one.txt") is not null);
+
+        await PlayerRepo.RunAsync(solo, "git switch main");
+        await PlayerRepo.RunAsync(solo, "git switch -c feature/two");
+        await PlayerRepo.CommitFileAsync(solo, "two.txt", "two\n", "work two");
+        await PlayerRepo.RunAsync(solo, "git push -u origin feature/two");
+        var second = await host.OpenPullRequestAsync("Two", "", "user", "feature/two", "main");
+        var unreviewed = await host.MergePullRequestAsync(second.Number); // merge ได้แม้ยังไม่ได้รีวิว
+        Assert.True(unreviewed.Success, unreviewed.Message);
+        Assert.True(await host.ReadFileAsync("main", "two.txt") is not null);
     });
 
     await tests.RunAsync("pull request needs commits beyond its own base branch", async () =>
@@ -428,7 +466,9 @@ internal static class PlayerRepo
 internal static class Samples
 {
     /// <summary>repo ตัวอย่างสำหรับเทสต์: main มี 2 commit และ feature/login อีก 1 commit</summary>
-    public static RemoteSeed Seed(DateTimeOffset now) => new(
+    public static readonly RemoteRules Strict = new(RequireApproval: true, AllowSelfReview: false);
+
+    public static RemoteSeed Seed(DateTimeOffset now, RemoteRules? rules = null) => new(
         "user",
         "my-project",
         string.Empty,
@@ -447,5 +487,8 @@ internal static class Samples
                 }),
             new("feature/login", "teammate", "Add login draft", now.AddDays(-1),
                 new Dictionary<string, string> { ["login.py"] = "print('login')\n" })
-        ]);
+        ])
+    {
+        Rules = rules ?? new RemoteRules()
+    };
 }

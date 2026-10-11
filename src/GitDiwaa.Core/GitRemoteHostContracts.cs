@@ -66,9 +66,11 @@ public sealed record PullRequestDetail(
     IReadOnlyList<PullRequestFileChange> Files,
     string Diff,
     bool HasConflicts,
-    IReadOnlyList<PullRequestReview> Reviews);
+    IReadOnlyList<PullRequestReview> Reviews,
+    string? MergeBlockedReason);
 
-public sealed record PullRequestMergeResult(bool Success, string Message, PullRequestInfo? PullRequest);
+/// <summary>ผลของการกระทำกับ pull request (review / close / merge) พร้อมข้อความอธิบายให้ UI แสดง</summary>
+public sealed record PullRequestActionResult(bool Success, string Message, PullRequestInfo? PullRequest);
 
 /// <summary>
 /// ข้อมูลและการกระทำของหน้า Remote Repository ที่จำลอง GitHub
@@ -90,7 +92,7 @@ public interface IGitRemoteHost
         string title, string body, string author, string sourceBranch, string targetBranch,
         CancellationToken cancellationToken = default);
     Task<PullRequestDetail?> GetPullRequestAsync(int number, CancellationToken cancellationToken = default);
-    PullRequestInfo? ReviewPullRequest(int number, string reviewer, ReviewVerdict verdict, string body = "");
-    PullRequestInfo? ClosePullRequest(int number);
-    Task<PullRequestMergeResult> MergePullRequestAsync(int number, CancellationToken cancellationToken = default);
+    PullRequestActionResult ReviewPullRequest(int number, string reviewer, ReviewVerdict verdict, string body = "");
+    PullRequestActionResult ClosePullRequest(int number);
+    Task<PullRequestActionResult> MergePullRequestAsync(int number, CancellationToken cancellationToken = default);
 }

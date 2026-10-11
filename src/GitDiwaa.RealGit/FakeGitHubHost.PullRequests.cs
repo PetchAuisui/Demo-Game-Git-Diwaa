@@ -35,20 +35,19 @@ internal sealed partial class FakeGitHubHost
 
     public async Task<PullRequestDetail?> GetPullRequestAsync(int number, CancellationToken cancellationToken = default)
     {
-        var pull = _pullRequests.FirstOrDefault(item => item.Number == number);
+        var pull = Find(number);
         if (pull is null) return null;
 
-        var range = $"{pull.TargetBranch}..{pull.SourceBranch}";
-        var triple = $"{pull.TargetBranch}...{pull.SourceBranch}";
-        var commits = pull.State == PullRequestState.Merged
-            ? []
-            : (await GitAsync(["log", range, $"--format=%H{Sep}%an{Sep}%aI{Sep}%s"], cancellationToken))
-                .Split('\n', StringSplitOptions.RemoveEmptyEntries).Select(ParseCommit).ToList();
-
+        var commits = new List<RemoteCommitInfo>();
         var files = new List<PullRequestFileChange>();
         var diff = string.Empty;
         if (pull.State != PullRequestState.Merged)
         {
+            var range = $"{pull.TargetBranch}..{pull.SourceBranch}";
+            var triple = $"{pull.TargetBranch}...{pull.SourceBranch}";
+            commits.AddRange((await GitAsync(["log", range, $"--format=%H{Sep}%an{Sep}%aI{Sep}%s"], cancellationToken))
+                .Split('\n', StringSplitOptions.RemoveEmptyEntries).Select(ParseCommit));
+
             var statuses = (await GitAsync(["diff", "--name-status", triple], cancellationToken))
                 .Split('\n', StringSplitOptions.RemoveEmptyEntries)
                 .Select(line => line.Split('\t'))
@@ -68,67 +67,105 @@ internal sealed partial class FakeGitHubHost
             if (diff.Length > 20_000) diff = diff[..20_000] + "\n… (diff truncated)";
         }
 
-        var conflicts = false;
-        if (pull.State == PullRequestState.Open)
-        {
-            var probe = await _runner.RunAsync(_sandbox, _remote.BareRepositoryPath,
-                ["merge-tree", "--write-tree", pull.TargetBranch, pull.SourceBranch], cancellationToken);
-            conflicts = !probe.Success;
-        }
-
-        return new(pull, commits, files, diff, conflicts, _reviews.GetValueOrDefault(number)?.ToList() ?? []);
+        var (hasConflicts, blockedReason) = pull.State == PullRequestState.Open
+            ? await CheckMergeAsync(pull, cancellationToken)
+            : (false, null);
+        return new(pull, commits, files, diff, hasConflicts,
+            _reviews.GetValueOrDefault(number)?.ToList() ?? [], blockedReason);
     }
 
-    public PullRequestInfo? ReviewPullRequest(int number, string reviewer, ReviewVerdict verdict, string body = "")
+    public PullRequestActionResult ReviewPullRequest(int number, string reviewer, ReviewVerdict verdict, string body = "")
     {
-        var pull = _pullRequests.FirstOrDefault(item => item.Number == number);
-        if (pull is null || pull.State != PullRequestState.Open) return pull;
-        if (string.Equals(pull.Author, reviewer, StringComparison.OrdinalIgnoreCase) && verdict != ReviewVerdict.Commented)
-            return pull; // เหมือน GitHub: อนุมัติ PR ของตัวเองไม่ได้
+        var pull = Find(number);
+        if (pull is null) return NotFound(number);
+        if (pull.State != PullRequestState.Open) return NotOpen(pull);
 
-        var list = _reviews[number];
-        list.Add(new(reviewer, verdict, body, DateTimeOffset.Now));
-        var decisive = list.LastOrDefault(review => review.Verdict != ReviewVerdict.Commented);
-        return Update(number, item => item with { IsApproved = decisive?.Verdict == ReviewVerdict.Approved });
+        if (verdict != ReviewVerdict.Commented && !_seed.Rules.AllowSelfReview &&
+            string.Equals(pull.Author, reviewer, StringComparison.OrdinalIgnoreCase))
+            return new(false, "You can't approve or request changes on your own pull request.", pull);
+
+        var reviews = _reviews[number];
+        reviews.Add(new(reviewer, verdict, body, DateTimeOffset.Now));
+        var decision = reviews.LastOrDefault(review => review.Verdict != ReviewVerdict.Commented);
+        var updated = Update(number, item => item with { IsApproved = decision?.Verdict == ReviewVerdict.Approved })!;
+        return new(true, verdict switch
+        {
+            ReviewVerdict.Approved => $"Approved pull request #{number}.",
+            ReviewVerdict.ChangesRequested => $"Requested changes on pull request #{number}.",
+            _ => $"Comment added to pull request #{number}."
+        }, updated);
     }
 
-    public PullRequestInfo? ClosePullRequest(int number) =>
-        Update(number, pull => pull.State == PullRequestState.Open ? pull with { State = PullRequestState.Closed } : pull);
+    public PullRequestActionResult ClosePullRequest(int number)
+    {
+        var pull = Find(number);
+        if (pull is null) return NotFound(number);
+        if (pull.State != PullRequestState.Open) return NotOpen(pull);
 
-    public async Task<PullRequestMergeResult> MergePullRequestAsync(
+        var closed = Update(number, item => item with { State = PullRequestState.Closed })!;
+        return new(true, $"Pull request #{number} closed.", closed);
+    }
+
+    public async Task<PullRequestActionResult> MergePullRequestAsync(
         int number, CancellationToken cancellationToken = default)
     {
-        var pullRequest = _pullRequests.FirstOrDefault(item => item.Number == number);
-        if (pullRequest is null) return new(false, $"Pull request #{number} not found.", null);
-        if (pullRequest.State != PullRequestState.Open)
-            return new(false, $"Pull request #{number} is already {pullRequest.State}.", pullRequest);
-        if (!pullRequest.IsApproved)
-            return new(false, "Review required: approve the pull request before merging.", pullRequest);
+        var pull = Find(number);
+        if (pull is null) return NotFound(number);
+        if (pull.State != PullRequestState.Open) return NotOpen(pull);
+
+        var (_, blockedReason) = await CheckMergeAsync(pull, cancellationToken);
+        if (blockedReason is not null) return new(false, blockedReason, pull);
 
         var work = Path.Combine(_sandbox.AttemptRoot, $"merge-work-{number}");
         try
         {
             await StepAsync(_sandbox.AttemptRoot, ["clone", _remote.BareRepositoryPath, work], cancellationToken);
-            await StepAsync(work, ["switch", "-c", "pr-target", $"origin/{pullRequest.TargetBranch}"], cancellationToken);
+            await StepAsync(work, ["switch", "-c", "pr-target", $"origin/{pull.TargetBranch}"], cancellationToken);
             await StepAsync(work,
                 ["-c", $"user.name={Owner}", "-c", $"user.email={Owner.ToLowerInvariant()}@git-diwaa.local",
-                 "merge", "--no-ff", $"origin/{pullRequest.SourceBranch}",
-                 "-m", $"Merge pull request #{number} from {Owner}/{pullRequest.SourceBranch}"],
+                 "merge", "--no-ff", $"origin/{pull.SourceBranch}",
+                 "-m", $"Merge pull request #{number} from {Owner}/{pull.SourceBranch}"],
                 cancellationToken);
-            await StepAsync(work, ["push", "origin", $"pr-target:{pullRequest.TargetBranch}"], cancellationToken);
+            await StepAsync(work, ["push", "origin", $"pr-target:{pull.TargetBranch}"], cancellationToken);
         }
         catch (InvalidOperationException exception)
         {
-            return new(false, $"Merge failed: {exception.Message}", pullRequest);
+            return new(false, $"Merge failed: {exception.Message}", pull);
         }
         finally
         {
             RemoteSeeder.ForceDelete(work);
         }
 
-        var merged = Update(number, item => item with { State = PullRequestState.Merged });
-        return new(true, $"Pull request #{number} merged into {pullRequest.TargetBranch}.", merged);
+        var merged = Update(number, item => item with { State = PullRequestState.Merged })!;
+        return new(true, $"Pull request #{number} merged into {pull.TargetBranch}.", merged);
     }
+
+    /// <summary>ตรวจว่า merge ได้ไหม: conflict (ตรวจจริงด้วย git merge-tree) และกติกา review ของ repo</summary>
+    private async Task<(bool HasConflicts, string? BlockedReason)> CheckMergeAsync(
+        PullRequestInfo pull, CancellationToken cancellationToken)
+    {
+        var probe = await _runner.RunAsync(_sandbox, _remote.BareRepositoryPath,
+            ["merge-tree", "--write-tree", pull.TargetBranch, pull.SourceBranch], cancellationToken);
+        if (!probe.Success)
+        {
+            return probe.ExitCode == 1
+                ? (true, "This branch has conflicts that must be resolved.")
+                : (false, $"Unable to check whether this pull request can be merged: {probe.Output}");
+        }
+
+        return _seed.Rules.RequireApproval && !pull.IsApproved
+            ? (false, "Review required: approve the pull request before merging.")
+            : (false, null);
+    }
+
+    private PullRequestInfo? Find(int number) => _pullRequests.FirstOrDefault(item => item.Number == number);
+
+    private static PullRequestActionResult NotFound(int number) =>
+        new(false, $"Pull request #{number} not found.", null);
+
+    private static PullRequestActionResult NotOpen(PullRequestInfo pull) =>
+        new(false, $"Pull request #{pull.Number} is already {pull.State}.", pull);
 
     private PullRequestInfo? Update(int number, Func<PullRequestInfo, PullRequestInfo> change)
     {
