@@ -120,9 +120,9 @@ try
 
     await tests.RunAsync("fake GitHub clones seeded history and never reaches the real GitHub", async () =>
     {
-        var seed = RemoteSeed.Khamphi(DateTimeOffset.Now);
+        var seed = Samples.Seed(DateTimeOffset.Now);
         await using var github = await factory.CreateAsync("act1-clone", "player", seed);
-        Assert.Equal("https://github.com/Preeyaporn/Khamphi_Projects_one.git", github.Info.RemoteUrl);
+        Assert.Equal("https://github.com/user/my-project.git", github.Info.RemoteUrl);
 
         var real = await github.ExecuteAsync("git clone https://github.com/torvalds/linux.git");
         Assert.False(real.Success);
@@ -130,100 +130,100 @@ try
 
         var clone = await github.ExecuteAsync($"git clone {github.Info.RemoteUrl}");
         Assert.True(clone.Success, clone.Output);
-        Assert.Contains((await github.ExecuteAsync("git remote -v")).Output, "github.com/Preeyaporn/Khamphi_Projects_one.git");
-        Assert.True((await github.InspectAsync()).Commits.Any(commit => commit.Subject.StartsWith("Initial commit")));
+        Assert.Contains((await github.ExecuteAsync("git remote -v")).Output, "github.com/user/my-project.git");
+        Assert.True((await github.InspectAsync()).Commits.Any(commit => commit.Subject == "Initial commit"));
         Assert.False((await github.ExecuteAsync("git remote set-url origin https://github.com/torvalds/linux.git")).Success);
     });
 
     await tests.RunAsync("remote host exposes repository, branches, commits and files", async () =>
     {
-        await using var github = await factory.CreateAsync("act1-host", "player", RemoteSeed.Khamphi(DateTimeOffset.Now));
+        await using var github = await factory.CreateAsync("act1-host", "player", Samples.Seed(DateTimeOffset.Now));
         var host = github.RemoteHost;
 
         var repo = await host.GetRepositoryAsync();
-        Assert.Equal("Preeyaporn", repo.Owner);
+        Assert.Equal("user", repo.Owner);
         Assert.Equal("main", repo.DefaultBranch);
         Assert.Equal(2, repo.BranchCount);
         Assert.Equal(2, repo.CommitCount);
 
         var branches = await host.ListBranchesAsync();
-        Assert.True(branches.Any(branch => branch.Name == "feature/ward-spell"));
+        Assert.True(branches.Any(branch => branch.Name == "feature/login"));
         Assert.True(branches.Single(branch => branch.IsDefault).Name == "main");
 
         var commits = await host.ListCommitsAsync("main");
-        Assert.Equal("Update documentation for mystical rituals", commits[0].Subject);
+        Assert.Equal("Update README", commits[0].Subject);
         Assert.True(commits[0].AuthoredAt > commits[1].AuthoredAt);
 
         var files = await host.ListFilesAsync("main");
         Assert.True(files.Any(file => file.Name == "README.md" && file.LastCommit is not null));
-        Assert.Contains(await host.ReadFileAsync("main", "README.md") ?? "", "Diwaa realm");
+        Assert.Contains(await host.ReadFileAsync("main", "README.md") ?? "", "sample project");
         Assert.True(await host.ReadFileAsync("main", "../etc/passwd") is null);
     });
 
     await tests.RunAsync("pull requests: detail, review rules, merge and branch cleanup", async () =>
     {
-        await using var github = await factory.CreateAsync("act1-pr", "player", RemoteSeed.Khamphi(DateTimeOffset.Now));
+        await using var github = await factory.CreateAsync("act1-pr", "player", Samples.Seed(DateTimeOffset.Now));
         var host = github.RemoteHost;
 
-        var ward = (await host.ListBranchesAsync()).Single(branch => branch.Name == "feature/ward-spell");
-        Assert.Equal(1, ward.Ahead);
-        Assert.Equal(0, ward.Behind);
+        var login = (await host.ListBranchesAsync()).Single(branch => branch.Name == "feature/login");
+        Assert.Equal(1, login.Ahead);
+        Assert.Equal(0, login.Behind);
 
         await Assert.ThrowsAsync<InvalidOperationException>(() =>
-            host.OpenPullRequestAsync("same", "", "Muira", "main", "main"));
-        var pr = await host.OpenPullRequestAsync("Add ward spell", "ward body", "Muira", "feature/ward-spell", "main");
+            host.OpenPullRequestAsync("same", "", "teammate", "main", "main"));
+        var pr = await host.OpenPullRequestAsync("Add login", "login body", "teammate", "feature/login", "main");
         Assert.Equal(1, pr.Number);
         await Assert.ThrowsAsync<InvalidOperationException>(() =>
-            host.OpenPullRequestAsync("again", "", "Muira", "feature/ward-spell", "main"));
+            host.OpenPullRequestAsync("again", "", "teammate", "feature/login", "main"));
 
         var detail = (await host.GetPullRequestAsync(pr.Number))!;
         Assert.Equal(1, detail.Commits.Count);
-        Assert.Equal("ward.py", detail.Files.Single().Path);
+        Assert.Equal("login.py", detail.Files.Single().Path);
         Assert.Equal("A", detail.Files.Single().Status);
-        Assert.Contains(detail.Diff, "+print('ward')");
+        Assert.Contains(detail.Diff, "+print('login')");
         Assert.False(detail.HasConflicts);
 
         var blocked = await host.MergePullRequestAsync(pr.Number);
         Assert.False(blocked.Success);
         Assert.Contains(blocked.Message, "Review required");
 
-        Assert.False(host.ReviewPullRequest(pr.Number, "Muira", ReviewVerdict.Approved)!.IsApproved);
-        host.ReviewPullRequest(pr.Number, "Preeyaporn", ReviewVerdict.Approved);
+        Assert.False(host.ReviewPullRequest(pr.Number, "teammate", ReviewVerdict.Approved)!.IsApproved);
+        host.ReviewPullRequest(pr.Number, "user", ReviewVerdict.Approved);
         Assert.True(host.ListPullRequests().Single().IsApproved);
-        host.ReviewPullRequest(pr.Number, "Preeyaporn", ReviewVerdict.ChangesRequested, "rename file");
+        host.ReviewPullRequest(pr.Number, "user", ReviewVerdict.ChangesRequested, "rename file");
         Assert.False(host.ListPullRequests().Single().IsApproved);
-        host.ReviewPullRequest(pr.Number, "Preeyaporn", ReviewVerdict.Approved);
+        host.ReviewPullRequest(pr.Number, "user", ReviewVerdict.Approved);
 
-        Assert.False(await host.DeleteBranchAsync("feature/ward-spell"));
+        Assert.False(await host.DeleteBranchAsync("feature/login"));
         var merged = await host.MergePullRequestAsync(pr.Number);
         Assert.True(merged.Success, merged.Message);
         Assert.Equal(PullRequestState.Merged, host.ListPullRequests().Single().State);
-        Assert.True(await host.ReadFileAsync("main", "ward.py") is not null);
+        Assert.True(await host.ReadFileAsync("main", "login.py") is not null);
         Assert.False((await host.MergePullRequestAsync(pr.Number)).Success);
         Assert.False(await host.DeleteBranchAsync("main"));
-        Assert.True(await host.DeleteBranchAsync("feature/ward-spell"));
+        Assert.True(await host.DeleteBranchAsync("feature/login"));
         Assert.Equal(1, (await host.ListBranchesAsync()).Count);
 
         await Assert.ThrowsAsync<InvalidOperationException>(() =>
-            host.OpenPullRequestAsync("bad", "", "Muira", "nope", "main"));
+            host.OpenPullRequestAsync("bad", "", "teammate", "nope", "main"));
     });
 
     await tests.RunAsync("pull request reports conflicts and can be closed", async () =>
     {
         var now = DateTimeOffset.Now;
-        var seed = RemoteSeed.Khamphi(now) with
+        var seed = Samples.Seed(now) with
         {
-            Commits = [.. RemoteSeed.Khamphi(now).Commits,
-                new SeedCommit("feature/ward-spell", "Muira", "Edit README on feature", now,
+            Commits = [.. Samples.Seed(now).Commits,
+                new SeedCommit("feature/login", "teammate", "Edit README on feature", now,
                     new Dictionary<string, string> { ["README.md"] = "feature version\n" }),
-                new SeedCommit("main", "Preeyaporn", "Edit README on main", now,
+                new SeedCommit("main", "user", "Edit README on main", now,
                     new Dictionary<string, string> { ["README.md"] = "main version\n" })]
         };
         await using var github = await factory.CreateAsync("act1-conflict", "player", seed);
         var host = github.RemoteHost;
-        var pr = await host.OpenPullRequestAsync("Conflicting", "", "Muira", "feature/ward-spell", "main");
+        var pr = await host.OpenPullRequestAsync("Conflicting", "", "teammate", "feature/login", "main");
         Assert.True((await host.GetPullRequestAsync(pr.Number))!.HasConflicts);
-        host.ReviewPullRequest(pr.Number, "Preeyaporn", ReviewVerdict.Approved);
+        host.ReviewPullRequest(pr.Number, "user", ReviewVerdict.Approved);
         var merge = await host.MergePullRequestAsync(pr.Number);
         Assert.False(merge.Success);
         Assert.Equal(PullRequestState.Closed, host.ClosePullRequest(pr.Number)!.State);
@@ -363,4 +363,29 @@ internal static class PlayerRepo
         await RunAsync(session, $"git remote add origin {session.Info.RemoteUrl}");
         await RunAsync(session, "git push -u origin main");
     }
+}
+
+internal static class Samples
+{
+    /// <summary>repo ตัวอย่างสำหรับเทสต์: main มี 2 commit และ feature/login อีก 1 commit</summary>
+    public static RemoteSeed Seed(DateTimeOffset now) => new(
+        "user",
+        "my-project",
+        string.Empty,
+        [
+            new("main", "user", "Initial commit", now.AddDays(-2),
+                new Dictionary<string, string>
+                {
+                    ["README.md"] = "# my-project\n\nA sample project.\n",
+                    ["app.py"] = "print('hello')\n"
+                }),
+            new("main", "user", "Update README", now.AddDays(-2).AddHours(3),
+                new Dictionary<string, string>
+                {
+                    ["README.md"] = "# my-project\n\nA sample project.\nSee notes.md.\n",
+                    ["notes.md"] = "# Notes\n"
+                }),
+            new("feature/login", "teammate", "Add login draft", now.AddDays(-1),
+                new Dictionary<string, string> { ["login.py"] = "print('login')\n" })
+        ]);
 }
