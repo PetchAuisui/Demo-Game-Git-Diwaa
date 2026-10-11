@@ -37,6 +37,7 @@ public partial class SandboxGameView : Control
 
     private void WireEvents()
     {
+        _topBar.RepoPressed += OnRepoPressed;
         _terminalPanel.CommandSubmitted += OnCommandSubmitted;
         _filesPanel.OpenFileRequested += OnOpenFileRequested;
         _filesPanel.SaveFileRequested += OnSaveFileRequested;
@@ -78,6 +79,7 @@ public partial class SandboxGameView : Control
         }
 
         _isInitialized = true;
+        _topBar.SetRepoButtonEnabled(_sandboxService.RemoteHost != null);
         _terminalPanel.SetExecuting(false);
 
         if (_sandboxService.Info != null)
@@ -87,6 +89,20 @@ public partial class SandboxGameView : Control
         }
 
         await RefreshStateAsync();
+    }
+
+    private void OnRepoPressed()
+    {
+        if (_sandboxService?.RemoteHost is not { } host)
+        {
+            _terminalPanel.AppendError("หน้า repo ใช้ได้เฉพาะเมื่อเปิดโหมด Real Git");
+            return;
+        }
+
+        var view = new RemoteRepoView();
+        view.BackRequested += () => view.QueueFree();
+        AddChild(view);
+        view.Open(host);
     }
 
     private async void OnCommandSubmitted(string command)

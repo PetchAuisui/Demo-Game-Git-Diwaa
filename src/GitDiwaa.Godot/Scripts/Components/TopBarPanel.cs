@@ -14,7 +14,11 @@ public partial class TopBarPanel : PanelContainer
     [Export]
     public string ModeText { get; set; } = "SANDBOX";
 
+    [Signal]
+    public delegate void RepoPressedEventHandler();
+
     private Label _brandLabel = null!;
+    private Button _repoButton = null!;
     private Label _modeLabel = null!;
 
     public override void _Ready()
@@ -22,13 +26,17 @@ public partial class TopBarPanel : PanelContainer
         BindNodes();
         _brandLabel.Text = GameTitle;
         _modeLabel.Text = ModeText;
+        _repoButton.Pressed += () => EmitSignal(SignalName.RepoPressed);
     }
 
     private void BindNodes()
     {
         _brandLabel = GetNode<Label>("%BrandLabel");
         _modeLabel = GetNode<Label>("%ModeLabel");
+        _repoButton = GetNode<Button>("%RepoButton");
     }
+
+    public void SetRepoButtonEnabled(bool enabled) => _repoButton.Disabled = !enabled;
 
     public void SetModeText(string modeText)
     {
