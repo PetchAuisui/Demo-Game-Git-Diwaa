@@ -30,15 +30,21 @@
 
 | หน้า | สิ่งที่ทำได้ |
 |---|---|
-| repo ว่าง | Quick setup: URL (Copy) และคำสั่งที่ใช้ใน terminal ของ Sandbox แยกเป็น สร้างใหม่ / push คลังเดิม / clone |
+| repo ว่าง | Quick setup: คำแนะนำวิธีใช้อยู่บนสุด, URL (Copy), ขั้นตอน 1) ตั้งชื่อผู้ใช้ Git 2) สร้างไฟล์แรกแล้ว commit 3) ผูก remote แล้ว push และ clone ท้ายหน้า คลิกที่คำสั่งเพื่อคัดลอกทีละบรรทัด (ย้อมสีและมีคำอธิบายสั้นๆ ข้างบรรทัด) |
 | Code | เลือก branch, เปิดโฟลเดอร์/ไฟล์ (มีเลขบรรทัดและปุ่ม Copy), commit ล่าสุด, ค้นหาไฟล์ (Go to file), README แสดงเป็น Markdown, เมนู Clone |
 | Commits | ประวัติ commit ของ branch จัดกลุ่มตามวัน |
-| Branches | แยก Default / Other, ahead/behind, เปิด PR, ลบ branch |
-| Pull requests | รายการ (ค้นหา, Open/Closed), เปิด PR (base ← compare), หน้า PR แบบ Conversation / Commits / Files changed (diff), review, merge, ปิด PR, ลบ branch หลัง merge |
+| Branches | แยก Default / Other, ชิป ahead/behind, เปิด PR, ลบ branch |
+| Pull requests | รายการ (ค้นหา, Open/Closed), เปิด PR (base ← compare, Title เติมจาก commit ล่าสุดให้), หน้า PR แบบ Conversation / Commits / Files changed (diff), review, merge, ปิด PR, ลบ branch หลัง merge |
+
+แนวทางการออกแบบหน้าตา (ปรับตามฟีดแบ็กว่า "ดูยาก สีกลืนกัน")
+- **ขนาด**: เกมตั้งฟอนต์เริ่มต้น 24 แต่ GitHub จริงใช้ 14–16 จึงคูณทุกขนาด (ตัวอักษร ไอคอน ช่องไฟ) ด้วย `GitHubTheme.UiScale` (1.35) ผ่าน `GitHubTheme.S()` ถ้าจะปรับความใหญ่ทั้งหน้าให้แก้ค่าเดียว
+- **สีเป็นชั้น**: `Inset` (แถบบน ช่องกรอก บล็อกโค้ด) < `Canvas` (พื้นหน้า) < `Surface` (การ์ด หัว repo) < `SurfaceRaised` (หัวการ์ด แถวที่ชี้ เมนู) ตัวอักษรและเส้นขอบสว่างกว่า GitHub เดิมเล็กน้อย ฉากเกมด้านหลังถูกบังเกือบทึบ
+- **คอลัมน์กึ่งกลาง**: เนื้อหากว้างสูงสุด `ContentMaxWidth` ทั้งหัว repo และตัวหน้า (ขอบซ้าย/ขวาตรงกัน) ไม่ยืดตามจอกว้าง
+- **แถบบน**: ปุ่มกลับ Sandbox พร้อมป้าย Esc, ช่อง URL, ปุ่มรีเฟรช, ป้าย "GitHub จำลอง"
 
 โครงโค้ด UI
-- `Scripts/Common/GitHubTheme.cs` พาเลตต์และ Theme (ปุ่ม ช่องกรอก เมนู แถบเลื่อน), `GitHubIcons.cs` ไอคอน SVG
-- `Scripts/Components/GitHubUi.cs` ชิ้นส่วนใช้ซ้ำ (แท็บ กล่องรายการ แถวคลิกได้ ป้ายสถานะ avatar แถบแจ้งผล)
+- `Scripts/Common/GitHubTheme.cs` พาเลตต์ สเกล และ Theme (ปุ่ม ช่องกรอก เมนู แถบเลื่อน), `GitHubIcons.cs` ไอคอน SVG
+- `Scripts/Components/GitHubUi.cs` ชิ้นส่วนใช้ซ้ำ (แท็บ กล่องรายการ แถวคลิกได้ ป้ายสถานะ avatar แถบแจ้งผล หัวข้อมีเลขกำกับ การ์ดขั้นตอน `Step` และบล็อกคำสั่ง `CommandBlock` ที่ย้อมสีคำสั่งและคลิกเพื่อคัดลอก)
 - `DiffViewer.cs` (diff แบบการ์ดต่อไฟล์), `MarkdownView.cs` (README และคำอธิบาย PR)
 - `RemoteRepoView.cs` โครงหน้าต่างและการนำทาง, `.Code.cs` / `.History.cs` / `.Pulls.cs` แยกตามหน้า
 

@@ -66,3 +66,10 @@
 - ปุ่ม Remote Repo (ไอคอนก้อนเมฆ) ที่หัวพาเนล Git Graph ของ Sandbox (ไม่อยู่ที่แถบบน) เปิด `RemoteRepoView` หน้าตาเลียนแบบ GitHub dark: Quick setup เมื่อ repo ว่าง, Code (ตารางไฟล์, README Markdown, Go to file, เมนู Clone), Commits, Branches, Pull requests (รายการ, เปิด PR, Conversation / Commits / Files changed, review, merge) พร้อมแถบ URL และกด Esc เพื่อกลับ
 - `IGitSandboxService.RemoteHost` ส่ง GitHub จำลองของ session ให้หน้า UI (mock service ไม่มี จึงกดปุ่มไม่ได้) และ `RealGitSandboxService` ใช้ชื่อผู้เล่นเป็นเจ้าของ repo (ยังเป็นค่าคงที่ `user` เพราะยังไม่มีหน้า login)
 - ตรวจ flow ในเกมจริงด้วยสคริปต์ที่พิมพ์คำสั่งผ่าน terminal ของ Sandbox แล้วเปิดหน้า repo, สร้าง PR, review, ดู diff, merge และกด Esc (ยังไม่มีเทสต์อัตโนมัติฝั่ง UI)
+
+### ปรับ UX/UI หน้า Remote Repository (feature/remote-repo-ui-polish)
+
+- ขยายตัวอักษรและช่องไฟทั้งหน้า (`GitHubTheme.UiScale`) ให้อ่านง่ายเท่า UI ส่วนอื่นของเกม, แยกสีเป็นชั้น (Inset/Canvas/Surface/SurfaceRaised) ให้ตัดกันชัด และจัดเนื้อหากึ่งกลางกว้างไม่เกินที่กำหนด
+- Quick setup เป็นขั้นตอน 1-2-3: คำแนะนำวิธีใช้อยู่บนสุด, คลิกคำสั่งเพื่อคัดลอก (ย้อมสี มีคำอธิบายข้างบรรทัด)
+- แถบบนมีป้าย Esc ปุ่มรีเฟรช และป้าย "GitHub จำลอง"; หน้า PR วางเลข #N ต่อท้ายชื่อ และฟอร์มเปิด PR เติม Title จาก commit ล่าสุด; หน้า Branches แสดง ahead/behind เป็นชิป
+- ตรวจด้วยสคริปต์ที่จับภาพทุกหน้า (repo ว่าง, Code, ไฟล์, Commits, Branches, PR ทุกแท็บ, merge) ผ่านทั้ง flow
