@@ -117,8 +117,9 @@ public partial class RemoteRepoView
         column.AddThemeConstantOverride("separation", S(4));
         column.AddChild(GitHubUi.Text(pull.Title, GitHubTheme.Fg, 16, bold: true));
 
-        var meta = new HBoxContainer();
-        meta.AddThemeConstantOverride("separation", S(8));
+        var meta = new HFlowContainer();
+        meta.AddThemeConstantOverride("h_separation", S(8));
+        meta.AddThemeConstantOverride("v_separation", S(6));
         var summary = pull.State switch
         {
             PullRequestState.Merged => $"#{pull.Number} by {pull.Author} was merged",
@@ -201,7 +202,18 @@ public partial class RemoteRepoView
                 summary.AddChild(GitHubUi.IconText(GhIcon.Commit, $"เปรียบเทียบ {head.Name} กับ {target.Name}", GitHubTheme.FgMuted, 14));
         }
 
-        comparePicker.ItemSelected += _ => UpdateSummary();
+        LineEdit? titleField = null;
+        var titleTouched = false;
+        void SuggestTitle()
+        {
+            if (titleField is not null && !titleTouched) titleField.Text = branches[comparePicker.Selected].LastCommitSubject;
+        }
+
+        comparePicker.ItemSelected += _ =>
+        {
+            UpdateSummary();
+            SuggestTitle();
+        };
         basePicker.ItemSelected += _ => UpdateSummary();
         UpdateSummary();
         compare.AddChild(compareColumn);
@@ -219,6 +231,9 @@ public partial class RemoteRepoView
         var fields = new VBoxContainer();
         fields.AddThemeConstantOverride("separation", S(12));
         var title = new LineEdit { PlaceholderText = "Title", SizeFlagsHorizontal = SizeFlags.ExpandFill, MouseFilter = MouseFilterEnum.Pass };
+        titleField = title;
+        title.TextChanged += _ => titleTouched = true; // เปลี่ยนด้วยโค้ด (SuggestTitle) ไม่ส่งสัญญาณนี้
+        SuggestTitle();
         fields.AddChild(title);
         var body = new TextEdit
         {
@@ -267,15 +282,12 @@ public partial class RemoteRepoView
         }
 
         var pull = detail.Pull;
-        var heading = new HBoxContainer();
-        heading.AddThemeConstantOverride("separation", S(12));
-        heading.AddChild(GitHubUi.Text(pull.Title, GitHubTheme.Fg, 28, wrap: true));
-        heading.AddChild(GitHubUi.Text($"#{pull.Number}", GitHubTheme.FgMuted, 28));
-        _content.AddChild(heading);
+        _content.AddChild(GitHubUi.Heading(pull.Title, $"#{pull.Number}"));
 
         var commitText = GitHubUi.Count(detail.Commits.Count, "commit", "commits");
-        var meta = new HBoxContainer();
-        meta.AddThemeConstantOverride("separation", S(8));
+        var meta = new HFlowContainer();
+        meta.AddThemeConstantOverride("h_separation", S(8));
+        meta.AddThemeConstantOverride("v_separation", S(6));
         meta.AddChild(GitHubUi.StatePill(pull.State));
         meta.AddChild(GitHubUi.Text(pull.Author, GitHubTheme.Fg, 15, bold: true));
         meta.AddChild(GitHubUi.Text(pull.State switch

@@ -183,6 +183,26 @@ public static class GitHubUi
         return pill;
     }
 
+    /// <summary>หัวข้อหน้า ตามด้วยเลขกำกับสีจาง (เช่น ชื่อ PR  #1) ตัดบรรทัดได้โดยเลขติดท้ายชื่อเสมอ</summary>
+    public static RichTextLabel Heading(string title, string? suffix = null, int size = 28)
+    {
+        var label = new RichTextLabel
+        {
+            BbcodeEnabled = true,
+            FitContent = true,
+            ScrollActive = false,
+            SelectionEnabled = true,
+            AutowrapMode = TextServer.AutowrapMode.WordSmart,
+            MouseFilter = Control.MouseFilterEnum.Pass,
+            SizeFlagsHorizontal = Control.SizeFlags.ExpandFill
+        };
+        label.AddThemeFontSizeOverride("normal_font_size", S(size));
+        label.AddThemeColorOverride("default_color", GitHubTheme.Fg);
+        var text = title.Replace("[", "[lb]");
+        label.Text = suffix is null ? text : $"{text} [color=#{GitHubTheme.FgMuted.ToHtml(false)}]{suffix}[/color]";
+        return label;
+    }
+
     /// <summary>ป้ายปุ่มคีย์บอร์ดเล็กๆ เช่น Esc</summary>
     public static PanelContainer KeyHint(string key)
     {
