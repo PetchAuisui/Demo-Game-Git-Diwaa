@@ -65,6 +65,24 @@ border_width_right = 5
 border_width_bottom = 5
 border_color = Color(0.169, 0.106, 0.055, 1)
 
+[sub_resource type="StyleBoxFlat" id="Style_btn_dressing_normal"]
+bg_color = Color(0.494, 0.341, 0.761, 1)
+border_width_right = 5
+border_width_bottom = 5
+border_color = Color(0.29, 0.078, 0.549, 1)
+
+[sub_resource type="StyleBoxFlat" id="Style_btn_dressing_pressed"]
+bg_color = Color(0.38, 0.22, 0.65, 1)
+border_width_left = 3
+border_width_top = 3
+border_color = Color(0.29, 0.078, 0.549, 1)
+
+[sub_resource type="StyleBoxFlat" id="Style_btn_dressing_hover"]
+bg_color = Color(0.584, 0.447, 0.843, 1)
+border_width_right = 5
+border_width_bottom = 5
+border_color = Color(0.29, 0.078, 0.549, 1)
+
 [sub_resource type="StyleBoxFlat" id="Style_terminal_bg"]
 bg_color = Color(0.043, 0.051, 0.035, 1)
 
@@ -220,7 +238,7 @@ unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 56)
 layout_mode = 2
 focus_neighbor_top = NodePath("../StartCareerBtn")
-focus_neighbor_bottom = NodePath("../TutorialBtn")
+focus_neighbor_bottom = NodePath("../DressingRoomBtn")
 theme_override_colors/font_color = Color(0.18, 0.12, 0.08, 1)
 theme_override_colors/font_pressed_color = Color(0.18, 0.12, 0.08, 1)
 theme_override_colors/font_hover_color = Color(0.18, 0.12, 0.08, 1)
@@ -230,6 +248,22 @@ theme_override_styles/normal = SubResource("Style_btn_resume_normal")
 theme_override_styles/pressed = SubResource("Style_btn_resume_pressed")
 theme_override_styles/hover = SubResource("Style_btn_resume_hover")
 text = "RESUME WORK 🕒"
+
+[node name="DressingRoomBtn" type="Button" parent="WindowAnchor/WindowFrame/WindowVBox/WindowContent/LeftMenuPanel/Margin/VBox" unique_id=1849204812]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 56)
+layout_mode = 2
+focus_neighbor_top = NodePath("../ResumeWorkBtn")
+focus_neighbor_bottom = NodePath("../TutorialBtn")
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_pressed_color = Color(0.9, 0.85, 1, 1)
+theme_override_colors/font_hover_color = Color(1, 1, 1, 1)
+theme_override_fonts/font = ExtResource("6_font_chakra_bold")
+theme_override_font_sizes/font_size = 20
+theme_override_styles/normal = SubResource("Style_btn_dressing_normal")
+theme_override_styles/pressed = SubResource("Style_btn_dressing_pressed")
+theme_override_styles/hover = SubResource("Style_btn_dressing_hover")
+text = "DRESSING ROOM ✨"
 
 [node name="DottedSeparator" type="Label" parent="WindowAnchor/WindowFrame/WindowVBox/WindowContent/LeftMenuPanel/Margin/VBox" unique_id=1344059474]
 layout_mode = 2
@@ -242,7 +276,7 @@ horizontal_alignment = 1
 [node name="TutorialBtn" type="Button" parent="WindowAnchor/WindowFrame/WindowVBox/WindowContent/LeftMenuPanel/Margin/VBox" unique_id=1448974232]
 unique_name_in_owner = true
 layout_mode = 2
-focus_neighbor_top = NodePath("../ResumeWorkBtn")
+focus_neighbor_top = NodePath("../DressingRoomBtn")
 theme_override_colors/font_color = Color(0.33, 0.24, 0.15, 1)
 theme_override_colors/font_pressed_color = Color(0.514, 0.133, 0.027, 1)
 theme_override_colors/font_hover_color = Color(0.871, 0.306, 0.137, 1)
