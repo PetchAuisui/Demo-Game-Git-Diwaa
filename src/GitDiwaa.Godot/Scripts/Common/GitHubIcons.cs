@@ -17,8 +17,8 @@ public static class GitHubIcons
     private static readonly Dictionary<(GhIcon Icon, string Color, int Size, float Scale), Texture2D?> Cache = new();
 
     /// <param name="size">ขนาดที่แสดง (px)</param>
-    /// <param name="scale">เรนเดอร์กี่เท่าของ size ปุ่ม/รูปใช้ 2 เท่า (theme จำกัดความกว้างให้) ส่วน LineEdit ใช้ 1</param>
-    public static Texture2D? Get(GhIcon icon, Color color, int size = 16, float scale = 2f)
+    /// <param name="scale">เรนเดอร์กี่เท่าของ size ปุ่ม/รูปใช้ 3 เท่า (theme จำกัดความกว้างให้) ส่วน LineEdit ใช้ 1</param>
+    public static Texture2D? Get(GhIcon icon, Color color, int size = 16, float scale = 3f)
     {
         var hex = "#" + color.ToHtml(false);
         var key = (icon, hex, size, scale);

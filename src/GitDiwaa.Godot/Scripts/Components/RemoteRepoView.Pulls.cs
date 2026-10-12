@@ -14,11 +14,11 @@ public partial class RemoteRepoView
         var rows = new List<(Control Row, string Title)>();
 
         var toolbar = new HBoxContainer();
-        toolbar.AddThemeConstantOverride("separation", 10);
+        toolbar.AddThemeConstantOverride("separation", S(10));
         var search = new LineEdit
         {
             PlaceholderText = "Search pull requests",
-            RightIcon = GitHubIcons.Get(GhIcon.Search, GitHubTheme.FgMuted, 16, 1f),
+            RightIcon = GitHubIcons.Get(GhIcon.Search, GitHubTheme.FgMuted, S(16), 1f),
             ClearButtonEnabled = true,
             SizeFlagsHorizontal = SizeFlags.ExpandFill,
             MouseFilter = MouseFilterEnum.Pass
@@ -48,7 +48,7 @@ public partial class RemoteRepoView
         var closed = pulls.Where(p => p.State != PullRequestState.Open).ToList();
 
         var filters = new HBoxContainer();
-        filters.AddThemeConstantOverride("separation", 4);
+        filters.AddThemeConstantOverride("separation", S(4));
         filters.AddChild(FilterButton($"{open.Count} Open", GhIcon.PullOpen, !_showClosed, () =>
         {
             _showClosed = false;
@@ -65,8 +65,8 @@ public partial class RemoteRepoView
         if (shown.Count == 0)
         {
             var empty = new MarginContainer();
-            empty.AddThemeConstantOverride("margin_top", 28);
-            empty.AddThemeConstantOverride("margin_bottom", 28);
+            empty.AddThemeConstantOverride("margin_top", S(28));
+            empty.AddThemeConstantOverride("margin_bottom", S(28));
             var message = GitHubUi.Text(_showClosed ? "ยังไม่มี pull request ที่ปิดแล้ว" : "ไม่มี pull request ที่เปิดอยู่",
                 GitHubTheme.FgMuted, 16);
             message.HorizontalAlignment = HorizontalAlignment.Center;
@@ -107,18 +107,18 @@ public partial class RemoteRepoView
     private static Control BuildPullRow(PullRequestInfo pull)
     {
         var row = new HBoxContainer();
-        row.AddThemeConstantOverride("separation", 12);
+        row.AddThemeConstantOverride("separation", S(12));
 
         var state = GitHubUi.StateIcon(pull.State, 18);
         state.SizeFlagsVertical = SizeFlags.ShrinkBegin;
         row.AddChild(state);
 
         var column = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
-        column.AddThemeConstantOverride("separation", 4);
+        column.AddThemeConstantOverride("separation", S(4));
         column.AddChild(GitHubUi.Text(pull.Title, GitHubTheme.Fg, 16, bold: true));
 
         var meta = new HBoxContainer();
-        meta.AddThemeConstantOverride("separation", 8);
+        meta.AddThemeConstantOverride("separation", S(8));
         var summary = pull.State switch
         {
             PullRequestState.Merged => $"#{pull.Number} by {pull.Author} was merged",
@@ -163,11 +163,11 @@ public partial class RemoteRepoView
 
         // แถบเลือก base ← compare
         var compare = GitHubUi.Card(16, 12);
-        compare.AddThemeStyleboxOverride("panel", GitHubTheme.Box(GitHubTheme.CanvasSubtle, GitHubTheme.Border, 6, 1, 16, 12));
+        compare.AddThemeStyleboxOverride("panel", GitHubTheme.Box(GitHubTheme.CanvasSubtle, GitHubTheme.Border, 8, 1, 16, 12));
         var compareColumn = new VBoxContainer();
-        compareColumn.AddThemeConstantOverride("separation", 10);
+        compareColumn.AddThemeConstantOverride("separation", S(10));
         var pickers = new HBoxContainer();
-        pickers.AddThemeConstantOverride("separation", 10);
+        pickers.AddThemeConstantOverride("separation", S(10));
         pickers.AddChild(GitHubUi.Icon(GhIcon.PullOpen, GitHubTheme.FgMuted, 18));
         pickers.AddChild(GitHubUi.Text("base:", GitHubTheme.FgMuted));
         var basePicker = BranchPicker(branches, _ => { }, defaultBranch);
@@ -179,7 +179,7 @@ public partial class RemoteRepoView
         compareColumn.AddChild(pickers);
 
         var summary = new HBoxContainer();
-        summary.AddThemeConstantOverride("separation", 6);
+        summary.AddThemeConstantOverride("separation", S(6));
         compareColumn.AddChild(summary);
         void UpdateSummary()
         {
@@ -209,7 +209,7 @@ public partial class RemoteRepoView
 
         // ฟอร์มหัวข้อ + รายละเอียด
         var form = new HBoxContainer();
-        form.AddThemeConstantOverride("separation", 14);
+        form.AddThemeConstantOverride("separation", S(14));
         var avatar = GitHubUi.Avatar(_repo!.Owner, 40);
         avatar.SizeFlagsVertical = SizeFlags.ShrinkBegin;
         form.AddChild(avatar);
@@ -217,13 +217,13 @@ public partial class RemoteRepoView
         var card = GitHubUi.Card(16, 16);
         card.SizeFlagsHorizontal = SizeFlags.ExpandFill;
         var fields = new VBoxContainer();
-        fields.AddThemeConstantOverride("separation", 12);
+        fields.AddThemeConstantOverride("separation", S(12));
         var title = new LineEdit { PlaceholderText = "Title", SizeFlagsHorizontal = SizeFlags.ExpandFill, MouseFilter = MouseFilterEnum.Pass };
         fields.AddChild(title);
         var body = new TextEdit
         {
             PlaceholderText = "Leave a comment",
-            CustomMinimumSize = new Vector2(0, 150),
+            CustomMinimumSize = new Vector2(0, S(150)),
             WrapMode = TextEdit.LineWrappingMode.Boundary
         };
         fields.AddChild(body);
@@ -232,7 +232,7 @@ public partial class RemoteRepoView
         error.Visible = false;
         fields.AddChild(error);
         var buttons = new HBoxContainer();
-        buttons.AddThemeConstantOverride("separation", 10);
+        buttons.AddThemeConstantOverride("separation", S(10));
         buttons.AddChild(GitHubUi.Spacer());
         buttons.AddChild(GitHubUi.Btn("Cancel", () => Go(Page.Pulls)));
         buttons.AddChild(GitHubUi.Btn("Create pull request", async () =>
@@ -268,14 +268,14 @@ public partial class RemoteRepoView
 
         var pull = detail.Pull;
         var heading = new HBoxContainer();
-        heading.AddThemeConstantOverride("separation", 12);
+        heading.AddThemeConstantOverride("separation", S(12));
         heading.AddChild(GitHubUi.Text(pull.Title, GitHubTheme.Fg, 28, wrap: true));
         heading.AddChild(GitHubUi.Text($"#{pull.Number}", GitHubTheme.FgMuted, 28));
         _content.AddChild(heading);
 
         var commitText = GitHubUi.Count(detail.Commits.Count, "commit", "commits");
         var meta = new HBoxContainer();
-        meta.AddThemeConstantOverride("separation", 8);
+        meta.AddThemeConstantOverride("separation", S(8));
         meta.AddChild(GitHubUi.StatePill(pull.State));
         meta.AddChild(GitHubUi.Text(pull.Author, GitHubTheme.Fg, 15, bold: true));
         meta.AddChild(GitHubUi.Text(pull.State switch
@@ -290,12 +290,12 @@ public partial class RemoteRepoView
         _content.AddChild(meta);
 
         var tabs = new HBoxContainer();
-        tabs.AddThemeConstantOverride("separation", 4);
+        tabs.AddThemeConstantOverride("separation", S(4));
         tabs.AddChild(GitHubUi.Tab("Conversation", _pullTab == PullTab.Conversation, () => SwitchPullTab(PullTab.Conversation), GhIcon.Comment));
         tabs.AddChild(GitHubUi.Tab("Commits", _pullTab == PullTab.Commits, () => SwitchPullTab(PullTab.Commits), GhIcon.Commit, detail.Commits.Count));
         tabs.AddChild(GitHubUi.Tab("Files changed", _pullTab == PullTab.Files, () => SwitchPullTab(PullTab.Files), GhIcon.File, detail.Files.Count));
         var tabColumn = new VBoxContainer();
-        tabColumn.AddThemeConstantOverride("separation", 0);
+        tabColumn.AddThemeConstantOverride("separation", S(0));
         tabColumn.AddChild(tabs);
         tabColumn.AddChild(new HSeparator());
         _content.AddChild(tabColumn);
@@ -343,22 +343,22 @@ public partial class RemoteRepoView
     private static Control TimelineComment(string author, string action, DateTimeOffset when, string? body)
     {
         var row = new HBoxContainer();
-        row.AddThemeConstantOverride("separation", 14);
+        row.AddThemeConstantOverride("separation", S(14));
         var avatar = GitHubUi.Avatar(author, 40);
         avatar.SizeFlagsVertical = SizeFlags.ShrinkBegin;
         row.AddChild(avatar);
 
         var header = new HBoxContainer();
-        header.AddThemeConstantOverride("separation", 8);
+        header.AddThemeConstantOverride("separation", S(8));
         header.AddChild(GitHubUi.Text(author, GitHubTheme.Fg, 15, bold: true));
         header.AddChild(GitHubUi.Text($"{action} {GitHubUi.TimeAgo(when)}", GitHubTheme.FgMuted, 14));
         var (box, content) = GitHubUi.Box(header);
 
         var margin = new MarginContainer { MouseFilter = MouseFilterEnum.Pass };
-        margin.AddThemeConstantOverride("margin_left", 16);
-        margin.AddThemeConstantOverride("margin_right", 16);
-        margin.AddThemeConstantOverride("margin_top", 14);
-        margin.AddThemeConstantOverride("margin_bottom", 16);
+        margin.AddThemeConstantOverride("margin_left", S(16));
+        margin.AddThemeConstantOverride("margin_right", S(16));
+        margin.AddThemeConstantOverride("margin_top", S(14));
+        margin.AddThemeConstantOverride("margin_bottom", S(16));
         margin.AddChild(string.IsNullOrWhiteSpace(body)
             ? GitHubUi.Text("No description provided.", GitHubTheme.FgMuted)
             : MarkdownView.Render(body));
@@ -377,17 +377,17 @@ public partial class RemoteRepoView
         };
 
         var row = new HBoxContainer();
-        row.AddThemeConstantOverride("separation", 14);
+        row.AddThemeConstantOverride("separation", S(14));
         var slot = new MarginContainer { MouseFilter = MouseFilterEnum.Ignore, SizeFlagsVertical = SizeFlags.ShrinkBegin };
-        slot.AddThemeConstantOverride("margin_left", 4);
-        slot.AddThemeConstantOverride("margin_right", 4);
+        slot.AddThemeConstantOverride("margin_left", S(4));
+        slot.AddThemeConstantOverride("margin_right", S(4));
         slot.AddChild(GitHubUi.Bubble(icon, fill, 32));
         row.AddChild(slot);
 
         var column = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
-        column.AddThemeConstantOverride("separation", 8);
+        column.AddThemeConstantOverride("separation", S(8));
         var line = new HBoxContainer();
-        line.AddThemeConstantOverride("separation", 8);
+        line.AddThemeConstantOverride("separation", S(8));
         line.AddChild(GitHubUi.Text(review.Reviewer, GitHubTheme.Fg, 15, bold: true));
         line.AddChild(GitHubUi.Text($"{verb} {GitHubUi.TimeAgo(review.At)}", GitHubTheme.FgMuted, 14));
         column.AddChild(line);
@@ -406,10 +406,10 @@ public partial class RemoteRepoView
     private static Control StatusRow(GhIcon icon, Color fill, string title, string? detail, bool last, Control? action = null)
     {
         var row = new HBoxContainer();
-        row.AddThemeConstantOverride("separation", 14);
+        row.AddThemeConstantOverride("separation", S(14));
         row.AddChild(GitHubUi.Bubble(icon, fill, 32));
         var text = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
-        text.AddThemeConstantOverride("separation", 2);
+        text.AddThemeConstantOverride("separation", S(2));
         text.AddChild(GitHubUi.Text(title, GitHubTheme.Fg, 16, bold: true, wrap: true));
         if (detail is not null) text.AddChild(GitHubUi.Text(detail, GitHubTheme.FgMuted, 14, wrap: true));
         row.AddChild(text);
@@ -440,7 +440,7 @@ public partial class RemoteRepoView
                 "Merging can be performed automatically.", false));
 
         var footer = new HBoxContainer();
-        footer.AddThemeConstantOverride("separation", 10);
+        footer.AddThemeConstantOverride("separation", S(10));
         var merge = GitHubUi.Btn("Merge pull request", async () =>
         {
             var result = await _host!.MergePullRequestAsync(pull.Number);
@@ -454,10 +454,10 @@ public partial class RemoteRepoView
             Go(Page.PullDetail, result.Message, !result.Success);
         }, GhButtonKind.Default, GhIcon.PullClosed));
         var padded = new MarginContainer();
-        padded.AddThemeConstantOverride("margin_left", 16);
-        padded.AddThemeConstantOverride("margin_right", 16);
-        padded.AddThemeConstantOverride("margin_top", 14);
-        padded.AddThemeConstantOverride("margin_bottom", 14);
+        padded.AddThemeConstantOverride("margin_left", S(16));
+        padded.AddThemeConstantOverride("margin_right", S(16));
+        padded.AddThemeConstantOverride("margin_top", S(14));
+        padded.AddThemeConstantOverride("margin_bottom", S(14));
         padded.AddChild(footer);
         body.AddChild(padded);
         _content.AddChild(box);
@@ -487,20 +487,20 @@ public partial class RemoteRepoView
     {
         var reviewer = _repo!.Owner;
         var row = new HBoxContainer();
-        row.AddThemeConstantOverride("separation", 14);
+        row.AddThemeConstantOverride("separation", S(14));
         var avatar = GitHubUi.Avatar(reviewer, 40);
         avatar.SizeFlagsVertical = SizeFlags.ShrinkBegin;
         row.AddChild(avatar);
 
         var card = GitHubUi.Card(16, 14);
         var column = new VBoxContainer();
-        column.AddThemeConstantOverride("separation", 10);
+        column.AddThemeConstantOverride("separation", S(10));
         column.AddChild(GitHubUi.Text("Add your review", GitHubTheme.Fg, 16, bold: true));
         column.AddChild(GitHubUi.Text($"ในฐานะ {reviewer}", GitHubTheme.FgMuted, 13));
         var comment = new TextEdit
         {
             PlaceholderText = "Leave a comment (ไม่บังคับ)",
-            CustomMinimumSize = new Vector2(0, 84),
+            CustomMinimumSize = new Vector2(0, S(84)),
             WrapMode = TextEdit.LineWrappingMode.Boundary
         };
         column.AddChild(comment);
@@ -512,7 +512,7 @@ public partial class RemoteRepoView
         }
 
         var buttons = new HBoxContainer();
-        buttons.AddThemeConstantOverride("separation", 10);
+        buttons.AddThemeConstantOverride("separation", S(10));
         buttons.AddChild(GitHubUi.Spacer());
         buttons.AddChild(GitHubUi.Btn("Comment", () => Review(ReviewVerdict.Commented), GhButtonKind.Default, GhIcon.Comment));
         buttons.AddChild(GitHubUi.Btn("Request changes", () => Review(ReviewVerdict.ChangesRequested), GhButtonKind.Danger));
@@ -552,7 +552,7 @@ public partial class RemoteRepoView
         var additions = detail.Files.Sum(file => file.Additions);
         var deletions = detail.Files.Sum(file => file.Deletions);
         var summary = new HBoxContainer();
-        summary.AddThemeConstantOverride("separation", 8);
+        summary.AddThemeConstantOverride("separation", S(8));
         summary.AddChild(GitHubUi.Text($"Showing {GitHubUi.Count(detail.Files.Count, "changed file", "changed files")} with",
             GitHubTheme.FgMuted));
         summary.AddChild(GitHubUi.Text($"{additions} additions", GitHubTheme.Success, 15, bold: true));

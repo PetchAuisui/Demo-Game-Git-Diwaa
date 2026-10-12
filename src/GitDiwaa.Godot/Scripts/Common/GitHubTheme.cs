@@ -8,6 +8,16 @@ namespace GitDiwaa.Godot.Common;
 /// </summary>
 public static class GitHubTheme
 {
+    /// <summary>
+    /// อัตราขยายของทั้งหน้า: เกมตั้งฟอนต์เริ่มต้นไว้ 24 ส่วนขนาดแบบ GitHub จริงอยู่ที่ 14–16
+    /// จึงคูณทุกขนาด (ตัวอักษร ไอคอน ช่องไฟ) ด้วยค่านี้ ให้อ่านสบายเท่ากับ UI ส่วนอื่นของเกม
+    /// </summary>
+    public const float UiScale = 1.35f;
+
+    public static int S(int pixels) => Mathf.RoundToInt(pixels * UiScale);
+
+    public static float S(float pixels) => pixels * UiScale;
+
     // พื้นผิวและเส้นขอบ
     public static readonly Color Canvas = new("#0d1117");
     public static readonly Color CanvasSubtle = new("#161b22");
@@ -63,15 +73,15 @@ public static class GitHubTheme
     };
 
     /// <summary>กล่องพื้นหลังมีเส้นขอบรอบด้าน</summary>
-    public static StyleBoxFlat Box(Color bg, Color border, int radius = 6, int borderWidth = 1, float padH = 0, float padV = 0)
+    public static StyleBoxFlat Box(Color bg, Color border, int radius = 8, int borderWidth = 1, float padH = 0, float padV = 0)
     {
         var box = new StyleBoxFlat { BgColor = bg, BorderColor = border };
         box.SetBorderWidthAll(borderWidth);
         box.SetCornerRadiusAll(radius);
-        box.ContentMarginLeft = padH + borderWidth;
-        box.ContentMarginRight = padH + borderWidth;
-        box.ContentMarginTop = padV + borderWidth;
-        box.ContentMarginBottom = padV + borderWidth;
+        box.ContentMarginLeft = S(padH) + borderWidth;
+        box.ContentMarginRight = S(padH) + borderWidth;
+        box.ContentMarginTop = S(padV) + borderWidth;
+        box.ContentMarginBottom = S(padV) + borderWidth;
         return box;
     }
 
@@ -83,47 +93,47 @@ public static class GitHubTheme
             BgColor = bg,
             BorderColor = line,
             BorderWidthBottom = lineWidth,
-            ContentMarginLeft = padH,
-            ContentMarginRight = padH,
-            ContentMarginTop = padTop,
-            ContentMarginBottom = (padBottom ?? padTop) + lineWidth
+            ContentMarginLeft = S(padH),
+            ContentMarginRight = S(padH),
+            ContentMarginTop = S(padTop),
+            ContentMarginBottom = S(padBottom ?? padTop) + lineWidth
         };
     }
 
     public static Theme Create()
     {
-        var theme = new Theme { DefaultFontSize = 15 };
+        var theme = new Theme { DefaultFontSize = S(15) };
         theme.SetColor("font_color", "Label", Fg);
 
         // ปุ่มทั่วไป
         foreach (var type in new[] { "Button", "OptionButton" })
         {
             SetButton(theme, type,
-                Box(new("#21262d"), new("#363b42"), 6, 1, 14, 5),
-                Box(new("#30363d"), new("#8b949e"), 6, 1, 14, 5),
-                Box(new("#282e33"), new("#8b949e"), 6, 1, 14, 5),
-                Box(new("#21262d"), new("#30363d"), 6, 1, 14, 5),
+                Box(new("#21262d"), new("#363b42"), 8, 1, 14, 5),
+                Box(new("#30363d"), new("#8b949e"), 8, 1, 14, 5),
+                Box(new("#282e33"), new("#8b949e"), 8, 1, 14, 5),
+                Box(new("#21262d"), new("#30363d"), 8, 1, 14, 5),
                 Fg, Fg, new("#484f58"));
-            theme.SetConstant("h_separation", type, 6);
-            theme.SetConstant("icon_max_width", type, 16);
+            theme.SetConstant("h_separation", type, S(6));
+            theme.SetConstant("icon_max_width", type, S(16));
         }
 
         // ปุ่มหลักสีเขียว
         theme.SetTypeVariation(PrimaryButton, "Button");
         SetButton(theme, PrimaryButton,
-            Box(SuccessEmphasis, new("#2ea043"), 6, 1, 14, 5),
-            Box(new("#2ea043"), new("#3fb950"), 6, 1, 14, 5),
-            Box(new("#1f7a2f"), new("#2ea043"), 6, 1, 14, 5),
-            Box(new(0.137f, 0.525f, 0.212f, 0.45f), new(0.18f, 0.63f, 0.26f, 0.3f), 6, 1, 14, 5),
+            Box(SuccessEmphasis, new("#2ea043"), 8, 1, 14, 5),
+            Box(new("#2ea043"), new("#3fb950"), 8, 1, 14, 5),
+            Box(new("#1f7a2f"), new("#2ea043"), 8, 1, 14, 5),
+            Box(new(0.137f, 0.525f, 0.212f, 0.45f), new(0.18f, 0.63f, 0.26f, 0.3f), 8, 1, 14, 5),
             Colors.White, Colors.White, new(1f, 1f, 1f, 0.5f));
 
         // ปุ่มอันตราย (ตัวแดง โฮเวอร์แล้วเป็นพื้นแดง)
         theme.SetTypeVariation(DangerButton, "Button");
         SetButton(theme, DangerButton,
-            Box(new("#21262d"), new("#363b42"), 6, 1, 14, 5),
-            Box(DangerEmphasis, Danger, 6, 1, 14, 5),
-            Box(new("#b62324"), Danger, 6, 1, 14, 5),
-            Box(new("#21262d"), new("#30363d"), 6, 1, 14, 5),
+            Box(new("#21262d"), new("#363b42"), 8, 1, 14, 5),
+            Box(DangerEmphasis, Danger, 8, 1, 14, 5),
+            Box(new("#b62324"), Danger, 8, 1, 14, 5),
+            Box(new("#21262d"), new("#30363d"), 8, 1, 14, 5),
             Danger, Colors.White, new("#484f58"));
 
         // ปุ่มลิงก์ (ข้อความสีฟ้า ไม่มีกรอบ)
@@ -134,18 +144,18 @@ public static class GitHubTheme
         // ปุ่มโปร่งใส (ปุ่มไอคอน/ลิงก์รอง) โฮเวอร์แล้วมีพื้น
         theme.SetTypeVariation(GhostButton, "Button");
         SetButton(theme, GhostButton,
-            Box(Colors.Transparent, Colors.Transparent, 6, 0, 8, 4),
-            Box(new(0.19f, 0.21f, 0.24f, 0.7f), Colors.Transparent, 6, 0, 8, 4),
-            Box(new(0.19f, 0.21f, 0.24f, 1f), Colors.Transparent, 6, 0, 8, 4),
-            Box(Colors.Transparent, Colors.Transparent, 6, 0, 8, 4),
+            Box(Colors.Transparent, Colors.Transparent, 8, 0, 8, 4),
+            Box(new(0.19f, 0.21f, 0.24f, 0.7f), Colors.Transparent, 8, 0, 8, 4),
+            Box(new(0.19f, 0.21f, 0.24f, 1f), Colors.Transparent, 8, 0, 8, 4),
+            Box(Colors.Transparent, Colors.Transparent, 8, 0, 8, 4),
             FgMuted, Fg, FgSubtle);
 
         // ช่องกรอก
         foreach (var type in new[] { "LineEdit", "TextEdit" })
         {
-            theme.SetStylebox("normal", type, Box(Canvas, Border, 6, 1, 12, 5));
+            theme.SetStylebox("normal", type, Box(Canvas, Border, 8, 1, 12, 5));
             theme.SetStylebox("focus", type, FocusRing());
-            theme.SetStylebox("read_only", type, Box(CanvasSubtle, Border, 6, 1, 12, 5));
+            theme.SetStylebox("read_only", type, Box(CanvasSubtle, Border, 8, 1, 12, 5));
             theme.SetColor("font_color", type, Fg);
             theme.SetColor("font_readonly_color", type, FgMuted);
             theme.SetColor("font_uneditable_color", type, FgMuted);
@@ -156,12 +166,13 @@ public static class GitHubTheme
 
         // เมนูตัวเลือก (เช่น เลือก branch)
         theme.SetStylebox("panel", "PopupMenu", Box(CanvasSubtle, Border, 8, 1, 4, 4));
-        theme.SetStylebox("hover", "PopupMenu", Box(new("#30363d"), Colors.Transparent, 6, 0, 8, 4));
+        theme.SetStylebox("hover", "PopupMenu", Box(new("#30363d"), Colors.Transparent, 8, 0, 8, 4));
         theme.SetStylebox("separator", "PopupMenu", new StyleBoxLine { Color = Border, Thickness = 1 });
         theme.SetColor("font_color", "PopupMenu", Fg);
         theme.SetColor("font_hover_color", "PopupMenu", Fg);
         theme.SetColor("font_disabled_color", "PopupMenu", FgSubtle);
-        theme.SetConstant("v_separation", "PopupMenu", 8);
+        theme.SetConstant("v_separation", "PopupMenu", S(8));
+        theme.SetConstant("icon_max_width", "PopupMenu", S(16));
 
         // แถบเลื่อนบางๆ
         foreach (var type in new[] { "VScrollBar", "HScrollBar" })
@@ -188,7 +199,7 @@ public static class GitHubTheme
 
     private static StyleBoxFlat FocusRing()
     {
-        var ring = Box(Colors.Transparent, AccentEmphasis, 6, 1, 12, 5);
+        var ring = Box(Colors.Transparent, AccentEmphasis, 8, 1, 12, 5);
         ring.DrawCenter = false;
         return ring;
     }
@@ -197,10 +208,10 @@ public static class GitHubTheme
     {
         var box = new StyleBoxFlat { BgColor = color };
         box.SetCornerRadiusAll(5);
-        box.ContentMarginLeft = vertical ? 5 : 0;
-        box.ContentMarginRight = vertical ? 5 : 0;
-        box.ContentMarginTop = vertical ? 0 : 5;
-        box.ContentMarginBottom = vertical ? 0 : 5;
+        box.ContentMarginLeft = vertical ? S(5) : 0;
+        box.ContentMarginRight = vertical ? S(5) : 0;
+        box.ContentMarginTop = vertical ? 0 : S(5);
+        box.ContentMarginBottom = vertical ? 0 : S(5);
         return box;
     }
 

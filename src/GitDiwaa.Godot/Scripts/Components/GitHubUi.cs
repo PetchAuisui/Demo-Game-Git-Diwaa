@@ -20,6 +20,8 @@ public static class GitHubUi
     private static readonly string[] AvatarColors =
         ["#1f6feb", "#8957e5", "#238636", "#9e6a03", "#da3633", "#0b7285", "#bf3989"];
 
+    private static int S(int pixels) => GitHubTheme.S(pixels);
+
     public static Control Spacer() => new()
     {
         SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
@@ -30,7 +32,7 @@ public static class GitHubUi
     {
         var label = new Label { Text = text, MouseFilter = Control.MouseFilterEnum.Ignore };
         label.AddThemeColorOverride("font_color", color ?? GitHubTheme.Fg);
-        label.AddThemeFontSizeOverride("font_size", size);
+        label.AddThemeFontSizeOverride("font_size", S(size));
         if (mono) label.AddThemeFontOverride("font", GitHubTheme.MonoFont);
         else if (bold) label.AddThemeFontOverride("font", GitHubTheme.BoldFont);
         if (wrap)
@@ -42,21 +44,25 @@ public static class GitHubUi
         return label;
     }
 
-    public static TextureRect Icon(GhIcon icon, Color color, int size = 16) => new()
+    public static TextureRect Icon(GhIcon icon, Color color, int size = 16)
     {
-        Texture = GitHubIcons.Get(icon, color, size),
-        CustomMinimumSize = new Vector2(size, size),
-        ExpandMode = TextureRect.ExpandModeEnum.IgnoreSize,
-        StretchMode = TextureRect.StretchModeEnum.KeepAspectCentered,
-        MouseFilter = Control.MouseFilterEnum.Ignore,
-        SizeFlagsVertical = Control.SizeFlags.ShrinkCenter,
-        TextureFilter = CanvasItem.TextureFilterEnum.LinearWithMipmaps
-    };
+        var pixels = S(size);
+        return new TextureRect
+        {
+            Texture = GitHubIcons.Get(icon, color, pixels),
+            CustomMinimumSize = new Vector2(pixels, pixels),
+            ExpandMode = TextureRect.ExpandModeEnum.IgnoreSize,
+            StretchMode = TextureRect.StretchModeEnum.KeepAspectCentered,
+            MouseFilter = Control.MouseFilterEnum.Ignore,
+            SizeFlagsVertical = Control.SizeFlags.ShrinkCenter,
+            TextureFilter = CanvasItem.TextureFilterEnum.LinearWithMipmaps
+        };
+    }
 
     public static HBoxContainer IconText(GhIcon icon, string text, Color color, int size = 15, bool bold = false)
     {
         var row = new HBoxContainer { MouseFilter = Control.MouseFilterEnum.Ignore };
-        row.AddThemeConstantOverride("separation", 6);
+        row.AddThemeConstantOverride("separation", S(6));
         row.AddChild(Icon(icon, color, size + 1));
         row.AddChild(Text(text, color, size, bold));
         return row;
@@ -92,7 +98,7 @@ public static class GitHubUi
                 GhButtonKind.Link => GitHubTheme.Accent,
                 _ => GitHubTheme.FgMuted
             };
-            button.Icon = GitHubIcons.Get(glyph, tint); // texture 2 เท่า ถูกจำกัดกว้าง 16px ด้วย icon_max_width ใน theme
+            button.Icon = GitHubIcons.Get(glyph, tint, S(16)); // texture 3 เท่า ถูกจำกัดกว้างด้วย icon_max_width ใน theme
         }
 
         button.Pressed += onPressed;
@@ -107,7 +113,7 @@ public static class GitHubUi
             MouseFilter = Control.MouseFilterEnum.Pass,
             SizeFlagsHorizontal = Control.SizeFlags.ExpandFill
         };
-        card.AddThemeStyleboxOverride("panel", GitHubTheme.Box(GitHubTheme.Canvas, GitHubTheme.Border, 6, 1, padH, padV));
+        card.AddThemeStyleboxOverride("panel", GitHubTheme.Box(GitHubTheme.Canvas, GitHubTheme.Border, 8, 1, padH, padV));
         return card;
     }
 
@@ -121,7 +127,7 @@ public static class GitHubUi
         };
         panel.AddThemeStyleboxOverride("panel", GitHubTheme.Box(GitHubTheme.Canvas, GitHubTheme.Border));
         var body = new VBoxContainer { MouseFilter = Control.MouseFilterEnum.Pass };
-        body.AddThemeConstantOverride("separation", 0);
+        body.AddThemeConstantOverride("separation", S(0));
         panel.AddChild(body);
         if (header is not null) body.AddChild(Header(header));
         return (panel, body);
@@ -177,7 +183,7 @@ public static class GitHubUi
     public static PanelContainer BranchPill(string name)
     {
         var pill = new PanelContainer { MouseFilter = Control.MouseFilterEnum.Ignore };
-        pill.AddThemeStyleboxOverride("panel", GitHubTheme.Box(GitHubTheme.AccentSubtle, Colors.Transparent, 6, 0, 7, 2));
+        pill.AddThemeStyleboxOverride("panel", GitHubTheme.Box(GitHubTheme.AccentSubtle, Colors.Transparent, 8, 0, 7, 2));
         pill.AddChild(Text(name, GitHubTheme.Accent, 13, mono: true));
         return pill;
     }
@@ -193,7 +199,7 @@ public static class GitHubUi
         var pill = new PanelContainer { MouseFilter = Control.MouseFilterEnum.Ignore, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter };
         pill.AddThemeStyleboxOverride("panel", GitHubTheme.Box(fill, fill, 16, 0, 12, 5));
         var row = new HBoxContainer { MouseFilter = Control.MouseFilterEnum.Ignore };
-        row.AddThemeConstantOverride("separation", 6);
+        row.AddThemeConstantOverride("separation", S(6));
         row.AddChild(Icon(icon, Colors.White, 14));
         row.AddChild(Text(label, Colors.White, 14, bold: true));
         pill.AddChild(row);
@@ -210,13 +216,14 @@ public static class GitHubUi
     /// <summary>วงกลมสีพร้อมไอคอนขาว (สถานะในไทม์ไลน์และกล่อง merge)</summary>
     public static PanelContainer Bubble(GhIcon icon, Color fill, int size = 32)
     {
+        var pixels = S(size);
         var bubble = new PanelContainer
         {
-            CustomMinimumSize = new Vector2(size, size),
+            CustomMinimumSize = new Vector2(pixels, pixels),
             MouseFilter = Control.MouseFilterEnum.Ignore,
             SizeFlagsVertical = Control.SizeFlags.ShrinkBegin
         };
-        bubble.AddThemeStyleboxOverride("panel", GitHubTheme.Box(fill, fill, size / 2, 0));
+        bubble.AddThemeStyleboxOverride("panel", GitHubTheme.Box(fill, fill, pixels / 2, 0));
         var glyph = Icon(icon, Colors.White, size / 2);
         glyph.SizeFlagsHorizontal = Control.SizeFlags.ShrinkCenter;
         glyph.SizeFlagsVertical = Control.SizeFlags.ShrinkCenter;
@@ -236,13 +243,14 @@ public static class GitHubUi
     {
         var index = name.Aggregate(0, (sum, character) => sum + character) % AvatarColors.Length;
         var fill = new Color(AvatarColors[index]);
+        var pixels = S(size);
         var avatar = new PanelContainer
         {
-            CustomMinimumSize = new Vector2(size, size),
+            CustomMinimumSize = new Vector2(pixels, pixels),
             MouseFilter = Control.MouseFilterEnum.Ignore,
             SizeFlagsVertical = Control.SizeFlags.ShrinkCenter
         };
-        avatar.AddThemeStyleboxOverride("panel", GitHubTheme.Box(fill, fill, size / 2, 0));
+        avatar.AddThemeStyleboxOverride("panel", GitHubTheme.Box(fill, fill, pixels / 2, 0));
         var initial = Text(name.Length > 0 ? name[..1].ToUpperInvariant() : "?", Colors.White, size / 2 + 1, bold: true);
         initial.HorizontalAlignment = HorizontalAlignment.Center;
         initial.VerticalAlignment = VerticalAlignment.Center;
@@ -258,9 +266,9 @@ public static class GitHubUi
         var fg = error ? GitHubTheme.Danger : GitHubTheme.Success;
         var panel = new PanelContainer { MouseFilter = Control.MouseFilterEnum.Pass, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
         panel.AddThemeStyleboxOverride("panel", GitHubTheme.Box(
-            error ? GitHubTheme.DangerSubtle : GitHubTheme.SuccessSubtle, new Color(fg, 0.4f), 6, 1, 14, 10));
+            error ? GitHubTheme.DangerSubtle : GitHubTheme.SuccessSubtle, new Color(fg, 0.4f), 8, 1, 14, 10));
         var row = new HBoxContainer { MouseFilter = Control.MouseFilterEnum.Pass };
-        row.AddThemeConstantOverride("separation", 10);
+        row.AddThemeConstantOverride("separation", S(10));
         row.AddChild(Icon(error ? GhIcon.Alert : GhIcon.Check, fg));
         row.AddChild(Text(message, GitHubTheme.Fg, 15, wrap: true));
         panel.AddChild(row);
@@ -272,9 +280,9 @@ public static class GitHubUi
     {
         var panel = new PanelContainer { MouseFilter = Control.MouseFilterEnum.Pass, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
         panel.AddThemeStyleboxOverride("panel", GitHubTheme.Box(
-            GitHubTheme.AccentSubtle, new Color(GitHubTheme.Accent, 0.4f), 6, 1, 14, 10));
+            GitHubTheme.AccentSubtle, new Color(GitHubTheme.Accent, 0.4f), 8, 1, 14, 10));
         var row = new HBoxContainer { MouseFilter = Control.MouseFilterEnum.Pass };
-        row.AddThemeConstantOverride("separation", 10);
+        row.AddThemeConstantOverride("separation", S(10));
         row.AddChild(Icon(GhIcon.Info, GitHubTheme.Accent));
         row.AddChild(Text(message, GitHubTheme.Fg, 15, wrap: true));
         panel.AddChild(row);
@@ -285,13 +293,13 @@ public static class GitHubUi
     public static PanelContainer CodeBlock(IEnumerable<string> lines)
     {
         var panel = Card(14, 10);
-        panel.AddThemeStyleboxOverride("panel", GitHubTheme.Box(GitHubTheme.CanvasSubtle, GitHubTheme.Border, 6, 1, 14, 8));
+        panel.AddThemeStyleboxOverride("panel", GitHubTheme.Box(GitHubTheme.CanvasSubtle, GitHubTheme.Border, 8, 1, 14, 8));
         var column = new VBoxContainer { MouseFilter = Control.MouseFilterEnum.Pass };
-        column.AddThemeConstantOverride("separation", 2);
+        column.AddThemeConstantOverride("separation", S(2));
         foreach (var line in lines)
         {
             var row = new HBoxContainer { MouseFilter = Control.MouseFilterEnum.Pass };
-            row.AddThemeConstantOverride("separation", 10);
+            row.AddThemeConstantOverride("separation", S(10));
             row.AddChild(Text("$", GitHubTheme.FgSubtle, 14, mono: true));
             var command = Text(line, GitHubTheme.Fg, 14, mono: true);
             command.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
@@ -309,7 +317,7 @@ public static class GitHubUi
     {
         var (panel, body) = Box();
         var column = new VBoxContainer { MouseFilter = Control.MouseFilterEnum.Pass, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
-        column.AddThemeConstantOverride("separation", 10);
+        column.AddThemeConstantOverride("separation", S(10));
         var glyph = Icon(icon, GitHubTheme.FgMuted, 32);
         glyph.SizeFlagsHorizontal = Control.SizeFlags.ShrinkCenter;
         column.AddChild(glyph);
@@ -322,10 +330,10 @@ public static class GitHubUi
         column.AddChild(detail);
 
         var margin = new MarginContainer { MouseFilter = Control.MouseFilterEnum.Pass };
-        margin.AddThemeConstantOverride("margin_top", 40);
-        margin.AddThemeConstantOverride("margin_bottom", 40);
-        margin.AddThemeConstantOverride("margin_left", 24);
-        margin.AddThemeConstantOverride("margin_right", 24);
+        margin.AddThemeConstantOverride("margin_top", S(40));
+        margin.AddThemeConstantOverride("margin_bottom", S(40));
+        margin.AddThemeConstantOverride("margin_left", S(24));
+        margin.AddThemeConstantOverride("margin_right", S(24));
         margin.AddChild(column);
         body.AddChild(margin);
         return panel;
@@ -356,7 +364,7 @@ public static class GitHubUi
         };
 
         var row = new HBoxContainer { MouseFilter = Control.MouseFilterEnum.Ignore };
-        row.AddThemeConstantOverride("separation", 8);
+        row.AddThemeConstantOverride("separation", S(8));
         if (icon is { } glyph) row.AddChild(Icon(glyph, active ? GitHubTheme.Fg : GitHubTheme.FgMuted));
         row.AddChild(Text(text, GitHubTheme.Fg, 15, bold: active));
         if (counter is { } count) row.AddChild(Counter(count));
@@ -368,13 +376,13 @@ public static class GitHubUi
     public static Control CodeLines(IReadOnlyList<string> lines, int max = 500)
     {
         var column = new VBoxContainer { MouseFilter = Control.MouseFilterEnum.Pass, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
-        column.AddThemeConstantOverride("separation", 0);
+        column.AddThemeConstantOverride("separation", S(0));
         for (var index = 0; index < Math.Min(lines.Count, max); index++)
         {
             var row = new HBoxContainer { MouseFilter = Control.MouseFilterEnum.Pass };
-            row.AddThemeConstantOverride("separation", 16);
+            row.AddThemeConstantOverride("separation", S(16));
             var number = Text((index + 1).ToString(CultureInfo.InvariantCulture), GitHubTheme.FgSubtle, 13, mono: true);
-            number.CustomMinimumSize = new Vector2(48, 0);
+            number.CustomMinimumSize = new Vector2(S(48), 0);
             number.HorizontalAlignment = HorizontalAlignment.Right;
             row.AddChild(number);
             var code = Text(lines[index], GitHubTheme.Fg, 14, mono: true);

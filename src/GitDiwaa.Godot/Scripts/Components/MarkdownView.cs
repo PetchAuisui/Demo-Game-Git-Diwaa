@@ -11,6 +11,8 @@ namespace GitDiwaa.Godot.Components;
 /// </summary>
 public static class MarkdownView
 {
+    private static int S(int pixels) => GitHubTheme.S(pixels);
+
     private static readonly Regex Bold = new(@"\*\*(.+?)\*\*", RegexOptions.Compiled);
 
     public static Control Render(string markdown)
@@ -20,7 +22,7 @@ public static class MarkdownView
             MouseFilter = Control.MouseFilterEnum.Pass,
             SizeFlagsHorizontal = Control.SizeFlags.ExpandFill
         };
-        column.AddThemeConstantOverride("separation", 12);
+        column.AddThemeConstantOverride("separation", S(12));
 
         var paragraph = new List<string>();
         var code = new List<string>();
@@ -99,7 +101,7 @@ public static class MarkdownView
     {
         var size = level switch { 1 => 28, 2 => 22, _ => 18 };
         var column = new VBoxContainer { MouseFilter = Control.MouseFilterEnum.Pass };
-        column.AddThemeConstantOverride("separation", 8);
+        column.AddThemeConstantOverride("separation", S(8));
         column.AddChild(GitHubUi.Text(text, GitHubTheme.Fg, size, bold: true, wrap: true));
         if (level <= 2) column.AddChild(new HSeparator());
         return column;
@@ -108,7 +110,7 @@ public static class MarkdownView
     private static Control Bullet(string text)
     {
         var row = new HBoxContainer { MouseFilter = Control.MouseFilterEnum.Pass };
-        row.AddThemeConstantOverride("separation", 10);
+        row.AddThemeConstantOverride("separation", S(10));
         var dot = GitHubUi.Text("•", GitHubTheme.FgMuted);
         dot.SizeFlagsVertical = Control.SizeFlags.ShrinkBegin;
         row.AddChild(dot);
@@ -119,7 +121,7 @@ public static class MarkdownView
     private static Control CodeBox(IReadOnlyList<string> lines)
     {
         var box = GitHubUi.Card(14, 10);
-        box.AddThemeStyleboxOverride("panel", GitHubTheme.Box(GitHubTheme.CanvasSubtle, GitHubTheme.Border, 6, 1, 14, 10));
+        box.AddThemeStyleboxOverride("panel", GitHubTheme.Box(GitHubTheme.CanvasSubtle, GitHubTheme.Border, 8, 1, 14, 10));
         var label = new RichTextLabel
         {
             Text = string.Join('\n', lines),
@@ -130,7 +132,7 @@ public static class MarkdownView
             AutowrapMode = TextServer.AutowrapMode.Off
         };
         label.AddThemeFontOverride("normal_font", GitHubTheme.MonoFont);
-        label.AddThemeFontSizeOverride("normal_font_size", 14);
+        label.AddThemeFontSizeOverride("normal_font_size", S(14));
         label.AddThemeColorOverride("default_color", GitHubTheme.Fg);
         box.AddChild(label);
         return box;
@@ -150,9 +152,9 @@ public static class MarkdownView
         };
         label.AddThemeFontOverride("bold_font", GitHubTheme.BoldFont);
         label.AddThemeFontOverride("mono_font", GitHubTheme.MonoFont);
-        label.AddThemeFontSizeOverride("normal_font_size", 15);
-        label.AddThemeFontSizeOverride("bold_font_size", 15);
-        label.AddThemeFontSizeOverride("mono_font_size", 14);
+        label.AddThemeFontSizeOverride("normal_font_size", S(15));
+        label.AddThemeFontSizeOverride("bold_font_size", S(15));
+        label.AddThemeFontSizeOverride("mono_font_size", S(14));
         label.AddThemeColorOverride("default_color", GitHubTheme.Fg);
         label.Text = ToBbcode(text);
         return label;

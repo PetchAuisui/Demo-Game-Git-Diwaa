@@ -22,6 +22,8 @@ public static class DiffViewer
         public readonly List<DiffLine> Lines = [];
     }
 
+    private static int S(int pixels) => GitHubTheme.S(pixels);
+
     private static readonly Regex HunkHeader = new(@"^@@ -(\d+)(?:,\d+)? \+(\d+)(?:,\d+)? @@", RegexOptions.Compiled);
 
     public static Control Build(string diff, IReadOnlyList<PullRequestFileChange> stats)
@@ -31,7 +33,7 @@ public static class DiffViewer
             MouseFilter = Control.MouseFilterEnum.Pass,
             SizeFlagsHorizontal = Control.SizeFlags.ExpandFill
         };
-        column.AddThemeConstantOverride("separation", 16);
+        column.AddThemeConstantOverride("separation", S(16));
         foreach (var file in Parse(diff))
             column.AddChild(FileCard(file, stats.FirstOrDefault(stat => stat.Path == file.Path)));
         return column;
@@ -96,7 +98,7 @@ public static class DiffViewer
     {
         var chevron = GitHubUi.Icon(GhIcon.ChevronDown, GitHubTheme.FgMuted);
         var header = new HBoxContainer { MouseFilter = Control.MouseFilterEnum.Ignore };
-        header.AddThemeConstantOverride("separation", 10);
+        header.AddThemeConstantOverride("separation", S(10));
         header.AddChild(chevron);
         var name = GitHubUi.Text(file.Path, GitHubTheme.Fg, 14, mono: true);
         name.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
@@ -109,7 +111,7 @@ public static class DiffViewer
 
         var (box, content) = GitHubUi.Box(header);
         var lines = new VBoxContainer { MouseFilter = Control.MouseFilterEnum.Pass };
-        lines.AddThemeConstantOverride("separation", 0);
+        lines.AddThemeConstantOverride("separation", S(0));
         foreach (var line in file.Lines) lines.AddChild(LineRow(line));
         content.AddChild(lines);
 
@@ -121,7 +123,7 @@ public static class DiffViewer
             if (input is not InputEventMouseButton { Pressed: true, ButtonIndex: MouseButton.Left }) return;
             headerPanel.AcceptEvent();
             lines.Visible = !lines.Visible;
-            chevron.Texture = GitHubIcons.Get(lines.Visible ? GhIcon.ChevronDown : GhIcon.ChevronRight, GitHubTheme.FgMuted);
+            chevron.Texture = GitHubIcons.Get(lines.Visible ? GhIcon.ChevronDown : GhIcon.ChevronRight, GitHubTheme.FgMuted, S(16));
         };
         return box;
     }
@@ -141,13 +143,13 @@ public static class DiffViewer
         {
             BgColor = background,
             ContentMarginLeft = 0,
-            ContentMarginRight = 12,
+            ContentMarginRight = S(12),
             ContentMarginTop = 1,
             ContentMarginBottom = 1
         });
 
         var cells = new HBoxContainer { MouseFilter = Control.MouseFilterEnum.Pass };
-        cells.AddThemeConstantOverride("separation", 0);
+        cells.AddThemeConstantOverride("separation", S(0));
         if (line.Kind is Kind.Hunk or Kind.Note)
         {
             cells.AddChild(Gutter(null, gutter));
@@ -168,7 +170,7 @@ public static class DiffViewer
                 _ => (" ", GitHubTheme.FgMuted)
             };
             var mark = GitHubUi.Text(sign, signColor, 14, mono: true);
-            mark.CustomMinimumSize = new Vector2(24, 0);
+            mark.CustomMinimumSize = new Vector2(S(24), 0);
             mark.HorizontalAlignment = HorizontalAlignment.Center;
             cells.AddChild(mark);
             var code = GitHubUi.Text(line.Text, GitHubTheme.Fg, 14, mono: true);
@@ -184,12 +186,12 @@ public static class DiffViewer
     /// <summary>คอลัมน์เลขบรรทัด (พื้นเข้มกว่าที่บรรทัดเพิ่ม/ลบ)</summary>
     private static Control Gutter(int? number, Color background)
     {
-        var cell = new PanelContainer { MouseFilter = Control.MouseFilterEnum.Pass, CustomMinimumSize = new Vector2(56, 0) };
+        var cell = new PanelContainer { MouseFilter = Control.MouseFilterEnum.Pass, CustomMinimumSize = new Vector2(S(56), 0) };
         cell.AddThemeStyleboxOverride("panel", new StyleBoxFlat
         {
             BgColor = background,
-            ContentMarginLeft = 4,
-            ContentMarginRight = 10,
+            ContentMarginLeft = S(4),
+            ContentMarginRight = S(10),
             ContentMarginTop = 0,
             ContentMarginBottom = 0
         });
