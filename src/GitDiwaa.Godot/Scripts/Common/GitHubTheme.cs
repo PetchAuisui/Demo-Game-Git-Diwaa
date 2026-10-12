@@ -70,10 +70,17 @@ public static class GitHubTheme
 
     private static Font? _mono;
     private static Font? _bold;
+    private static Font? _monoBold;
 
     public static Font MonoFont => _mono ??= new SystemFont
     {
         FontNames = ["Menlo", "Consolas", "DejaVu Sans Mono", "monospace"]
+    };
+
+    public static Font MonoBoldFont => _monoBold ??= new FontVariation
+    {
+        BaseFont = MonoFont,
+        VariationEmbolden = 0.4f
     };
 
     public static Font BoldFont => _bold ??= new FontVariation

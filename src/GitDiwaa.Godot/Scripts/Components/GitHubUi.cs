@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Text;
 using GitDiwaa.Core;
 using GitDiwaa.Godot.Common;
 using Godot;
@@ -13,6 +14,9 @@ public enum GhButtonKind
     Link,
     Ghost
 }
+
+/// <summary>บรรทัดคำสั่งหนึ่งบรรทัด พร้อมคำอธิบายสั้นๆ ที่แสดงข้างๆ (ไม่ถูกคัดลอกไปด้วย)</summary>
+public readonly record struct CodeLine(string Command, string? Hint = null);
 
 /// <summary>ชิ้นส่วน UI แบบ GitHub ที่ใช้ซ้ำในหน้า Remote Repository</summary>
 public static class GitHubUi
@@ -284,42 +288,264 @@ public static class GitHubUi
         return panel;
     }
 
-    /// <summary>แถบข้อมูลสีฟ้า (คำแนะนำ ไม่ใช่ผลลัพธ์ของการกระทำ)</summary>
-    public static PanelContainer Info(string message)
+    /// <summary>แถบข้อมูลสีฟ้า (คำแนะนำ ไม่ใช่ผลลัพธ์ของการกระทำ) ใส่หัวข้อตัวหนาได้</summary>
+    public static PanelContainer Info(string message, string? title = null)
     {
         var panel = new PanelContainer { MouseFilter = Control.MouseFilterEnum.Pass, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
         panel.AddThemeStyleboxOverride("panel", GitHubTheme.Box(
-            GitHubTheme.AccentSubtle, new Color(GitHubTheme.Accent, 0.4f), 8, 1, 14, 10));
+            GitHubTheme.AccentSubtle, new Color(GitHubTheme.Accent, 0.5f), 8, 1, 16, 12));
         var row = new HBoxContainer { MouseFilter = Control.MouseFilterEnum.Pass };
-        row.AddThemeConstantOverride("separation", S(10));
-        row.AddChild(Icon(GhIcon.Info, GitHubTheme.Accent));
-        row.AddChild(Text(message, GitHubTheme.Fg, 15, wrap: true));
+        row.AddThemeConstantOverride("separation", S(12));
+        var icon = Icon(GhIcon.Info, GitHubTheme.Accent, 18);
+        icon.SizeFlagsVertical = Control.SizeFlags.ShrinkBegin;
+        row.AddChild(icon);
+
+        var text = new VBoxContainer { MouseFilter = Control.MouseFilterEnum.Pass, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+        text.AddThemeConstantOverride("separation", S(2));
+        if (title is not null) text.AddChild(Text(title, GitHubTheme.Fg, 16, bold: true, wrap: true));
+        text.AddChild(Text(message, GitHubTheme.Fg, 15, wrap: true));
+        row.AddChild(text);
         panel.AddChild(row);
         return panel;
     }
 
-    /// <summary>บล็อกคำสั่งสีเข้มพร้อมปุ่ม Copy ต่อบรรทัด (ผู้เล่นพิมพ์ทีละบรรทัดใน terminal ของเกม)</summary>
-    public static PanelContainer CodeBlock(IEnumerable<string> lines)
+    public static PanelContainer CodeBlock(IEnumerable<string> lines) =>
+        CommandBlock(lines.Select(line => new CodeLine(line)));
+
+    /// <summary>
+    /// บล็อกคำสั่งสีเข้มเหมือนหน้าต่าง terminal: ย้อมสีส่วนต่างของคำสั่ง ใส่คำอธิบายสั้นๆ ข้างบรรทัดได้
+    /// และคลิกทั้งแถวเพื่อคัดลอกทีละบรรทัด (terminal ของเกมรับคำสั่งทีละบรรทัด)
+    /// </summary>
+    public static PanelContainer CommandBlock(IEnumerable<CodeLine> lines)
     {
-        var panel = Card(14, 10);
-        panel.AddThemeStyleboxOverride("panel", GitHubTheme.Box(GitHubTheme.Inset, GitHubTheme.Border, 8, 1, 14, 8));
+        var items = lines.ToList();
+        var commandWidth = items.Any(item => item.Hint is not null)
+            ? items.Max(item => GitHubTheme.MonoFont.GetStringSize(item.Command, HorizontalAlignment.Left, -1, S(15)).X) * 1.04f + S(6)
+            : 0f;
+
+        var panel = new PanelContainer { MouseFilter = Control.MouseFilterEnum.Pass, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+        panel.AddThemeStyleboxOverride("panel", GitHubTheme.Box(GitHubTheme.Inset, GitHubTheme.Border, 8, 1, 6, 6));
         var column = new VBoxContainer { MouseFilter = Control.MouseFilterEnum.Pass };
         column.AddThemeConstantOverride("separation", S(2));
-        foreach (var line in lines)
-        {
-            var row = new HBoxContainer { MouseFilter = Control.MouseFilterEnum.Pass };
-            row.AddThemeConstantOverride("separation", S(10));
-            row.AddChild(Text("$", GitHubTheme.FgSubtle, 14, mono: true));
-            var command = Text(line, GitHubTheme.Fg, 14, mono: true);
-            command.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
-            row.AddChild(command);
-            var text = line;
-            row.AddChild(Btn(string.Empty, () => DisplayServer.ClipboardSet(text), GhButtonKind.Ghost, GhIcon.Copy));
-            column.AddChild(row);
-        }
-
+        foreach (var line in items) column.AddChild(CommandRow(line, commandWidth));
         panel.AddChild(column);
         return panel;
+    }
+
+    private static Control CommandRow(CodeLine line, float commandWidth)
+    {
+        var row = new PanelContainer
+        {
+            MouseFilter = Control.MouseFilterEnum.Pass,
+            MouseDefaultCursorShape = Control.CursorShape.PointingHand,
+            TooltipText = "คลิกเพื่อคัดลอกคำสั่งนี้"
+        };
+        StyleBoxFlat Style(bool hover) => GitHubTheme.Box(
+            hover ? new Color(1f, 1f, 1f, 0.07f) : Colors.Transparent, Colors.Transparent, 6, 0, 10, 6);
+        row.AddThemeStyleboxOverride("panel", Style(false));
+
+        var cells = new HBoxContainer { MouseFilter = Control.MouseFilterEnum.Ignore };
+        cells.AddThemeConstantOverride("separation", S(12));
+
+        var prompt = Text("$", GitHubTheme.FgSubtle, 15, mono: true);
+        prompt.SizeFlagsVertical = Control.SizeFlags.ShrinkBegin;
+        cells.AddChild(prompt);
+
+        var command = Highlight(line.Command);
+        if (commandWidth > 0)
+        {
+            command.CustomMinimumSize = new Vector2(commandWidth, 0);
+            command.SizeFlagsHorizontal = Control.SizeFlags.ShrinkBegin;
+        }
+
+        cells.AddChild(command);
+
+        // คำอธิบายข้างบรรทัด ใช้ช่องเดียวกันแสดง "คัดลอกแล้ว" ชั่วคราว เพื่อไม่ให้แถวขยับ
+        var note = Text(line.Hint ?? string.Empty, GitHubTheme.FgMuted, 14, wrap: line.Hint is not null);
+        note.SizeFlagsVertical = Control.SizeFlags.ShrinkBegin;
+        if (line.Hint is null) note.SizeFlagsHorizontal = Control.SizeFlags.ShrinkEnd;
+        cells.AddChild(note);
+
+        var icon = Icon(GhIcon.Copy, GitHubTheme.FgSubtle);
+        icon.SizeFlagsVertical = Control.SizeFlags.ShrinkBegin;
+        cells.AddChild(icon);
+        row.AddChild(cells);
+
+        void ShowCopyIcon(Color color) => icon.Texture = GitHubIcons.Get(GhIcon.Copy, color, S(16));
+        row.MouseEntered += () =>
+        {
+            row.AddThemeStyleboxOverride("panel", Style(true));
+            ShowCopyIcon(GitHubTheme.Fg);
+        };
+        row.MouseExited += () =>
+        {
+            row.AddThemeStyleboxOverride("panel", Style(false));
+            ShowCopyIcon(GitHubTheme.FgSubtle);
+        };
+        row.GuiInput += input =>
+        {
+            if (input is not InputEventMouseButton { Pressed: true, ButtonIndex: MouseButton.Left }) return;
+            row.AcceptEvent();
+            DisplayServer.ClipboardSet(line.Command);
+            note.Text = "คัดลอกแล้ว";
+            note.AddThemeColorOverride("font_color", GitHubTheme.Success);
+            icon.Texture = GitHubIcons.Get(GhIcon.Check, GitHubTheme.Success, S(16));
+            row.GetTree().CreateTimer(1.4).Timeout += () =>
+            {
+                if (!GodotObject.IsInstanceValid(row)) return;
+                note.Text = line.Hint ?? string.Empty;
+                note.AddThemeColorOverride("font_color", GitHubTheme.FgMuted);
+                ShowCopyIcon(GitHubTheme.FgSubtle);
+            };
+        };
+        return row;
+    }
+
+    private static RichTextLabel Highlight(string command)
+    {
+        var label = new RichTextLabel
+        {
+            BbcodeEnabled = true,
+            FitContent = true,
+            ScrollActive = false,
+            SelectionEnabled = false,
+            AutowrapMode = TextServer.AutowrapMode.Arbitrary,
+            MouseFilter = Control.MouseFilterEnum.Ignore,
+            SizeFlagsHorizontal = Control.SizeFlags.ExpandFill
+        };
+        label.AddThemeFontOverride("normal_font", GitHubTheme.MonoFont);
+        label.AddThemeFontOverride("bold_font", GitHubTheme.MonoBoldFont);
+        label.AddThemeFontSizeOverride("normal_font_size", S(15));
+        label.AddThemeFontSizeOverride("bold_font_size", S(15));
+        label.AddThemeColorOverride("default_color", GitHubTheme.Fg);
+        label.Text = CommandToBbcode(command);
+        return label;
+    }
+
+    /// <summary>
+    /// ย้อมสีคำสั่ง: ชื่อคำสั่ง (git / write ของเกม) ตัวหนา, คำสั่งย่อยของ git สีเขียว, flag สีส้ม,
+    /// ข้อความในเครื่องหมายคำพูดสีฟ้าอ่อน, URL และชื่อไฟล์สีฟ้า
+    /// </summary>
+    private static string CommandToBbcode(string command)
+    {
+        var tokens = Tokenize(command);
+        var builder = new StringBuilder();
+        for (var index = 0; index < tokens.Count; index++)
+        {
+            if (index > 0) builder.Append(' ');
+            var token = tokens[index];
+            var bold = false;
+            Color? color = null;
+
+            if (index == 0)
+            {
+                bold = true;
+                if (token == "write") color = GitHubTheme.SyntaxGame;
+            }
+            else if (tokens[0] == "write")
+            {
+                color = index == 1 ? GitHubTheme.SyntaxPath : GitHubTheme.SyntaxString;
+            }
+            else if (token.StartsWith('-'))
+            {
+                color = GitHubTheme.SyntaxFlag;
+            }
+            else if (tokens[0] == "git" && index == 1)
+            {
+                color = GitHubTheme.SyntaxSubcommand;
+                bold = true;
+            }
+            else if (token.StartsWith('"') || token.StartsWith('\''))
+            {
+                color = GitHubTheme.SyntaxString;
+            }
+            else if (token.Contains("://", StringComparison.Ordinal))
+            {
+                color = GitHubTheme.SyntaxPath;
+            }
+
+            var text = token.Replace("[", "[lb]");
+            if (bold) text = $"[b]{text}[/b]";
+            builder.Append(color is { } tint ? $"[color=#{tint.ToHtml(false)}]{text}[/color]" : text);
+        }
+
+        return builder.ToString();
+    }
+
+    private static List<string> Tokenize(string command)
+    {
+        var tokens = new List<string>();
+        var current = new StringBuilder();
+        var quote = '\0';
+        foreach (var character in command)
+        {
+            if (quote != '\0')
+            {
+                current.Append(character);
+                if (character == quote) quote = '\0';
+            }
+            else if (character is '"' or '\'')
+            {
+                quote = character;
+                current.Append(character);
+            }
+            else if (char.IsWhiteSpace(character))
+            {
+                if (current.Length == 0) continue;
+                tokens.Add(current.ToString());
+                current.Clear();
+            }
+            else
+            {
+                current.Append(character);
+            }
+        }
+
+        if (current.Length > 0) tokens.Add(current.ToString());
+        return tokens;
+    }
+
+    /// <summary>วงกลมสีฟ้าใส่เลขขั้นตอน</summary>
+    public static PanelContainer NumberBubble(int number, int size = 30)
+    {
+        var pixels = S(size);
+        var bubble = new PanelContainer
+        {
+            CustomMinimumSize = new Vector2(pixels, pixels),
+            MouseFilter = Control.MouseFilterEnum.Ignore,
+            SizeFlagsVertical = Control.SizeFlags.ShrinkCenter
+        };
+        bubble.AddThemeStyleboxOverride("panel", GitHubTheme.Box(GitHubTheme.AccentEmphasis, GitHubTheme.AccentEmphasis, pixels / 2, 0));
+        var label = Text(number.ToString(CultureInfo.InvariantCulture), Colors.White, 15, bold: true);
+        label.HorizontalAlignment = HorizontalAlignment.Center;
+        label.VerticalAlignment = VerticalAlignment.Center;
+        label.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
+        label.SizeFlagsVertical = Control.SizeFlags.ExpandFill;
+        bubble.AddChild(label);
+        return bubble;
+    }
+
+    /// <summary>การ์ดขั้นตอน: เลขวงกลม หัวข้อ คำอธิบายสั้นๆ ชิดขวา ตามด้วยเนื้อหา (เช่น บล็อกคำสั่ง)</summary>
+    public static PanelContainer Step(int number, string title, string? hint, Control body)
+    {
+        var card = Card(20, 16);
+        var column = new VBoxContainer { MouseFilter = Control.MouseFilterEnum.Pass };
+        column.AddThemeConstantOverride("separation", S(12));
+
+        var header = new HBoxContainer { MouseFilter = Control.MouseFilterEnum.Pass };
+        header.AddThemeConstantOverride("separation", S(12));
+        header.AddChild(NumberBubble(number));
+        header.AddChild(Text(title, GitHubTheme.Fg, 18, bold: true));
+        if (hint is not null)
+        {
+            header.AddChild(Spacer());
+            header.AddChild(Text(hint, GitHubTheme.FgMuted, 14));
+        }
+
+        column.AddChild(header);
+        column.AddChild(body);
+        card.AddChild(column);
+        return card;
     }
 
     public static Control EmptyState(GhIcon icon, string title, string hint)

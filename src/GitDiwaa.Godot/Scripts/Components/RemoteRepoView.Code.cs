@@ -151,54 +151,62 @@ public partial class RemoteRepoView
         _content.AddChild(box);
     }
 
-    /// <summary>repo ที่ยังไม่มีอะไรถูก push: หน้า Quick setup แบบ GitHub บอก URL และคำสั่งที่ใช้ใน terminal ของเกม</summary>
+    /// <summary>
+    /// repo ที่ยังไม่มีอะไรถูก push: หน้า Quick setup เป็นขั้นตอน 1-2-3 บอก URL และคำสั่งที่ใช้ใน terminal ของเกม
+    /// (คำแนะนำวิธีใช้อยู่บนสุด เพราะผู้เล่นต้องกด Esc ออกไปพิมพ์ใน terminal แล้วกลับมาดูผล)
+    /// </summary>
     private void BuildEmptyRepo()
     {
         var repo = _repo!;
-        var card = GitHubUi.Card(28, 22);
-        var column = new VBoxContainer();
-        column.AddThemeConstantOverride("separation", S(14));
 
-        column.AddChild(GitHubUi.Text("Quick setup — repo นี้ยังว่างอยู่", GitHubTheme.Fg, 22, bold: true));
-        column.AddChild(GitHubUi.Text("push งานจากคลังในเครื่องขึ้นมา แล้วไฟล์ branch และ commit จะแสดงที่หน้านี้",
-            GitHubTheme.FgMuted, wrap: true));
+        _content.AddChild(GitHubUi.Info(
+            "คลิกที่คำสั่งเพื่อคัดลอก → กด Esc กลับไปที่ terminal → วางด้วย Ctrl/⌘+V แล้วกด Enter ทีละบรรทัด → เปิดหน้านี้อีกครั้งเพื่อดูผลที่ push",
+            "ทำตามขั้นตอนเหล่านี้ใน terminal ของ Sandbox"));
 
+        var intro = new VBoxContainer();
+        intro.AddThemeConstantOverride("separation", S(6));
+        intro.AddChild(GitHubUi.Text("Quick setup — repo นี้ยังว่างอยู่", GitHubTheme.Fg, 26, bold: true));
+        intro.AddChild(GitHubUi.Text("push งานจากเครื่องของคุณขึ้นมา แล้วไฟล์ branch และ commit จะแสดงที่หน้านี้",
+            GitHubTheme.FgMuted, 16, wrap: true));
+        _content.AddChild(intro);
+
+        var urlCard = GitHubUi.Card(16, 12);
         var urlRow = new HBoxContainer();
-        urlRow.AddThemeConstantOverride("separation", S(8));
+        urlRow.AddThemeConstantOverride("separation", S(10));
         urlRow.AddChild(GitHubUi.Pill("HTTPS", GitHubTheme.Fg, GitHubTheme.Border));
         urlRow.AddChild(new LineEdit { Text = repo.CloneUrl, Editable = false, SizeFlagsHorizontal = SizeFlags.ExpandFill });
         urlRow.AddChild(GitHubUi.Btn("Copy URL", () => DisplayServer.ClipboardSet(repo.CloneUrl), GhButtonKind.Default, GhIcon.Copy));
-        column.AddChild(urlRow);
-        column.AddChild(new HSeparator());
+        urlCard.AddChild(urlRow);
+        _content.AddChild(urlCard);
 
-        column.AddChild(GitHubUi.Text("…สร้างโปรเจกต์ใหม่ แล้ว push ขึ้นมา", GitHubTheme.Fg, 18, bold: true));
-        column.AddChild(GitHubUi.Text("ครั้งแรก: ตั้งชื่อผู้ใช้ Git (ข้ามได้ถ้าตั้งแล้ว)", GitHubTheme.FgMuted, 14));
-        column.AddChild(GitHubUi.CodeBlock(
-        [
-            $"git config --global user.name \"{repo.Owner}\"",
-            $"git config --global user.email \"{repo.Owner}@example.com\""
-        ]));
-        column.AddChild(GitHubUi.CodeBlock(
-        [
-            $"write README.md # {repo.Name}",
-            "git init",
-            "git add README.md",
-            "git commit -m \"first commit\"",
-            $"git remote add origin {repo.CloneUrl}",
-            "git push -u origin main"
-        ]));
-        column.AddChild(new HSeparator());
+        _content.AddChild(GitHubUi.Step(1, "ตั้งชื่อผู้ใช้ Git", "ครั้งแรกเท่านั้น — ข้ามได้ถ้าเคยตั้งไว้แล้ว",
+            GitHubUi.CommandBlock(
+            [
+                new($"git config --global user.name \"{repo.Owner}\"", "ชื่อที่จะขึ้นใน commit"),
+                new($"git config --global user.email \"{repo.Owner}@example.com\"", "อีเมลที่จะขึ้นใน commit")
+            ])));
 
-        column.AddChild(GitHubUi.Text("…หรือ push คลังที่มีอยู่แล้ว", GitHubTheme.Fg, 18, bold: true));
-        column.AddChild(GitHubUi.CodeBlock([$"git remote add origin {repo.CloneUrl}", "git push -u origin main"]));
-        column.AddChild(new HSeparator());
+        _content.AddChild(GitHubUi.Step(2, "สร้างไฟล์แรก แล้ว commit", null,
+            GitHubUi.CommandBlock(
+            [
+                new($"write README.md # {repo.Name}", "คำสั่งของเกม สร้างไฟล์ README.md (ไม่ใช่คำสั่ง Git)"),
+                new("git init", "สร้าง repo ในเครื่อง"),
+                new("git add README.md", "เลือกไฟล์ที่จะบันทึก"),
+                new("git commit -m \"first commit\"", "บันทึกเป็น commit แรก")
+            ])));
 
-        column.AddChild(GitHubUi.Text("…หรือ clone repo ว่างนี้มาทำงานต่อ", GitHubTheme.Fg, 18, bold: true));
-        column.AddChild(GitHubUi.CodeBlock([$"git clone {repo.CloneUrl}"]));
+        _content.AddChild(GitHubUi.Step(3, "เชื่อมกับ repo นี้ แล้ว push", "มี repo ในเครื่องอยู่แล้ว? เริ่มที่ขั้นนี้ได้เลย",
+            GitHubUi.CommandBlock(
+            [
+                new($"git remote add origin {repo.CloneUrl}", "ผูกชื่อ origin กับ repo นี้"),
+                new("git push -u origin main", "ส่ง branch main ขึ้นมา")
+            ])));
 
-        column.AddChild(GitHubUi.Info("พิมพ์คำสั่งใน terminal ของ Sandbox (กด Esc หรือ ← กลับ Sandbox) แล้วเปิดหน้านี้อีกครั้งเพื่อดูผล"));
-        card.AddChild(column);
-        _content.AddChild(card);
+        var clone = new VBoxContainer();
+        clone.AddThemeConstantOverride("separation", S(10));
+        clone.AddChild(GitHubUi.Text("หรือ clone repo ว่างนี้ลงมาทำงานต่อ", GitHubTheme.Fg, 16, bold: true));
+        clone.AddChild(GitHubUi.CommandBlock([new CodeLine($"git clone {repo.CloneUrl}", "ดึง repo นี้ลงมาเป็นโฟลเดอร์ใหม่")]));
+        _content.AddChild(clone);
     }
 
     private async Task BuildBlobAsync()
