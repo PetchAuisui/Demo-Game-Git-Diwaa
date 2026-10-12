@@ -179,6 +179,15 @@ public static class GitHubUi
         return pill;
     }
 
+    /// <summary>ป้ายปุ่มคีย์บอร์ดเล็กๆ เช่น Esc</summary>
+    public static PanelContainer KeyHint(string key)
+    {
+        var chip = new PanelContainer { MouseFilter = Control.MouseFilterEnum.Ignore, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter };
+        chip.AddThemeStyleboxOverride("panel", GitHubTheme.Box(GitHubTheme.Surface, GitHubTheme.Border, 6, 1, 8, 1));
+        chip.AddChild(Text(key, GitHubTheme.FgMuted, 13, mono: true));
+        return chip;
+    }
+
     /// <summary>ชื่อ branch แบบพื้นฟ้าอ่อนอักษร mono เหมือนในหน้า PR</summary>
     public static PanelContainer BranchPill(string name)
     {

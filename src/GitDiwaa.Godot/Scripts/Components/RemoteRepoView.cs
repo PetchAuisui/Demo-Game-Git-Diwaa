@@ -35,6 +35,12 @@ public partial class RemoteRepoView : Control
     private HBoxContainer _tabs = null!;
     private ScrollContainer _scroll = null!;
     private VBoxContainer _content = null!;
+    private PanelContainer _window = null!;
+    private MarginContainer _headerMargin = null!;
+    private MarginContainer _bodyMargin = null!;
+
+    /// <summary>ความกว้างสูงสุดของเนื้อหา (หัว repo และตัวหน้าจัดกึ่งกลางให้ตรงกัน) จอกว้างขึ้นก็ไม่ยืดตาม</summary>
+    private static int ContentMaxWidth => S(1000);
 
     public override void _Ready()
     {
@@ -56,6 +62,7 @@ public partial class RemoteRepoView : Control
         AddChild(margin);
 
         var window = new PanelContainer { ClipContents = true };
+        _window = window;
         window.AddThemeStyleboxOverride("panel", GitHubTheme.Box(GitHubTheme.Canvas, GitHubTheme.Border, 10, 1));
         margin.AddChild(window);
 
@@ -65,6 +72,9 @@ public partial class RemoteRepoView : Control
         column.AddChild(BuildTopBar());
         column.AddChild(BuildRepoHeader());
         column.AddChild(BuildBody());
+
+        _window.Resized += UpdateGutters;
+        Callable.From(UpdateGutters).CallDeferred();
     }
 
     /// <summary>
@@ -98,6 +108,7 @@ public partial class RemoteRepoView : Control
         var row = new HBoxContainer();
         row.AddThemeConstantOverride("separation", S(12));
         row.AddChild(GitHubUi.Btn("กลับ Sandbox", () => EmitSignal(SignalName.BackRequested), icon: GhIcon.ArrowLeft));
+        row.AddChild(GitHubUi.KeyHint("Esc"));
 
         var address = new PanelContainer
         {
@@ -115,6 +126,10 @@ public partial class RemoteRepoView : Control
         address.AddChild(addressRow);
         row.AddChild(address);
 
+        var refresh = GitHubUi.Btn(string.Empty, () => Go(_page), GhButtonKind.Ghost, GhIcon.Refresh);
+        refresh.TooltipText = "รีเฟรชหน้านี้";
+        row.AddChild(refresh);
+
         row.AddChild(GitHubUi.Spacer());
         _avatarSlot = new Control { MouseFilter = MouseFilterEnum.Ignore, CustomMinimumSize = new Vector2(S(28), S(28)) };
         row.AddChild(_avatarSlot);
@@ -127,8 +142,11 @@ public partial class RemoteRepoView : Control
     private Control BuildRepoHeader()
     {
         var header = new PanelContainer { MouseFilter = MouseFilterEnum.Pass };
-        header.AddThemeStyleboxOverride("panel", GitHubTheme.Underlined(GitHubTheme.Surface, GitHubTheme.Border, 1, 24, 16, 0));
+        header.AddThemeStyleboxOverride("panel", GitHubTheme.Underlined(GitHubTheme.Surface, GitHubTheme.Border, 1, 0, 16, 0));
 
+        _headerMargin = new MarginContainer();
+        _headerMargin.AddThemeConstantOverride("margin_left", S(24));
+        _headerMargin.AddThemeConstantOverride("margin_right", S(24));
         var column = new VBoxContainer();
         column.AddThemeConstantOverride("separation", S(12));
 
@@ -147,7 +165,8 @@ public partial class RemoteRepoView : Control
         _tabs.AddThemeConstantOverride("separation", S(4));
         column.AddChild(_tabs);
 
-        header.AddChild(column);
+        _headerMargin.AddChild(column);
+        header.AddChild(_headerMargin);
         return header;
     }
 
@@ -163,11 +182,31 @@ public partial class RemoteRepoView : Control
         margin.AddThemeConstantOverride("margin_right", S(24));
         margin.AddThemeConstantOverride("margin_top", S(20));
         margin.AddThemeConstantOverride("margin_bottom", S(40));
+        _bodyMargin = margin;
+        _scroll.GetVScrollBar().VisibilityChanged += UpdateGutters;
         _content = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
         _content.AddThemeConstantOverride("separation", S(16));
         margin.AddChild(_content);
         _scroll.AddChild(margin);
         return _scroll;
+    }
+
+    /// <summary>
+    /// จัดเนื้อหาให้อยู่กึ่งกลางกว้างไม่เกิน <see cref="ContentMaxWidth"/> ทั้งหัว repo และตัวหน้า
+    /// ขอบซ้าย/ขวาตรงกัน โดยหักความกว้างแถบเลื่อนฝั่งตัวหน้าออกจากขอบขวา
+    /// </summary>
+    private void UpdateGutters()
+    {
+        if (_window is null || _headerMargin is null || _bodyMargin is null) return;
+
+        var gutter = Math.Max(S(20), (int)((_window.Size.X - ContentMaxWidth) / 2f));
+        var scrollbar = _scroll.GetVScrollBar();
+        var scrollbarWidth = scrollbar.Visible ? (int)scrollbar.GetCombinedMinimumSize().X : 0;
+
+        _headerMargin.AddThemeConstantOverride("margin_left", gutter);
+        _headerMargin.AddThemeConstantOverride("margin_right", gutter);
+        _bodyMargin.AddThemeConstantOverride("margin_left", gutter);
+        _bodyMargin.AddThemeConstantOverride("margin_right", Math.Max(S(12), gutter - scrollbarWidth));
     }
 
     public void Open(IGitRemoteHost host)
@@ -225,6 +264,7 @@ public partial class RemoteRepoView : Control
             _content.AddChild(GitHubUi.Flash($"โหลดข้อมูล repository ไม่สำเร็จ: {ex.Message}", true));
         }
 
+        Callable.From(UpdateGutters).CallDeferred();
         _scroll.SetDeferred(ScrollContainer.PropertyName.ScrollVertical, 0);
     }
 
