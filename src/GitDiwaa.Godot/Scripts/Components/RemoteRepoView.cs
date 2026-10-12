@@ -130,6 +130,10 @@ public partial class RemoteRepoView : Control
         refresh.TooltipText = "รีเฟรชหน้านี้";
         row.AddChild(refresh);
 
+        var simulated = GitHubUi.Pill("GitHub จำลอง", GitHubTheme.Attention, new Color(GitHubTheme.Attention, 0.55f), size: 13);
+        simulated.SizeFlagsVertical = SizeFlags.ShrinkCenter;
+        row.AddChild(simulated);
+
         row.AddChild(GitHubUi.Spacer());
         _avatarSlot = new Control { MouseFilter = MouseFilterEnum.Ignore, CustomMinimumSize = new Vector2(S(28), S(28)) };
         row.AddChild(_avatarSlot);

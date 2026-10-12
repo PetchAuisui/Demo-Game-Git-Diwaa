@@ -84,7 +84,10 @@ public partial class RemoteRepoView
 
         if (!branch.IsDefault)
         {
-            row.AddChild(GitHubUi.Text($"{branch.Behind} behind | {branch.Ahead} ahead", GitHubTheme.FgMuted, 13));
+            row.AddChild(GitHubUi.Pill($"{branch.Ahead} ahead",
+                branch.Ahead > 0 ? GitHubTheme.Success : GitHubTheme.FgMuted,
+                branch.Ahead > 0 ? new Color(GitHubTheme.Success, 0.5f) : GitHubTheme.Border, size: 13));
+            row.AddChild(GitHubUi.Pill($"{branch.Behind} behind", GitHubTheme.FgMuted, GitHubTheme.Border, size: 13));
             row.AddChild(GitHubUi.Btn("New pull request", () =>
             {
                 _newPullSource = branch.Name;
