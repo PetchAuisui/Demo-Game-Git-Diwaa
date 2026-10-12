@@ -36,11 +36,12 @@ public partial class RemoteRepoView : Control
     private ScrollContainer _scroll = null!;
     private VBoxContainer _content = null!;
     private PanelContainer _window = null!;
+    private MarginContainer _topMargin = null!;
     private MarginContainer _headerMargin = null!;
     private MarginContainer _bodyMargin = null!;
 
     /// <summary>ความกว้างสูงสุดของเนื้อหา (หัว repo และตัวหน้าจัดกึ่งกลางให้ตรงกัน) จอกว้างขึ้นก็ไม่ยืดตาม</summary>
-    private static int ContentMaxWidth => S(1000);
+    private static int ContentMaxWidth => S(1320);
 
     public override void _Ready()
     {
@@ -55,10 +56,10 @@ public partial class RemoteRepoView : Control
 
         var margin = new MarginContainer();
         margin.SetAnchorsAndOffsetsPreset(LayoutPreset.FullRect);
-        margin.AddThemeConstantOverride("margin_left", 56);
-        margin.AddThemeConstantOverride("margin_right", 56);
+        margin.AddThemeConstantOverride("margin_left", 28);
+        margin.AddThemeConstantOverride("margin_right", 28);
         margin.AddThemeConstantOverride("margin_top", 84);
-        margin.AddThemeConstantOverride("margin_bottom", 36);
+        margin.AddThemeConstantOverride("margin_bottom", 28);
         AddChild(margin);
 
         var window = new PanelContainer { ClipContents = true };
@@ -100,11 +101,14 @@ public partial class RemoteRepoView : Control
     private Control BuildTopBar()
     {
         var bar = new PanelContainer { MouseFilter = MouseFilterEnum.Pass };
-        var style = GitHubTheme.Underlined(GitHubTheme.Inset, GitHubTheme.Border, 1, 16, 10);
+        var style = GitHubTheme.Underlined(GitHubTheme.Inset, GitHubTheme.Border, 1, 0, 10);
         style.CornerRadiusTopLeft = 9;
         style.CornerRadiusTopRight = 9;
         bar.AddThemeStyleboxOverride("panel", style);
 
+        _topMargin = new MarginContainer();
+        _topMargin.AddThemeConstantOverride("margin_left", S(16));
+        _topMargin.AddThemeConstantOverride("margin_right", S(16));
         var row = new HBoxContainer();
         row.AddThemeConstantOverride("separation", S(12));
         row.AddChild(GitHubUi.Btn("กลับ Sandbox", () => EmitSignal(SignalName.BackRequested), icon: GhIcon.ArrowLeft));
@@ -138,7 +142,8 @@ public partial class RemoteRepoView : Control
         _avatarSlot = new Control { MouseFilter = MouseFilterEnum.Ignore, CustomMinimumSize = new Vector2(S(28), S(28)) };
         row.AddChild(_avatarSlot);
 
-        bar.AddChild(row);
+        _topMargin.AddChild(row);
+        bar.AddChild(_topMargin);
         return bar;
     }
 
@@ -196,21 +201,25 @@ public partial class RemoteRepoView : Control
     }
 
     /// <summary>
-    /// จัดเนื้อหาให้อยู่กึ่งกลางกว้างไม่เกิน <see cref="ContentMaxWidth"/> ทั้งหัว repo และตัวหน้า
+    /// จัดเนื้อหาให้อยู่กึ่งกลางกว้างไม่เกิน <see cref="ContentMaxWidth"/> ทั้งแถบบน หัว repo และตัวหน้า
     /// ขอบซ้าย/ขวาตรงกัน โดยหักความกว้างแถบเลื่อนฝั่งตัวหน้าออกจากขอบขวา
     /// </summary>
     private void UpdateGutters()
     {
         // อาจถูกเรียกแบบ deferred หลังหน้าถูกปิด (กด Esc) จึงเช็กว่าโหนดยังอยู่
-        if (!IsInstanceValid(_window) || !IsInstanceValid(_headerMargin) || !IsInstanceValid(_bodyMargin)
-            || !IsInstanceValid(_scroll)) return;
+        if (!IsInstanceValid(_window) || !IsInstanceValid(_topMargin) || !IsInstanceValid(_headerMargin)
+            || !IsInstanceValid(_bodyMargin) || !IsInstanceValid(_scroll)) return;
 
         var gutter = Math.Max(S(20), (int)((_window.Size.X - ContentMaxWidth) / 2f));
         var scrollbar = _scroll.GetVScrollBar();
         var scrollbarWidth = scrollbar.Visible ? (int)scrollbar.GetCombinedMinimumSize().X : 0;
 
-        _headerMargin.AddThemeConstantOverride("margin_left", gutter);
-        _headerMargin.AddThemeConstantOverride("margin_right", gutter);
+        foreach (var margin in new[] { _topMargin, _headerMargin })
+        {
+            margin.AddThemeConstantOverride("margin_left", gutter);
+            margin.AddThemeConstantOverride("margin_right", gutter);
+        }
+
         _bodyMargin.AddThemeConstantOverride("margin_left", gutter);
         _bodyMargin.AddThemeConstantOverride("margin_right", Math.Max(S(12), gutter - scrollbarWidth));
     }
