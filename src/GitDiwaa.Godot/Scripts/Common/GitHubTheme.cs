@@ -191,6 +191,11 @@ public static class GitHubTheme
         theme.SetConstant("v_separation", "PopupMenu", S(8));
         theme.SetConstant("icon_max_width", "PopupMenu", S(16));
 
+        // คำแนะนำเมื่อชี้ (tooltip)
+        theme.SetStylebox("panel", "TooltipPanel", Box(SurfaceRaised, Border, 6, 1, 8, 4));
+        theme.SetColor("font_color", "TooltipLabel", Fg);
+        theme.SetFontSize("font_size", "TooltipLabel", S(14));
+
         // แถบเลื่อนบางๆ
         foreach (var type in new[] { "VScrollBar", "HScrollBar" })
         {

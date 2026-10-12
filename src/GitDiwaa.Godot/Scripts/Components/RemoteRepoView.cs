@@ -201,7 +201,9 @@ public partial class RemoteRepoView : Control
     /// </summary>
     private void UpdateGutters()
     {
-        if (_window is null || _headerMargin is null || _bodyMargin is null) return;
+        // อาจถูกเรียกแบบ deferred หลังหน้าถูกปิด (กด Esc) จึงเช็กว่าโหนดยังอยู่
+        if (!IsInstanceValid(_window) || !IsInstanceValid(_headerMargin) || !IsInstanceValid(_bodyMargin)
+            || !IsInstanceValid(_scroll)) return;
 
         var gutter = Math.Max(S(20), (int)((_window.Size.X - ContentMaxWidth) / 2f));
         var scrollbar = _scroll.GetVScrollBar();
@@ -243,8 +245,11 @@ public partial class RemoteRepoView : Control
         try
         {
             _repo = await _host.GetRepositoryAsync();
+            if (!IsAlive) return;
             ShowRepoHeader(_repo, _host.ListPullRequests().Count(p => p.State == PullRequestState.Open));
-            if (!(await _host.ListBranchesAsync()).Any(b => b.Name == _branch)) _branch = _repo.DefaultBranch;
+            var branches = await _host.ListBranchesAsync();
+            if (!IsAlive) return;
+            if (!branches.Any(b => b.Name == _branch)) _branch = _repo.DefaultBranch;
 
             if (_status.Length > 0)
             {
@@ -265,9 +270,11 @@ public partial class RemoteRepoView : Control
         }
         catch (Exception ex)
         {
+            if (!IsAlive) return; // ปิดหน้าไปแล้วระหว่างรอข้อมูล ไม่ต้องแจ้งอะไร
             _content.AddChild(GitHubUi.Flash($"โหลดข้อมูล repository ไม่สำเร็จ: {ex.Message}", true));
         }
 
+        if (!IsAlive) return;
         Callable.From(UpdateGutters).CallDeferred();
         _scroll.SetDeferred(ScrollContainer.PropertyName.ScrollVertical, 0);
     }
@@ -317,6 +324,9 @@ public partial class RemoteRepoView : Control
     // ───────────── ตัวช่วย ─────────────
 
     private static int S(int pixels) => GitHubTheme.S(pixels);
+
+    /// <summary>ผู้เล่นอาจกด Esc ปิดหน้าระหว่างรอข้อมูลจาก Git จึงต้องเช็กก่อนแตะโหนดหลังทุก await</summary>
+    private bool IsAlive => IsInstanceValid(this) && !IsQueuedForDeletion();
 
     private static string ParentPath(string path)
     {
