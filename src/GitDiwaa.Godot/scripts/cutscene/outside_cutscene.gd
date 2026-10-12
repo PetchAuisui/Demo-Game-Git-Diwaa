@@ -20,7 +20,7 @@ extends Node2D
 @onready var subtitle_label: Label = $UI/TitleContainer/SubtitleLabel
 @onready var start_prompt: Label = $UI/TitleContainer/StartPrompt
 
-@export var next_scene_path: String = ""
+@export var next_scene_path: String = "res://Scenes/SandboxGameView.tscn"
 
 var can_start: bool = false
 var is_starting: bool = false

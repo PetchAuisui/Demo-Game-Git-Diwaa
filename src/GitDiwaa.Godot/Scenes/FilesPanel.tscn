@@ -1,0 +1,466 @@
+[gd_scene load_steps=12 format=3]
+
+[ext_resource type="Script" path="res://Scripts/Components/FilesPanel.cs" id="1_script"]
+[ext_resource type="Theme" path="res://Scenes/FileDialogTheme.tres" id="2_dialog_theme"]
+[ext_resource type="Texture2D" path="res://assets/icons/file.svg" id="3_file_icon"]
+[ext_resource type="Texture2D" path="res://assets/icons/folder.svg" id="4_folder_icon"]
+
+[sub_resource type="StyleBoxFlat" id="Style_card"]
+bg_color = Color(0.025, 0.031, 0.055, 0.94)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(0.37, 0.42, 0.67, 0.95)
+corner_radius_top_left = 12
+corner_radius_top_right = 12
+corner_radius_bottom_right = 12
+corner_radius_bottom_left = 12
+
+[sub_resource type="StyleBoxFlat" id="Style_surface"]
+bg_color = Color(0.012, 0.017, 0.031, 0.96)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.19, 0.23, 0.4, 1)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+content_margin_left = 14.0
+content_margin_top = 14.0
+content_margin_right = 14.0
+content_margin_bottom = 14.0
+
+[sub_resource type="StyleBoxFlat" id="Style_button_normal"]
+bg_color = Color(0.12, 0.14, 0.24, 0.98)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.42, 0.48, 0.72, 1)
+corner_radius_top_left = 7
+corner_radius_top_right = 7
+corner_radius_bottom_right = 7
+corner_radius_bottom_left = 7
+content_margin_left = 8.0
+content_margin_top = 7.0
+content_margin_right = 8.0
+content_margin_bottom = 7.0
+
+[sub_resource type="StyleBoxFlat" id="Style_button_hover"]
+bg_color = Color(0.19, 0.23, 0.38, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.66, 0.71, 0.98, 1)
+corner_radius_top_left = 7
+corner_radius_top_right = 7
+corner_radius_bottom_right = 7
+corner_radius_bottom_left = 7
+content_margin_left = 8.0
+content_margin_top = 7.0
+content_margin_right = 8.0
+content_margin_bottom = 7.0
+
+[sub_resource type="StyleBoxFlat" id="Style_button_disabled"]
+bg_color = Color(0.06, 0.07, 0.12, 0.7)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.24, 0.27, 0.37, 0.7)
+corner_radius_top_left = 7
+corner_radius_top_right = 7
+corner_radius_bottom_right = 7
+corner_radius_bottom_left = 7
+content_margin_left = 8.0
+content_margin_top = 7.0
+content_margin_right = 8.0
+content_margin_bottom = 7.0
+
+[sub_resource type="StyleBoxFlat" id="Style_input"]
+bg_color = Color(0.018, 0.024, 0.043, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.25, 0.3, 0.5, 1)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_right = 6
+corner_radius_bottom_left = 6
+
+[sub_resource type="SystemFont" id="Font_code"]
+font_names = PackedStringArray("Menlo", "Consolas", "DejaVu Sans Mono")
+
+[node name="FilesPanel" type="PanelContainer"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("Style_card")
+script = ExtResource("1_script")
+
+[node name="Margin" type="MarginContainer" parent="."]
+layout_mode = 2
+theme_override_constants/margin_left = 13
+theme_override_constants/margin_top = 13
+theme_override_constants/margin_right = 13
+theme_override_constants/margin_bottom = 13
+
+[node name="Layout" type="VBoxContainer" parent="Margin"]
+layout_mode = 2
+theme_override_constants/separation = 9
+
+[node name="TitleLabel" type="Label" parent="Margin/Layout"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.79, 0.35, 1)
+theme_override_font_sizes/font_size = 24
+text = "FILES — พื้นที่ทำงาน"
+
+[node name="FeedbackLabel" type="Label" parent="Margin/Layout"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+theme_override_colors/font_color = Color(0.45, 0.95, 0.66, 1)
+theme_override_font_sizes/font_size = 16
+text = "พร้อมใช้งาน"
+autowrap_mode = 2
+
+[node name="WorkspaceActions" type="VBoxContainer" parent="Margin/Layout"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="CreateActions" type="HBoxContainer" parent="Margin/Layout/WorkspaceActions"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="NewFileButton" type="Button" parent="Margin/Layout/WorkspaceActions/CreateActions"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 42)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 18
+theme_override_styles/normal = SubResource("Style_button_normal")
+theme_override_styles/hover = SubResource("Style_button_hover")
+theme_override_styles/disabled = SubResource("Style_button_disabled")
+text = "+ ไฟล์"
+
+[node name="NewFolderButton" type="Button" parent="Margin/Layout/WorkspaceActions/CreateActions"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 42)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 18
+theme_override_styles/normal = SubResource("Style_button_normal")
+theme_override_styles/hover = SubResource("Style_button_hover")
+theme_override_styles/disabled = SubResource("Style_button_disabled")
+text = "+ โฟลเดอร์"
+
+[node name="WorkspaceBody" type="Control" parent="Margin/Layout"]
+custom_minimum_size = Vector2(0, 202)
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="NavigatorSurface" type="PanelContainer" parent="Margin/Layout/WorkspaceBody"]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("Style_surface")
+
+[node name="NavigatorLayout" type="VBoxContainer" parent="Margin/Layout/WorkspaceBody/NavigatorSurface"]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="NavigatorTitle" type="Label" parent="Margin/Layout/WorkspaceBody/NavigatorSurface/NavigatorLayout"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.68, 0.73, 0.85, 1)
+theme_override_font_sizes/font_size = 17
+text = "WORKSPACE"
+
+[node name="EntryActions" type="HBoxContainer" parent="Margin/Layout/WorkspaceBody/NavigatorSurface/NavigatorLayout"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="OpenButton" type="Button" parent="Margin/Layout/WorkspaceBody/NavigatorSurface/NavigatorLayout/EntryActions"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 42)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.7, 1, 0.72, 1)
+theme_override_font_sizes/font_size = 18
+theme_override_styles/normal = SubResource("Style_button_normal")
+theme_override_styles/hover = SubResource("Style_button_hover")
+theme_override_styles/disabled = SubResource("Style_button_disabled")
+disabled = true
+text = "เปิด"
+
+[node name="RenameButton" type="Button" parent="Margin/Layout/WorkspaceBody/NavigatorSurface/NavigatorLayout/EntryActions"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 42)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 18
+theme_override_styles/normal = SubResource("Style_button_normal")
+theme_override_styles/hover = SubResource("Style_button_hover")
+theme_override_styles/disabled = SubResource("Style_button_disabled")
+disabled = true
+text = "เปลี่ยนชื่อ"
+
+[node name="DeleteButton" type="Button" parent="Margin/Layout/WorkspaceBody/NavigatorSurface/NavigatorLayout/EntryActions"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 42)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(1, 0.52, 0.55, 1)
+theme_override_font_sizes/font_size = 18
+theme_override_styles/normal = SubResource("Style_button_normal")
+theme_override_styles/hover = SubResource("Style_button_hover")
+theme_override_styles/disabled = SubResource("Style_button_disabled")
+disabled = true
+text = "ลบ"
+
+[node name="FilesList" type="ItemList" parent="Margin/Layout/WorkspaceBody/NavigatorSurface/NavigatorLayout"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_colors/font_color = Color(0.82, 0.85, 0.93, 1)
+theme_override_colors/font_selected_color = Color(1, 0.9, 0.56, 1)
+theme_override_font_sizes/font_size = 20
+theme_override_styles/panel = SubResource("Style_input")
+theme_override_constants/v_separation = 8
+allow_reselect = true
+
+[node name="EditorSurface" type="PanelContainer" parent="Margin/Layout/WorkspaceBody"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("Style_surface")
+
+[node name="EditorLayout" type="VBoxContainer" parent="Margin/Layout/WorkspaceBody/EditorSurface"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+theme_override_constants/separation = 5
+
+[node name="EditorPathLabel" type="Label" parent="Margin/Layout/WorkspaceBody/EditorSurface/EditorLayout"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.88, 0.9, 0.97, 1)
+theme_override_font_sizes/font_size = 16
+text = "file.txt"
+text_overrun_behavior = 3
+
+[node name="EditorStatus" type="HBoxContainer" parent="Margin/Layout/WorkspaceBody/EditorSurface/EditorLayout"]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="DirtyLabel" type="Label" parent="Margin/Layout/WorkspaceBody/EditorSurface/EditorLayout/EditorStatus"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(1, 0.79, 0.35, 1)
+theme_override_font_sizes/font_size = 15
+text = "● ยังไม่บันทึก"
+
+[node name="CloseEditorButton" type="Button" parent="Margin/Layout/WorkspaceBody/EditorSurface/EditorLayout/EditorStatus"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+theme_override_styles/normal = SubResource("Style_button_normal")
+theme_override_styles/hover = SubResource("Style_button_hover")
+text = "← ไฟล์"
+tooltip_text = "กลับไปรายการไฟล์"
+
+[node name="Editor" type="CodeEdit" parent="Margin/Layout/WorkspaceBody/EditorSurface/EditorLayout"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_colors/font_color = Color(0.84, 0.88, 0.96, 1)
+theme_override_colors/caret_color = Color(1, 0.79, 0.35, 1)
+theme_override_colors/selection_color = Color(0.25, 0.31, 0.55, 0.8)
+theme_override_fonts/font = SubResource("Font_code")
+theme_override_font_sizes/font_size = 18
+theme_override_styles/normal = SubResource("Style_input")
+gutters_draw_line_numbers = true
+highlight_current_line = true
+draw_tabs = true
+
+[node name="SaveButton" type="Button" parent="Margin/Layout/WorkspaceBody/EditorSurface/EditorLayout"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.7, 1, 0.72, 1)
+theme_override_font_sizes/font_size = 18
+theme_override_styles/normal = SubResource("Style_button_normal")
+theme_override_styles/hover = SubResource("Style_button_hover")
+theme_override_styles/disabled = SubResource("Style_button_disabled")
+disabled = true
+text = "บันทึก"
+
+[node name="CreateFileDialog" type="ConfirmationDialog" parent="."]
+unique_name_in_owner = true
+title = "สร้างไฟล์ใหม่"
+size = Vector2i(520, 250)
+borderless = true
+theme = ExtResource("2_dialog_theme")
+unresizable = true
+ok_button_text = "สร้างและเปิด"
+cancel_button_text = "ยกเลิก"
+
+[node name="Content" type="MarginContainer" parent="CreateFileDialog"]
+theme_override_constants/margin_left = 4
+theme_override_constants/margin_top = 18
+theme_override_constants/margin_right = 4
+theme_override_constants/margin_bottom = 16
+
+[node name="Layout" type="VBoxContainer" parent="CreateFileDialog/Content"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="Heading" type="HBoxContainer" parent="CreateFileDialog/Content/Layout"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="Icon" type="TextureRect" parent="CreateFileDialog/Content/Layout/Heading"]
+custom_minimum_size = Vector2(28, 28)
+layout_mode = 2
+texture = ExtResource("3_file_icon")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Label" type="Label" parent="CreateFileDialog/Content/Layout/Heading"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.79, 0.35, 1)
+theme_override_font_sizes/font_size = 26
+text = "สร้างไฟล์ใหม่"
+
+[node name="NameLabel" type="Label" parent="CreateFileDialog/Content/Layout"]
+layout_mode = 2
+text = "ชื่อไฟล์"
+
+[node name="CreateFileNameInput" type="LineEdit" parent="CreateFileDialog/Content/Layout"]
+unique_name_in_owner = true
+layout_mode = 2
+custom_minimum_size = Vector2(0, 48)
+size_flags_vertical = 0
+placeholder_text = "เช่น quest.txt"
+
+[node name="CreateFileLocation" type="Label" parent="CreateFileDialog/Content/Layout"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.68, 0.73, 0.85, 1)
+theme_override_font_sizes/font_size = 16
+text = "สร้างใน: /"
+text_overrun_behavior = 3
+
+[node name="CreateFolderDialog" type="ConfirmationDialog" parent="."]
+unique_name_in_owner = true
+title = "สร้างโฟลเดอร์ใหม่"
+size = Vector2i(520, 250)
+borderless = true
+theme = ExtResource("2_dialog_theme")
+unresizable = true
+ok_button_text = "สร้างโฟลเดอร์"
+cancel_button_text = "ยกเลิก"
+
+[node name="Content" type="MarginContainer" parent="CreateFolderDialog"]
+theme_override_constants/margin_left = 4
+theme_override_constants/margin_top = 18
+theme_override_constants/margin_right = 4
+theme_override_constants/margin_bottom = 16
+
+[node name="Layout" type="VBoxContainer" parent="CreateFolderDialog/Content"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="Heading" type="HBoxContainer" parent="CreateFolderDialog/Content/Layout"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="Icon" type="TextureRect" parent="CreateFolderDialog/Content/Layout/Heading"]
+custom_minimum_size = Vector2(28, 28)
+layout_mode = 2
+texture = ExtResource("4_folder_icon")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Label" type="Label" parent="CreateFolderDialog/Content/Layout/Heading"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.38, 0.74, 1, 1)
+theme_override_font_sizes/font_size = 26
+text = "สร้างโฟลเดอร์ใหม่"
+
+[node name="NameLabel" type="Label" parent="CreateFolderDialog/Content/Layout"]
+layout_mode = 2
+text = "ชื่อโฟลเดอร์"
+
+[node name="CreateFolderNameInput" type="LineEdit" parent="CreateFolderDialog/Content/Layout"]
+unique_name_in_owner = true
+layout_mode = 2
+custom_minimum_size = Vector2(0, 48)
+size_flags_vertical = 0
+placeholder_text = "เช่น quests"
+
+[node name="CreateFolderLocation" type="Label" parent="CreateFolderDialog/Content/Layout"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.68, 0.73, 0.85, 1)
+theme_override_font_sizes/font_size = 16
+text = "สร้างใน: /"
+text_overrun_behavior = 3
+
+[node name="RenameDialog" type="ConfirmationDialog" parent="."]
+unique_name_in_owner = true
+title = "เปลี่ยนชื่อ"
+size = Vector2i(480, 190)
+borderless = true
+theme = ExtResource("2_dialog_theme")
+unresizable = true
+ok_button_text = "เปลี่ยนชื่อ"
+cancel_button_text = "ยกเลิก"
+dialog_text = "ชื่อใหม่"
+
+[node name="RenameInput" type="LineEdit" parent="RenameDialog"]
+unique_name_in_owner = true
+offset_left = 16.0
+offset_top = 82.0
+offset_right = 464.0
+offset_bottom = 122.0
+
+[node name="DeleteConfirmDialog" type="ConfirmationDialog" parent="."]
+unique_name_in_owner = true
+title = "ยืนยันการลบ"
+size = Vector2i(520, 190)
+borderless = true
+theme = ExtResource("2_dialog_theme")
+unresizable = true
+ok_button_text = "ลบ"
+cancel_button_text = "ยกเลิก"
+
+[node name="DiscardChangesDialog" type="ConfirmationDialog" parent="."]
+unique_name_in_owner = true
+title = "มีการแก้ไขที่ยังไม่บันทึก"
+size = Vector2i(540, 190)
+borderless = true
+theme = ExtResource("2_dialog_theme")
+unresizable = true
+ok_button_text = "ทิ้งการแก้ไข"
+cancel_button_text = "กลับไปบันทึก"
