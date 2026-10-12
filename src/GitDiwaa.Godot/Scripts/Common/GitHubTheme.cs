@@ -18,22 +18,25 @@ public static class GitHubTheme
 
     public static float S(float pixels) => pixels * UiScale;
 
-    // พื้นผิวและเส้นขอบ
-    public static readonly Color Canvas = new("#0d1117");
-    public static readonly Color CanvasSubtle = new("#161b22");
-    public static readonly Color Border = new("#30363d");
-    public static readonly Color BorderMuted = new("#21262d");
+    // พื้นผิวเป็นชั้นๆ: แถบบน/ช่องกรอก/บล็อกโค้ด (เข้มสุด) < พื้นหน้า < การ์ด < หัวการ์ดและแถวที่ชี้
+    public static readonly Color Backdrop = new(0.004f, 0.016f, 0.035f, 0.97f);
+    public static readonly Color Inset = new("#05070a");
+    public static readonly Color Canvas = new("#0a0d12");
+    public static readonly Color Surface = new("#11161d");
+    public static readonly Color SurfaceRaised = new("#1a212b");
+    public static readonly Color Border = new("#3d444d");
+    public static readonly Color BorderMuted = new("#2b323b");
 
-    // ตัวอักษร
-    public static readonly Color Fg = new("#e6edf3");
-    public static readonly Color FgMuted = new("#7d8590");
-    public static readonly Color FgSubtle = new("#6e7681");
+    // ตัวอักษร (สว่างกว่า GitHub เดิมเล็กน้อย ให้อ่านบนพื้นเข้มได้ชัด)
+    public static readonly Color Fg = new("#f0f6fc");
+    public static readonly Color FgMuted = new("#9ba5b0");
+    public static readonly Color FgSubtle = new("#7d8590");
 
     // สีสถานะ
-    public static readonly Color Accent = new("#2f81f7");
-    public static readonly Color AccentHover = new("#58a6ff");
+    public static readonly Color Accent = new("#4493f8");
+    public static readonly Color AccentHover = new("#79b8ff");
     public static readonly Color AccentEmphasis = new("#1f6feb");
-    public static readonly Color AccentSubtle = new("#132339");
+    public static readonly Color AccentSubtle = new("#12233b");
     public static readonly Color Success = new("#3fb950");
     public static readonly Color SuccessEmphasis = new("#238636");
     public static readonly Color SuccessSubtle = new("#12261e");
@@ -44,6 +47,13 @@ public static class GitHubTheme
     public static readonly Color Done = new("#a371f7");
     public static readonly Color DoneEmphasis = new("#8957e5");
     public static readonly Color TabUnderline = new("#f78166");
+
+    // สีไล่คำสั่งในบล็อกโค้ด
+    public static readonly Color SyntaxSubcommand = new("#7ee787");
+    public static readonly Color SyntaxFlag = new("#ffa657");
+    public static readonly Color SyntaxString = new("#a5d6ff");
+    public static readonly Color SyntaxPath = new("#79c0ff");
+    public static readonly Color SyntaxGame = new("#d2a8ff");
 
     // diff
     public static readonly Color DiffAdd = new("#12261e");
@@ -109,10 +119,10 @@ public static class GitHubTheme
         foreach (var type in new[] { "Button", "OptionButton" })
         {
             SetButton(theme, type,
-                Box(new("#21262d"), new("#363b42"), 8, 1, 14, 5),
-                Box(new("#30363d"), new("#8b949e"), 8, 1, 14, 5),
-                Box(new("#282e33"), new("#8b949e"), 8, 1, 14, 5),
-                Box(new("#21262d"), new("#30363d"), 8, 1, 14, 5),
+                Box(new("#212832"), new("#4a525c"), 8, 1, 14, 5),
+                Box(new("#2c3440"), new("#9ba5b0"), 8, 1, 14, 5),
+                Box(new("#252c36"), new("#9ba5b0"), 8, 1, 14, 5),
+                Box(new("#1a2029"), new("#343b45"), 8, 1, 14, 5),
                 Fg, Fg, new("#484f58"));
             theme.SetConstant("h_separation", type, S(6));
             theme.SetConstant("icon_max_width", type, S(16));
@@ -145,28 +155,28 @@ public static class GitHubTheme
         theme.SetTypeVariation(GhostButton, "Button");
         SetButton(theme, GhostButton,
             Box(Colors.Transparent, Colors.Transparent, 8, 0, 8, 4),
-            Box(new(0.19f, 0.21f, 0.24f, 0.7f), Colors.Transparent, 8, 0, 8, 4),
-            Box(new(0.19f, 0.21f, 0.24f, 1f), Colors.Transparent, 8, 0, 8, 4),
+            Box(new(0.23f, 0.26f, 0.31f, 0.7f), Colors.Transparent, 8, 0, 8, 4),
+            Box(new(0.23f, 0.26f, 0.31f, 1f), Colors.Transparent, 8, 0, 8, 4),
             Box(Colors.Transparent, Colors.Transparent, 8, 0, 8, 4),
             FgMuted, Fg, FgSubtle);
 
         // ช่องกรอก
         foreach (var type in new[] { "LineEdit", "TextEdit" })
         {
-            theme.SetStylebox("normal", type, Box(Canvas, Border, 8, 1, 12, 5));
+            theme.SetStylebox("normal", type, Box(Inset, Border, 8, 1, 12, 5));
             theme.SetStylebox("focus", type, FocusRing());
-            theme.SetStylebox("read_only", type, Box(CanvasSubtle, Border, 8, 1, 12, 5));
+            theme.SetStylebox("read_only", type, Box(Inset, Border, 8, 1, 12, 5));
             theme.SetColor("font_color", type, Fg);
-            theme.SetColor("font_readonly_color", type, FgMuted);
-            theme.SetColor("font_uneditable_color", type, FgMuted);
+            theme.SetColor("font_readonly_color", type, Fg);
+            theme.SetColor("font_uneditable_color", type, Fg);
             theme.SetColor("font_placeholder_color", type, FgSubtle);
             theme.SetColor("caret_color", type, Fg);
             theme.SetColor("selection_color", type, new(AccentEmphasis, 0.45f));
         }
 
         // เมนูตัวเลือก (เช่น เลือก branch)
-        theme.SetStylebox("panel", "PopupMenu", Box(CanvasSubtle, Border, 8, 1, 4, 4));
-        theme.SetStylebox("hover", "PopupMenu", Box(new("#30363d"), Colors.Transparent, 8, 0, 8, 4));
+        theme.SetStylebox("panel", "PopupMenu", Box(SurfaceRaised, Border, 8, 1, 4, 4));
+        theme.SetStylebox("hover", "PopupMenu", Box(new("#2c3440"), Colors.Transparent, 8, 0, 8, 4));
         theme.SetStylebox("separator", "PopupMenu", new StyleBoxLine { Color = Border, Thickness = 1 });
         theme.SetColor("font_color", "PopupMenu", Fg);
         theme.SetColor("font_hover_color", "PopupMenu", Fg);

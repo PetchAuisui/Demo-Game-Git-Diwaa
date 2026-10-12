@@ -233,7 +233,7 @@ public partial class RemoteRepoView
     {
         var url = _repo!.CloneUrl;
         var popup = new PopupPanel();
-        popup.AddThemeStyleboxOverride("panel", GitHubTheme.Box(GitHubTheme.CanvasSubtle, GitHubTheme.Border, 8, 1, 18, 14));
+        popup.AddThemeStyleboxOverride("panel", GitHubTheme.Box(GitHubTheme.SurfaceRaised, GitHubTheme.Border, 8, 1, 18, 14));
 
         var column = new VBoxContainer { CustomMinimumSize = new Vector2(S(540), 0) };
         column.AddThemeConstantOverride("separation", S(10));

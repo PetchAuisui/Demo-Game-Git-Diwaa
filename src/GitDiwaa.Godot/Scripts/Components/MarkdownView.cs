@@ -121,7 +121,7 @@ public static class MarkdownView
     private static Control CodeBox(IReadOnlyList<string> lines)
     {
         var box = GitHubUi.Card(14, 10);
-        box.AddThemeStyleboxOverride("panel", GitHubTheme.Box(GitHubTheme.CanvasSubtle, GitHubTheme.Border, 8, 1, 14, 10));
+        box.AddThemeStyleboxOverride("panel", GitHubTheme.Box(GitHubTheme.Inset, GitHubTheme.Border, 8, 1, 14, 10));
         var label = new RichTextLabel
         {
             Text = string.Join('\n', lines),

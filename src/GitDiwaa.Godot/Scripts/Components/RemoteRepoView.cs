@@ -43,7 +43,7 @@ public partial class RemoteRepoView : Control
         MouseFilter = MouseFilterEnum.Stop;
         GetViewport().GuiReleaseFocus(); // ไม่ให้ช่องพิมพ์ของ terminal ด้านหลังรับคีย์บอร์ดต่อ
 
-        var dim = new ColorRect { Color = new Color(0.004f, 0.016f, 0.035f, 0.9f) };
+        var dim = new ColorRect { Color = GitHubTheme.Backdrop };
         dim.SetAnchorsAndOffsetsPreset(LayoutPreset.FullRect);
         AddChild(dim);
 
@@ -56,7 +56,7 @@ public partial class RemoteRepoView : Control
         AddChild(margin);
 
         var window = new PanelContainer { ClipContents = true };
-        window.AddThemeStyleboxOverride("panel", GitHubTheme.Box(GitHubTheme.Canvas, GitHubTheme.Border, 8, 1));
+        window.AddThemeStyleboxOverride("panel", GitHubTheme.Box(GitHubTheme.Canvas, GitHubTheme.Border, 10, 1));
         margin.AddChild(window);
 
         var column = new VBoxContainer();
@@ -90,9 +90,9 @@ public partial class RemoteRepoView : Control
     private Control BuildTopBar()
     {
         var bar = new PanelContainer { MouseFilter = MouseFilterEnum.Pass };
-        var style = GitHubTheme.Underlined(GitHubTheme.CanvasSubtle, GitHubTheme.Border, 1, 16, 10);
-        style.CornerRadiusTopLeft = 7;
-        style.CornerRadiusTopRight = 7;
+        var style = GitHubTheme.Underlined(GitHubTheme.Inset, GitHubTheme.Border, 1, 16, 10);
+        style.CornerRadiusTopLeft = 9;
+        style.CornerRadiusTopRight = 9;
         bar.AddThemeStyleboxOverride("panel", style);
 
         var row = new HBoxContainer();
@@ -105,7 +105,7 @@ public partial class RemoteRepoView : Control
             CustomMinimumSize = new Vector2(S(560), 0),
             SizeFlagsHorizontal = SizeFlags.ShrinkBegin
         };
-        address.AddThemeStyleboxOverride("panel", GitHubTheme.Box(GitHubTheme.Canvas, GitHubTheme.Border, 16, 1, 14, 4));
+        address.AddThemeStyleboxOverride("panel", GitHubTheme.Box(GitHubTheme.Surface, GitHubTheme.Border, 16, 1, 14, 4));
         var addressRow = new HBoxContainer { MouseFilter = MouseFilterEnum.Ignore };
         addressRow.AddThemeConstantOverride("separation", S(8));
         addressRow.AddChild(GitHubUi.Icon(GhIcon.Lock, GitHubTheme.FgMuted, 14));
@@ -127,7 +127,7 @@ public partial class RemoteRepoView : Control
     private Control BuildRepoHeader()
     {
         var header = new PanelContainer { MouseFilter = MouseFilterEnum.Pass };
-        header.AddThemeStyleboxOverride("panel", GitHubTheme.Underlined(GitHubTheme.CanvasSubtle, GitHubTheme.Border, 1, 24, 16, 0));
+        header.AddThemeStyleboxOverride("panel", GitHubTheme.Underlined(GitHubTheme.Surface, GitHubTheme.Border, 1, 24, 16, 0));
 
         var column = new VBoxContainer();
         column.AddThemeConstantOverride("separation", S(12));

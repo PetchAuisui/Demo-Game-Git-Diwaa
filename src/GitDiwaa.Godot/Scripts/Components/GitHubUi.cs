@@ -113,7 +113,7 @@ public static class GitHubUi
             MouseFilter = Control.MouseFilterEnum.Pass,
             SizeFlagsHorizontal = Control.SizeFlags.ExpandFill
         };
-        card.AddThemeStyleboxOverride("panel", GitHubTheme.Box(GitHubTheme.Canvas, GitHubTheme.Border, 8, 1, padH, padV));
+        card.AddThemeStyleboxOverride("panel", GitHubTheme.Box(GitHubTheme.Surface, GitHubTheme.Border, 8, 1, padH, padV));
         return card;
     }
 
@@ -125,7 +125,7 @@ public static class GitHubUi
             MouseFilter = Control.MouseFilterEnum.Pass,
             SizeFlagsHorizontal = Control.SizeFlags.ExpandFill
         };
-        panel.AddThemeStyleboxOverride("panel", GitHubTheme.Box(GitHubTheme.Canvas, GitHubTheme.Border));
+        panel.AddThemeStyleboxOverride("panel", GitHubTheme.Box(GitHubTheme.Surface, GitHubTheme.Border));
         var body = new VBoxContainer { MouseFilter = Control.MouseFilterEnum.Pass };
         body.AddThemeConstantOverride("separation", S(0));
         panel.AddChild(body);
@@ -136,7 +136,7 @@ public static class GitHubUi
     public static PanelContainer Header(Control content)
     {
         var bar = new PanelContainer { MouseFilter = Control.MouseFilterEnum.Pass };
-        var style = GitHubTheme.Underlined(GitHubTheme.CanvasSubtle, GitHubTheme.Border, 1, 16, 10);
+        var style = GitHubTheme.Underlined(GitHubTheme.SurfaceRaised, GitHubTheme.Border, 1, 16, 10);
         style.CornerRadiusTopLeft = 5;
         style.CornerRadiusTopRight = 5;
         bar.AddThemeStyleboxOverride("panel", style);
@@ -149,7 +149,7 @@ public static class GitHubUi
     {
         var row = new PanelContainer { MouseFilter = Control.MouseFilterEnum.Pass };
         StyleBoxFlat Style(bool hover) => GitHubTheme.Underlined(
-            hover ? GitHubTheme.CanvasSubtle : Colors.Transparent, GitHubTheme.BorderMuted, last ? 0 : 1, 16, 9);
+            hover ? GitHubTheme.SurfaceRaised : Colors.Transparent, GitHubTheme.BorderMuted, last ? 0 : 1, 16, 9);
 
         row.AddThemeStyleboxOverride("panel", Style(false));
         if (onClick is not null)
@@ -234,7 +234,7 @@ public static class GitHubUi
     public static PanelContainer Counter(int number)
     {
         var counter = new PanelContainer { MouseFilter = Control.MouseFilterEnum.Ignore, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter };
-        counter.AddThemeStyleboxOverride("panel", GitHubTheme.Box(new(0.43f, 0.46f, 0.51f, 0.4f), Colors.Transparent, 10, 0, 7, 0));
+        counter.AddThemeStyleboxOverride("panel", GitHubTheme.Box(new(0.52f, 0.56f, 0.62f, 0.35f), Colors.Transparent, 10, 0, 7, 0));
         counter.AddChild(Text(number.ToString(CultureInfo.InvariantCulture), GitHubTheme.Fg, 12));
         return counter;
     }
@@ -293,7 +293,7 @@ public static class GitHubUi
     public static PanelContainer CodeBlock(IEnumerable<string> lines)
     {
         var panel = Card(14, 10);
-        panel.AddThemeStyleboxOverride("panel", GitHubTheme.Box(GitHubTheme.CanvasSubtle, GitHubTheme.Border, 8, 1, 14, 8));
+        panel.AddThemeStyleboxOverride("panel", GitHubTheme.Box(GitHubTheme.Inset, GitHubTheme.Border, 8, 1, 14, 8));
         var column = new VBoxContainer { MouseFilter = Control.MouseFilterEnum.Pass };
         column.AddThemeConstantOverride("separation", S(2));
         foreach (var line in lines)

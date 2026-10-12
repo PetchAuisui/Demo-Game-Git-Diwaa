@@ -163,7 +163,7 @@ public partial class RemoteRepoView
 
         // แถบเลือก base ← compare
         var compare = GitHubUi.Card(16, 12);
-        compare.AddThemeStyleboxOverride("panel", GitHubTheme.Box(GitHubTheme.CanvasSubtle, GitHubTheme.Border, 8, 1, 16, 12));
+        compare.AddThemeStyleboxOverride("panel", GitHubTheme.Box(GitHubTheme.Surface, GitHubTheme.Border, 8, 1, 16, 12));
         var compareColumn = new VBoxContainer();
         compareColumn.AddThemeConstantOverride("separation", S(10));
         var pickers = new HBoxContainer();
