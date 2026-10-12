@@ -25,7 +25,7 @@
 
 ## หน้า Remote Repository ใน Sandbox
 
-เปิดจากปุ่ม **Remote Repo** (ไอคอนก้อนเมฆ) ที่แถบบนของ Sandbox (`RemoteRepoView`) หน้าตาเลียนแบบ GitHub ธีม dark ไม่ยึดตัวอย่างใน Figma
+เปิดจากปุ่ม **Remote Repo** (ไอคอนก้อนเมฆ `RemoteRepoButton`) ที่มุมขวาของหัวพาเนล Git Graph ใน Sandbox (`RemoteRepoView`) หน้าตาเลียนแบบ GitHub ธีม dark ไม่ยึดตัวอย่างใน Figma
 มีแถบ URL แสดงที่อยู่ของหน้าปัจจุบัน (เช่น `github.com/user/my-project/pull/1`) กด Esc หรือปุ่ม "กลับ Sandbox" เพื่อกลับ
 
 | หน้า | สิ่งที่ทำได้ |

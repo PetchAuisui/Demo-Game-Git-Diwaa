@@ -16,6 +16,7 @@ public partial class SandboxGameView : Control
     private FilesPanel _filesPanel = null!;
     private GitGraphPanel _gitGraphPanel = null!;
     private TerminalPanel _terminalPanel = null!;
+    private RemoteRepoButton _remoteRepoButton = null!;
 
     private IGitSandboxService _sandboxService = null!;
     private bool _isInitialized;
@@ -37,7 +38,9 @@ public partial class SandboxGameView : Control
 
     private void WireEvents()
     {
-        _topBar.RepoPressed += OnRepoPressed;
+        _remoteRepoButton = new RemoteRepoButton();
+        _remoteRepoButton.Pressed += OnRepoPressed;
+        _gitGraphPanel.AddHeaderAction(_remoteRepoButton);
         _terminalPanel.CommandSubmitted += OnCommandSubmitted;
         _filesPanel.OpenFileRequested += OnOpenFileRequested;
         _filesPanel.SaveFileRequested += OnSaveFileRequested;
@@ -79,7 +82,7 @@ public partial class SandboxGameView : Control
         }
 
         _isInitialized = true;
-        _topBar.SetRepoButtonEnabled(_sandboxService.RemoteHost != null);
+        _remoteRepoButton.SetAvailable(_sandboxService.RemoteHost != null);
         _terminalPanel.SetExecuting(false);
 
         if (_sandboxService.Info != null)
