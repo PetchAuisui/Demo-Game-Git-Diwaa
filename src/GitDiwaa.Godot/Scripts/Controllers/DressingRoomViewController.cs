@@ -14,6 +14,14 @@ namespace GitDiwaa.Godot.Controllers;
 /// </summary>
 public partial class DressingRoomViewController : Control
 {
+    // Color & Theme Tokens for Dressing Room
+    private static readonly Color TabActiveBg = new(0.427f, 0.157f, 0.851f, 1f);     // #6D28D9
+    private static readonly Color TabActiveBorder = new(0.545f, 0.361f, 0.965f, 1f); // #8B5CF6
+    private static readonly Color TabInactiveBg = new(0.082f, 0.059f, 0.180f, 0.9f); // #150F2E
+    private static readonly Color TabInactiveBorder = new(0.180f, 0.137f, 0.333f, 1f); // #2E2355
+    private static readonly Color TabActiveText = new(1.0f, 1.0f, 1.0f, 1.0f);
+    private static readonly Color TabInactiveText = new(0.65f, 0.60f, 0.80f, 1.0f);
+
     private Button _backBtn = null!;
     private Button _rotateLeftBtn = null!;
     private Button _rotateRightBtn = null!;
@@ -26,19 +34,21 @@ public partial class DressingRoomViewController : Control
     private Control _emptyStateContainer = null!;
     private GridContainer _itemsGrid = null!;
 
-    // Category Tabs: All, Hood, Scarf, Bag, Cat
-    private Button _tabAll = null!;
-    private Button _tabHood = null!;
-    private Button _tabScarf = null!;
-    private Button _tabBag = null!;
-    private Button _tabCat = null!;
+    // Category Tabs: 0 = All, 1 = Hood, 2 = Scarf, 3 = Bag, 4 = Cat
+    private Button[] _tabButtons = Array.Empty<Button>();
 
     // Facing textures: 0 = Front, 1 = Right, 2 = Back, 3 = Left
     private Texture2D[] _facingTextures = Array.Empty<Texture2D>();
     private int _facingIndex = 0;
 
     // Active Category Filter: 0 = All, 1 = Hood, 2 = Scarf, 3 = Bag, 4 = Cat
+    // TODO: Connect with Shop / Inventory purchased items filter once the Shop system is integrated.
     private int _activeCategory = 0;
+
+    // Animation & Transition Guards
+    private float _catInitialY;
+    private bool _isCatHopping = false;
+    private bool _isLeaving = false;
 
     // Tab Styles
     private StyleBoxFlat _tabActiveStyle = null!;
@@ -53,13 +63,15 @@ public partial class DressingRoomViewController : Control
         UpdateCharacterFacing();
         UpdateCategoryFilter(0);
 
+        // Store ground reference position for cat hop animation
+        _catInitialY = _catSprite.Position.Y;
+
         // Awaiting items from shop - keep companion cat standing nicely beside Vel
         _catSprite.Visible = true;
         _emptyStateContainer.Visible = true;
         _itemsGrid.Visible = false;
         _counterValue.Text = "0 ชิ้น";
 
-        _backBtn.GrabFocus();
         StartFadeIn();
     }
 
@@ -77,32 +89,48 @@ public partial class DressingRoomViewController : Control
         _emptyStateContainer = GetNode<Control>("%EmptyStateContainer");
         _itemsGrid = GetNode<GridContainer>("%ItemsGrid");
 
-        _tabAll = GetNode<Button>("%TabAll");
-        _tabHood = GetNode<Button>("%TabHood");
-        _tabScarf = GetNode<Button>("%TabScarf");
-        _tabBag = GetNode<Button>("%TabBag");
-        _tabCat = GetNode<Button>("%TabCat");
+        _tabButtons = new[]
+        {
+            GetNode<Button>("%TabAll"),
+            GetNode<Button>("%TabHood"),
+            GetNode<Button>("%TabScarf"),
+            GetNode<Button>("%TabBag"),
+            GetNode<Button>("%TabCat")
+        };
     }
 
     private void LoadTextures()
     {
-        _facingTextures = new Texture2D[4];
-        _facingTextures[0] = GD.Load<Texture2D>("res://assets/cutscene/characters/vel/vel_Hblue_Sredyellow_idle.png");
-        _facingTextures[1] = GD.Load<Texture2D>("res://assets/cutscene/characters/vel/vel_right.png");
-        _facingTextures[2] = GD.Load<Texture2D>("res://assets/cutscene/characters/vel/vel_back.png");
-        _facingTextures[3] = GD.Load<Texture2D>("res://assets/cutscene/characters/vel/vel_left.png");
+        string[] paths =
+        {
+            "res://assets/cutscene/characters/vel/vel_Hblue_Sredyellow_idle.png",
+            "res://assets/cutscene/characters/vel/vel_right.png",
+            "res://assets/cutscene/characters/vel/vel_back.png",
+            "res://assets/cutscene/characters/vel/vel_left.png"
+        };
+
+        _facingTextures = new Texture2D[paths.Length];
+        for (int i = 0; i < paths.Length; i++)
+        {
+            var texture = GD.Load<Texture2D>(paths[i]);
+            if (texture == null)
+            {
+                GD.PushError($"[DressingRoom] Failed to load character texture from '{paths[i]}'");
+            }
+            _facingTextures[i] = texture!;
+        }
     }
 
     private void InitTabStyles()
     {
         _tabActiveStyle = new StyleBoxFlat
         {
-            BgColor = new Color(0.427f, 0.157f, 0.851f, 1f), // #6D28D9
+            BgColor = TabActiveBg,
             BorderWidthLeft = 2,
             BorderWidthTop = 2,
             BorderWidthRight = 2,
             BorderWidthBottom = 2,
-            BorderColor = new Color(0.545f, 0.361f, 0.965f, 1f), // #8B5CF6
+            BorderColor = TabActiveBorder,
             CornerRadiusTopLeft = 14,
             CornerRadiusTopRight = 14,
             CornerRadiusBottomLeft = 14,
@@ -115,12 +143,12 @@ public partial class DressingRoomViewController : Control
 
         _tabInactiveStyle = new StyleBoxFlat
         {
-            BgColor = new Color(0.082f, 0.059f, 0.180f, 0.9f), // #150F2E
+            BgColor = TabInactiveBg,
             BorderWidthLeft = 1,
             BorderWidthTop = 1,
             BorderWidthRight = 1,
             BorderWidthBottom = 1,
-            BorderColor = new Color(0.180f, 0.137f, 0.333f, 1f), // #2E2355
+            BorderColor = TabInactiveBorder,
             CornerRadiusTopLeft = 14,
             CornerRadiusTopRight = 14,
             CornerRadiusBottomLeft = 14,
@@ -138,11 +166,15 @@ public partial class DressingRoomViewController : Control
         _rotateLeftBtn.Pressed += OnRotateLeft;
         _rotateRightBtn.Pressed += OnRotateRight;
 
-        _tabAll.Pressed += () => UpdateCategoryFilter(0);
-        _tabHood.Pressed += () => UpdateCategoryFilter(1);
-        _tabScarf.Pressed += () => UpdateCategoryFilter(2);
-        _tabBag.Pressed += () => UpdateCategoryFilter(3);
-        _tabCat.Pressed += () => UpdateCategoryFilter(4);
+        for (int i = 0; i < _tabButtons.Length; i++)
+        {
+            int categoryIndex = i;
+            _tabButtons[i].Pressed += () =>
+            {
+                PlaySfx();
+                UpdateCategoryFilter(categoryIndex);
+            };
+        }
 
         // Interactive cat on pedestal
         _catSprite.GuiInput += OnCatGuiInput;
@@ -168,37 +200,47 @@ public partial class DressingRoomViewController : Control
 
     private void OnCatClicked()
     {
+        if (_isCatHopping) return;
+        _isCatHopping = true;
+
         if (_sfxMeow != null && _sfxMeow.Stream != null)
         {
             _sfxMeow.Play();
         }
 
-        // Cute hop animation
+        // Cute hop animation anchored to initial Y ground
         var tween = CreateTween();
-        float currentY = _catSprite.Position.Y;
-        tween.TweenProperty(_catSprite, "position:y", currentY - 14.0f, 0.12f)
+        tween.TweenProperty(_catSprite, "position:y", _catInitialY - 14.0f, 0.12f)
              .SetTrans(Tween.TransitionType.Quad)
              .SetEase(Tween.EaseType.Out);
-        tween.TweenProperty(_catSprite, "position:y", currentY, 0.14f)
+        tween.TweenProperty(_catSprite, "position:y", _catInitialY, 0.14f)
              .SetTrans(Tween.TransitionType.Bounce)
              .SetEase(Tween.EaseType.Out);
+        tween.TweenCallback(Callable.From(() =>
+        {
+            _catSprite.Position = new Vector2(_catSprite.Position.X, _catInitialY);
+            _isCatHopping = false;
+        }));
     }
 
-    public override void _UnhandledInput(InputEvent @event)
+    public override void _Input(InputEvent @event)
     {
         if (@event.IsActionPressed("ui_cancel"))
         {
             OnBackPressed();
+            GetViewport().SetInputAsHandled();
         }
         else if (@event is InputEventKey keyEvent && keyEvent.Pressed && !keyEvent.Echo)
         {
-            if (keyEvent.Keycode == Key.A || keyEvent.Keycode == Key.Left)
+            if (keyEvent.Keycode is Key.A or Key.Left)
             {
                 OnRotateLeft();
+                GetViewport().SetInputAsHandled();
             }
-            else if (keyEvent.Keycode == Key.D || keyEvent.Keycode == Key.Right)
+            else if (keyEvent.Keycode is Key.D or Key.Right)
             {
                 OnRotateRight();
+                GetViewport().SetInputAsHandled();
             }
         }
     }
@@ -227,15 +269,13 @@ public partial class DressingRoomViewController : Control
 
     private void UpdateCategoryFilter(int categoryIndex)
     {
-        PlaySfx();
         _activeCategory = categoryIndex;
 
-        // Apply Tab styles
-        ApplyTabStyle(_tabAll, categoryIndex == 0);
-        ApplyTabStyle(_tabHood, categoryIndex == 1);
-        ApplyTabStyle(_tabScarf, categoryIndex == 2);
-        ApplyTabStyle(_tabBag, categoryIndex == 3);
-        ApplyTabStyle(_tabCat, categoryIndex == 4);
+        // Apply Tab styles across all tabs
+        for (int i = 0; i < _tabButtons.Length; i++)
+        {
+            ApplyTabStyle(_tabButtons[i], i == categoryIndex);
+        }
     }
 
     private void ApplyTabStyle(Button btn, bool isActive)
@@ -243,11 +283,14 @@ public partial class DressingRoomViewController : Control
         btn.AddThemeStyleboxOverride("normal", isActive ? _tabActiveStyle : _tabInactiveStyle);
         btn.AddThemeStyleboxOverride("hover", isActive ? _tabActiveStyle : _tabInactiveStyle);
         btn.AddThemeStyleboxOverride("pressed", isActive ? _tabActiveStyle : _tabInactiveStyle);
-        btn.AddThemeColorOverride("font_color", isActive ? new Color(1, 1, 1, 1) : new Color(0.65f, 0.60f, 0.80f, 1));
+        btn.AddThemeColorOverride("font_color", isActive ? TabActiveText : TabInactiveText);
     }
 
     private void OnBackPressed()
     {
+        if (_isLeaving) return;
+        _isLeaving = true;
+
         PlaySfx();
         if (_fadeOverlay != null)
         {
