@@ -30,7 +30,7 @@ public partial class RemoteRepoView
     private Control BuildCodeToolbar(IReadOnlyList<RemoteBranchInfo> branches, List<(Control Row, string Name)> rows)
     {
         var toolbar = new HBoxContainer();
-        toolbar.AddThemeConstantOverride("separation", 10);
+        toolbar.AddThemeConstantOverride("separation", S(10));
         toolbar.AddChild(BranchPicker(branches, name =>
         {
             _branch = name;
@@ -44,8 +44,8 @@ public partial class RemoteRepoView
         var search = new LineEdit
         {
             PlaceholderText = "Go to file",
-            CustomMinimumSize = new Vector2(260, 0),
-            RightIcon = GitHubIcons.Get(GhIcon.Search, GitHubTheme.FgMuted, 16, 1f),
+            CustomMinimumSize = new Vector2(S(260), 0),
+            RightIcon = GitHubIcons.Get(GhIcon.Search, GitHubTheme.FgMuted, S(16), 1f),
             ClearButtonEnabled = true,
             MouseFilter = MouseFilterEnum.Pass
         };
@@ -65,7 +65,7 @@ public partial class RemoteRepoView
     private Control BuildFileTable(RemoteCommitInfo? latest, IReadOnlyList<RemoteFileEntry> files, List<(Control Row, string Name)> rows)
     {
         var header = new HBoxContainer();
-        header.AddThemeConstantOverride("separation", 12);
+        header.AddThemeConstantOverride("separation", S(12));
         if (latest is not null)
         {
             header.AddChild(GitHubUi.Avatar(latest.Author, 22));
@@ -90,7 +90,7 @@ public partial class RemoteRepoView
         if (_path.Length > 0)
         {
             var up = new HBoxContainer();
-            up.AddThemeConstantOverride("separation", 12);
+            up.AddThemeConstantOverride("separation", S(12));
             up.AddChild(GitHubUi.Icon(GhIcon.Folder, GitHubTheme.Accent));
             up.AddChild(GitHubUi.Text("..", GitHubTheme.Fg));
             body.AddChild(GitHubUi.ListRow(up, files.Count == 0, () =>
@@ -104,11 +104,11 @@ public partial class RemoteRepoView
         {
             var entry = files[index];
             var row = new HBoxContainer();
-            row.AddThemeConstantOverride("separation", 12);
+            row.AddThemeConstantOverride("separation", S(12));
             row.AddChild(GitHubUi.Icon(entry.IsDirectory ? GhIcon.Folder : GhIcon.File,
                 entry.IsDirectory ? GitHubTheme.Accent : GitHubTheme.FgMuted));
             var name = GitHubUi.Text(entry.Name, GitHubTheme.Fg);
-            name.CustomMinimumSize = new Vector2(300, 0);
+            name.CustomMinimumSize = new Vector2(S(300), 0);
             row.AddChild(name);
             var message = GitHubUi.Text(entry.LastCommit?.Subject ?? string.Empty, GitHubTheme.FgMuted, 14);
             message.SizeFlagsHorizontal = SizeFlags.ExpandFill;
@@ -136,69 +136,77 @@ public partial class RemoteRepoView
         if (readme is null) return;
 
         var header = new HBoxContainer();
-        header.AddThemeConstantOverride("separation", 8);
+        header.AddThemeConstantOverride("separation", S(8));
         header.AddChild(GitHubUi.Icon(GhIcon.Book, GitHubTheme.FgMuted));
         header.AddChild(GitHubUi.Text("README", GitHubTheme.Fg, 14, bold: true));
         var (box, body) = GitHubUi.Box(header);
 
         var margin = new MarginContainer { MouseFilter = MouseFilterEnum.Pass };
-        margin.AddThemeConstantOverride("margin_left", 32);
-        margin.AddThemeConstantOverride("margin_right", 32);
-        margin.AddThemeConstantOverride("margin_top", 24);
-        margin.AddThemeConstantOverride("margin_bottom", 28);
+        margin.AddThemeConstantOverride("margin_left", S(32));
+        margin.AddThemeConstantOverride("margin_right", S(32));
+        margin.AddThemeConstantOverride("margin_top", S(24));
+        margin.AddThemeConstantOverride("margin_bottom", S(28));
         margin.AddChild(MarkdownView.Render(readme));
         body.AddChild(margin);
         _content.AddChild(box);
     }
 
-    /// <summary>repo ที่ยังไม่มีอะไรถูก push: หน้า Quick setup แบบ GitHub บอก URL และคำสั่งที่ใช้ใน terminal ของเกม</summary>
+    /// <summary>
+    /// repo ที่ยังไม่มีอะไรถูก push: หน้า Quick setup เป็นขั้นตอน 1-2-3 บอก URL และคำสั่งที่ใช้ใน terminal ของเกม
+    /// (คำแนะนำวิธีใช้อยู่บนสุด เพราะผู้เล่นต้องกด Esc ออกไปพิมพ์ใน terminal แล้วกลับมาดูผล)
+    /// </summary>
     private void BuildEmptyRepo()
     {
         var repo = _repo!;
-        var card = GitHubUi.Card(28, 22);
-        var column = new VBoxContainer();
-        column.AddThemeConstantOverride("separation", 14);
 
-        column.AddChild(GitHubUi.Text("Quick setup — repo นี้ยังว่างอยู่", GitHubTheme.Fg, 22, bold: true));
-        column.AddChild(GitHubUi.Text("push งานจากคลังในเครื่องขึ้นมา แล้วไฟล์ branch และ commit จะแสดงที่หน้านี้",
-            GitHubTheme.FgMuted, wrap: true));
+        _content.AddChild(GitHubUi.Info(
+            "คลิกที่คำสั่งเพื่อคัดลอก → กด Esc กลับไปที่ terminal → วางด้วย Ctrl/⌘+V แล้วกด Enter ทีละบรรทัด → เปิดหน้านี้อีกครั้งเพื่อดูผลที่ push",
+            "ทำตามขั้นตอนเหล่านี้ใน terminal ของ Sandbox"));
 
+        var intro = new VBoxContainer();
+        intro.AddThemeConstantOverride("separation", S(6));
+        intro.AddChild(GitHubUi.Text("Quick setup — repo นี้ยังว่างอยู่", GitHubTheme.Fg, 26, bold: true));
+        intro.AddChild(GitHubUi.Text("push งานจากเครื่องของคุณขึ้นมา แล้วไฟล์ branch และ commit จะแสดงที่หน้านี้",
+            GitHubTheme.FgMuted, 16, wrap: true));
+        _content.AddChild(intro);
+
+        var urlCard = GitHubUi.Card(16, 12);
         var urlRow = new HBoxContainer();
-        urlRow.AddThemeConstantOverride("separation", 8);
+        urlRow.AddThemeConstantOverride("separation", S(10));
         urlRow.AddChild(GitHubUi.Pill("HTTPS", GitHubTheme.Fg, GitHubTheme.Border));
         urlRow.AddChild(new LineEdit { Text = repo.CloneUrl, Editable = false, SizeFlagsHorizontal = SizeFlags.ExpandFill });
         urlRow.AddChild(GitHubUi.Btn("Copy URL", () => DisplayServer.ClipboardSet(repo.CloneUrl), GhButtonKind.Default, GhIcon.Copy));
-        column.AddChild(urlRow);
-        column.AddChild(new HSeparator());
+        urlCard.AddChild(urlRow);
+        _content.AddChild(urlCard);
 
-        column.AddChild(GitHubUi.Text("…สร้างโปรเจกต์ใหม่ แล้ว push ขึ้นมา", GitHubTheme.Fg, 18, bold: true));
-        column.AddChild(GitHubUi.Text("ครั้งแรก: ตั้งชื่อผู้ใช้ Git (ข้ามได้ถ้าตั้งแล้ว)", GitHubTheme.FgMuted, 14));
-        column.AddChild(GitHubUi.CodeBlock(
-        [
-            $"git config --global user.name \"{repo.Owner}\"",
-            $"git config --global user.email \"{repo.Owner}@example.com\""
-        ]));
-        column.AddChild(GitHubUi.CodeBlock(
-        [
-            $"write README.md # {repo.Name}",
-            "git init",
-            "git add README.md",
-            "git commit -m \"first commit\"",
-            $"git remote add origin {repo.CloneUrl}",
-            "git push -u origin main"
-        ]));
-        column.AddChild(new HSeparator());
+        _content.AddChild(GitHubUi.Step(1, "ตั้งชื่อผู้ใช้ Git", "ครั้งแรกเท่านั้น — ข้ามได้ถ้าเคยตั้งไว้แล้ว",
+            GitHubUi.CommandBlock(
+            [
+                new($"git config --global user.name \"{repo.Owner}\"", "ชื่อที่จะขึ้นใน commit"),
+                new($"git config --global user.email \"{repo.Owner}@example.com\"", "อีเมลที่จะขึ้นใน commit")
+            ])));
 
-        column.AddChild(GitHubUi.Text("…หรือ push คลังที่มีอยู่แล้ว", GitHubTheme.Fg, 18, bold: true));
-        column.AddChild(GitHubUi.CodeBlock([$"git remote add origin {repo.CloneUrl}", "git push -u origin main"]));
-        column.AddChild(new HSeparator());
+        _content.AddChild(GitHubUi.Step(2, "สร้างไฟล์แรก แล้ว commit", null,
+            GitHubUi.CommandBlock(
+            [
+                new($"write README.md # {repo.Name}", "คำสั่งของเกม สร้างไฟล์ README.md (ไม่ใช่คำสั่ง Git)"),
+                new("git init", "สร้าง repo ในเครื่อง"),
+                new("git add README.md", "เลือกไฟล์ที่จะบันทึก"),
+                new("git commit -m \"first commit\"", "บันทึกเป็น commit แรก")
+            ])));
 
-        column.AddChild(GitHubUi.Text("…หรือ clone repo ว่างนี้มาทำงานต่อ", GitHubTheme.Fg, 18, bold: true));
-        column.AddChild(GitHubUi.CodeBlock([$"git clone {repo.CloneUrl}"]));
+        _content.AddChild(GitHubUi.Step(3, "เชื่อมกับ repo นี้ แล้ว push", "มี repo ในเครื่องอยู่แล้ว? เริ่มที่ขั้นนี้ได้เลย",
+            GitHubUi.CommandBlock(
+            [
+                new($"git remote add origin {repo.CloneUrl}", "ผูกชื่อ origin กับ repo นี้"),
+                new("git push -u origin main", "ส่ง branch main ขึ้นมา")
+            ])));
 
-        column.AddChild(GitHubUi.Info("พิมพ์คำสั่งใน terminal ของ Sandbox (กด Esc หรือ ← กลับ Sandbox) แล้วเปิดหน้านี้อีกครั้งเพื่อดูผล"));
-        card.AddChild(column);
-        _content.AddChild(card);
+        var clone = new VBoxContainer();
+        clone.AddThemeConstantOverride("separation", S(10));
+        clone.AddChild(GitHubUi.Text("หรือ clone repo ว่างนี้ลงมาทำงานต่อ", GitHubTheme.Fg, 16, bold: true));
+        clone.AddChild(GitHubUi.CommandBlock([new CodeLine($"git clone {repo.CloneUrl}", "ดึง repo นี้ลงมาเป็นโฟลเดอร์ใหม่")]));
+        _content.AddChild(clone);
     }
 
     private async Task BuildBlobAsync()
@@ -208,7 +216,7 @@ public partial class RemoteRepoView
         var lines = (text ?? string.Empty).Replace("\r\n", "\n").TrimEnd('\n').Split('\n');
 
         var header = new HBoxContainer();
-        header.AddThemeConstantOverride("separation", 10);
+        header.AddThemeConstantOverride("separation", S(10));
         header.AddChild(GitHubUi.Icon(GhIcon.File, GitHubTheme.FgMuted));
         header.AddChild(GitHubUi.Text(System.IO.Path.GetFileName(_path), GitHubTheme.Fg, 15, bold: true));
         header.AddChild(GitHubUi.Text(GitHubUi.Count(lines.Length, "line", "lines"), GitHubTheme.FgMuted, 13));
@@ -218,9 +226,9 @@ public partial class RemoteRepoView
         var (box, body) = GitHubUi.Box(header);
 
         var margin = new MarginContainer { MouseFilter = MouseFilterEnum.Pass };
-        margin.AddThemeConstantOverride("margin_top", 10);
-        margin.AddThemeConstantOverride("margin_bottom", 10);
-        margin.AddThemeConstantOverride("margin_right", 16);
+        margin.AddThemeConstantOverride("margin_top", S(10));
+        margin.AddThemeConstantOverride("margin_bottom", S(10));
+        margin.AddThemeConstantOverride("margin_right", S(16));
         margin.AddChild(text is null
             ? GitHubUi.Text("ไม่พบไฟล์หรืออ่านไม่ได้", GitHubTheme.FgMuted)
             : GitHubUi.CodeLines(lines));
@@ -232,15 +240,12 @@ public partial class RemoteRepoView
     private void ShowCloneMenu(Button anchor)
     {
         var url = _repo!.CloneUrl;
-        var popup = new PopupPanel();
-        popup.AddThemeStyleboxOverride("panel", GitHubTheme.Box(GitHubTheme.CanvasSubtle, GitHubTheme.Border, 8, 1, 18, 14));
-
-        var column = new VBoxContainer { CustomMinimumSize = new Vector2(540, 0) };
-        column.AddThemeConstantOverride("separation", 10);
+        var column = new VBoxContainer { CustomMinimumSize = new Vector2(S(640), 0) };
+        column.AddThemeConstantOverride("separation", S(10));
         column.AddChild(GitHubUi.IconText(GhIcon.Code, "Clone", GitHubTheme.Fg, 15, bold: true));
 
         var urlRow = new HBoxContainer();
-        urlRow.AddThemeConstantOverride("separation", 8);
+        urlRow.AddThemeConstantOverride("separation", S(8));
         urlRow.AddChild(GitHubUi.Pill("HTTPS", GitHubTheme.Fg, GitHubTheme.Border));
         urlRow.AddChild(new LineEdit { Text = url, Editable = false, SizeFlagsHorizontal = SizeFlags.ExpandFill });
         urlRow.AddChild(GitHubUi.Btn(string.Empty, () => DisplayServer.ClipboardSet(url), GhButtonKind.Default, GhIcon.Copy));
@@ -248,18 +253,62 @@ public partial class RemoteRepoView
 
         column.AddChild(GitHubUi.Text("พิมพ์คำสั่งนี้ใน terminal ของ Sandbox", GitHubTheme.FgMuted, 13));
         column.AddChild(GitHubUi.CodeBlock([$"git clone {url}"]));
-        popup.AddChild(column);
+        ShowFloatingPanel(anchor, column);
+    }
 
-        popup.PopupHide += popup.QueueFree;
-        AddChild(popup);
+    /// <summary>
+    /// เมนูลอยใต้ปุ่ม <paramref name="anchor"/> ชิดขอบขวา คลิกข้างนอกเพื่อปิด
+    /// ใช้ overlay ในหน้าเดียวกันแทน PopupPanel เพราะหน้าต่าง popup ยืดเต็มความสูงจอ
+    /// ความกว้างมาจาก CustomMinimumSize ของ <paramref name="content"/>
+    /// </summary>
+    private Control ShowFloatingPanel(Button anchor, Control content)
+    {
+        // ชั้นโปร่งใสเต็มหน้า คลิกตรงไหนนอกเมนูก็ปิด
+        var overlay = new Control { MouseFilter = MouseFilterEnum.Stop };
+        overlay.SetAnchorsAndOffsetsPreset(LayoutPreset.FullRect);
+        overlay.GuiInput += input =>
+        {
+            if (input is InputEventMouseButton { Pressed: true }) overlay.QueueFree();
+        };
+
+        var panel = new PanelContainer { MouseFilter = MouseFilterEnum.Stop };
+        var panelStyle = GitHubTheme.Box(GitHubTheme.SurfaceRaised, GitHubTheme.Border, 8, 1, 18, 14);
+        panel.AddThemeStyleboxOverride("panel", panelStyle);
+        panel.AddChild(content);
+        overlay.AddChild(panel);
+        AddChild(overlay);
+
+        // วางชิดขอบขวาของปุ่ม ใต้ปุ่ม 6px (พิกัดสัมพัทธ์กับหน้านี้)
+        // ความกว้างรู้แน่นอน แต่ความสูงต้องรอให้ข้อความ autowrap รู้ความกว้างก่อน
+        // ถ้าอ่านความสูงตอนนี้จะได้ค่ามหาศาล (label คิดว่ากว้าง 0) กล่องเลยยืดเต็มจอ
+        var width = content.CustomMinimumSize.X + panelStyle.GetMinimumSize().X;
         var anchorRect = anchor.GetGlobalRect();
-        popup.Popup(new Rect2I((int)anchorRect.End.X - 580, (int)anchorRect.End.Y + 6, 580, 0));
+        panel.Position = new Vector2(anchorRect.End.X - width, anchorRect.End.Y + 6) - GetGlobalRect().Position;
+        panel.Size = new Vector2(width, 0);
+        ShrinkToContentAsync(panel);
+        return overlay;
+    }
+
+    /// <summary>รอให้จัดเลย์เอาต์ครบสองเฟรมแล้วหดกล่องให้พอดีเนื้อหา</summary>
+    private async void ShrinkToContentAsync(Control panel)
+    {
+        for (var frame = 0; frame < 2; frame++)
+        {
+            await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
+            if (!IsInstanceValid(panel)) return;
+            panel.ResetSize();
+        }
+
+        // กล่องสูงเกินที่เหลือใต้ปุ่ม: เลื่อนขึ้นให้ปุ่มล่างสุดไม่หลุดจอ
+        var space = GetViewportRect().Size.Y - GetGlobalRect().Position.Y;
+        var overflow = panel.Position.Y + panel.Size.Y + S(12) - space;
+        if (overflow > 0) panel.Position = new Vector2(panel.Position.X, Mathf.Max(S(8), panel.Position.Y - overflow));
     }
 
     private HBoxContainer Breadcrumb()
     {
         var row = new HBoxContainer();
-        row.AddThemeConstantOverride("separation", 6);
+        row.AddThemeConstantOverride("separation", S(6));
         row.AddChild(GitHubUi.Btn(_repo!.Name, () =>
         {
             _path = string.Empty;

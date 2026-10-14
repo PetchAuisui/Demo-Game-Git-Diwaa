@@ -21,6 +21,7 @@ public sealed class RealGitSandboxService : IGitSandboxService
     public GitSessionInfo? Info => _session?.Info;
     public bool IsInitialized => _session != null;
     public IGitRemoteHost? RemoteHost => _session?.RemoteHost;
+    public IGitRemoteAccount? RemoteAccount => _session?.RemoteAccount;
     public string CurrentBranch => _lastSnapshot?.CurrentBranch ?? "main";
 
     /// <param name="customWorkspaceRoot">โฟลเดอร์เก็บ workspace (ค่าเริ่มต้น user://git-workspaces)</param>

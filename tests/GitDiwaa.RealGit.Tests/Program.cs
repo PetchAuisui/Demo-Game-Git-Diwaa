@@ -7,7 +7,7 @@ var tests = new TestRunner();
 try
 {
     var factory = new RealGitGameSessionFactory(testRoot);
-    await using var session = await factory.CreateAsync("act1", "player");
+    await using var session = await factory.CreateAsync("act1", "player", RemoteSeed.Empty());
 
     await tests.RunAsync("session starts outside a repository", async () =>
     {
@@ -15,7 +15,7 @@ try
         Assert.False(snapshot.IsInitialized);
         Assert.Equal("act1", session.Info.MissionId);
         Assert.Equal("player", session.Info.AttemptId);
-        Assert.Equal("https://github.com/user/my-project.git", session.Info.RemoteUrl);
+        Assert.Equal("https://magic-vault.com/user/my-project.git", session.Info.RemoteUrl);
     });
 
     await tests.RunAsync("Git version and config are real and isolated", async () =>
@@ -33,7 +33,7 @@ try
         await RejectAsync("git help", "not enabled");
         await RejectAsync("git add ../outside.txt", "escapes");
         await RejectAsync("git --git-dir=/tmp status", "not enabled");
-        await RejectAsync("git remote add origin https://example.com/repo.git", "https://github.com/user/my-project.git");
+        await RejectAsync("git remote add origin https://example.com/repo.git", "https://magic-vault.com/user/my-project.git");
         await RejectAsync("git remote add origin https://git-diwaa.local/other.git", "registered");
     });
 
@@ -112,7 +112,7 @@ try
 
     await tests.RunAsync("clone works against the session's local bare remote", async () =>
     {
-        await using var cloneSession = await factory.CreateAsync("clone", "player");
+        await using var cloneSession = await factory.CreateAsync("clone", "player", RemoteSeed.Empty());
         var clone = await cloneSession.ExecuteAsync($"git clone {cloneSession.Info.RemoteUrl}");
         Assert.True(clone.Success, clone.Output);
         Assert.True((await cloneSession.InspectAsync()).IsInitialized);
@@ -120,14 +120,14 @@ try
 
     await tests.RunAsync("default remote is an empty GitHub repository owned by the player", async () =>
     {
-        await using var empty = await factory.CreateAsync("act1-empty", "player");
-        Assert.Equal("https://github.com/user/my-project.git", empty.Info.RemoteUrl);
+        await using var empty = await factory.CreateAsync("act1-empty", "player", RemoteSeed.Empty());
+        Assert.Equal("https://magic-vault.com/user/my-project.git", empty.Info.RemoteUrl);
 
-        var host = empty.RemoteHost;
+        var host = empty.RemoteHost!;
         var repo = await host.GetRepositoryAsync();
         Assert.Equal("user", repo.Owner);
         Assert.Equal("my-project", repo.Name);
-        Assert.Equal("https://github.com/user/my-project.git", repo.CloneUrl);
+        Assert.Equal("https://magic-vault.com/user/my-project.git", repo.CloneUrl);
         Assert.True(repo.IsEmpty);
         Assert.Equal(0, repo.CommitCount);
         Assert.Equal(0, (await host.ListBranchesAsync()).Count);
@@ -137,12 +137,34 @@ try
         Assert.Equal(0, host.ListPullRequests().Count);
     });
 
+    await tests.RunAsync("default session starts with no repository until the player creates one", async () =>
+    {
+        await using var fresh = await factory.CreateAsync("act1-none", "player");
+        Assert.Equal(string.Empty, fresh.Info.RemoteUrl);
+        Assert.True(fresh.RemoteHost is null);
+
+        var account = fresh.RemoteAccount!;
+        Assert.Equal("user", account.Owner);
+        Assert.Equal(0, (await account.ListRepositoriesAsync()).Count);
+        Assert.True(account.OpenRepository("my-project") is null);
+
+        var rejected = await fresh.ExecuteAsync("git remote add origin https://magic-vault.com/user/my-project.git");
+        Assert.False(rejected.Success);
+        Assert.Contains(rejected.Output, "Create a repository");
+
+        var created = await account.CreateRepositoryAsync("first", "");
+        Assert.Equal("https://magic-vault.com/user/first.git", created.CloneUrl);
+        Assert.Equal(1, (await account.ListRepositoriesAsync()).Count);
+        var clone = await fresh.ExecuteAsync("git clone https://magic-vault.com/user/first.git");
+        Assert.True(clone.Success, clone.Output);
+    });
+
     await tests.RunAsync("pushing from the player repository shows up on the remote host", async () =>
     {
-        await using var player = await factory.CreateAsync("act1-publish", "player");
+        await using var player = await factory.CreateAsync("act1-publish", "player", RemoteSeed.Empty());
         await PlayerRepo.PublishMainAsync(player);
 
-        var host = player.RemoteHost;
+        var host = player.RemoteHost!;
         var repo = await host.GetRepositoryAsync();
         Assert.False(repo.IsEmpty);
         Assert.Equal("main", repo.DefaultBranch);
@@ -158,17 +180,17 @@ try
     await tests.RunAsync("the player name becomes the owner of the remote repository", async () =>
     {
         var aliceFactory = new RealGitGameSessionFactory(testRoot, "alice");
-        await using var alice = await aliceFactory.CreateAsync("act1-alice", "player");
-        Assert.Equal("https://github.com/alice/my-project.git", alice.Info.RemoteUrl);
-        Assert.Equal("alice", (await alice.RemoteHost.GetRepositoryAsync()).Owner);
+        await using var alice = await aliceFactory.CreateAsync("act1-alice", "player", RemoteSeed.Empty("alice"));
+        Assert.Equal("https://magic-vault.com/alice/my-project.git", alice.Info.RemoteUrl);
+        Assert.Equal("alice", (await alice.RemoteHost!.GetRepositoryAsync()).Owner);
         Assert.Throws<ArgumentException>(() => new RealGitGameSessionFactory(testRoot, "../evil"));
     });
 
-    await tests.RunAsync("fake GitHub clones seeded history and never reaches the real GitHub", async () =>
+    await tests.RunAsync("simulated GitHub clones seeded history and never reaches the real GitHub", async () =>
     {
         var seed = Samples.Seed(DateTimeOffset.Now);
         await using var github = await factory.CreateAsync("act1-clone", "player", seed);
-        Assert.Equal("https://github.com/user/my-project.git", github.Info.RemoteUrl);
+        Assert.Equal("https://magic-vault.com/user/my-project.git", github.Info.RemoteUrl);
 
         var real = await github.ExecuteAsync("git clone https://github.com/torvalds/linux.git");
         Assert.False(real.Success);
@@ -176,15 +198,50 @@ try
 
         var clone = await github.ExecuteAsync($"git clone {github.Info.RemoteUrl}");
         Assert.True(clone.Success, clone.Output);
-        Assert.Contains((await github.ExecuteAsync("git remote -v")).Output, "github.com/user/my-project.git");
+        Assert.Contains((await github.ExecuteAsync("git remote -v")).Output, "magic-vault.com/user/my-project.git");
         Assert.True((await github.InspectAsync()).Commits.Any(commit => commit.Subject == "Initial commit"));
         Assert.False((await github.ExecuteAsync("git remote set-url origin https://github.com/torvalds/linux.git")).Success);
+    });
+
+    await tests.RunAsync("account creates extra repositories that can be pushed to and cloned", async () =>
+    {
+        await using var session = await factory.CreateAsync("act1-account", "player", RemoteSeed.Empty());
+        var account = session.RemoteAccount!;
+        Assert.Equal(1, (await account.ListRepositoriesAsync()).Count);
+
+        var created = await account.CreateRepositoryAsync("notes", "my notes");
+        Assert.Equal("https://magic-vault.com/user/notes.git", created.CloneUrl);
+        Assert.True(created.IsEmpty);
+        Assert.Equal(2, (await account.ListRepositoriesAsync()).Count);
+        await Assert.ThrowsAsync<InvalidOperationException>(() => account.CreateRepositoryAsync("NOTES", ""));
+        await Assert.ThrowsAsync<InvalidOperationException>(() => account.CreateRepositoryAsync("bad name", ""));
+
+        // สร้างชื่อเดียวกันพร้อมกัน: สำเร็จได้แค่ครั้งเดียว
+        var racing = await Task.WhenAll(Enumerable.Range(0, 3).Select(async _ =>
+        {
+            try { await account.CreateRepositoryAsync("race", ""); return true; }
+            catch (InvalidOperationException) { return false; }
+        }));
+        Assert.Equal(1, racing.Count(created => created));
+        Assert.Equal(3, (await account.ListRepositoriesAsync()).Count);
+
+        await PlayerRepo.RunAsync(session, "git init");
+        await session.Files.WriteAllTextAsync("a.txt", "hello");
+        await PlayerRepo.RunAsync(session, "git add .");
+        await PlayerRepo.RunAsync(session, "git commit -m first");
+        await PlayerRepo.RunAsync(session, "git remote add origin https://magic-vault.com/user/notes.git");
+        await PlayerRepo.RunAsync(session, "git push -u origin main");
+
+        var notes = account.OpenRepository("notes")!;
+        Assert.Equal(1, (await notes.GetRepositoryAsync()).CommitCount);
+        Assert.True((await account.OpenRepository("my-project")!.GetRepositoryAsync()).IsEmpty);
+        Assert.False((await session.ExecuteAsync("git remote set-url origin https://magic-vault.com/user/other.git")).Success);
     });
 
     await tests.RunAsync("remote host exposes repository, branches, commits and files", async () =>
     {
         await using var github = await factory.CreateAsync("act1-host", "player", Samples.Seed(DateTimeOffset.Now));
-        var host = github.RemoteHost;
+        var host = github.RemoteHost!;
 
         var repo = await host.GetRepositoryAsync();
         Assert.Equal("user", repo.Owner);
@@ -209,7 +266,7 @@ try
     await tests.RunAsync("pull requests: detail, review rules, merge and branch cleanup", async () =>
     {
         await using var github = await factory.CreateAsync("act1-pr", "player", Samples.Seed(DateTimeOffset.Now, Samples.Strict));
-        var host = github.RemoteHost;
+        var host = github.RemoteHost!;
 
         var login = (await host.ListBranchesAsync()).Single(branch => branch.Name == "feature/login");
         Assert.Equal(1, login.Ahead);
@@ -278,7 +335,7 @@ try
                     new Dictionary<string, string> { ["README.md"] = "main version\n" })]
         };
         await using var github = await factory.CreateAsync("act1-conflict", "player", seed);
-        var host = github.RemoteHost;
+        var host = github.RemoteHost!;
         var pr = await host.OpenPullRequestAsync("Conflicting", "", "teammate", "feature/login", "main");
         var detail = (await host.GetPullRequestAsync(pr.Number))!;
         Assert.True(detail.HasConflicts);
@@ -294,11 +351,43 @@ try
         Assert.False(host.ClosePullRequest(pr.Number).Success);
     });
 
+    await tests.RunAsync("line comments post immediately or wait in a pending review until it is submitted", async () =>
+    {
+        await using var lines = await factory.CreateAsync("act1-lines", "player", RemoteSeed.Empty());
+        await PlayerRepo.PublishMainAsync(lines);
+        var host = lines.RemoteHost!;
+        await PlayerRepo.RunAsync(lines, "git switch -c feature/lines");
+        await PlayerRepo.CommitFileAsync(lines, "lines.txt", "a\nb\n", "add lines");
+        await PlayerRepo.RunAsync(lines, "git push -u origin feature/lines");
+        var pr = await host.OpenPullRequestAsync("Lines", "", "user", "feature/lines", "main");
+
+        Assert.True(host.AddLineComment(pr.Number, "user", "lines.txt", 2, true, "single", false).Success);
+        Assert.True(host.AddLineComment(pr.Number, "user", "lines.txt", 1, true, "draft", true).Success);
+        Assert.False(host.AddLineComment(pr.Number, "user", "lines.txt", 1, true, "  ", false).Success);
+        Assert.False(host.AddLineComment(pr.Number, "user", "lines.txt", 0, true, "bad line", false).Success);
+
+        var before = (await host.GetPullRequestAsync(pr.Number))!.LineComments;
+        Assert.Equal(2, before.Count);
+        Assert.False(before.Single(comment => comment.Body == "single").IsPending);
+        Assert.True(before.Single(comment => comment.Body == "draft").IsPending);
+
+        // คอมเมนต์ทั่วไปบน PR ต้องไม่ส่ง pending review ไปด้วย
+        Assert.False(host.CommentOnPullRequest(pr.Number, "user", "  ").Success);
+        Assert.True(host.CommentOnPullRequest(pr.Number, "user", "general").Success);
+        Assert.True((await host.GetPullRequestAsync(pr.Number))!.LineComments.Single(comment => comment.Body == "draft").IsPending);
+
+        Assert.True(host.ReviewPullRequest(pr.Number, "user", ReviewVerdict.Commented).Success);
+        Assert.True((await host.GetPullRequestAsync(pr.Number))!.LineComments.All(comment => !comment.IsPending));
+
+        Assert.True(host.ClosePullRequest(pr.Number).Success);
+        Assert.False(host.AddLineComment(pr.Number, "user", "lines.txt", 1, true, "late", false).Success);
+    });
+
     await tests.RunAsync("solo player can review and merge their own pull requests by default", async () =>
     {
-        await using var solo = await factory.CreateAsync("act1-solo", "player");
+        await using var solo = await factory.CreateAsync("act1-solo", "player", RemoteSeed.Empty());
         await PlayerRepo.PublishMainAsync(solo);
-        var host = solo.RemoteHost;
+        var host = solo.RemoteHost!;
 
         await PlayerRepo.RunAsync(solo, "git switch -c feature/one");
         await PlayerRepo.CommitFileAsync(solo, "one.txt", "one\n", "work one");
@@ -322,7 +411,7 @@ try
 
     await tests.RunAsync("pull request needs commits beyond its own base branch", async () =>
     {
-        await using var player = await factory.CreateAsync("act1-pr-base", "player");
+        await using var player = await factory.CreateAsync("act1-pr-base", "player", RemoteSeed.Empty());
         await PlayerRepo.PublishMainAsync(player);
         await PlayerRepo.RunAsync(player, "git switch -c feature/a");
         await PlayerRepo.CommitFileAsync(player, "a.txt", "a\n", "work on a");
@@ -330,7 +419,7 @@ try
         await PlayerRepo.RunAsync(player, "git switch -c feature/b"); // แตกจาก feature/a ยังไม่มี commit ใหม่
         await PlayerRepo.RunAsync(player, "git push -u origin feature/b");
 
-        var host = player.RemoteHost;
+        var host = player.RemoteHost!;
         await Assert.ThrowsAsync<InvalidOperationException>(() =>
             host.OpenPullRequestAsync("a into b", "", "user", "feature/a", "feature/b"));
         var pr = await host.OpenPullRequestAsync("b into main", "", "user", "feature/b", "main");

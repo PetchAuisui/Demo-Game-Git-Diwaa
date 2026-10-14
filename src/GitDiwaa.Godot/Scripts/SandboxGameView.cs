@@ -82,7 +82,7 @@ public partial class SandboxGameView : Control
         }
 
         _isInitialized = true;
-        _remoteRepoButton.SetAvailable(_sandboxService.RemoteHost != null);
+        _remoteRepoButton.SetAvailable(_sandboxService.RemoteAccount != null);
         _terminalPanel.SetExecuting(false);
 
         if (_sandboxService.Info != null)
@@ -96,7 +96,7 @@ public partial class SandboxGameView : Control
 
     private void OnRepoPressed()
     {
-        if (_sandboxService?.RemoteHost is not { } host)
+        if (_sandboxService?.RemoteAccount is not { } account)
         {
             _terminalPanel.AppendError("หน้า repo ใช้ได้เฉพาะเมื่อเปิดโหมด Real Git");
             return;
@@ -105,7 +105,7 @@ public partial class SandboxGameView : Control
         var view = new RemoteRepoView();
         view.BackRequested += () => view.QueueFree();
         AddChild(view);
-        view.Open(host);
+        view.Open(account);
     }
 
     private async void OnCommandSubmitted(string command)

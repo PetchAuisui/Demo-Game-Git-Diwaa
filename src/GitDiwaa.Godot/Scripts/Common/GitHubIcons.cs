@@ -5,7 +5,7 @@ namespace GitDiwaa.Godot.Common;
 public enum GhIcon
 {
     Repo, Book, Code, PullOpen, PullMerged, PullClosed, Branch, History, Commit,
-    File, Folder, Check, X, Comment, Copy, Search, ChevronDown, ChevronRight, Trash, Lock, Alert, Plus, ArrowLeft, Info, Cloud
+    File, Folder, Check, X, Comment, Copy, Search, ChevronDown, ChevronRight, Trash, Lock, Alert, Plus, ArrowLeft, Info, Cloud, Refresh
 }
 
 /// <summary>
@@ -17,8 +17,8 @@ public static class GitHubIcons
     private static readonly Dictionary<(GhIcon Icon, string Color, int Size, float Scale), Texture2D?> Cache = new();
 
     /// <param name="size">ขนาดที่แสดง (px)</param>
-    /// <param name="scale">เรนเดอร์กี่เท่าของ size ปุ่ม/รูปใช้ 2 เท่า (theme จำกัดความกว้างให้) ส่วน LineEdit ใช้ 1</param>
-    public static Texture2D? Get(GhIcon icon, Color color, int size = 16, float scale = 2f)
+    /// <param name="scale">เรนเดอร์กี่เท่าของ size ปุ่ม/รูปใช้ 3 เท่า (theme จำกัดความกว้างให้) ส่วน LineEdit ใช้ 1</param>
+    public static Texture2D? Get(GhIcon icon, Color color, int size = 16, float scale = 3f)
     {
         var hex = "#" + color.ToHtml(false);
         var key = (icon, hex, size, scale);
@@ -86,6 +86,9 @@ public static class GitHubIcons
         GhIcon.ArrowLeft => "<path d=\"M13 8H3M7 4L3 8l4 4\"/>",
         GhIcon.Cloud =>
             "<g transform=\"scale(0.6667)\"><path d=\"M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z\" stroke-width=\"2.25\"/></g>",
+        GhIcon.Refresh =>
+            "<g transform=\"scale(0.6667)\" stroke-width=\"2.25\"><polyline points=\"23 4 23 10 17 10\"/><polyline points=\"1 20 1 14 7 14\"/>" +
+            "<path d=\"M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15\"/></g>",
         GhIcon.Info => "<circle cx=\"8\" cy=\"8\" r=\"6\"/><path d=\"M8 7.25v3.5M8 5v.25\"/>",
         _ => string.Empty
     };

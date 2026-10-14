@@ -3,7 +3,7 @@ using GitDiwaa.Core;
 
 namespace GitDiwaa.RealGit;
 
-internal sealed partial class FakeGitHubHost : IGitRemoteHost
+internal sealed partial class SimulatedGitHubHost : IGitRemoteHost
 {
     private const char Sep = '\u001f';
 
@@ -13,7 +13,7 @@ internal sealed partial class FakeGitHubHost : IGitRemoteHost
     private readonly RemoteSeed _seed;
     private readonly List<PullRequestInfo> _pullRequests = [];
 
-    public FakeGitHubHost(GitSandbox sandbox, LocalRemote remote, GitProcessRunner runner, RemoteSeed seed)
+    public SimulatedGitHubHost(GitSandbox sandbox, LocalRemote remote, GitProcessRunner runner, RemoteSeed seed)
     {
         _sandbox = sandbox;
         _remote = remote;
@@ -23,6 +23,8 @@ internal sealed partial class FakeGitHubHost : IGitRemoteHost
 
     private string Owner => _seed.Owner;
     private string RepoName => _seed.Name;
+
+    internal string RepositoryName => _seed.Name;
 
     public async Task<RemoteRepositoryInfo> GetRepositoryAsync(CancellationToken cancellationToken = default)
     {

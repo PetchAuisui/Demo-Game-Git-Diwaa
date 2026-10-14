@@ -17,6 +17,7 @@ public sealed class MockGitSandboxService : IGitSandboxService
     private string _currentBranch = "main";
 
     public IGitRemoteHost? RemoteHost => null;
+    public IGitRemoteAccount? RemoteAccount => null;
     public GitSessionInfo? Info => new("mock-01", "mock-attempt-1", "/tmp/mock-git-repo", "file:///tmp/mock-remote.git");
     public bool IsInitialized => _isInitialized;
     public string CurrentBranch => _currentBranch;

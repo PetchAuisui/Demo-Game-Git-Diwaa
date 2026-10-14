@@ -12,7 +12,7 @@ public partial class RemoteRepoView
     {
         var branches = await _host!.ListBranchesAsync();
         var toolbar = new HBoxContainer();
-        toolbar.AddThemeConstantOverride("separation", 12);
+        toolbar.AddThemeConstantOverride("separation", S(12));
         toolbar.AddChild(GitHubUi.Text("Commits", GitHubTheme.Fg, 26, bold: true));
         toolbar.AddChild(GitHubUi.Spacer());
         toolbar.AddChild(BranchPicker(branches, name =>
@@ -64,7 +64,7 @@ public partial class RemoteRepoView
     private Control BranchRow(RemoteBranchInfo branch, bool last)
     {
         var row = new HBoxContainer();
-        row.AddThemeConstantOverride("separation", 12);
+        row.AddThemeConstantOverride("separation", S(12));
 
         var name = GitHubUi.Btn(branch.Name, () =>
         {
@@ -72,7 +72,7 @@ public partial class RemoteRepoView
             _path = string.Empty;
             Go(Page.Code);
         }, GhButtonKind.Link);
-        name.CustomMinimumSize = new Vector2(240, 0);
+        name.CustomMinimumSize = new Vector2(S(240), 0);
         name.Alignment = HorizontalAlignment.Left;
         row.AddChild(name);
         if (branch.IsDefault) row.AddChild(GitHubUi.Pill("default", GitHubTheme.FgMuted, GitHubTheme.Border));
@@ -84,7 +84,10 @@ public partial class RemoteRepoView
 
         if (!branch.IsDefault)
         {
-            row.AddChild(GitHubUi.Text($"{branch.Behind} behind | {branch.Ahead} ahead", GitHubTheme.FgMuted, 13));
+            row.AddChild(GitHubUi.Pill($"{branch.Ahead} ahead",
+                branch.Ahead > 0 ? GitHubTheme.Success : GitHubTheme.FgMuted,
+                branch.Ahead > 0 ? new Color(GitHubTheme.Success, 0.5f) : GitHubTheme.Border, size: 13));
+            row.AddChild(GitHubUi.Pill($"{branch.Behind} behind", GitHubTheme.FgMuted, GitHubTheme.Border, size: 13));
             row.AddChild(GitHubUi.Btn("New pull request", () =>
             {
                 _newPullSource = branch.Name;
@@ -104,15 +107,15 @@ public partial class RemoteRepoView
     private static Control CommitRow(RemoteCommitInfo commit, bool last)
     {
         var row = new HBoxContainer();
-        row.AddThemeConstantOverride("separation", 12);
+        row.AddThemeConstantOverride("separation", S(12));
 
         var column = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
-        column.AddThemeConstantOverride("separation", 4);
+        column.AddThemeConstantOverride("separation", S(4));
         var subject = GitHubUi.Text(commit.Subject, GitHubTheme.Fg, 15, bold: true);
         subject.ClipText = true;
         column.AddChild(subject);
         var meta = new HBoxContainer();
-        meta.AddThemeConstantOverride("separation", 8);
+        meta.AddThemeConstantOverride("separation", S(8));
         meta.AddChild(GitHubUi.Avatar(commit.Author, 18));
         meta.AddChild(GitHubUi.Text(commit.Author, GitHubTheme.Fg, 13, bold: true));
         meta.AddChild(GitHubUi.Text($"committed {GitHubUi.TimeAgo(commit.AuthoredAt)}", GitHubTheme.FgMuted, 13));

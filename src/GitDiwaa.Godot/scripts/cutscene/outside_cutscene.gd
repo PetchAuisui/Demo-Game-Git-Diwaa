@@ -32,6 +32,7 @@ signal cutscene_finished
 
 func _ready() -> void:
 	Engine.time_scale = 1.0
+	add_child(preload("res://scripts/cutscene/skip_cutscene_button.gd").new())
 	_init_scene()
 	play_chaos_sequence()
 
