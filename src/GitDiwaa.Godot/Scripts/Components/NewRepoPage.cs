@@ -18,10 +18,8 @@ public partial class NewRepoPage : PanelContainer
         _error = GetNode<Label>("%Error");
         _name = GetNode<LineEdit>("%NameEdit");
 
-        GetNode<Label>("%Title").AddThemeFontOverride("font", GitHubTheme.BoldFont);
-        GetNode<Label>("%NameLabel").AddThemeFontOverride("font", GitHubTheme.BoldFont);
-        GetNode<Label>("%OwnerLabel").AddThemeFontOverride("font", GitHubTheme.BoldFont);
-        GetNode<Label>("%DescriptionLabel").AddThemeFontOverride("font", GitHubTheme.BoldFont);
+        foreach (var label in new[] { "%Title", "%NameLabel", "%OwnerLabel", "%DescriptionLabel" })
+            GetNode<Label>(label).AddThemeFontOverride("font", GitHubTheme.BoldFont);
         GetNode<Button>("%CreateButton").Icon = GitHubIcons.Get(GhIcon.Repo, Colors.White, GitHubTheme.S(16));
     }
 
@@ -32,8 +30,12 @@ public partial class NewRepoPage : PanelContainer
         GetNode<Label>("%OwnerLabel").Text = owner;
         var description = GetNode<LineEdit>("%DescriptionEdit");
 
+        var busy = false;
         async void Create()
         {
+            if (busy) return; // กดซ้ำ (Enter แล้วคลิก) ระหว่างรอ ไม่ให้สร้างสองรอบ
+            busy = true;
+            _error.Visible = false;
             try
             {
                 await create(_name.Text, description.Text);
@@ -45,6 +47,10 @@ public partial class NewRepoPage : PanelContainer
                 if (!IsInstanceValid(this) || IsQueuedForDeletion()) return;
                 _error.Text = ex.Message;
                 _error.Visible = true;
+            }
+            finally
+            {
+                busy = false;
             }
         }
 

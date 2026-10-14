@@ -610,10 +610,10 @@ public static class GitHubUi
 
         // วัดความกว้างได้ถูกต้องก็ต่อเมื่ออยู่ใน tree (ธีมของ GitHub มาจากโหนดแม่) ผู้เรียกบางที่ยังไม่ได้ AddChild
         if (picker.IsInsideTree()) FitBranchPicker(picker);
-        else picker.TreeEntered += () => Callable.From(() =>
+        else picker.Connect(Node.SignalName.TreeEntered, Callable.From(() =>
         {
             if (GodotObject.IsInstanceValid(picker)) FitBranchPicker(picker);
-        }).CallDeferred();
+        }), (uint)GodotObject.ConnectFlags.OneShot | (uint)GodotObject.ConnectFlags.Deferred);
 
         picker.ItemSelected += index =>
         {
