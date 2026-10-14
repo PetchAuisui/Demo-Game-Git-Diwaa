@@ -9,12 +9,12 @@ internal sealed class GitCommandPolicy
     };
 
     private readonly GitSandbox _sandbox;
-    private readonly LocalRemote _remote;
+    private readonly RemoteRegistry _remotes;
 
-    public GitCommandPolicy(GitSandbox sandbox, LocalRemote remote)
+    public GitCommandPolicy(GitSandbox sandbox, RemoteRegistry remotes)
     {
         _sandbox = sandbox;
-        _remote = remote;
+        _remotes = remotes;
     }
 
     public string? Validate(IReadOnlyList<string> arguments)
@@ -198,13 +198,20 @@ internal sealed class GitCommandPolicy
 
     private string? ValidateRemoteUrl(string url)
     {
-        if (url.Equals(_remote.AliasUrl, StringComparison.Ordinal)) return null;
-        if (Path.IsPathRooted(url) &&
-            Path.GetFullPath(url).Equals(
-                Path.GetFullPath(_remote.BareRepositoryPath),
-                OperatingSystem.IsWindows() ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal))
-            return null;
-        return $"Only the remote registered for this Git-Diwaa session is allowed: {_remote.AliasUrl}";
+        var comparison = OperatingSystem.IsWindows() ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal;
+        foreach (var remote in _remotes.Remotes)
+        {
+            if (url.Equals(remote.AliasUrl, StringComparison.Ordinal)) return null;
+            if (Path.IsPathRooted(url) &&
+                Path.GetFullPath(url).Equals(Path.GetFullPath(remote.BareRepositoryPath), comparison))
+                return null;
+        }
+
+        if (_remotes.Remotes.Count == 0)
+            return "No remotes are registered for this Git-Diwaa session yet. Create a repository from the GitHub page first.";
+
+        return $"Only the remotes registered for this Git-Diwaa session are allowed: " +
+               string.Join(", ", _remotes.Remotes.Select(remote => remote.AliasUrl));
     }
 
     private static bool IsProcessEscapeOption(string value) =>

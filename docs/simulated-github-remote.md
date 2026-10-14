@@ -1,4 +1,4 @@
-# GitHub จำลอง (Fake GitHub Remote)
+# GitHub จำลอง (Simulated GitHub Remote)
 
 เป้าหมาย: คำสั่ง `git clone/fetch/pull/push` ในเกมต้องไม่ออกไปถึง GitHub จริง แต่ผู้เล่นยังเห็น URL แบบ GitHub และมีข้อมูลสำหรับหน้า Remote Repository
 
@@ -6,14 +6,14 @@
 
 ## สถานะเริ่มต้น
 
-- ทุก session มี remote เป็น repo **ว่าง** ที่ผู้เล่นเป็นเจ้าของ: `https://github.com/user/my-project.git`
+- ทุก session เริ่มด้วยบัญชี `user` ที่ **ยังไม่มี repo เลย** ผู้เล่นสร้าง repo ว่างเองได้ไม่จำกัดผ่านปุ่ม New (ด่านที่ต้องการ repo ตั้งต้นส่ง `RemoteSeed` เข้ามาเอง เช่น `RemoteSeed.Empty()` จะได้ `https://github.com/user/my-project.git`) (`https://github.com/user/<ชื่อ>.git`) แต่ละ repo แยก branch และ PR ของตัวเอง
 - เจ้าของ (host) ใช้ชื่อ `user` ไปก่อน เปลี่ยนได้ที่ `RealGitGameSessionFactory(workspaceRoot, playerName)` เมื่อมีหน้า login ที่ตั้งชื่อผู้เล่นได้
 - ไม่มีข้อมูลตัวอย่างในโค้ดจริง ผู้เล่นต้อง push งานขึ้นไปเอง
 - ด่านที่ต้องการ remote ที่มีประวัติอยู่แล้ว (เช่น ด่าน 37 ที่ remote นำหน้า local) กำหนดผ่าน `RemoteSeed` ต่อด่าน
 
 ## ข้อมูลและการกระทำที่ host ให้ (ตาม Notion: งานหน้า Remote Repository)
 
-`IGitGameSession.RemoteHost` (`IGitRemoteHost`) ให้ข้อมูลและการกระทำสำหรับหน้า Remote Repository ของเกม:
+`IGitGameSession.RemoteAccount` (`IGitRemoteAccount`) ให้รายการ repo / เปิด repo / สร้าง repo ใหม่ ส่วน `IGitRemoteHost` ของแต่ละ repo (และ `IGitGameSession.RemoteHost` ที่เป็น repo แรก) ให้ข้อมูลและการกระทำสำหรับหน้า repo:
 
 | หมวด | สิ่งที่ host ให้ |
 |---|---|
@@ -30,6 +30,8 @@
 
 | หน้า | สิ่งที่ทำได้ |
 |---|---|
+| รายการ repo | หน้าแรกหลังกดปุ่ม Remote Repo: พื้นหลังห้องบัลลังก์ (`assets/art/remote/throne-room.png`), การ์ดโปรไฟล์ซ้าย, ช่องค้นหา, ปุ่ม **New** และรายการ repo ขวา กดชื่อ repo เพื่อเข้า กดชื่อเจ้าของที่หัว repo เพื่อกลับมารายการ |
+| New repository | ฟอร์มตั้งชื่อ (ตัวอักษรอังกฤษ ตัวเลข `-` `_` ชื่อซ้ำไม่ได้) และคำอธิบาย สร้างเป็น repo ว่างแล้วเข้าหน้า Quick setup ของ repo นั้นทันที |
 | repo ว่าง | Quick setup: คำแนะนำวิธีใช้อยู่บนสุด, URL (Copy), ขั้นตอน 1) ตั้งชื่อผู้ใช้ Git 2) สร้างไฟล์แรกแล้ว commit 3) ผูก remote แล้ว push และ clone ท้ายหน้า คลิกที่คำสั่งเพื่อคัดลอกทีละบรรทัด (ย้อมสีและมีคำอธิบายสั้นๆ ข้างบรรทัด) |
 | Code | เลือก branch, เปิดโฟลเดอร์/ไฟล์ (มีเลขบรรทัดและปุ่ม Copy), commit ล่าสุด, ค้นหาไฟล์ (Go to file), README แสดงเป็น Markdown, เมนู Clone |
 | Commits | ประวัติ commit ของ branch จัดกลุ่มตามวัน |
@@ -53,7 +55,7 @@
 ## การทำงาน
 
 1. URL ที่ผู้เล่นเห็นเป็น URL สมมติรูปแบบ GitHub แต่ถูก rewrite (`url.<bare>.insteadOf`) ไปยัง bare repository ในโฟลเดอร์ session เท่านั้น
-2. Policy ยอมรับเฉพาะ URL ของ session นั้นแบบตรงตัว URL อื่นรวมถึง GitHub จริงถูกปฏิเสธและบอก URL ที่อนุญาต
+2. Policy ยอมรับเฉพาะ URL ของ repo ในบัญชีนี้แบบตรงตัว (ทั้ง repo แรกและที่สร้างเพิ่ม) URL อื่นรวมถึง GitHub จริงจะไม่ผ่านและบอก URL ที่ใช้ได้
 3. `IGitRemoteHost` อ่านข้อมูลจาก bare repository จริงด้วย Git ส่วน merge ทำด้วย Git จริงแล้ว push เข้า bare remote
 4. สถานะ PR และ review เก็บในหน่วยความจำของ session
 5. ตรวจ conflict ก่อน merge ทุกครั้งด้วย `git merge-tree` ผลสรุปอยู่ใน `PullRequestDetail.MergeBlockedReason` เพื่อให้ UI ไม่ต้องรู้กติกาเอง

@@ -24,7 +24,12 @@ public interface IGitGameSession : IAsyncDisposable
 {
     GitSessionInfo Info { get; }
     IPlayerFileSystem Files { get; }
-    IGitRemoteHost RemoteHost { get; }
+    /// <summary>host ของ repo แรกจาก seed ของด่าน (null ถ้าบัญชีเริ่มโดยไม่มี repo ใช้ <see cref="RemoteAccount"/> แทน)</summary>
+    IGitRemoteHost? RemoteHost { get; }
+
+    /// <summary>บัญชีที่มีหลาย repo บน GitHub จำลอง (null ถ้า session ไม่รองรับ)</summary>
+    IGitRemoteAccount? RemoteAccount => null;
+
     Task<GitCommandResult> ExecuteAsync(string commandLine, CancellationToken cancellationToken = default);
     Task<GitRepositorySnapshot> InspectAsync(CancellationToken cancellationToken = default);
 }

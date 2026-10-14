@@ -2,7 +2,7 @@ using GitDiwaa.Core;
 
 namespace GitDiwaa.RealGit;
 
-internal sealed partial class FakeGitHubHost
+internal sealed partial class SimulatedGitHubHost
 {
     private readonly Dictionary<int, List<PullRequestReview>> _reviews = [];
     private readonly Dictionary<int, PullRequestDetail> _mergedDetails = [];

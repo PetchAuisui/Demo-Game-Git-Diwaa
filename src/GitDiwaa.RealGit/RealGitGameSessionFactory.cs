@@ -17,12 +17,12 @@ public sealed class RealGitGameSessionFactory : IGitGameSessionFactory
         _playerName = playerName;
     }
 
-    /// <summary>สร้าง session ที่มี GitHub จำลองเป็น repo ว่างของผู้เล่น</summary>
+    /// <summary>สร้าง session ที่มีบัญชี GitHub จำลองของผู้เล่นแต่ยังไม่มี repo ผู้เล่นสร้างเอง</summary>
     public Task<IGitGameSession> CreateAsync(
         string missionId,
         string attemptId,
         CancellationToken cancellationToken = default) =>
-        CreateAsync(missionId, attemptId, RemoteSeed.Empty(_playerName), cancellationToken);
+        CreateAsync(missionId, attemptId, RemoteSeed.NoRepository(_playerName), cancellationToken);
 
     /// <summary>สร้าง session ที่ GitHub จำลองเริ่มต้นตาม <paramref name="seed"/> (เช่น มีประวัติอยู่แล้ว)</summary>
     public async Task<IGitGameSession> CreateAsync(
@@ -36,6 +36,9 @@ public sealed class RealGitGameSessionFactory : IGitGameSessionFactory
         ValidateName(seed.Name, nameof(seed.Name));
 
         var sandbox = _workspaceManager.CreateAttempt(missionId, attemptId);
+        if (seed.StartsWithoutRepository)
+            return new RealGitGameSession(sandbox, _workspaceManager, null, _processRunner, seed);
+
         var remote = await _workspaceManager.CreateBareRemoteAsync(
             sandbox,
             _processRunner,
@@ -43,7 +46,7 @@ public sealed class RealGitGameSessionFactory : IGitGameSessionFactory
             seed.CloneUrl,
             cancellationToken);
         await RemoteSeeder.SeedAsync(sandbox, remote, _processRunner, seed, cancellationToken);
-        return new RealGitGameSession(sandbox, remote, _processRunner, seed);
+        return new RealGitGameSession(sandbox, _workspaceManager, remote, _processRunner, seed);
     }
 
     private static void ValidateName(string value, string parameterName)

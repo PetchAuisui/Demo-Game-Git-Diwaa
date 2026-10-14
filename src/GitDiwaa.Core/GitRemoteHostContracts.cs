@@ -79,6 +79,7 @@ public sealed record PullRequestActionResult(bool Success, string Message, PullR
 public interface IGitRemoteHost
 {
     Task<RemoteRepositoryInfo> GetRepositoryAsync(CancellationToken cancellationToken = default);
+
     Task<IReadOnlyList<RemoteBranchInfo>> ListBranchesAsync(CancellationToken cancellationToken = default);
     Task<IReadOnlyList<RemoteCommitInfo>> ListCommitsAsync(
         string branch, int limit = 30, CancellationToken cancellationToken = default);
@@ -95,4 +96,21 @@ public interface IGitRemoteHost
     PullRequestActionResult ReviewPullRequest(int number, string reviewer, ReviewVerdict verdict, string body = "");
     PullRequestActionResult ClosePullRequest(int number);
     Task<PullRequestActionResult> MergePullRequestAsync(int number, CancellationToken cancellationToken = default);
+}
+
+/// <summary>
+/// บัญชีผู้เล่นบน GitHub จำลอง: มีได้หลาย repo เลือกเปิดและสร้างใหม่ได้เหมือน GitHub จริง
+/// แต่ละ repo เป็น <see cref="IGitRemoteHost"/> ของตัวเอง (PR/branch แยกกัน)
+/// </summary>
+public interface IGitRemoteAccount
+{
+    string Owner { get; }
+    Task<IReadOnlyList<RemoteRepositoryInfo>> ListRepositoriesAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>host ของ repo ตามชื่อ (ไม่สนตัวพิมพ์ใหญ่เล็ก) หรือ null ถ้าไม่มี</summary>
+    IGitRemoteHost? OpenRepository(string name);
+
+    /// <summary>สร้าง repo ว่างใหม่ ชื่อซ้ำหรือไม่ถูกรูปแบบจะโยน <see cref="InvalidOperationException"/> พร้อมข้อความที่แสดงให้ผู้เล่นอ่านได้</summary>
+    Task<RemoteRepositoryInfo> CreateRepositoryAsync(
+        string name, string description, CancellationToken cancellationToken = default);
 }

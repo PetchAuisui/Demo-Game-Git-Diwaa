@@ -52,9 +52,9 @@
 
 ## GitHub จำลอง (feature/github-remote-simulator)
 
-รายละเอียดอยู่ใน `docs/fake-github-remote.md`
+รายละเอียดอยู่ใน `docs/simulated-github-remote.md`
 
-- remote เริ่มต้นเป็น repo ว่าง `https://github.com/user/my-project.git` (เจ้าของ `user`, กำหนดผ่าน `playerName` ของ factory) ไม่มีข้อมูลตัวอย่างในโค้ดจริง; `RemoteSeed` ใช้ตั้งประวัติเริ่มต้นต่อด่านได้
+- บัญชีเริ่มต้นไม่มี repo (เจ้าของ `user`, กำหนดผ่าน `playerName` ของ factory) `CreateAsync(mission, attempt)` ใช้ `RemoteSeed.NoRepository`; ส่ง `RemoteSeed.Empty()` หรือ seed ของด่านถ้าต้องการ repo `https://github.com/user/my-project.git` ตั้งต้น ไม่มีข้อมูลตัวอย่างในโค้ดจริง; `RemoteSeed` ใช้ตั้งประวัติเริ่มต้นต่อด่านได้
 - URL GitHub จริงถูกปฏิเสธโดย command policy (clone / remote add / remote set-url) และข้อความบอก URL ที่อนุญาต
 - `RemoteHost` รองรับ: branches (ahead/behind), commits, ไฟล์/โฟลเดอร์, ลบ branch, สร้าง PR, diff/commits/ไฟล์ที่เปลี่ยน, review, ตรวจ conflict ก่อน merge, ปิด PR, ดู PR ที่ merge แล้วย้อนหลัง
 - กติกา PR ปรับได้ด้วย `RemoteRules` (ค่าเริ่มต้นเหมาะกับ sandbox คนเดียว: review เป็นทางเลือก รีวิว PR ตัวเองได้)

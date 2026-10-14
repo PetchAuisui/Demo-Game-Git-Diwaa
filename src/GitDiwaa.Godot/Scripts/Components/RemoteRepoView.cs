@@ -12,13 +12,14 @@ public partial class RemoteRepoView : Control
 {
     [Signal] public delegate void BackRequestedEventHandler();
 
-    private enum Page { Code, Blob, Commits, Branches, Pulls, NewPull, PullDetail }
+    private enum Page { Repos, NewRepo, Code, Blob, Commits, Branches, Pulls, NewPull, PullDetail }
 
     private enum PullTab { Conversation, Commits, Files }
 
+    private IGitRemoteAccount? _account;
     private IGitRemoteHost? _host;
     private RemoteRepositoryInfo? _repo;
-    private Page _page = Page.Code;
+    private Page _page = Page.Repos;
     private string _branch = "main";
     private string _path = "";
     private int _pullNumber;
@@ -36,6 +37,8 @@ public partial class RemoteRepoView : Control
     private ScrollContainer _scroll = null!;
     private VBoxContainer _content = null!;
     private PanelContainer _window = null!;
+    private Control _repoHeader = null!;
+    private TextureRect _roomBackdrop = null!;
     private MarginContainer _topMargin = null!;
     private MarginContainer _headerMargin = null!;
     private MarginContainer _bodyMargin = null!;
@@ -67,11 +70,15 @@ public partial class RemoteRepoView : Control
         window.AddThemeStyleboxOverride("panel", GitHubTheme.Box(GitHubTheme.Canvas, GitHubTheme.Border, 10, 1));
         margin.AddChild(window);
 
+        _roomBackdrop = BuildRoomBackdrop();
+        window.AddChild(_roomBackdrop);
+
         var column = new VBoxContainer();
         column.AddThemeConstantOverride("separation", S(0));
         window.AddChild(column);
         column.AddChild(BuildTopBar());
-        column.AddChild(BuildRepoHeader());
+        _repoHeader = BuildRepoHeader();
+        column.AddChild(_repoHeader);
         column.AddChild(BuildBody());
 
         _window.Resized += UpdateGutters;
@@ -163,6 +170,13 @@ public partial class RemoteRepoView : Control
         title.AddThemeConstantOverride("separation", S(8));
         title.AddChild(GitHubUi.Icon(GhIcon.Repo, GitHubTheme.FgMuted, 18));
         _ownerLabel = GitHubUi.Text(string.Empty, GitHubTheme.Accent, 20);
+        _ownerLabel.TooltipText = "กลับไปรายการ repository";
+        _ownerLabel.MouseFilter = MouseFilterEnum.Stop;
+        _ownerLabel.MouseDefaultCursorShape = CursorShape.PointingHand;
+        _ownerLabel.GuiInput += input =>
+        {
+            if (input is InputEventMouseButton { Pressed: true, ButtonIndex: MouseButton.Left }) Go(Page.Repos);
+        };
         title.AddChild(_ownerLabel);
         title.AddChild(GitHubUi.Text("/", GitHubTheme.FgMuted, 20));
         _repoLabel = GitHubUi.Text(string.Empty, GitHubTheme.Accent, 20, bold: true);
@@ -224,9 +238,24 @@ public partial class RemoteRepoView : Control
         _bodyMargin.AddThemeConstantOverride("margin_right", Math.Max(S(12), gutter - scrollbarWidth));
     }
 
-    public void Open(IGitRemoteHost host)
+    public void Open(IGitRemoteAccount account)
     {
+        _account = account;
+        _host = null;
+        Go(Page.Repos);
+    }
+
+    /// <summary>เปิด repo ที่เลือกจากรายการ (เริ่มที่หน้า Code ของ repo นั้น)</summary>
+    private void OpenRepo(string name)
+    {
+        var host = _account?.OpenRepository(name);
+        if (host is null) return;
         _host = host;
+        _branch = "main";
+        _path = string.Empty;
+        _pullNumber = 0;
+        _showClosed = false;
+        _newPullSource = string.Empty;
         Go(Page.Code);
     }
 
@@ -244,7 +273,7 @@ public partial class RemoteRepoView : Control
 
     private async Task RefreshAsync()
     {
-        if (_host is null) return;
+        if (_account is null) return;
         foreach (var child in _content.GetChildren())
         {
             _content.RemoveChild(child);
@@ -253,29 +282,10 @@ public partial class RemoteRepoView : Control
 
         try
         {
-            _repo = await _host.GetRepositoryAsync();
-            if (!IsAlive) return;
-            ShowRepoHeader(_repo, _host.ListPullRequests().Count(p => p.State == PullRequestState.Open));
-            var branches = await _host.ListBranchesAsync();
-            if (!IsAlive) return;
-            if (!branches.Any(b => b.Name == _branch)) _branch = _repo.DefaultBranch;
-
-            if (_status.Length > 0)
-            {
-                _content.AddChild(GitHubUi.Flash(_status, _statusIsError));
-                _status = string.Empty;
-            }
-
-            switch (_page)
-            {
-                case Page.Code: await BuildCodeAsync(); break;
-                case Page.Blob: await BuildBlobAsync(); break;
-                case Page.Commits: await BuildCommitsAsync(); break;
-                case Page.Branches: await BuildBranchesAsync(); break;
-                case Page.Pulls: BuildPulls(_host.ListPullRequests()); break;
-                case Page.NewPull: await BuildNewPullAsync(); break;
-                case Page.PullDetail: await BuildPullDetailAsync(); break;
-            }
+            if (_page is Page.Repos or Page.NewRepo)
+                await RefreshAccountPageAsync();
+            else if (_host is not null)
+                await RefreshRepoPageAsync(_host);
         }
         catch (Exception ex)
         {
@@ -288,19 +298,74 @@ public partial class RemoteRepoView : Control
         _scroll.SetDeferred(ScrollContainer.PropertyName.ScrollVertical, 0);
     }
 
-    private void ShowRepoHeader(RemoteRepositoryInfo repo, int openPulls)
+    /// <summary>หน้าระดับบัญชี: รายการ repo และฟอร์มสร้าง repo ใหม่ (ยังไม่ได้อยู่ใน repo ใด)</summary>
+    private async Task RefreshAccountPageAsync()
     {
-        _ownerLabel.Text = repo.Owner;
-        _repoLabel.Text = repo.Name;
-        _addressPath.Text = AddressPath(repo);
+        var repos = await _account!.ListRepositoriesAsync();
+        if (!IsAlive) return;
+        ShowAccountHeader(_account.Owner);
+        ShowStatus();
+        if (_page == Page.Repos) BuildRepos(repos);
+        else BuildNewRepo();
+    }
 
+    private async Task RefreshRepoPageAsync(IGitRemoteHost host)
+    {
+        _repo = await host.GetRepositoryAsync();
+        if (!IsAlive) return;
+        ShowRepoHeader(_repo, host.ListPullRequests().Count(p => p.State == PullRequestState.Open));
+        var branches = await host.ListBranchesAsync();
+        if (!IsAlive) return;
+        if (!branches.Any(b => b.Name == _branch)) _branch = _repo.DefaultBranch;
+
+        ShowStatus();
+
+        switch (_page)
+        {
+            case Page.Code: await BuildCodeAsync(); break;
+            case Page.Blob: await BuildBlobAsync(); break;
+            case Page.Commits: await BuildCommitsAsync(); break;
+            case Page.Branches: await BuildBranchesAsync(); break;
+            case Page.Pulls: BuildPulls(host.ListPullRequests()); break;
+            case Page.NewPull: await BuildNewPullAsync(); break;
+            case Page.PullDetail: await BuildPullDetailAsync(); break;
+        }
+    }
+
+    private void ShowStatus()
+    {
+        if (_status.Length == 0) return;
+        _content.AddChild(GitHubUi.Flash(_status, _statusIsError));
+        _status = string.Empty;
+    }
+
+    private void SetAvatar(string owner)
+    {
         foreach (var child in _avatarSlot.GetChildren())
         {
             _avatarSlot.RemoveChild(child);
             child.QueueFree();
         }
 
-        _avatarSlot.AddChild(GitHubUi.Avatar(repo.Owner, 28));
+        _avatarSlot.AddChild(GitHubUi.Avatar(owner, 28));
+    }
+
+    private void ShowAccountHeader(string owner)
+    {
+        _repoHeader.Visible = false;
+        _roomBackdrop.Visible = true;
+        _addressPath.Text = _page == Page.NewRepo ? "/new" : $"/{owner}?tab=repositories";
+        SetAvatar(owner);
+    }
+
+    private void ShowRepoHeader(RemoteRepositoryInfo repo, int openPulls)
+    {
+        _repoHeader.Visible = true;
+        _roomBackdrop.Visible = false;
+        _ownerLabel.Text = repo.Owner;
+        _repoLabel.Text = repo.Name;
+        _addressPath.Text = AddressPath(repo);
+        SetAvatar(repo.Owner);
 
         foreach (var child in _tabs.GetChildren())
         {

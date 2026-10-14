@@ -52,7 +52,7 @@ snapshot
 
 ## รอบทดลอง Local Remote
 
-ทุก attempt มี remote เป็น GitHub จำลองที่ยังว่าง เจ้าของคือ `user` ใช้ `remote-url` เพื่ออ่าน URL ของ attempt ปัจจุบัน (ค่าเริ่มต้น `https://github.com/user/my-project.git`):
+ทุก attempt มีบัญชี GitHub จำลองเจ้าของคือ `user` ที่ **ยังไม่มี repo** ต้องสร้างก่อนจากหน้า GitHub ในเกม (ปุ่ม New) แล้วค่อยใช้ URL ของ repo นั้น (ถ้าด่านส่ง seed ตั้งต้นมา `remote-url` จะแสดง URL ของ repo นั้น เช่น `https://github.com/user/my-project.git`):
 
 ```text
 remote-url

@@ -81,7 +81,9 @@ internal sealed class TerminalApp
                 _terminal.WriteLine(_session.Info.RepositoryPath);
                 return true;
             case "remote-url":
-                _terminal.WriteLine(_session.Info.RemoteUrl);
+                _terminal.WriteLine(_session.Info.RemoteUrl.Length == 0
+                    ? "No repository yet — create one on the simulated GitHub first."
+                    : _session.Info.RemoteUrl);
                 return true;
             case "files":
                 var files = _session.Files.ListFiles();
@@ -138,7 +140,8 @@ internal sealed class TerminalApp
         _terminal.WriteLine("       Git-Diwaa — Real Git Lab");
         _terminal.WriteLine("========================================");
         _terminal.WriteLine($"Sandbox: {_session.Info.RepositoryPath}");
-        _terminal.WriteLine($"Game remote: {_session.Info.RemoteUrl}");
+        if (_session.Info.RemoteUrl.Length > 0)
+            _terminal.WriteLine($"Game remote: {_session.Info.RemoteUrl}");
         _terminal.WriteLine("Commands only affect this isolated game session.");
         _terminal.WriteLine("Type help for available commands or exit to quit.\n");
     }
