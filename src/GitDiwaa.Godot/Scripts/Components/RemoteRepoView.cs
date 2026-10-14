@@ -48,41 +48,53 @@ public partial class RemoteRepoView : Control
     /// <summary>ความกว้างสูงสุดของเนื้อหา (หัว repo และตัวหน้าจัดกึ่งกลางให้ตรงกัน) จอกว้างขึ้นก็ไม่ยืดตาม</summary>
     private static int ContentMaxWidth => S(1320);
 
+    /// <summary>
+    /// โครงหน้าอยู่ใน Scenes/RemoteRepoView.tscn (แถบบน หัว repo พื้นที่เลื่อน) โค้ดนี้แค่ผูก node ใส่ไอคอน
+    /// และต่อสัญญาณ ส่วนเนื้อหาของแต่ละหน้าสร้างตามข้อมูลลงใน Content
+    /// </summary>
     public override void _Ready()
     {
-        Theme = GitHubTheme.Create();
-        SetAnchorsAndOffsetsPreset(LayoutPreset.FullRect);
-        MouseFilter = MouseFilterEnum.Stop;
+        Theme = GitHubTheme.Create(); // ธีมเป็นโค้ดเพราะสเกลและฟอนต์คำนวณตอนรัน
         GetViewport().GuiReleaseFocus(); // ไม่ให้ช่องพิมพ์ของ terminal ด้านหลังรับคีย์บอร์ดต่อ
 
-        var dim = new ColorRect { Color = GitHubTheme.Backdrop };
-        dim.SetAnchorsAndOffsetsPreset(LayoutPreset.FullRect);
-        AddChild(dim);
+        _window = GetNode<PanelContainer>("%Window");
+        _roomBackdrop = GetNode<TextureRect>("%RoomBackdrop");
+        _topMargin = GetNode<MarginContainer>("%TopMargin");
+        _backButton = GetNode<Button>("%BackButton");
+        _addressPath = GetNode<Label>("%AddressPath");
+        _avatarSlot = GetNode<Control>("%AvatarSlot");
+        _repoHeader = GetNode<Control>("%RepoHeader");
+        _headerMargin = GetNode<MarginContainer>("%HeaderMargin");
+        _ownerLabel = GetNode<Label>("%OwnerLabel");
+        _repoLabel = GetNode<Label>("%RepoLabel");
+        _tabs = GetNode<HBoxContainer>("%Tabs");
+        _scroll = GetNode<ScrollContainer>("%Scroll");
+        _bodyMargin = GetNode<MarginContainer>("%BodyMargin");
+        _content = GetNode<VBoxContainer>("%Content");
 
-        var margin = new MarginContainer();
-        margin.SetAnchorsAndOffsetsPreset(LayoutPreset.FullRect);
-        margin.AddThemeConstantOverride("margin_left", 28);
-        margin.AddThemeConstantOverride("margin_right", 28);
-        margin.AddThemeConstantOverride("margin_top", 84);
-        margin.AddThemeConstantOverride("margin_bottom", 28);
-        AddChild(margin);
+        // ไอคอน SVG เรนเดอร์ตามสเกลตอนรัน จึงใส่จากโค้ด ส่วนขนาดและตำแหน่งอยู่ใน scene
+        GetNode<TextureRect>("%LockIcon").Texture = GitHubIcons.Get(GhIcon.Lock, GitHubTheme.FgMuted, S(14));
+        GetNode<TextureRect>("%RepoIcon").Texture = GitHubIcons.Get(GhIcon.Repo, GitHubTheme.FgMuted, S(18));
+        GetNode<Label>("%EscLabel").AddThemeFontOverride("font", GitHubTheme.MonoFont);
+        _repoLabel.AddThemeFontOverride("font", GitHubTheme.BoldFont);
 
-        var window = new PanelContainer { ClipContents = true };
-        _window = window;
-        window.AddThemeStyleboxOverride("panel", GitHubTheme.Box(GitHubTheme.Canvas, GitHubTheme.Border, 10, 1));
-        margin.AddChild(window);
+        _backButton.Icon = GitHubIcons.Get(GhIcon.ArrowLeft, GitHubTheme.FgMuted, S(16));
+        _backButton.Pressed += () => Go(Page.Repos);
 
-        _roomBackdrop = BuildRoomBackdrop();
-        window.AddChild(_roomBackdrop);
+        var refresh = GetNode<Button>("%RefreshButton");
+        refresh.Icon = GitHubIcons.Get(GhIcon.Refresh, GitHubTheme.FgMuted, S(16));
+        refresh.Pressed += () => Go(_page);
 
-        var column = new VBoxContainer();
-        column.AddThemeConstantOverride("separation", S(0));
-        window.AddChild(column);
-        column.AddChild(BuildTopBar());
-        _repoHeader = BuildRepoHeader();
-        column.AddChild(_repoHeader);
-        column.AddChild(BuildBody());
+        var close = GetNode<Button>("%CloseButton");
+        close.Icon = GitHubIcons.Get(GhIcon.X, GitHubTheme.FgMuted, S(16));
+        close.Pressed += () => EmitSignal(SignalName.BackRequested);
 
+        _ownerLabel.GuiInput += input =>
+        {
+            if (input is InputEventMouseButton { Pressed: true, ButtonIndex: MouseButton.Left }) Go(Page.Repos);
+        };
+
+        _scroll.GetVScrollBar().VisibilityChanged += UpdateGutters;
         _window.Resized += UpdateGutters;
         Callable.From(UpdateGutters).CallDeferred();
     }
@@ -104,131 +116,6 @@ public partial class RemoteRepoView : Control
 
         GetViewport().SetInputAsHandled();
         EmitSignal(SignalName.BackRequested);
-    }
-
-    /// <summary>แถบบนสุด: ปุ่มย้อนกลับ ช่อง URL ตรงกลางเหมือนเบราว์เซอร์ และปุ่มปิด (แสดงที่อยู่ของหน้าปัจจุบัน)</summary>
-    private Control BuildTopBar()
-    {
-        var bar = new PanelContainer { MouseFilter = MouseFilterEnum.Pass };
-        var style = GitHubTheme.Underlined(GitHubTheme.Inset, GitHubTheme.Border, 1, 0, 10);
-        style.CornerRadiusTopLeft = 9;
-        style.CornerRadiusTopRight = 9;
-        bar.AddThemeStyleboxOverride("panel", style);
-
-        _topMargin = new MarginContainer();
-        _topMargin.AddThemeConstantOverride("margin_left", S(16));
-        _topMargin.AddThemeConstantOverride("margin_right", S(16));
-        // สามช่อง: ซ้าย/ขวาขยายเท่ากัน ช่อง URL ตรงกลางจึงอยู่กลางแถบพอดี
-        var row = new HBoxContainer();
-        row.AddThemeConstantOverride("separation", S(12));
-
-        var left = new HBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill, SizeFlagsStretchRatio = 1 };
-        left.AddThemeConstantOverride("separation", S(12));
-        _backButton = GitHubUi.Btn("ย้อนกลับ", () => Go(Page.Repos), icon: GhIcon.ArrowLeft);
-        _backButton.TooltipText = "กลับไปรายการ repository";
-        _backButton.Visible = false;
-        left.AddChild(_backButton);
-
-        var simulated = GitHubUi.Pill("Magic Vault", GitHubTheme.Attention, new Color(GitHubTheme.Attention, 0.55f), size: 13);
-        simulated.SizeFlagsVertical = SizeFlags.ShrinkCenter;
-        left.AddChild(simulated);
-        row.AddChild(left);
-
-        var address = new PanelContainer
-        {
-            MouseFilter = MouseFilterEnum.Pass,
-            CustomMinimumSize = new Vector2(S(560), 0),
-            SizeFlagsHorizontal = SizeFlags.ShrinkCenter
-        };
-        address.AddThemeStyleboxOverride("panel", GitHubTheme.Box(GitHubTheme.Surface, GitHubTheme.Border, 16, 1, 14, 4));
-        var addressRow = new HBoxContainer { MouseFilter = MouseFilterEnum.Ignore };
-        addressRow.AddThemeConstantOverride("separation", S(8));
-        addressRow.AddChild(GitHubUi.Icon(GhIcon.Lock, GitHubTheme.FgMuted, 14));
-        addressRow.AddChild(GitHubUi.Text("magic-vault.com", GitHubTheme.FgMuted, 14));
-        _addressPath = GitHubUi.Text(string.Empty, GitHubTheme.Fg, 14);
-        addressRow.AddChild(_addressPath);
-        address.AddChild(addressRow);
-        row.AddChild(address);
-
-        var right = new HBoxContainer
-        {
-            SizeFlagsHorizontal = SizeFlags.ExpandFill,
-            SizeFlagsStretchRatio = 1,
-            Alignment = BoxContainer.AlignmentMode.End
-        };
-        right.AddThemeConstantOverride("separation", S(12));
-        var refresh = GitHubUi.Btn(string.Empty, () => Go(_page), GhButtonKind.Ghost, GhIcon.Refresh);
-        refresh.TooltipText = "รีเฟรชหน้านี้";
-        right.AddChild(refresh);
-        _avatarSlot = new Control { MouseFilter = MouseFilterEnum.Ignore, CustomMinimumSize = new Vector2(S(28), S(28)) };
-        right.AddChild(_avatarSlot);
-        right.AddChild(GitHubUi.KeyHint("Esc"));
-        right.AddChild(GitHubUi.Btn("ปิด", () => EmitSignal(SignalName.BackRequested), icon: GhIcon.X));
-        row.AddChild(right);
-
-        _topMargin.AddChild(row);
-        bar.AddChild(_topMargin);
-        return bar;
-    }
-
-    /// <summary>ส่วนหัว repo: ไอคอน เจ้าของ / ชื่อ repo ป้าย Public และแท็บ Code / Pull requests</summary>
-    private Control BuildRepoHeader()
-    {
-        var header = new PanelContainer { MouseFilter = MouseFilterEnum.Pass };
-        header.AddThemeStyleboxOverride("panel", GitHubTheme.Underlined(GitHubTheme.Surface, GitHubTheme.Border, 1, 0, 16, 0));
-
-        _headerMargin = new MarginContainer();
-        _headerMargin.AddThemeConstantOverride("margin_left", S(24));
-        _headerMargin.AddThemeConstantOverride("margin_right", S(24));
-        var column = new VBoxContainer();
-        column.AddThemeConstantOverride("separation", S(12));
-
-        var title = new HBoxContainer();
-        title.AddThemeConstantOverride("separation", S(8));
-        title.AddChild(GitHubUi.Icon(GhIcon.Repo, GitHubTheme.FgMuted, 18));
-        _ownerLabel = GitHubUi.Text(string.Empty, GitHubTheme.Accent, 20);
-        _ownerLabel.TooltipText = "กลับไปรายการ repository";
-        _ownerLabel.MouseFilter = MouseFilterEnum.Stop;
-        _ownerLabel.MouseDefaultCursorShape = CursorShape.PointingHand;
-        _ownerLabel.GuiInput += input =>
-        {
-            if (input is InputEventMouseButton { Pressed: true, ButtonIndex: MouseButton.Left }) Go(Page.Repos);
-        };
-        title.AddChild(_ownerLabel);
-        title.AddChild(GitHubUi.Text("/", GitHubTheme.FgMuted, 20));
-        _repoLabel = GitHubUi.Text(string.Empty, GitHubTheme.Accent, 20, bold: true);
-        title.AddChild(_repoLabel);
-        title.AddChild(GitHubUi.Pill("Public", GitHubTheme.FgMuted, GitHubTheme.Border));
-        column.AddChild(title);
-
-        _tabs = new HBoxContainer();
-        _tabs.AddThemeConstantOverride("separation", S(4));
-        column.AddChild(_tabs);
-
-        _headerMargin.AddChild(column);
-        header.AddChild(_headerMargin);
-        return header;
-    }
-
-    private Control BuildBody()
-    {
-        _scroll = new ScrollContainer
-        {
-            SizeFlagsVertical = SizeFlags.ExpandFill,
-            HorizontalScrollMode = ScrollContainer.ScrollMode.Disabled
-        };
-        var margin = new MarginContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
-        margin.AddThemeConstantOverride("margin_left", S(24));
-        margin.AddThemeConstantOverride("margin_right", S(24));
-        margin.AddThemeConstantOverride("margin_top", S(20));
-        margin.AddThemeConstantOverride("margin_bottom", S(40));
-        _bodyMargin = margin;
-        _scroll.GetVScrollBar().VisibilityChanged += UpdateGutters;
-        _content = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
-        _content.AddThemeConstantOverride("separation", S(16));
-        margin.AddChild(_content);
-        _scroll.AddChild(margin);
-        return _scroll;
     }
 
     /// <summary>

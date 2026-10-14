@@ -94,6 +94,8 @@ public partial class SandboxGameView : Control
         await RefreshStateAsync();
     }
 
+    private static readonly PackedScene RemoteRepoViewScene = GD.Load<PackedScene>("res://Scenes/RemoteRepoView.tscn");
+
     private void OnRepoPressed()
     {
         if (_sandboxService?.RemoteAccount is not { } account)
@@ -102,7 +104,7 @@ public partial class SandboxGameView : Control
             return;
         }
 
-        var view = new RemoteRepoView();
+        var view = RemoteRepoViewScene.Instantiate<RemoteRepoView>();
         view.BackRequested += () => view.QueueFree();
         AddChild(view);
         view.Open(account);
