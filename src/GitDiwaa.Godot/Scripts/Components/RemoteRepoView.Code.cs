@@ -236,14 +236,27 @@ public partial class RemoteRepoView
         _content.AddChild(box);
     }
 
-    /// <summary>เมนู Clone ที่เปิดจากปุ่ม Code: ลอยใต้ปุ่มและปิดเองเมื่อคลิกข้างนอก เหมือน GitHub</summary>
+    /// <summary>
+    /// เมนู Clone ที่เปิดจากปุ่ม Code: ลอยใต้ปุ่มและปิดเองเมื่อคลิกข้างนอก เหมือน GitHub
+    /// ใช้ overlay ในหน้าเดียวกันแทน PopupPanel เพราะหน้าต่าง popup ยืดเต็มความสูงจอ
+    /// </summary>
     private void ShowCloneMenu(Button anchor)
     {
         var url = _repo!.CloneUrl;
-        var popup = new PopupPanel();
-        popup.AddThemeStyleboxOverride("panel", GitHubTheme.Box(GitHubTheme.SurfaceRaised, GitHubTheme.Border, 8, 1, 18, 14));
 
-        var column = new VBoxContainer { CustomMinimumSize = new Vector2(S(540), 0) };
+        // ชั้นโปร่งใสเต็มหน้า คลิกตรงไหนนอกเมนูก็ปิด
+        var overlay = new Control { MouseFilter = MouseFilterEnum.Stop };
+        overlay.SetAnchorsAndOffsetsPreset(LayoutPreset.FullRect);
+        overlay.GuiInput += input =>
+        {
+            if (input is InputEventMouseButton { Pressed: true }) overlay.QueueFree();
+        };
+
+        var panel = new PanelContainer { MouseFilter = MouseFilterEnum.Stop };
+        var panelStyle = GitHubTheme.Box(GitHubTheme.SurfaceRaised, GitHubTheme.Border, 8, 1, 18, 14);
+        panel.AddThemeStyleboxOverride("panel", panelStyle);
+
+        var column = new VBoxContainer { CustomMinimumSize = new Vector2(S(640), 0) };
         column.AddThemeConstantOverride("separation", S(10));
         column.AddChild(GitHubUi.IconText(GhIcon.Code, "Clone", GitHubTheme.Fg, 15, bold: true));
 
@@ -256,12 +269,29 @@ public partial class RemoteRepoView
 
         column.AddChild(GitHubUi.Text("พิมพ์คำสั่งนี้ใน terminal ของ Sandbox", GitHubTheme.FgMuted, 13));
         column.AddChild(GitHubUi.CodeBlock([$"git clone {url}"]));
-        popup.AddChild(column);
+        panel.AddChild(column);
+        overlay.AddChild(panel);
+        AddChild(overlay);
 
-        popup.PopupHide += popup.QueueFree;
-        AddChild(popup);
+        // วางชิดขอบขวาของปุ่ม ใต้ปุ่ม 6px (พิกัดสัมพัทธ์กับหน้านี้)
+        // ความกว้างรู้แน่นอน แต่ความสูงต้องรอให้ข้อความ autowrap รู้ความกว้างก่อน
+        // ถ้าอ่านความสูงตอนนี้จะได้ค่ามหาศาล (label คิดว่ากว้าง 0) กล่องเลยยืดเต็มจอ
+        var width = column.CustomMinimumSize.X + panelStyle.GetMinimumSize().X;
         var anchorRect = anchor.GetGlobalRect();
-        popup.Popup(new Rect2I((int)anchorRect.End.X - S(580), (int)anchorRect.End.Y + 6, S(580), 0));
+        panel.Position = new Vector2(anchorRect.End.X - width, anchorRect.End.Y + 6) - GetGlobalRect().Position;
+        panel.Size = new Vector2(width, 0);
+        ShrinkToContentAsync(panel);
+    }
+
+    /// <summary>รอให้จัดเลย์เอาต์ครบสองเฟรมแล้วหดกล่องให้พอดีเนื้อหา</summary>
+    private async void ShrinkToContentAsync(Control panel)
+    {
+        for (var frame = 0; frame < 2; frame++)
+        {
+            await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
+            if (!IsInstanceValid(panel)) return;
+            panel.ResetSize();
+        }
     }
 
     private HBoxContainer Breadcrumb()
