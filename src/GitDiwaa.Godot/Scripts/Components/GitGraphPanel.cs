@@ -20,6 +20,7 @@ public partial class GitGraphPanel : PanelContainer
 	public string EmptyText { get; set; } = "ยังไม่มี Commit\nสร้าง repository และ commit แล้วประวัติจะแสดงที่นี่";
 
 	private Label _titleLabel = null!;
+	private HBoxContainer _headerActions = null!;
 	private RichTextLabel _graphOutput = null!;
 	private ScrollContainer _scroll = null!;
 	private CommitGraphCanvas _canvas = null!;
@@ -55,8 +56,12 @@ public partial class GitGraphPanel : PanelContainer
 	private void BindNodes()
 	{
 		_titleLabel = GetNode<Label>("%TitleLabel");
+		_headerActions = GetNode<HBoxContainer>("%HeaderActions");
 		_graphOutput = GetNode<RichTextLabel>("%GraphOutput");
 	}
+
+	/// <summary>เพิ่มปุ่มหรือตัวควบคุมที่มุมขวาของหัวพาเนล (เจ้าของพาเนลเป็นคนเลือกว่าจะใส่อะไร)</summary>
+	public void AddHeaderAction(Control action) => _headerActions.AddChild(action);
 
 	public void SetEmptyState()
 	{

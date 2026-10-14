@@ -37,12 +37,23 @@ theme_override_constants/margin_bottom = 14
 layout_mode = 2
 theme_override_constants/separation = 8
 
-[node name="TitleLabel" type="Label" parent="Margin/Layout"]
+[node name="Header" type="HBoxContainer" parent="Margin/Layout"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="TitleLabel" type="Label" parent="Margin/Layout/Header"]
 unique_name_in_owner = true
 layout_mode = 2
+size_flags_horizontal = 3
 theme_override_colors/font_color = Color(1, 0.79, 0.35, 1)
 theme_override_font_sizes/font_size = 21
 text = "GIT GRAPH"
+vertical_alignment = 1
+
+[node name="HeaderActions" type="HBoxContainer" parent="Margin/Layout/Header"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/separation = 8
 
 [node name="GraphOutput" type="RichTextLabel" parent="Margin/Layout"]
 unique_name_in_owner = true
