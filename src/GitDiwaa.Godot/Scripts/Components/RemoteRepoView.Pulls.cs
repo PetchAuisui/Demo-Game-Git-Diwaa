@@ -533,7 +533,7 @@ public partial class RemoteRepoView
                 return;
             }
 
-            var result = _host!.ReviewPullRequest(pull.Number, reviewer, ReviewVerdict.Commented, comment.Text);
+            var result = _host!.CommentOnPullRequest(pull.Number, reviewer, comment.Text);
             Go(Page.PullDetail, result.Message, !result.Success);
         }, GhButtonKind.Primary, GhIcon.Comment));
         column.AddChild(buttons);
@@ -588,8 +588,8 @@ public partial class RemoteRepoView
         {
             if (verdict == ReviewVerdict.Commented && string.IsNullOrWhiteSpace(comment.Text) && pendingComments == 0)
             {
+                // เก็บเมนูไว้เปิดอยู่ (overlay อยู่นอก _content จึงไม่ถูกล้างตอน Go) ข้อความที่พิมพ์ไว้จะไม่หาย
                 Go(Page.PullDetail, "พิมพ์ความเห็นก่อน หรือเลือก Approve / Request changes", true);
-                overlay?.QueueFree();
                 return;
             }
 

@@ -112,6 +112,9 @@ public interface IGitRemoteHost
     PullRequestActionResult AddLineComment(
         int number, string author, string path, int line, bool onNewSide, string body, bool startReview);
 
+    /// <summary>คอมเมนต์ทั่วไปบน PR (ช่อง Add a comment) ไม่แตะ pending review ของผู้เขียน ต่างจาก <see cref="ReviewPullRequest"/></summary>
+    PullRequestActionResult CommentOnPullRequest(int number, string author, string body);
+
     PullRequestActionResult ClosePullRequest(int number);
     Task<PullRequestActionResult> MergePullRequestAsync(int number, CancellationToken cancellationToken = default);
 }

@@ -357,7 +357,8 @@ public static class DiffViewer
         plus.Visible = false;
         cell.AddChild(plus);
         row.MouseEntered += () => plus.Visible = true;
-        row.MouseExited += () => plus.Visible = false;
+        // ปุ่มเป็น child ที่รับเมาส์ ทำให้ row ยิง MouseExited ตอนเมาส์เข้าปุ่ม จึงซ่อนเฉพาะเมื่อเมาส์ออกนอกแถวจริง
+        row.MouseExited += () => plus.Visible = row.GetGlobalRect().HasPoint(row.GetGlobalMousePosition());
         return cell;
     }
 

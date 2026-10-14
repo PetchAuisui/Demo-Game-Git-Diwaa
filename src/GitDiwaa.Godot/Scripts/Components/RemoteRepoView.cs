@@ -288,7 +288,37 @@ public partial class RemoteRepoView : Control
         await RefreshAsync();
     }
 
+    private bool _refreshing;
+    private bool _refreshQueued;
+
+    /// <summary>
+    /// รีเฟรชทีละรอบ: ถ้ากดเปลี่ยนหน้าซ้อนระหว่างรอข้อมูล รอบที่สองจะรอรอบแรกจบแล้วค่อยวาดใหม่
+    /// ไม่งั้นสองรอบจะเติมเนื้อหาลง _content พร้อมกันจนซ้ำ
+    /// </summary>
     private async Task RefreshAsync()
+    {
+        if (_refreshing)
+        {
+            _refreshQueued = true;
+            return;
+        }
+
+        _refreshing = true;
+        try
+        {
+            do
+            {
+                _refreshQueued = false;
+                await RefreshOnceAsync();
+            } while (_refreshQueued && IsAlive);
+        }
+        finally
+        {
+            _refreshing = false;
+        }
+    }
+
+    private async Task RefreshOnceAsync()
     {
         if (_account is null) return;
         foreach (var child in _content.GetChildren())

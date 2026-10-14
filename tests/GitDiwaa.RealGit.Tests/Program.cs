@@ -216,6 +216,15 @@ try
         await Assert.ThrowsAsync<InvalidOperationException>(() => account.CreateRepositoryAsync("NOTES", ""));
         await Assert.ThrowsAsync<InvalidOperationException>(() => account.CreateRepositoryAsync("bad name", ""));
 
+        // สร้างชื่อเดียวกันพร้อมกัน: สำเร็จได้แค่ครั้งเดียว
+        var racing = await Task.WhenAll(Enumerable.Range(0, 3).Select(async _ =>
+        {
+            try { await account.CreateRepositoryAsync("race", ""); return true; }
+            catch (InvalidOperationException) { return false; }
+        }));
+        Assert.Equal(1, racing.Count(created => created));
+        Assert.Equal(3, (await account.ListRepositoriesAsync()).Count);
+
         await PlayerRepo.RunAsync(session, "git init");
         await session.Files.WriteAllTextAsync("a.txt", "hello");
         await PlayerRepo.RunAsync(session, "git add .");
@@ -361,6 +370,11 @@ try
         Assert.Equal(2, before.Count);
         Assert.False(before.Single(comment => comment.Body == "single").IsPending);
         Assert.True(before.Single(comment => comment.Body == "draft").IsPending);
+
+        // คอมเมนต์ทั่วไปบน PR ต้องไม่ส่ง pending review ไปด้วย
+        Assert.False(host.CommentOnPullRequest(pr.Number, "user", "  ").Success);
+        Assert.True(host.CommentOnPullRequest(pr.Number, "user", "general").Success);
+        Assert.True((await host.GetPullRequestAsync(pr.Number))!.LineComments.Single(comment => comment.Body == "draft").IsPending);
 
         Assert.True(host.ReviewPullRequest(pr.Number, "user", ReviewVerdict.Commented).Success);
         Assert.True((await host.GetPullRequestAsync(pr.Number))!.LineComments.All(comment => !comment.IsPending));

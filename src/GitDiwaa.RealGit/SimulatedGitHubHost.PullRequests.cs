@@ -102,6 +102,18 @@ internal sealed partial class SimulatedGitHubHost
             : $"Comment added to pull request #{number}.", pull);
     }
 
+    public PullRequestActionResult CommentOnPullRequest(int number, string author, string body)
+    {
+        var pull = Find(number);
+        if (pull is null) return NotFound(number);
+        if (pull.State != PullRequestState.Open) return NotOpen(pull);
+        if (string.IsNullOrWhiteSpace(body)) return new(false, "A comment is required.", pull);
+
+        // เก็บเป็น review แบบ Commented เพื่อให้ไทม์ไลน์เดิมแสดงผลเหมือนเดิม แต่ไม่ส่ง pending comments
+        _reviews[number].Add(new(author, ReviewVerdict.Commented, body, DateTimeOffset.Now));
+        return new(true, $"Comment added to pull request #{number}.", pull);
+    }
+
     public PullRequestActionResult ReviewPullRequest(int number, string reviewer, ReviewVerdict verdict, string body = "")
     {
         var pull = Find(number);

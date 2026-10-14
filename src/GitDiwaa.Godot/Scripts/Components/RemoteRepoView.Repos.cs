@@ -169,7 +169,8 @@ public partial class RemoteRepoView
             }
             catch (InvalidOperationException ex)
             {
-                if (!IsAlive) return;
+                // กดสร้างซ้ำเร็วๆ: ครั้งแรกสำเร็จแล้วหน้าถูกสร้างใหม่ ช่อง error เดิมถูกลบไปแล้ว
+                if (!IsAlive || !IsInstanceValid(error)) return;
                 error.Text = ex.Message;
                 error.Visible = true;
             }
