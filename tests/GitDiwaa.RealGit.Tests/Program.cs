@@ -383,6 +383,21 @@ try
         Assert.False(host.AddLineComment(pr.Number, "user", "lines.txt", 1, true, "late", false).Success);
     });
 
+    await tests.RunAsync("pull request file list and diff use the real (unquoted) path for non-ASCII file names", async () =>
+    {
+        await using var thai = await factory.CreateAsync("act1-thai", "player", RemoteSeed.Empty());
+        await PlayerRepo.PublishMainAsync(thai);
+        var host = thai.RemoteHost!;
+        await PlayerRepo.RunAsync(thai, "git switch -c feature/thai");
+        await PlayerRepo.CommitFileAsync(thai, "บันทึก.txt", "สวัสดี\n", "add thai file");
+        await PlayerRepo.RunAsync(thai, "git push -u origin feature/thai");
+        var pr = await host.OpenPullRequestAsync("Thai", "", "user", "feature/thai", "main");
+
+        var detail = (await host.GetPullRequestAsync(pr.Number))!;
+        Assert.Equal("บันทึก.txt", detail.Files.Single().Path);
+        Assert.Contains(detail.Diff, "+++ b/บันทึก.txt");
+    });
+
     await tests.RunAsync("solo player can review and merge their own pull requests by default", async () =>
     {
         await using var solo = await factory.CreateAsync("act1-solo", "player", RemoteSeed.Empty());

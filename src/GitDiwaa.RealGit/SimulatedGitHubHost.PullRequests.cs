@@ -55,12 +55,12 @@ internal sealed partial class SimulatedGitHubHost
             commits.AddRange((await GitAsync(["log", range, $"--format=%H{Sep}%an{Sep}%aI{Sep}%s"], cancellationToken))
                 .Split('\n', StringSplitOptions.RemoveEmptyEntries).Select(ParseCommit));
 
-            var statuses = (await GitAsync(["diff", "--name-status", triple], cancellationToken))
+            var statuses = (await GitAsync(["-c", "core.quotepath=false", "diff", "--no-renames", "--name-status", triple], cancellationToken))
                 .Split('\n', StringSplitOptions.RemoveEmptyEntries)
                 .Select(line => line.Split('\t'))
                 .Where(parts => parts.Length >= 2)
                 .ToDictionary(parts => parts[^1], parts => parts[0][..1]);
-            foreach (var line in (await GitAsync(["diff", "--numstat", triple], cancellationToken))
+            foreach (var line in (await GitAsync(["-c", "core.quotepath=false", "diff", "--no-renames", "--numstat", triple], cancellationToken))
                          .Split('\n', StringSplitOptions.RemoveEmptyEntries))
             {
                 var parts = line.Split('\t');
@@ -70,7 +70,7 @@ internal sealed partial class SimulatedGitHubHost
                     int.TryParse(parts[1], out var del) ? del : 0));
             }
 
-            diff = await GitAsync(["diff", triple], cancellationToken);
+            diff = await GitAsync(["-c", "core.quotepath=false", "diff", "--no-renames", triple], cancellationToken);
             if (diff.Length > 20_000) diff = diff[..20_000] + "\n… (diff truncated)";
         }
 

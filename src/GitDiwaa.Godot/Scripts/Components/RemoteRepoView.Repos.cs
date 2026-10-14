@@ -167,8 +167,9 @@ public partial class RemoteRepoView
                 _statusIsError = false;
                 OpenRepo(repo.Name);
             }
-            catch (InvalidOperationException ex)
+            catch (Exception ex)
             {
+                // ข้อผิดพลาดอื่น (เช่นสร้างโฟลเดอร์ไม่ได้) ต้องไม่หลุดออกจาก async void จนเกมค้าง
                 // กดสร้างซ้ำเร็วๆ: ครั้งแรกสำเร็จแล้วหน้าถูกสร้างใหม่ ช่อง error เดิมถูกลบไปแล้ว
                 if (!IsAlive || !IsInstanceValid(error)) return;
                 error.Text = ex.Message;
