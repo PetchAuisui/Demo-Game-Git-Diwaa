@@ -6,8 +6,8 @@
 
 ## สถานะเริ่มต้น
 
-- ทุก session เริ่มด้วยบัญชี `user` ที่ **ยังไม่มี repo เลย** ผู้เล่นสร้าง repo ว่างเองได้ไม่จำกัดผ่านปุ่ม New (ด่านที่ต้องการ repo ตั้งต้นส่ง `RemoteSeed` เข้ามาเอง เช่น `RemoteSeed.Empty()` จะได้ `https://github.com/user/my-project.git`) (`https://github.com/user/<ชื่อ>.git`) แต่ละ repo แยก branch และ PR ของตัวเอง
-- เจ้าของ (host) ใช้ชื่อ `user` ไปก่อน เปลี่ยนได้ที่ `RealGitGameSessionFactory(workspaceRoot, playerName)` เมื่อมีหน้า login ที่ตั้งชื่อผู้เล่นได้
+- ทุก session เริ่มด้วยบัญชี `Khamphi` ที่ **ยังไม่มี repo เลย** ผู้เล่นสร้าง repo ว่างเองได้ไม่จำกัดผ่านปุ่ม New (ด่านที่ต้องการ repo ตั้งต้นส่ง `RemoteSeed` เข้ามาเอง เช่น `RemoteSeed.Empty()` จะได้ `https://github.com/Khamphi/my-project.git`) (`https://github.com/Khamphi/<ชื่อ>.git`) แต่ละ repo แยก branch และ PR ของตัวเอง
+- เจ้าของ (host) ใช้ชื่อ `Khamphi` ไปก่อน เปลี่ยนได้ที่ `RealGitGameSessionFactory(workspaceRoot, playerName)` เมื่อมีหน้า login ที่ตั้งชื่อผู้เล่นได้
 - ไม่มีข้อมูลตัวอย่างในโค้ดจริง ผู้เล่นต้อง push งานขึ้นไปเอง
 - ด่านที่ต้องการ remote ที่มีประวัติอยู่แล้ว (เช่น ด่าน 37 ที่ remote นำหน้า local) กำหนดผ่าน `RemoteSeed` ต่อด่าน
 
@@ -26,7 +26,7 @@
 ## หน้า Remote Repository ใน Sandbox
 
 เปิดจากปุ่ม **Remote Repo** (ไอคอนก้อนเมฆ `RemoteRepoButton`) ที่มุมขวาของหัวพาเนล Git Graph ใน Sandbox (`RemoteRepoView`) หน้าตาเลียนแบบ GitHub ธีม dark ไม่ยึดตัวอย่างใน Figma
-มีแถบ URL แสดงที่อยู่ของหน้าปัจจุบัน (เช่น `github.com/user/my-project/pull/1`) กด Esc หรือปุ่ม "กลับ Sandbox" เพื่อกลับ
+มีแถบ URL แสดงที่อยู่ของหน้าปัจจุบัน (เช่น `github.com/Khamphi/my-project/pull/1`) กด Esc หรือปุ่ม "กลับ Sandbox" เพื่อกลับ
 
 | หน้า | สิ่งที่ทำได้ |
 |---|---|

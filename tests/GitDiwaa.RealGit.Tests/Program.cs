@@ -15,7 +15,7 @@ try
         Assert.False(snapshot.IsInitialized);
         Assert.Equal("act1", session.Info.MissionId);
         Assert.Equal("player", session.Info.AttemptId);
-        Assert.Equal("https://github.com/user/my-project.git", session.Info.RemoteUrl);
+        Assert.Equal("https://github.com/Khamphi/my-project.git", session.Info.RemoteUrl);
     });
 
     await tests.RunAsync("Git version and config are real and isolated", async () =>
@@ -33,7 +33,7 @@ try
         await RejectAsync("git help", "not enabled");
         await RejectAsync("git add ../outside.txt", "escapes");
         await RejectAsync("git --git-dir=/tmp status", "not enabled");
-        await RejectAsync("git remote add origin https://example.com/repo.git", "https://github.com/user/my-project.git");
+        await RejectAsync("git remote add origin https://example.com/repo.git", "https://github.com/Khamphi/my-project.git");
         await RejectAsync("git remote add origin https://git-diwaa.local/other.git", "registered");
     });
 
@@ -121,13 +121,13 @@ try
     await tests.RunAsync("default remote is an empty GitHub repository owned by the player", async () =>
     {
         await using var empty = await factory.CreateAsync("act1-empty", "player", RemoteSeed.Empty());
-        Assert.Equal("https://github.com/user/my-project.git", empty.Info.RemoteUrl);
+        Assert.Equal("https://github.com/Khamphi/my-project.git", empty.Info.RemoteUrl);
 
         var host = empty.RemoteHost!;
         var repo = await host.GetRepositoryAsync();
-        Assert.Equal("user", repo.Owner);
+        Assert.Equal("Khamphi", repo.Owner);
         Assert.Equal("my-project", repo.Name);
-        Assert.Equal("https://github.com/user/my-project.git", repo.CloneUrl);
+        Assert.Equal("https://github.com/Khamphi/my-project.git", repo.CloneUrl);
         Assert.True(repo.IsEmpty);
         Assert.Equal(0, repo.CommitCount);
         Assert.Equal(0, (await host.ListBranchesAsync()).Count);
@@ -144,18 +144,18 @@ try
         Assert.True(fresh.RemoteHost is null);
 
         var account = fresh.RemoteAccount!;
-        Assert.Equal("user", account.Owner);
+        Assert.Equal("Khamphi", account.Owner);
         Assert.Equal(0, (await account.ListRepositoriesAsync()).Count);
         Assert.True(account.OpenRepository("my-project") is null);
 
-        var rejected = await fresh.ExecuteAsync("git remote add origin https://github.com/user/my-project.git");
+        var rejected = await fresh.ExecuteAsync("git remote add origin https://github.com/Khamphi/my-project.git");
         Assert.False(rejected.Success);
         Assert.Contains(rejected.Output, "Create a repository");
 
         var created = await account.CreateRepositoryAsync("first", "");
-        Assert.Equal("https://github.com/user/first.git", created.CloneUrl);
+        Assert.Equal("https://github.com/Khamphi/first.git", created.CloneUrl);
         Assert.Equal(1, (await account.ListRepositoriesAsync()).Count);
-        var clone = await fresh.ExecuteAsync("git clone https://github.com/user/first.git");
+        var clone = await fresh.ExecuteAsync("git clone https://github.com/Khamphi/first.git");
         Assert.True(clone.Success, clone.Output);
     });
 
@@ -210,7 +210,7 @@ try
         Assert.Equal(1, (await account.ListRepositoriesAsync()).Count);
 
         var created = await account.CreateRepositoryAsync("notes", "my notes");
-        Assert.Equal("https://github.com/user/notes.git", created.CloneUrl);
+        Assert.Equal("https://github.com/Khamphi/notes.git", created.CloneUrl);
         Assert.True(created.IsEmpty);
         Assert.Equal(2, (await account.ListRepositoriesAsync()).Count);
         await Assert.ThrowsAsync<InvalidOperationException>(() => account.CreateRepositoryAsync("NOTES", ""));
@@ -220,13 +220,13 @@ try
         await session.Files.WriteAllTextAsync("a.txt", "hello");
         await PlayerRepo.RunAsync(session, "git add .");
         await PlayerRepo.RunAsync(session, "git commit -m first");
-        await PlayerRepo.RunAsync(session, "git remote add origin https://github.com/user/notes.git");
+        await PlayerRepo.RunAsync(session, "git remote add origin https://github.com/Khamphi/notes.git");
         await PlayerRepo.RunAsync(session, "git push -u origin main");
 
         var notes = account.OpenRepository("notes")!;
         Assert.Equal(1, (await notes.GetRepositoryAsync()).CommitCount);
         Assert.True((await account.OpenRepository("my-project")!.GetRepositoryAsync()).IsEmpty);
-        Assert.False((await session.ExecuteAsync("git remote set-url origin https://github.com/user/other.git")).Success);
+        Assert.False((await session.ExecuteAsync("git remote set-url origin https://github.com/Khamphi/other.git")).Success);
     });
 
     await tests.RunAsync("remote host exposes repository, branches, commits and files", async () =>

@@ -20,7 +20,7 @@ public sealed record RemoteSeed(
     string Description,
     IReadOnlyList<SeedCommit> Commits)
 {
-    public const string DefaultOwner = "user";
+    public const string DefaultOwner = "Khamphi";
     public const string DefaultName = "my-project";
 
     public RemoteRules Rules { get; init; } = new();
