@@ -4,12 +4,12 @@ using Godot;
 namespace GitDiwaa.Godot.Components;
 
 /// <summary>
-/// ปุ่มไปหน้า Remote Repository (GitHub จำลอง): ไอคอนก้อนเมฆ (สื่อว่าอยู่บนเซิร์ฟเวอร์) + ข้อความ Remote Repo
+/// ปุ่มไปหน้า Remote Repository (Magic Vault): ไอคอนก้อนเมฆ (สื่อว่าอยู่บนเซิร์ฟเวอร์) + ข้อความ Remote Repo
 /// ใช้สไตล์เดียวกับปุ่มใน FilesPanel จึงวางในพาเนลไหนก็เข้ากัน สร้างด้วยโค้ดแล้วใส่ผ่าน GitGraphPanel.AddHeaderAction
 /// </summary>
 public partial class RemoteRepoButton : Button
 {
-    private const string AvailableHint = "เปิด Remote Repository (GitHub จำลอง): ดูไฟล์ branch และ pull request ที่ push ขึ้นไป";
+    private const string AvailableHint = "เปิด Remote Repository (Magic Vault): ดูไฟล์ branch และ pull request ที่ push ขึ้นไป";
     private const string UnavailableHint = "ใช้ได้เฉพาะโหมด Real Git";
 
     public override void _Ready()

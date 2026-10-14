@@ -20,7 +20,7 @@ public sealed record RemoteSeed(
     string Description,
     IReadOnlyList<SeedCommit> Commits)
 {
-    public const string DefaultOwner = "Khamphi";
+    public const string DefaultOwner = "user";
     public const string DefaultName = "my-project";
 
     public RemoteRules Rules { get; init; } = new();
@@ -28,7 +28,7 @@ public sealed record RemoteSeed(
     /// <summary>true = บัญชีเริ่มต้นโดยไม่มี repo เลย ผู้เล่นต้องสร้างเองผ่านหน้า New repository</summary>
     public bool StartsWithoutRepository { get; init; }
 
-    public string CloneUrl => $"https://github.com/{Owner}/{Name}.git";
+    public string CloneUrl => $"https://magic-vault.com/{Owner}/{Name}.git";
 
     /// <summary>repo ว่างที่ผู้เล่นเป็นเจ้าของ ต้อง push งานขึ้นไปเอง</summary>
     public static RemoteSeed Empty(string owner = DefaultOwner, string name = DefaultName) =>

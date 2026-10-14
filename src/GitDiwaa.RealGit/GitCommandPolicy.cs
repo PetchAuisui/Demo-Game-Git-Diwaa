@@ -208,7 +208,7 @@ internal sealed class GitCommandPolicy
         }
 
         if (_remotes.Remotes.Count == 0)
-            return "No remotes are registered for this Git-Diwaa session yet. Create a repository from the GitHub page first.";
+            return "No remotes are registered for this Git-Diwaa session yet. Create a repository from the Magic Vault page first.";
 
         return $"Only the remotes registered for this Git-Diwaa session are allowed: " +
                string.Join(", ", _remotes.Remotes.Select(remote => remote.AliasUrl));

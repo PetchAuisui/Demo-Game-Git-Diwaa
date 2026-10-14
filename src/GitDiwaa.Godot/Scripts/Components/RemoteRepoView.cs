@@ -134,7 +134,7 @@ public partial class RemoteRepoView : Control
         var addressRow = new HBoxContainer { MouseFilter = MouseFilterEnum.Ignore };
         addressRow.AddThemeConstantOverride("separation", S(8));
         addressRow.AddChild(GitHubUi.Icon(GhIcon.Lock, GitHubTheme.FgMuted, 14));
-        addressRow.AddChild(GitHubUi.Text("github.com", GitHubTheme.FgMuted, 14));
+        addressRow.AddChild(GitHubUi.Text("magic-vault.com", GitHubTheme.FgMuted, 14));
         _addressPath = GitHubUi.Text(string.Empty, GitHubTheme.Fg, 14);
         addressRow.AddChild(_addressPath);
         address.AddChild(addressRow);
@@ -144,7 +144,7 @@ public partial class RemoteRepoView : Control
         refresh.TooltipText = "รีเฟรชหน้านี้";
         row.AddChild(refresh);
 
-        var simulated = GitHubUi.Pill("GitHub จำลอง", GitHubTheme.Attention, new Color(GitHubTheme.Attention, 0.55f), size: 13);
+        var simulated = GitHubUi.Pill("Magic Vault", GitHubTheme.Attention, new Color(GitHubTheme.Attention, 0.55f), size: 13);
         simulated.SizeFlagsVertical = SizeFlags.ShrinkCenter;
         row.AddChild(simulated);
 
@@ -385,7 +385,7 @@ public partial class RemoteRepoView : Control
         _tabs.AddChild(GitHubUi.Tab("Pull requests", !codeActive, () => Go(Page.Pulls), GhIcon.PullOpen, openPulls));
     }
 
-    /// <summary>ส่วนหลัง github.com ของที่อยู่หน้าปัจจุบัน เหมือน URL จริงของ GitHub</summary>
+    /// <summary>ส่วนหลัง magic-vault.com ของที่อยู่หน้าปัจจุบัน</summary>
     private string AddressPath(RemoteRepositoryInfo repo)
     {
         var root = $"/{repo.Owner}/{repo.Name}";

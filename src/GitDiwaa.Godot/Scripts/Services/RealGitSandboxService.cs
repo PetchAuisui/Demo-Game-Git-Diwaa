@@ -25,7 +25,7 @@ public sealed class RealGitSandboxService : IGitSandboxService
     public string CurrentBranch => _lastSnapshot?.CurrentBranch ?? "main";
 
     /// <param name="customWorkspaceRoot">โฟลเดอร์เก็บ workspace (ค่าเริ่มต้น user://git-workspaces)</param>
-    /// <param name="playerName">ชื่อผู้เล่น ใช้เป็นเจ้าของ repo บน GitHub จำลอง (ยังไม่มีหน้า login จึงใช้ "Khamphi")</param>
+    /// <param name="playerName">ชื่อผู้เล่น ใช้เป็นเจ้าของ repo บน GitHub จำลอง (ยังไม่มีหน้า login จึงใช้ "user")</param>
     public RealGitSandboxService(string? customWorkspaceRoot = null, string playerName = RemoteSeed.DefaultOwner)
     {
         _playerName = playerName;

@@ -52,11 +52,11 @@ snapshot
 
 ## รอบทดลอง Local Remote
 
-ทุก attempt มีบัญชี GitHub จำลองเจ้าของคือ `Khamphi` ที่ **ยังไม่มี repo** ต้องสร้างก่อนจากหน้า GitHub ในเกม (ปุ่ม New) แล้วค่อยใช้ URL ของ repo นั้น (ถ้าด่านส่ง seed ตั้งต้นมา `remote-url` จะแสดง URL ของ repo นั้น เช่น `https://github.com/Khamphi/my-project.git`):
+ทุก attempt มีบัญชี GitHub จำลองเจ้าของคือ `user` ที่ **ยังไม่มี repo** ต้องสร้างก่อนจากหน้า Magic Vault ในเกม (ปุ่ม New) แล้วค่อยใช้ URL ของ repo นั้น (ถ้าด่านส่ง seed ตั้งต้นมา `remote-url` จะแสดง URL ของ repo นั้น เช่น `https://magic-vault.com/user/my-project.git`):
 
 ```text
 remote-url
-git remote add origin https://github.com/Khamphi/my-project.git
+git remote add origin https://magic-vault.com/user/my-project.git
 git push -u origin main
 git fetch origin
 git pull
