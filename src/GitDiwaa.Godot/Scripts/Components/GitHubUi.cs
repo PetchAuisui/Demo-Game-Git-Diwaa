@@ -608,7 +608,13 @@ public static class GitHubUi
             if (branches[index].Name == selected) picker.Selected = index;
         }
 
-        FitBranchPicker(picker);
+        // วัดความกว้างได้ถูกต้องก็ต่อเมื่ออยู่ใน tree (ธีมของ GitHub มาจากโหนดแม่) ผู้เรียกบางที่ยังไม่ได้ AddChild
+        if (picker.IsInsideTree()) FitBranchPicker(picker);
+        else picker.TreeEntered += () => Callable.From(() =>
+        {
+            if (GodotObject.IsInstanceValid(picker)) FitBranchPicker(picker);
+        }).CallDeferred();
+
         picker.ItemSelected += index =>
         {
             FitBranchPicker(picker);
