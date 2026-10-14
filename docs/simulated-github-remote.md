@@ -48,7 +48,8 @@
 - `Scripts/Common/GitHubTheme.cs` พาเลตต์ สเกล และ Theme (ปุ่ม ช่องกรอก เมนู แถบเลื่อน), `GitHubIcons.cs` ไอคอน SVG
 - `Scripts/Components/GitHubUi.cs` ชิ้นส่วนใช้ซ้ำ (แท็บ กล่องรายการ แถวคลิกได้ ป้ายสถานะ avatar แถบแจ้งผล หัวข้อมีเลขกำกับ การ์ดขั้นตอน `Step` และบล็อกคำสั่ง `CommandBlock` ที่ย้อมสีคำสั่งและคลิกเพื่อคัดลอก)
 - `DiffViewer.cs` (diff แบบการ์ดต่อไฟล์), `MarkdownView.cs` (README และคำอธิบาย PR)
-- `RemoteRepoView.cs` โครงหน้าต่างและการนำทาง, `.Code.cs` / `.History.cs` / `.Pulls.cs` แยกตามหน้า
+- `Scenes/RemoteRepoView.tscn` โครงคงที่ของหน้า (กรอบหน้าต่าง แถบบน หัว repo แท็บ พื้นที่เลื่อน) ปรับหน้าตาใน Godot editor ได้ ค่าสี/ขนาดใน scene ต้องตรงกับ `GitHubTheme` (สเกล ×1.35 คำนวณไว้แล้ว)
+- `RemoteRepoView.cs` ผูก node ของ scene นำทาง และรีเฟรช, `.Code.cs` / `.History.cs` / `.Pulls.cs` / `.Repos.cs` สร้างเนื้อหาแต่ละหน้าตามข้อมูลด้วยโค้ด (แถวไฟล์ commit PR diff เปลี่ยนตามข้อมูลจึงไม่ใช่ scene)
 
 ข้อจำกัดของหน้า UI: เป็น overlay ครอบ Sandbox ต้องกลับไปพิมพ์คำสั่งใน terminal แล้วเปิดหน้าใหม่เพื่อดูผล
 

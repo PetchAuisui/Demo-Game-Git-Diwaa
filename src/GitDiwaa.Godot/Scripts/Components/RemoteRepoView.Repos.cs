@@ -6,28 +6,6 @@ namespace GitDiwaa.Godot.Components;
 
 public partial class RemoteRepoView
 {
-    private const string RoomTexturePath = "res://assets/art/remote/throne-room.png";
-
-    /// <summary>ภาพห้องบัลลังก์เป็นพื้นหลังหน้ารายการ repo (พิกเซลอาร์ต จึงขยายแบบ nearest) ซ่อนไว้ในหน้าอื่น</summary>
-    private static TextureRect BuildRoomBackdrop()
-    {
-        var backdrop = new TextureRect
-        {
-            Texture = ResourceLoader.Exists(RoomTexturePath) ? GD.Load<Texture2D>(RoomTexturePath) : null,
-            ExpandMode = TextureRect.ExpandModeEnum.IgnoreSize,
-            StretchMode = TextureRect.StretchModeEnum.KeepAspectCovered,
-            TextureFilter = CanvasItem.TextureFilterEnum.Nearest,
-            MouseFilter = MouseFilterEnum.Ignore,
-            Visible = false
-        };
-        backdrop.SetAnchorsAndOffsetsPreset(LayoutPreset.FullRect);
-
-        var shade = new ColorRect { Color = new Color(0f, 0f, 0.03f, 0.35f), MouseFilter = MouseFilterEnum.Ignore };
-        shade.SetAnchorsAndOffsetsPreset(LayoutPreset.FullRect);
-        backdrop.AddChild(shade);
-        return backdrop;
-    }
-
     /// <summary>หน้ารายการ repo ก่อนเข้า repo: การ์ดโปรไฟล์ซ้าย, ช่องค้นหา + ปุ่ม New และรายการ repo ขวา</summary>
     private void BuildRepos(IReadOnlyList<RemoteRepositoryInfo> repos)
     {
