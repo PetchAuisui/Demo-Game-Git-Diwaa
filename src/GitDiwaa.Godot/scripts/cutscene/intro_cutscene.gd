@@ -82,6 +82,7 @@ const SHARD_LANDING_POSITIONS: Array[Vector2] = [
 
 func _ready() -> void:
 	Engine.time_scale = 1.0
+	add_child(preload("res://scripts/cutscene/skip_cutscene_button.gd").new())
 	_init_shards()
 	_reset_cutscene_state()
 	
