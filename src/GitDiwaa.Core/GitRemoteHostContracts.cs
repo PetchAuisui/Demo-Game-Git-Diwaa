@@ -47,6 +47,13 @@ public enum ReviewVerdict
 
 public sealed record PullRequestReview(string Reviewer, ReviewVerdict Verdict, string Body, DateTimeOffset At);
 
+/// <summary>
+/// ความเห็นรายบรรทัดใน diff ของ PR: <see cref="OnNewSide"/> = บรรทัดฝั่งใหม่ (R) ไม่ใช่ฝั่งเก่า (L)
+/// <see cref="IsPending"/> = ยังอยู่ใน pending review ของผู้เขียน เห็นคนเดียวจนกว่าจะ Submit review
+/// </summary>
+public sealed record PullRequestLineComment(
+    string Path, int Line, bool OnNewSide, string Author, string Body, DateTimeOffset At, bool IsPending);
+
 public sealed record PullRequestInfo(
     int Number,
     string Title,
@@ -67,7 +74,10 @@ public sealed record PullRequestDetail(
     string Diff,
     bool HasConflicts,
     IReadOnlyList<PullRequestReview> Reviews,
-    string? MergeBlockedReason);
+    string? MergeBlockedReason)
+{
+    public IReadOnlyList<PullRequestLineComment> LineComments { get; init; } = [];
+}
 
 /// <summary>ผลของการกระทำกับ pull request (review / close / merge) พร้อมข้อความอธิบายให้ UI แสดง</summary>
 public sealed record PullRequestActionResult(bool Success, string Message, PullRequestInfo? PullRequest);
@@ -94,6 +104,14 @@ public interface IGitRemoteHost
         CancellationToken cancellationToken = default);
     Task<PullRequestDetail?> GetPullRequestAsync(int number, CancellationToken cancellationToken = default);
     PullRequestActionResult ReviewPullRequest(int number, string reviewer, ReviewVerdict verdict, string body = "");
+
+    /// <summary>
+    /// คอมเมนต์รายบรรทัดใน diff: <paramref name="startReview"/> = true เก็บเป็น pending review
+    /// (ส่งพร้อมกันตอน <see cref="ReviewPullRequest"/>) ไม่งั้นโพสต์ทันที
+    /// </summary>
+    PullRequestActionResult AddLineComment(
+        int number, string author, string path, int line, bool onNewSide, string body, bool startReview);
+
     PullRequestActionResult ClosePullRequest(int number);
     Task<PullRequestActionResult> MergePullRequestAsync(int number, CancellationToken cancellationToken = default);
 }

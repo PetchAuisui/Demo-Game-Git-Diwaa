@@ -20,7 +20,7 @@
 | หน้ารวม / Code | ข้อมูล repo, commit ล่าสุด, ไฟล์/โฟลเดอร์ตาม branch, อ่านเนื้อหาไฟล์ (เช่น README), URL สำหรับ clone |
 | Commits | ประวัติ commit ของ branch |
 | Branches | รายการ branch พร้อม ahead/behind เทียบ default branch, ลบ branch (ลบ default หรือ branch ที่มี PR เปิดอยู่ไม่ได้) |
-| Pull requests | สร้าง PR, commits / ไฟล์ที่เปลี่ยน / diff, review (Approve / Request changes / Comment), merge, ปิด PR, ดู PR ที่ merge แล้วย้อนหลัง |
+| Pull requests | สร้าง PR, commits / ไฟล์ที่เปลี่ยน / diff, ความเห็นรายบรรทัดใน diff (ชี้เมาส์ที่บรรทัดแล้วกด + → Write/Preview → Comment ทันที หรือ Start a review เก็บเป็น pending ส่งพร้อมตอน Submit review), review (ปุ่ม Review changes ในแท็บ Files changed → Comment / Approve / Request changes → Submit review), คอมเมนต์และ Close pull request ที่กล่องท้ายหน้า Conversation, merge, ดู PR ที่ merge แล้วย้อนหลัง |
 | repo ว่าง | `RemoteRepositoryInfo.IsEmpty` ใช้แสดงหน้า Quick setup |
 
 ## หน้า Remote Repository ใน Sandbox

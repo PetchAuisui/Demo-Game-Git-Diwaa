@@ -19,6 +19,7 @@ public partial class RemoteRepoView : Control
     private IGitRemoteAccount? _account;
     private IGitRemoteHost? _host;
     private Button _backButton = null!;
+    private int? _restoreScroll;
     private RemoteRepositoryInfo? _repo;
     private Page _page = Page.Repos;
     private string _branch = "main";
@@ -105,7 +106,7 @@ public partial class RemoteRepoView : Control
         EmitSignal(SignalName.BackRequested);
     }
 
-    /// <summary>แถบบนสุด: ปุ่มกลับ Sandbox และช่อง URL เหมือนเบราว์เซอร์ (แสดงที่อยู่ของหน้าปัจจุบัน)</summary>
+    /// <summary>แถบบนสุด: ปุ่มย้อนกลับ ช่อง URL ตรงกลางเหมือนเบราว์เซอร์ และปุ่มปิด (แสดงที่อยู่ของหน้าปัจจุบัน)</summary>
     private Control BuildTopBar()
     {
         var bar = new PanelContainer { MouseFilter = MouseFilterEnum.Pass };
@@ -117,18 +118,27 @@ public partial class RemoteRepoView : Control
         _topMargin = new MarginContainer();
         _topMargin.AddThemeConstantOverride("margin_left", S(16));
         _topMargin.AddThemeConstantOverride("margin_right", S(16));
+        // สามช่อง: ซ้าย/ขวาขยายเท่ากัน ช่อง URL ตรงกลางจึงอยู่กลางแถบพอดี
         var row = new HBoxContainer();
         row.AddThemeConstantOverride("separation", S(12));
+
+        var left = new HBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill, SizeFlagsStretchRatio = 1 };
+        left.AddThemeConstantOverride("separation", S(12));
         _backButton = GitHubUi.Btn("ย้อนกลับ", () => Go(Page.Repos), icon: GhIcon.ArrowLeft);
         _backButton.TooltipText = "กลับไปรายการ repository";
         _backButton.Visible = false;
-        row.AddChild(_backButton);
+        left.AddChild(_backButton);
+
+        var simulated = GitHubUi.Pill("Magic Vault", GitHubTheme.Attention, new Color(GitHubTheme.Attention, 0.55f), size: 13);
+        simulated.SizeFlagsVertical = SizeFlags.ShrinkCenter;
+        left.AddChild(simulated);
+        row.AddChild(left);
 
         var address = new PanelContainer
         {
             MouseFilter = MouseFilterEnum.Pass,
             CustomMinimumSize = new Vector2(S(560), 0),
-            SizeFlagsHorizontal = SizeFlags.ShrinkBegin
+            SizeFlagsHorizontal = SizeFlags.ShrinkCenter
         };
         address.AddThemeStyleboxOverride("panel", GitHubTheme.Box(GitHubTheme.Surface, GitHubTheme.Border, 16, 1, 14, 4));
         var addressRow = new HBoxContainer { MouseFilter = MouseFilterEnum.Ignore };
@@ -140,19 +150,21 @@ public partial class RemoteRepoView : Control
         address.AddChild(addressRow);
         row.AddChild(address);
 
+        var right = new HBoxContainer
+        {
+            SizeFlagsHorizontal = SizeFlags.ExpandFill,
+            SizeFlagsStretchRatio = 1,
+            Alignment = BoxContainer.AlignmentMode.End
+        };
+        right.AddThemeConstantOverride("separation", S(12));
         var refresh = GitHubUi.Btn(string.Empty, () => Go(_page), GhButtonKind.Ghost, GhIcon.Refresh);
         refresh.TooltipText = "รีเฟรชหน้านี้";
-        row.AddChild(refresh);
-
-        var simulated = GitHubUi.Pill("Magic Vault", GitHubTheme.Attention, new Color(GitHubTheme.Attention, 0.55f), size: 13);
-        simulated.SizeFlagsVertical = SizeFlags.ShrinkCenter;
-        row.AddChild(simulated);
-
-        row.AddChild(GitHubUi.Spacer());
+        right.AddChild(refresh);
         _avatarSlot = new Control { MouseFilter = MouseFilterEnum.Ignore, CustomMinimumSize = new Vector2(S(28), S(28)) };
-        row.AddChild(_avatarSlot);
-        row.AddChild(GitHubUi.KeyHint("Esc"));
-        row.AddChild(GitHubUi.Btn("ปิด", () => EmitSignal(SignalName.BackRequested), icon: GhIcon.X));
+        right.AddChild(_avatarSlot);
+        right.AddChild(GitHubUi.KeyHint("Esc"));
+        right.AddChild(GitHubUi.Btn("ปิด", () => EmitSignal(SignalName.BackRequested), icon: GhIcon.X));
+        row.AddChild(right);
 
         _topMargin.AddChild(row);
         bar.AddChild(_topMargin);
@@ -300,7 +312,21 @@ public partial class RemoteRepoView : Control
 
         if (!IsAlive) return;
         Callable.From(UpdateGutters).CallDeferred();
-        _scroll.SetDeferred(ScrollContainer.PropertyName.ScrollVertical, 0);
+        var scroll = _restoreScroll ?? 0;
+        _restoreScroll = null;
+        if (scroll == 0) _scroll.SetDeferred(ScrollContainer.PropertyName.ScrollVertical, 0);
+        else RestoreScrollAsync(scroll);
+    }
+
+    /// <summary>กลับไปตำแหน่งเลื่อนเดิมหลังโหลดหน้าใหม่ (เช่น หลังส่งความเห็นกลาง diff) ต้องรอให้เลย์เอาต์ยาวพอก่อน</summary>
+    private async void RestoreScrollAsync(int value)
+    {
+        for (var frame = 0; frame < 3; frame++)
+        {
+            await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
+            if (!IsAlive) return;
+            _scroll.ScrollVertical = value;
+        }
     }
 
     /// <summary>หน้าระดับบัญชี: รายการ repo และฟอร์มสร้าง repo ใหม่ (ยังไม่ได้อยู่ใน repo ใด)</summary>

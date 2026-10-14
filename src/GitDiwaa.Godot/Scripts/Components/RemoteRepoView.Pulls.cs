@@ -333,12 +333,15 @@ public partial class RemoteRepoView
         var pull = detail.Pull;
         _content.AddChild(TimelineComment(pull.Author, "opened this pull request", pull.CreatedAt, pull.Body));
         foreach (var review in detail.Reviews) _content.AddChild(ReviewEvent(review));
+        foreach (var comment in detail.LineComments.Where(item => !item.IsPending))
+            _content.AddChild(TimelineComment(comment.Author,
+                $"commented on {comment.Path} line {(comment.OnNewSide ? "R" : "L")}{comment.Line}", comment.At, comment.Body));
 
         switch (pull.State)
         {
             case PullRequestState.Open:
                 BuildMergeBox(detail);
-                BuildReviewBox(pull);
+                BuildCommentBox(pull);
                 break;
             case PullRequestState.Merged:
                 await BuildMergedBoxAsync(pull);
@@ -460,11 +463,6 @@ public partial class RemoteRepoView
         }, GhButtonKind.Primary, GhIcon.PullMerged);
         merge.Disabled = detail.MergeBlockedReason is not null;
         footer.AddChild(merge);
-        footer.AddChild(GitHubUi.Btn("Close pull request", () =>
-        {
-            var result = _host!.ClosePullRequest(pull.Number);
-            Go(Page.PullDetail, result.Message, !result.Success);
-        }, GhButtonKind.Default, GhIcon.PullClosed));
         var padded = new MarginContainer();
         padded.AddThemeConstantOverride("margin_left", S(16));
         padded.AddThemeConstantOverride("margin_right", S(16));
@@ -494,8 +492,11 @@ public partial class RemoteRepoView
         _content.AddChild(box);
     }
 
-    /// <summary>ฟอร์ม review: ความเห็น + Comment / Request changes / Approve (ผลและเหตุผลมาจาก host)</summary>
-    private void BuildReviewBox(PullRequestInfo pull)
+    /// <summary>
+    /// กล่องคอมเมนต์ท้ายหน้า Conversation เหมือน GitHub: ช่องพิมพ์ + Close pull request + Comment
+    /// (Approve / Request changes อยู่ที่ปุ่ม Review changes ในแท็บ Files changed)
+    /// </summary>
+    private void BuildCommentBox(PullRequestInfo pull)
     {
         var reviewer = _repo!.Owner;
         var row = new HBoxContainer();
@@ -507,32 +508,101 @@ public partial class RemoteRepoView
         var card = GitHubUi.Card(16, 14);
         var column = new VBoxContainer();
         column.AddThemeConstantOverride("separation", S(10));
-        column.AddChild(GitHubUi.Text("Add your review", GitHubTheme.Fg, 16, bold: true));
-        column.AddChild(GitHubUi.Text($"ในฐานะ {reviewer}", GitHubTheme.FgMuted, 13));
+        column.AddChild(GitHubUi.Text("Add a comment", GitHubTheme.Fg, 16, bold: true));
         var comment = new TextEdit
         {
-            PlaceholderText = "Leave a comment (ไม่บังคับ)",
+            PlaceholderText = "Leave a comment",
             CustomMinimumSize = new Vector2(0, S(84)),
             WrapMode = TextEdit.LineWrappingMode.Boundary
         };
         column.AddChild(comment);
 
-        void Review(ReviewVerdict verdict)
-        {
-            var result = _host!.ReviewPullRequest(pull.Number, reviewer, verdict, comment.Text);
-            Go(Page.PullDetail, result.Message, !result.Success);
-        }
-
         var buttons = new HBoxContainer();
         buttons.AddThemeConstantOverride("separation", S(10));
         buttons.AddChild(GitHubUi.Spacer());
-        buttons.AddChild(GitHubUi.Btn("Comment", () => Review(ReviewVerdict.Commented), GhButtonKind.Default, GhIcon.Comment));
-        buttons.AddChild(GitHubUi.Btn("Request changes", () => Review(ReviewVerdict.ChangesRequested), GhButtonKind.Danger));
-        buttons.AddChild(GitHubUi.Btn("Approve", () => Review(ReviewVerdict.Approved), GhButtonKind.Primary, GhIcon.Check));
+        buttons.AddChild(GitHubUi.Btn("Close pull request", () =>
+        {
+            var result = _host!.ClosePullRequest(pull.Number);
+            Go(Page.PullDetail, result.Message, !result.Success);
+        }, GhButtonKind.Default, GhIcon.PullClosed));
+        buttons.AddChild(GitHubUi.Btn("Comment", () =>
+        {
+            if (string.IsNullOrWhiteSpace(comment.Text))
+            {
+                Go(Page.PullDetail, "พิมพ์ความเห็นก่อนกด Comment", true);
+                return;
+            }
+
+            var result = _host!.ReviewPullRequest(pull.Number, reviewer, ReviewVerdict.Commented, comment.Text);
+            Go(Page.PullDetail, result.Message, !result.Success);
+        }, GhButtonKind.Primary, GhIcon.Comment));
         column.AddChild(buttons);
         card.AddChild(column);
         row.AddChild(card);
         _content.AddChild(row);
+    }
+
+    /// <summary>
+    /// หน้าต่าง "Finish your review" ที่เปิดจากปุ่ม Review changes: ความเห็น + เลือก Comment / Approve /
+    /// Request changes แล้วกด Submit review (ผลและเหตุผลที่ปฏิเสธมาจาก host)
+    /// </summary>
+    private void ShowReviewMenu(Button anchor, PullRequestInfo pull, int pendingComments)
+    {
+        var reviewer = _repo!.Owner;
+        var column = new VBoxContainer { CustomMinimumSize = new Vector2(S(440), 0) };
+        column.AddThemeConstantOverride("separation", S(10));
+        column.AddChild(GitHubUi.Text("Finish your review", GitHubTheme.Fg, 16, bold: true));
+        if (pendingComments > 0)
+            column.AddChild(GitHubUi.Text(
+                $"{GitHubUi.Count(pendingComments, "pending comment", "pending comments")} จะถูกส่งพร้อมรีวิวนี้",
+                GitHubTheme.FgMuted, 13));
+
+        var comment = new TextEdit
+        {
+            PlaceholderText = "Leave a comment",
+            CustomMinimumSize = new Vector2(0, S(84)),
+            WrapMode = TextEdit.LineWrappingMode.Boundary
+        };
+        column.AddChild(comment);
+
+        var group = new ButtonGroup();
+        var verdict = ReviewVerdict.Commented;
+        void AddOption(string title, string hint, ReviewVerdict value)
+        {
+            var option = new CheckBox { Text = title, ButtonGroup = group, ButtonPressed = value == verdict };
+            option.Pressed += () => verdict = value;
+            column.AddChild(option);
+            var note = GitHubUi.Text(hint, GitHubTheme.FgMuted, 13, wrap: true);
+            var indent = new MarginContainer();
+            indent.AddThemeConstantOverride("margin_left", S(28));
+            indent.AddChild(note);
+            column.AddChild(indent);
+        }
+
+        AddOption("Comment", "Submit general feedback without explicit approval.", ReviewVerdict.Commented);
+        AddOption("Approve", "Submit feedback and approve merging these changes.", ReviewVerdict.Approved);
+        AddOption("Request changes", "Submit feedback that must be addressed before merging.", ReviewVerdict.ChangesRequested);
+
+        Control? overlay = null;
+        var submit = GitHubUi.Btn("Submit review", () =>
+        {
+            if (verdict == ReviewVerdict.Commented && string.IsNullOrWhiteSpace(comment.Text) && pendingComments == 0)
+            {
+                Go(Page.PullDetail, "พิมพ์ความเห็นก่อน หรือเลือก Approve / Request changes", true);
+                overlay?.QueueFree();
+                return;
+            }
+
+            var result = _host!.ReviewPullRequest(pull.Number, reviewer, verdict, comment.Text);
+            overlay?.QueueFree();
+            _pullTab = PullTab.Conversation;
+            Go(Page.PullDetail, result.Message, !result.Success);
+        }, GhButtonKind.Primary);
+        var footer = new HBoxContainer();
+        footer.AddChild(GitHubUi.Spacer());
+        footer.AddChild(submit);
+        column.AddChild(footer);
+        overlay = ShowFloatingPanel(anchor, column);
     }
 
     // ───────────── Commits / Files changed ─────────────
@@ -570,7 +640,28 @@ public partial class RemoteRepoView
         summary.AddChild(GitHubUi.Text($"{additions} additions", GitHubTheme.Success, 15, bold: true));
         summary.AddChild(GitHubUi.Text("and", GitHubTheme.FgMuted));
         summary.AddChild(GitHubUi.Text($"{deletions} deletions", GitHubTheme.Danger, 15, bold: true));
+        var viewer = _repo!.Owner;
+        var pending = detail.LineComments.Count(comment =>
+            comment.IsPending && comment.Author.Equals(viewer, StringComparison.OrdinalIgnoreCase));
+        var open = detail.Pull.State == PullRequestState.Open;
+        if (open)
+        {
+            summary.AddChild(GitHubUi.Spacer());
+            Button? review = null;
+            review = GitHubUi.Btn(pending > 0 ? $"Review changes · {pending}" : "Review changes",
+                () => ShowReviewMenu(review!, detail.Pull, pending), GhButtonKind.Primary, GhIcon.Comment);
+            summary.AddChild(review);
+        }
+
         _content.AddChild(summary);
-        _content.AddChild(DiffViewer.Build(detail.Diff, detail.Files));
+        var comments = new DiffViewer.CommentContext(detail.LineComments, viewer, open
+            ? (path, line, onNewSide, body, startReview) =>
+            {
+                var result = _host!.AddLineComment(detail.Pull.Number, viewer, path, line, onNewSide, body, startReview);
+                _restoreScroll = (int)_scroll.ScrollVertical;
+                Go(Page.PullDetail, result.Message, !result.Success);
+            }
+            : null);
+        _content.AddChild(DiffViewer.Build(detail.Diff, detail.Files, comments));
     }
 }

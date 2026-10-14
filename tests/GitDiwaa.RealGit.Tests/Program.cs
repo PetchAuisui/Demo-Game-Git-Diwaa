@@ -342,6 +342,33 @@ try
         Assert.False(host.ClosePullRequest(pr.Number).Success);
     });
 
+    await tests.RunAsync("line comments post immediately or wait in a pending review until it is submitted", async () =>
+    {
+        await using var lines = await factory.CreateAsync("act1-lines", "player", RemoteSeed.Empty());
+        await PlayerRepo.PublishMainAsync(lines);
+        var host = lines.RemoteHost!;
+        await PlayerRepo.RunAsync(lines, "git switch -c feature/lines");
+        await PlayerRepo.CommitFileAsync(lines, "lines.txt", "a\nb\n", "add lines");
+        await PlayerRepo.RunAsync(lines, "git push -u origin feature/lines");
+        var pr = await host.OpenPullRequestAsync("Lines", "", "user", "feature/lines", "main");
+
+        Assert.True(host.AddLineComment(pr.Number, "user", "lines.txt", 2, true, "single", false).Success);
+        Assert.True(host.AddLineComment(pr.Number, "user", "lines.txt", 1, true, "draft", true).Success);
+        Assert.False(host.AddLineComment(pr.Number, "user", "lines.txt", 1, true, "  ", false).Success);
+        Assert.False(host.AddLineComment(pr.Number, "user", "lines.txt", 0, true, "bad line", false).Success);
+
+        var before = (await host.GetPullRequestAsync(pr.Number))!.LineComments;
+        Assert.Equal(2, before.Count);
+        Assert.False(before.Single(comment => comment.Body == "single").IsPending);
+        Assert.True(before.Single(comment => comment.Body == "draft").IsPending);
+
+        Assert.True(host.ReviewPullRequest(pr.Number, "user", ReviewVerdict.Commented).Success);
+        Assert.True((await host.GetPullRequestAsync(pr.Number))!.LineComments.All(comment => !comment.IsPending));
+
+        Assert.True(host.ClosePullRequest(pr.Number).Success);
+        Assert.False(host.AddLineComment(pr.Number, "user", "lines.txt", 1, true, "late", false).Success);
+    });
+
     await tests.RunAsync("solo player can review and merge their own pull requests by default", async () =>
     {
         await using var solo = await factory.CreateAsync("act1-solo", "player", RemoteSeed.Empty());

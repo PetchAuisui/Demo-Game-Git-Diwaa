@@ -6,6 +6,7 @@ internal sealed partial class SimulatedGitHubHost
 {
     private readonly Dictionary<int, List<PullRequestReview>> _reviews = [];
     private readonly Dictionary<int, PullRequestDetail> _mergedDetails = [];
+    private readonly Dictionary<int, List<PullRequestLineComment>> _lineComments = [];
 
     public IReadOnlyList<PullRequestInfo> ListPullRequests() => _pullRequests.ToList();
 
@@ -31,6 +32,7 @@ internal sealed partial class SimulatedGitHubHost
             PullRequestState.Open, false, DateTimeOffset.Now);
         _pullRequests.Add(pullRequest);
         _reviews[pullRequest.Number] = [];
+        _lineComments[pullRequest.Number] = [];
         return pullRequest;
     }
 
@@ -41,7 +43,7 @@ internal sealed partial class SimulatedGitHubHost
 
         // หลัง merge แล้ว base..source ว่างเปล่า จึงคืนภาพ commit/ไฟล์/diff ที่บันทึกไว้ตอน merge
         if (pull.State == PullRequestState.Merged && _mergedDetails.TryGetValue(number, out var snapshot))
-            return snapshot with { Pull = pull };
+            return snapshot with { Pull = pull, LineComments = LineCommentsOf(number) };
 
         var commits = new List<RemoteCommitInfo>();
         var files = new List<PullRequestFileChange>();
@@ -76,7 +78,28 @@ internal sealed partial class SimulatedGitHubHost
             ? await CheckMergeAsync(pull, cancellationToken)
             : (false, null);
         return new(pull, commits, files, diff, hasConflicts,
-            _reviews.GetValueOrDefault(number)?.ToList() ?? [], blockedReason);
+            _reviews.GetValueOrDefault(number)?.ToList() ?? [], blockedReason)
+        {
+            LineComments = LineCommentsOf(number)
+        };
+    }
+
+    private List<PullRequestLineComment> LineCommentsOf(int number) =>
+        _lineComments.GetValueOrDefault(number)?.ToList() ?? [];
+
+    public PullRequestActionResult AddLineComment(
+        int number, string author, string path, int line, bool onNewSide, string body, bool startReview)
+    {
+        var pull = Find(number);
+        if (pull is null) return NotFound(number);
+        if (pull.State != PullRequestState.Open) return NotOpen(pull);
+        if (string.IsNullOrWhiteSpace(body)) return new(false, "A comment is required.", pull);
+        if (line < 1 || string.IsNullOrWhiteSpace(path)) return new(false, "Choose a line in the diff to comment on.", pull);
+
+        _lineComments[number].Add(new(path, line, onNewSide, author, body.Trim(), DateTimeOffset.Now, startReview));
+        return new(true, startReview
+            ? "Review comment added to your pending review."
+            : $"Comment added to pull request #{number}.", pull);
     }
 
     public PullRequestActionResult ReviewPullRequest(int number, string reviewer, ReviewVerdict verdict, string body = "")
@@ -91,6 +114,13 @@ internal sealed partial class SimulatedGitHubHost
 
         var reviews = _reviews[number];
         reviews.Add(new(reviewer, verdict, body, DateTimeOffset.Now));
+
+        // ส่ง pending review: ความเห็นรายบรรทัดของผู้รีวิวคนนี้กลายเป็นของสาธารณะพร้อมกัน
+        var lineComments = _lineComments[number];
+        for (var index = 0; index < lineComments.Count; index++)
+            if (lineComments[index].IsPending &&
+                string.Equals(lineComments[index].Author, reviewer, StringComparison.OrdinalIgnoreCase))
+                lineComments[index] = lineComments[index] with { IsPending = false };
         var decision = reviews.LastOrDefault(review => review.Verdict != ReviewVerdict.Commented);
         var updated = Update(number, item => item with { IsApproved = decision?.Verdict == ReviewVerdict.Approved })!;
         return new(true, verdict switch
