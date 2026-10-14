@@ -6,98 +6,14 @@ namespace GitDiwaa.Godot.Components;
 
 public partial class RemoteRepoView
 {
-    /// <summary>หน้ารายการ repo ก่อนเข้า repo: การ์ดโปรไฟล์ซ้าย, ช่องค้นหา + ปุ่ม New และรายการ repo ขวา</summary>
+    private static readonly PackedScene RepoListPageScene = GD.Load<PackedScene>("res://Scenes/RepoListPage.tscn");
+
+    /// <summary>หน้ารายการ repo ก่อนเข้า repo: โครงอยู่ใน Scenes/RepoListPage.tscn</summary>
     private void BuildRepos(IReadOnlyList<RemoteRepositoryInfo> repos)
     {
-        var owner = _account!.Owner;
-
-        var tabs = new HBoxContainer();
-        tabs.AddChild(GitHubUi.Tab("Repositories", true, () => { }, GhIcon.Repo, repos.Count));
-        _content.AddChild(tabs);
-
-        var columns = new HBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
-        columns.AddThemeConstantOverride("separation", S(28));
-        columns.AddChild(BuildProfileCard(owner));
-
-        var right = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
-        right.AddThemeConstantOverride("separation", S(14));
-
-        var list = new VBoxContainer { SizeFlagsVertical = SizeFlags.ExpandFill };
-        var search = new LineEdit
-        {
-            PlaceholderText = "Find a repository…",
-            ClearButtonEnabled = true,
-            SizeFlagsHorizontal = SizeFlags.ExpandFill
-        };
-        search.TextChanged += text => FillRepoList(list, repos, text);
-
-        var searchRow = new HBoxContainer();
-        searchRow.AddThemeConstantOverride("separation", S(10));
-        searchRow.AddChild(search);
-        searchRow.AddChild(GitHubUi.Btn("New", () => Go(Page.NewRepo), GhButtonKind.Primary, GhIcon.Repo));
-        right.AddChild(searchRow);
-
-        var panel = new PanelContainer { SizeFlagsVertical = SizeFlags.ExpandFill };
-        panel.AddThemeStyleboxOverride("panel", GitHubTheme.Box(new Color(GitHubTheme.Canvas, 0.88f), GitHubTheme.Border, 12, 1, 8, 8));
-        panel.CustomMinimumSize = new Vector2(0, S(320));
-        panel.AddChild(list);
-        right.AddChild(panel);
-        FillRepoList(list, repos, string.Empty);
-
-        columns.AddChild(right);
-        _content.AddChild(columns);
-    }
-
-    private static Control BuildProfileCard(string owner)
-    {
-        var card = new PanelContainer { SizeFlagsVertical = SizeFlags.ShrinkBegin, CustomMinimumSize = new Vector2(S(250), 0) };
-        card.AddThemeStyleboxOverride("panel", GitHubTheme.Box(new Color("#3a1812"), new Color("#a8793a"), 12, 3, 24, 28));
-        var body = new VBoxContainer { Alignment = BoxContainer.AlignmentMode.Center };
-        body.AddThemeConstantOverride("separation", S(16));
-
-        var avatar = GitHubUi.Avatar(owner, 120);
-        avatar.SizeFlagsHorizontal = SizeFlags.ShrinkCenter;
-        body.AddChild(avatar);
-
-        var name = GitHubUi.Text(owner, GitHubTheme.Fg, 26, bold: true);
-        name.HorizontalAlignment = HorizontalAlignment.Center;
-        body.AddChild(name);
-        card.AddChild(body);
-        return card;
-    }
-
-    private void FillRepoList(VBoxContainer list, IReadOnlyList<RemoteRepositoryInfo> repos, string filter)
-    {
-        foreach (var child in list.GetChildren())
-        {
-            list.RemoveChild(child);
-            child.QueueFree();
-        }
-
-        var shown = repos
-            .Where(repo => filter.Length == 0 || repo.Name.Contains(filter, StringComparison.OrdinalIgnoreCase))
-            .ToList();
-        if (shown.Count == 0)
-        {
-            list.AddChild(GitHubUi.EmptyState(GhIcon.Repo, "ไม่พบ repository", repos.Count == 0 ? "กด New เพื่อสร้าง repository แรก" : "ลองค้นหาด้วยชื่ออื่น"));
-            return;
-        }
-
-        for (var index = 0; index < shown.Count; index++)
-        {
-            var repo = shown[index];
-            var row = new HBoxContainer();
-            row.AddThemeConstantOverride("separation", S(10));
-            var text = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill, MouseFilter = MouseFilterEnum.Ignore };
-            text.AddChild(GitHubUi.Text(repo.Name, GitHubTheme.Accent, 22, bold: true));
-            var meta = repo.IsEmpty
-                ? "ยังว่างอยู่ — push งานขึ้นมาก่อน"
-                : $"{GitHubUi.Count(repo.BranchCount, "branch", "branches")} · {GitHubUi.Count(repo.CommitCount, "commit", "commits")}";
-            text.AddChild(GitHubUi.Text(meta, GitHubTheme.FgMuted, 14));
-            row.AddChild(text);
-            row.AddChild(GitHubUi.Pill("Public", GitHubTheme.FgMuted, GitHubTheme.Border));
-            list.AddChild(GitHubUi.ListRow(row, index == shown.Count - 1, () => OpenRepo(repo.Name)));
-        }
+        var page = RepoListPageScene.Instantiate<RepoListPage>();
+        _content.AddChild(page);
+        page.Setup(_account!.Owner, repos, OpenRepo, () => Go(Page.NewRepo));
     }
 
     /// <summary>ฟอร์มสร้าง repository ใหม่ (ว่าง) เหมือนหน้า New repository ของ GitHub</summary>

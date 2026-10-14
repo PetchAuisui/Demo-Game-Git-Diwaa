@@ -14,6 +14,8 @@ src/GitDiwaa.Godot/
 │   ├── FilesPanel.tscn              # Panel แสดงไฟล์ใน Workspace และสถานะ Git
 │   ├── GitGraphPanel.tscn           # Panel แสดง Commit DAG, Branch Badges, ประวัติ
 │   ├── RemoteRepoView.tscn          # โครงหน้า Remote Repository (แถบบน หัว repo พื้นที่เลื่อน)
+│   ├── RepoListPage.tscn            # หน้ารายการ repo ในหน้า Remote Repository
+│   ├── CodePage.tscn                # แถบเครื่องมือหน้า Code ของ repo
 │   └── TerminalPanel.tscn           # Reusable Terminal Window และ Command Prompt
 └── Scripts/
     ├── Common/

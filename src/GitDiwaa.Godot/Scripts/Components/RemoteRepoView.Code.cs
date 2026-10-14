@@ -8,6 +8,8 @@ public partial class RemoteRepoView
 {
     // ───────────── Code ─────────────
 
+    private static readonly PackedScene CodePageScene = GD.Load<PackedScene>("res://Scenes/CodePage.tscn");
+
     private async Task BuildCodeAsync()
     {
         if (_repo!.IsEmpty)
@@ -21,44 +23,25 @@ public partial class RemoteRepoView
         var files = await _host.ListFilesAsync(_branch, _path);
 
         var rows = new List<(Control Row, string Name)>();
-        _content.AddChild(BuildCodeToolbar(branches, rows));
-        if (_path.Length > 0) _content.AddChild(Breadcrumb());
-        _content.AddChild(BuildFileTable(latest, files, rows));
-        await AddReadmeAsync();
-    }
-
-    private Control BuildCodeToolbar(IReadOnlyList<RemoteBranchInfo> branches, List<(Control Row, string Name)> rows)
-    {
-        var toolbar = new HBoxContainer();
-        toolbar.AddThemeConstantOverride("separation", S(10));
-        toolbar.AddChild(BranchPicker(branches, name =>
-        {
-            _branch = name;
-            _path = string.Empty;
-            Go(Page.Code);
-        }));
-        toolbar.AddChild(GitHubUi.Btn(
-            GitHubUi.Count(branches.Count, "Branch", "Branches"), () => Go(Page.Branches), GhButtonKind.Ghost, GhIcon.Branch));
-        toolbar.AddChild(GitHubUi.Spacer());
-
-        var search = new LineEdit
-        {
-            PlaceholderText = "Go to file",
-            CustomMinimumSize = new Vector2(S(260), 0),
-            RightIcon = GitHubIcons.Get(GhIcon.Search, GitHubTheme.FgMuted, S(16), 1f),
-            ClearButtonEnabled = true,
-            MouseFilter = MouseFilterEnum.Pass
-        };
-        search.TextChanged += text =>
-        {
-            foreach (var (row, name) in rows)
-                row.Visible = text.Length == 0 || name.Contains(text, StringComparison.OrdinalIgnoreCase);
-        };
-        toolbar.AddChild(search);
-        Button? codeButton = null;
-        codeButton = GitHubUi.Btn("Code ▾", () => ShowCloneMenu(codeButton!), GhButtonKind.Primary, GhIcon.Code);
-        toolbar.AddChild(codeButton);
-        return toolbar;
+        var page = CodePageScene.Instantiate<CodePage>();
+        _content.AddChild(page);
+        page.Setup(branches, _branch,
+            name =>
+            {
+                _branch = name;
+                _path = string.Empty;
+                Go(Page.Code);
+            },
+            () => Go(Page.Branches),
+            text =>
+            {
+                foreach (var (row, name) in rows)
+                    row.Visible = text.Length == 0 || name.Contains(text, StringComparison.OrdinalIgnoreCase);
+            },
+            ShowCloneMenu);
+        if (_path.Length > 0) page.AddChild(Breadcrumb());
+        page.AddChild(BuildFileTable(latest, files, rows));
+        await AddReadmeAsync(page);
     }
 
     /// <summary>ตารางไฟล์: แถวหัวเป็น commit ล่าสุดของ branch ส่วนแถวไฟล์คลิกได้ทั้งแถว</summary>
@@ -129,11 +112,11 @@ public partial class RemoteRepoView
         return box;
     }
 
-    private async Task AddReadmeAsync()
+    private async Task AddReadmeAsync(Control page)
     {
         var readmePath = _path.Length == 0 ? "README.md" : $"{_path}/README.md";
         var readme = await _host!.ReadFileAsync(_branch, readmePath);
-        if (readme is null) return;
+        if (readme is null || !IsInstanceValid(page)) return; // ปิดหน้าหรือรีเฟรชระหว่างรอ
 
         var header = new HBoxContainer();
         header.AddThemeConstantOverride("separation", S(8));
@@ -148,7 +131,7 @@ public partial class RemoteRepoView
         margin.AddThemeConstantOverride("margin_bottom", S(28));
         margin.AddChild(MarkdownView.Render(readme));
         body.AddChild(margin);
-        _content.AddChild(box);
+        page.AddChild(box);
     }
 
     /// <summary>

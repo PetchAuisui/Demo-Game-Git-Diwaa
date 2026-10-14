@@ -360,16 +360,8 @@ public partial class RemoteRepoView : Control
 
     private OptionButton BranchPicker(IReadOnlyList<RemoteBranchInfo> branches, Action<string> onSelected, string? selected = null)
     {
-        selected ??= _branch;
         var picker = new OptionButton { MouseFilter = MouseFilterEnum.Pass };
-        var icon = GitHubIcons.Get(GhIcon.Branch, GitHubTheme.FgMuted, S(16));
-        for (var index = 0; index < branches.Count; index++)
-        {
-            picker.AddIconItem(icon, branches[index].Name, index);
-            if (branches[index].Name == selected) picker.Selected = index;
-        }
-
-        picker.ItemSelected += index => onSelected(branches[(int)index].Name);
+        GitHubUi.FillBranchPicker(picker, branches, onSelected, selected ?? _branch);
         return picker;
     }
 }
