@@ -594,6 +594,51 @@ public static class GitHubUi
         return panel;
     }
 
+    /// <summary>
+    /// ใส่รายชื่อ branch ลงตัวเลือก (ไอคอน branch หน้าชื่อ) เลือก <paramref name="selected"/> ไว้ และแจ้งชื่อเมื่อเปลี่ยน
+    /// ปุ่มกว้างพอดีชื่อ branch ที่เลือก ไม่ใช่ชื่อที่ยาวที่สุดในรายการ และไม่เกิน <see cref="BranchPickerMaxWidth"/>
+    /// </summary>
+    public static void FillBranchPicker(OptionButton picker, IReadOnlyList<RemoteBranchInfo> branches, Action<string> onSelected, string selected)
+    {
+        picker.FitToLongestItem = false;
+        var icon = GitHubIcons.Get(GhIcon.Branch, GitHubTheme.FgMuted, S(16));
+        for (var index = 0; index < branches.Count; index++)
+        {
+            picker.AddIconItem(icon, branches[index].Name, index);
+            if (branches[index].Name == selected) picker.Selected = index;
+        }
+
+        // วัดความกว้างได้ถูกต้องก็ต่อเมื่ออยู่ใน tree (ธีมของ GitHub มาจากโหนดแม่) ผู้เรียกบางที่ยังไม่ได้ AddChild
+        if (picker.IsInsideTree()) FitBranchPicker(picker);
+        else picker.Connect(Node.SignalName.TreeEntered, Callable.From(() =>
+        {
+            if (GodotObject.IsInstanceValid(picker)) FitBranchPicker(picker);
+        }), (uint)GodotObject.ConnectFlags.OneShot | (uint)GodotObject.ConnectFlags.Deferred);
+
+        picker.ItemSelected += index =>
+        {
+            FitBranchPicker(picker);
+            onSelected(branches[(int)index].Name);
+        };
+    }
+
+    /// <summary>ความกว้างสูงสุดของตัวเลือก branch ชื่อที่ยาวกว่านี้ถูกตัดท้ายด้วย … (ดูชื่อเต็มได้จากเมนูและ tooltip)</summary>
+    public static int BranchPickerMaxWidth => S(380);
+
+    private static void FitBranchPicker(OptionButton picker)
+    {
+        picker.ClipText = false;
+        picker.TextOverrunBehavior = TextServer.OverrunBehavior.NoTrimming;
+        picker.CustomMinimumSize = Vector2.Zero;
+        picker.TooltipText = string.Empty;
+        if (picker.GetCombinedMinimumSize().X <= BranchPickerMaxWidth) return;
+
+        picker.ClipText = true;
+        picker.TextOverrunBehavior = TextServer.OverrunBehavior.TrimEllipsis;
+        picker.CustomMinimumSize = new Vector2(BranchPickerMaxWidth, 0);
+        picker.TooltipText = picker.GetItemText(picker.Selected);
+    }
+
     /// <summary>แท็บแบบ GitHub: ขีดส้มใต้แท็บที่เลือก มีไอคอนและตัวเลขนับได้</summary>
     public static PanelContainer Tab(string text, bool active, Action onClick, GhIcon? icon = null, int? counter = null)
     {
