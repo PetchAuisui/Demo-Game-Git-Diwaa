@@ -18,6 +18,7 @@ public partial class RemoteRepoView : Control
 
     private IGitRemoteAccount? _account;
     private IGitRemoteHost? _host;
+    private Button _backButton = null!;
     private RemoteRepositoryInfo? _repo;
     private Page _page = Page.Repos;
     private string _branch = "main";
@@ -118,8 +119,10 @@ public partial class RemoteRepoView : Control
         _topMargin.AddThemeConstantOverride("margin_right", S(16));
         var row = new HBoxContainer();
         row.AddThemeConstantOverride("separation", S(12));
-        row.AddChild(GitHubUi.Btn("กลับ Sandbox", () => EmitSignal(SignalName.BackRequested), icon: GhIcon.ArrowLeft));
-        row.AddChild(GitHubUi.KeyHint("Esc"));
+        _backButton = GitHubUi.Btn("ย้อนกลับ", () => Go(Page.Repos), icon: GhIcon.ArrowLeft);
+        _backButton.TooltipText = "กลับไปรายการ repository";
+        _backButton.Visible = false;
+        row.AddChild(_backButton);
 
         var address = new PanelContainer
         {
@@ -148,6 +151,8 @@ public partial class RemoteRepoView : Control
         row.AddChild(GitHubUi.Spacer());
         _avatarSlot = new Control { MouseFilter = MouseFilterEnum.Ignore, CustomMinimumSize = new Vector2(S(28), S(28)) };
         row.AddChild(_avatarSlot);
+        row.AddChild(GitHubUi.KeyHint("Esc"));
+        row.AddChild(GitHubUi.Btn("ปิด", () => EmitSignal(SignalName.BackRequested), icon: GhIcon.X));
 
         _topMargin.AddChild(row);
         bar.AddChild(_topMargin);
@@ -353,6 +358,7 @@ public partial class RemoteRepoView : Control
     private void ShowAccountHeader(string owner)
     {
         _repoHeader.Visible = false;
+        _backButton.Visible = _page == Page.NewRepo;
         _roomBackdrop.Visible = true;
         _addressPath.Text = _page == Page.NewRepo ? "/new" : $"/{owner}?tab=repositories";
         SetAvatar(owner);
@@ -361,6 +367,7 @@ public partial class RemoteRepoView : Control
     private void ShowRepoHeader(RemoteRepositoryInfo repo, int openPulls)
     {
         _repoHeader.Visible = true;
+        _backButton.Visible = true;
         _roomBackdrop.Visible = false;
         _ownerLabel.Text = repo.Owner;
         _repoLabel.Text = repo.Name;
