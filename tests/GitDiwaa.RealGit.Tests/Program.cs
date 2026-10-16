@@ -225,6 +225,8 @@ try
         Assert.Equal(1, racing.Count(created => created));
         Assert.Equal(3, (await account.ListRepositoriesAsync()).Count);
 
+        await PlayerRepo.RunAsync(session, "git config --global user.name \"Git Diwaa Player\"");
+        await PlayerRepo.RunAsync(session, "git config --global user.email player@git-diwaa.local");
         await PlayerRepo.RunAsync(session, "git init");
         await session.Files.WriteAllTextAsync("a.txt", "hello");
         await PlayerRepo.RunAsync(session, "git add .");
