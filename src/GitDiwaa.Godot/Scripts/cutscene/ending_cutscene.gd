@@ -1,14 +1,14 @@
 extends Node2D
 
 ## การควบคุมฉากจบเกมทั้ง 8 ฉาก (Ending Cutscene - Complete 8 Stages)
-## 1. การฟื้นฟูคัมภีร์เวทต้นกำเนิด (khampri-null + ดูดเศษ 16 ชิ้นพร้อมกัน -> khampri สมบูรณ์)
-## 2. ท้องฟ้าโกลาหลกลับคืนสู่สภาพปกติ (animated storm sky -> animated peaceful sky)
-## 3. บ้านเมืองกลับคืนสู่ความสงบ (animated chaos village -> peaceful village)
-## 4. เวลถูกวาร์ปกลับห้องสมุด (ห้องโล่ง -> วาร์ปมาตกใจ -> คัมภีร์ตกจากฟ้าลงมือ -> ท่า vel_hold)
-## 5. การกลับมาของปรมาจารย์ (หลุมดำเปิด เวลกระโดดตกใจ คัมภีร์ลอย อาจารย์พุ่งขึ้นมา ยิ้มกวน)
-## 6. ช่องการ์ตูนเฉลยความจริง (Comic frame ซูมอาจารย์แก่หลงลืม พลังรั่วตกหลุมตัวเอง)
-## 7. กล่องบทสนทนา (คลิกหน้าจอเพื่อไปต่อ 3 ประโยคตามบท)
-## 8. บทสรุปการเดินทางของเวล (ซูมกล้องออก -> จอดำ -> ข้อความสรุป -> THE END -> ปุ่มกลับสู่หน้าหลัก)
+## 1. การฟื้นฟูคัมภีร์เวทต้นกำเนิด (khampri-null + ดูดเศษ 16 ชิ้นพร้อมกัน -> khampri สั่น 3 ครั้ง + ปล่อยวงแสง)
+## 2. ท้องฟ้าโกลาหลกลับคืนสู่สภาพปกติ (animated storm sky -> แสงวาบนุ่มนวล 0.3s -> animated peaceful sky)
+## 3. บ้านเมืองกลับคืนสู่ความสงบ (animated chaos village -> แสงเวทเยียวยา -> peaceful village ต่อเนื่อง)
+## 4. เวลถูกวาร์ปกลับห้องสมุด (ห้องโล่ง -> วาร์ปพร้อมวงแสงที่พื้น -> คัมภีร์ตกใส่มือแล้วเปลี่ยนเป็น vel_hold พอดี)
+## 5. การกลับมาของปรมาจารย์ (หลุมดำเปิด เวลสะดุ้งกระโดด หนังสือเด้งลอยค้างแล้วรับกลับมา -> อาจารย์พุ่งขึ้นมา)
+## 6. ช่องการ์ตูนเฉลยความจริง (ขยายกรอบใหญ่ ซูมอาจารย์เด่นชัด ฉากหลังมืด 65% อาจารย์หลงลืมตกหลุมตัวเอง)
+## 7. กล่องบทสนทนา (อาจารย์ยิ้มขี้เล่น เวลยืนนิ่ง 1 วินาทีเน้นอารมณ์ ก่อนถอนหายใจ)
+## 8. บทสรุปการเดินทางของเวล (ซูมกล้องออก -> พื้นหลังมืดลงอย่างต่อเนื่อง -> ข้อความสรุปกระชับชัดเจน -> THE END)
 
 @export var start_scene_path: String = "res://scenes/StartView.tscn"
 
@@ -18,6 +18,7 @@ extends Node2D
 
 # Stage 1: Book Restoration
 @onready var stage1: Node2D = $Stage1_BookRestoration
+@onready var ring_of_light: Sprite2D = $Stage1_BookRestoration/RingOfLight
 @onready var khampri_null: Sprite2D = $Stage1_BookRestoration/KhampriNull
 @onready var khampri_full: Sprite2D = $Stage1_BookRestoration/KhampriFull
 @onready var shards_container: Node2D = $Stage1_BookRestoration/ShardsContainer
@@ -29,11 +30,13 @@ extends Node2D
 
 # Stage 3: Village Restoration
 @onready var stage3: Node2D = $Stage3_VillageRestoration
-@onready var village_animated: Sprite2D = $Stage3_VillageRestoration/VillageAnimated
+@onready var village_chaos: Sprite2D = $Stage3_VillageRestoration/VillageChaos
+@onready var village_peaceful: Sprite2D = $Stage3_VillageRestoration/VillagePeaceful
 
 # Stage 4-8: Library
 @onready var stage4: Node2D = $Stage4_Library
 @onready var library_bg: Sprite2D = $Stage4_Library/LibraryBg
+@onready var warp_spark: Sprite2D = $Stage4_Library/WarpSpark
 @onready var dark_overlay: ColorRect = $Stage4_Library/DarkOverlay
 @onready var black_hole: Sprite2D = $Stage4_Library/BlackHole
 @onready var khampri_shadow: Sprite2D = $Stage4_Library/KhampriShadow
@@ -59,11 +62,11 @@ extends Node2D
 @onready var return_menu_btn: Button = $MagicStoryUI/TheEndContainer/ReturnMenuBtn
 
 # Audio (SFX only, NO BGM)
-@onready var sfx_fusion: AudioStreamPlayer = $Audio/SfxFusion
-@onready var sfx_warp: AudioStreamPlayer = $Audio/SfxWarp
-@onready var sfx_pop: AudioStreamPlayer = $Audio/SfxPop
-@onready var sfx_next: AudioStreamPlayer = $Audio/SfxNext
-@onready var sfx_success: AudioStreamPlayer = $Audio/SfxSuccess
+var sfx_fusion: AudioStreamPlayer
+var sfx_warp: AudioStreamPlayer
+var sfx_pop: AudioStreamPlayer
+var sfx_next: AudioStreamPlayer
+var sfx_success: AudioStreamPlayer
 
 var shards16: Array[Sprite2D] = []
 var shard_initial_positions: Array[Vector2] = []
@@ -77,9 +80,8 @@ var typewriter_tween: Tween = null
 # Animation timers for spritesheets
 var storm_anim_timer: float = 0.0
 var peaceful_anim_timer: float = 0.0
-var village_anim_timer: float = 0.0
-var village_is_restoring: bool = false
-var village_current_frame: float = 58.0
+var village_chaos_anim_timer: float = 0.0
+var village_peaceful_anim_timer: float = 0.0
 
 # Camera shake
 var camera_shake_amount: float = 0.0
@@ -92,6 +94,7 @@ func _ready() -> void:
 	skip_btn.next_scene_path = start_scene_path
 	add_child(skip_btn)
 	
+	_init_sfx()
 	_init_shards()
 	_reset_all_stages()
 	
@@ -116,18 +119,13 @@ func _process(delta: float) -> void:
 
 	# อัปเดตเฟรมแอนิเมชันของหมู่บ้านในฉาก 3
 	if current_stage == 3:
-		if not village_is_restoring:
-			# ช่วงโกลาหล เล่นเฟรม 54 ถึง 62
-			village_anim_timer += delta * 8.0
-			village_animated.frame = 54 + (int(village_anim_timer) % 9)
-		else:
-			# ช่วงเวทมนตร์เยียวยา ถอยกลับสู่สภาพสงบ (เฟรม 0)
-			if village_current_frame > 0.0:
-				village_current_frame = maxf(0.0, village_current_frame - (delta * 32.0))
-				village_animated.frame = int(village_current_frame)
-			else:
-				# หยุดนิ่งที่เฟรม 0 (หมู่บ้านสงบสุขสมบูรณ์)
-				village_animated.frame = 0
+		if village_chaos.visible and village_chaos.modulate.a > 0.01:
+			village_chaos_anim_timer += delta * 8.0
+			village_chaos.frame = 50 + (int(village_chaos_anim_timer) % 9)
+		
+		if village_peaceful.visible and village_peaceful.modulate.a > 0.01:
+			village_peaceful_anim_timer += delta * 8.0
+			village_peaceful.frame = int(village_peaceful_anim_timer) % 24
 
 	# ระบบสั่นของกล้อง (Camera shake)
 	if camera_shake_amount > 0.0:
@@ -203,95 +201,123 @@ func _reset_all_stages() -> void:
 	white_flash.color = Color(1, 1, 1, 0.0)
 	dialogue_box.visible = false
 	the_end_container.visible = false
+	if ring_of_light:
+		ring_of_light.visible = false
 	if dark_overlay:
 		dark_overlay.visible = false
+	if village_chaos:
+		village_chaos.visible = false
+		village_chaos.modulate = Color(1, 1, 1, 1)
+	if village_peaceful:
+		village_peaceful.visible = false
+		village_peaceful.modulate = Color(1, 1, 1, 0)
 	
-	# เตรียม Stage 1
+	# เตรียม Stage 1: คัมภีร์เริ่มจากขนาดเล็ก ไม่ใหญ่จนเต็มจอ
 	khampri_null.visible = true
-	khampri_null.scale = Vector2(0.1, 0.1)
+	khampri_null.scale = Vector2(0.5, 0.5)
 	khampri_null.modulate = Color(1, 1, 1, 0.0)
 	khampri_full.visible = false
-	khampri_full.scale = Vector2(2.8, 2.8)
+	khampri_full.scale = Vector2(2.2, 2.2)
 	
-	# จัดตำแหน่งเศษ 16 ชิ้นกระจายรอบคัมภีร์
+	# จัดตำแหน่งเศษ 16 ชิ้นกระจายรอบคัมภีร์ให้เห็นเป็นชิ้นชัดเจน
 	var count = shards16.size()
 	for i in range(count):
 		var s: Sprite2D = shards16[i]
 		var angle: float = (float(i) / float(count)) * TAU - (PI * 0.5)
-		var dist: float = 330.0 if (i % 2 == 0) else 270.0
-		var pos = Vector2(cos(angle) * dist * 1.3, sin(angle) * dist)
+		var dist: float = 300.0 if (i % 2 == 0) else 250.0
+		var pos = Vector2(cos(angle) * dist * 1.25, sin(angle) * dist)
 		shard_initial_positions.append(pos)
 		s.position = pos
-		s.scale = Vector2(0.9, 0.9)
+		s.scale = Vector2(1.0, 1.0)
 		s.rotation = angle + (PI * 0.5)
 		s.modulate = Color(1, 1, 1, 0.0)
 		s.visible = true
 
 ## =============================================================
 ## ฉากที่ 1: การฟื้นฟูคัมภีร์เวทต้นกำเนิด
-## คัมภีร์เปล่าโผล่มาตรงกลาง เศษ 16 ชิ้นโผล่รอบๆ แล้วพุ่งเข้าพร้อมกัน
+## คัมภีร์เริ่มขนาดเล็กขยายขึ้น เศษ 16 ชิ้นหยุดนิ่งสั้นๆ พุ่งเข้าพร้อมกัน
+## คัมภีร์สั่น 2-3 ครั้ง และปล่อยวงแสงออกมาหนึ่งวง
 ## =============================================================
 func play_stage_1_book_restoration() -> void:
 	current_stage = 1
 	
-	# 1.1 คัมภีร์เปล่าขนาดใหญ่ค่อย ๆ ปรากฏขึ้นกึ่งกลางจอ (1.2s)
+	# 1.1 คัมภีร์เริ่มจากขนาดเล็กขยายขึ้นเล็กน้อย ไม่ใหญ่จนเต็มจอ (scale 0.5 -> 2.2) (0.9s)
+	khampri_null.scale = Vector2(0.5, 0.5)
+	khampri_null.modulate = Color(1, 1, 1, 0.0)
 	var tw_book = create_tween().set_parallel(true)
-	tw_book.tween_property(khampri_null, "modulate:a", 1.0, 1.2)
-	tw_book.tween_property(khampri_null, "scale", Vector2(2.8, 2.8), 1.2).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	tw_book.tween_property(khampri_null, "modulate:a", 1.0, 0.8)
+	tw_book.tween_property(khampri_null, "scale", Vector2(2.2, 2.2), 0.9).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	
-	# 1.2 เศษคัมภีร์ทั้ง 16 ชิ้น ปรากฏขึ้นรอบ ๆ พร้อมกัน แล้วหยุดนิ่งชั่วครู่ (1.4s -> 2.4s)
+	# 1.2 เศษคัมภีร์ทั้ง 16 ชิ้น ปรากฏขึ้นรอบ ๆ เป็นชิ้นชัดเจน (1.0s)
 	var tw_shards_in = create_tween()
-	tw_shards_in.tween_interval(1.4)
+	tw_shards_in.tween_interval(1.0)
 	tw_shards_in.tween_callback(func():
 		for s in shards16:
 			var tw_s = create_tween().set_parallel(true)
-			tw_s.tween_property(s, "modulate", Color(1.8, 1.6, 1.1, 1.0), 0.8).set_trans(Tween.TRANS_SINE)
+			tw_s.tween_property(s, "modulate", Color(1.8, 1.6, 1.2, 1.0), 0.5).set_trans(Tween.TRANS_SINE)
 	)
 	
-	# 1.3 เศษทั้ง 16 ชิ้น พุ่งเข้าหาคัมภีร์เปล่าพร้อม ๆ กัน! (2.6s)
+	# 1.3 เศษทั้งหมดหยุดนิ่งสั้น ๆ (~0.7s) เพื่อให้เห็นชัด ก่อนพุ่งเข้าหาคัมภีร์พร้อมกัน (2.2s)
 	var tw_absorb = create_tween()
-	tw_absorb.tween_interval(2.6)
+	tw_absorb.tween_interval(2.2)
 	tw_absorb.tween_callback(func():
 		_play_sfx(sfx_fusion)
-		camera_shake_amount = 4.0
+		camera_shake_amount = 3.0
 		
 		for s in shards16:
 			var tw_fly = create_tween().set_parallel(true)
-			tw_fly.tween_property(s, "position", Vector2.ZERO, 0.75).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN)
-			tw_fly.tween_property(s, "scale", Vector2(0.15, 0.15), 0.75)
-			tw_fly.tween_property(s, "rotation", s.rotation + PI * 2.0, 0.75)
+			tw_fly.tween_property(s, "position", Vector2.ZERO, 0.65).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN)
+			tw_fly.tween_property(s, "scale", Vector2(0.15, 0.15), 0.65)
+			tw_fly.tween_property(s, "rotation", s.rotation + PI * 2.0, 0.65)
 			tw_fly.chain().tween_callback(func(): s.visible = false)
 	)
 	
-	# 1.4 เมื่อเศษเข้าไปครบ คัมภีร์เปล่งแสงวาบกลายเป็นคัมภีร์สมบูรณ์ (3.4s)
+	# 1.4 เมื่อรวมสำเร็จ: คัมภีร์สั่น 2–3 ครั้ง และปล่อยวงแสงออกมาหนึ่งวง (2.85s)
 	var tw_complete = create_tween()
-	tw_complete.tween_interval(3.4)
+	tw_complete.tween_interval(2.85)
 	tw_complete.tween_callback(func():
 		_play_sfx(sfx_success)
-		camera_shake_amount = 7.0
 		khampri_null.visible = false
 		khampri_full.visible = true
-		khampri_full.modulate = Color(3.5, 3.0, 2.0, 1.0)
-		khampri_full.scale = Vector2(3.5, 3.5)
+		khampri_full.modulate = Color(2.5, 2.2, 1.6, 1.0)
+		khampri_full.scale = Vector2(2.5, 2.5)
 		
+		# คัมภีร์สั่น 2-3 ครั้ง
+		var tw_shake = create_tween()
+		tw_shake.tween_property(khampri_full, "position:x", 967.0, 0.05)
+		tw_shake.tween_property(khampri_full, "position:x", 953.0, 0.05)
+		tw_shake.tween_property(khampri_full, "position:x", 965.0, 0.05)
+		tw_shake.tween_property(khampri_full, "position:x", 960.0, 0.05)
+		
+		# ปล่อยวงแสง (Ring of Light) ขยายออกไป
+		if ring_of_light:
+			ring_of_light.visible = true
+			ring_of_light.scale = Vector2(0.2, 0.2)
+			ring_of_light.modulate = Color(2.0, 1.8, 1.2, 1.0)
+			var tw_ring = create_tween().set_parallel(true)
+			tw_ring.tween_property(ring_of_light, "scale", Vector2(9.0, 9.0), 0.7).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+			tw_ring.tween_property(ring_of_light, "modulate:a", 0.0, 0.7)
+		
+		# คัมภีร์คืนขนาด 2.2
 		var tw_shine = create_tween().set_parallel(true)
-		tw_shine.tween_property(khampri_full, "scale", Vector2(2.8, 2.8), 0.6).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-		tw_shine.tween_property(khampri_full, "modulate", Color(1.8, 1.6, 1.2, 1.0), 0.8)
+		tw_shine.tween_property(khampri_full, "scale", Vector2(2.2, 2.2), 0.5).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+		tw_shine.tween_property(khampri_full, "modulate", Color(1.4, 1.3, 1.1, 1.0), 0.6)
 	)
 	
-	# 1.5 แสงวาบสีขาวสว่างจ้าเต็มจอเพื่อตัดเข้าสู่ฉาก 2 (5.0s)
+	# 1.5 แสงเวทสว่างวาบสั้น ๆ (0.35s) เปลี่ยนเข้าสู่ฉาก 2 (4.3s)
 	var tw_flash = create_tween()
-	tw_flash.tween_interval(5.0)
+	tw_flash.tween_interval(4.3)
 	tw_flash.tween_callback(func():
 		_play_sfx(sfx_warp)
 		white_flash.visible = true
+		white_flash.color = Color(1.0, 0.98, 0.92, 0.0)
 		var tw_wf = create_tween()
-		tw_wf.tween_property(white_flash, "color:a", 1.0, 0.6).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+		tw_wf.tween_property(white_flash, "color:a", 0.55, 0.25).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 		tw_wf.tween_callback(play_stage_2_sky_restoration)
 	)
 
 ## =============================================================
-## ฉากที่ 2: ท้องฟ้าโกลาหลกลับคืนสู่สภาพปกติ (ใช้ภาพขยับ animated spritesheet)
+## ฉากที่ 2: ท้องฟ้าโกลาหลกลับคืนสู่สภาพปกติ (แสงวาบ 0.3-0.5s เมฆเล่นต่อเนื่อง)
 ## =============================================================
 func play_stage_2_sky_restoration() -> void:
 	current_stage = 2
@@ -302,78 +328,83 @@ func play_stage_2_sky_restoration() -> void:
 	peaceful_sky.visible = true
 	peaceful_sky.modulate = Color(1, 1, 1, 0)
 	
-	# แสงวาบจางลง เผยให้เห็นท้องฟ้าพายุที่กำลังเคลื่อนไหว (0.6s)
+	# แสงวาบจางลงอย่างรวดเร็ว (0.35s) ไม่ให้บังรายละเอียด
 	var tw_unflash = create_tween()
-	tw_unflash.tween_property(white_flash, "color:a", 0.0, 0.6)
+	tw_unflash.tween_property(white_flash, "color:a", 0.0, 0.35)
 	
-	# 2.2 เล่นภาพพายุประมาณ 2 วินาที -> เกิดแสงวาบเปลี่ยนเป็นท้องฟ้าสดใส (2.2s -> 3.5s)
+	# 2.2 เล่นภาพพายุเคลื่อนไหวต่อเนื่อง ~1.8 วินาที -> แสงเวทมนตร์สว่างวาบชั่วขณะ 0.3-0.5s คลี่คลายสู่ปกติ
 	var tw_magic_sweep = create_tween()
-	tw_magic_sweep.tween_interval(2.2)
+	tw_magic_sweep.tween_interval(1.8)
 	tw_magic_sweep.tween_callback(func():
 		_play_sfx(sfx_warp)
 		
-		# แสงสว่างวาบทั่วท้องฟ้า
+		# แสงสว่างวาบ 0.35s ไม่ให้จอขาวจ้าจนมองไม่เห็น
 		var tw_glare = create_tween()
-		tw_glare.tween_property(white_flash, "color:a", 0.7, 0.35)
-		tw_glare.tween_property(white_flash, "color:a", 0.0, 0.45)
+		tw_glare.tween_property(white_flash, "color:a", 0.5, 0.2)
+		tw_glare.tween_property(white_flash, "color:a", 0.0, 0.3)
 		
-		# ท้องฟ้าพายุจางหาย เผยท้องฟ้าสดใสที่กำลังเคลื่อนไหว
+		# ท้องฟ้าค่อยๆ เปลี่ยนสีอย่างนุ่มนวล โดยแอนิเมชันก้อนเมฆเล่นต่อเนื่อง
 		var tw_sky = create_tween().set_parallel(true)
-		tw_sky.tween_property(storm_sky, "modulate:a", 0.0, 1.0)
-		tw_sky.tween_property(peaceful_sky, "modulate:a", 1.0, 1.0)
+		tw_sky.tween_property(storm_sky, "modulate:a", 0.0, 0.7)
+		tw_sky.tween_property(peaceful_sky, "modulate:a", 1.0, 0.7)
 	)
 	
-	# ค้างท้องฟ้าสงบ 2.5 วินาที แล้วตัดไปฉาก 3 (5.2s)
+	# ค้างท้องฟ้าสงบ 2.2 วินาที แล้วเปลี่ยนผ่านอย่างต่อเนื่องเข้าสู่ฉาก 3 (4.5s)
 	var tw_next = create_tween()
-	tw_next.tween_interval(5.2)
+	tw_next.tween_interval(4.5)
 	tw_next.tween_callback(func():
 		var tw_wf = create_tween()
-		tw_wf.tween_property(white_flash, "color:a", 1.0, 0.5)
+		tw_wf.tween_property(white_flash, "color:a", 0.5, 0.25)
 		tw_wf.tween_callback(play_stage_3_village_restoration)
 	)
 
 ## =============================================================
-## ฉากที่ 3: บ้านเมืองกลับคืนสู่ความสงบ (ใช้ภาพขยับ animated spritesheet)
-## แสดงความโกลาหล -> แสงเวทมนตร์เยียวยา -> คืนสู่ความสงบ (ค้างนานกว่าฉาก 2)
+## ฉากที่ 3: บ้านเมืองกลับคืนสู่ความสงบ (เปลี่ยนผ่านต่อเนื่อง นุ่มนวลแบบฉากที่ 2 ไม่มีฉากดำ)
 ## =============================================================
 func play_stage_3_village_restoration() -> void:
 	current_stage = 3
 	stage2.visible = false
 	stage3.visible = true
-	village_is_restoring = false
-	village_animated.visible = true
-	village_animated.modulate = Color(1, 1, 1, 1)
-	village_current_frame = 58.0
 	
-	# แสงวาบจางลง เผยภาพเมืองโกลาหลกำลังเคลื่อนไหว (0.6s)
+	village_chaos.visible = true
+	village_chaos.modulate = Color(1, 1, 1, 1)
+	village_peaceful.visible = true
+	village_peaceful.modulate = Color(1, 1, 1, 0)
+	
+	# แสงวาบจางลงใน 0.3s เผยเมืองกำลังโกลาหลเคลื่อนไหวต่อเนื่อง
 	var tw_unflash = create_tween()
-	tw_unflash.tween_property(white_flash, "color:a", 0.0, 0.6)
+	tw_unflash.tween_property(white_flash, "color:a", 0.0, 0.3)
 	
-	# 3.2 หลังเล่นภาพโกลาหล 2.5 วินาที เกิดแสงเวทมนตร์คลี่คลายสภาพเมืองสู่ความสงบ
+	# 3.2 เล่นภาพโกลาหล 1.8 วินาที -> แสงเวทมนตร์สว่างวาบ 0.35s คลี่คลายสู่ปกติเหมือนฉาก 2
 	var tw_restore = create_tween()
-	tw_restore.tween_interval(2.5)
+	tw_restore.tween_interval(1.8)
 	tw_restore.tween_callback(func():
-		_play_sfx(sfx_success)
-		village_is_restoring = true
+		_play_sfx(sfx_warp)
 		
+		# แสงสว่างวาบนุ่มนวล 0.35s ไม่ให้จอขาวจ้า (เหมือนฉากที่ 2)
 		var tw_glare = create_tween()
-		tw_glare.tween_property(white_flash, "color:a", 0.75, 0.35)
-		tw_glare.tween_property(white_flash, "color:a", 0.0, 0.5)
+		tw_glare.tween_property(white_flash, "color:a", 0.5, 0.2)
+		tw_glare.tween_property(white_flash, "color:a", 0.0, 0.3)
+		
+		# หมู่บ้านค่อยๆ เปลี่ยนจากโกลาหลสู่สงบสุขอย่างนุ่มนวล โดยแอนิเมชันเล่นต่อเนื่อง
+		var tw_vil = create_tween().set_parallel(true)
+		tw_vil.tween_property(village_chaos, "modulate:a", 0.0, 0.7)
+		tw_vil.tween_property(village_peaceful, "modulate:a", 1.0, 0.7)
 	)
 	
-	# ค้างภาพเมืองที่สงบสุขนานขึ้น (~4 วินาที) แล้วตัดเข้าสู่ฉาก 4 ห้องสมุด (7.0s)
+	# ค้างภาพเมืองที่สงบสุข 2.5 วินาที แล้วเปลี่ยนผ่านเข้าสู่ฉาก 4 ห้องสมุดอย่างต่อเนื่อง (4.8s)
 	var tw_next = create_tween()
-	tw_next.tween_interval(7.0)
+	tw_next.tween_interval(4.8)
 	tw_next.tween_callback(func():
 		var tw_wf = create_tween()
-		tw_wf.tween_property(white_flash, "color:a", 1.0, 0.6)
+		tw_wf.tween_property(white_flash, "color:a", 0.5, 0.25)
 		tw_wf.tween_callback(play_stage_4_vel_in_library)
 	)
 
 ## =============================================================
 ## ฉากที่ 4: เวลถูกวาร์ปกลับห้องสมุด
-## หอสมุดโล่งๆ ก่อน 1.2s -> เวลวาร์ปกลับมาทำหน้าตกใจ
-## คัมภีร์โผล่สูงๆ ตกลงมาในมือ -> เปลี่ยนเป็นท่า hold (ยังไม่มีบทพูด)
+## จังหวะที่ 1: วาร์ปพร้อมแสงวงเล็กๆ ที่พื้น -> ปรากฏตัวแบบวิบมา ไม่เด้งตัว ด้วยหน้า cat (:3)
+## จังหวะที่ 2: หนังสือตกลงมา -> เปลี่ยนเป็นท่า hold ในจังหวะที่หนังสือถึงมือจริงๆ
 ## =============================================================
 func play_stage_4_vel_in_library() -> void:
 	current_stage = 4
@@ -387,280 +418,277 @@ func play_stage_4_vel_in_library() -> void:
 	khampri_floating.visible = false
 	khampri_shadow.visible = false
 	exclamation_mark.visible = false
+	if warp_spark:
+		warp_spark.visible = false
 	if dark_overlay:
 		dark_overlay.visible = false
 	
-	# แสงขาวจางลง เผยห้องสมุดโล่งๆ เงียบสงบ (0.8s)
+	# แสงจางลงใน 0.35s เผยห้องสมุดเงียบสงบ
 	var tw_unflash = create_tween()
-	tw_unflash.tween_property(white_flash, "color:a", 0.0, 0.8)
+	tw_unflash.tween_property(white_flash, "color:a", 0.0, 0.35)
 	
-	# 4.1 เวลวาร์ปปรากฏตัวขึ้นมากลางห้อง พร้อมทำหน้าตกใจ vel_shock (1.2s)
+	# จังหวะที่หนึ่ง: เวลวาร์ปกลับมา ปรากฏพร้อมแสงวงเล็กๆ ที่พื้น วิบมาแค่นั้น ไม่เด้งตัว (1.2s)
 	var tw_warp_vel = create_tween()
 	tw_warp_vel.tween_interval(1.2)
 	tw_warp_vel.tween_callback(func():
 		_play_sfx(sfx_warp)
+		# แสงวงเวทที่พื้นตำแหน่งเท้าของเวล
+		if warp_spark:
+			warp_spark.visible = true
+			warp_spark.position = Vector2(-40, 98)
+			warp_spark.scale = Vector2.ZERO
+			warp_spark.modulate = Color(1.5, 1.8, 2.5, 1.0)
+			var tw_ws = create_tween().set_parallel(true)
+			tw_ws.tween_property(warp_spark, "scale", Vector2(1.8, 1.2), 0.25).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+			tw_ws.tween_property(warp_spark, "modulate:a", 0.0, 0.45)
+		
+		# ตัวละครเวลปรากฏตัวขึ้นมา ทำหน้า cat (vel_cat ปากแมว :3) ตรงกับตำแหน่ง intro (-40, 59)
 		vel.visible = true
-		vel.position = Vector2(-10, 59)
-		vel.play("shock")
-		vel.scale = Vector2(0.1, 0.1)
+		vel.position = Vector2(-40, 59)
+		vel.scale = Vector2.ONE
+		vel.play("cat")
 		vel.modulate = Color(2.0, 2.0, 2.0, 0.0)
 		
-		var tw_v = create_tween().set_parallel(true)
-		tw_v.tween_property(vel, "scale", Vector2.ONE, 0.35).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-		tw_v.tween_property(vel, "modulate", Color(1, 1, 1, 1), 0.35)
+		var tw_v = create_tween()
+		tw_v.tween_property(vel, "modulate", Color(1, 1, 1, 1), 0.15)
 	)
 	
-	# 4.2 คัมภีร์โผล่มาสูงๆ เหนือหัว แล้วตกลงมาในมือเวล (2.2s)
+	# จังหวะที่สอง: ตอนหนังสือตกลงมา ให้เวลเปลี่ยนเป็นท่า hold ในจังหวะที่หนังสือถึงมือจริงๆ (2.2s)
 	var tw_book_drop = create_tween()
 	tw_book_drop.tween_interval(2.2)
 	tw_book_drop.tween_callback(func():
 		khampri_floating.visible = true
-		khampri_floating.position = Vector2(-10, -85) # สูงเหนือหัวเวล
+		khampri_floating.position = Vector2(-40, -95) # อยู่สูงเหนือหัวเวลที่ x = -40
 		khampri_floating.scale = Vector2(0.18, 0.18)
 		khampri_floating.modulate = Color(1.8, 1.6, 1.1, 1.0)
 		
 		khampri_shadow.visible = true
-		khampri_shadow.position = Vector2(-10, 98)
+		khampri_shadow.position = Vector2(-40, 98)
 		khampri_shadow.scale = Vector2(0.1, 0.05)
 		khampri_shadow.modulate = Color(1, 1, 1, 0.0)
 		
-		# คัมภีร์ตกลงมาใส่สองมือเวล
+		# คัมภีร์ร่วงตกลงมา
 		var tw_drop = create_tween().set_parallel(true)
 		tw_drop.tween_property(khampri_floating, "position:y", 14.0, 0.55).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
 		tw_drop.tween_property(khampri_shadow, "scale", Vector2(0.8, 0.4), 0.55)
 		tw_drop.tween_property(khampri_shadow, "modulate:a", 0.4, 0.55)
 		
-		# เมื่อตกถึงมือ เด้งเบาๆ และเวลเปลี่ยนเป็นท่า vel_hold ทันที
+		# ในจังหวะที่หนังสือถึงมือจริงๆ ➔ เปลี่ยนเป็นท่า vel_hold ทันที พร้อมเด้งเบาๆ
 		tw_drop.chain().tween_callback(func():
 			_play_sfx(sfx_pop)
 			vel.play("hold")
 			
-			# เด้งเล็กน้อย
 			var tw_bounce = create_tween()
 			tw_bounce.tween_property(khampri_floating, "position:y", 8.0, 0.12).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 			tw_bounce.tween_property(khampri_floating, "position:y", 14.0, 0.15).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
 		)
 	)
 	
-	# ค้างบรรยากาศเงียบสงบโดยไม่มีบทพูด 2.5 วินาที แล้วเริ่มฉาก 5 (4.8s)
+	# ค้างบรรยากาศเงียบสงบโดยไม่มีบทพูด 2.2 วินาที แล้วเข้าสู่ฉาก 5 (4.8s)
 	var tw_next = create_tween()
 	tw_next.tween_interval(4.8)
 	tw_next.tween_callback(play_stage_5_master_return)
 
 ## =============================================================
 ## ฉากที่ 5: การกลับมาของปรมาจารย์
-## หลุมดำเปิด สั่นสะเทือน เวลตกใจกระโดดขึ้น คัมภีร์ลอยค้าง 0.4 วิ แล้วตกลงมาในมือ
-## อาจารย์พุ่งขึ้นมาจากหลุมดำ ยืนนิ่ง 1 วิ แล้วเปลี่ยนเป็นยิ้มกวน เวลอึ้งสุดขีด
+## จังหวะคอมเมดี้: หลุมดำเปิดช้าๆ -> อาจารย์พุ่งขึ้นมาแบบช้าลงเห็นชัดเจน
+## เวลสะดุ้ง คัมภีร์กระดอนขึ้นฟ้าแล้วสลายหายไป
+## อาจารย์แลนดิ้งทำหน้า minishock เอ่ยถามเวล -> เวลทำหน้า angry -> เข้า Flashback
 ## =============================================================
 func play_stage_5_master_return() -> void:
 	current_stage = 5
+	exclamation_mark.visible = false
 	
-	# 5.1 หลุมดำเปิดขึ้นทางขวา มีแรงสั่นสะเทือนเล็กน้อย (0.6s)
+	# 5.1 หลุมดำค่อย ๆ เปิดขึ้นทางขวาพร้อมเสียงสั่นสะเทือน ตำแหน่ง intro_cutscene (40, 97) (0.8s)
 	var tw_hole = create_tween()
-	tw_hole.tween_interval(0.6)
+	tw_hole.tween_interval(0.8)
 	tw_hole.tween_callback(func():
-		camera_shake_amount = 3.5
+		camera_shake_amount = 2.5
 		black_hole.visible = true
-		black_hole.position = Vector2(45, 96)
+		black_hole.position = Vector2(40, 97)
 		black_hole.scale = Vector2.ZERO
 		var tw_bh = create_tween()
-		tw_bh.tween_property(black_hole, "scale", Vector2(1.2, 1.0), 0.45).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+		tw_bh.tween_property(black_hole, "scale", Vector2(1.3, 1.1), 0.65).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	)
 	
-	# 5.2 เวลตกใจกระโดดขึ้น หนังสือหลุดมือลอยขึ้นฟ้า (1.1s)
-	var tw_vel_startle = create_tween()
-	tw_vel_startle.tween_interval(1.1)
-	tw_vel_startle.tween_callback(func():
+	# 5.2 ปรมาจารย์พุ่งตัวขึ้นมาจากหลุมดำอย่างชัดเจน ไม่เร็วเกินไป (1.8s)
+	# พร้อมกับจังหวะที่คัมภีร์เด้งหลุดจากมือเวลแล้วสลายหายไป
+	var tw_emerge = create_tween()
+	tw_emerge.tween_interval(1.8)
+	tw_emerge.tween_callback(func():
 		_play_sfx(sfx_pop)
-		vel.play("shock")
+		camera_shake_amount = 4.5
 		
-		# เวลกระโดดตัวลอย
-		var tw_vjump = create_tween()
-		tw_vjump.tween_property(vel, "position:y", 38.0, 0.22).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-		tw_vjump.tween_property(vel, "position:y", 59.0, 0.22).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
-		
-		# หนังสือหลุดมือลอยขึ้นไปสูงกว่าตัวเวล
-		var tw_bjump = create_tween()
-		tw_bjump.tween_property(khampri_floating, "position:y", -30.0, 0.25).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-		# ค้างอยู่กลางอากาศแป๊บนึง (0.4 วิ)
-		tw_bjump.tween_interval(0.4)
-		# ตกลงมาใส่มือเวลเหมือนเดิม
-		tw_bjump.tween_property(khampri_floating, "position:y", 14.0, 0.25).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
-		tw_bjump.tween_callback(func():
-			vel.play("hold")
-		)
-	)
-	
-	# 5.3 อาจารย์พุ่งขึ้นมาจากหลุมดำ ลงมายืนที่พื้น (2.3s)
-	var tw_master_emerge = create_tween()
-	tw_master_emerge.tween_interval(2.3)
-	tw_master_emerge.tween_callback(func():
-		_play_sfx(sfx_pop)
-		camera_shake_amount = 5.0
+		# อาจารย์พุ่งขึ้นมาจากหลุมดำ (40, 97)
 		master_char.visible = true
-		master_char.position = Vector2(45, 96)
-		master_char.scale = Vector2(0.2, 0.2)
+		master_char.position = Vector2(40, 97)
+		master_char.scale = Vector2(0.3, 0.3)
 		master_char.modulate = Color(1, 1, 1, 1)
 		master_char.play("shock1")
 		
-		# ดีดตัวพุ่งขึ้นสู่ความสูง 28px แล้วลงมายืนที่ 59px
+		# พุ่งลอยขึ้นสู่อากาศ (0.55s) แล้วตกลงมายืนบนพื้นตำแหน่ง intro_cutscene (40, 59) (0.35s)
 		var tw_m = create_tween().set_parallel(true)
-		tw_m.tween_property(master_char, "position:y", 28.0, 0.32).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-		tw_m.tween_property(master_char, "scale", Vector2.ONE, 0.32)
+		tw_m.tween_property(master_char, "position:y", 10.0, 0.55).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+		tw_m.tween_property(master_char, "scale", Vector2.ONE, 0.55)
 		
-		tw_m.chain().tween_property(master_char, "position:y", 59.0, 0.22).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+		tw_m.chain().tween_property(master_char, "position:y", 59.0, 0.35).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+		tw_m.chain().tween_callback(func():
+			camera_shake_amount = 3.0
+			# อาจารย์แลนดิ้งลงพื้น ทำหน้า minishock (เหงื่อตก เลิ่กลั่ก)
+			master_char.play("minishock")
+		)
 		
-		# หลุมดำปิดตัวลงทันทีหลังอาจารย์ขึ้นมา
+		# หลุมดำค่อยๆ หดปิดตัวลง
 		var tw_close = create_tween()
-		tw_close.tween_property(black_hole, "scale", Vector2.ZERO, 0.25)
+		tw_close.tween_interval(0.4)
+		tw_close.tween_property(black_hole, "scale", Vector2.ZERO, 0.35)
 		tw_close.tween_callback(func(): black_hole.visible = false)
 		
-		# อาจารย์ยืนนิ่งทำหน้าธรรมดา (idle) 1 วินาที
-		tw_m.chain().tween_callback(func():
-			master_char.play("idle")
+		# --- เวลสะดุ้งตกใจกระโดด & คัมภีร์กระดอนขึ้นฟ้าแล้วสลายหายไป (ไม่มีเครื่องหมาย !) ---
+		exclamation_mark.visible = false
+		vel.play("shock")
+		var tw_vjump = create_tween()
+		tw_vjump.tween_property(vel, "position:y", 35.0, 0.22).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+		tw_vjump.tween_property(vel, "position:y", 59.0, 0.25).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+		
+		# คัมภีร์เด้งลอยขึ้นฟ้า ส่องแสงสีทอง แล้วสลายหายไป
+		var tw_b_vanish = create_tween().set_parallel(true)
+		tw_b_vanish.tween_property(khampri_floating, "position:y", -60.0, 0.45).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+		tw_b_vanish.tween_property(khampri_floating, "modulate", Color(2.5, 2.2, 1.4, 1.0), 0.25)
+		if khampri_shadow:
+			tw_b_vanish.tween_property(khampri_shadow, "modulate:a", 0.0, 0.3)
+		
+		# สลายตัวเป็นประกายแสงหายไปในอากาศ
+		tw_b_vanish.chain().tween_property(khampri_floating, "scale", Vector2.ZERO, 0.3).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_IN)
+		tw_b_vanish.chain().tween_property(khampri_floating, "modulate:a", 0.0, 0.25)
+		tw_b_vanish.chain().tween_callback(func():
+			khampri_floating.visible = false
+			if khampri_shadow:
+				khampri_shadow.visible = false
 		)
 	)
 	
-	# 5.4 อาจารย์เปลี่ยนเป็นยิ้มกวนๆ ตาหยี (playful) & เวลอึ้งตกใจสุดขีด (3.5s)
-	var tw_expressions = create_tween()
-	tw_expressions.tween_interval(3.5)
-	tw_expressions.tween_callback(func():
-		# อาจารย์ยิ้มกวนแบบไม่รู้ร้อนรู้หนาว (master_playful)
-		master_char.play("playful")
+	# 5.3 อาจารย์แลนดิ้งทำหน้า minishock แล้วเปิดกล่องข้อความถามเวล (3.2s)
+	# เวลเปลี่ยนเป็นหน้า angry (>_<) ฟังอาจารย์ถาม
+	var tw_dialogue = create_tween()
+	tw_dialogue.tween_interval(3.2)
+	tw_dialogue.tween_callback(func():
+		vel.play("angry")
+		master_char.play("minishock")
 		
-		# เวลอึ้ง ตกใจสุดขีดเมื่อเห็นว่าเป็นอาจารย์
-		vel.play("shock")
-		exclamation_mark.visible = true
-		exclamation_mark.scale = Vector2.ZERO
-		var tw_ex = create_tween()
-		tw_ex.tween_property(exclamation_mark, "scale", Vector2(1.3, 1.3), 0.12)
-		tw_ex.tween_property(exclamation_mark, "scale", Vector2.ONE, 0.1)
+		_show_dialogue(
+			"ปรมาจารย์",
+			"อ้าว เวล... เกิดอะไรขึ้นเนี่ย แล้วทำไมดูเหนื่อยมอมแมมแบบนี้ล่ะ?",
+			func():
+				# เมื่อผู้เล่นคลิกหรือกด Space ไปต่อ ให้ซ่อนกล่องข้อความแล้วตัดเข้า Flashback ทันที
+				_hide_dialogue(play_stage_6_comic_flashback)
+		)
 	)
-	
-	# เข้าสู่ฉาก 6 (ช่องการ์ตูนย้อนอดีต) (5.0s)
-	var tw_next = create_tween()
-	tw_next.tween_interval(5.0)
-	tw_next.tween_callback(play_stage_6_comic_flashback)
 
 ## =============================================================
-## ฉากที่ 6: เฉลยความจริงเบื้องหลัง (ช่องสี่เหลี่ยมกรอบการ์ตูน Flashback)
-## ซูมอาจารย์แก่หลงลืม พลังรั่วตกหลุมตัวเอง
+## ฉากที่ 6: เฉลยความจริงเบื้องหลัง (Flashback ช้าลง ชัดเจน ให้เวลาดูและอ่านมุกตลก)
 ## =============================================================
 func play_stage_6_comic_flashback() -> void:
 	current_stage = 6
 	exclamation_mark.visible = false
 	
-	# ห้องสมุดมืดลงเล็กน้อย
-	if dark_overlay:
-		dark_overlay.visible = true
-		dark_overlay.modulate = Color(1, 1, 1, 0.0)
-		var tw_dim = create_tween()
-		tw_dim.tween_property(dark_overlay, "modulate:a", 1.0, 0.4)
-	
-	# กรอบการ์ตูนสี่เหลี่ยมโผล่ขึ้นมาตรงกลาง (ซูมภาพอาจารย์)
+	# กรอบภาพย้อนเหตุการณ์เด้งขึ้นมา
 	comic_container.visible = true
-	comic_container.scale = Vector2(0.2, 0.2)
+	comic_container.scale = Vector2(0.3, 0.3)
 	comic_container.modulate = Color(1, 1, 1, 0.0)
 	comic_container.pivot_offset = comic_container.size * 0.5
 	
 	flashback_master.visible = true
-	flashback_master.position = Vector2(360, 240)
-	flashback_master.scale = Vector2(3.0, 3.0)
+	flashback_master.position = Vector2(460, 345)
+	flashback_master.scale = Vector2(2.8, 2.8)
 	flashback_master.modulate = Color(1, 1, 1, 1)
-	flashback_master.play("walk")
+	flashback_master.play("breathe_blink") # ยืนสงบนิ่งหายใจกระพริบตาตาใส เหมือนฉากเปิดเรื่อง
 	flashback_hole.visible = false
 	
 	var tw_panel_in = create_tween().set_parallel(true)
 	tw_panel_in.tween_property(comic_container, "scale", Vector2.ONE, 0.45).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	tw_panel_in.tween_property(comic_container, "modulate:a", 1.0, 0.45)
 	
-	# แอนิเมชันในกรอบ: อาจารย์เดินเพลินๆ พลังเวทตกหล่นเกิดหลุมดำใต้ฝ่าเท้า (1.2s)
+	# 6.2 เมื่อกรอบเปิดขึ้นมา อาจารย์ยืนอยู่ หลุมดำค่อยๆ ขยายขึ้นใต้เท้าบนพื้นห้องสมุด (1.6s)
 	var tw_hole_open = create_tween()
-	tw_hole_open.tween_interval(1.2)
+	tw_hole_open.tween_interval(1.6)
 	tw_hole_open.tween_callback(func():
+		# หลุมดำค่อยๆ ขยายขึ้นใต้เท้าที่พื้นห้องสมุด (y = 460)
 		flashback_hole.visible = true
+		flashback_hole.position = Vector2(460, 460)
 		flashback_hole.scale = Vector2.ZERO
 		var tw_h = create_tween()
-		tw_h.tween_property(flashback_hole, "scale", Vector2(3.0, 2.4), 0.35).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+		tw_h.tween_property(flashback_hole, "scale", Vector2(3.0, 2.2), 0.5).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 		
-		# อาจารย์สะดุดตกใจเหวอ (shock2)
-		flashback_master.play("shock2")
+		# อาจารย์ทำท่าตกใจสุดขีด shock1 (ยกมือทาบหู ตาโตอ้าปากค้าง เหมือนฉากเปิดเรื่องเป๊ะๆ)
+		flashback_master.play("shock1")
+		
+		# เอฟเฟกต์สะดุ้งตัวสั่นด้วยความตกใจ (เหมือนฉากเปิดเรื่อง)
+		var tw_shake = create_tween().set_loops(6)
+		tw_shake.tween_property(flashback_master, "position:x", 463.0, 0.05)
+		tw_shake.tween_property(flashback_master, "position:x", 457.0, 0.05)
+		tw_shake.chain().tween_property(flashback_master, "position:x", 460.0, 0.05)
 	)
 	
-	# อาจารย์ร่วงหล่นลงไปในหลุมดำของตัวเอง (2.2s)
+	# 6.3 หลังตกใจเหวออยู่ 1.5 วินาที -> อาจารย์ร่วงหล่นลงไปในหลุมดำของตัวเอง (3.3s)
 	var tw_fall = create_tween()
-	tw_fall.tween_interval(2.2)
+	tw_fall.tween_interval(3.3)
 	tw_fall.tween_callback(func():
 		_play_sfx(sfx_warp)
+		# ดีดตัวนิดนึงแล้วร่วงดิ่งลงหลุมดำ (เหมือนฉากเปิดเรื่อง)
 		var tw_m_fall = create_tween().set_parallel(true)
-		tw_m_fall.tween_property(flashback_master, "position:y", 370.0, 0.55).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
-		tw_m_fall.tween_property(flashback_master, "scale", Vector2(0.5, 0.5), 0.55)
-		tw_m_fall.tween_property(flashback_master, "modulate:a", 0.0, 0.55)
+		tw_m_fall.tween_property(flashback_master, "position:y", 510.0, 0.65).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+		tw_m_fall.tween_property(flashback_master, "scale", Vector2(0.35, 0.35), 0.65)
+		tw_m_fall.tween_property(flashback_master, "modulate:a", 0.0, 0.65)
 		
-		# หลุมดำปิดตามลงไป
-		tw_m_fall.chain().tween_property(flashback_hole, "scale", Vector2.ZERO, 0.3)
+		# หลุมดำหดปิดตัวลง
+		tw_m_fall.chain().tween_property(flashback_hole, "scale", Vector2.ZERO, 0.35)
 	)
 	
-	# กรอบการ์ตูนหายไป กลับสู่ปัจจุบัน (4.8s)
+	# 6.4 ค้างกรอบภาพที่ว่างเปล่าพร้อมคำบรรยายมุกตลกให้อ่านได้เต็มที่ (~3.6s) แล้วค่อยปิดกรอบ (7.6s)
 	var tw_panel_out = create_tween()
-	tw_panel_out.tween_interval(4.8)
+	tw_panel_out.tween_interval(7.6)
 	tw_panel_out.tween_callback(func():
 		var tw_out = create_tween().set_parallel(true)
-		tw_out.tween_property(comic_container, "scale", Vector2(0.3, 0.3), 0.35).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_IN)
-		tw_out.tween_property(comic_container, "modulate:a", 0.0, 0.35)
-		if dark_overlay:
-			tw_out.tween_property(dark_overlay, "modulate:a", 0.0, 0.35)
+		tw_out.tween_property(comic_container, "scale", Vector2(0.3, 0.3), 0.4).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_IN)
+		tw_out.tween_property(comic_container, "modulate:a", 0.0, 0.4)
 		
 		tw_out.chain().tween_callback(func():
 			comic_container.visible = false
-			if dark_overlay:
-				dark_overlay.visible = false
 			play_stage_7_dialogue()
 		)
 	)
 
 ## =============================================================
-## ฉากที่ 7: บทสนทนา (คลิกหน้าจอเพื่อไปต่อ)
+## ฉากที่ 7: บทสนทนาหลังจบ Flashback (เวลมองอาจารย์ด้วยหน้า angry แล้วบ่นอาจารย์)
 ## =============================================================
 func play_stage_7_dialogue() -> void:
 	current_stage = 7
 	
-	# อาจารย์ยืนมองเวลตาใส
+	# เวลยังคงมองอาจารย์ด้วยหน้า angry (>_<) อาจารย์ยืนมองเวล
+	vel.play("angry")
 	master_char.play("breathe_blink")
 	
-	# ประโยคที่ 1: อาจารย์ถาม
-	_show_dialogue(
-		"ปรมาจารย์",
-		"อ้าว เวล... เกิดอะไรขึ้นเนี่ย แล้วทำไมดูเหนื่อยมอมแมมแบบนี้ล่ะ?",
-		_dialogue_line_2_vel
-	)
-
-func _dialogue_line_2_vel() -> void:
-	# เวลทำหน้างอน/มุ่ยแก้ม (vel_angry)
-	vel.play("angry")
-	
-	# ประโยคที่ 2: เวลตอบ
+	# ประโยคที่ 1: เวลพูดหลังรู้ความจริง
 	_show_dialogue(
 		"เวล",
 		"เฮ้อ... ทั้งหมดนี่เป็นเพราะอาจารย์เองสินะ...",
-		_dialogue_line_3_master
-	)
-
-func _dialogue_line_3_master() -> void:
-	# อาจารย์ยิ้มกวนๆ ตาหยี แลบลิ้น (playful)
-	master_char.play("playful")
-	
-	# ประโยคที่ 3: อาจารย์หัวเราะ
-	_show_dialogue(
-		"ปรมาจารย์",
-		"ฉันเองหรอเนี่ย_55555",
 		func():
-			_hide_dialogue(play_stage_8_epilogue)
+			# ปรมาจารย์ยิ้มแหะๆ ตาหยี playful ขำแห้ง
+			master_char.play("playful")
+			
+			# ประโยคที่ 2: อาจารย์ตอบ
+			_show_dialogue(
+				"ปรมาจารย์",
+				"ฉันเองหรอเนี่ย_55555",
+				func():
+					_hide_dialogue(play_stage_8_epilogue)
+			)
 	)
 
 ## =============================================================
 ## ฉากที่ 8: บทสรุปการเดินทางของเวล (The End)
-## ซูมออก -> จอดำ -> ข้อความสรุป -> THE END -> ปุ่มกลับสู่หน้าหลัก
+## ซูมออก -> พื้นหลังมืดลงอย่างต่อเนื่อง -> THE END ชัดเจน
 ## =============================================================
 func play_stage_8_epilogue() -> void:
 	current_stage = 8
@@ -668,22 +696,22 @@ func play_stage_8_epilogue() -> void:
 	is_fast_forwarding = false
 	Engine.time_scale = 1.0
 	
-	# เวลมองคัมภีร์ในมือแล้วยิ้มบางๆ อาจารย์ยืนยิ้มอยู่ข้างๆ
-	vel.play("hold")
+	# เวลยืนพักหายใจ อาจารย์ยืนยิ้มอยู่ข้างๆ
+	vel.play("breathe_blink")
 	master_char.play("playful")
 	
 	# กล้องค่อย ๆ ซูมออก เผยภาพกว้างของห้องสมุด (3.0s)
 	var tw_zoom = create_tween().set_parallel(true)
 	tw_zoom.tween_property(camera, "zoom", Vector2(0.85, 0.85), 3.0).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 	
-	# ภาพค่อย ๆ มืดลง (Fade to Black) (2.5s)
+	# พื้นหลังค่อย ๆ มืดลงอย่างต่อเนื่องและนุ่มนวล (Fade to Dark 2.5s)
+	the_end_container.visible = true
+	the_end_container.modulate = Color(1, 1, 1, 0.0)
+	
 	var tw_fade_dark = create_tween()
-	tw_fade_dark.tween_interval(2.5)
+	tw_fade_dark.tween_interval(0.8)
+	tw_fade_dark.tween_property(the_end_container, "modulate:a", 1.0, 2.2).set_trans(Tween.TRANS_SINE)
 	tw_fade_dark.tween_callback(func():
-		the_end_container.visible = true
-		the_end_container.modulate = Color(1, 1, 1, 0)
-		var tw_te = create_tween()
-		tw_te.tween_property(the_end_container, "modulate:a", 1.0, 1.4).set_trans(Tween.TRANS_SINE)
 		return_menu_btn.grab_focus()
 	)
 
@@ -740,4 +768,18 @@ func _on_return_menu_pressed() -> void:
 func _play_sfx(player: AudioStreamPlayer) -> void:
 	if player and player.stream:
 		player.play()
+
+func _init_sfx() -> void:
+	sfx_fusion = _create_sfx_player("res://assets/audio/sfx_success.wav")
+	sfx_warp = _create_sfx_player("res://assets/audio/sfx_command.wav")
+	sfx_pop = _create_sfx_player("res://assets/audio/sfx_modal.wav")
+	sfx_next = _create_sfx_player("res://assets/audio/sfx_dialogue_next.wav")
+	sfx_success = _create_sfx_player("res://assets/audio/sfx_success.wav")
+
+func _create_sfx_player(path: String) -> AudioStreamPlayer:
+	var player = AudioStreamPlayer.new()
+	if ResourceLoader.exists(path):
+		player.stream = load(path)
+	add_child(player)
+	return player
 
