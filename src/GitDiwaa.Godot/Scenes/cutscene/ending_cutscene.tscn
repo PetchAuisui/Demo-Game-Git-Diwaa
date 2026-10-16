@@ -45,6 +45,7 @@
 [ext_resource type="Texture2D" uid="uid://6272rjfm3v7c" path="res://assets/cutscene/backgrounds/storm-clouds-preview-Sheet.png" id="43_storm"]
 [ext_resource type="Texture2D" uid="uid://ldg2myveluut" path="res://assets/cutscene/backgrounds/peaceful-landscape-preview-Sheet.png" id="44_peaceful"]
 [ext_resource type="Texture2D" uid="uid://dcvd3t5deskx3" path="res://assets/cutscene/backgrounds/village-normal-to-chaos-Sheet.png" id="45_village"]
+[ext_resource type="Texture2D" uid="uid://bgvwv062jgxby" path="res://assets/cutscene/anger_mark.png" id="46_anger"]
 
 [sub_resource type="Gradient" id="Gradient_ring"]
 offsets = PackedFloat32Array(0.55, 0.72, 0.88, 1)
@@ -65,6 +66,18 @@ colors = PackedColorArray(0.8, 0.95, 1, 0.9, 0.4, 0.7, 1, 0.5, 0.1, 0.3, 0.8, 0)
 [sub_resource type="GradientTexture2D" id="GradientTexture2D_warp"]
 gradient = SubResource("Gradient_warp")
 height = 32
+fill = 1
+fill_from = Vector2(0.5, 0.5)
+fill_to = Vector2(1, 0.5)
+
+[sub_resource type="Gradient" id="Gradient_aura"]
+offsets = PackedFloat32Array(0, 0.45, 0.75, 1)
+colors = PackedColorArray(1, 0.95, 0.7, 0.8, 0.7, 0.85, 1, 0.45, 0.4, 0.3, 0.8, 0.15, 0, 0, 0, 0)
+
+[sub_resource type="GradientTexture2D" id="GradientTexture2D_aura"]
+gradient = SubResource("Gradient_aura")
+width = 256
+height = 256
 fill = 1
 fill_from = Vector2(0.5, 0.5)
 fill_to = Vector2(1, 0.5)
@@ -512,6 +525,13 @@ position = Vector2(960, 540)
 scale = Vector2(0.2, 0.2)
 texture = SubResource("GradientTexture2D_ring")
 
+[node name="BookAura" type="Sprite2D" parent="Stage1_BookRestoration" unique_id=987123999]
+visible = false
+modulate = Color(1.6, 1.4, 1.1, 0)
+position = Vector2(960, 540)
+scale = Vector2(1.8, 1.8)
+texture = SubResource("GradientTexture2D_aura")
+
 [node name="KhampriNull" type="Sprite2D" parent="Stage1_BookRestoration" unique_id=819533844]
 position = Vector2(960, 540)
 scale = Vector2(2.2, 2.2)
@@ -528,67 +548,67 @@ texture = ExtResource("21_khampri")
 position = Vector2(960, 540)
 
 [node name="Shard1" type="Sprite2D" parent="Stage1_BookRestoration/ShardsContainer" unique_id=468601452]
-scale = Vector2(0.9, 0.9)
+scale = Vector2(1.4, 1.4)
 texture = ExtResource("23_m1")
 
 [node name="Shard2" type="Sprite2D" parent="Stage1_BookRestoration/ShardsContainer" unique_id=149642461]
-scale = Vector2(0.9, 0.9)
+scale = Vector2(1.4, 1.4)
 texture = ExtResource("24_m2")
 
 [node name="Shard3" type="Sprite2D" parent="Stage1_BookRestoration/ShardsContainer" unique_id=499178280]
-scale = Vector2(0.9, 0.9)
+scale = Vector2(1.4, 1.4)
 texture = ExtResource("25_m3")
 
 [node name="Shard4" type="Sprite2D" parent="Stage1_BookRestoration/ShardsContainer" unique_id=267025857]
-scale = Vector2(0.9, 0.9)
+scale = Vector2(1.4, 1.4)
 texture = ExtResource("26_m4")
 
 [node name="Shard5" type="Sprite2D" parent="Stage1_BookRestoration/ShardsContainer" unique_id=1396513331]
-scale = Vector2(0.9, 0.9)
+scale = Vector2(1.4, 1.4)
 texture = ExtResource("27_m5")
 
 [node name="Shard6" type="Sprite2D" parent="Stage1_BookRestoration/ShardsContainer" unique_id=662413120]
-scale = Vector2(0.9, 0.9)
+scale = Vector2(1.4, 1.4)
 texture = ExtResource("28_m6")
 
 [node name="Shard7" type="Sprite2D" parent="Stage1_BookRestoration/ShardsContainer" unique_id=486169204]
-scale = Vector2(0.9, 0.9)
+scale = Vector2(1.4, 1.4)
 texture = ExtResource("29_m7")
 
 [node name="Shard8" type="Sprite2D" parent="Stage1_BookRestoration/ShardsContainer" unique_id=297680122]
-scale = Vector2(0.9, 0.9)
+scale = Vector2(1.4, 1.4)
 texture = ExtResource("30_m8")
 
 [node name="Shard9" type="Sprite2D" parent="Stage1_BookRestoration/ShardsContainer" unique_id=1471429257]
-scale = Vector2(0.9, 0.9)
+scale = Vector2(1.4, 1.4)
 texture = ExtResource("31_m9")
 
 [node name="Shard10" type="Sprite2D" parent="Stage1_BookRestoration/ShardsContainer" unique_id=1471476513]
-scale = Vector2(0.9, 0.9)
+scale = Vector2(1.4, 1.4)
 texture = ExtResource("32_m10")
 
 [node name="Shard11" type="Sprite2D" parent="Stage1_BookRestoration/ShardsContainer" unique_id=1879407160]
-scale = Vector2(0.9, 0.9)
+scale = Vector2(1.4, 1.4)
 texture = ExtResource("33_m11")
 
 [node name="Shard12" type="Sprite2D" parent="Stage1_BookRestoration/ShardsContainer" unique_id=2000880641]
-scale = Vector2(0.9, 0.9)
+scale = Vector2(1.4, 1.4)
 texture = ExtResource("34_m12")
 
 [node name="Shard13" type="Sprite2D" parent="Stage1_BookRestoration/ShardsContainer" unique_id=1308754401]
-scale = Vector2(0.9, 0.9)
+scale = Vector2(1.4, 1.4)
 texture = ExtResource("35_m13")
 
 [node name="Shard14" type="Sprite2D" parent="Stage1_BookRestoration/ShardsContainer" unique_id=615020325]
-scale = Vector2(0.9, 0.9)
+scale = Vector2(1.4, 1.4)
 texture = ExtResource("36_m14")
 
 [node name="Shard15" type="Sprite2D" parent="Stage1_BookRestoration/ShardsContainer" unique_id=442435916]
-scale = Vector2(0.9, 0.9)
+scale = Vector2(1.4, 1.4)
 texture = ExtResource("37_m15")
 
 [node name="Shard16" type="Sprite2D" parent="Stage1_BookRestoration/ShardsContainer" unique_id=456207076]
-scale = Vector2(0.9, 0.9)
+scale = Vector2(1.4, 1.4)
 texture = ExtResource("38_m16")
 
 [node name="Stage2_SkyRestoration" type="Node2D" parent="." unique_id=685658419]
@@ -678,6 +698,12 @@ visible = false
 position = Vector2(0, -56)
 scale = Vector2(1e-05, 1e-05)
 texture = ExtResource("20_exclamation")
+
+[node name="AngerMark" type="Sprite2D" parent="Stage4_Library/Vel" unique_id=861410790]
+visible = false
+position = Vector2(14, -54)
+scale = Vector2(1e-05, 1e-05)
+texture = ExtResource("46_anger")
 
 [node name="Master" type="AnimatedSprite2D" parent="Stage4_Library" unique_id=1568305020]
 visible = false
