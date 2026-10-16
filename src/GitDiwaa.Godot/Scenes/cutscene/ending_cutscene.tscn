@@ -47,6 +47,8 @@
 [ext_resource type="Texture2D" uid="uid://dcvd3t5deskx3" path="res://assets/cutscene/backgrounds/village-normal-to-chaos-Sheet.png" id="45_village"]
 [ext_resource type="Texture2D" uid="uid://bgvwv062jgxby" path="res://assets/cutscene/anger_mark.png" id="46_anger"]
 [ext_resource type="Texture2D" uid="uid://dc6mqbtqyme4e" path="res://assets/cutscene/sigh_puff.png" id="47_puff"]
+[ext_resource type="Texture2D" uid="uid://dbunvkxfhmyjk" path="res://assets/cutscene/characters/mewla/mewla_black_idle.png" id="48_mewla"]
+[ext_resource type="Texture2D" uid="uid://d2uwr2jusv421" path="res://assets/cutscene/characters/guardian/guardian-breathe-Sheet.png" id="49_guardian"]
 
 [sub_resource type="Gradient" id="Gradient_ring"]
 offsets = PackedFloat32Array(0.55, 0.72, 0.88, 1)
@@ -505,6 +507,17 @@ corner_radius_bottom_left = 8
 shadow_color = Color(0.9, 0.8, 0.4, 0.35)
 shadow_size = 8
 
+[sub_resource type="AtlasTexture" id="AtlasTexture_guardian_idle"]
+atlas = ExtResource("49_guardian")
+region = Rect2(0, 0, 48, 83)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_bottom_bar"]
+bg_color = Color(0.04, 0.03, 0.07, 0.95)
+border_width_top = 3
+border_color = Color(0.85, 0.72, 0.42, 0.85)
+shadow_color = Color(0, 0, 0, 0.85)
+shadow_size = 14
+
 [node name="EndingCutscene" type="Node2D" unique_id=1713555345]
 texture_filter = 1
 script = ExtResource("1_script")
@@ -905,9 +918,9 @@ anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -650.0
-offset_top = -220.0
-offset_right = 650.0
+offset_left = -600.0
+offset_top = -180.0
+offset_right = 600.0
 offset_bottom = -20.0
 grow_horizontal = 2
 grow_vertical = 2
@@ -950,26 +963,247 @@ text = "THE END"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="ReturnMenuBtn" type="Button" parent="MagicStoryUI/TheEndContainer" unique_id=1587123478]
+[node name="ContinuePrompt" type="Label" parent="MagicStoryUI/TheEndContainer" unique_id=1494280456]
 layout_mode = 1
-anchors_preset = 8
+anchors_preset = 7
 anchor_left = 0.5
-anchor_top = 0.5
+anchor_top = 1.0
 anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -175.0
-offset_top = 100.0
-offset_right = 175.0
-offset_bottom = 166.0
+anchor_bottom = 1.0
+offset_left = -300.0
+offset_top = -110.0
+offset_right = 300.0
+offset_bottom = -70.0
 grow_horizontal = 2
+grow_vertical = 0
+theme_override_colors/font_color = Color(0.85, 0.78, 0.65, 0.9)
+theme_override_colors/font_outline_color = Color(0.18, 0.1, 0.04, 0.85)
+theme_override_constants/outline_size = 4
+theme_override_fonts/font = ExtResource("39_font")
+theme_override_font_sizes/font_size = 22
+text = "คลิกหน้าจอเพื่อไปต่อ"
+horizontal_alignment = 1
+
+[node name="CreditsContainer" type="Control" parent="MagicStoryUI" unique_id=305941744]
+visible = false
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="DarkOverlay" type="ColorRect" parent="MagicStoryUI/CreditsContainer" unique_id=1835182048]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.04, 0.03, 0.07, 0.75)
+
+[node name="LeftContent" type="VBoxContainer" parent="MagicStoryUI/CreditsContainer" unique_id=515662230]
+layout_mode = 1
+anchors_preset = 4
+anchor_top = 0.5
+anchor_bottom = 0.5
+offset_left = 120.0
+offset_top = -240.0
+offset_right = 880.0
+offset_bottom = 160.0
+grow_vertical = 2
+theme_override_constants/separation = 22
+alignment = 1
+
+[node name="GameTitleLabel" type="Label" parent="MagicStoryUI/CreditsContainer/LeftContent" unique_id=373728280]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.88, 0.45, 1)
+theme_override_colors/font_shadow_color = Color(0.9, 0.6, 0.1, 0.5)
+theme_override_colors/font_outline_color = Color(0.12, 0.06, 0.02, 1)
+theme_override_constants/shadow_offset_x = 0
+theme_override_constants/shadow_offset_y = 0
+theme_override_constants/outline_size = 12
+theme_override_constants/shadow_outline_size = 20
+theme_override_fonts/font = ExtResource("39_font")
+theme_override_font_sizes/font_size = 68
+text = "GIT DI WAA"
+
+[node name="ThankYouLabel" type="Label" parent="MagicStoryUI/CreditsContainer/LeftContent" unique_id=1892837101]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.96, 0.93, 0.88, 1)
+theme_override_colors/font_outline_color = Color(0.1, 0.08, 0.14, 0.95)
+theme_override_constants/outline_size = 6
+theme_override_fonts/font = ExtResource("39_font")
+theme_override_font_sizes/font_size = 36
+text = "Thank You for Playing"
+
+[node name="GratitudeLabel" type="Label" parent="MagicStoryUI/CreditsContainer/LeftContent" unique_id=1892837102]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.88, 0.82, 0.7, 0.95)
+theme_override_colors/font_outline_color = Color(0.1, 0.08, 0.14, 0.95)
+theme_override_constants/outline_size = 6
+theme_override_fonts/font = ExtResource("39_font")
+theme_override_font_sizes/font_size = 28
+text = "ขอบคุณที่ร่วมเดินทางไปกับเรา"
+
+[node name="RightCharactersContainer" type="HBoxContainer" parent="MagicStoryUI/CreditsContainer" unique_id=1892837103]
+texture_filter = 1
+layout_mode = 1
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -960.0
+offset_top = -430.0
+offset_right = -100.0
+offset_bottom = -140.0
+grow_horizontal = 0
+grow_vertical = 0
+theme_override_constants/separation = 40
+alignment = 1
+
+[node name="CharVel" type="VBoxContainer" parent="MagicStoryUI/CreditsContainer/RightCharactersContainer" unique_id=1892837104]
+layout_mode = 2
+theme_override_constants/separation = 12
+alignment = 2
+
+[node name="NameLabel" type="Label" parent="MagicStoryUI/CreditsContainer/RightCharactersContainer/CharVel" unique_id=1892837105]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.92, 0.75, 1)
+theme_override_colors/font_outline_color = Color(0.1, 0.08, 0.14, 1)
+theme_override_constants/outline_size = 6
+theme_override_fonts/font = ExtResource("39_font")
+theme_override_font_sizes/font_size = 22
+text = "เวล"
+horizontal_alignment = 1
+
+[node name="SpriteRect" type="TextureRect" parent="MagicStoryUI/CreditsContainer/RightCharactersContainer/CharVel" unique_id=1892837106]
+texture_filter = 1
+custom_minimum_size = Vector2(132, 228)
+layout_mode = 2
+texture = ExtResource("6_vel_idle")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="CharMewla" type="VBoxContainer" parent="MagicStoryUI/CreditsContainer/RightCharactersContainer" unique_id=1892837107]
+layout_mode = 2
+theme_override_constants/separation = 12
+alignment = 2
+
+[node name="NameLabel" type="Label" parent="MagicStoryUI/CreditsContainer/RightCharactersContainer/CharMewla" unique_id=1892837108]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.92, 0.75, 1)
+theme_override_colors/font_outline_color = Color(0.1, 0.08, 0.14, 1)
+theme_override_constants/outline_size = 6
+theme_override_fonts/font = ExtResource("39_font")
+theme_override_font_sizes/font_size = 22
+text = "มิวรา"
+horizontal_alignment = 1
+
+[node name="SpriteRect" type="TextureRect" parent="MagicStoryUI/CreditsContainer/RightCharactersContainer/CharMewla" unique_id=1892837109]
+texture_filter = 1
+custom_minimum_size = Vector2(132, 228)
+layout_mode = 2
+texture = ExtResource("48_mewla")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="CharMaster" type="VBoxContainer" parent="MagicStoryUI/CreditsContainer/RightCharactersContainer" unique_id=1892837110]
+layout_mode = 2
+theme_override_constants/separation = 12
+alignment = 2
+
+[node name="NameLabel" type="Label" parent="MagicStoryUI/CreditsContainer/RightCharactersContainer/CharMaster" unique_id=1892837111]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.92, 0.75, 1)
+theme_override_colors/font_outline_color = Color(0.1, 0.08, 0.14, 1)
+theme_override_constants/outline_size = 6
+theme_override_fonts/font = ExtResource("39_font")
+theme_override_font_sizes/font_size = 22
+text = "ปรมาจารย์"
+horizontal_alignment = 1
+
+[node name="SpriteRect" type="TextureRect" parent="MagicStoryUI/CreditsContainer/RightCharactersContainer/CharMaster" unique_id=1892837112]
+texture_filter = 1
+custom_minimum_size = Vector2(132, 228)
+layout_mode = 2
+texture = ExtResource("13_master_idle")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="CharGuardian" type="VBoxContainer" parent="MagicStoryUI/CreditsContainer/RightCharactersContainer" unique_id=1892837113]
+layout_mode = 2
+theme_override_constants/separation = 12
+alignment = 2
+
+[node name="NameLabel" type="Label" parent="MagicStoryUI/CreditsContainer/RightCharactersContainer/CharGuardian" unique_id=1892837114]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.92, 0.75, 1)
+theme_override_colors/font_outline_color = Color(0.1, 0.08, 0.14, 1)
+theme_override_constants/outline_size = 6
+theme_override_fonts/font = ExtResource("39_font")
+theme_override_font_sizes/font_size = 22
+text = "ผู้พิทักษ์"
+horizontal_alignment = 1
+
+[node name="SpriteRect" type="TextureRect" parent="MagicStoryUI/CreditsContainer/RightCharactersContainer/CharGuardian" unique_id=1892837115]
+texture_filter = 1
+custom_minimum_size = Vector2(132, 228)
+layout_mode = 2
+texture = SubResource("AtlasTexture_guardian_idle")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="BottomBar" type="Panel" parent="MagicStoryUI/CreditsContainer" unique_id=1892837116]
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -140.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_styles/panel = SubResource("StyleBoxFlat_bottom_bar")
+
+[node name="DevelopedByLabel" type="Label" parent="MagicStoryUI/CreditsContainer/BottomBar" unique_id=1892837117]
+layout_mode = 1
+anchors_preset = 4
+anchor_top = 0.5
+anchor_bottom = 0.5
+offset_left = 120.0
+offset_top = -20.0
+offset_right = 720.0
+offset_bottom = 20.0
+grow_vertical = 2
+theme_override_colors/font_color = Color(0.85, 0.8, 0.72, 0.95)
+theme_override_colors/font_outline_color = Color(0.08, 0.05, 0.1, 1)
+theme_override_constants/outline_size = 4
+theme_override_fonts/font = ExtResource("39_font")
+theme_override_font_sizes/font_size = 24
+text = "Developed by Git Di Waa Team"
+vertical_alignment = 1
+
+[node name="ReturnMenuBtn" type="Button" parent="MagicStoryUI/CreditsContainer/BottomBar" unique_id=1587123478]
+layout_mode = 1
+anchors_preset = 6
+anchor_left = 1.0
+anchor_top = 0.5
+anchor_right = 1.0
+anchor_bottom = 0.5
+offset_left = -380.0
+offset_top = -32.0
+offset_right = -100.0
+offset_bottom = 32.0
+grow_horizontal = 0
 grow_vertical = 2
 mouse_default_cursor_shape = 2
 theme_override_colors/font_color = Color(1, 0.95, 0.8, 1)
 theme_override_colors/font_hover_color = Color(1, 1, 1, 1)
 theme_override_fonts/font = ExtResource("39_font")
-theme_override_font_sizes/font_size = 28
+theme_override_font_sizes/font_size = 26
 theme_override_styles/normal = SubResource("StyleBoxFlat_btn_normal")
 theme_override_styles/pressed = SubResource("StyleBoxFlat_btn_hover")
 theme_override_styles/hover = SubResource("StyleBoxFlat_btn_hover")
 theme_override_styles/focus = SubResource("StyleBoxFlat_btn_hover")
-text = "กลับสู่หน้าหลัก"
+text = "กลับสู่เมนูหลัก"

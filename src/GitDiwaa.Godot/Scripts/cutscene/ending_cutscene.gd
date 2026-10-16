@@ -62,7 +62,8 @@ extends Node2D
 @onready var dialogue_label: Label = $MagicStoryUI/DialogueBox/Margin/VBox/DialogueLabel
 @onready var continue_prompt: Label = $MagicStoryUI/DialogueBox/Margin/VBox/ContinuePrompt
 @onready var the_end_container: Control = $MagicStoryUI/TheEndContainer
-@onready var return_menu_btn: Button = $MagicStoryUI/TheEndContainer/ReturnMenuBtn
+@onready var credits_container: Control = $MagicStoryUI/CreditsContainer
+@onready var return_menu_btn: Button = $MagicStoryUI/CreditsContainer/BottomBar/ReturnMenuBtn
 
 # Audio (SFX only, NO BGM)
 var sfx_fusion: AudioStreamPlayer
@@ -75,6 +76,7 @@ var shards16: Array[Sprite2D] = []
 var shard_initial_positions: Array[Vector2] = []
 var current_stage: int = 1
 var is_waiting_dialogue: bool = false
+var is_waiting_epilogue: bool = false
 var dialogue_callback: Callable = Callable()
 var is_fast_forwarding: bool = false
 var can_fast_forward: bool = true
@@ -155,14 +157,21 @@ func _process(delta: float) -> void:
 			Engine.time_scale = 2.5 if wants_ff else 1.0
 
 func _input(event: InputEvent) -> void:
-	if not is_waiting_dialogue:
+	if is_waiting_dialogue:
+		if event.is_action_pressed("ui_accept") or \
+		   (event is InputEventKey and event.pressed and not event.echo and (event.keycode == KEY_SPACE or event.keycode == KEY_ENTER)) or \
+		   (event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT):
+			get_viewport().set_input_as_handled()
+			_advance_dialogue()
 		return
 	
-	if event.is_action_pressed("ui_accept") or \
-	   (event is InputEventKey and event.pressed and not event.echo and (event.keycode == KEY_SPACE or event.keycode == KEY_ENTER)) or \
-	   (event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT):
-		get_viewport().set_input_as_handled()
-		_advance_dialogue()
+	if is_waiting_epilogue:
+		if event.is_action_pressed("ui_accept") or \
+		   (event is InputEventKey and event.pressed and not event.echo and (event.keycode == KEY_SPACE or event.keycode == KEY_ENTER)) or \
+		   (event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT):
+			get_viewport().set_input_as_handled()
+			_advance_epilogue_to_credits()
+		return
 
 func _advance_dialogue() -> void:
 	if not is_waiting_dialogue:
@@ -207,6 +216,8 @@ func _reset_all_stages() -> void:
 	white_flash.color = Color(1, 1, 1, 0.0)
 	dialogue_box.visible = false
 	the_end_container.visible = false
+	credits_container.visible = false
+	is_waiting_epilogue = false
 	if ring_of_light:
 		ring_of_light.visible = false
 	if book_aura:
@@ -811,8 +822,8 @@ func _stop_sigh_puff() -> void:
 		)
 
 ## =============================================================
-## ฉากที่ 8: บทสรุปการเดินทางของเวล (The End)
-## ซูมออก -> พื้นหลังมืดลงอย่างต่อเนื่อง -> THE END ชัดเจน
+## ฉากที่ 8: บทสรุปการเดินทางของเวล (The End Screen ตามรูปภาพ)
+## ซูมออก -> พื้นหลังมืดลงอย่างต่อเนื่อง -> แสดงบทสรุปและ THE END ชัดเจน
 ## =============================================================
 func play_stage_8_epilogue() -> void:
 	current_stage = 8
@@ -826,23 +837,76 @@ func play_stage_8_epilogue() -> void:
 	if sigh_puff:
 		sigh_puff.visible = false
 	
-	# เมื่อจบบทสนทนา ทั้งสองตัวละครเปลี่ยนเป็นท่ายืนนิ่ง idle
+	# ทั้งสองตัวละครเปลี่ยนเป็นท่ายืนนิ่ง idle
 	vel.play("idle")
 	master_char.play("idle")
 	
 	# กล้องค่อย ๆ ซูมออก เผยภาพกว้างของห้องสมุด (3.0s)
-	var tw_zoom = create_tween().set_parallel(true)
+	var tw_zoom = create_tween()
 	tw_zoom.tween_property(camera, "zoom", Vector2(0.85, 0.85), 3.0).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 	
-	# พื้นหลังค่อย ๆ มืดลงอย่างต่อเนื่องและนุ่มนวล (Fade to Dark 2.5s)
+	# ค่อยๆ ปรากฏฉาก TheEndContainer
 	the_end_container.visible = true
 	the_end_container.modulate = Color(1, 1, 1, 0.0)
 	
-	var tw_fade_dark = create_tween()
-	tw_fade_dark.tween_interval(0.8)
-	tw_fade_dark.tween_property(the_end_container, "modulate:a", 1.0, 2.2).set_trans(Tween.TRANS_SINE)
-	tw_fade_dark.tween_callback(func():
-		return_menu_btn.grab_focus()
+	var tw_fade_in = create_tween()
+	tw_fade_in.tween_interval(0.6)
+	tw_fade_in.tween_property(the_end_container, "modulate:a", 1.0, 1.8).set_trans(Tween.TRANS_SINE)
+	tw_fade_in.tween_callback(func():
+		is_waiting_epilogue = true
+	)
+	
+	# หากผู้เล่นอ่านจบแล้วไม่กดอะไร จะตัดเข้าสู่หน้าขอบคุณอัตโนมัติใน 5.5 วินาที
+	var tw_auto = create_tween()
+	tw_auto.tween_interval(5.5)
+	tw_auto.tween_callback(func():
+		if is_waiting_epilogue:
+			_advance_epilogue_to_credits()
+	)
+
+## เปลี่ยนผ่านจากฉาก The End เข้าสู่หน้าขอบคุณและเครดิต
+func _advance_epilogue_to_credits() -> void:
+	if not is_waiting_epilogue:
+		return
+	is_waiting_epilogue = false
+	
+	var tw_out = create_tween()
+	tw_out.tween_property(the_end_container, "modulate:a", 0.0, 0.6).set_trans(Tween.TRANS_SINE)
+	tw_out.tween_callback(func():
+		the_end_container.visible = false
+		play_stage_9_credits()
+	)
+
+## =============================================================
+## ฉากที่ 9: หน้าขอบคุณและเครดิตปิดฉาก (Thank You for Playing Screen)
+## กล้องเลื่อนขวา -> ซ้าย -> นิ่งกลาง พร้อมเผยฉากเครดิตและตัวละครทั้ง 4
+## =============================================================
+func play_stage_9_credits() -> void:
+	current_stage = 9
+	
+	# 1. แอนิเมชันกล้องแพนเลื่อนขวา -> เลื่อนซ้าย -> กลับสู่ตรงกลางอย่างนุ่มนวล
+	var tw_cam = create_tween()
+	# แพนไปทางขวาเล็กน้อย (0.0s -> 2.0s)
+	tw_cam.tween_property(camera, "position", Vector2(1040, 530), 2.0).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	# แพนสไลด์กลับมาทางซ้าย (2.0s -> 4.4s)
+	tw_cam.tween_property(camera, "position", Vector2(880, 545), 2.4).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	# เลื่อนกลับสู่กึ่งกลางนุ่มนวล (4.4s -> 6.2s)
+	tw_cam.tween_property(camera, "position", Vector2(960, 540), 1.8).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	
+	# ปรับซูมกล้องเล็กน้อยให้เห็นความกว้างและบรรยากาศห้องสมุด
+	var tw_zoom = create_tween()
+	tw_zoom.tween_property(camera, "zoom", Vector2(0.92, 0.92), 4.5).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	
+	# 2. ปรากฏฉากเครดิต CreditsContainer อย่างนุ่มนวล
+	credits_container.visible = true
+	credits_container.modulate = Color(1, 1, 1, 0.0)
+	
+	var tw_fade_in = create_tween()
+	tw_fade_in.tween_interval(0.4)
+	tw_fade_in.tween_property(credits_container, "modulate:a", 1.0, 1.8).set_trans(Tween.TRANS_SINE)
+	tw_fade_in.tween_callback(func():
+		if is_instance_valid(return_menu_btn):
+			return_menu_btn.grab_focus()
 	)
 
 ## =============================================================
@@ -888,8 +952,10 @@ func _hide_dialogue(on_finish: Callable) -> void:
 
 func _on_return_menu_pressed() -> void:
 	_play_sfx(sfx_warp)
+	if is_instance_valid(return_menu_btn):
+		return_menu_btn.disabled = true
 	var tw = create_tween()
-	tw.tween_property(the_end_container, "modulate:a", 0.0, 0.5)
+	tw.tween_property(credits_container, "modulate:a", 0.0, 0.5)
 	tw.tween_callback(func():
 		Engine.time_scale = 1.0
 		get_tree().change_scene_to_file(start_scene_path)
