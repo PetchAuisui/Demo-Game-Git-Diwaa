@@ -45,6 +45,7 @@ extends Node2D
 @onready var vel: AnimatedSprite2D = $Stage4_Library/Vel
 @onready var exclamation_mark: Sprite2D = $Stage4_Library/Vel/ExclamationMark
 @onready var anger_mark: Sprite2D = $Stage4_Library/Vel/AngerMark
+@onready var sigh_puff: Sprite2D = $Stage4_Library/Vel/SighPuff
 @onready var master_char: AnimatedSprite2D = $Stage4_Library/Master
 
 # Stage 6: Comic Flashback Panel
@@ -79,6 +80,7 @@ var is_fast_forwarding: bool = false
 var can_fast_forward: bool = true
 var typewriter_tween: Tween = null
 var anger_bounce_tween: Tween = null
+var sigh_puff_tween: Tween = null
 
 # Animation timers for spritesheets
 var storm_anim_timer: float = 0.0
@@ -216,6 +218,11 @@ func _reset_all_stages() -> void:
 	if anger_mark:
 		anger_mark.visible = false
 		anger_mark.scale = Vector2.ZERO
+	if sigh_puff_tween and sigh_puff_tween.is_valid():
+		sigh_puff_tween.kill()
+	if sigh_puff:
+		sigh_puff.visible = false
+		sigh_puff.scale = Vector2.ZERO
 	if village_chaos:
 		village_chaos.visible = false
 		village_chaos.modulate = Color(1, 1, 1, 1)
@@ -229,6 +236,9 @@ func _reset_all_stages() -> void:
 	khampri_null.modulate = Color(1, 1, 1, 0.0)
 	khampri_full.visible = false
 	khampri_full.scale = Vector2(2.2, 2.2)
+	khampri_full.modulate = Color(1, 1, 1, 1)
+	if khampri_floating:
+		khampri_floating.modulate = Color(1, 1, 1, 1)
 	
 	# จัดตำแหน่งเศษ 16 ชิ้นกระจายรอบคัมภีร์ให้เห็นเป็นชิ้นชัดเจน ขนาดใหญ่ขึ้นเล็กน้อย (1.35)
 	var count = shards16.size()
@@ -266,7 +276,7 @@ func play_stage_1_book_restoration() -> void:
 		for i in range(shards16.size()):
 			var s: Sprite2D = shards16[i]
 			var tw_s = create_tween().set_parallel(true)
-			tw_s.tween_property(s, "modulate", Color(1.8, 1.6, 1.2, 1.0), 0.5).set_trans(Tween.TRANS_SINE)
+			tw_s.tween_property(s, "modulate", Color(1.0, 1.0, 1.0, 1.0), 0.5).set_trans(Tween.TRANS_SINE)
 			
 			# ทำให้เศษคัมภีร์ขยับลอยพริ้วไหวเบาๆ ไม่เยอะมาก (gentle floating drift)
 			var base_pos: Vector2 = shard_initial_positions[i]
@@ -287,7 +297,8 @@ func play_stage_1_book_restoration() -> void:
 			var tw_fly = create_tween().set_parallel(true)
 			tw_fly.tween_property(s, "position", Vector2.ZERO, 0.65).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN)
 			tw_fly.tween_property(s, "scale", Vector2(0.2, 0.2), 0.65)
-			tw_fly.tween_property(s, "rotation", s.rotation + PI * 2.0, 0.65)
+			# ปรับการหมุนตอนดูดเข้าไม่ให้หมุนเยอะเกินไป (หมุนเบาๆ เพียง 45 องศา)
+			tw_fly.tween_property(s, "rotation", s.rotation + PI * 0.25, 0.65)
 			tw_fly.chain().tween_callback(func(): s.visible = false)
 	)
 	
@@ -298,7 +309,7 @@ func play_stage_1_book_restoration() -> void:
 		_play_sfx(sfx_success)
 		khampri_null.visible = false
 		khampri_full.visible = true
-		khampri_full.modulate = Color(2.5, 2.2, 1.6, 1.0)
+		khampri_full.modulate = Color(1.2, 1.15, 1.1, 1.0)
 		khampri_full.scale = Vector2(2.5, 2.5)
 		
 		# เปล่งประกายออร่านิดหน่อยรอบคัมภีร์หลังรวมกับเศษคัมภีร์แล้ว
@@ -331,10 +342,10 @@ func play_stage_1_book_restoration() -> void:
 			tw_ring.tween_property(ring_of_light, "scale", Vector2(9.0, 9.0), 0.7).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 			tw_ring.tween_property(ring_of_light, "modulate:a", 0.0, 0.7)
 		
-		# คัมภีร์คืนขนาด 2.2 พร้อมเรืองแสงออร่านุ่มนวล
+		# คัมภีร์คืนขนาด 2.2 พร้อมปรับโทนสีเป็นสีแท้ธรรมชาติ (โทนเดียวกันกับตอนเวลถือ)
 		var tw_shine = create_tween().set_parallel(true)
 		tw_shine.tween_property(khampri_full, "scale", Vector2(2.2, 2.2), 0.5).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-		tw_shine.tween_property(khampri_full, "modulate", Color(1.5, 1.4, 1.2, 1.0), 0.6)
+		tw_shine.tween_property(khampri_full, "modulate", Color(1.0, 1.0, 1.0, 1.0), 0.5)
 	)
 	
 	# 1.5 แสงเวทสว่างวาบสั้น ๆ (0.35s) เปลี่ยนเข้าสู่ฉาก 2 (4.3s)
@@ -497,7 +508,7 @@ func play_stage_4_vel_in_library() -> void:
 		khampri_floating.visible = true
 		khampri_floating.position = Vector2(-40, -95) # อยู่สูงเหนือหัวเวลที่ x = -40
 		khampri_floating.scale = Vector2(0.18, 0.18)
-		khampri_floating.modulate = Color(1.8, 1.6, 1.1, 1.0)
+		khampri_floating.modulate = Color(1.0, 1.0, 1.0, 1.0)
 		
 		khampri_shadow.visible = true
 		khampri_shadow.position = Vector2(-40, 98)
@@ -585,10 +596,10 @@ func play_stage_5_master_return() -> void:
 		tw_vjump.tween_property(vel, "position:y", 35.0, 0.22).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 		tw_vjump.tween_property(vel, "position:y", 59.0, 0.25).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
 		
-		# คัมภีร์เด้งลอยขึ้นฟ้า ส่องแสงสีทอง แล้วสลายหายไป
+		# คัมภีร์เด้งลอยขึ้นฟ้า ส่องแสง แล้วสลายหายไป
 		var tw_b_vanish = create_tween().set_parallel(true)
 		tw_b_vanish.tween_property(khampri_floating, "position:y", -60.0, 0.45).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-		tw_b_vanish.tween_property(khampri_floating, "modulate", Color(2.5, 2.2, 1.4, 1.0), 0.25)
+		tw_b_vanish.tween_property(khampri_floating, "modulate", Color(1.3, 1.25, 1.1, 1.0), 0.25)
 		if khampri_shadow:
 			tw_b_vanish.tween_property(khampri_shadow, "modulate:a", 0.0, 0.3)
 		
@@ -708,7 +719,7 @@ func play_stage_7_dialogue() -> void:
 		if anger_bounce_tween and anger_bounce_tween.is_valid():
 			anger_bounce_tween.kill()
 		anger_mark.visible = true
-		anger_mark.position = Vector2(14, -54)
+		anger_mark.position = Vector2(12, -32)
 		anger_mark.scale = Vector2.ZERO
 		var tw_pop = create_tween()
 		tw_pop.tween_property(anger_mark, "scale", Vector2(0.72, 0.72), 0.15).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
@@ -717,9 +728,9 @@ func play_stage_7_dialogue() -> void:
 				anger_bounce_tween = create_tween().set_loops()
 				# ขยับและพองยุบเบาๆ นุ่มนวล ไม่เด้งรุนแรง (gentle subtle bobbing)
 				anger_bounce_tween.tween_property(anger_mark, "scale", Vector2(0.75, 0.75), 0.45).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
-				anger_bounce_tween.parallel().tween_property(anger_mark, "position:y", -55.0, 0.45).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+				anger_bounce_tween.parallel().tween_property(anger_mark, "position:y", -33.0, 0.45).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 				anger_bounce_tween.chain().tween_property(anger_mark, "scale", Vector2(0.69, 0.69), 0.45).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
-				anger_bounce_tween.parallel().tween_property(anger_mark, "position:y", -53.5, 0.45).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+				anger_bounce_tween.parallel().tween_property(anger_mark, "position:y", -31.5, 0.45).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 		)
 	
 	# ประโยคที่ 1 (ของฉาก 7): เวลพูดหลังรู้ความจริง
@@ -735,18 +746,69 @@ func play_stage_7_dialogue() -> void:
 				tw_ang_out.tween_property(anger_mark, "scale", Vector2.ZERO, 0.12)
 				tw_ang_out.tween_callback(func(): anger_mark.visible = false)
 			
-			# บทที่ 3: เวลใช้หน้า breathe_blink และปรมาจารย์ใช้หน้า playful
+			# บทที่ 3: เวลใช้หน้า breathe_blink และปรมาจารย์ใช้หน้า playful พร้อมปุยลมหายใจถอนหายใจ
 			vel.play("breathe_blink")
 			master_char.play("playful")
+			_play_sigh_puff()
 			
 			# ประโยคที่ 2 (ของฉาก 7): อาจารย์ตอบ
 			_show_dialogue(
 				"ปรมาจารย์",
 				"ฉันเองหรอเนี่ย_55555",
 				func():
+					_stop_sigh_puff()
 					_hide_dialogue(play_stage_8_epilogue)
 			)
 	)
+
+## แอนิเมชันปุยลมหายใจถอนหายใจ (Sigh Puff Effect) ลอยเอื่อยๆ ข้างล่างตัว
+func _play_sigh_puff() -> void:
+	if not is_instance_valid(sigh_puff):
+		return
+	if sigh_puff_tween and sigh_puff_tween.is_valid():
+		sigh_puff_tween.kill()
+	
+	sigh_puff.visible = true
+	sigh_puff.position = Vector2(20, 14)
+	sigh_puff.scale = Vector2.ZERO
+	sigh_puff.modulate = Color(1, 1, 1, 0.0)
+	
+	sigh_puff_tween = create_tween().set_loops()
+	
+	# รอจังหวะเริ่มสูดลมเข้าแล้วเริ่มผ่อนลมหายใจออก (~0.4s)
+	sigh_puff_tween.tween_interval(0.4)
+	
+	# ปรากฏปุยลมหายใจเล็กๆ
+	sigh_puff_tween.tween_callback(func():
+		if is_instance_valid(sigh_puff):
+			sigh_puff.position = Vector2(20, 14)
+			sigh_puff.scale = Vector2.ZERO
+			sigh_puff.modulate = Color(1, 1, 1, 0.0)
+	)
+	var tw_pop = sigh_puff_tween.parallel()
+	tw_pop.tween_property(sigh_puff, "scale", Vector2(0.85, 0.85), 0.22).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	tw_pop.tween_property(sigh_puff, "modulate:a", 0.95, 0.18)
+	
+	# ปุยลมหายใจลอยเอื่อยๆ ลงข้างล่างตัวอย่างนุ่มนวล พร้อมค่อยๆ จางหายไป
+	var tw_drift = sigh_puff_tween.chain().set_parallel(true)
+	tw_drift.tween_property(sigh_puff, "position", Vector2(26, 22), 1.8).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	tw_drift.tween_property(sigh_puff, "scale", Vector2(0.95, 0.95), 1.8)
+	tw_drift.tween_property(sigh_puff, "modulate:a", 0.0, 1.7).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	
+	# รอจังหวะก่อนวนลูปถอนหายใจรอบถัดไป
+	sigh_puff_tween.chain().tween_interval(1.8)
+
+func _stop_sigh_puff() -> void:
+	if sigh_puff_tween and sigh_puff_tween.is_valid():
+		sigh_puff_tween.kill()
+	if is_instance_valid(sigh_puff) and sigh_puff.visible:
+		var tw_out = create_tween()
+		tw_out.tween_property(sigh_puff, "modulate:a", 0.0, 0.15)
+		tw_out.tween_callback(func():
+			if is_instance_valid(sigh_puff):
+				sigh_puff.visible = false
+				sigh_puff.scale = Vector2.ZERO
+		)
 
 ## =============================================================
 ## ฉากที่ 8: บทสรุปการเดินทางของเวล (The End)
@@ -758,8 +820,11 @@ func play_stage_8_epilogue() -> void:
 	is_fast_forwarding = false
 	Engine.time_scale = 1.0
 	
+	_stop_sigh_puff()
 	if anger_mark:
 		anger_mark.visible = false
+	if sigh_puff:
+		sigh_puff.visible = false
 	
 	# เมื่อจบบทสนทนา ทั้งสองตัวละครเปลี่ยนเป็นท่ายืนนิ่ง idle
 	vel.play("idle")

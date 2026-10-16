@@ -46,6 +46,7 @@
 [ext_resource type="Texture2D" uid="uid://ldg2myveluut" path="res://assets/cutscene/backgrounds/peaceful-landscape-preview-Sheet.png" id="44_peaceful"]
 [ext_resource type="Texture2D" uid="uid://dcvd3t5deskx3" path="res://assets/cutscene/backgrounds/village-normal-to-chaos-Sheet.png" id="45_village"]
 [ext_resource type="Texture2D" uid="uid://bgvwv062jgxby" path="res://assets/cutscene/anger_mark.png" id="46_anger"]
+[ext_resource type="Texture2D" uid="uid://dc6mqbtqyme4e" path="res://assets/cutscene/sigh_puff.png" id="47_puff"]
 
 [sub_resource type="Gradient" id="Gradient_ring"]
 offsets = PackedFloat32Array(0.55, 0.72, 0.88, 1)
@@ -59,17 +60,6 @@ fill = 1
 fill_from = Vector2(0.5, 0.5)
 fill_to = Vector2(1, 0.5)
 
-[sub_resource type="Gradient" id="Gradient_warp"]
-offsets = PackedFloat32Array(0, 0.45, 1)
-colors = PackedColorArray(0.8, 0.95, 1, 0.9, 0.4, 0.7, 1, 0.5, 0.1, 0.3, 0.8, 0)
-
-[sub_resource type="GradientTexture2D" id="GradientTexture2D_warp"]
-gradient = SubResource("Gradient_warp")
-height = 32
-fill = 1
-fill_from = Vector2(0.5, 0.5)
-fill_to = Vector2(1, 0.5)
-
 [sub_resource type="Gradient" id="Gradient_aura"]
 offsets = PackedFloat32Array(0, 0.45, 0.75, 1)
 colors = PackedColorArray(1, 0.95, 0.7, 0.8, 0.7, 0.85, 1, 0.45, 0.4, 0.3, 0.8, 0.15, 0, 0, 0, 0)
@@ -78,6 +68,17 @@ colors = PackedColorArray(1, 0.95, 0.7, 0.8, 0.7, 0.85, 1, 0.45, 0.4, 0.3, 0.8, 
 gradient = SubResource("Gradient_aura")
 width = 256
 height = 256
+fill = 1
+fill_from = Vector2(0.5, 0.5)
+fill_to = Vector2(1, 0.5)
+
+[sub_resource type="Gradient" id="Gradient_warp"]
+offsets = PackedFloat32Array(0, 0.45, 1)
+colors = PackedColorArray(0.8, 0.95, 1, 0.9, 0.4, 0.7, 1, 0.5, 0.1, 0.3, 0.8, 0)
+
+[sub_resource type="GradientTexture2D" id="GradientTexture2D_warp"]
+gradient = SubResource("Gradient_warp")
+height = 32
 fill = 1
 fill_from = Vector2(0.5, 0.5)
 fill_to = Vector2(1, 0.5)
@@ -539,7 +540,6 @@ texture = ExtResource("22_khampri_null")
 
 [node name="KhampriFull" type="Sprite2D" parent="Stage1_BookRestoration" unique_id=872162374]
 visible = false
-modulate = Color(1.8, 1.6, 1.2, 1)
 position = Vector2(960, 540)
 scale = Vector2(2.2, 2.2)
 texture = ExtResource("21_khampri")
@@ -682,7 +682,6 @@ texture = ExtResource("42_shadow")
 
 [node name="KhampriFloating" type="Sprite2D" parent="Stage4_Library" unique_id=1683684226]
 visible = false
-modulate = Color(1.4, 1.3, 1, 1)
 position = Vector2(-40, 14)
 scale = Vector2(0.18, 0.18)
 texture = ExtResource("21_khampri")
@@ -701,9 +700,15 @@ texture = ExtResource("20_exclamation")
 
 [node name="AngerMark" type="Sprite2D" parent="Stage4_Library/Vel" unique_id=861410790]
 visible = false
-position = Vector2(14, -54)
+position = Vector2(12, -32)
 scale = Vector2(1e-05, 1e-05)
 texture = ExtResource("46_anger")
+
+[node name="SighPuff" type="Sprite2D" parent="Stage4_Library/Vel" unique_id=861410791]
+visible = false
+position = Vector2(20, 14)
+scale = Vector2(1e-05, 1e-05)
+texture = ExtResource("47_puff")
 
 [node name="Master" type="AnimatedSprite2D" parent="Stage4_Library" unique_id=1568305020]
 visible = false
