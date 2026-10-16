@@ -1,193 +1,133 @@
-[gd_scene format=3 uid="uid://c3eaa1f2e8b4c"]
+[gd_scene format=3 uid="uid://c3d9a1f2e8b4c"]
 
-[ext_resource type="Texture2D" uid="uid://d1k0b34y780t7" path="res://assets/cutscene/Libary.png" id="1_library"]
-[ext_resource type="Texture2D" uid="uid://djf4udkk5u51w" path="res://assets/cutscene/characters/vel/vel_breathe-Sheet.png" id="2_vel_breathe"]
-[ext_resource type="Texture2D" uid="uid://cnyp8l2pk7uln" path="res://assets/cutscene/characters/vel/vel_breathe_blink-Sheet.png" id="3_vel_blink"]
-[ext_resource type="Texture2D" uid="uid://don4qpk4c43rc" path="res://assets/cutscene/characters/vel/vel_Hblue_Sredyellow_idle.png" id="4_vel_idle"]
-[ext_resource type="Texture2D" uid="uid://bwv0pcja8aiqd" path="res://assets/cutscene/characters/vel/vel_shockpng.png" id="5_vel_shock"]
-[ext_resource type="Texture2D" uid="uid://bvfiiywfa04t3" path="res://assets/cutscene/characters/vel/vel_walk-Sheet.png" id="6_vel_walk"]
-[ext_resource type="Texture2D" uid="uid://ccvcnopoctw6j" path="res://assets/cutscene/characters/vel/vel_walk_right-Sheet.png" id="7_vel_walk_right"]
-[ext_resource type="Texture2D" uid="uid://dj1udjgebk0s5" path="res://assets/cutscene/characters/master/master_breathe-Sheet.png" id="8_master_breathe"]
-[ext_resource type="Texture2D" uid="uid://boy3laf48ahkf" path="res://assets/cutscene/characters/master/master_breathe_blink-Sheet.png" id="9_master_blink"]
-[ext_resource type="Texture2D" uid="uid://ksl18qyh4k6u" path="res://assets/cutscene/characters/master/master_idle.png" id="10_master_idle"]
-[ext_resource type="Texture2D" uid="uid://dhydmv0uo61tb" path="res://assets/cutscene/characters/master/master_walk-Sheet.png" id="11_master_walk"]
-[ext_resource type="Texture2D" uid="uid://dgrtmh13o84nk" path="res://assets/cutscene/characters/master/master_walk_left-Sheet.png" id="12_master_walk_left"]
-[ext_resource type="Texture2D" uid="uid://mtyphxqftbrt" path="res://assets/cutscene/characters/master/master_shock1.png" id="13_master_shock1"]
-[ext_resource type="Texture2D" uid="uid://cv4vo1ts0tik4" path="res://assets/cutscene/black_hole.png" id="14_black_hole"]
-[ext_resource type="Texture2D" uid="uid://bbl6m8brfnkxl" path="res://assets/cutscene/exclamation_mark.png" id="15_exclamation"]
-[ext_resource type="Texture2D" uid="uid://bm6lbwx34tnd3" path="res://assets/cutscene/props/khampri/Khampri.png" id="16_khampri"]
-[ext_resource type="Texture2D" uid="uid://cmiovgqy6yf68" path="res://assets/cutscene/props/khampri/minikhampri1.png" id="17_mini1"]
-[ext_resource type="Texture2D" uid="uid://vuubdrsnjoim" path="res://assets/cutscene/props/khampri/minikhampri2.png" id="18_mini2"]
-[ext_resource type="Texture2D" uid="uid://c85nr0pshcdl0" path="res://assets/cutscene/props/khampri/minikhampri3.png" id="19_mini3"]
-[ext_resource type="Texture2D" uid="uid://bberhkoqd5xuy" path="res://assets/cutscene/props/khampri/minikhampri4.png" id="20_mini4"]
-[ext_resource type="Texture2D" uid="uid://begdng4y33dc8" path="res://assets/cutscene/props/khampri/minikhampri5.png" id="21_mini5"]
-[ext_resource type="Texture2D" uid="uid://d0nnagl8j06dx" path="res://assets/cutscene/props/khampri/minikhampri6.png" id="22_mini6"]
-[ext_resource type="Texture2D" uid="uid://cu53xj1m5ee4v" path="res://assets/cutscene/props/khampri/minikhampri7.png" id="23_mini7"]
-[ext_resource type="Texture2D" uid="uid://bf31knirc7elk" path="res://assets/cutscene/props/khampri/minikhampri8.png" id="24_mini8"]
-[ext_resource type="Texture2D" uid="uid://movqwrr1esij" path="res://assets/cutscene/props/khampri/minikhampri9.png" id="25_mini9"]
-[ext_resource type="Texture2D" uid="uid://vhibtx00l1kl" path="res://assets/cutscene/props/khampri/minikhampri10.png" id="26_mini10"]
-[ext_resource type="Texture2D" uid="uid://bpwwyf1t2ktnv" path="res://assets/cutscene/props/khampri/minikhampri11.png" id="27_mini11"]
-[ext_resource type="Texture2D" uid="uid://bmmn0lw6vs33x" path="res://assets/cutscene/props/khampri/minikhampri12.png" id="28_mini12"]
-[ext_resource type="Texture2D" uid="uid://boqfopl133s5y" path="res://assets/cutscene/props/khampri/minikhampri13.png" id="29_mini13"]
-[ext_resource type="Texture2D" uid="uid://cujobgtqpdh8q" path="res://assets/cutscene/props/khampri/minikhampri14.png" id="30_mini14"]
-[ext_resource type="Texture2D" uid="uid://lbxd43tusjvx" path="res://assets/cutscene/props/khampri/minikhampri15.png" id="31_mini15"]
-[ext_resource type="Texture2D" uid="uid://b6yre4fu0rwi2" path="res://assets/cutscene/props/khampri/minikhampri16.png" id="32_mini16"]
-[ext_resource type="Texture2D" uid="uid://bngf0cdl4kc1q" path="res://assets/cutscene/props/khampri/paper.png" id="33_paper"]
-[ext_resource type="FontFile" uid="uid://csurxmw2vmws4" path="res://assets/fonts/TA-8-bit.ttf" id="34_font"]
-[ext_resource type="Texture2D" uid="uid://dmykeg4jphdb0" path="res://assets/cutscene/props/khampri/drop_shadow.png" id="35_shadow"]
-[ext_resource type="Script" path="res://scripts/cutscene/ending_cutscene.gd" id="36_script"]
-[ext_resource type="AudioStream" uid="uid://b87shisgjem5v" path="res://assets/audio/sfx_success.wav" id="37_sfx_success"]
-[ext_resource type="AudioStream" path="res://assets/audio/sfx_command.wav" id="38_sfx_command"]
-[ext_resource type="AudioStream" path="res://assets/audio/sfx_modal.wav" id="39_sfx_modal"]
-[ext_resource type="AudioStream" path="res://assets/audio/sfx_dialogue_next.wav" id="40_sfx_next"]
+[ext_resource type="Script" path="res://scripts/cutscene/ending_cutscene.gd" id="1_script"]
+[ext_resource type="Texture2D" uid="uid://d1k0b34y780t7" path="res://assets/cutscene/Libary.png" id="2_library"]
+[ext_resource type="Texture2D" uid="uid://b6yre4fu0rwi2" path="res://assets/cutscene/characters/vel/vel_hold.png" id="3_vel_hold"]
+[ext_resource type="Texture2D" uid="uid://djf4udkk5u51w" path="res://assets/cutscene/characters/vel/vel_breathe-Sheet.png" id="4_vel_breathe"]
+[ext_resource type="Texture2D" uid="uid://cnyp8l2pk7uln" path="res://assets/cutscene/characters/vel/vel_breathe_blink-Sheet.png" id="5_vel_blink"]
+[ext_resource type="Texture2D" uid="uid://don4qpk4c43rc" path="res://assets/cutscene/characters/vel/vel_Hblue_Sredyellow_idle.png" id="6_vel_idle"]
+[ext_resource type="Texture2D" uid="uid://bwv0pcja8aiqd" path="res://assets/cutscene/characters/vel/vel_shockpng.png" id="7_vel_shock"]
+[ext_resource type="Texture2D" uid="uid://bvfiiywfa04t3" path="res://assets/cutscene/characters/vel/vel_walk-Sheet.png" id="8_vel_walk"]
+[ext_resource type="Texture2D" uid="uid://ccvcnopoctw6j" path="res://assets/cutscene/characters/vel/vel_walk_right-Sheet.png" id="9_vel_walk_right"]
+[ext_resource type="Texture2D" uid="uid://c4bkwod3w8ii3" path="res://assets/cutscene/characters/vel/vel_angry.png" id="10_vel_angry"]
+[ext_resource type="Texture2D" uid="uid://dj1udjgebk0s5" path="res://assets/cutscene/characters/master/master_breathe-Sheet.png" id="11_master_breathe"]
+[ext_resource type="Texture2D" uid="uid://boy3laf48ahkf" path="res://assets/cutscene/characters/master/master_breathe_blink-Sheet.png" id="12_master_blink"]
+[ext_resource type="Texture2D" uid="uid://ksl18qyh4k6u" path="res://assets/cutscene/characters/master/master_idle.png" id="13_master_idle"]
+[ext_resource type="Texture2D" uid="uid://dhydmv0uo61tb" path="res://assets/cutscene/characters/master/master_walk-Sheet.png" id="14_master_walk"]
+[ext_resource type="Texture2D" uid="uid://dgrtmh13o84nk" path="res://assets/cutscene/characters/master/master_walk_left-Sheet.png" id="15_master_walk_left"]
+[ext_resource type="Texture2D" uid="uid://mtyphxqftbrt" path="res://assets/cutscene/characters/master/master_shock1.png" id="16_master_shock1"]
+[ext_resource type="Texture2D" path="res://assets/cutscene/characters/master/master_shock2.png" id="17_master_shock2"]
+[ext_resource type="Texture2D" uid="uid://bx4bc0kje3h8q" path="res://assets/cutscene/characters/master/master_playful.png" id="18_master_playful"]
+[ext_resource type="Texture2D" uid="uid://cv4vo1ts0tik4" path="res://assets/cutscene/black_hole.png" id="19_black_hole"]
+[ext_resource type="Texture2D" uid="uid://bbl6m8brfnkxl" path="res://assets/cutscene/exclamation_mark.png" id="20_exclamation"]
+[ext_resource type="Texture2D" uid="uid://bm6lbwx34tnd3" path="res://assets/cutscene/props/khampri/Khampri.png" id="21_khampri"]
+[ext_resource type="Texture2D" path="res://assets/cutscene/props/khampri/khampri-null.png" id="22_khampri_null"]
+[ext_resource type="Texture2D" uid="uid://cmiovgqy6yf68" path="res://assets/cutscene/props/khampri/minikhampri1.png" id="23_m1"]
+[ext_resource type="Texture2D" uid="uid://vuubdrsnjoim" path="res://assets/cutscene/props/khampri/minikhampri2.png" id="24_m2"]
+[ext_resource type="Texture2D" uid="uid://c85nr0pshcdl0" path="res://assets/cutscene/props/khampri/minikhampri3.png" id="25_m3"]
+[ext_resource type="Texture2D" uid="uid://bberhkoqd5xuy" path="res://assets/cutscene/props/khampri/minikhampri4.png" id="26_m4"]
+[ext_resource type="Texture2D" uid="uid://begdng4y33dc8" path="res://assets/cutscene/props/khampri/minikhampri5.png" id="27_m5"]
+[ext_resource type="Texture2D" uid="uid://d0nnagl8j06dx" path="res://assets/cutscene/props/khampri/minikhampri6.png" id="28_m6"]
+[ext_resource type="Texture2D" uid="uid://cu53xj1m5ee4v" path="res://assets/cutscene/props/khampri/minikhampri7.png" id="29_m7"]
+[ext_resource type="Texture2D" uid="uid://bf31knirc7elk" path="res://assets/cutscene/props/khampri/minikhampri8.png" id="30_m8"]
+[ext_resource type="Texture2D" uid="uid://movqwrr1esij" path="res://assets/cutscene/props/khampri/minikhampri9.png" id="31_m9"]
+[ext_resource type="Texture2D" uid="uid://vhibtx00l1kl" path="res://assets/cutscene/props/khampri/minikhampri10.png" id="32_m10"]
+[ext_resource type="Texture2D" uid="uid://bpwwyf1t2ktnv" path="res://assets/cutscene/props/khampri/minikhampri11.png" id="33_m11"]
+[ext_resource type="Texture2D" uid="uid://bmmn0lw6vs33x" path="res://assets/cutscene/props/khampri/minikhampri12.png" id="34_m12"]
+[ext_resource type="Texture2D" uid="uid://boqfopl133s5y" path="res://assets/cutscene/props/khampri/minikhampri13.png" id="35_m13"]
+[ext_resource type="Texture2D" uid="uid://cujobgtqpdh8q" path="res://assets/cutscene/props/khampri/minikhampri14.png" id="36_m14"]
+[ext_resource type="Texture2D" uid="uid://lbxd43tusjvx" path="res://assets/cutscene/props/khampri/minikhampri15.png" id="37_m15"]
+[ext_resource type="Texture2D" uid="uid://b6yre4fu0rwi2" path="res://assets/cutscene/props/khampri/minikhampri16.png" id="38_m16"]
+[ext_resource type="FontFile" uid="uid://csurxmw2vmws4" path="res://assets/fonts/TA-8-bit.ttf" id="39_font"]
+[ext_resource type="FontFile" uid="uid://deedcfbkojx6k" path="res://assets/fonts/ChakraPetch-Bold.ttf" id="40_chakra_bold"]
+[ext_resource type="FontFile" uid="uid://c82lda4ldw0ve" path="res://assets/fonts/ChakraPetch-Regular.ttf" id="41_chakra_regular"]
+[ext_resource type="Texture2D" uid="uid://dmykeg4jphdb0" path="res://assets/cutscene/props/khampri/drop_shadow.png" id="42_shadow"]
+[ext_resource type="Texture2D" uid="uid://6272rjfm3v7c" path="res://assets/cutscene/backgrounds/storm-clouds-preview-Sheet.png" id="43_storm"]
+[ext_resource type="Texture2D" uid="uid://ldg2myveluut" path="res://assets/cutscene/backgrounds/peaceful-landscape-preview-Sheet.png" id="44_peaceful"]
+[ext_resource type="Texture2D" uid="uid://dcvd3t5deskx3" path="res://assets/cutscene/backgrounds/village-normal-to-chaos-Sheet.png" id="45_village"]
+[ext_resource type="AudioStream" uid="uid://b87shisgjem5v" path="res://assets/audio/sfx_success.wav" id="46_sfx_success"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx_command.wav" id="47_sfx_command"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx_modal.wav" id="48_sfx_modal"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx_dialogue_next.wav" id="49_sfx_next"]
 
-[sub_resource type="AtlasTexture" id="AtlasTexture_vypf7"]
-atlas = ExtResource("2_vel_breathe")
+[sub_resource type="AtlasTexture" id="AtlasTexture_vel_hold"]
+atlas = ExtResource("3_vel_hold")
 region = Rect2(0, 0, 48, 83)
 
-[sub_resource type="AtlasTexture" id="AtlasTexture_uh7kr"]
-atlas = ExtResource("2_vel_breathe")
+[sub_resource type="AtlasTexture" id="AtlasTexture_vel_angry"]
+atlas = ExtResource("10_vel_angry")
+region = Rect2(0, 0, 48, 83)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_vel_blink_0"]
+atlas = ExtResource("5_vel_blink")
+region = Rect2(0, 0, 48, 83)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_vel_blink_1"]
+atlas = ExtResource("5_vel_blink")
 region = Rect2(48, 0, 48, 83)
 
-[sub_resource type="AtlasTexture" id="AtlasTexture_n4k0d"]
-atlas = ExtResource("2_vel_breathe")
+[sub_resource type="AtlasTexture" id="AtlasTexture_vel_blink_2"]
+atlas = ExtResource("5_vel_blink")
 region = Rect2(96, 0, 48, 83)
 
-[sub_resource type="AtlasTexture" id="AtlasTexture_neyx1"]
-atlas = ExtResource("2_vel_breathe")
+[sub_resource type="AtlasTexture" id="AtlasTexture_vel_blink_3"]
+atlas = ExtResource("5_vel_blink")
 region = Rect2(144, 0, 48, 83)
 
-[sub_resource type="AtlasTexture" id="AtlasTexture_gsopo"]
-atlas = ExtResource("2_vel_breathe")
-region = Rect2(192, 0, 48, 83)
-
-[sub_resource type="AtlasTexture" id="AtlasTexture_qiaej"]
-atlas = ExtResource("2_vel_breathe")
-region = Rect2(240, 0, 48, 83)
-
-[sub_resource type="AtlasTexture" id="AtlasTexture_gwkeg"]
-atlas = ExtResource("3_vel_blink")
+[sub_resource type="AtlasTexture" id="AtlasTexture_vel_idle"]
+atlas = ExtResource("6_vel_idle")
 region = Rect2(0, 0, 48, 83)
 
-[sub_resource type="AtlasTexture" id="AtlasTexture_ttvhs"]
-atlas = ExtResource("3_vel_blink")
+[sub_resource type="AtlasTexture" id="AtlasTexture_vel_shock"]
+atlas = ExtResource("7_vel_shock")
+region = Rect2(0, 0, 48, 83)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_vel_walk_0"]
+atlas = ExtResource("8_vel_walk")
+region = Rect2(0, 0, 48, 83)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_vel_walk_1"]
+atlas = ExtResource("8_vel_walk")
 region = Rect2(48, 0, 48, 83)
 
-[sub_resource type="AtlasTexture" id="AtlasTexture_q6r02"]
-atlas = ExtResource("3_vel_blink")
+[sub_resource type="AtlasTexture" id="AtlasTexture_vel_walk_2"]
+atlas = ExtResource("8_vel_walk")
 region = Rect2(96, 0, 48, 83)
 
-[sub_resource type="AtlasTexture" id="AtlasTexture_e42a6"]
-atlas = ExtResource("3_vel_blink")
+[sub_resource type="AtlasTexture" id="AtlasTexture_vel_walk_3"]
+atlas = ExtResource("8_vel_walk")
 region = Rect2(144, 0, 48, 83)
-
-[sub_resource type="AtlasTexture" id="AtlasTexture_yk7p2"]
-atlas = ExtResource("3_vel_blink")
-region = Rect2(192, 0, 48, 83)
-
-[sub_resource type="AtlasTexture" id="AtlasTexture_nr5m1"]
-atlas = ExtResource("3_vel_blink")
-region = Rect2(240, 0, 48, 83)
-
-[sub_resource type="AtlasTexture" id="AtlasTexture_v2c5g"]
-atlas = ExtResource("4_vel_idle")
-region = Rect2(0, 0, 48, 83)
-
-[sub_resource type="AtlasTexture" id="AtlasTexture_qn1kh"]
-atlas = ExtResource("5_vel_shock")
-region = Rect2(0, 0, 48, 83)
-
-[sub_resource type="AtlasTexture" id="AtlasTexture_v6kqr"]
-atlas = ExtResource("6_vel_walk")
-region = Rect2(0, 0, 48, 83)
-
-[sub_resource type="AtlasTexture" id="AtlasTexture_y8jof"]
-atlas = ExtResource("6_vel_walk")
-region = Rect2(48, 0, 48, 83)
-
-[sub_resource type="AtlasTexture" id="AtlasTexture_7t4pe"]
-atlas = ExtResource("6_vel_walk")
-region = Rect2(96, 0, 48, 83)
-
-[sub_resource type="AtlasTexture" id="AtlasTexture_6fjai"]
-atlas = ExtResource("6_vel_walk")
-region = Rect2(144, 0, 48, 83)
-
-[sub_resource type="AtlasTexture" id="AtlasTexture_sa3bf"]
-atlas = ExtResource("6_vel_walk")
-region = Rect2(192, 0, 48, 83)
-
-[sub_resource type="AtlasTexture" id="AtlasTexture_yf5ri"]
-atlas = ExtResource("6_vel_walk")
-region = Rect2(240, 0, 48, 83)
-
-[sub_resource type="AtlasTexture" id="AtlasTexture_fy3ys"]
-atlas = ExtResource("7_vel_walk_right")
-region = Rect2(0, 0, 48, 83)
-
-[sub_resource type="AtlasTexture" id="AtlasTexture_l1uh8"]
-atlas = ExtResource("7_vel_walk_right")
-region = Rect2(48, 0, 48, 83)
-
-[sub_resource type="AtlasTexture" id="AtlasTexture_0pnwy"]
-atlas = ExtResource("7_vel_walk_right")
-region = Rect2(96, 0, 48, 83)
-
-[sub_resource type="AtlasTexture" id="AtlasTexture_oeuo4"]
-atlas = ExtResource("7_vel_walk_right")
-region = Rect2(144, 0, 48, 83)
-
-[sub_resource type="AtlasTexture" id="AtlasTexture_0wukv"]
-atlas = ExtResource("7_vel_walk_right")
-region = Rect2(192, 0, 48, 83)
-
-[sub_resource type="AtlasTexture" id="AtlasTexture_mi7k4"]
-atlas = ExtResource("7_vel_walk_right")
-region = Rect2(240, 0, 48, 83)
 
 [sub_resource type="SpriteFrames" id="SpriteFrames_vel"]
 animations = [{
 "frames": [{
-"duration": 2.0,
-"texture": SubResource("AtlasTexture_vypf7")
-}, {
 "duration": 1.0,
-"texture": SubResource("AtlasTexture_uh7kr")
-}, {
-"duration": 2.0,
-"texture": SubResource("AtlasTexture_n4k0d")
-}, {
-"duration": 1.0,
-"texture": SubResource("AtlasTexture_neyx1")
-}, {
-"duration": 2.0,
-"texture": SubResource("AtlasTexture_gsopo")
-}, {
-"duration": 1.0,
-"texture": SubResource("AtlasTexture_qiaej")
+"texture": SubResource("AtlasTexture_vel_hold")
 }],
 "loop": 1,
-"name": &"breathe",
+"name": &"hold",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_vel_angry")
+}],
+"loop": 1,
+"name": &"angry",
 "speed": 5.0
 }, {
 "frames": [{
 "duration": 2.0,
-"texture": SubResource("AtlasTexture_gwkeg")
+"texture": SubResource("AtlasTexture_vel_blink_0")
 }, {
 "duration": 1.0,
-"texture": SubResource("AtlasTexture_ttvhs")
+"texture": SubResource("AtlasTexture_vel_blink_1")
 }, {
 "duration": 2.0,
-"texture": SubResource("AtlasTexture_q6r02")
+"texture": SubResource("AtlasTexture_vel_blink_2")
 }, {
 "duration": 1.0,
-"texture": SubResource("AtlasTexture_e42a6")
-}, {
-"duration": 2.0,
-"texture": SubResource("AtlasTexture_yk7p2")
-}, {
-"duration": 1.0,
-"texture": SubResource("AtlasTexture_nr5m1")
+"texture": SubResource("AtlasTexture_vel_blink_3")
 }],
 "loop": 1,
 "name": &"breathe_blink",
@@ -195,7 +135,7 @@ animations = [{
 }, {
 "frames": [{
 "duration": 1.0,
-"texture": SubResource("AtlasTexture_v2c5g")
+"texture": SubResource("AtlasTexture_vel_idle")
 }],
 "loop": 1,
 "name": &"idle",
@@ -203,7 +143,7 @@ animations = [{
 }, {
 "frames": [{
 "duration": 1.0,
-"texture": SubResource("AtlasTexture_qn1kh")
+"texture": SubResource("AtlasTexture_vel_shock")
 }],
 "loop": 1,
 "name": &"shock",
@@ -211,198 +151,73 @@ animations = [{
 }, {
 "frames": [{
 "duration": 2.0,
-"texture": SubResource("AtlasTexture_v6kqr")
+"texture": SubResource("AtlasTexture_vel_walk_0")
 }, {
 "duration": 1.0,
-"texture": SubResource("AtlasTexture_y8jof")
+"texture": SubResource("AtlasTexture_vel_walk_1")
 }, {
 "duration": 2.0,
-"texture": SubResource("AtlasTexture_7t4pe")
+"texture": SubResource("AtlasTexture_vel_walk_2")
 }, {
 "duration": 1.0,
-"texture": SubResource("AtlasTexture_6fjai")
-}, {
-"duration": 2.0,
-"texture": SubResource("AtlasTexture_sa3bf")
-}, {
-"duration": 1.0,
-"texture": SubResource("AtlasTexture_yf5ri")
+"texture": SubResource("AtlasTexture_vel_walk_3")
 }],
 "loop": 1,
 "name": &"walk",
 "speed": 5.0
-}, {
-"frames": [{
-"duration": 2.0,
-"texture": SubResource("AtlasTexture_fy3ys")
-}, {
-"duration": 1.0,
-"texture": SubResource("AtlasTexture_l1uh8")
-}, {
-"duration": 2.0,
-"texture": SubResource("AtlasTexture_0pnwy")
-}, {
-"duration": 1.0,
-"texture": SubResource("AtlasTexture_oeuo4")
-}, {
-"duration": 2.0,
-"texture": SubResource("AtlasTexture_0wukv")
-}, {
-"duration": 1.0,
-"texture": SubResource("AtlasTexture_mi7k4")
-}],
-"loop": 1,
-"name": &"walk_right",
-"speed": 5.0
 }]
 
-[sub_resource type="AtlasTexture" id="AtlasTexture_krge8"]
-atlas = ExtResource("8_master_breathe")
+[sub_resource type="AtlasTexture" id="AtlasTexture_master_blink_0"]
+atlas = ExtResource("12_master_blink")
 region = Rect2(0, 0, 48, 83)
 
-[sub_resource type="AtlasTexture" id="AtlasTexture_x064n"]
-atlas = ExtResource("8_master_breathe")
+[sub_resource type="AtlasTexture" id="AtlasTexture_master_blink_1"]
+atlas = ExtResource("12_master_blink")
 region = Rect2(48, 0, 48, 83)
 
-[sub_resource type="AtlasTexture" id="AtlasTexture_r2nb2"]
-atlas = ExtResource("8_master_breathe")
+[sub_resource type="AtlasTexture" id="AtlasTexture_master_blink_2"]
+atlas = ExtResource("12_master_blink")
 region = Rect2(96, 0, 48, 83)
 
-[sub_resource type="AtlasTexture" id="AtlasTexture_nn0cr"]
-atlas = ExtResource("8_master_breathe")
-region = Rect2(144, 0, 48, 83)
-
-[sub_resource type="AtlasTexture" id="AtlasTexture_7fiwr"]
-atlas = ExtResource("8_master_breathe")
-region = Rect2(192, 0, 48, 83)
-
-[sub_resource type="AtlasTexture" id="AtlasTexture_bdtup"]
-atlas = ExtResource("8_master_breathe")
-region = Rect2(240, 0, 48, 83)
-
-[sub_resource type="AtlasTexture" id="AtlasTexture_3watq"]
-atlas = ExtResource("9_master_blink")
-region = Rect2(0, 0, 48, 83)
-
-[sub_resource type="AtlasTexture" id="AtlasTexture_25hmc"]
-atlas = ExtResource("9_master_blink")
-region = Rect2(48, 0, 48, 83)
-
-[sub_resource type="AtlasTexture" id="AtlasTexture_r3dlc"]
-atlas = ExtResource("9_master_blink")
-region = Rect2(96, 0, 48, 83)
-
-[sub_resource type="AtlasTexture" id="AtlasTexture_l4ayc"]
-atlas = ExtResource("9_master_blink")
-region = Rect2(144, 0, 48, 83)
-
-[sub_resource type="AtlasTexture" id="AtlasTexture_pajdn"]
-atlas = ExtResource("9_master_blink")
-region = Rect2(192, 0, 48, 83)
-
-[sub_resource type="AtlasTexture" id="AtlasTexture_ymo3m"]
-atlas = ExtResource("9_master_blink")
-region = Rect2(240, 0, 48, 83)
-
-[sub_resource type="AtlasTexture" id="AtlasTexture_v0yfd"]
-atlas = ExtResource("10_master_idle")
+[sub_resource type="AtlasTexture" id="AtlasTexture_master_idle"]
+atlas = ExtResource("13_master_idle")
 region = Rect2(0, 0, 48, 83)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_master_shock1"]
-atlas = ExtResource("13_master_shock1")
+atlas = ExtResource("16_master_shock1")
 region = Rect2(0, 0, 48, 83)
 
-[sub_resource type="AtlasTexture" id="AtlasTexture_t27yn"]
-atlas = ExtResource("11_master_walk")
+[sub_resource type="AtlasTexture" id="AtlasTexture_master_shock2"]
+atlas = ExtResource("17_master_shock2")
 region = Rect2(0, 0, 48, 83)
 
-[sub_resource type="AtlasTexture" id="AtlasTexture_lo3u8"]
-atlas = ExtResource("11_master_walk")
+[sub_resource type="AtlasTexture" id="AtlasTexture_master_playful"]
+atlas = ExtResource("18_master_playful")
+region = Rect2(0, 0, 48, 83)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_master_walk_0"]
+atlas = ExtResource("14_master_walk")
+region = Rect2(0, 0, 48, 83)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_master_walk_1"]
+atlas = ExtResource("14_master_walk")
 region = Rect2(48, 0, 48, 83)
 
-[sub_resource type="AtlasTexture" id="AtlasTexture_x61a6"]
-atlas = ExtResource("11_master_walk")
+[sub_resource type="AtlasTexture" id="AtlasTexture_master_walk_2"]
+atlas = ExtResource("14_master_walk")
 region = Rect2(96, 0, 48, 83)
-
-[sub_resource type="AtlasTexture" id="AtlasTexture_f4u44"]
-atlas = ExtResource("11_master_walk")
-region = Rect2(144, 0, 48, 83)
-
-[sub_resource type="AtlasTexture" id="AtlasTexture_axk57"]
-atlas = ExtResource("11_master_walk")
-region = Rect2(192, 0, 48, 83)
-
-[sub_resource type="AtlasTexture" id="AtlasTexture_x5sui"]
-atlas = ExtResource("11_master_walk")
-region = Rect2(240, 0, 48, 83)
-
-[sub_resource type="AtlasTexture" id="AtlasTexture_f02kp"]
-atlas = ExtResource("12_master_walk_left")
-region = Rect2(0, 0, 48, 83)
-
-[sub_resource type="AtlasTexture" id="AtlasTexture_4frde"]
-atlas = ExtResource("12_master_walk_left")
-region = Rect2(48, 0, 48, 83)
-
-[sub_resource type="AtlasTexture" id="AtlasTexture_tmb6b"]
-atlas = ExtResource("12_master_walk_left")
-region = Rect2(96, 0, 48, 83)
-
-[sub_resource type="AtlasTexture" id="AtlasTexture_4hvib"]
-atlas = ExtResource("12_master_walk_left")
-region = Rect2(144, 0, 48, 83)
-
-[sub_resource type="AtlasTexture" id="AtlasTexture_ucapt"]
-atlas = ExtResource("12_master_walk_left")
-region = Rect2(192, 0, 48, 83)
-
-[sub_resource type="AtlasTexture" id="AtlasTexture_txmes"]
-atlas = ExtResource("12_master_walk_left")
-region = Rect2(240, 0, 48, 83)
 
 [sub_resource type="SpriteFrames" id="SpriteFrames_master"]
 animations = [{
 "frames": [{
 "duration": 2.0,
-"texture": SubResource("AtlasTexture_krge8")
+"texture": SubResource("AtlasTexture_master_blink_0")
 }, {
 "duration": 1.0,
-"texture": SubResource("AtlasTexture_x064n")
+"texture": SubResource("AtlasTexture_master_blink_1")
 }, {
 "duration": 2.0,
-"texture": SubResource("AtlasTexture_r2nb2")
-}, {
-"duration": 1.0,
-"texture": SubResource("AtlasTexture_nn0cr")
-}, {
-"duration": 2.0,
-"texture": SubResource("AtlasTexture_7fiwr")
-}, {
-"duration": 1.0,
-"texture": SubResource("AtlasTexture_bdtup")
-}],
-"loop": 1,
-"name": &"breathe",
-"speed": 5.0
-}, {
-"frames": [{
-"duration": 2.0,
-"texture": SubResource("AtlasTexture_3watq")
-}, {
-"duration": 1.0,
-"texture": SubResource("AtlasTexture_25hmc")
-}, {
-"duration": 2.0,
-"texture": SubResource("AtlasTexture_r3dlc")
-}, {
-"duration": 1.0,
-"texture": SubResource("AtlasTexture_l4ayc")
-}, {
-"duration": 2.0,
-"texture": SubResource("AtlasTexture_pajdn")
-}, {
-"duration": 1.0,
-"texture": SubResource("AtlasTexture_ymo3m")
+"texture": SubResource("AtlasTexture_master_blink_2")
 }],
 "loop": 1,
 "name": &"breathe_blink",
@@ -410,7 +225,7 @@ animations = [{
 }, {
 "frames": [{
 "duration": 1.0,
-"texture": SubResource("AtlasTexture_v0yfd")
+"texture": SubResource("AtlasTexture_master_idle")
 }],
 "loop": 1,
 "name": &"idle",
@@ -425,442 +240,417 @@ animations = [{
 "speed": 5.0
 }, {
 "frames": [{
-"duration": 2.0,
-"texture": SubResource("AtlasTexture_t27yn")
-}, {
 "duration": 1.0,
-"texture": SubResource("AtlasTexture_lo3u8")
-}, {
-"duration": 2.0,
-"texture": SubResource("AtlasTexture_x61a6")
-}, {
-"duration": 1.0,
-"texture": SubResource("AtlasTexture_f4u44")
-}, {
-"duration": 2.0,
-"texture": SubResource("AtlasTexture_axk57")
-}, {
-"duration": 1.0,
-"texture": SubResource("AtlasTexture_x5sui")
+"texture": SubResource("AtlasTexture_master_shock2")
 }],
 "loop": 1,
-"name": &"walk",
+"name": &"shock2",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_master_playful")
+}],
+"loop": 1,
+"name": &"playful",
 "speed": 5.0
 }, {
 "frames": [{
 "duration": 2.0,
-"texture": SubResource("AtlasTexture_f02kp")
+"texture": SubResource("AtlasTexture_master_walk_0")
 }, {
 "duration": 1.0,
-"texture": SubResource("AtlasTexture_4frde")
+"texture": SubResource("AtlasTexture_master_walk_1")
 }, {
 "duration": 2.0,
-"texture": SubResource("AtlasTexture_tmb6b")
-}, {
-"duration": 1.0,
-"texture": SubResource("AtlasTexture_4hvib")
-}, {
-"duration": 2.0,
-"texture": SubResource("AtlasTexture_ucapt")
-}, {
-"duration": 1.0,
-"texture": SubResource("AtlasTexture_txmes")
+"texture": SubResource("AtlasTexture_master_walk_2")
 }],
 "loop": 1,
-"name": &"walk_left",
+"name": &"walk",
 "speed": 5.0
 }]
 
-[sub_resource type="AtlasTexture" id="AtlasTexture_parchment_ui"]
-atlas = ExtResource("33_paper")
-region = Rect2(103, 43, 240, 209)
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_dialogue"]
+bg_color = Color(0.04, 0.04, 0.06, 0.94)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.85, 0.85, 0.88, 0.95)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+shadow_color = Color(0, 0, 0, 0.6)
+shadow_size = 8
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_btn_normal"]
-bg_color = Color(0.18, 0.12, 0.28, 0.9)
-border_width_left = 3
-border_width_top = 3
-border_width_right = 3
-border_width_bottom = 3
-border_color = Color(0.9, 0.75, 0.45, 0.9)
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_comic_panel"]
+bg_color = Color(0.12, 0.09, 0.16, 0.98)
+border_width_left = 4
+border_width_top = 4
+border_width_right = 4
+border_width_bottom = 4
+border_color = Color(1, 0.95, 0.85, 1)
 corner_radius_top_left = 12
 corner_radius_top_right = 12
 corner_radius_bottom_right = 12
 corner_radius_bottom_left = 12
+shadow_color = Color(0, 0, 0, 0.7)
+shadow_size = 14
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_btn_normal"]
+bg_color = Color(0.15, 0.1, 0.22, 0.9)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.95, 0.85, 0.5, 0.9)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
 shadow_color = Color(0, 0, 0, 0.45)
 shadow_size = 6
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_btn_hover"]
-bg_color = Color(0.28, 0.2, 0.42, 0.95)
-border_width_left = 3
-border_width_top = 3
-border_width_right = 3
-border_width_bottom = 3
-border_color = Color(1, 0.9, 0.6, 1)
-corner_radius_top_left = 12
-corner_radius_top_right = 12
-corner_radius_bottom_right = 12
-corner_radius_bottom_left = 12
-shadow_color = Color(0.9, 0.75, 0.45, 0.3)
+bg_color = Color(0.25, 0.18, 0.35, 0.95)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(1, 0.95, 0.65, 1)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+shadow_color = Color(0.9, 0.8, 0.4, 0.35)
 shadow_size = 8
 
-[node name="EndingCutscene" type="Sprite2D"]
+[node name="EndingCutscene" type="Node2D"]
+texture_filter = 1
+script = ExtResource("1_script")
+
+[node name="Camera2D" type="Camera2D" parent="."]
+position = Vector2(960, 540)
+
+[node name="Stage1_BookRestoration" type="Node2D" parent="."]
+
+[node name="PurpleDarkBg" type="ColorRect" parent="Stage1_BookRestoration"]
+offset_right = 1920.0
+offset_bottom = 1080.0
+color = Color(0.05, 0.035, 0.08, 1)
+
+[node name="KhampriNull" type="Sprite2D" parent="Stage1_BookRestoration"]
+position = Vector2(960, 540)
+scale = Vector2(2.8, 2.8)
+texture = ExtResource("22_khampri_null")
+
+[node name="KhampriFull" type="Sprite2D" parent="Stage1_BookRestoration"]
+visible = false
+modulate = Color(1.8, 1.6, 1.2, 1)
+position = Vector2(960, 540)
+scale = Vector2(2.8, 2.8)
+texture = ExtResource("21_khampri")
+
+[node name="ShardsContainer" type="Node2D" parent="Stage1_BookRestoration"]
+position = Vector2(960, 540)
+
+[node name="Shard1" type="Sprite2D" parent="Stage1_BookRestoration/ShardsContainer"]
+scale = Vector2(0.9, 0.9)
+texture = ExtResource("23_m1")
+
+[node name="Shard2" type="Sprite2D" parent="Stage1_BookRestoration/ShardsContainer"]
+scale = Vector2(0.9, 0.9)
+texture = ExtResource("24_m2")
+
+[node name="Shard3" type="Sprite2D" parent="Stage1_BookRestoration/ShardsContainer"]
+scale = Vector2(0.9, 0.9)
+texture = ExtResource("25_m3")
+
+[node name="Shard4" type="Sprite2D" parent="Stage1_BookRestoration/ShardsContainer"]
+scale = Vector2(0.9, 0.9)
+texture = ExtResource("26_m4")
+
+[node name="Shard5" type="Sprite2D" parent="Stage1_BookRestoration/ShardsContainer"]
+scale = Vector2(0.9, 0.9)
+texture = ExtResource("27_m5")
+
+[node name="Shard6" type="Sprite2D" parent="Stage1_BookRestoration/ShardsContainer"]
+scale = Vector2(0.9, 0.9)
+texture = ExtResource("28_m6")
+
+[node name="Shard7" type="Sprite2D" parent="Stage1_BookRestoration/ShardsContainer"]
+scale = Vector2(0.9, 0.9)
+texture = ExtResource("29_m7")
+
+[node name="Shard8" type="Sprite2D" parent="Stage1_BookRestoration/ShardsContainer"]
+scale = Vector2(0.9, 0.9)
+texture = ExtResource("30_m8")
+
+[node name="Shard9" type="Sprite2D" parent="Stage1_BookRestoration/ShardsContainer"]
+scale = Vector2(0.9, 0.9)
+texture = ExtResource("31_m9")
+
+[node name="Shard10" type="Sprite2D" parent="Stage1_BookRestoration/ShardsContainer"]
+scale = Vector2(0.9, 0.9)
+texture = ExtResource("32_m10")
+
+[node name="Shard11" type="Sprite2D" parent="Stage1_BookRestoration/ShardsContainer"]
+scale = Vector2(0.9, 0.9)
+texture = ExtResource("33_m11")
+
+[node name="Shard12" type="Sprite2D" parent="Stage1_BookRestoration/ShardsContainer"]
+scale = Vector2(0.9, 0.9)
+texture = ExtResource("34_m12")
+
+[node name="Shard13" type="Sprite2D" parent="Stage1_BookRestoration/ShardsContainer"]
+scale = Vector2(0.9, 0.9)
+texture = ExtResource("35_m13")
+
+[node name="Shard14" type="Sprite2D" parent="Stage1_BookRestoration/ShardsContainer"]
+scale = Vector2(0.9, 0.9)
+texture = ExtResource("36_m14")
+
+[node name="Shard15" type="Sprite2D" parent="Stage1_BookRestoration/ShardsContainer"]
+scale = Vector2(0.9, 0.9)
+texture = ExtResource("37_m15")
+
+[node name="Shard16" type="Sprite2D" parent="Stage1_BookRestoration/ShardsContainer"]
+scale = Vector2(0.9, 0.9)
+texture = ExtResource("38_m16")
+
+[node name="Stage2_SkyRestoration" type="Node2D" parent="."]
+visible = false
+
+[node name="PeacefulSky" type="Sprite2D" parent="Stage2_SkyRestoration"]
 position = Vector2(960, 540)
 scale = Vector2(4, 4)
-texture = ExtResource("1_library")
-script = ExtResource("36_script")
+texture = ExtResource("44_peaceful")
+hframes = 11
+vframes = 6
 
-[node name="RoomLighting" type="CanvasModulate" parent="."]
-color = Color(0.35, 0.35, 0.45, 1)
+[node name="StormSky" type="Sprite2D" parent="Stage2_SkyRestoration"]
+position = Vector2(960, 540)
+scale = Vector2(4, 4)
+texture = ExtResource("43_storm")
+hframes = 11
+vframes = 6
 
-[node name="BlackHole" type="Sprite2D" parent="."]
+[node name="Stage3_VillageRestoration" type="Node2D" parent="."]
 visible = false
-position = Vector2(40, 96)
+
+[node name="VillageAnimated" type="Sprite2D" parent="Stage3_VillageRestoration"]
+position = Vector2(960, 540)
+scale = Vector2(4, 4)
+texture = ExtResource("45_village")
+hframes = 11
+vframes = 6
+frame = 58
+
+[node name="Stage4_Library" type="Node2D" parent="."]
+visible = false
+position = Vector2(960, 540)
+scale = Vector2(4, 4)
+
+[node name="LibraryBg" type="Sprite2D" parent="Stage4_Library"]
+texture = ExtResource("2_library")
+
+[node name="DarkOverlay" type="ColorRect" parent="Stage4_Library"]
+visible = false
+offset_left = -240.0
+offset_top = -135.0
+offset_right = 240.0
+offset_bottom = 135.0
+color = Color(0, 0, 0, 0.6)
+
+[node name="BlackHole" type="Sprite2D" parent="Stage4_Library"]
+visible = false
+position = Vector2(45, 96)
 scale = Vector2(1e-05, 1e-05)
-texture = ExtResource("14_black_hole")
+texture = ExtResource("19_black_hole")
 
-[node name="KhampriShadow" type="Sprite2D" parent="."]
+[node name="KhampriShadow" type="Sprite2D" parent="Stage4_Library"]
 visible = false
-modulate = Color(1, 1, 1, 0)
-position = Vector2(64, 98)
-scale = Vector2(1.1, 0.7)
-texture = ExtResource("35_shadow")
+position = Vector2(-10, 98)
+scale = Vector2(0.8, 0.4)
+texture = ExtResource("42_shadow")
 
-[node name="Khampri" type="Sprite2D" parent="."]
+[node name="KhampriFloating" type="Sprite2D" parent="Stage4_Library"]
 visible = false
-modulate = Color(0.7, 0.63, 0.55, 1)
-position = Vector2(64, 79)
-scale = Vector2(0.2, 0.2)
-texture = ExtResource("16_khampri")
+modulate = Color(1.4, 1.3, 1, 1)
+position = Vector2(-10, 14)
+scale = Vector2(0.18, 0.18)
+texture = ExtResource("21_khampri")
 
-[node name="Shards" type="Node2D" parent="."]
-
-[node name="Shard1" type="Sprite2D" parent="Shards"]
-modulate = Color(0.7, 0.63, 0.55, 1)
-scale = Vector2(0.2, 0.2)
-texture = ExtResource("17_mini1")
-region_enabled = true
-region_rect = Rect2(6, 7, 38, 23)
-
-[node name="Shard2" type="Sprite2D" parent="Shards"]
-modulate = Color(0.7, 0.63, 0.55, 1)
-scale = Vector2(0.2, 0.2)
-texture = ExtResource("18_mini2")
-region_enabled = true
-region_rect = Rect2(52, 6, 36, 30)
-
-[node name="Shard3" type="Sprite2D" parent="Shards"]
-modulate = Color(0.7, 0.63, 0.55, 1)
-scale = Vector2(0.2, 0.2)
-texture = ExtResource("19_mini3")
-region_enabled = true
-region_rect = Rect2(99, 5, 33, 34)
-
-[node name="Shard4" type="Sprite2D" parent="Shards"]
-modulate = Color(0.7, 0.63, 0.55, 1)
-scale = Vector2(0.2, 0.2)
-texture = ExtResource("20_mini4")
-region_enabled = true
-region_rect = Rect2(151, 6, 25, 34)
-
-[node name="Shard5" type="Sprite2D" parent="Shards"]
-modulate = Color(0.7, 0.63, 0.55, 1)
-scale = Vector2(0.2, 0.2)
-texture = ExtResource("21_mini5")
-region_enabled = true
-region_rect = Rect2(192, 6, 27, 35)
-
-[node name="Shard6" type="Sprite2D" parent="Shards"]
-modulate = Color(0.7, 0.63, 0.55, 1)
-scale = Vector2(0.2, 0.2)
-texture = ExtResource("22_mini6")
-region_enabled = true
-region_rect = Rect2(4, 43, 33, 29)
-
-[node name="Shard7" type="Sprite2D" parent="Shards"]
-modulate = Color(0.7, 0.63, 0.55, 1)
-scale = Vector2(0.2, 0.2)
-texture = ExtResource("23_mini7")
-region_enabled = true
-region_rect = Rect2(51, 47, 29, 33)
-
-[node name="Shard8" type="Sprite2D" parent="Shards"]
-modulate = Color(0.7, 0.63, 0.55, 1)
-scale = Vector2(0.2, 0.2)
-texture = ExtResource("24_mini8")
-region_enabled = true
-region_rect = Rect2(102, 50, 24, 29)
-
-[node name="Shard9" type="Sprite2D" parent="Shards"]
-modulate = Color(0.7, 0.63, 0.55, 1)
-scale = Vector2(0.2, 0.2)
-texture = ExtResource("25_mini9")
-region_enabled = true
-region_rect = Rect2(145, 51, 26, 26)
-
-[node name="Shard10" type="Sprite2D" parent="Shards"]
-modulate = Color(0.7, 0.63, 0.55, 1)
-scale = Vector2(0.2, 0.2)
-texture = ExtResource("26_mini10")
-region_enabled = true
-region_rect = Rect2(191, 49, 22, 31)
-
-[node name="Shard11" type="Sprite2D" parent="Shards"]
-modulate = Color(0.7, 0.63, 0.55, 1)
-scale = Vector2(0.2, 0.2)
-texture = ExtResource("27_mini11")
-region_enabled = true
-region_rect = Rect2(5, 97, 25, 30)
-
-[node name="Shard12" type="Sprite2D" parent="Shards"]
-modulate = Color(0.7, 0.63, 0.55, 1)
-scale = Vector2(0.2, 0.2)
-texture = ExtResource("28_mini12")
-region_enabled = true
-region_rect = Rect2(46, 101, 33, 25)
-
-[node name="Shard13" type="Sprite2D" parent="Shards"]
-modulate = Color(0.7, 0.63, 0.55, 1)
-scale = Vector2(0.2, 0.2)
-texture = ExtResource("29_mini13")
-region_enabled = true
-region_rect = Rect2(105, 97, 22, 26)
-
-[node name="Shard14" type="Sprite2D" parent="Shards"]
-modulate = Color(0.7, 0.63, 0.55, 1)
-scale = Vector2(0.2, 0.2)
-texture = ExtResource("30_mini14")
-region_enabled = true
-region_rect = Rect2(148, 92, 26, 32)
-
-[node name="Shard15" type="Sprite2D" parent="Shards"]
-modulate = Color(0.7, 0.63, 0.55, 1)
-scale = Vector2(0.2, 0.2)
-texture = ExtResource("31_mini15")
-region_enabled = true
-region_rect = Rect2(194, 99, 25, 28)
-
-[node name="Shard16" type="Sprite2D" parent="Shards"]
-modulate = Color(0.7, 0.63, 0.55, 1)
-scale = Vector2(0.2, 0.2)
-texture = ExtResource("32_mini16")
-region_enabled = true
-region_rect = Rect2(2, 149, 41, 33)
-
-[node name="Vel" type="AnimatedSprite2D" parent="."]
-position = Vector2(-40, 59)
+[node name="Vel" type="AnimatedSprite2D" parent="Stage4_Library"]
+visible = false
+position = Vector2(-10, 59)
 sprite_frames = SubResource("SpriteFrames_vel")
-animation = &"breathe_blink"
+animation = &"shock"
 
-[node name="ExclamationMark" type="Sprite2D" parent="Vel"]
+[node name="ExclamationMark" type="Sprite2D" parent="Stage4_Library/Vel"]
 visible = false
 position = Vector2(0, -56)
 scale = Vector2(1e-05, 1e-05)
-texture = ExtResource("15_exclamation")
+texture = ExtResource("20_exclamation")
 
-[node name="Master" type="AnimatedSprite2D" parent="."]
+[node name="Master" type="AnimatedSprite2D" parent="Stage4_Library"]
 visible = false
-modulate = Color(0.1, 0.05, 0.2, 0)
-position = Vector2(40, 97)
-scale = Vector2(0.1, 0.1)
+position = Vector2(45, 59)
 sprite_frames = SubResource("SpriteFrames_master")
-animation = &"shock1"
+animation = &"idle"
 
-[node name="FlashOverlay" type="ColorRect" parent="."]
+[node name="ComicPanelContainer" type="Control" parent="."]
 visible = false
+layout_mode = 3
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = 600.0
+offset_top = 280.0
+offset_right = 1320.0
+offset_bottom = 740.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="ComicPanelBg" type="Panel" parent="ComicPanelContainer"]
+clip_contents = true
+layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = -300.0
-offset_top = -200.0
-offset_right = 300.0
-offset_bottom = 200.0
 grow_horizontal = 2
 grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_comic_panel")
+
+[node name="FlashbackLibraryBg" type="Sprite2D" parent="ComicPanelContainer/ComicPanelBg"]
+position = Vector2(360, 260)
+scale = Vector2(6, 6)
+texture = ExtResource("2_library")
+
+[node name="FlashbackHole" type="Sprite2D" parent="ComicPanelContainer/ComicPanelBg"]
+visible = false
+position = Vector2(360, 360)
+scale = Vector2(3, 2.4)
+texture = ExtResource("19_black_hole")
+
+[node name="FlashbackMaster" type="AnimatedSprite2D" parent="ComicPanelContainer/ComicPanelBg"]
+position = Vector2(360, 240)
+scale = Vector2(3, 3)
+sprite_frames = SubResource("SpriteFrames_master")
+animation = &"walk"
+
+[node name="ComicVignette" type="ColorRect" parent="ComicPanelContainer/ComicPanelBg"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.9, 0.75, 0.5, 0.15)
+
+[node name="ComicTitle" type="Label" parent="ComicPanelContainer"]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_top = -42.0
+offset_bottom = -6.0
+grow_horizontal = 2
+theme_override_colors/font_color = Color(1, 0.9, 0.5, 1)
+theme_override_colors/font_outline_color = Color(0.15, 0.08, 0.03, 1)
+theme_override_constants/outline_size = 6
+theme_override_fonts/font = ExtResource("39_font")
+theme_override_font_sizes/font_size = 24
+text = "[ ภาพย้อนความทรงจำ: จุดเกิดเหตุที่แท้จริง ]"
+horizontal_alignment = 1
+
+[node name="ComicCaption" type="Label" parent="ComicPanelContainer"]
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = 10.0
+offset_bottom = 45.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_colors/font_color = Color(0.96, 0.92, 0.82, 1)
+theme_override_colors/font_outline_color = Color(0.15, 0.08, 0.03, 1)
+theme_override_constants/outline_size = 6
+theme_override_fonts/font = ExtResource("39_font")
+theme_override_font_sizes/font_size = 22
+text = "ด้วยความแก่ชราและขี้ลืม ปรมาจารย์ทำพลังเวทรั่วไหลจนตกหลุมดำของตัวเอง!"
+horizontal_alignment = 1
+
+[node name="WhiteFlashOverlay" type="ColorRect" parent="."]
+visible = false
+offset_right = 1920.0
+offset_bottom = 1080.0
 mouse_filter = 2
 color = Color(1, 1, 1, 0)
 
 [node name="MagicStoryUI" type="CanvasLayer" parent="."]
 
-[node name="Backdrop" type="ColorRect" parent="MagicStoryUI"]
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-mouse_filter = 2
-color = Color(0, 0, 0, 0)
-
-[node name="ParchmentShadow" type="TextureRect" parent="MagicStoryUI"]
-modulate = Color(0, 0, 0, 0)
-anchors_preset = 8
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -444.0
-offset_top = -307.0
-offset_right = 456.0
-offset_bottom = 355.0
-grow_horizontal = 2
-grow_vertical = 2
-mouse_filter = 2
-texture = SubResource("AtlasTexture_parchment_ui")
-expand_mode = 1
-stretch_mode = 5
-
-[node name="ParchmentFrame" type="TextureRect" parent="MagicStoryUI"]
-modulate = Color(1, 1, 1, 0)
-anchors_preset = 8
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -450.0
-offset_top = -320.0
-offset_right = 450.0
-offset_bottom = 342.0
-grow_horizontal = 2
-grow_vertical = 2
-mouse_filter = 2
-texture = SubResource("AtlasTexture_parchment_ui")
-expand_mode = 1
-stretch_mode = 5
-
-[node name="DialogueContainer" type="Control" parent="MagicStoryUI"]
-modulate = Color(1, 1, 1, 0)
-scale = Vector2(0.01, 0.01)
-pivot_offset = Vector2(400, 180)
-anchors_preset = 8
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -400.0
-offset_top = -180.0
-offset_right = 400.0
-offset_bottom = 180.0
-grow_horizontal = 2
-grow_vertical = 2
-mouse_filter = 2
-
-[node name="SpeakerAuraLabel" type="Label" parent="MagicStoryUI/DialogueContainer"]
-layout_mode = 1
-anchors_preset = 10
-anchor_right = 1.0
-offset_top = -8.0
-offset_bottom = 32.0
-grow_horizontal = 2
-theme_override_colors/font_color = Color(1, 0.9, 0.5, 0.35)
-theme_override_colors/font_shadow_color = Color(1, 0.8, 0.3, 0.3)
-theme_override_constants/shadow_offset_x = 0
-theme_override_constants/shadow_offset_y = 0
-theme_override_constants/shadow_outline_size = 12
-theme_override_fonts/font = ExtResource("34_font")
-theme_override_font_sizes/font_size = 28
-text = "ปรมาจารย์"
-horizontal_alignment = 1
-
-[node name="SpeakerLabel" type="Label" parent="MagicStoryUI/DialogueContainer"]
-layout_mode = 1
-anchors_preset = 10
-anchor_right = 1.0
-offset_top = -8.0
-offset_bottom = 32.0
-grow_horizontal = 2
-theme_override_colors/font_color = Color(1, 0.9, 0.5, 1)
-theme_override_colors/font_outline_color = Color(0.2, 0.12, 0.05, 0.95)
-theme_override_constants/outline_size = 6
-theme_override_fonts/font = ExtResource("34_font")
-theme_override_font_sizes/font_size = 28
-text = "ปรมาจารย์"
-horizontal_alignment = 1
-
-[node name="DialogueAuraLabel" type="RichTextLabel" parent="MagicStoryUI/DialogueContainer"]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_left = 20.0
-offset_top = 50.0
-offset_right = -20.0
-offset_bottom = -50.0
-grow_horizontal = 2
-grow_vertical = 2
-mouse_filter = 2
-bbcode_enabled = true
-fit_content = false
-scroll_active = false
-theme_override_colors/default_color = Color(1, 0.88, 0.5, 0.35)
-theme_override_colors/font_outline_color = Color(1, 0.82, 0.4, 0.35)
-theme_override_constants/outline_size = 8
-theme_override_constants/line_separation = 12
-theme_override_fonts/normal_font = ExtResource("34_font")
-theme_override_font_sizes/normal_font_size = 32
-text = "[center]ข้อความบทสนทนา[/center]"
-
-[node name="DialogueRichLabel" type="RichTextLabel" parent="MagicStoryUI/DialogueContainer"]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_left = 20.0
-offset_top = 50.0
-offset_right = -20.0
-offset_bottom = -50.0
-grow_horizontal = 2
-grow_vertical = 2
-mouse_filter = 2
-bbcode_enabled = true
-fit_content = false
-scroll_active = false
-theme_override_colors/default_color = Color(0.96, 0.9, 0.78, 1)
-theme_override_colors/font_outline_color = Color(0.18, 0.11, 0.05, 0.95)
-theme_override_constants/outline_size = 6
-theme_override_constants/line_separation = 12
-theme_override_fonts/normal_font = ExtResource("34_font")
-theme_override_font_sizes/normal_font_size = 32
-text = "[center]ข้อความบทสนทนา[/center]"
-
-[node name="ContinuePrompt" type="Label" parent="MagicStoryUI/DialogueContainer"]
-layout_mode = 1
+[node name="DialogueBox" type="PanelContainer" parent="MagicStoryUI"]
+visible = false
 anchors_preset = 7
 anchor_left = 0.5
 anchor_top = 1.0
 anchor_right = 0.5
 anchor_bottom = 1.0
-offset_left = -250.0
-offset_top = -25.0
-offset_right = 250.0
-offset_bottom = 10.0
+offset_left = -580.0
+offset_top = -205.0
+offset_right = 580.0
+offset_bottom = -40.0
 grow_horizontal = 2
 grow_vertical = 0
 mouse_filter = 2
-theme_override_colors/font_color = Color(0.85, 0.75, 0.58, 0.95)
-theme_override_colors/font_outline_color = Color(0.18, 0.11, 0.05, 0.9)
-theme_override_constants/outline_size = 4
-theme_override_fonts/font = ExtResource("34_font")
-theme_override_font_sizes/font_size = 22
-text = "— กด Space หรือคลิก เพื่อไปต่อ —"
-horizontal_alignment = 1
+theme_override_styles/panel = SubResource("StyleBoxFlat_dialogue")
 
-[node name="PageIndicator" type="Label" parent="MagicStoryUI/DialogueContainer"]
-layout_mode = 1
-anchors_preset = 3
-anchor_left = 1.0
-anchor_top = 1.0
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_left = -120.0
-offset_top = -25.0
-offset_right = -20.0
-offset_bottom = 10.0
-grow_horizontal = 0
-grow_vertical = 0
+[node name="Margin" type="MarginContainer" parent="MagicStoryUI/DialogueBox"]
+layout_mode = 2
 mouse_filter = 2
-theme_override_colors/font_color = Color(0.7, 0.6, 0.45, 0.8)
-theme_override_fonts/font = ExtResource("34_font")
+theme_override_constants/margin_left = 32
+theme_override_constants/margin_top = 20
+theme_override_constants/margin_right = 32
+theme_override_constants/margin_bottom = 16
+
+[node name="VBox" type="VBoxContainer" parent="MagicStoryUI/DialogueBox/Margin"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 8
+
+[node name="SpeakerLabel" type="Label" parent="MagicStoryUI/DialogueBox/Margin/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.9, 0.45, 1)
+theme_override_colors/font_outline_color = Color(0.18, 0.1, 0.04, 0.95)
+theme_override_constants/outline_size = 6
+theme_override_fonts/font = ExtResource("39_font")
+theme_override_font_sizes/font_size = 28
+text = "ปรมาจารย์"
+
+[node name="DialogueLabel" type="Label" parent="MagicStoryUI/DialogueBox/Margin/VBox"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_colors/font_color = Color(0.96, 0.92, 0.82, 1)
+theme_override_colors/font_outline_color = Color(0.18, 0.1, 0.04, 0.95)
+theme_override_constants/outline_size = 6
+theme_override_constants/line_spacing = 10
+theme_override_fonts/font = ExtResource("39_font")
+theme_override_font_sizes/font_size = 26
+text = "อ้าว เวล... เกิดอะไรขึ้นเนี่ย แล้วทำไมดูเหนื่อยมอมแมมแบบนี้ล่ะ?"
+autowrap_mode = 3
+
+[node name="ContinuePrompt" type="Label" parent="MagicStoryUI/DialogueBox/Margin/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.85, 0.78, 0.65, 0.9)
+theme_override_colors/font_outline_color = Color(0.18, 0.1, 0.04, 0.85)
+theme_override_constants/outline_size = 4
+theme_override_fonts/font = ExtResource("39_font")
 theme_override_font_sizes/font_size = 20
-text = "1 / 5"
+text = "— คลิกหน้าจอเพื่อไปต่อ —"
 horizontal_alignment = 2
 
 [node name="TheEndContainer" type="Control" parent="MagicStoryUI"]
@@ -872,6 +662,42 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 
+[node name="DarkOverlay" type="ColorRect" parent="MagicStoryUI/TheEndContainer"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 0, 0, 0.9)
+
+[node name="SummaryLabel" type="RichTextLabel" parent="MagicStoryUI/TheEndContainer"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -650.0
+offset_top = -220.0
+offset_right = 650.0
+offset_bottom = -20.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+bbcode_enabled = true
+fit_content = false
+scroll_active = false
+theme_override_colors/default_color = Color(0.96, 0.92, 0.85, 1)
+theme_override_colors/font_outline_color = Color(0.15, 0.08, 0.03, 0.95)
+theme_override_constants/outline_size = 6
+theme_override_constants/line_separation = 16
+theme_override_fonts/normal_font = ExtResource("39_font")
+theme_override_font_sizes/normal_font_size = 28
+text = "[center]แม้การเดินทางครั้งนี้จะเริ่มต้นจากความผิดพลาดของปรมาจารย์
+แต่เวลก็ได้เรียนรู้และเติบโต จนสามารถฟื้นฟูคัมภีร์เวทต้นกำเนิด
+และคืนความสงบสุขให้แก่อาณาจักรได้สำเร็จ[/center]"
+
 [node name="TitleLabel" type="Label" parent="MagicStoryUI/TheEndContainer"]
 layout_mode = 1
 anchors_preset = 8
@@ -880,9 +706,9 @@ anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
 offset_left = -300.0
-offset_top = -180.0
+offset_top = -10.0
 offset_right = 300.0
-offset_bottom = -80.0
+offset_bottom = 70.0
 grow_horizontal = 2
 grow_vertical = 2
 theme_override_colors/font_color = Color(1, 0.9, 0.5, 1)
@@ -892,31 +718,9 @@ theme_override_constants/shadow_offset_y = 0
 theme_override_constants/shadow_outline_size = 18
 theme_override_colors/font_outline_color = Color(0.15, 0.08, 0.03, 1)
 theme_override_constants/outline_size = 10
-theme_override_fonts/font = ExtResource("34_font")
-theme_override_font_sizes/font_size = 72
+theme_override_fonts/font = ExtResource("39_font")
+theme_override_font_sizes/font_size = 64
 text = "THE END"
-horizontal_alignment = 1
-vertical_alignment = 1
-
-[node name="SubtitleLabel" type="Label" parent="MagicStoryUI/TheEndContainer"]
-layout_mode = 1
-anchors_preset = 8
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -400.0
-offset_top = -60.0
-offset_right = 400.0
-offset_bottom = -10.0
-grow_horizontal = 2
-grow_vertical = 2
-theme_override_colors/font_color = Color(0.9, 0.85, 0.75, 1)
-theme_override_colors/font_outline_color = Color(0.15, 0.08, 0.03, 0.95)
-theme_override_constants/outline_size = 6
-theme_override_fonts/font = ExtResource("34_font")
-theme_override_font_sizes/font_size = 28
-text = "ขอบคุณที่ร่วมผจญภัยใน Git Di Waa"
 horizontal_alignment = 1
 vertical_alignment = 1
 
@@ -928,15 +732,15 @@ anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
 offset_left = -175.0
-offset_top = 40.0
+offset_top = 100.0
 offset_right = 175.0
-offset_bottom = 110.0
+offset_bottom = 166.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_default_cursor_shape = 2
 theme_override_colors/font_color = Color(1, 0.95, 0.8, 1)
 theme_override_colors/font_hover_color = Color(1, 1, 1, 1)
-theme_override_fonts/font = ExtResource("34_font")
+theme_override_fonts/font = ExtResource("39_font")
 theme_override_font_sizes/font_size = 28
 theme_override_styles/normal = SubResource("StyleBoxFlat_btn_normal")
 theme_override_styles/hover = SubResource("StyleBoxFlat_btn_hover")
@@ -947,22 +751,21 @@ text = "กลับสู่หน้าหลัก"
 [node name="Audio" type="Node" parent="."]
 
 [node name="SfxFusion" type="AudioStreamPlayer" parent="Audio"]
-stream = ExtResource("39_sfx_modal")
+stream = ExtResource("48_sfx_modal")
 volume_db = -3.0
 
 [node name="SfxWarp" type="AudioStreamPlayer" parent="Audio"]
-stream = ExtResource("38_sfx_command")
-volume_db = -2.0
+stream = ExtResource("47_sfx_command")
+volume_db = -1.0
 
 [node name="SfxPop" type="AudioStreamPlayer" parent="Audio"]
-stream = ExtResource("39_sfx_modal")
+stream = ExtResource("48_sfx_modal")
 volume_db = 0.0
 
 [node name="SfxNext" type="AudioStreamPlayer" parent="Audio"]
-stream = ExtResource("40_sfx_next")
+stream = ExtResource("49_sfx_next")
 volume_db = -3.0
 
 [node name="SfxSuccess" type="AudioStreamPlayer" parent="Audio"]
-stream = ExtResource("37_sfx_success")
+stream = ExtResource("46_sfx_success")
 volume_db = 0.0
-
