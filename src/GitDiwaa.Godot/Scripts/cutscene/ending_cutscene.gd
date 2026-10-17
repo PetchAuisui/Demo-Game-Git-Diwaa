@@ -94,6 +94,7 @@ var book_aura_pulse_tween: Tween = null
 var epilogue_pulse_tween: Tween = null
 var epilogue_seq_tween: Tween = null
 var epilogue_auto_tween: Tween = null
+var shard_drift_tweens: Array[Tween] = []
 var skip_btn_instance: CanvasLayer = null
 
 # Animation timers for spritesheets
@@ -139,6 +140,10 @@ func _exit_tree() -> void:
 		epilogue_seq_tween.kill()
 	if epilogue_auto_tween and epilogue_auto_tween.is_valid():
 		epilogue_auto_tween.kill()
+	for tw in shard_drift_tweens:
+		if tw and tw.is_valid():
+			tw.kill()
+	shard_drift_tweens.clear()
 
 func _process(delta: float) -> void:
 	# อัปเดตเฟรมแอนิเมชันของท้องฟ้าในฉาก 2
@@ -262,6 +267,10 @@ func _reset_all_stages() -> void:
 		epilogue_seq_tween.kill()
 	if epilogue_auto_tween and epilogue_auto_tween.is_valid():
 		epilogue_auto_tween.kill()
+	for tw in shard_drift_tweens:
+		if tw and tw.is_valid():
+			tw.kill()
+	shard_drift_tweens.clear()
 	if is_instance_valid(skip_btn_instance):
 		skip_btn_instance.visible = true
 	credits_container.visible = false
@@ -346,12 +355,19 @@ func play_stage_1_book_restoration() -> void:
 			var tw_drift = create_tween().set_loops(2)
 			tw_drift.tween_property(s, "position", base_pos + dir * 10.0, 0.55).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 			tw_drift.tween_property(s, "position", base_pos - dir * 8.0, 0.55).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+			shard_drift_tweens.append(tw_drift)
 	)
 	
 	# 1.3 เศษทั้งหมดหยุดนิ่งสั้น ๆ (~0.7s) เพื่อให้เห็นชัด ก่อนพุ่งเข้าหาคัมภีร์พร้อมกัน (2.2s)
 	var tw_absorb = create_tween()
 	tw_absorb.tween_interval(2.2)
 	tw_absorb.tween_callback(func():
+		# หยุด drift tween ทั้งหมดก่อน เพื่อไม่ให้คำนวณตำแหน่งชนกับ fly tween
+		for tw in shard_drift_tweens:
+			if tw and tw.is_valid():
+				tw.kill()
+		shard_drift_tweens.clear()
+		
 		_play_sfx(sfx_fusion)
 		camera_shake_amount = 3.0
 		
@@ -1106,7 +1122,7 @@ func _on_return_menu_pressed() -> void:
 	)
 
 func _play_sfx(_player: AudioStreamPlayer) -> void:
-	# ปิดเสียงทั้งหมดในฉาก ending-cutscene ชั่วคราวตามที่ระบุ
+	# TODO: เปิดใช้งาน SFX เมื่อมีไฟล์เสียงที่สมบูรณ์ตามแผน (ปัจจุบันปิดเสียงชั่วคราวตามที่ระบุ)
 	return
 
 func _init_sfx() -> void:
