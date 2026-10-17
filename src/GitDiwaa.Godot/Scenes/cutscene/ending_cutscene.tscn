@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://c3eaa1f2e8b4c"]
 
-[ext_resource type="Script" uid="uid://ca6pfd1q5i48k" path="res://scripts/cutscene/ending_cutscene.gd" id="1_script"]
+[ext_resource type="Script" uid="uid://ca6pfd1q5i48k" path="res://Scripts/cutscene/ending_cutscene.gd" id="1_script"]
 [ext_resource type="Texture2D" uid="uid://d1k0b34y780t7" path="res://assets/cutscene/Libary.png" id="2_library"]
 [ext_resource type="Texture2D" uid="uid://don4qpk4c43rc" path="res://assets/cutscene/characters/vel/vel_Hblue_Sredyellow_idle.png" id="6_vel_idle"]
 [ext_resource type="Texture2D" uid="uid://bwv0pcja8aiqd" path="res://assets/cutscene/characters/vel/vel_shockpng.png" id="7_vel_shock"]

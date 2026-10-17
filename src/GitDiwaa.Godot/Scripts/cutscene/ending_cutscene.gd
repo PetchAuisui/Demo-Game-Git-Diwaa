@@ -63,7 +63,6 @@ extends Node2D
 @onready var continue_prompt: Label = $MagicStoryUI/DialogueBox/Margin/VBox/ContinuePrompt
 @onready var the_end_container: Control = $MagicStoryUI/TheEndContainer
 @onready var the_end_dark_overlay: ColorRect = $MagicStoryUI/TheEndContainer/DarkOverlay
-@onready var summary_container: VBoxContainer = $MagicStoryUI/TheEndContainer/SummaryContainer
 @onready var summary_line1: Label = $MagicStoryUI/TheEndContainer/SummaryContainer/SummaryLine1
 @onready var summary_line2: Label = $MagicStoryUI/TheEndContainer/SummaryContainer/SummaryLine2
 @onready var summary_line3: Label = $MagicStoryUI/TheEndContainer/SummaryContainer/SummaryLine3
@@ -93,6 +92,8 @@ var anger_bounce_tween: Tween = null
 var sigh_puff_tween: Tween = null
 var book_aura_pulse_tween: Tween = null
 var epilogue_pulse_tween: Tween = null
+var epilogue_seq_tween: Tween = null
+var epilogue_auto_tween: Tween = null
 var skip_btn_instance: CanvasLayer = null
 
 # Animation timers for spritesheets
@@ -124,6 +125,20 @@ func _ready() -> void:
 
 func _exit_tree() -> void:
 	Engine.time_scale = 1.0
+	if typewriter_tween and typewriter_tween.is_valid():
+		typewriter_tween.kill()
+	if anger_bounce_tween and anger_bounce_tween.is_valid():
+		anger_bounce_tween.kill()
+	if sigh_puff_tween and sigh_puff_tween.is_valid():
+		sigh_puff_tween.kill()
+	if book_aura_pulse_tween and book_aura_pulse_tween.is_valid():
+		book_aura_pulse_tween.kill()
+	if epilogue_pulse_tween and epilogue_pulse_tween.is_valid():
+		epilogue_pulse_tween.kill()
+	if epilogue_seq_tween and epilogue_seq_tween.is_valid():
+		epilogue_seq_tween.kill()
+	if epilogue_auto_tween and epilogue_auto_tween.is_valid():
+		epilogue_auto_tween.kill()
 
 func _process(delta: float) -> void:
 	# อัปเดตเฟรมแอนิเมชันของท้องฟ้าในฉาก 2
@@ -243,6 +258,10 @@ func _reset_all_stages() -> void:
 		the_end_continue_prompt.modulate.a = 0.0
 	if epilogue_pulse_tween and epilogue_pulse_tween.is_valid():
 		epilogue_pulse_tween.kill()
+	if epilogue_seq_tween and epilogue_seq_tween.is_valid():
+		epilogue_seq_tween.kill()
+	if epilogue_auto_tween and epilogue_auto_tween.is_valid():
+		epilogue_auto_tween.kill()
 	if is_instance_valid(skip_btn_instance):
 		skip_btn_instance.visible = true
 	credits_container.visible = false
@@ -783,7 +802,7 @@ func play_stage_7_dialogue() -> void:
 	# ประโยคที่ 1 (ของฉาก 7): เวลพูดหลังรู้ความจริง
 	_show_dialogue(
 		"เวล",
-		"เฮ้อ... เรื่องวุ่นวายทั้งหมดที่่เกิดขึ้น สาเหตุเกิดจากท่านปรมาจารย์หรอเนี่ย...",
+		"เฮ้อ... เรื่องวุ่นวายทั้งหมดที่เกิดขึ้น สาเหตุเกิดจากท่านปรมาจารย์เหรอเนี่ย...",
 		func():
 			# ปิดไอคอนอารมณ์เสียเมื่อจบประโยคของเวล
 			if is_instance_valid(anger_mark) and anger_mark.visible:
@@ -801,7 +820,7 @@ func play_stage_7_dialogue() -> void:
 			# ประโยคที่ 2 (ของฉาก 7): อาจารย์ตอบ
 			_show_dialogue(
 				"ปรมาจารย์",
-				"ฉันเองหรอเนี่ย... 55555",
+				"ฉันเองเหรอเนี่ย... 55555",
 				func():
 					_stop_sigh_puff()
 					vel.play("idle")
@@ -901,41 +920,53 @@ func play_stage_8_epilogue() -> void:
 	the_end_title.modulate.a = 0.0
 	the_end_continue_prompt.modulate.a = 0.0
 	
-	var tw_seq = create_tween()
+	if epilogue_seq_tween and epilogue_seq_tween.is_valid():
+		epilogue_seq_tween.kill()
+	epilogue_seq_tween = create_tween()
 	
 	# 1. เริ่มด้วยฉากสีปกติ ให้เห็นเวลกับปรมาจารย์ชัดเจนเป็นเวลา 2 วินาที
-	tw_seq.tween_interval(2.0)
+	epilogue_seq_tween.tween_interval(2.0)
 	
 	# 2. ค่อย ๆ เพิ่มชั้นสีดำคลุมฉากจากความทึบ 0% ไปเป็น 45% ภายใน 1 วินาที
 	# ชั้นดำอยู่หลังข้อความ และยังมองเห็นใบหน้ากับสีชุดตัวละครได้
 	# พร้อมค่อย ๆ ลดระดับเสียงเพลงประกอบเล็กน้อยช่วงข้อความปรากฏ
-	tw_seq.tween_callback(func():
+	epilogue_seq_tween.tween_callback(func():
 		_fade_bgm_volume(-6.0, 1.0)
 	)
-	tw_seq.tween_property(the_end_dark_overlay, "color:a", 0.45, 1.0).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	epilogue_seq_tween.tween_property(the_end_dark_overlay, "color:a", 0.45, 1.0).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 	
 	# 3. ใช้ข้อความจบเดิม สีขาว ตำแหน่งกึ่งกลางเดิม ค่อย ๆ เฟดเข้าทีละบรรทัด บรรทัดละ 0.6 วินาที
 	# เว้นระหว่างบรรทัด 0.8 วินาที และคงบรรทัดก่อนหน้าไว้ให้อ่านต่อเนื่อง
-	tw_seq.tween_property(summary_line1, "modulate:a", 1.0, 0.6).set_trans(Tween.TRANS_SINE)
-	tw_seq.tween_interval(0.8)
-	tw_seq.tween_property(summary_line2, "modulate:a", 1.0, 0.6).set_trans(Tween.TRANS_SINE)
-	tw_seq.tween_interval(0.8)
-	tw_seq.tween_property(summary_line3, "modulate:a", 1.0, 0.6).set_trans(Tween.TRANS_SINE)
+	epilogue_seq_tween.tween_property(summary_line1, "modulate:a", 1.0, 0.6).set_trans(Tween.TRANS_SINE)
+	epilogue_seq_tween.tween_interval(0.8)
+	epilogue_seq_tween.tween_property(summary_line2, "modulate:a", 1.0, 0.6).set_trans(Tween.TRANS_SINE)
+	epilogue_seq_tween.tween_interval(0.8)
+	epilogue_seq_tween.tween_property(summary_line3, "modulate:a", 1.0, 0.6).set_trans(Tween.TRANS_SINE)
 	
 	# 4. เมื่อข้อความครบทุกบรรทัด รอ 1 วินาที แล้วเฟดคำว่า “THE END” เข้ามาภายใน 1 วินาที
 	# ใช้รูปแบบพิกเซลสีทองและตำแหน่งเดิม
-	tw_seq.tween_interval(1.0)
-	tw_seq.tween_property(the_end_title, "modulate:a", 1.0, 1.0).set_trans(Tween.TRANS_SINE)
+	epilogue_seq_tween.tween_interval(1.0)
+	epilogue_seq_tween.tween_property(the_end_title, "modulate:a", 1.0, 1.0).set_trans(Tween.TRANS_SINE)
 	
 	# 5. หลัง THE END แสดงครบแล้ว 2 วินาที จึงแสดงข้อความสำหรับไปหน้าถัดไป พร้อมเปิดรับการคลิก
 	# ป้องกันการคลิกจากฉากก่อนหน้าทำให้หน้าจบถูกข้ามทันที
-	tw_seq.tween_interval(2.0)
-	tw_seq.tween_callback(func():
+	epilogue_seq_tween.tween_interval(2.0)
+	epilogue_seq_tween.tween_callback(func():
 		var tw_prompt = create_tween()
 		tw_prompt.tween_property(the_end_continue_prompt, "modulate:a", 1.0, 0.5).set_trans(Tween.TRANS_SINE)
 		tw_prompt.tween_callback(func():
 			_start_epilogue_pulse()
 			is_waiting_epilogue = true
+			
+			# เริ่มนับเวลาถอยหลัง 8 วินาที "หลังจาก" ข้อความทั้งหมดแสดงผลเต็มที่แล้ว เผื่อผู้เล่นไม่คลิก
+			if epilogue_auto_tween and epilogue_auto_tween.is_valid():
+				epilogue_auto_tween.kill()
+			epilogue_auto_tween = create_tween()
+			epilogue_auto_tween.tween_interval(8.0)
+			epilogue_auto_tween.tween_callback(func():
+				if is_waiting_epilogue:
+					_advance_epilogue_to_credits()
+			)
 		)
 	)
 
@@ -969,6 +1000,10 @@ func _advance_epilogue_to_credits() -> void:
 	
 	if epilogue_pulse_tween and epilogue_pulse_tween.is_valid():
 		epilogue_pulse_tween.kill()
+	if epilogue_auto_tween and epilogue_auto_tween.is_valid():
+		epilogue_auto_tween.kill()
+	if epilogue_seq_tween and epilogue_seq_tween.is_valid():
+		epilogue_seq_tween.kill()
 	
 	# ค่อย ๆ เฟดเสียงเพลงออกเมื่อออกจากหน้าจบ
 	_fade_bgm_volume(-80.0, 0.8)
