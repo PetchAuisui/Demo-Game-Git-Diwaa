@@ -98,7 +98,7 @@ jobs:
       - name: CLI smoke test
         shell: bash
         run: |
-          printf 'git --version\ngit init\nwrite README.md Hello\ngit add README.md\ngit commit -m "ci smoke"\nsnapshot\nexit\n' \
+          printf 'git --version\ngit config --global user.name "CI"\ngit config --global user.email ci@git-diwaa.local\ngit init\nwrite README.md Hello\ngit add README.md\ngit commit -m "ci smoke"\nsnapshot\nexit\n' \
             | dotnet run --project src/GitDiwaa.Cli/GitDiwaa.Cli.csproj -c Release --no-build | tee cli.txt
           grep -q '"Subject": "ci smoke"' cli.txt
 
