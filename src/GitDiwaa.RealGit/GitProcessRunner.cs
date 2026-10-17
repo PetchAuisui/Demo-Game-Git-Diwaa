@@ -12,13 +12,14 @@ internal sealed class GitProcessRunner
         GitSandbox sandbox,
         string workingDirectory,
         IReadOnlyList<string> arguments,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        IReadOnlyDictionary<string, string>? extraEnvironment = null)
     {
         try
         {
             using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
             timeout.CancelAfter(DefaultTimeout);
-            return await RunCoreAsync(sandbox, workingDirectory, arguments, timeout.Token);
+            return await RunCoreAsync(sandbox, workingDirectory, arguments, timeout.Token, extraEnvironment);
         }
         catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
         {
@@ -36,7 +37,8 @@ internal sealed class GitProcessRunner
         GitSandbox sandbox,
         string workingDirectory,
         IReadOnlyList<string> arguments,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        IReadOnlyDictionary<string, string>? extraEnvironment)
     {
         var startInfo = new ProcessStartInfo
         {
@@ -51,6 +53,8 @@ internal sealed class GitProcessRunner
 
         foreach (var argument in arguments) startInfo.ArgumentList.Add(argument);
         ApplySandboxEnvironment(startInfo, sandbox);
+        if (extraEnvironment is not null)
+            foreach (var (key, value) in extraEnvironment) startInfo.Environment[key] = value;
 
         using var process = new Process { StartInfo = startInfo };
         process.Start();

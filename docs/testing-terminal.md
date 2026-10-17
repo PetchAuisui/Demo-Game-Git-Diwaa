@@ -52,17 +52,19 @@ snapshot
 
 ## รอบทดลอง Local Remote
 
-ใช้ `remote-url` เพื่ออ่าน URL ของ local bare remote ใน attempt ปัจจุบัน แล้วแทนค่าในคำสั่ง:
+ทุก attempt มีบัญชี GitHub จำลองเจ้าของคือ `user` ที่ **ยังไม่มี repo** ต้องสร้างก่อนจากหน้า Magic Vault ในเกม (ปุ่ม New) แล้วค่อยใช้ URL ของ repo นั้น (ถ้าด่านส่ง seed ตั้งต้นมา `remote-url` จะแสดง URL ของ repo นั้น เช่น `https://magic-vault.com/user/my-project.git`):
 
 ```text
 remote-url
-git remote add origin https://git-diwaa.local/origin.git
+git remote add origin https://magic-vault.com/user/my-project.git
 git push -u origin main
 git fetch origin
 git pull
 ```
 
-URL รูปแบบ `https://git-diwaa.local/...` เป็น alias ภายในเกม ไม่เรียกเครือข่ายจริง และ output จะไม่เปิดเผย path ของ bare repository ภายใน
+URL รูปแบบ `https://github.com/<user>/<repo>.git` เป็น alias ภายในเกม ไม่เรียกเครือข่ายจริง และ output จะไม่เปิดเผย path ของ bare repository ภายใน ใช้ได้เฉพาะ URL ของ attempt นี้ URL อื่นรวมถึง GitHub จริงจะถูกปฏิเสธพร้อมบอก URL ที่อนุญาต
+
+repo ว่างตอนเริ่ม ผู้เล่นต้อง push ขึ้นไปเอง `git clone <url>` ของ repo ว่างใช้ได้ (ได้ working tree ว่าง)
 
 ## คำสั่ง Git ที่เปิดใช้
 

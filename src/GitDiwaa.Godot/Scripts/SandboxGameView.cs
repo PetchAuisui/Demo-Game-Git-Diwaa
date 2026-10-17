@@ -16,6 +16,7 @@ public partial class SandboxGameView : Control
     private FilesPanel _filesPanel = null!;
     private GitGraphPanel _gitGraphPanel = null!;
     private TerminalPanel _terminalPanel = null!;
+    private RemoteRepoButton _remoteRepoButton = null!;
 
     private IGitSandboxService _sandboxService = null!;
     private bool _isInitialized;
@@ -37,6 +38,9 @@ public partial class SandboxGameView : Control
 
     private void WireEvents()
     {
+        _remoteRepoButton = new RemoteRepoButton();
+        _remoteRepoButton.Pressed += OnRepoPressed;
+        _gitGraphPanel.AddHeaderAction(_remoteRepoButton);
         _terminalPanel.CommandSubmitted += OnCommandSubmitted;
         _filesPanel.OpenFileRequested += OnOpenFileRequested;
         _filesPanel.SaveFileRequested += OnSaveFileRequested;
@@ -78,6 +82,7 @@ public partial class SandboxGameView : Control
         }
 
         _isInitialized = true;
+        _remoteRepoButton.SetAvailable(_sandboxService.RemoteAccount != null);
         _terminalPanel.SetExecuting(false);
 
         if (_sandboxService.Info != null)
@@ -87,6 +92,22 @@ public partial class SandboxGameView : Control
         }
 
         await RefreshStateAsync();
+    }
+
+    private static readonly PackedScene RemoteRepoViewScene = GD.Load<PackedScene>("res://Scenes/RemoteRepoView.tscn");
+
+    private void OnRepoPressed()
+    {
+        if (_sandboxService?.RemoteAccount is not { } account)
+        {
+            _terminalPanel.AppendError("หน้า repo ใช้ได้เฉพาะเมื่อเปิดโหมด Real Git");
+            return;
+        }
+
+        var view = RemoteRepoViewScene.Instantiate<RemoteRepoView>();
+        view.BackRequested += () => view.QueueFree();
+        AddChild(view);
+        view.Open(account);
     }
 
     private async void OnCommandSubmitted(string command)

@@ -11,6 +11,10 @@ public interface IGitSandboxService : IAsyncDisposable
 {
     GitSessionInfo? Info { get; }
     bool IsInitialized { get; }
+    /// <summary>หน้า Remote Repository จำลอง (null เมื่อใช้ mock service)</summary>
+    IGitRemoteHost? RemoteHost { get; }
+    /// <summary>บัญชีที่มีหลาย repo บน GitHub จำลอง (null เมื่อใช้ mock service)</summary>
+    IGitRemoteAccount? RemoteAccount { get; }
     string CurrentBranch { get; }
 
     Task InitializeAsync(string missionId = "checkpoint-01", string? attemptId = null, CancellationToken cancellationToken = default);
