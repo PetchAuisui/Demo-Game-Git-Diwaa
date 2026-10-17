@@ -10,7 +10,7 @@ extends Node2D
 ## 7. กล่องบทสนทนา (อาจารย์ยิ้มขี้เล่น เวลยืนนิ่ง 1 วินาทีเน้นอารมณ์ ก่อนถอนหายใจ)
 ## 8. บทสรุปการเดินทางของเวล (ซูมกล้องออก -> พื้นหลังมืดลงอย่างต่อเนื่อง -> ข้อความสรุปกระชับชัดเจน -> THE END)
 
-@export var start_scene_path: String = "res://scenes/StartView.tscn"
+@export var start_scene_path: String = "res://Scenes/StartView.tscn"
 
 # Camera & Overlays
 @onready var camera: Camera2D = $Camera2D
@@ -83,6 +83,7 @@ var can_fast_forward: bool = true
 var typewriter_tween: Tween = null
 var anger_bounce_tween: Tween = null
 var sigh_puff_tween: Tween = null
+var book_aura_pulse_tween: Tween = null
 
 # Animation timers for spritesheets
 var storm_anim_timer: float = 0.0
@@ -220,6 +221,8 @@ func _reset_all_stages() -> void:
 	is_waiting_epilogue = false
 	if ring_of_light:
 		ring_of_light.visible = false
+	if book_aura_pulse_tween and book_aura_pulse_tween.is_valid():
+		book_aura_pulse_tween.kill()
 	if book_aura:
 		book_aura.visible = false
 	if dark_overlay:
@@ -252,6 +255,7 @@ func _reset_all_stages() -> void:
 		khampri_floating.modulate = Color(1, 1, 1, 1)
 	
 	# จัดตำแหน่งเศษ 16 ชิ้นกระจายรอบคัมภีร์ให้เห็นเป็นชิ้นชัดเจน ขนาดใหญ่ขึ้นเล็กน้อย (1.35)
+	shard_initial_positions.clear()
 	var count = shards16.size()
 	for i in range(count):
 		var s: Sprite2D = shards16[i]
@@ -333,9 +337,11 @@ func play_stage_1_book_restoration() -> void:
 			tw_aura.tween_property(book_aura, "modulate:a", 0.65, 0.5)
 			
 			# ออร่ากะพริบเปล่งแสงเบาๆ นุ่มนวลรอบคัมภีร์
-			var tw_pulse = create_tween().set_loops()
-			tw_pulse.tween_property(book_aura, "scale", Vector2(2.15, 2.15), 0.7).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
-			tw_pulse.tween_property(book_aura, "scale", Vector2(1.95, 1.95), 0.7).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+			if book_aura_pulse_tween and book_aura_pulse_tween.is_valid():
+				book_aura_pulse_tween.kill()
+			book_aura_pulse_tween = create_tween().set_loops()
+			book_aura_pulse_tween.tween_property(book_aura, "scale", Vector2(2.15, 2.15), 0.7).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+			book_aura_pulse_tween.tween_property(book_aura, "scale", Vector2(1.95, 1.95), 0.7).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 		
 		# คัมภีร์สั่น 2-3 ครั้ง
 		var tw_shake = create_tween()
@@ -377,6 +383,8 @@ func play_stage_1_book_restoration() -> void:
 func play_stage_2_sky_restoration() -> void:
 	current_stage = 2
 	stage1.visible = false
+	if book_aura_pulse_tween and book_aura_pulse_tween.is_valid():
+		book_aura_pulse_tween.kill()
 	if book_aura:
 		book_aura.visible = false
 	stage2.visible = true
@@ -765,7 +773,7 @@ func play_stage_7_dialogue() -> void:
 			# ประโยคที่ 2 (ของฉาก 7): อาจารย์ตอบ
 			_show_dialogue(
 				"ปรมาจารย์",
-				"ฉันเองหรอเนี่ย_55555",
+				"ฉันเองหรอเนี่ย... 55555",
 				func():
 					_stop_sigh_puff()
 					_hide_dialogue(play_stage_8_epilogue)
@@ -854,14 +862,14 @@ func play_stage_8_epilogue() -> void:
 	tw_fade_in.tween_property(the_end_container, "modulate:a", 1.0, 1.8).set_trans(Tween.TRANS_SINE)
 	tw_fade_in.tween_callback(func():
 		is_waiting_epilogue = true
-	)
-	
-	# หากผู้เล่นอ่านจบแล้วไม่กดอะไร จะตัดเข้าสู่หน้าขอบคุณอัตโนมัติใน 5.5 วินาที
-	var tw_auto = create_tween()
-	tw_auto.tween_interval(5.5)
-	tw_auto.tween_callback(func():
-		if is_waiting_epilogue:
-			_advance_epilogue_to_credits()
+		
+		# หากผู้เล่นอ่านจบแล้วไม่คลิก จะตัดเข้าสู่หน้าขอบคุณอัตโนมัติหลังอ่าน 8 วินาที
+		var tw_auto = create_tween()
+		tw_auto.tween_interval(8.0)
+		tw_auto.tween_callback(func():
+			if is_waiting_epilogue:
+				_advance_epilogue_to_credits()
+		)
 	)
 
 ## เปลี่ยนผ่านจากฉาก The End เข้าสู่หน้าขอบคุณและเครดิต
@@ -916,9 +924,14 @@ func _show_dialogue(speaker: String, text: String, on_continue: Callable) -> voi
 	is_waiting_dialogue = true
 	dialogue_callback = on_continue
 	
+	# รีเซ็ตความเร็วกลับสู่ปกติเพื่อให้อ่านบทสนทนาได้ชัดเจน
+	is_fast_forwarding = false
+	Engine.time_scale = 1.0
+	
 	speaker_label.text = speaker
 	dialogue_label.text = text
-	dialogue_label.visible_characters = 0
+	dialogue_label.visible_characters = -1
+	dialogue_label.visible_ratio = 0.0
 	
 	dialogue_box.visible = true
 	dialogue_box.modulate = Color(1, 1, 1, 0)
@@ -939,6 +952,8 @@ func _show_dialogue(speaker: String, text: String, on_continue: Callable) -> voi
 
 func _hide_dialogue(on_finish: Callable) -> void:
 	is_waiting_dialogue = false
+	is_fast_forwarding = false
+	Engine.time_scale = 1.0
 	if typewriter_tween and typewriter_tween.is_valid():
 		typewriter_tween.kill()
 		

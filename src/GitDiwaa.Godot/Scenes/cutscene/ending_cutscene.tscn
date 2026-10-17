@@ -480,32 +480,28 @@ corner_radius_bottom_left = 10
 shadow_size = 8
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_btn_normal"]
-bg_color = Color(0.15, 0.1, 0.22, 0.9)
+bg_color = Color(0.12, 0.09, 0.16, 0.95)
 border_width_left = 2
 border_width_top = 2
 border_width_right = 2
 border_width_bottom = 2
-border_color = Color(0.95, 0.85, 0.5, 0.9)
+border_color = Color(0.85, 0.72, 0.42, 0.85)
 corner_radius_top_left = 8
 corner_radius_top_right = 8
 corner_radius_bottom_right = 8
 corner_radius_bottom_left = 8
-shadow_color = Color(0, 0, 0, 0.45)
-shadow_size = 6
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_btn_hover"]
-bg_color = Color(0.25, 0.18, 0.35, 0.95)
+bg_color = Color(0.2, 0.15, 0.28, 0.95)
 border_width_left = 2
 border_width_top = 2
 border_width_right = 2
 border_width_bottom = 2
-border_color = Color(1, 0.95, 0.65, 1)
+border_color = Color(1, 0.9, 0.6, 1)
 corner_radius_top_left = 8
 corner_radius_top_right = 8
 corner_radius_bottom_right = 8
 corner_radius_bottom_left = 8
-shadow_color = Color(0.9, 0.8, 0.4, 0.35)
-shadow_size = 8
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_guardian_idle"]
 atlas = ExtResource("49_guardian")
@@ -874,7 +870,7 @@ text = "ปรมาจารย์"
 [node name="DialogueLabel" type="Label" parent="MagicStoryUI/DialogueBox/Margin/VBox" unique_id=1145092419]
 layout_mode = 2
 size_flags_vertical = 3
-theme_override_colors/font_color = Color(0.96, 0.92, 0.82, 1)
+theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_colors/font_outline_color = Color(0.18, 0.1, 0.04, 0.95)
 theme_override_constants/line_spacing = 10
 theme_override_constants/outline_size = 6
@@ -885,7 +881,7 @@ autowrap_mode = 3
 
 [node name="ContinuePrompt" type="Label" parent="MagicStoryUI/DialogueBox/Margin/VBox" unique_id=1494280455]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.85, 0.78, 0.65, 0.9)
+theme_override_colors/font_color = Color(1, 1, 1, 0.95)
 theme_override_colors/font_outline_color = Color(0.18, 0.1, 0.04, 0.85)
 theme_override_constants/outline_size = 4
 theme_override_fonts/font = ExtResource("39_font")
@@ -1070,11 +1066,11 @@ alignment = 2
 
 [node name="NameLabel" type="Label" parent="MagicStoryUI/CreditsContainer/RightCharactersContainer/CharVel" unique_id=1892837105]
 layout_mode = 2
-theme_override_colors/font_color = Color(1, 0.92, 0.75, 1)
+theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_colors/font_outline_color = Color(0.1, 0.08, 0.14, 1)
 theme_override_constants/outline_size = 6
 theme_override_fonts/font = ExtResource("39_font")
-theme_override_font_sizes/font_size = 22
+theme_override_font_sizes/font_size = 26
 text = "เวล"
 horizontal_alignment = 1
 
@@ -1093,11 +1089,11 @@ alignment = 2
 
 [node name="NameLabel" type="Label" parent="MagicStoryUI/CreditsContainer/RightCharactersContainer/CharMewla" unique_id=1892837108]
 layout_mode = 2
-theme_override_colors/font_color = Color(1, 0.92, 0.75, 1)
+theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_colors/font_outline_color = Color(0.1, 0.08, 0.14, 1)
 theme_override_constants/outline_size = 6
 theme_override_fonts/font = ExtResource("39_font")
-theme_override_font_sizes/font_size = 22
+theme_override_font_sizes/font_size = 26
 text = "มิวรา"
 horizontal_alignment = 1
 
@@ -1116,11 +1112,11 @@ alignment = 2
 
 [node name="NameLabel" type="Label" parent="MagicStoryUI/CreditsContainer/RightCharactersContainer/CharMaster" unique_id=1892837111]
 layout_mode = 2
-theme_override_colors/font_color = Color(1, 0.92, 0.75, 1)
+theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_colors/font_outline_color = Color(0.1, 0.08, 0.14, 1)
 theme_override_constants/outline_size = 6
 theme_override_fonts/font = ExtResource("39_font")
-theme_override_font_sizes/font_size = 22
+theme_override_font_sizes/font_size = 26
 text = "ปรมาจารย์"
 horizontal_alignment = 1
 
@@ -1139,11 +1135,11 @@ alignment = 2
 
 [node name="NameLabel" type="Label" parent="MagicStoryUI/CreditsContainer/RightCharactersContainer/CharGuardian" unique_id=1892837114]
 layout_mode = 2
-theme_override_colors/font_color = Color(1, 0.92, 0.75, 1)
+theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_colors/font_outline_color = Color(0.1, 0.08, 0.14, 1)
 theme_override_constants/outline_size = 6
 theme_override_fonts/font = ExtResource("39_font")
-theme_override_font_sizes/font_size = 22
+theme_override_font_sizes/font_size = 26
 text = "ผู้พิทักษ์"
 horizontal_alignment = 1
 
@@ -1176,7 +1172,7 @@ offset_top = -20.0
 offset_right = 720.0
 offset_bottom = 20.0
 grow_vertical = 2
-theme_override_colors/font_color = Color(0.85, 0.8, 0.72, 0.95)
+theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_colors/font_outline_color = Color(0.08, 0.05, 0.1, 1)
 theme_override_constants/outline_size = 4
 theme_override_fonts/font = ExtResource("39_font")
@@ -1198,7 +1194,7 @@ offset_bottom = 32.0
 grow_horizontal = 0
 grow_vertical = 2
 mouse_default_cursor_shape = 2
-theme_override_colors/font_color = Color(1, 0.95, 0.8, 1)
+theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_colors/font_hover_color = Color(1, 1, 1, 1)
 theme_override_fonts/font = ExtResource("39_font")
 theme_override_font_sizes/font_size = 26
