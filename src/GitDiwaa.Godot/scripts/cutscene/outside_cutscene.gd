@@ -101,7 +101,7 @@ func _init_scene() -> void:
 	if subtitle_label:
 		subtitle_label.text = "— ตำนานแห่งหอคอยต้นกำเนิด —"
 	if start_prompt:
-		start_prompt.text = "— กด Space หรือคลิก เพื่อเข้าสู่ด่านแรก —"
+		start_prompt.text = "คลิกหน้าจอเพื่อไปต่อ"
 	fade_overlay.color = Color(0, 0, 0, 1)
 	fade_overlay.visible = true
 
