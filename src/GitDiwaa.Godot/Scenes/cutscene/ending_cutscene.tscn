@@ -918,35 +918,60 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-color = Color(0.00392, 0, 0.07451, 0.9)
+color = Color(0.00392, 0, 0.07451, 0)
 
-[node name="SummaryLabel" type="RichTextLabel" parent="MagicStoryUI/TheEndContainer" unique_id=515662229]
+[node name="SummaryContainer" type="VBoxContainer" parent="MagicStoryUI/TheEndContainer" unique_id=515662229]
 layout_mode = 1
 anchors_preset = 8
 anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -600.0
+offset_left = -700.0
 offset_top = -180.0
-offset_right = 600.0
+offset_right = 700.0
 offset_bottom = -20.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
-theme_override_colors/default_color = Color(0.980392, 0.976471, 0.964706, 1)
+theme_override_constants/separation = 18
+alignment = 1
+
+[node name="SummaryLine1" type="Label" parent="MagicStoryUI/TheEndContainer/SummaryContainer" unique_id=515662231]
+modulate = Color(1, 1, 1, 0)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.980392, 0.976471, 0.964706, 1)
 theme_override_colors/font_outline_color = Color(0.00392, 0, 0.07451, 0.95)
-theme_override_constants/line_separation = 18
 theme_override_constants/outline_size = 6
-theme_override_fonts/normal_font = ExtResource("39_font")
-theme_override_font_sizes/normal_font_size = 30
-bbcode_enabled = true
-text = "[center]แม้จุดเริ่มต้นจะเกิดจากความโก๊ะของปรมาจารย์
-แต่เวลก็ได้เติบโตและกอบกู้คัมภีร์เวทต้นกำเนิด
-คืนความสงบสุขให้แก่อาณาจักรได้สำเร็จ[/center]"
-scroll_active = false
+theme_override_fonts/font = ExtResource("39_font")
+theme_override_font_sizes/font_size = 30
+text = "แม้จุดเริ่มต้นจะเกิดจากความโก๊ะของปรมาจารย์"
+horizontal_alignment = 1
+
+[node name="SummaryLine2" type="Label" parent="MagicStoryUI/TheEndContainer/SummaryContainer" unique_id=515662232]
+modulate = Color(1, 1, 1, 0)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.980392, 0.976471, 0.964706, 1)
+theme_override_colors/font_outline_color = Color(0.00392, 0, 0.07451, 0.95)
+theme_override_constants/outline_size = 6
+theme_override_fonts/font = ExtResource("39_font")
+theme_override_font_sizes/font_size = 30
+text = "แต่เวลก็ได้เติบโตและกอบกู้คัมภีร์เวทต้นกำเนิด"
+horizontal_alignment = 1
+
+[node name="SummaryLine3" type="Label" parent="MagicStoryUI/TheEndContainer/SummaryContainer" unique_id=515662233]
+modulate = Color(1, 1, 1, 0)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.980392, 0.976471, 0.964706, 1)
+theme_override_colors/font_outline_color = Color(0.00392, 0, 0.07451, 0.95)
+theme_override_constants/outline_size = 6
+theme_override_fonts/font = ExtResource("39_font")
+theme_override_font_sizes/font_size = 30
+text = "คืนความสงบสุขให้แก่อาณาจักรได้สำเร็จ"
+horizontal_alignment = 1
 
 [node name="TitleLabel" type="Label" parent="MagicStoryUI/TheEndContainer" unique_id=373728279]
+modulate = Color(1, 1, 1, 0)
 layout_mode = 1
 anchors_preset = 8
 anchor_left = 0.5
@@ -973,6 +998,7 @@ horizontal_alignment = 1
 vertical_alignment = 1
 
 [node name="ContinuePrompt" type="Label" parent="MagicStoryUI/TheEndContainer" unique_id=1494280456]
+modulate = Color(1, 1, 1, 0)
 layout_mode = 1
 anchors_preset = 7
 anchor_left = 0.5

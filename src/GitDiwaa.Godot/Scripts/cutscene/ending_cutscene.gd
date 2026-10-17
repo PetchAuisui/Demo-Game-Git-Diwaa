@@ -62,10 +62,18 @@ extends Node2D
 @onready var dialogue_label: Label = $MagicStoryUI/DialogueBox/Margin/VBox/DialogueLabel
 @onready var continue_prompt: Label = $MagicStoryUI/DialogueBox/Margin/VBox/ContinuePrompt
 @onready var the_end_container: Control = $MagicStoryUI/TheEndContainer
+@onready var the_end_dark_overlay: ColorRect = $MagicStoryUI/TheEndContainer/DarkOverlay
+@onready var summary_container: VBoxContainer = $MagicStoryUI/TheEndContainer/SummaryContainer
+@onready var summary_line1: Label = $MagicStoryUI/TheEndContainer/SummaryContainer/SummaryLine1
+@onready var summary_line2: Label = $MagicStoryUI/TheEndContainer/SummaryContainer/SummaryLine2
+@onready var summary_line3: Label = $MagicStoryUI/TheEndContainer/SummaryContainer/SummaryLine3
+@onready var the_end_title: Label = $MagicStoryUI/TheEndContainer/TitleLabel
+@onready var the_end_continue_prompt: Label = $MagicStoryUI/TheEndContainer/ContinuePrompt
 @onready var credits_container: Control = $MagicStoryUI/CreditsContainer
 @onready var return_menu_btn: Button = $MagicStoryUI/CreditsContainer/BottomBar/ReturnMenuBtn
 
 # Audio (SFX only, NO BGM)
+@export var bgm_player: AudioStreamPlayer = null
 var sfx_fusion: AudioStreamPlayer
 var sfx_warp: AudioStreamPlayer
 var sfx_pop: AudioStreamPlayer
@@ -84,6 +92,8 @@ var typewriter_tween: Tween = null
 var anger_bounce_tween: Tween = null
 var sigh_puff_tween: Tween = null
 var book_aura_pulse_tween: Tween = null
+var epilogue_pulse_tween: Tween = null
+var skip_btn_instance: CanvasLayer = null
 
 # Animation timers for spritesheets
 var storm_anim_timer: float = 0.0
@@ -100,6 +110,7 @@ func _ready() -> void:
 	# เพิ่มปุ่มข้าม cutscene
 	var skip_btn = preload("res://scripts/cutscene/skip_cutscene_button.gd").new()
 	skip_btn.next_scene_path = start_scene_path
+	skip_btn_instance = skip_btn
 	add_child(skip_btn)
 	
 	_init_sfx()
@@ -217,6 +228,23 @@ func _reset_all_stages() -> void:
 	white_flash.color = Color(0.980392, 0.976471, 0.964706, 0.0)
 	dialogue_box.visible = false
 	the_end_container.visible = false
+	the_end_container.modulate = Color(1, 1, 1, 1)
+	if the_end_dark_overlay:
+		the_end_dark_overlay.color = Color(0.00392, 0, 0.07451, 0.0)
+	if summary_line1:
+		summary_line1.modulate.a = 0.0
+	if summary_line2:
+		summary_line2.modulate.a = 0.0
+	if summary_line3:
+		summary_line3.modulate.a = 0.0
+	if the_end_title:
+		the_end_title.modulate.a = 0.0
+	if the_end_continue_prompt:
+		the_end_continue_prompt.modulate.a = 0.0
+	if epilogue_pulse_tween and epilogue_pulse_tween.is_valid():
+		epilogue_pulse_tween.kill()
+	if is_instance_valid(skip_btn_instance):
+		skip_btn_instance.visible = true
 	credits_container.visible = false
 	is_waiting_epilogue = false
 	if ring_of_light:
@@ -776,6 +804,8 @@ func play_stage_7_dialogue() -> void:
 				"ฉันเองหรอเนี่ย... 55555",
 				func():
 					_stop_sigh_puff()
+					vel.play("idle")
+					master_char.play("idle")
 					_hide_dialogue(play_stage_8_epilogue)
 			)
 	)
@@ -830,14 +860,16 @@ func _stop_sigh_puff() -> void:
 		)
 
 ## =============================================================
-## ฉากที่ 8: บทสรุปการเดินทางของเวล (The End Screen ตามรูปภาพ)
-## ซูมออก -> พื้นหลังมืดลงอย่างต่อเนื่อง -> แสดงบทสรุปและ THE END ชัดเจน
+## ฉากที่ 8: บทสรุปการเดินทางของเวล (The End Screen)
+## เริ่มด้วยฉากสีปกติ 2s -> คลุมดำ 45% ใน 1s -> ข้อความสรุปเฟดทีละบรรทัด
+## -> THE END สีทอง -> ซ่อนปุ่มข้าม และรอ 2s ก่อนเปิดรับคลิกไปหน้าเครดิต
 ## =============================================================
 func play_stage_8_epilogue() -> void:
 	current_stage = 8
 	can_fast_forward = false
 	is_fast_forwarding = false
 	Engine.time_scale = 1.0
+	is_waiting_epilogue = false
 	
 	_stop_sigh_puff()
 	if anger_mark:
@@ -845,38 +877,101 @@ func play_stage_8_epilogue() -> void:
 	if sigh_puff:
 		sigh_puff.visible = false
 	
-	# ทั้งสองตัวละครเปลี่ยนเป็นท่ายืนนิ่ง idle
+	# ซ่อนปุ่ม "ข้าม" เมื่อเข้าสู่หน้าจบนี้
+	if is_instance_valid(skip_btn_instance):
+		skip_btn_instance.visible = false
+	
+	# ตัวละครทั้งสองเปลี่ยนเป็นท่ายืนนิ่ง idle
 	vel.play("idle")
 	master_char.play("idle")
 	
-	# กล้องค่อย ๆ ซูมออก เผยภาพกว้างของห้องสมุด (3.0s)
-	var tw_zoom = create_tween()
-	tw_zoom.tween_property(camera, "zoom", Vector2(0.85, 0.85), 3.0).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	# รักษาสัดส่วนภาพและความคมชัดของพิกเซลเดิม ไม่ซูมกล้องจนบิดเบือนสเกลพิกเซล
+	camera.position = Vector2(960, 540)
+	camera.zoom = Vector2.ONE
 	
-	# ค่อยๆ ปรากฏฉาก TheEndContainer
+	# เตรียมองค์ประกอบหน้า The End
 	the_end_container.visible = true
-	the_end_container.modulate = Color(1, 1, 1, 0.0)
+	the_end_container.modulate = Color(1, 1, 1, 1)
 	
-	var tw_fade_in = create_tween()
-	tw_fade_in.tween_interval(0.6)
-	tw_fade_in.tween_property(the_end_container, "modulate:a", 1.0, 1.8).set_trans(Tween.TRANS_SINE)
-	tw_fade_in.tween_callback(func():
-		is_waiting_epilogue = true
-		
-		# หากผู้เล่นอ่านจบแล้วไม่คลิก จะตัดเข้าสู่หน้าขอบคุณอัตโนมัติหลังอ่าน 8 วินาที
-		var tw_auto = create_tween()
-		tw_auto.tween_interval(8.0)
-		tw_auto.tween_callback(func():
-			if is_waiting_epilogue:
-				_advance_epilogue_to_credits()
+	# เริ่มด้วยฉากสีปกติ และรีเซ็ตความโปร่งใสของข้อความทั้งหมด
+	the_end_dark_overlay.color = Color(0.00392, 0, 0.07451, 0.0)
+	summary_line1.modulate.a = 0.0
+	summary_line2.modulate.a = 0.0
+	summary_line3.modulate.a = 0.0
+	the_end_title.modulate.a = 0.0
+	the_end_continue_prompt.modulate.a = 0.0
+	
+	var tw_seq = create_tween()
+	
+	# 1. เริ่มด้วยฉากสีปกติ ให้เห็นเวลกับปรมาจารย์ชัดเจนเป็นเวลา 2 วินาที
+	tw_seq.tween_interval(2.0)
+	
+	# 2. ค่อย ๆ เพิ่มชั้นสีดำคลุมฉากจากความทึบ 0% ไปเป็น 45% ภายใน 1 วินาที
+	# ชั้นดำอยู่หลังข้อความ และยังมองเห็นใบหน้ากับสีชุดตัวละครได้
+	# พร้อมค่อย ๆ ลดระดับเสียงเพลงประกอบเล็กน้อยช่วงข้อความปรากฏ
+	tw_seq.tween_callback(func():
+		_fade_bgm_volume(-6.0, 1.0)
+	)
+	tw_seq.tween_property(the_end_dark_overlay, "color:a", 0.45, 1.0).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	
+	# 3. ใช้ข้อความจบเดิม สีขาว ตำแหน่งกึ่งกลางเดิม ค่อย ๆ เฟดเข้าทีละบรรทัด บรรทัดละ 0.6 วินาที
+	# เว้นระหว่างบรรทัด 0.8 วินาที และคงบรรทัดก่อนหน้าไว้ให้อ่านต่อเนื่อง
+	tw_seq.tween_property(summary_line1, "modulate:a", 1.0, 0.6).set_trans(Tween.TRANS_SINE)
+	tw_seq.tween_interval(0.8)
+	tw_seq.tween_property(summary_line2, "modulate:a", 1.0, 0.6).set_trans(Tween.TRANS_SINE)
+	tw_seq.tween_interval(0.8)
+	tw_seq.tween_property(summary_line3, "modulate:a", 1.0, 0.6).set_trans(Tween.TRANS_SINE)
+	
+	# 4. เมื่อข้อความครบทุกบรรทัด รอ 1 วินาที แล้วเฟดคำว่า “THE END” เข้ามาภายใน 1 วินาที
+	# ใช้รูปแบบพิกเซลสีทองและตำแหน่งเดิม
+	tw_seq.tween_interval(1.0)
+	tw_seq.tween_property(the_end_title, "modulate:a", 1.0, 1.0).set_trans(Tween.TRANS_SINE)
+	
+	# 5. หลัง THE END แสดงครบแล้ว 2 วินาที จึงแสดงข้อความสำหรับไปหน้าถัดไป พร้อมเปิดรับการคลิก
+	# ป้องกันการคลิกจากฉากก่อนหน้าทำให้หน้าจบถูกข้ามทันที
+	tw_seq.tween_interval(2.0)
+	tw_seq.tween_callback(func():
+		var tw_prompt = create_tween()
+		tw_prompt.tween_property(the_end_continue_prompt, "modulate:a", 1.0, 0.5).set_trans(Tween.TRANS_SINE)
+		tw_prompt.tween_callback(func():
+			_start_epilogue_pulse()
+			is_waiting_epilogue = true
 		)
 	)
+
+## แอนิเมชันกระพริบนุ่มนวลสำหรับข้อความคลิกเพื่อไปต่อ
+func _start_epilogue_pulse() -> void:
+	if epilogue_pulse_tween and epilogue_pulse_tween.is_valid():
+		epilogue_pulse_tween.kill()
+	epilogue_pulse_tween = create_tween().set_loops()
+	epilogue_pulse_tween.tween_property(the_end_continue_prompt, "modulate:a", 0.35, 0.9).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	epilogue_pulse_tween.tween_property(the_end_continue_prompt, "modulate:a", 1.0, 0.9).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+
+## ควบคุมระดับเสียงเพลงประกอบอย่างปลอดภัย (หากมีเพลงในอนาคต)
+func _fade_bgm_volume(target_db: float, duration: float) -> void:
+	var player: AudioStreamPlayer = bgm_player
+	if not is_instance_valid(player):
+		player = get_node_or_null("BGM") as AudioStreamPlayer
+	if not is_instance_valid(player):
+		for child in get_children():
+			if child is AudioStreamPlayer and child.playing and child != sfx_fusion and child != sfx_warp and child != sfx_pop and child != sfx_next and child != sfx_success:
+				player = child
+				break
+	if is_instance_valid(player) and player.playing:
+		var tw = create_tween()
+		tw.tween_property(player, "volume_db", target_db, duration)
 
 ## เปลี่ยนผ่านจากฉาก The End เข้าสู่หน้าขอบคุณและเครดิต
 func _advance_epilogue_to_credits() -> void:
 	if not is_waiting_epilogue:
 		return
 	is_waiting_epilogue = false
+	
+	if epilogue_pulse_tween and epilogue_pulse_tween.is_valid():
+		epilogue_pulse_tween.kill()
+	
+	# ค่อย ๆ เฟดเสียงเพลงออกเมื่อออกจากหน้าจบ
+	_fade_bgm_volume(-80.0, 0.8)
 	
 	var tw_out = create_tween()
 	tw_out.tween_property(the_end_container, "modulate:a", 0.0, 0.6).set_trans(Tween.TRANS_SINE)

@@ -24,12 +24,14 @@ func _ready() -> void:
 	add_child(button)
 
 func _unhandled_key_input(event: InputEvent) -> void:
+	if not visible:
+		return
 	if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_ESCAPE:
 		get_viewport().set_input_as_handled()
 		skip()
 
 func skip() -> void:
-	if _skipping:
+	if not visible or _skipping:
 		return
 	_skipping = true
 	Engine.time_scale = 1.0
