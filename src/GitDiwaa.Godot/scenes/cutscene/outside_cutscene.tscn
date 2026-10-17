@@ -999,12 +999,12 @@ offset_right = 450.0
 offset_bottom = -60.0
 grow_horizontal = 2
 grow_vertical = 0
-theme_override_colors/font_color = Color(0.9, 0.93, 1, 0.95)
-theme_override_colors/font_outline_color = Color(0.08, 0.05, 0.14, 0.9)
-theme_override_constants/outline_size = 5
+theme_override_colors/font_color = Color(0.980392, 0.976471, 0.964706, 0.95)
+theme_override_colors/font_outline_color = Color(0.00392, 0, 0.07451, 0.85)
+theme_override_constants/outline_size = 4
 theme_override_fonts/font = ExtResource("6_ta_font")
-theme_override_font_sizes/font_size = 28
-text = "— กด Space หรือคลิก เพื่อเข้าสู่ด่านแรก —"
+theme_override_font_sizes/font_size = 22
+text = "คลิกหน้าจอเพื่อไปต่อ"
 horizontal_alignment = 1
 vertical_alignment = 1
 

@@ -214,7 +214,7 @@ func _reset_all_stages() -> void:
 	stage4.visible = false
 	comic_container.visible = false
 	white_flash.visible = false
-	white_flash.color = Color(1, 1, 1, 0.0)
+	white_flash.color = Color(0.980392, 0.976471, 0.964706, 0.0)
 	dialogue_box.visible = false
 	the_end_container.visible = false
 	credits_container.visible = false
@@ -371,7 +371,7 @@ func play_stage_1_book_restoration() -> void:
 	tw_flash.tween_callback(func():
 		_play_sfx(sfx_warp)
 		white_flash.visible = true
-		white_flash.color = Color(1.0, 0.98, 0.92, 0.0)
+		white_flash.color = Color(0.980392, 0.976471, 0.964706, 0.0)
 		var tw_wf = create_tween()
 		tw_wf.tween_property(white_flash, "color:a", 0.55, 0.25).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 		tw_wf.tween_callback(play_stage_2_sky_restoration)
@@ -892,20 +892,19 @@ func _advance_epilogue_to_credits() -> void:
 func play_stage_9_credits() -> void:
 	current_stage = 9
 	
-	# 1. แอนิเมชันกล้องแพนเลื่อนขวา -> เลื่อนซ้าย -> กลับสู่ตรงกลางอย่างนุ่มนวล
-	var tw_cam = create_tween()
-	# แพนไปทางขวาเล็กน้อย (0.0s -> 2.0s)
-	tw_cam.tween_property(camera, "position", Vector2(1040, 530), 2.0).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
-	# แพนสไลด์กลับมาทางซ้าย (2.0s -> 4.4s)
-	tw_cam.tween_property(camera, "position", Vector2(880, 545), 2.4).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
-	# เลื่อนกลับสู่กึ่งกลางนุ่มนวล (4.4s -> 6.2s)
-	tw_cam.tween_property(camera, "position", Vector2(960, 540), 1.8).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	# ซ่อนทุก Stage ก่อนหน้าทั้งหมดอย่างสมบูรณ์เพื่อไม่ให้เห็นฉากหลัง
+	stage1.visible = false
+	stage2.visible = false
+	stage3.visible = false
+	stage4.visible = false
+	comic_container.visible = false
+	the_end_container.visible = false
 	
-	# ปรับซูมกล้องเล็กน้อยให้เห็นความกว้างและบรรยากาศห้องสมุด
-	var tw_zoom = create_tween()
-	tw_zoom.tween_property(camera, "zoom", Vector2(0.92, 0.92), 4.5).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	# รีเซ็ตตำแหน่งและมุมมองกล้องให้อยู่ตรงกลางนิ่งสงบ
+	camera.position = Vector2(960, 540)
+	camera.zoom = Vector2(1.0, 1.0)
 	
-	# 2. ปรากฏฉากเครดิต CreditsContainer อย่างนุ่มนวล
+	# ปรากฏฉากเครดิต CreditsContainer พร้อมละอองเวทมนตร์อย่างนุ่มนวล
 	credits_container.visible = true
 	credits_container.modulate = Color(1, 1, 1, 0.0)
 	

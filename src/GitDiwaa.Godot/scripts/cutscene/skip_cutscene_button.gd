@@ -14,7 +14,7 @@ func _ready() -> void:
 	button.text = "ข้าม ⏵⏵  (Esc)"
 	button.focus_mode = Control.FOCUS_NONE
 	button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
-	button.modulate = Color(1, 1, 1, 0.75)
+	button.modulate = Color(0.980392, 0.976471, 0.964706, 0.75)
 	button.set_anchors_and_offsets_preset(Control.PRESET_TOP_RIGHT)
 	button.offset_left = -170.0
 	button.offset_right = -20.0

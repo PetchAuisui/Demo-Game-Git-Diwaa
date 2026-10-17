@@ -85,6 +85,22 @@ fill = 1
 fill_from = Vector2(0.5, 0.5)
 fill_to = Vector2(1, 0.5)
 
+[sub_resource type="Gradient" id="Gradient_magic_speck"]
+offsets = PackedFloat32Array(0, 0.4, 0.8, 1)
+colors = PackedColorArray(1, 1, 1, 1, 0.95, 0.9, 1, 0.85, 0.7, 0.65, 1, 0.35, 0, 0, 0, 0)
+
+[sub_resource type="GradientTexture2D" id="GradientTexture2D_magic_speck"]
+gradient = SubResource("Gradient_magic_speck")
+width = 16
+height = 16
+fill = 1
+fill_from = Vector2(0.5, 0.5)
+fill_to = Vector2(1, 0.5)
+
+[sub_resource type="Gradient" id="Gradient_particle_fade"]
+offsets = PackedFloat32Array(0, 0.15, 0.8, 1)
+colors = PackedColorArray(0.980392, 0.976471, 0.964706, 0, 0.980392, 0.976471, 0.964706, 0.85, 0.980392, 0.95, 0.88, 0.75, 0.980392, 0.976471, 0.964706, 0)
+
 [sub_resource type="AtlasTexture" id="AtlasTexture_vel_angry"]
 atlas = ExtResource("10_vel_angry")
 region = Rect2(0, 0, 48, 83)
@@ -453,51 +469,52 @@ animations = [{
 }]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_comic_panel"]
-bg_color = Color(0.12, 0.09, 0.16, 0.98)
+bg_color = Color(0.00392, 0, 0.07451, 0.98)
 border_width_left = 4
 border_width_top = 4
 border_width_right = 4
 border_width_bottom = 4
-border_color = Color(1, 0.95, 0.85, 1)
+border_color = Color(0.980392, 0.976471, 0.964706, 1)
 corner_radius_top_left = 12
 corner_radius_top_right = 12
 corner_radius_bottom_right = 12
 corner_radius_bottom_left = 12
-shadow_color = Color(0, 0, 0, 0.7)
+shadow_color = Color(0.00392, 0, 0.07451, 0.7)
 shadow_size = 14
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_dialogue"]
-bg_color = Color(0.04, 0.04, 0.06, 0.94)
+bg_color = Color(0.00392, 0, 0.07451, 0.96)
 border_width_left = 2
 border_width_top = 2
 border_width_right = 2
 border_width_bottom = 2
-border_color = Color(0.85, 0.85, 0.88, 0.95)
+border_color = Color(0.980392, 0.976471, 0.964706, 0.95)
 corner_radius_top_left = 10
 corner_radius_top_right = 10
 corner_radius_bottom_right = 10
 corner_radius_bottom_left = 10
+shadow_color = Color(0.00392, 0, 0.07451, 0.6)
 shadow_size = 8
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_btn_normal"]
-bg_color = Color(0.12, 0.09, 0.16, 0.95)
+bg_color = Color(0.00392, 0, 0.07451, 0.95)
 border_width_left = 2
 border_width_top = 2
 border_width_right = 2
 border_width_bottom = 2
-border_color = Color(0.85, 0.72, 0.42, 0.85)
+border_color = Color(0.980392, 0.976471, 0.964706, 0.85)
 corner_radius_top_left = 8
 corner_radius_top_right = 8
 corner_radius_bottom_right = 8
 corner_radius_bottom_left = 8
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_btn_hover"]
-bg_color = Color(0.2, 0.15, 0.28, 0.95)
+bg_color = Color(0.06, 0.04, 0.16, 0.95)
 border_width_left = 2
 border_width_top = 2
 border_width_right = 2
 border_width_bottom = 2
-border_color = Color(1, 0.9, 0.6, 1)
+border_color = Color(0.980392, 0.976471, 0.964706, 1)
 corner_radius_top_left = 8
 corner_radius_top_right = 8
 corner_radius_bottom_right = 8
@@ -508,10 +525,10 @@ atlas = ExtResource("49_guardian")
 region = Rect2(0, 0, 48, 83)
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_bottom_bar"]
-bg_color = Color(0.04, 0.03, 0.07, 0.95)
+bg_color = Color(0.00392, 0, 0.07451, 0.96)
 border_width_top = 3
 border_color = Color(0.85, 0.72, 0.42, 0.85)
-shadow_color = Color(0, 0, 0, 0.85)
+shadow_color = Color(0.00392, 0, 0.07451, 0.85)
 shadow_size = 14
 
 [node name="EndingCutscene" type="Node2D" unique_id=1713555345]
@@ -526,7 +543,7 @@ position = Vector2(960, 540)
 [node name="PurpleDarkBg" type="ColorRect" parent="Stage1_BookRestoration" unique_id=1150218345]
 offset_right = 1920.0
 offset_bottom = 1080.0
-color = Color(0.07, 0.045, 0.12, 1)
+color = Color(0.00392, 0, 0.07451, 1)
 
 [node name="RingOfLight" type="Sprite2D" parent="Stage1_BookRestoration" unique_id=761954895]
 visible = false
@@ -675,7 +692,7 @@ offset_left = -240.0
 offset_top = -135.0
 offset_right = 240.0
 offset_bottom = 135.0
-color = Color(0, 0, 0, 0.6)
+color = Color(0.00392, 0, 0.07451, 0.6)
 
 [node name="BlackHole" type="Sprite2D" parent="Stage4_Library" unique_id=895412529]
 visible = false
@@ -749,7 +766,7 @@ anchor_right = 2.0
 anchor_bottom = 2.0
 grow_horizontal = 2
 grow_vertical = 2
-color = Color(0, 0, 0, 0.94)
+color = Color(0.00392, 0, 0.07451, 0.94)
 
 [node name="ComicPanelBg" type="Panel" parent="ComicPanelContainer" unique_id=7641419]
 clip_contents = true
@@ -795,7 +812,7 @@ offset_top = -42.0
 offset_bottom = -6.0
 grow_horizontal = 2
 theme_override_colors/font_color = Color(1, 0.9, 0.5, 1)
-theme_override_colors/font_outline_color = Color(0.15, 0.08, 0.03, 1)
+theme_override_colors/font_outline_color = Color(0.00392, 0, 0.07451, 1)
 theme_override_constants/outline_size = 6
 theme_override_fonts/font = ExtResource("39_font")
 theme_override_font_sizes/font_size = 24
@@ -812,8 +829,8 @@ offset_top = 12.0
 offset_bottom = 48.0
 grow_horizontal = 2
 grow_vertical = 0
-theme_override_colors/font_color = Color(0.96, 0.92, 0.82, 1)
-theme_override_colors/font_outline_color = Color(0.15, 0.08, 0.03, 1)
+theme_override_colors/font_color = Color(0.980392, 0.976471, 0.964706, 1)
+theme_override_colors/font_outline_color = Color(0.00392, 0, 0.07451, 1)
 theme_override_constants/outline_size = 6
 theme_override_fonts/font = ExtResource("39_font")
 theme_override_font_sizes/font_size = 22
@@ -825,7 +842,7 @@ visible = false
 offset_right = 1920.0
 offset_bottom = 1080.0
 mouse_filter = 2
-color = Color(1, 1, 1, 0)
+color = Color(0.980392, 0.976471, 0.964706, 0)
 
 [node name="MagicStoryUI" type="CanvasLayer" parent="." unique_id=1505822689]
 
@@ -861,7 +878,7 @@ theme_override_constants/separation = 8
 [node name="SpeakerLabel" type="Label" parent="MagicStoryUI/DialogueBox/Margin/VBox" unique_id=1415030837]
 layout_mode = 2
 theme_override_colors/font_color = Color(1, 0.9, 0.45, 1)
-theme_override_colors/font_outline_color = Color(0.18, 0.1, 0.04, 0.95)
+theme_override_colors/font_outline_color = Color(0.00392, 0, 0.07451, 0.95)
 theme_override_constants/outline_size = 6
 theme_override_fonts/font = ExtResource("39_font")
 theme_override_font_sizes/font_size = 28
@@ -870,8 +887,8 @@ text = "ปรมาจารย์"
 [node name="DialogueLabel" type="Label" parent="MagicStoryUI/DialogueBox/Margin/VBox" unique_id=1145092419]
 layout_mode = 2
 size_flags_vertical = 3
-theme_override_colors/font_color = Color(1, 1, 1, 1)
-theme_override_colors/font_outline_color = Color(0.18, 0.1, 0.04, 0.95)
+theme_override_colors/font_color = Color(0.980392, 0.976471, 0.964706, 1)
+theme_override_colors/font_outline_color = Color(0.00392, 0, 0.07451, 0.95)
 theme_override_constants/line_spacing = 10
 theme_override_constants/outline_size = 6
 theme_override_fonts/font = ExtResource("39_font")
@@ -881,8 +898,8 @@ autowrap_mode = 3
 
 [node name="ContinuePrompt" type="Label" parent="MagicStoryUI/DialogueBox/Margin/VBox" unique_id=1494280455]
 layout_mode = 2
-theme_override_colors/font_color = Color(1, 1, 1, 0.95)
-theme_override_colors/font_outline_color = Color(0.18, 0.1, 0.04, 0.85)
+theme_override_colors/font_color = Color(0.980392, 0.976471, 0.964706, 0.95)
+theme_override_colors/font_outline_color = Color(0.00392, 0, 0.07451, 0.85)
 theme_override_constants/outline_size = 4
 theme_override_fonts/font = ExtResource("39_font")
 theme_override_font_sizes/font_size = 20
@@ -905,7 +922,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-color = Color(0, 0, 0, 0.9)
+color = Color(0.00392, 0, 0.07451, 0.9)
 
 [node name="SummaryLabel" type="RichTextLabel" parent="MagicStoryUI/TheEndContainer" unique_id=515662229]
 layout_mode = 1
@@ -921,8 +938,8 @@ offset_bottom = -20.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
-theme_override_colors/default_color = Color(0.96, 0.92, 0.85, 1)
-theme_override_colors/font_outline_color = Color(0.15, 0.08, 0.03, 0.95)
+theme_override_colors/default_color = Color(0.980392, 0.976471, 0.964706, 1)
+theme_override_colors/font_outline_color = Color(0.00392, 0, 0.07451, 0.95)
 theme_override_constants/line_separation = 18
 theme_override_constants/outline_size = 6
 theme_override_fonts/normal_font = ExtResource("39_font")
@@ -948,7 +965,7 @@ grow_horizontal = 2
 grow_vertical = 2
 theme_override_colors/font_color = Color(1, 0.9, 0.5, 1)
 theme_override_colors/font_shadow_color = Color(1, 0.7, 0.2, 0.45)
-theme_override_colors/font_outline_color = Color(0.15, 0.08, 0.03, 1)
+theme_override_colors/font_outline_color = Color(0.00392, 0, 0.07451, 1)
 theme_override_constants/shadow_offset_x = 0
 theme_override_constants/shadow_offset_y = 0
 theme_override_constants/outline_size = 10
@@ -972,8 +989,8 @@ offset_right = 300.0
 offset_bottom = -70.0
 grow_horizontal = 2
 grow_vertical = 0
-theme_override_colors/font_color = Color(0.85, 0.78, 0.65, 0.9)
-theme_override_colors/font_outline_color = Color(0.18, 0.1, 0.04, 0.85)
+theme_override_colors/font_color = Color(0.980392, 0.976471, 0.964706, 0.95)
+theme_override_colors/font_outline_color = Color(0.00392, 0, 0.07451, 0.85)
 theme_override_constants/outline_size = 4
 theme_override_fonts/font = ExtResource("39_font")
 theme_override_font_sizes/font_size = 22
@@ -996,7 +1013,27 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-color = Color(0.04, 0.03, 0.07, 0.75)
+color = Color(0.00392, 0, 0.07451, 1)
+
+[node name="MagicParticles" type="CPUParticles2D" parent="MagicStoryUI/CreditsContainer" unique_id=1835182050]
+position = Vector2(960, 540)
+amount = 55
+lifetime = 6.0
+preprocess = 3.0
+texture = SubResource("GradientTexture2D_magic_speck")
+emission_shape = 3
+emission_rect_extents = Vector2(960, 540)
+direction = Vector2(0.15, -1)
+spread = 35.0
+gravity = Vector2(0, -12)
+initial_velocity_min = 12.0
+initial_velocity_max = 35.0
+angular_velocity_min = -30.0
+angular_velocity_max = 30.0
+scale_amount_min = 0.35
+scale_amount_max = 0.9
+color = Color(0.980392, 0.976471, 0.964706, 0.85)
+color_ramp = SubResource("Gradient_particle_fade")
 
 [node name="LeftContent" type="VBoxContainer" parent="MagicStoryUI/CreditsContainer" unique_id=515662230]
 layout_mode = 1
@@ -1015,7 +1052,7 @@ alignment = 1
 layout_mode = 2
 theme_override_colors/font_color = Color(1, 0.88, 0.45, 1)
 theme_override_colors/font_shadow_color = Color(0.9, 0.6, 0.1, 0.5)
-theme_override_colors/font_outline_color = Color(0.12, 0.06, 0.02, 1)
+theme_override_colors/font_outline_color = Color(0.00392, 0, 0.07451, 1)
 theme_override_constants/shadow_offset_x = 0
 theme_override_constants/shadow_offset_y = 0
 theme_override_constants/outline_size = 12
@@ -1026,8 +1063,8 @@ text = "GIT DI WAA"
 
 [node name="ThankYouLabel" type="Label" parent="MagicStoryUI/CreditsContainer/LeftContent" unique_id=1892837101]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.96, 0.93, 0.88, 1)
-theme_override_colors/font_outline_color = Color(0.1, 0.08, 0.14, 0.95)
+theme_override_colors/font_color = Color(0.980392, 0.976471, 0.964706, 1)
+theme_override_colors/font_outline_color = Color(0.00392, 0, 0.07451, 0.95)
 theme_override_constants/outline_size = 6
 theme_override_fonts/font = ExtResource("39_font")
 theme_override_font_sizes/font_size = 36
@@ -1035,8 +1072,8 @@ text = "Thank You for Playing"
 
 [node name="GratitudeLabel" type="Label" parent="MagicStoryUI/CreditsContainer/LeftContent" unique_id=1892837102]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.88, 0.82, 0.7, 0.95)
-theme_override_colors/font_outline_color = Color(0.1, 0.08, 0.14, 0.95)
+theme_override_colors/font_color = Color(0.980392, 0.976471, 0.964706, 0.95)
+theme_override_colors/font_outline_color = Color(0.00392, 0, 0.07451, 0.95)
 theme_override_constants/outline_size = 6
 theme_override_fonts/font = ExtResource("39_font")
 theme_override_font_sizes/font_size = 28
@@ -1066,11 +1103,11 @@ alignment = 2
 
 [node name="NameLabel" type="Label" parent="MagicStoryUI/CreditsContainer/RightCharactersContainer/CharVel" unique_id=1892837105]
 layout_mode = 2
-theme_override_colors/font_color = Color(1, 1, 1, 1)
-theme_override_colors/font_outline_color = Color(0.1, 0.08, 0.14, 1)
+theme_override_colors/font_color = Color(0.980392, 0.976471, 0.964706, 1)
+theme_override_colors/font_outline_color = Color(0.00392, 0, 0.07451, 1)
 theme_override_constants/outline_size = 6
 theme_override_fonts/font = ExtResource("39_font")
-theme_override_font_sizes/font_size = 26
+theme_override_font_sizes/font_size = 30
 text = "เวล"
 horizontal_alignment = 1
 
@@ -1089,11 +1126,11 @@ alignment = 2
 
 [node name="NameLabel" type="Label" parent="MagicStoryUI/CreditsContainer/RightCharactersContainer/CharMewla" unique_id=1892837108]
 layout_mode = 2
-theme_override_colors/font_color = Color(1, 1, 1, 1)
-theme_override_colors/font_outline_color = Color(0.1, 0.08, 0.14, 1)
+theme_override_colors/font_color = Color(0.980392, 0.976471, 0.964706, 1)
+theme_override_colors/font_outline_color = Color(0.00392, 0, 0.07451, 1)
 theme_override_constants/outline_size = 6
 theme_override_fonts/font = ExtResource("39_font")
-theme_override_font_sizes/font_size = 26
+theme_override_font_sizes/font_size = 30
 text = "มิวรา"
 horizontal_alignment = 1
 
@@ -1112,11 +1149,11 @@ alignment = 2
 
 [node name="NameLabel" type="Label" parent="MagicStoryUI/CreditsContainer/RightCharactersContainer/CharMaster" unique_id=1892837111]
 layout_mode = 2
-theme_override_colors/font_color = Color(1, 1, 1, 1)
-theme_override_colors/font_outline_color = Color(0.1, 0.08, 0.14, 1)
+theme_override_colors/font_color = Color(0.980392, 0.976471, 0.964706, 1)
+theme_override_colors/font_outline_color = Color(0.00392, 0, 0.07451, 1)
 theme_override_constants/outline_size = 6
 theme_override_fonts/font = ExtResource("39_font")
-theme_override_font_sizes/font_size = 26
+theme_override_font_sizes/font_size = 30
 text = "ปรมาจารย์"
 horizontal_alignment = 1
 
@@ -1135,11 +1172,11 @@ alignment = 2
 
 [node name="NameLabel" type="Label" parent="MagicStoryUI/CreditsContainer/RightCharactersContainer/CharGuardian" unique_id=1892837114]
 layout_mode = 2
-theme_override_colors/font_color = Color(1, 1, 1, 1)
-theme_override_colors/font_outline_color = Color(0.1, 0.08, 0.14, 1)
+theme_override_colors/font_color = Color(0.980392, 0.976471, 0.964706, 1)
+theme_override_colors/font_outline_color = Color(0.00392, 0, 0.07451, 1)
 theme_override_constants/outline_size = 6
 theme_override_fonts/font = ExtResource("39_font")
-theme_override_font_sizes/font_size = 26
+theme_override_font_sizes/font_size = 30
 text = "ผู้พิทักษ์"
 horizontal_alignment = 1
 
@@ -1172,8 +1209,8 @@ offset_top = -20.0
 offset_right = 720.0
 offset_bottom = 20.0
 grow_vertical = 2
-theme_override_colors/font_color = Color(1, 1, 1, 1)
-theme_override_colors/font_outline_color = Color(0.08, 0.05, 0.1, 1)
+theme_override_colors/font_color = Color(0.980392, 0.976471, 0.964706, 1)
+theme_override_colors/font_outline_color = Color(0.00392, 0, 0.07451, 1)
 theme_override_constants/outline_size = 4
 theme_override_fonts/font = ExtResource("39_font")
 theme_override_font_sizes/font_size = 24
@@ -1194,8 +1231,10 @@ offset_bottom = 32.0
 grow_horizontal = 0
 grow_vertical = 2
 mouse_default_cursor_shape = 2
-theme_override_colors/font_color = Color(1, 1, 1, 1)
-theme_override_colors/font_hover_color = Color(1, 1, 1, 1)
+theme_override_colors/font_color = Color(0.980392, 0.976471, 0.964706, 1)
+theme_override_colors/font_hover_color = Color(0.980392, 0.976471, 0.964706, 1)
+theme_override_colors/font_pressed_color = Color(0.980392, 0.976471, 0.964706, 1)
+theme_override_colors/font_focus_color = Color(0.980392, 0.976471, 0.964706, 1)
 theme_override_fonts/font = ExtResource("39_font")
 theme_override_font_sizes/font_size = 26
 theme_override_styles/normal = SubResource("StyleBoxFlat_btn_normal")
