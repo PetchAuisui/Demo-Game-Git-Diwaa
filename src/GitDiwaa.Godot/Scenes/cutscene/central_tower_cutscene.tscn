@@ -1,0 +1,500 @@
+[gd_scene format=3 uid="uid://cmqxsaugtu6mt"]
+
+[ext_resource type="Script" path="res://Scripts/cutscene/central_tower_cutscene.gd" id="1_script"]
+[ext_resource type="Texture2D" uid="uid://cgl7a5ytds8rh" path="res://assets/cutscene/backgrounds/central-tower-Sheet.png" id="2_bg"]
+[ext_resource type="Texture2D" uid="uid://don4qpk4c43rc" path="res://assets/cutscene/characters/vel/vel_Hblue_Sredyellow_idle.png" id="3_vel_idle"]
+[ext_resource type="Texture2D" uid="uid://bwv0pcja8aiqd" path="res://assets/cutscene/characters/vel/vel_shockpng.png" id="4_vel_shock"]
+[ext_resource type="Texture2D" uid="uid://cnyp8l2pk7uln" path="res://assets/cutscene/characters/vel/vel_breathe_blink-Sheet.png" id="5_vel_blink"]
+[ext_resource type="Texture2D" uid="uid://djf4udkk5u51w" path="res://assets/cutscene/characters/vel/vel_breathe-Sheet.png" id="6_vel_breathe"]
+[ext_resource type="Texture2D" uid="uid://ccvcnopoctw6j" path="res://assets/cutscene/characters/vel/vel_walk_right-Sheet.png" id="7_vel_walk"]
+[ext_resource type="Texture2D" uid="uid://bbl6m8brfnkxl" path="res://assets/cutscene/exclamation_mark.png" id="8_exclamation"]
+[ext_resource type="Texture2D" uid="uid://cpg2rjs3k7fqy" path="res://assets/cutscene/characters/guardian/guardian-idle.png" id="9_guardian_idle"]
+[ext_resource type="Texture2D" uid="uid://d2uwr2jusv421" path="res://assets/cutscene/characters/guardian/guardian-breathe-Sheet.png" id="10_guardian_breathe"]
+[ext_resource type="Texture2D" uid="uid://degrc4atotqp2" path="res://assets/cutscene/characters/guardian/guardian-talk-Sheet.png" id="11_guardian_talk"]
+[ext_resource type="Texture2D" uid="uid://osadi21w88vx" path="res://assets/cutscene/characters/guardian/guardian-talk-blink-Sheet.png" id="12_guardian_talk_blink"]
+[ext_resource type="FontFile" uid="uid://deedcfbkojx6k" path="res://assets/fonts/ChakraPetch-Bold.ttf" id="13_font_bold"]
+[ext_resource type="AudioStream" uid="uid://c4gmyhi70e5oq" path="res://assets/audio/sfx_dialogue_next.wav" id="14_sfx_next"]
+[ext_resource type="AudioStream" uid="uid://okd1lm33qdyj" path="res://assets/audio/sfx_command.wav" id="15_sfx_warp"]
+[ext_resource type="AudioStream" uid="uid://bgxv5dvxt2uof" path="res://assets/audio/bgm_tower_loop.wav" id="16_bgm"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_vel_blink_0"]
+atlas = ExtResource("5_vel_blink")
+region = Rect2(0, 0, 48, 83)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_vel_blink_1"]
+atlas = ExtResource("5_vel_blink")
+region = Rect2(48, 0, 48, 83)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_vel_blink_2"]
+atlas = ExtResource("5_vel_blink")
+region = Rect2(96, 0, 48, 83)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_vel_blink_3"]
+atlas = ExtResource("5_vel_blink")
+region = Rect2(144, 0, 48, 83)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_vel_blink_4"]
+atlas = ExtResource("5_vel_blink")
+region = Rect2(192, 0, 48, 83)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_vel_blink_5"]
+atlas = ExtResource("5_vel_blink")
+region = Rect2(240, 0, 48, 83)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_vel_breathe_0"]
+atlas = ExtResource("6_vel_breathe")
+region = Rect2(0, 0, 48, 83)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_vel_breathe_1"]
+atlas = ExtResource("6_vel_breathe")
+region = Rect2(48, 0, 48, 83)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_vel_breathe_2"]
+atlas = ExtResource("6_vel_breathe")
+region = Rect2(96, 0, 48, 83)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_vel_breathe_3"]
+atlas = ExtResource("6_vel_breathe")
+region = Rect2(144, 0, 48, 83)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_vel_breathe_4"]
+atlas = ExtResource("6_vel_breathe")
+region = Rect2(192, 0, 48, 83)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_vel_breathe_5"]
+atlas = ExtResource("6_vel_breathe")
+region = Rect2(240, 0, 48, 83)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_vel_walk_0"]
+atlas = ExtResource("7_vel_walk")
+region = Rect2(0, 0, 48, 83)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_vel_walk_1"]
+atlas = ExtResource("7_vel_walk")
+region = Rect2(48, 0, 48, 83)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_vel_walk_2"]
+atlas = ExtResource("7_vel_walk")
+region = Rect2(96, 0, 48, 83)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_vel_walk_3"]
+atlas = ExtResource("7_vel_walk")
+region = Rect2(144, 0, 48, 83)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_vel_walk_4"]
+atlas = ExtResource("7_vel_walk")
+region = Rect2(192, 0, 48, 83)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_vel_walk_5"]
+atlas = ExtResource("7_vel_walk")
+region = Rect2(240, 0, 48, 83)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_vel"]
+animations = [{
+"frames": [{
+"duration": 2.0,
+"texture": SubResource("AtlasTexture_vel_blink_0")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_vel_blink_1")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_vel_blink_2")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_vel_blink_3")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_vel_blink_4")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_vel_blink_5")
+}],
+"loop": true,
+"name": &"breathe_blink",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_vel_breathe_0")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_vel_breathe_1")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_vel_breathe_2")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_vel_breathe_3")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_vel_breathe_4")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_vel_breathe_5")
+}],
+"loop": true,
+"name": &"breathe",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("3_vel_idle")
+}],
+"loop": true,
+"name": &"idle",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("4_vel_shock")
+}],
+"loop": true,
+"name": &"shock",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_vel_walk_0")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_vel_walk_1")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_vel_walk_2")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_vel_walk_3")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_vel_walk_4")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_vel_walk_5")
+}],
+"loop": true,
+"name": &"walk",
+"speed": 6.0
+}]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_guard_breathe_0"]
+atlas = ExtResource("10_guardian_breathe")
+region = Rect2(0, 0, 48, 83)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_guard_breathe_1"]
+atlas = ExtResource("10_guardian_breathe")
+region = Rect2(48, 0, 48, 83)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_guard_breathe_2"]
+atlas = ExtResource("10_guardian_breathe")
+region = Rect2(96, 0, 48, 83)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_guard_breathe_3"]
+atlas = ExtResource("10_guardian_breathe")
+region = Rect2(144, 0, 48, 83)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_guard_breathe_4"]
+atlas = ExtResource("10_guardian_breathe")
+region = Rect2(192, 0, 48, 83)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_guard_breathe_5"]
+atlas = ExtResource("10_guardian_breathe")
+region = Rect2(240, 0, 48, 83)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_guard_talk_0"]
+atlas = ExtResource("11_guardian_talk")
+region = Rect2(0, 0, 48, 83)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_guard_talk_1"]
+atlas = ExtResource("11_guardian_talk")
+region = Rect2(48, 0, 48, 83)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_guard_talk_2"]
+atlas = ExtResource("11_guardian_talk")
+region = Rect2(96, 0, 48, 83)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_guard_talk_3"]
+atlas = ExtResource("11_guardian_talk")
+region = Rect2(144, 0, 48, 83)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_guard_talk_4"]
+atlas = ExtResource("11_guardian_talk")
+region = Rect2(192, 0, 48, 83)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_guard_talk_5"]
+atlas = ExtResource("11_guardian_talk")
+region = Rect2(240, 0, 48, 83)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_guard_talk_blink_0"]
+atlas = ExtResource("12_guardian_talk_blink")
+region = Rect2(0, 0, 48, 83)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_guard_talk_blink_1"]
+atlas = ExtResource("12_guardian_talk_blink")
+region = Rect2(48, 0, 48, 83)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_guard_talk_blink_2"]
+atlas = ExtResource("12_guardian_talk_blink")
+region = Rect2(96, 0, 48, 83)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_guard_talk_blink_3"]
+atlas = ExtResource("12_guardian_talk_blink")
+region = Rect2(144, 0, 48, 83)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_guard_talk_blink_4"]
+atlas = ExtResource("12_guardian_talk_blink")
+region = Rect2(192, 0, 48, 83)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_guard_talk_blink_5"]
+atlas = ExtResource("12_guardian_talk_blink")
+region = Rect2(240, 0, 48, 83)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_guardian"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_guard_breathe_0")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_guard_breathe_1")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_guard_breathe_2")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_guard_breathe_3")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_guard_breathe_4")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_guard_breathe_5")
+}],
+"loop": true,
+"name": &"breathe",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("9_guardian_idle")
+}],
+"loop": true,
+"name": &"idle",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_guard_talk_0")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_guard_talk_1")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_guard_talk_2")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_guard_talk_3")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_guard_talk_4")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_guard_talk_5")
+}],
+"loop": true,
+"name": &"talk",
+"speed": 6.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_guard_talk_blink_0")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_guard_talk_blink_1")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_guard_talk_blink_2")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_guard_talk_blink_3")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_guard_talk_blink_4")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_guard_talk_blink_5")
+}],
+"loop": true,
+"name": &"talk_blink",
+"speed": 6.0
+}]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_dialogue"]
+bg_color = Color(0.00392, 0, 0.07451, 0.96)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.980392, 0.976471, 0.964706, 0.95)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+shadow_color = Color(0.00392, 0, 0.07451, 0.6)
+shadow_size = 8
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_skip_btn"]
+bg_color = Color(0.00392, 0, 0.07451, 0.85)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.980392, 0.976471, 0.964706, 0.6)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_right = 6
+corner_radius_bottom_left = 6
+
+[node name="CentralTowerCutscene" type="Node2D"]
+script = ExtResource("1_script")
+
+[node name="Camera2D" type="Camera2D" parent="."]
+position = Vector2(960, 540)
+
+[node name="Background" type="Sprite2D" parent="."]
+texture_filter = 1
+position = Vector2(960, 540)
+scale = Vector2(4, 4)
+texture = ExtResource("2_bg")
+region_enabled = true
+region_rect = Rect2(0, 0, 480, 270)
+
+[node name="Atmosphere" type="ColorRect" parent="."]
+offset_right = 1920.0
+offset_bottom = 1080.0
+mouse_filter = 2
+color = Color(0.02, 0.015, 0.05, 0.12)
+
+[node name="Stage" type="Node2D" parent="."]
+
+[node name="Vel" type="AnimatedSprite2D" parent="Stage"]
+texture_filter = 1
+position = Vector2(520, 780)
+scale = Vector2(4, 4)
+sprite_frames = SubResource("SpriteFrames_vel")
+animation = &"walk"
+
+[node name="ExclamationMark" type="Sprite2D" parent="Stage/Vel"]
+visible = false
+texture_filter = 1
+position = Vector2(0, -60)
+scale = Vector2(3.5, 3.5)
+texture = ExtResource("8_exclamation")
+
+[node name="Guardian" type="AnimatedSprite2D" parent="Stage"]
+texture_filter = 1
+position = Vector2(1320, 780)
+scale = Vector2(4, 4)
+sprite_frames = SubResource("SpriteFrames_guardian")
+animation = &"idle"
+flip_h = true
+
+[node name="MagicStoryUI" type="CanvasLayer" parent="."]
+layer = 10
+
+[node name="SkipButton" type="Button" parent="MagicStoryUI"]
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -190.0
+offset_top = 20.0
+offset_right = -30.0
+offset_bottom = 56.0
+grow_horizontal = 0
+mouse_default_cursor_shape = 2
+theme_override_colors/font_color = Color(0.980392, 0.976471, 0.964706, 0.85)
+theme_override_fonts/font = ExtResource("13_font_bold")
+theme_override_font_sizes/font_size = 18
+theme_override_styles/normal = SubResource("StyleBoxFlat_skip_btn")
+text = "ข้าม ⏵⏵ (Esc)"
+
+[node name="DialogueBox" type="PanelContainer" parent="MagicStoryUI"]
+visible = false
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -580.0
+offset_top = -225.0
+offset_right = 580.0
+offset_bottom = -45.0
+grow_horizontal = 2
+grow_vertical = 0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_dialogue")
+
+[node name="Margin" type="MarginContainer" parent="MagicStoryUI/DialogueBox"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/margin_left = 32
+theme_override_constants/margin_top = 20
+theme_override_constants/margin_right = 32
+theme_override_constants/margin_bottom = 16
+
+[node name="VBox" type="VBoxContainer" parent="MagicStoryUI/DialogueBox/Margin"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 8
+
+[node name="SpeakerLabel" type="Label" parent="MagicStoryUI/DialogueBox/Margin/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.9, 0.45, 1)
+theme_override_colors/font_outline_color = Color(0.00392, 0, 0.07451, 0.95)
+theme_override_constants/outline_size = 6
+theme_override_fonts/font = ExtResource("13_font_bold")
+theme_override_font_sizes/font_size = 28
+text = "ผู้พิทักษ์"
+
+[node name="DialogueLabel" type="Label" parent="MagicStoryUI/DialogueBox/Margin/VBox"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_colors/font_color = Color(0.980392, 0.976471, 0.964706, 1)
+theme_override_colors/font_outline_color = Color(0.00392, 0, 0.07451, 0.95)
+theme_override_constants/line_spacing = 10
+theme_override_constants/outline_size = 6
+theme_override_fonts/font = ExtResource("13_font_bold")
+theme_override_font_sizes/font_size = 25
+autowrap_mode = 3
+
+[node name="ContinuePrompt" type="Label" parent="MagicStoryUI/DialogueBox/Margin/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.980392, 0.976471, 0.964706, 0.8)
+theme_override_colors/font_outline_color = Color(0.00392, 0, 0.07451, 0.8)
+theme_override_constants/outline_size = 4
+theme_override_fonts/font = ExtResource("13_font_bold")
+theme_override_font_sizes/font_size = 18
+text = "คลิกหน้าจอ หรือกด Space เพื่อไปต่อ"
+horizontal_alignment = 2
+
+[node name="FadeOverlay" type="ColorRect" parent="MagicStoryUI"]
+visible = false
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0, 0, 0, 1)
+
+[node name="Audio" type="Node" parent="."]
+
+[node name="SfxNext" type="AudioStreamPlayer" parent="Audio"]
+stream = ExtResource("14_sfx_next")
+
+[node name="SfxWarp" type="AudioStreamPlayer" parent="Audio"]
+stream = ExtResource("15_sfx_warp")
+
+[node name="BgmPlayer" type="AudioStreamPlayer" parent="Audio"]
+stream = ExtResource("16_bgm")
+volume_db = -6.0
