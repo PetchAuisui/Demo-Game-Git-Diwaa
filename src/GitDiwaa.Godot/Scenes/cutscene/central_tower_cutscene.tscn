@@ -12,10 +12,7 @@
 [ext_resource type="Texture2D" uid="uid://d2uwr2jusv421" path="res://assets/cutscene/characters/guardian/guardian-breathe-Sheet.png" id="10_guardian_breathe"]
 [ext_resource type="Texture2D" uid="uid://degrc4atotqp2" path="res://assets/cutscene/characters/guardian/guardian-talk-Sheet.png" id="11_guardian_talk"]
 [ext_resource type="Texture2D" uid="uid://osadi21w88vx" path="res://assets/cutscene/characters/guardian/guardian-talk-blink-Sheet.png" id="12_guardian_talk_blink"]
-[ext_resource type="FontFile" uid="uid://deedcfbkojx6k" path="res://assets/fonts/ChakraPetch-Bold.ttf" id="13_font_bold"]
-[ext_resource type="AudioStream" uid="uid://c4gmyhi70e5oq" path="res://assets/audio/sfx_dialogue_next.wav" id="14_sfx_next"]
-[ext_resource type="AudioStream" uid="uid://okd1lm33qdyj" path="res://assets/audio/sfx_command.wav" id="15_sfx_warp"]
-[ext_resource type="AudioStream" uid="uid://bgxv5dvxt2uof" path="res://assets/audio/bgm_tower_loop.wav" id="16_bgm"]
+[ext_resource type="FontFile" uid="uid://csurxmw2vmws4" path="res://assets/fonts/TA-8-bit.ttf" id="13_font"]
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_vel_blink_0"]
 atlas = ExtResource("5_vel_blink")
@@ -343,17 +340,29 @@ corner_radius_bottom_left = 10
 shadow_color = Color(0.00392, 0, 0.07451, 0.6)
 shadow_size = 8
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_skip_btn"]
-bg_color = Color(0.00392, 0, 0.07451, 0.85)
-border_width_left = 1
-border_width_top = 1
-border_width_right = 1
-border_width_bottom = 1
-border_color = Color(0.980392, 0.976471, 0.964706, 0.6)
-corner_radius_top_left = 6
-corner_radius_top_right = 6
-corner_radius_bottom_right = 6
-corner_radius_bottom_left = 6
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_btn_normal"]
+bg_color = Color(0.00392, 0, 0.07451, 0.95)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.980392, 0.976471, 0.964706, 0.85)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_btn_hover"]
+bg_color = Color(0.06, 0.04, 0.16, 0.95)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.980392, 0.976471, 0.964706, 1)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
 
 [node name="CentralTowerCutscene" type="Node2D"]
 script = ExtResource("1_script")
@@ -406,16 +415,21 @@ layer = 10
 anchors_preset = 1
 anchor_left = 1.0
 anchor_right = 1.0
-offset_left = -190.0
+offset_left = -210.0
 offset_top = 20.0
 offset_right = -30.0
-offset_bottom = 56.0
+offset_bottom = 60.0
 grow_horizontal = 0
 mouse_default_cursor_shape = 2
-theme_override_colors/font_color = Color(0.980392, 0.976471, 0.964706, 0.85)
-theme_override_fonts/font = ExtResource("13_font_bold")
-theme_override_font_sizes/font_size = 18
-theme_override_styles/normal = SubResource("StyleBoxFlat_skip_btn")
+theme_override_colors/font_color = Color(0.980392, 0.976471, 0.964706, 0.9)
+theme_override_colors/font_focus_color = Color(0.980392, 0.976471, 0.964706, 1)
+theme_override_colors/font_hover_color = Color(0.980392, 0.976471, 0.964706, 1)
+theme_override_fonts/font = ExtResource("13_font")
+theme_override_font_sizes/font_size = 20
+theme_override_styles/normal = SubResource("StyleBoxFlat_btn_normal")
+theme_override_styles/hover = SubResource("StyleBoxFlat_btn_hover")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_btn_hover")
+theme_override_styles/focus = SubResource("StyleBoxFlat_btn_hover")
 text = "ข้าม ⏵⏵ (Esc)"
 
 [node name="DialogueBox" type="PanelContainer" parent="MagicStoryUI"]
@@ -426,9 +440,9 @@ anchor_top = 1.0
 anchor_right = 0.5
 anchor_bottom = 1.0
 offset_left = -580.0
-offset_top = -225.0
+offset_top = -205.0
 offset_right = 580.0
-offset_bottom = -45.0
+offset_bottom = -40.0
 grow_horizontal = 2
 grow_vertical = 0
 mouse_filter = 2
@@ -452,7 +466,7 @@ layout_mode = 2
 theme_override_colors/font_color = Color(1, 0.9, 0.45, 1)
 theme_override_colors/font_outline_color = Color(0.00392, 0, 0.07451, 0.95)
 theme_override_constants/outline_size = 6
-theme_override_fonts/font = ExtResource("13_font_bold")
+theme_override_fonts/font = ExtResource("13_font")
 theme_override_font_sizes/font_size = 28
 text = "ผู้พิทักษ์"
 
@@ -463,18 +477,18 @@ theme_override_colors/font_color = Color(0.980392, 0.976471, 0.964706, 1)
 theme_override_colors/font_outline_color = Color(0.00392, 0, 0.07451, 0.95)
 theme_override_constants/line_spacing = 10
 theme_override_constants/outline_size = 6
-theme_override_fonts/font = ExtResource("13_font_bold")
-theme_override_font_sizes/font_size = 25
+theme_override_fonts/font = ExtResource("13_font")
+theme_override_font_sizes/font_size = 26
 autowrap_mode = 3
 
 [node name="ContinuePrompt" type="Label" parent="MagicStoryUI/DialogueBox/Margin/VBox"]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.980392, 0.976471, 0.964706, 0.8)
-theme_override_colors/font_outline_color = Color(0.00392, 0, 0.07451, 0.8)
+theme_override_colors/font_color = Color(0.980392, 0.976471, 0.964706, 0.95)
+theme_override_colors/font_outline_color = Color(0.00392, 0, 0.07451, 0.85)
 theme_override_constants/outline_size = 4
-theme_override_fonts/font = ExtResource("13_font_bold")
-theme_override_font_sizes/font_size = 18
-text = "คลิกหน้าจอ หรือกด Space เพื่อไปต่อ"
+theme_override_fonts/font = ExtResource("13_font")
+theme_override_font_sizes/font_size = 20
+text = "คลิกหน้าจอเพื่อไปต่อ"
 horizontal_alignment = 2
 
 [node name="FadeOverlay" type="ColorRect" parent="MagicStoryUI"]
@@ -486,15 +500,3 @@ grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
 color = Color(0, 0, 0, 1)
-
-[node name="Audio" type="Node" parent="."]
-
-[node name="SfxNext" type="AudioStreamPlayer" parent="Audio"]
-stream = ExtResource("14_sfx_next")
-
-[node name="SfxWarp" type="AudioStreamPlayer" parent="Audio"]
-stream = ExtResource("15_sfx_warp")
-
-[node name="BgmPlayer" type="AudioStreamPlayer" parent="Audio"]
-stream = ExtResource("16_bgm")
-volume_db = -6.0

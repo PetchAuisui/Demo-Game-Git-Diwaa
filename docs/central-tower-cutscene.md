@@ -31,8 +31,7 @@ flowchart LR
 | **ตัวละครฝั่งซ้าย (เวล)** | `res://assets/cutscene/characters/vel/` | • `vel_Hblue_Sredyellow_idle.png` (ท่ายืน)<br>• `vel_walk_right-Sheet.png` (ท่าเดินเข้าห้อง)<br>• `vel_breathe_blink-Sheet.png` (ท่าหายใจและกระพริบตา)<br>• `vel_shockpng.png` (ท่าตกใจ) |
 | **ตัวละครฝั่งขวา (ผู้พิทักษ์)** | `res://assets/cutscene/characters/guardian/` | • `guardian-idle.png` (ท่ายืนนิ่ง)<br>• `guardian-talk-Sheet.png` (ท่าพูด)<br>• `guardian-talk-blink-Sheet.png` (ท่าพูดพร้อมกระพริบตา)<br>• `guardian-breathe-Sheet.png` (ท่าหายใจ) |
 | **เอฟเฟกต์ประกอบ** | `res://assets/cutscene/exclamation_mark.png` | ไอคอนตกใจ (!) สีแดงเด้งขึ้นเหนือศีรษะเวล |
-| **ฟอนต์ข้อความ** | `res://assets/fonts/ChakraPetch-Bold.ttf` | ฟอนต์ไทยคมชัด สไตล์เวทมนตร์ย้อนยุค |
-| **เสียงประกอบ (SFX/BGM)** | `res://assets/audio/sfx_dialogue_next.wav`<br>`res://assets/audio/bgm_tower_loop.wav` | เสียงคลิกเปลี่ยนประโยค และดนตรีบรรยากาศหอคอยวนลูป |
+| **ฟอนต์ข้อความ** | `res://assets/fonts/TA-8-bit.ttf` | ฟอนต์พิกเซล 8-bit มาตรฐานเดียวกับ Ending Cutscene |
 
 ---
 
@@ -49,19 +48,15 @@ CentralTowerCutscene (Node2D) [Script: central_tower_cutscene.gd]
 │   ├── Vel (AnimatedSprite2D) [Position: (760, 780), Scale 4x4]
 │   │   └── ExclamationMark (Sprite2D) [Position: (0, -60)]
 │   └── Guardian (AnimatedSprite2D) [Position: (1320, 780), Scale 4x4, Flip H: true]
-├── MagicStoryUI (CanvasLayer: Layer 10)
-│   ├── SkipButton (Button) [มุมขวาบน สำหรับกดข้ามคัตซีน]
-│   ├── DialogueBox (PanelContainer) [กล่องข้อความกึ่งกลางล่างจอ]
-│   │   └── Margin (MarginContainer)
-│   │       └── VBox (VBoxContainer)
-│   │           ├── SpeakerLabel (Label) [ชื่อผู้พูด สีทอง #FFE673]
-│   │           ├── DialogueLabel (Label) [ข้อความคำพูด สีขาวครีม #FAF9F6]
-│   │           └── ContinuePrompt (Label) [คำแนะนำ 'คลิกหน้าจอ หรือกด Space เพื่อไปต่อ']
-│   └── FadeOverlay (ColorRect) [ม่านจอดำสำหรับเฟดเข้า-ออก]
-└── Audio (Node)
-    ├── SfxNext (AudioStreamPlayer) -> sfx_dialogue_next.wav
-    ├── SfxWarp (AudioStreamPlayer) -> sfx_command.wav
-    └── BgmPlayer (AudioStreamPlayer) -> bgm_tower_loop.wav
+└── MagicStoryUI (CanvasLayer: Layer 10)
+    ├── SkipButton (Button) [มุมขวาบน สำหรับกดข้ามคัตซีน สไตล์เดียวกับ Ending Cutscene]
+    ├── DialogueBox (PanelContainer) [กล่องข้อความกึ่งกลางล่างจอ สไตล์เดียวกับ Ending Cutscene]
+    │   └── Margin (MarginContainer)
+    │       └── VBox (VBoxContainer)
+    │           ├── SpeakerLabel (Label) [ชื่อผู้พูด สีทอง #FFE673, ฟอนต์ TA-8-bit ขนาด 28]
+    │           ├── DialogueLabel (Label) [ข้อความคำพูด สีขาวครีม #FAF9F6, ฟอนต์ TA-8-bit ขนาด 26]
+    │           └── ContinuePrompt (Label) [คำแนะนำ 'คลิกหน้าจอเพื่อไปต่อ', ฟอนต์ TA-8-bit ขนาด 20]
+    └── FadeOverlay (ColorRect) [ม่านจอดำสำหรับเฟดเข้า-ออก]
 ```
 
 ---

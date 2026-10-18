@@ -30,10 +30,6 @@ extends Node2D
 @onready var continue_prompt: Label = $MagicStoryUI/DialogueBox/Margin/VBox/ContinuePrompt
 @onready var skip_button: Button = $MagicStoryUI/SkipButton
 
-# Audio
-@onready var sfx_next: AudioStreamPlayer = $Audio/SfxNext
-@onready var sfx_warp: AudioStreamPlayer = $Audio/SfxWarp
-@onready var bgm_player: AudioStreamPlayer = $Audio/BgmPlayer
 
 # Dialogue Script Data (บทสนทนาประจำฉาก)
 const DIALOGUES: Array[Dictionary] = [
@@ -219,9 +215,6 @@ func _init_scene_state() -> void:
 	fade_overlay.visible = true
 	fade_overlay.color = Color(0, 0, 0, 1.0)
 	
-	# เล่นเพลงประกอบ
-	if bgm_player and not bgm_player.playing:
-		bgm_player.play()
 
 ## -------------------------------------------------------------
 ## Sequence: เดินเข้าฉากเปิดตัว
@@ -306,7 +299,6 @@ func _on_player_advance() -> void:
 			guardian.play("breathe")
 	else:
 		# ถ้าข้อความขึ้นครบแล้ว ให้ไปประโยคถัดไป
-		_play_sfx(sfx_next)
 		current_dialogue_index += 1
 		_show_current_dialogue()
 
@@ -339,9 +331,6 @@ func _finish_cutscene() -> void:
 	# เฟดจอดำ และเปลี่ยนซีน
 	var tw_fade_out = create_tween()
 	tw_fade_out.tween_property(fade_overlay, "color:a", 1.0, 0.6)
-	if bgm_player and bgm_player.playing:
-		tw_fade_out.parallel().tween_property(bgm_player, "volume_db", -40.0, 0.6)
-		
 	tw_fade_out.tween_callback(func():
 		_switch_to_gameplay()
 	)
@@ -358,7 +347,3 @@ func _switch_to_gameplay() -> void:
 		get_tree().change_scene_to_file(next_scene_path)
 	else:
 		push_warning("[CentralTowerCutscene] next_scene_path not found: '%s'" % next_scene_path)
-
-func _play_sfx(player: AudioStreamPlayer) -> void:
-	if is_instance_valid(player) and player.stream:
-		player.play()
