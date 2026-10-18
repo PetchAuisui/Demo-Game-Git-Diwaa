@@ -33,7 +33,7 @@ flowchart LR
 | **เอฟเฟกต์ประกอบ** | `res://assets/cutscene/exclamation_mark.png` | ไอคอนตกใจ (!) สีแดงเด้งขึ้นเหนือศีรษะเวล |
 | **กรอบข้อความ** | `res://assets/cutscene/frame dialog text/text dialog.png` | กรอบข้อความดีไซน์พิเศษ ขอบมนโทนม่วงเข้มตัดลาเวนเดอร์ (9-slice StyleBoxTexture) |
 | **ลูกศรไปต่อ** | `res://assets/cutscene/frame dialog text/arrow.png` | ไอคอนลูกศรพิกเซลชี้ลงโทนลาเวนเดอร์ ลอยเด้งดึ๋งบอกให้คลิกไปต่อ |
-| **ฟอนต์ข้อความ** | `res://assets/fonts/2005.ttf` | ฟอนต์พิกเซลภาษาไทย (2005_iannnnnAMD) ที่สระและวรรณยุกต์หนาคมชัด ไม่แตกเบลอ สไตล์ Pixel Art แท้ |
+| **ฟอนต์ข้อความ** | `res://assets/fonts/TA-8-bit.ttf` | ฟอนต์พิกเซล 8-bit มาตรฐานดั้งเดิมของโปรเจกต์ (ปรับขยายขนาดเป็น 26 px สีขาวจั๊ว สระคมชัดพอดีกล่อง ดูรายละเอียดใน [คู่มือฟอนต์](fonts.md)) |
 
 ---
 
@@ -60,8 +60,8 @@ CentralTowerCutscene (Node2D) [Script: central_tower_cutscene.gd]
     ├── DialogueBox (PanelContainer) [StyleBoxTexture: text dialog.png (Hand-drawn pixel frame 9-slice, Margin 24px, Region: Rect2(43, 191, 2086, 332), Filter: Linear, Modulate: Color(0.78, 0.74, 0.82) ลดความสว่างเส้นม่วงลงไม่ให้แย่งสายตา), Offset: L:-580, R:580, T:-216, B:-36]
     │   ├── Margin (MarginContainer) [Margin: L:36, T:24, R:48, B:16]
     │   │   └── VBox (VBoxContainer) [Separation: 12]
-    │   │       ├── SpeakerLabel (Label) [ชื่อผู้พูด ตัวหนา (FontVariation: variation_embolden = 0.2) สีทองหม่น #F0D273, Outline 3px, ฟอนต์พิกเซล 2005.ttf ขนาด 50]
-    │   │       └── DialogueLabel (Label) [ข้อความคำพูด ฟอนต์พิกเซล 2005.ttf ขนาด 44 px น้ำหนักปกติ สระ-วรรณยุกต์ครบถ้วนคมชัด สไตล์พิกเซลแท้ สีขาวจั๊วสว่างชัด #FFFFFF, Outline 2px, Line Spacing 8px]
+    │   │       ├── SpeakerLabel (Label) [ชื่อผู้พูด ตัวหนา (FontVariation: variation_embolden = 0.3) สีทองหม่น #F0D273, Outline 3px, ฟอนต์ TA-8-bit ขนาด 28]
+    │   │       └── DialogueLabel (Label) [ข้อความคำพูด ฟอนต์ TA-8-bit ขนาด 26 px (ขยายเพิ่ม 15% จากเดิม) สีขาวจั๊ว #FFFFFF คมชัด, Outline 2px, Line Spacing 8px]
     │   └── ArrowOverlay (Control) [Overlay ป้องกันกระทบข้อความ]
     │       └── ArrowWrapper (Control) [Anchors: Bottom-Right (offset: -48, -34, -22, -16)]
     │           └── ContinueArrow (TextureRect) [arrow.png ลอยเด้งดึ๋ง แสดงเฉพาะเมื่อพิมพ์ข้อความเสร็จสิ้น]
@@ -89,7 +89,7 @@ CentralTowerCutscene (Node2D) [Script: central_tower_cutscene.gd]
    - ปรับกล่องข้อความ `DialogueBox` ให้มีสัดส่วนกะทัดรัดใกล้เคียงฉากหอสมุด: ขนาด `1160 × 180 px`, จัดวางกึ่งกลางแนวนอน (`offset_left = -580`, `offset_right = 580`), ห่างขอบล่าง 36 px (`offset_top = -216`, `offset_bottom = -36`)
    - ใช้ภาพกรอบที่ผู้ใช้วาดเองแท้จริง (`text dialog.png`) ผ่าน `StyleBoxTexture` (Region: `Rect2(43, 191, 2086, 332)`) โดยกำหนด 9-slice Margins แบบสมมาตร `24 px` ทุกด้าน เปิด `texture_filter = Linear` และปรับ `modulate_color = Color(0.78, 0.74, 0.82)` เพื่อลดความสว่างของเส้นม่วงลงเล็กน้อย ไม่ให้เด่นแย่งสายตาจากบทสนทนา
    - การจัดแนว: ชื่อผู้พูดและบทสนทนาชิดซ้ายแนวเดียวกัน ห่างขอบซ้าย 36 px, เว้นชื่อจากขอบบน 24 px, เว้นระหว่างชื่อกับบทพูด 12 px
-   - Typography Hierarchy: ชื่อผู้พูดใช้แบบ**ตัวหนา (Bold)** สีทองหม่น `#F0D273` ขนาด **50 px** (ชดเชย UPM 2048 ของฟอนต์ 2005.ttf ให้เด่นชัดเต็มตา), บทพูดใช้ฟอนต์พิกเซลภาษาไทย **2005.ttf** ขนาด **44 px** น้ำหนักปกติ (สระและวรรณยุกต์คมชัด ชัดเจน ไม่จิ๋ว) สีขาวจั๊ว `#FFFFFF` ขอบดำ 2 px เว้นระยะบรรทัด 8 px คงบทสนทนาแบบเดิม 16 บท พร้อมใช้ Non-breaking Space สำหรับคำเฉพาะอย่าง "Git Flow" / "GitHub Flow" เพื่อไม่ให้ถูกตัดแยกคนละบรรทัด
+   - Typography Hierarchy: ชื่อผู้พูดใช้แบบ**ตัวหนา (Bold)** สีทองหม่น `#F0D273` ขนาด **28 px** (สร้างผ่าน `FontVariation: variation_embolden = 0.3` และขอบดำ 3 px เด่นชัดกว่าบทพูด), บทพูดใช้ฟอนต์ **TA-8-bit.ttf** ขยายขนาดเป็น **26 px** (เพิ่มขึ้น 15% จากเดิม 22 px เพื่อให้อ่านง่าย สระไม่จม) สีขาวจั๊ว `#FFFFFF` ขอบดำ 2 px เว้นระยะบรรทัด 8 px คงบทสนทนาแบบเดิม 16 บท พร้อมใช้ Non-breaking Space สำหรับคำเฉพาะอย่าง "Git Flow" / "GitHub Flow" เพื่อไม่ให้ถูกตัดแยกคนละบรรทัด
    - ลูกศรไปต่อ (Continue Arrow): จัดวางที่มุมขวาล่าง (`ArrowOverlay`) ซ่อนระหว่างข้อความกำลังพิมพ์ และจะแสดงขึ้นพร้อมอนิเมชันลอยเบาๆ ทันทีที่ข้อความขึ้นครบ 100%
    - ผลลัพธ์: ระดับขอบบนของกล่องข้อความอยู่ที่ `y = 864` วางทับเฉพาะส่วนรองเท้า (ประมาณ 40 px) โดยมองเห็นลำตัว เสื้อผ้า และใบหน้าของตัวละครครบถ้วนชัดเจนในระดับสายตา
 

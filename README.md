@@ -96,3 +96,5 @@ dotnet run --project tests/GitDiwaa.RealGit.Tests/GitDiwaa.RealGit.Tests.csproj
 - [สถานะระบบและงานถัดไป](docs/implementation-status.md)
 - [ทดสอบผ่าน Terminal](docs/testing-terminal.md)
 - [แนวทางเชื่อม Godot C# รอบถัดไป](docs/godot-integration.md)
+- [รายการและการใช้งานฟอนต์](docs/fonts.md)
+- [คัตซีนหอคอยเวทกลาง (Central Tower Cutscene)](docs/central-tower-cutscene.md)

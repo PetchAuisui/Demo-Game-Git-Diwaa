@@ -17,7 +17,7 @@
 [ext_resource type="Texture2D" uid="uid://oj5c6k43q74d" path="res://assets/cutscene/frame dialog text/text dialog.png" id="15_dialog_frame"]
 [ext_resource type="Texture2D" uid="uid://djcf2i5xifya1" path="res://assets/cutscene/frame dialog text/arrow.png" id="16_dialog_arrow"]
 [ext_resource type="Texture2D" uid="uid://dmykeg4jphdb0" path="res://assets/cutscene/props/khampri/drop_shadow.png" id="17_shadow"]
-[ext_resource type="FontFile" uid="uid://hyuules3xb0a" path="res://assets/fonts/2005.ttf" id="18_pixel_font"]
+
 
 [sub_resource type="Animation" id="Animation_reset"]
 length = 0.001
@@ -454,8 +454,8 @@ region_rect = Rect2(43, 191, 2086, 332)
 modulate_color = Color(0.78, 0.74, 0.82, 1)
 
 [sub_resource type="FontVariation" id="FontVariation_speaker_bold"]
-base_font = ExtResource("18_pixel_font")
-variation_embolden = 0.2
+base_font = ExtResource("14_font")
+variation_embolden = 0.3
 
 
 [node name="CentralTowerCutscene" type="Node2D" unique_id=2028812494]
@@ -600,7 +600,7 @@ theme_override_colors/font_color = Color(0.941176, 0.823529, 0.45098, 1)
 theme_override_colors/font_outline_color = Color(0.07, 0.05, 0.09, 1)
 theme_override_constants/outline_size = 3
 theme_override_fonts/font = SubResource("FontVariation_speaker_bold")
-theme_override_font_sizes/font_size = 50
+theme_override_font_sizes/font_size = 28
 text = "ผู้พิทักษ์"
 
 [node name="DialogueLabel" type="Label" parent="MagicStoryUI/DialogueBox/Margin/VBox" unique_id=1071406823]
@@ -610,8 +610,8 @@ theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_colors/font_outline_color = Color(0.07, 0.05, 0.09, 1)
 theme_override_constants/line_spacing = 8
 theme_override_constants/outline_size = 2
-theme_override_fonts/font = ExtResource("18_pixel_font")
-theme_override_font_sizes/font_size = 44
+theme_override_fonts/font = ExtResource("14_font")
+theme_override_font_sizes/font_size = 26
 autowrap_mode = 3
 
 [node name="ArrowOverlay" type="Control" parent="MagicStoryUI/DialogueBox" unique_id=1928374614]
