@@ -10,7 +10,8 @@ extends Node2D
 
 @export var next_scene_path: String = "res://Scenes/SandboxGameView.tscn"
 
-# Camera & Visuals
+# Animation & Visuals
+@onready var anim_player: AnimationPlayer = $AnimationPlayer
 @onready var camera: Camera2D = $Camera2D
 @onready var background: Sprite2D = $Background
 @onready var atmosphere: ColorRect = $Atmosphere
@@ -20,6 +21,7 @@ extends Node2D
 @onready var stage: Node2D = $Stage
 @onready var vel: AnimatedSprite2D = $Stage/Vel
 @onready var exclamation_mark: Sprite2D = $Stage/Vel/ExclamationMark
+@onready var question_mark: Label = $Stage/Vel/QuestionMark
 @onready var guardian: AnimatedSprite2D = $Stage/Guardian
 
 # UI Elements
@@ -31,119 +33,90 @@ extends Node2D
 @onready var skip_button: Button = $MagicStoryUI/SkipButton
 
 
+# ลำดับท่าทางวนลูป (Sequence Loops)
+# ผู้พิทักษ์ขณะพูด: talk -> talk_blink -> talk -> talk -> talk_blink
+const GUARDIAN_TALK_SEQ: Array[String] = ["talk", "talk_blink", "talk", "talk", "talk_blink"]
+
+# ผู้พิทักษ์ขณะไม่ได้พูด (ฟัง/รอ): breathe -> breathe_blink -> breathe -> breathe -> breathe_blink
+const GUARDIAN_IDLE_SEQ: Array[String] = ["breathe", "breathe_blink", "breathe", "breathe", "breathe_blink"]
+
+# เวล (ท่าปกติวนลูป): breathe -> breathe_blink -> breathe -> breathe -> breathe_blink
+const VEL_IDLE_SEQ: Array[String] = ["breathe", "breathe_blink", "breathe", "breathe", "breathe_blink"]
+
+# สถานะลำดับแอนิเมชันของตัวละคร
+var is_guardian_speaking: bool = false
+var guardian_seq_step: int = 0
+var vel_seq_step: int = 0
+var vel_custom_anim: String = ""
+
 # Dialogue Script Data (บทสนทนาประจำฉาก)
 const DIALOGUES: Array[Dictionary] = [
 	{
 		"speaker": "ผู้พิทักษ์",
-		"text": "มาถึงแล้วสินะ ศิษย์ฝึกหัด",
-		"vel_anim": "idle",
-		"guardian_anim": "talk_blink",
-		"exclamation": false
+		"text": "มาถึงแล้วสินะ ศิษย์ฝึกหัด"
 	},
 	{
 		"speaker": "เวล",
-		"text": "ท่านคือ...",
-		"vel_anim": "shock",
-		"guardian_anim": "idle",
-		"exclamation": true
+		"text": "ท่านคือ..."
 	},
 	{
 		"speaker": "ผู้พิทักษ์",
-		"text": "ข้าคือผู้พิทักษ์คลังเวทกลาง ดูแลบันทึกและความรู้ของจอมเวททุกคนในอาณาจักร นายมาที่นี่เพื่อตามหาเศษคัมภีร์ที่เหลือ ใช่ไหม",
-		"vel_anim": "breathe_blink",
-		"guardian_anim": "talk_blink",
-		"exclamation": false
+		"text": "ข้าคือผู้พิทักษ์คลังเวทกลาง ดูแลบันทึกและความรู้ของจอมเวททุกคนในอาณาจักร นายมาที่นี่เพื่อตามหาเศษคัมภีร์ที่เหลือ ใช่ไหม"
 	},
 	{
 		"speaker": "เวล",
-		"text": "ใช่ครับ",
-		"vel_anim": "idle",
-		"guardian_anim": "breathe",
-		"exclamation": false
+		"text": "ใช่ครับ"
 	},
 	{
 		"speaker": "ผู้พิทักษ์",
-		"text": "ดี แต่ก่อนจะไปมากกว่านี้ ข้าอยากให้เจ้าได้เรียนรู้การใช้พลัง Git ของเราในการจารึกร่วมกับผู้อื่น",
-		"vel_anim": "breathe_blink",
-		"guardian_anim": "talk_blink",
-		"exclamation": false
+		"text": "ดี แต่ก่อนจะไปมากกว่านี้ ข้าอยากให้เจ้าได้เรียนรู้การใช้พลัง Git ของเราในการจารึกร่วมกับผู้อื่น"
 	},
 	{
 		"speaker": "เวล",
 		"text": "กฎเหรอครับ?",
-		"vel_anim": "breathe_blink",
-		"guardian_anim": "idle",
-		"exclamation": false
+		"emote": "question"
 	},
 	{
 		"speaker": "ผู้พิทักษ์",
-		"text": "ไม่ใช่หรอก มันเรียกว่าธรรมเนียมมากกว่า โดยส่วนมากธรรมเนียมเป็นไปตามกำหนดจากเจ้าของคัมภีร์",
-		"vel_anim": "idle",
-		"guardian_anim": "talk_blink",
-		"exclamation": false
+		"text": "ไม่ใช่หรอก มันเรียกว่าธรรมเนียมมากกว่า โดยส่วนมากธรรมเนียมเป็นไปตามกำหนดจากเจ้าของคัมภีร์"
 	},
 	{
 		"speaker": "ผู้พิทักษ์",
-		"text": "เพราะงั้นนี่คือ...",
-		"vel_anim": "idle",
-		"guardian_anim": "breathe",
-		"exclamation": false
+		"text": "เพราะงั้นนี่คือ..."
 	},
 	{
 		"speaker": "ผู้พิทักษ์",
-		"text": "'GitHub Flow' ธรรมเนียมที่คลังเวทกลางแห่งนี้ใช้กันมาตลอด",
-		"vel_anim": "shock",
-		"guardian_anim": "talk_blink",
-		"exclamation": false
+		"text": "'GitHub Flow' ธรรมเนียมที่คลังเวทกลางแห่งนี้ใช้กันมาตลอด"
 	},
 	{
 		"speaker": "เวล",
 		"text": "GitHub Flow?",
-		"vel_anim": "shock",
-		"guardian_anim": "breathe",
-		"exclamation": false
+		"emote": "question"
 	},
 	{
 		"speaker": "ผู้พิทักษ์",
-		"text": "ใช่ ความจริงแล้วในหมู่จอมเวททั่วอาณาจักร มีธรรมเนียมการทำงานร่วมกันอยู่หลายแบบ บ้างก็ใช้ 'Git Flow' ที่ซับซ้อนกว่า มีเส้นทางแยกย่อยหลายสาย บางคลังก็ใช้แบบอื่นไปเลยก็มี",
-		"vel_anim": "breathe_blink",
-		"guardian_anim": "talk_blink",
-		"exclamation": false
+		"text": "ใช่ ความจริงแล้วในหมู่จอมเวททั่วอาณาจักร มีธรรมเนียมการทำงานร่วมกันอยู่หลายแบบ บ้างก็ใช้ 'Git Flow' ที่ซับซ้อนกว่า มีเส้นทางแยกย่อยหลายสาย บางคลังก็ใช้แบบอื่นไปเลยก็มี"
 	},
 	{
 		"speaker": "ผู้พิทักษ์",
-		"text": "แต่ที่นี่ เราเลือกใช้ GitHub Flow เพราะเรียบง่าย เหมาะกับจอมเวทที่หมุนเวียนงานกันเร็ว ๆ",
-		"vel_anim": "idle",
-		"guardian_anim": "talk_blink",
-		"exclamation": false
+		"text": "แต่ที่นี่ เราเลือกใช้ GitHub Flow เพราะเรียบง่าย เหมาะกับจอมเวทที่หมุนเวียนงานกันเร็ว ๆ"
 	},
 	{
 		"speaker": "เวล",
 		"text": "แล้วมันทำงานยังไงครับ",
-		"vel_anim": "breathe_blink",
-		"guardian_anim": "idle",
-		"exclamation": false
+		"emote": "question"
 	},
 	{
 		"speaker": "ผู้พิทักษ์",
-		"text": "หลักการง่ายมาก มีเส้นทางหลักอยู่เส้นเดียวคือ main ห้ามใครแก้ไขมันตรง ๆ เด็ดขาด",
-		"vel_anim": "shock",
-		"guardian_anim": "talk_blink",
-		"exclamation": false
+		"text": "หลักการง่ายมาก มีเส้นทางหลักอยู่เส้นเดียวคือ main ห้ามใครแก้ไขมันตรง ๆ เด็ดขาด"
 	},
 	{
 		"speaker": "ผู้พิทักษ์",
-		"text": "ทุกครั้งที่จะเริ่มงานใหม่ ไม่ว่าเล็กหรือใหญ่ ต้องแยกเส้นทางจารึกใหม่ออกมาก่อนเสมอ",
-		"vel_anim": "breathe_blink",
-		"guardian_anim": "talk_blink",
-		"exclamation": false
+		"text": "ทุกครั้งที่จะเริ่มงานใหม่ ไม่ว่าเล็กหรือใหญ่ ต้องแยกเส้นทางจารึกใหม่ออกมาก่อนเสมอ"
 	},
 	{
 		"speaker": "ผู้พิทักษ์",
-		"text": "ทำงานเสร็จ ทดสอบจนมั่นใจ ก็ยื่นคำขอบันทึกคัมภีร์กลับเข้า main แล้วให้จอมเวทคนอื่นตรวจสอบก่อนรวม",
-		"vel_anim": "idle",
-		"guardian_anim": "talk_blink",
-		"exclamation": false
+		"text": "ทำงานเสร็จ ทดสอบจนมั่นใจ ก็ยื่นคำขอบันทึกคัมภีร์กลับเข้า main แล้วให้จอมเวทคนอื่นตรวจสอบก่อนรวม"
 	}
 ]
 
@@ -153,6 +126,7 @@ var is_typing: bool = false
 var is_transitioning: bool = false
 var typewriter_tween: Tween = null
 var exclamation_tween: Tween = null
+var question_tween: Tween = null
 
 func _ready() -> void:
 	Engine.time_scale = 1.0
@@ -198,11 +172,18 @@ func _init_scene_state() -> void:
 	guardian.position = Vector2(1320, 780)
 	guardian.scale = Vector2(4.0, 4.0)
 	guardian.flip_h = true
-	guardian.play("idle")
+	guardian.play("breathe")
+	guardian.animation_finished.connect(_on_guardian_animation_finished)
+	vel.animation_finished.connect(_on_vel_animation_finished)
 	
 	exclamation_mark.visible = false
 	exclamation_mark.scale = Vector2.ZERO
 	exclamation_mark.position = Vector2(0, -60)
+	
+	question_mark.visible = false
+	question_mark.scale = Vector2.ZERO
+	question_mark.modulate.a = 1.0
+	question_mark.position = Vector2.ZERO
 	
 	# ซ่อนกล่องข้อความไว้ก่อน
 	dialogue_box.visible = false
@@ -215,6 +196,10 @@ func _init_scene_state() -> void:
 	fade_overlay.visible = true
 	fade_overlay.color = Color(0, 0, 0, 1.0)
 	
+	# เริ่มเล่นอนิเมชันของฉาก (วนลูปต่อเนื่อง)
+	if anim_player and not anim_player.is_playing():
+		anim_player.play("background_loop")
+
 
 ## -------------------------------------------------------------
 ## Sequence: เดินเข้าฉากเปิดตัว
@@ -228,7 +213,7 @@ func _play_entrance_sequence() -> void:
 	var tw_walk = create_tween()
 	tw_walk.tween_property(vel, "position:x", 760.0, 1.4).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
 	tw_walk.tween_callback(func():
-		vel.play("idle")
+		vel.play("breathe")
 		# หน่วงเล็กน้อย 0.3s แล้วเริ่มบทสนทนาแรก
 		var tw_wait = create_tween()
 		tw_wait.tween_interval(0.3)
@@ -236,7 +221,7 @@ func _play_entrance_sequence() -> void:
 	)
 
 ## -------------------------------------------------------------
-## Sequence: ควบคุมบทสนทนา
+## Sequence: ควบคุมบทสนทนาและท่าทางตัวละคร
 ## -------------------------------------------------------------
 func _start_dialogue_sequence() -> void:
 	current_dialogue_index = 0
@@ -248,6 +233,39 @@ func _start_dialogue_sequence() -> void:
 	tw_box.tween_property(dialogue_box, "scale", Vector2.ONE, 0.25).from(Vector2(0.96, 0.96)).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	
 	_show_current_dialogue()
+
+func _on_guardian_animation_finished() -> void:
+	var seq = GUARDIAN_TALK_SEQ if is_guardian_speaking else GUARDIAN_IDLE_SEQ
+	guardian_seq_step = (guardian_seq_step + 1) % seq.size()
+	guardian.play(seq[guardian_seq_step])
+
+func _on_vel_animation_finished() -> void:
+	if vel_custom_anim != "":
+		return
+	vel_seq_step = (vel_seq_step + 1) % VEL_IDLE_SEQ.size()
+	vel.play(VEL_IDLE_SEQ[vel_seq_step])
+
+func _update_character_postures(speaker: String, vel_override: String = "") -> void:
+	# 1. จัดการผู้พิทักษ์ (พูด vs ฟัง)
+	var should_guardian_speak = (speaker == "ผู้พิทักษ์")
+	if is_guardian_speaking != should_guardian_speak:
+		is_guardian_speaking = should_guardian_speak
+		guardian_seq_step = 0
+		var seq = GUARDIAN_TALK_SEQ if is_guardian_speaking else GUARDIAN_IDLE_SEQ
+		guardian.play(seq[0])
+
+	# 2. จัดการเวล (ลูป breathe ตลอดเวลา เว้นแต่จะมีท่าพิเศษ override)
+	if vel_override != "":
+		vel_custom_anim = vel_override
+		vel.play(vel_override)
+	else:
+		if vel_custom_anim != "":
+			vel_custom_anim = ""
+			vel_seq_step = 0
+			vel.play(VEL_IDLE_SEQ[0])
+		elif vel.animation not in VEL_IDLE_SEQ:
+			vel_seq_step = 0
+			vel.play(VEL_IDLE_SEQ[0])
 
 func _show_current_dialogue() -> void:
 	if current_dialogue_index >= DIALOGUES.size():
@@ -262,16 +280,20 @@ func _show_current_dialogue() -> void:
 	dialogue_label.text = data["text"]
 	dialogue_label.visible_ratio = 0.0
 	
-	# อัปเดตท่าทางตัวละคร
-	if data.has("vel_anim") and vel.sprite_frames.has_animation(data["vel_anim"]):
-		vel.play(data["vel_anim"])
-	if data.has("guardian_anim") and guardian.sprite_frames.has_animation(data["guardian_anim"]):
-		guardian.play(data["guardian_anim"])
+	# อัปเดตท่าทางตัวละคร (อิงสถานะ ไม่รีสตาร์ทเฟรมใหม่ทุกครั้งที่กดข้อความ)
+	var vel_override = data.get("vel_anim_override", "")
+	_update_character_postures(data["speaker"], vel_override)
 		
-	# ไอคอนตกใจ (!)
-	if data.get("exclamation", false):
+	# ไอคอนตกใจ (!) หรือสงสัย (?)
+	var emote = data.get("emote", "")
+	if emote == "question":
+		_hide_exclamation()
+		_pop_question_mark()
+	elif emote == "exclamation" or data.get("exclamation", false):
+		_hide_question_mark()
 		_pop_exclamation()
 	else:
+		_hide_question_mark()
 		_hide_exclamation()
 		
 	# Typewriter effect
@@ -283,9 +305,6 @@ func _show_current_dialogue() -> void:
 	typewriter_tween.tween_property(dialogue_label, "visible_ratio", 1.0, duration)
 	typewriter_tween.tween_callback(func():
 		is_typing = false
-		# เมื่อพูดจบ ถ้าผู้พิทักษ์กำลังขยับปาก ให้สลับเป็นท่ายืนปกติ
-		if guardian.animation == "talk_blink":
-			guardian.play("breathe")
 	)
 
 func _on_player_advance() -> void:
@@ -295,25 +314,70 @@ func _on_player_advance() -> void:
 			typewriter_tween.kill()
 		dialogue_label.visible_ratio = 1.0
 		is_typing = false
-		if guardian.animation == "talk_blink":
-			guardian.play("breathe")
 	else:
 		# ถ้าข้อความขึ้นครบแล้ว ให้ไปประโยคถัดไป
 		current_dialogue_index += 1
 		_show_current_dialogue()
+
+func _pop_question_mark() -> void:
+	if question_tween and question_tween.is_valid():
+		question_tween.kill()
+	question_mark.visible = true
+	question_mark.scale = Vector2.ZERO
+	question_mark.modulate.a = 1.0
+	question_mark.position = Vector2.ZERO
+	
+	question_tween = create_tween()
+	# 1. เด้งดึ๋งขึ้นมาอย่างนุ่มนวลและเห็นชัด (0.3s ด้วย TRANS_BACK, EASE_OUT)
+	question_tween.tween_property(question_mark, "scale", Vector2.ONE, 0.3).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	# 2. ค้างไว้ให้อ่านข้อความทันและสังเกตเห็นชัดเจนพอดี (~1.6s)
+	question_tween.tween_interval(1.6)
+	# 3. ลอยขึ้นเล็กน้อยและค่อยๆ จางหายไปอย่างนุ่มนวล (0.4s)
+	var tw_fade = question_tween.parallel()
+	tw_fade.tween_property(question_mark, "modulate:a", 0.0, 0.4).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	tw_fade.tween_property(question_mark, "position:y", -8.0, 0.4).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	question_tween.tween_callback(func():
+		question_mark.visible = false
+	)
+
+func _hide_question_mark() -> void:
+	if question_tween and question_tween.is_valid():
+		question_tween.kill()
+	if is_instance_valid(question_mark):
+		question_mark.visible = false
+		question_mark.scale = Vector2.ZERO
+		question_mark.modulate.a = 1.0
+		question_mark.position = Vector2.ZERO
 
 func _pop_exclamation() -> void:
 	if exclamation_tween and exclamation_tween.is_valid():
 		exclamation_tween.kill()
 	exclamation_mark.visible = true
 	exclamation_mark.scale = Vector2.ZERO
+	exclamation_mark.modulate.a = 1.0
+	exclamation_mark.position = Vector2(0, -60)
+	
 	exclamation_tween = create_tween()
-	exclamation_tween.tween_property(exclamation_mark, "scale", Vector2(3.5, 3.5), 0.15).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	# 1. เด้งขึ้นมาอย่างเห็นชัด
+	exclamation_tween.tween_property(exclamation_mark, "scale", Vector2.ONE, 0.3).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	# 2. ค้างไว้พอดีคำ (~1.6s)
+	exclamation_tween.tween_interval(1.6)
+	# 3. ลอยขึ้นและค่อยๆ จางหายไป (0.4s)
+	var tw_fade = exclamation_tween.parallel()
+	tw_fade.tween_property(exclamation_mark, "modulate:a", 0.0, 0.4).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	tw_fade.tween_property(exclamation_mark, "position:y", -68.0, 0.4).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	exclamation_tween.tween_callback(func():
+		exclamation_mark.visible = false
+	)
 
 func _hide_exclamation() -> void:
-	if is_instance_valid(exclamation_mark) and exclamation_mark.visible:
+	if exclamation_tween and exclamation_tween.is_valid():
+		exclamation_tween.kill()
+	if is_instance_valid(exclamation_mark):
 		exclamation_mark.visible = false
 		exclamation_mark.scale = Vector2.ZERO
+		exclamation_mark.modulate.a = 1.0
+		exclamation_mark.position = Vector2(0, -60)
 
 ## -------------------------------------------------------------
 ## การเปลี่ยนผ่านและจบฉาก
@@ -323,6 +387,8 @@ func _finish_cutscene() -> void:
 		return
 	is_transitioning = true
 	is_dialogue_active = false
+	_hide_question_mark()
+	_hide_exclamation()
 	
 	# ซ่อนกล่องข้อความ
 	var tw_box = create_tween()
@@ -339,6 +405,8 @@ func _skip_cutscene() -> void:
 	if is_transitioning:
 		return
 	is_transitioning = true
+	_hide_question_mark()
+	_hide_exclamation()
 	_switch_to_gameplay()
 
 func _switch_to_gameplay() -> void:
