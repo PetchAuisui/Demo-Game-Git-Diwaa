@@ -29,7 +29,7 @@ extends Node2D
 @onready var dialogue_box: PanelContainer = $MagicStoryUI/DialogueBox
 @onready var speaker_label: Label = $MagicStoryUI/DialogueBox/Margin/VBox/SpeakerLabel
 @onready var dialogue_label: Label = $MagicStoryUI/DialogueBox/Margin/VBox/DialogueLabel
-@onready var continue_arrow: TextureRect = $MagicStoryUI/DialogueBox/Margin/VBox/BottomRow/ArrowWrapper/ContinueArrow
+@onready var continue_arrow: TextureRect = $MagicStoryUI/DialogueBox/ArrowOverlay/ArrowWrapper/ContinueArrow
 @onready var skip_button: Button = $MagicStoryUI/SkipButton
 
 
@@ -128,6 +128,7 @@ var typewriter_tween: Tween = null
 var exclamation_tween: Tween = null
 var question_tween: Tween = null
 var arrow_tween: Tween = null
+var entrance_tween: Tween = null
 
 func _ready() -> void:
 	Engine.time_scale = 1.0
@@ -165,12 +166,14 @@ func _init_scene_state() -> void:
 	camera.position = Vector2(960, 540)
 	camera.zoom = Vector2.ONE
 	
-	# เตรียมตัวละคร เวล (ซ้าย) ผู้พิทักษ์ (ขวา)
-	vel.position = Vector2(520, 780)
+	# เตรียมตัวละคร:
+	# เวลเกิดจากนอกจอทางซ้าย (spawn_x = -120) ที่ระดับความสูงพื้นสมดุล y = 750 (เท้าแตะพื้น 904)
+	vel.position = Vector2(-120, 750)
 	vel.scale = Vector2(4.0, 4.0)
 	vel.play("walk")
 	
-	guardian.position = Vector2(1320, 780)
+	# ผู้พิทักษ์ยืนฝั่งขวา สมมาตรกับตำแหน่งเป้าหมายของเวล (x = 1220, y = 750) ห่างจากกึ่งกลาง 960 เท่ากัน 260px
+	guardian.position = Vector2(1220, 750)
 	guardian.scale = Vector2(4.0, 4.0)
 	guardian.flip_h = true
 	guardian.play("breathe")
@@ -183,11 +186,12 @@ func _init_scene_state() -> void:
 	
 	question_mark.visible = false
 	question_mark.scale = Vector2.ZERO
-	question_mark.position = Vector2(0, -50)
+	question_mark.position = Vector2(0, -36)
 	
 	# ซ่อนกล่องข้อความไว้ก่อน
 	dialogue_box.visible = false
 	dialogue_box.modulate = Color(1, 1, 1, 0)
+	_hide_continue_arrow()
 	
 	# ปุ่มข้าม
 	skip_button.pressed.connect(_skip_cutscene)
@@ -202,21 +206,30 @@ func _init_scene_state() -> void:
 
 
 ## -------------------------------------------------------------
-## Sequence: เดินเข้าฉากเปิดตัว
+## Sequence: เดินเข้าฉากเปิดตัว (ก้าวขาเดินมาจากนอกจอสู่ชั้นใหม่)
 ## -------------------------------------------------------------
 func _play_entrance_sequence() -> void:
+	if entrance_tween and entrance_tween.is_valid():
+		entrance_tween.kill()
+		
 	# 1. เฟดสว่างเปิดฉาก (0.8 วินาที)
 	var tw_fade_in = create_tween()
 	tw_fade_in.tween_property(fade_overlay, "color:a", 0.0, 0.8)
 	
-	# 2. เวลเดินจากซ้าย (x: 520 -> 760)
-	var tw_walk = create_tween()
-	tw_walk.tween_property(vel, "position:x", 760.0, 1.4).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
-	tw_walk.tween_callback(func():
+	# 2. เวลเดินจากนอกจอซ้าย (-120 -> 700) ข้ามระยะทาง 820px ใน 2.4 วินาที
+	entrance_tween = create_tween()
+	entrance_tween.tween_property(vel, "position:x", 700.0, 2.4).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	entrance_tween.tween_callback(func():
+		# รีเซ็ตและซิงค์จังหวะหายใจให้เวลและผู้พิทักษ์เริ่มต้นพร้อมกันเป๊ะๆ
+		vel_seq_step = 0
+		guardian_seq_step = 0
 		vel.play("breathe")
-		# หน่วงเล็กน้อย 0.3s แล้วเริ่มบทสนทนาแรก
+		vel.set_frame_and_progress(0, 0.0)
+		guardian.play("breathe")
+		guardian.set_frame_and_progress(0, 0.0)
+		# หน่วงเล็กน้อย 0.35s แล้วเริ่มบทสนทนาแรก
 		var tw_wait = create_tween()
-		tw_wait.tween_interval(0.3)
+		tw_wait.tween_interval(0.35)
 		tw_wait.tween_callback(_start_dialogue_sequence)
 	)
 
@@ -231,14 +244,6 @@ func _start_dialogue_sequence() -> void:
 	var tw_box = create_tween().set_parallel(true)
 	tw_box.tween_property(dialogue_box, "modulate:a", 1.0, 0.25)
 	tw_box.tween_property(dialogue_box, "scale", Vector2.ONE, 0.25).from(Vector2(0.96, 0.96)).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-	
-	# เริ่มอนิเมชันลูกศรชี้ลงสำหรับบอกให้คลิกไปต่อ (ลอยเด้งดึ๋งขึ้นลงเบาๆ ตลอด)
-	if continue_arrow:
-		if arrow_tween and arrow_tween.is_valid():
-			arrow_tween.kill()
-		arrow_tween = create_tween().set_loops()
-		arrow_tween.tween_property(continue_arrow, "position:y", 4.0, 0.45).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
-		arrow_tween.tween_property(continue_arrow, "position:y", 0.0, 0.45).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 	
 	_show_current_dialogue()
 
@@ -258,9 +263,18 @@ func _update_character_postures(speaker: String, vel_override: String = "") -> v
 	var should_guardian_speak = (speaker == "ผู้พิทักษ์")
 	if is_guardian_speaking != should_guardian_speak:
 		is_guardian_speaking = should_guardian_speak
-		guardian_seq_step = 0
-		var seq = GUARDIAN_TALK_SEQ if is_guardian_speaking else GUARDIAN_IDLE_SEQ
-		guardian.play(seq[0])
+		if is_guardian_speaking:
+			# เมื่อผู้พิทักษ์เริ่มพูด ให้จังหวะขยับตัวและหายใจซิงค์ตรงกับเวลต่อเนื่อง
+			guardian_seq_step = vel_seq_step
+			var anim_to_play = GUARDIAN_TALK_SEQ[guardian_seq_step]
+			guardian.play(anim_to_play)
+			guardian.set_frame_and_progress(vel.frame, vel.frame_progress)
+		else:
+			# เมื่อผู้พิทักษ์หยุดพูด ให้ซิงค์จังหวะหายใจกลับมาตรงกับเวลทันที
+			guardian_seq_step = vel_seq_step
+			var anim_to_play = vel.animation if (vel.animation in GUARDIAN_IDLE_SEQ) else GUARDIAN_IDLE_SEQ[guardian_seq_step]
+			guardian.play(anim_to_play)
+			guardian.set_frame_and_progress(vel.frame, vel.frame_progress)
 
 	# 2. จัดการเวล (ลูป breathe ตลอดเวลา เว้นแต่จะมีท่าพิเศษ override)
 	if vel_override != "":
@@ -269,11 +283,15 @@ func _update_character_postures(speaker: String, vel_override: String = "") -> v
 	else:
 		if vel_custom_anim != "":
 			vel_custom_anim = ""
-			vel_seq_step = 0
-			vel.play(VEL_IDLE_SEQ[0])
+			# เมื่อเวลหมดท่าพิเศษ ให้ซิงค์จังหวะหายใจกลับมาตรงกับผู้พิทักษ์
+			vel_seq_step = guardian_seq_step
+			var anim_to_play = guardian.animation if (guardian.animation in VEL_IDLE_SEQ) else VEL_IDLE_SEQ[vel_seq_step]
+			vel.play(anim_to_play)
+			vel.set_frame_and_progress(guardian.frame, guardian.frame_progress)
 		elif vel.animation not in VEL_IDLE_SEQ:
-			vel_seq_step = 0
-			vel.play(VEL_IDLE_SEQ[0])
+			vel_seq_step = guardian_seq_step
+			vel.play(VEL_IDLE_SEQ[vel_seq_step])
+			vel.set_frame_and_progress(guardian.frame, guardian.frame_progress)
 
 func _show_current_dialogue() -> void:
 	if current_dialogue_index >= DIALOGUES.size():
@@ -283,6 +301,7 @@ func _show_current_dialogue() -> void:
 	var data = DIALOGUES[current_dialogue_index]
 	is_dialogue_active = true
 	is_typing = true
+	_hide_continue_arrow()
 	
 	speaker_label.text = data["speaker"]
 	dialogue_label.text = data["text"]
@@ -313,6 +332,7 @@ func _show_current_dialogue() -> void:
 	typewriter_tween.tween_property(dialogue_label, "visible_ratio", 1.0, duration)
 	typewriter_tween.tween_callback(func():
 		is_typing = false
+		_show_continue_arrow()
 	)
 
 func _on_player_advance() -> void:
@@ -322,17 +342,36 @@ func _on_player_advance() -> void:
 			typewriter_tween.kill()
 		dialogue_label.visible_ratio = 1.0
 		is_typing = false
+		_show_continue_arrow()
 	else:
 		# ถ้าข้อความขึ้นครบแล้ว ให้ไปประโยคถัดไป
 		current_dialogue_index += 1
 		_show_current_dialogue()
+
+func _show_continue_arrow() -> void:
+	if not continue_arrow:
+		return
+	if arrow_tween and arrow_tween.is_valid():
+		arrow_tween.kill()
+	continue_arrow.position.y = 0.0
+	continue_arrow.visible = true
+	arrow_tween = create_tween().set_loops()
+	arrow_tween.tween_property(continue_arrow, "position:y", 4.0, 0.45).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	arrow_tween.tween_property(continue_arrow, "position:y", 0.0, 0.45).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+
+func _hide_continue_arrow() -> void:
+	if arrow_tween and arrow_tween.is_valid():
+		arrow_tween.kill()
+	if is_instance_valid(continue_arrow):
+		continue_arrow.visible = false
+		continue_arrow.position.y = 0.0
 
 func _pop_question_mark() -> void:
 	if question_tween and question_tween.is_valid():
 		question_tween.kill()
 	question_mark.visible = true
 	question_mark.scale = Vector2.ZERO
-	question_mark.position = Vector2(0, -50)
+	question_mark.position = Vector2(0, -36)
 	
 	# 1. จังหวะเด้งขยายขึ้นมาอย่างเห็นชัด (0.22s ด้วย TRANS_BACK)
 	var tw_pop = create_tween()
@@ -342,8 +381,8 @@ func _pop_question_mark() -> void:
 			return
 		# 2. ค้างไว้บนจอพร้อมลอยเด้งดึ๋งเบาๆ ขึ้นลงต่อเนื่อง (Idle Bobbing) ตราบใดที่ยังอยู่ในบทสนทนานี้
 		question_tween = create_tween().set_loops()
-		question_tween.tween_property(question_mark, "position:y", -54.0, 0.45).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
-		question_tween.tween_property(question_mark, "position:y", -46.0, 0.45).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN)
+		question_tween.tween_property(question_mark, "position:y", -39.0, 0.45).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+		question_tween.tween_property(question_mark, "position:y", -33.0, 0.45).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN)
 	)
 	question_tween = tw_pop
 
@@ -353,7 +392,7 @@ func _hide_question_mark() -> void:
 	if is_instance_valid(question_mark):
 		question_mark.visible = false
 		question_mark.scale = Vector2.ZERO
-		question_mark.position = Vector2(0, -50)
+		question_mark.position = Vector2(0, -36)
 
 func _pop_exclamation() -> void:
 	if exclamation_tween and exclamation_tween.is_valid():
@@ -393,8 +432,7 @@ func _finish_cutscene() -> void:
 		return
 	is_transitioning = true
 	is_dialogue_active = false
-	if arrow_tween and arrow_tween.is_valid():
-		arrow_tween.kill()
+	_hide_continue_arrow()
 	_hide_question_mark()
 	_hide_exclamation()
 	
@@ -413,8 +451,9 @@ func _skip_cutscene() -> void:
 	if is_transitioning:
 		return
 	is_transitioning = true
-	if arrow_tween and arrow_tween.is_valid():
-		arrow_tween.kill()
+	if entrance_tween and entrance_tween.is_valid():
+		entrance_tween.kill()
+	_hide_continue_arrow()
 	_hide_question_mark()
 	_hide_exclamation()
 	_switch_to_gameplay()

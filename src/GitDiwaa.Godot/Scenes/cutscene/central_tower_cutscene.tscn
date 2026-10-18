@@ -16,6 +16,7 @@
 [ext_resource type="FontFile" uid="uid://csurxmw2vmws4" path="res://assets/fonts/TA-8-bit.ttf" id="14_font"]
 [ext_resource type="Texture2D" uid="uid://oj5c6k43q74d" path="res://assets/cutscene/frame dialog text/text dialog.png" id="15_dialog_frame"]
 [ext_resource type="Texture2D" uid="uid://djcf2i5xifya1" path="res://assets/cutscene/frame dialog text/arrow.png" id="16_dialog_arrow"]
+[ext_resource type="Texture2D" uid="uid://dmykeg4jphdb0" path="res://assets/cutscene/props/khampri/drop_shadow.png" id="17_shadow"]
 
 [sub_resource type="Animation" id="Animation_reset"]
 length = 0.001
@@ -444,11 +445,15 @@ region = Rect2(561, 344, 537, 334)
 
 [sub_resource type="StyleBoxTexture" id="StyleBoxTexture_dialogue"]
 texture = ExtResource("15_dialog_frame")
-texture_margin_left = 70.0
-texture_margin_top = 45.0
-texture_margin_right = 70.0
-texture_margin_bottom = 45.0
+texture_margin_left = 24.0
+texture_margin_top = 24.0
+texture_margin_right = 24.0
+texture_margin_bottom = 24.0
 region_rect = Rect2(43, 191, 2086, 332)
+
+[sub_resource type="FontVariation" id="FontVariation_speaker_bold"]
+base_font = ExtResource("14_font")
+variation_embolden = 0.3
 
 [node name="CentralTowerCutscene" type="Node2D" unique_id=2028812494]
 script = ExtResource("1_script")
@@ -478,10 +483,17 @@ color = Color(0.02, 0.015, 0.05, 0.12)
 
 [node name="Vel" type="AnimatedSprite2D" parent="Stage" unique_id=565222718]
 texture_filter = 1
-position = Vector2(520, 780)
+position = Vector2(-120, 750)
 scale = Vector2(4, 4)
 sprite_frames = SubResource("SpriteFrames_vel")
-animation = &"breathe"
+animation = &"walk"
+
+[node name="DropShadow" type="Sprite2D" parent="Stage/Vel" unique_id=1633430788]
+show_behind_parent = true
+texture_filter = 1
+position = Vector2(0, 38.5)
+scale = Vector2(0.65, 0.45)
+texture = ExtResource("17_shadow")
 
 [node name="ExclamationMark" type="Sprite2D" parent="Stage/Vel" unique_id=1633430790]
 visible = false
@@ -491,7 +503,7 @@ texture = ExtResource("8_exclamation")
 
 [node name="QuestionMark" type="Node2D" parent="Stage/Vel" unique_id=1633430799]
 visible = false
-position = Vector2(0, -50)
+position = Vector2(0, -36)
 
 [node name="Label" type="Label" parent="Stage/Vel/QuestionMark" unique_id=1633430800]
 texture_filter = 1
@@ -511,11 +523,18 @@ vertical_alignment = 1
 
 [node name="Guardian" type="AnimatedSprite2D" parent="Stage" unique_id=1855813349]
 texture_filter = 1
-position = Vector2(1320, 780)
+position = Vector2(1220, 750)
 scale = Vector2(4, 4)
 sprite_frames = SubResource("SpriteFrames_guardian")
-animation = &"talk_blink"
+animation = &"breathe"
 flip_h = true
+
+[node name="DropShadow" type="Sprite2D" parent="Stage/Guardian" unique_id=1855813350]
+show_behind_parent = true
+texture_filter = 1
+position = Vector2(0, 38.5)
+scale = Vector2(0.65, 0.45)
+texture = ExtResource("17_shadow")
 
 [node name="MagicStoryUI" type="CanvasLayer" parent="." unique_id=68041295]
 layer = 10
@@ -543,15 +562,17 @@ text = "ข้าม ⏵⏵ (Esc)"
 
 [node name="DialogueBox" type="PanelContainer" parent="MagicStoryUI" unique_id=831756592]
 visible = false
+texture_filter = 1
+custom_minimum_size = Vector2(1160, 180)
 anchors_preset = 7
 anchor_left = 0.5
 anchor_top = 1.0
 anchor_right = 0.5
 anchor_bottom = 1.0
-offset_left = -640.0
-offset_top = -240.0
-offset_right = 640.0
-offset_bottom = -35.0
+offset_left = -580.0
+offset_top = -216.0
+offset_right = 580.0
+offset_bottom = -36.0
 grow_horizontal = 2
 grow_vertical = 0
 mouse_filter = 2
@@ -560,48 +581,59 @@ theme_override_styles/panel = SubResource("StyleBoxTexture_dialogue")
 [node name="Margin" type="MarginContainer" parent="MagicStoryUI/DialogueBox" unique_id=524809207]
 layout_mode = 2
 mouse_filter = 2
-theme_override_constants/margin_left = 48
-theme_override_constants/margin_top = 28
+theme_override_constants/margin_left = 36
+theme_override_constants/margin_top = 24
 theme_override_constants/margin_right = 48
-theme_override_constants/margin_bottom = 20
+theme_override_constants/margin_bottom = 16
 
 [node name="VBox" type="VBoxContainer" parent="MagicStoryUI/DialogueBox/Margin" unique_id=624120008]
 layout_mode = 2
 mouse_filter = 2
-theme_override_constants/separation = 8
+theme_override_constants/separation = 12
 
 [node name="SpeakerLabel" type="Label" parent="MagicStoryUI/DialogueBox/Margin/VBox" unique_id=312504441]
 layout_mode = 2
-theme_override_colors/font_color = Color(1, 0.9, 0.45, 1)
-theme_override_colors/font_outline_color = Color(0.00392, 0, 0.07451, 0.95)
-theme_override_constants/outline_size = 6
-theme_override_fonts/font = ExtResource("14_font")
+theme_override_colors/font_color = Color(0.941176, 0.823529, 0.45098, 1)
+theme_override_colors/font_outline_color = Color(0.07, 0.05, 0.09, 1)
+theme_override_constants/outline_size = 3
+theme_override_fonts/font = SubResource("FontVariation_speaker_bold")
 theme_override_font_sizes/font_size = 28
 text = "ผู้พิทักษ์"
 
 [node name="DialogueLabel" type="Label" parent="MagicStoryUI/DialogueBox/Margin/VBox" unique_id=1071406823]
 layout_mode = 2
 size_flags_vertical = 3
-theme_override_colors/font_color = Color(0.980392, 0.976471, 0.964706, 1)
-theme_override_colors/font_outline_color = Color(0.00392, 0, 0.07451, 0.95)
-theme_override_constants/line_spacing = 10
-theme_override_constants/outline_size = 6
+theme_override_colors/font_color = Color(0.98, 0.972549, 0.94902, 1)
+theme_override_colors/font_outline_color = Color(0.07, 0.05, 0.09, 1)
+theme_override_constants/line_spacing = 6
+theme_override_constants/outline_size = 2
 theme_override_fonts/font = ExtResource("14_font")
-theme_override_font_sizes/font_size = 26
+theme_override_font_sizes/font_size = 22
 autowrap_mode = 3
 
-[node name="BottomRow" type="HBoxContainer" parent="MagicStoryUI/DialogueBox/Margin/VBox" unique_id=1928374615]
+[node name="ArrowOverlay" type="Control" parent="MagicStoryUI/DialogueBox" unique_id=1928374614]
 layout_mode = 2
-alignment = 2
+mouse_filter = 2
 
-[node name="ArrowWrapper" type="Control" parent="MagicStoryUI/DialogueBox/Margin/VBox/BottomRow" unique_id=1928374616]
-custom_minimum_size = Vector2(30, 20)
-layout_mode = 2
+[node name="ArrowWrapper" type="Control" parent="MagicStoryUI/DialogueBox/ArrowOverlay" unique_id=1928374616]
+layout_mode = 1
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -48.0
+offset_top = -34.0
+offset_right = -22.0
+offset_bottom = -16.0
+grow_horizontal = 0
+grow_vertical = 0
+mouse_filter = 2
 
-[node name="ContinueArrow" type="TextureRect" parent="MagicStoryUI/DialogueBox/Margin/VBox/BottomRow/ArrowWrapper" unique_id=607048491]
+[node name="ContinueArrow" type="TextureRect" parent="MagicStoryUI/DialogueBox/ArrowOverlay/ArrowWrapper" unique_id=607048491]
 layout_mode = 0
-offset_right = 30.0
-offset_bottom = 20.0
+offset_right = 26.0
+offset_bottom = 18.0
 mouse_filter = 2
 texture = SubResource("AtlasTexture_arrow")
 expand_mode = 1

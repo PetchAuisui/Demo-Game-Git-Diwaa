@@ -48,23 +48,23 @@ CentralTowerCutscene (Node2D) [Script: central_tower_cutscene.gd]
 ├── Background (Sprite2D) (central-tower-Sheet, hframes: 11, vframes: 12, Scale 4x4)
 ├── Atmosphere (ColorRect) (ฟิลเตอร์เงาบรรยากาศความมืดม่วงโปร่งแสง)
 ├── Stage (Node2D)
-│   ├── Vel (AnimatedSprite2D) [Spawn: (-120, 700), Target: (700, 700), Scale 4x4]
+│   ├── Vel (AnimatedSprite2D) [Spawn: (-120, 750), Target: (700, 750), Scale 4x4]
 │   │   ├── DropShadow (Sprite2D) [drop_shadow.png, Scale (0.65, 0.45), Position: (0, 38.5)]
 │   │   ├── ExclamationMark (Sprite2D) [Position: (0, -60)]
 │   │   └── QuestionMark (Node2D) [Position: (0, -36)]
 │   │       └── Label [Font: TA-8-bit.ttf 20px, Color: #FFFFFF, Outline: 4px #000000]
-│   └── Guardian (AnimatedSprite2D) [Position: (1220, 700), Scale 4x4, Flip H: true]
+│   └── Guardian (AnimatedSprite2D) [Position: (1220, 750), Scale 4x4, Flip H: true]
 │       └── DropShadow (Sprite2D) [drop_shadow.png, Scale (0.65, 0.45), Position: (0, 38.5)]
 └── MagicStoryUI (CanvasLayer: Layer 10)
     ├── SkipButton (Button) [มุมขวาบน สำหรับกดข้ามคัตซีน]
-    ├── DialogueBox (PanelContainer) [StyleBoxTexture: text dialog.png (9-slice), Offset: T:-200, B:-25, W:1320]
-    │   └── Margin (MarginContainer) [Margin: L:44, T:22, R:44, B:16]
-    │       └── VBox (VBoxContainer) [Separation: 6]
-    │           ├── SpeakerLabel (Label) [ชื่อผู้พูด สีทอง #FFE673, ฟอนต์ TA-8-bit ขนาด 26]
-    │           ├── DialogueLabel (Label) [ข้อความคำพูด สีขาวครีม #FAF9F6, ฟอนต์ TA-8-bit ขนาด 24]
-    │           └── BottomRow (HBoxContainer) [ชิดขวา Alignment: End]
-    │               └── ArrowWrapper (Control)
-    │                   └── ContinueArrow (TextureRect) [arrow.png ลอยเด้งดึ๋งชี้ลงบอกให้ไปต่อ]
+    ├── DialogueBox (PanelContainer) [StyleBoxTexture: text dialog.png (Hand-drawn pixel frame 9-slice, Margin 24px, Region: Rect2(43, 191, 2086, 332), Filter: Linear), Offset: L:-580, R:580, T:-216, B:-36]
+    │   ├── Margin (MarginContainer) [Margin: L:36, T:24, R:48, B:16]
+    │   │   └── VBox (VBoxContainer) [Separation: 12]
+    │   │       ├── SpeakerLabel (Label) [ชื่อผู้พูด ตัวหนา (FontVariation: variation_embolden = 0.3) สีทองหม่น #F0D273, Outline 3px, ฟอนต์ TA-8-bit ขนาด 28]
+    │   │       └── DialogueLabel (Label) [ข้อความคำพูด สีขาวอมครีม #FAF8F2, Outline 2px, Line Spacing 6px, ฟอนต์ TA-8-bit ขนาด 22]
+    │   └── ArrowOverlay (Control) [Overlay ป้องกันกระทบข้อความ]
+    │       └── ArrowWrapper (Control) [Anchors: Bottom-Right (offset: -48, -34, -22, -16)]
+    │           └── ContinueArrow (TextureRect) [arrow.png ลอยเด้งดึ๋ง แสดงเฉพาะเมื่อพิมพ์ข้อความเสร็จสิ้น]
     └── FadeOverlay (ColorRect) [ม่านจอดำสำหรับเฟดเข้า-ออก]
 ```
 
@@ -82,18 +82,26 @@ CentralTowerCutscene (Node2D) [Script: central_tower_cutscene.gd]
 
 2. **ระดับความสูงและการยึดพื้นบนแกน Y (Grounded Height & Drop Shadow):**
    - ตัวละคร Sprite ขนาด 48×83 ขยาย Scale 4 เท่า มีความสูง 332px จุดกำเนิด (Origin Center) อยู่ตรงกลางตัว ปลายเท้าอยู่ที่ `+154px` จาก Origin
-   - กำหนดระดับแกน Y: `position.y = 700` ส่งผลให้ปลายเท้าอยู่ที่ `y = 854` สอดคล้องกับเส้นระนาบพื้นกระเบื้องลายข้าวหลามตัดหน้าบันไดพอดี
+   - กำหนดระดับแกน Y: `position.y = 750` ส่งผลให้ปลายเท้าอยู่ที่ `y = 904` สอดคล้องกับระนาบพื้นกระเบื้องลายข้าวหลามตัดด้านหน้าบันไดอย่างเป็นธรรมชาติ (ไม่ลอยหรือยืนสูงติดผนังด้านบนเกินไป)
    - เพิ่มโหนดเงาใต้เท้า `DropShadow` (`res://assets/cutscene/props/khampri/drop_shadow.png`) วางไว้ที่ `Vector2(0, 38.5)` สเกล `Vector2(0.65, 0.45)` พร้อม `show_behind_parent = true` ช่วยให้ตัวละครดูมีน้ำหนักและติดพื้นอย่างเป็นธรรมชาติ ไม่รู้สึกลอยในอากาศ
 
-3. **สัดส่วนและการเว้นระยะของกล่องข้อความ (Dialogue Box Clearance):**
-   - กล่องข้อความ `DialogueBox` ปรับสัดส่วนให้กะทัดรัดและสวยงาม: `offset_left = -660`, `offset_top = -200`, `offset_right = 660`, `offset_bottom = -25` (ความกว้าง 1320px, ความสูง 175px, ตำแหน่งแกน Y บนจอ = `880` ถึง `1055`)
-   - ขนาดฟอนต์ปรับให้พอดีคำ: `SpeakerLabel` ขนาด 26, `DialogueLabel` ขนาด 24 (Line Spacing 8)
-   - ผลลัพธ์: ระดับขอบบนของกล่องข้อความอยู่ที่ `y = 880` ซึ่งอยู่ใต้ระดับปลายเท้าของตัวละคร (`y = 854`) มีระยะเว้นว่าง 26px ทำให้มองเห็นตัวละครครบทั้งตัว (ศีรษะ, เสื้อคลุม, ลำตัว, ขา, รองเท้า และเงาใต้เท้า) 100% ไม่ถูกกล่องข้อความบดบัง
+3. **สัดส่วนและการเว้นระยะของกล่องข้อความ (Dialogue Box Clearance & Proportion):**
+   - ปรับกล่องข้อความ `DialogueBox` ให้มีสัดส่วนกะทัดรัดใกล้เคียงฉากหอสมุด: ขนาด `1160 × 180 px`, จัดวางกึ่งกลางแนวนอน (`offset_left = -580`, `offset_right = 580`), ห่างขอบล่าง 36 px (`offset_top = -216`, `offset_bottom = -36`)
+   - ใช้ภาพกรอบที่ผู้ใช้วาดเองแท้จริง (`text dialog.png`) ผ่าน `StyleBoxTexture` (Region: `Rect2(43, 191, 2086, 332)`) โดยกำหนด 9-slice Margins แบบสมมาตร `24 px` ทุกด้าน และเปิด `texture_filter = Linear` เพื่อป้องกันเส้นพิกเซลเบี้ยวหรือหายจากการสเกลลง
+   - การจัดแนว: ชื่อผู้พูดและบทสนทนาชิดซ้ายแนวเดียวกัน ห่างขอบซ้าย 36 px, เว้นชื่อจากขอบบน 24 px, เว้นระหว่างชื่อกับบทพูด 12 px
+   - Typography Hierarchy: ชื่อผู้พูดใช้แบบ**ตัวหนา (Bold)** สีทองหม่น `#F0D273` ขนาด **28 px** (สร้างผ่าน `FontVariation: variation_embolden = 0.3` และขอบดำ 3 px เด่นชัดกว่าบทพูด), บทพูดใช้สีขาวอมครีม `#FAF8F2` ขนาด **22 px** เส้นขอบดำบาง 2 px รองรับ 2 บรรทัดโดยไม่เบียดหรือทับซ้อน
+   - ลูกศรไปต่อ (Continue Arrow): จัดวางที่มุมขวาล่าง (`ArrowOverlay`) ซ่อนระหว่างข้อความกำลังพิมพ์ และจะแสดงขึ้นพร้อมอนิเมชันลอยเบาๆ ทันทีที่ข้อความขึ้นครบ 100%
+   - ผลลัพธ์: ระดับขอบบนของกล่องข้อความอยู่ที่ `y = 864` วางทับเฉพาะส่วนรองเท้า (ประมาณ 40 px) โดยมองเห็นลำตัว เสื้อผ้า และใบหน้าของตัวละครครบถ้วนชัดเจนในระดับสายตา
 
 4. **การเดินเข้าฉากจากนอกจอ (Walk-in Entrance):**
-   - เวลจะเกิดที่พิกัดนอกจอซ้ายสุด: `Vector2(-120, 700)` พร้อมเปิดเล่นแอนิเมชัน `"walk"`
+   - เวลจะเกิดที่พิกัดนอกจอซ้ายสุด: `Vector2(-120, 750)` พร้อมเปิดเล่นแอนิเมชัน `"walk"`
    - เล่น Tween เคลื่อนที่ตามแกน X จาก `-120.0` ไปยัง `700.0` เป็นระยะทาง 820px ในเวลา 2.4 วินาที (`Tween.TRANS_SINE`, `Tween.EASE_OUT`) เสมือนก้าวขาขึ้นมายังชั้นใหม่ของหอคอย
    - เมื่อเดินถึงจุด `700` ตัวละครจะเปลี่ยนเป็นท่า `"breathe"` หน่วง 0.35 วินาที แล้วกล่องข้อความจึงเริ่มแสดงบทสนทนาแรก
+
+5. **การซิงค์จังหวะหายใจของตัวละคร (Breathing Synchronization):**
+   - ทั้งสองตัวละครใช้ลูปหายใจที่มีคาบเวลาเท่ากันเป๊ะ: 6 เฟรม @ 5 FPS (Frame durations `[2, 1, 2, 1, 2, 1]` = รวม 9 ticks = 1.8 วินาทีต่อลูป)
+   - เมื่อเวลเดินเข้าฉากเสร็จสิ้น (t = 2.4s) ระบบจะสั่งรีเซ็ตทั้งเวลและผู้พิทักษ์ให้เริ่มที่เฟรม 0 (`frame = 0, progress = 0.0`) พร้อมกันทันที
+   - ระหว่างการเปลี่ยนสถานะ (พูด vs ฟัง) ตัวละครจะส่งต่อ `frame` และ `frame_progress` เข้าหากัน ทำให้จังหวะการยกอกหายใจและการกระพริบตาเป็นไปอย่างพร้อมเพรียง ไม่คลาดเคลื่อนหลุดเฟส
 
 > [!NOTE]
 > **การแยกส่วนมาตรฐาน (Documentation Scope):**
