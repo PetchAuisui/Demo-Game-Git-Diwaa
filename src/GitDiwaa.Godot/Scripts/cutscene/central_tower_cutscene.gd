@@ -21,7 +21,7 @@ extends Node2D
 @onready var stage: Node2D = $Stage
 @onready var vel: AnimatedSprite2D = $Stage/Vel
 @onready var exclamation_mark: Sprite2D = $Stage/Vel/ExclamationMark
-@onready var question_mark: Label = $Stage/Vel/QuestionMark
+@onready var question_mark: Node2D = $Stage/Vel/QuestionMark
 @onready var guardian: AnimatedSprite2D = $Stage/Guardian
 
 # UI Elements
@@ -182,8 +182,7 @@ func _init_scene_state() -> void:
 	
 	question_mark.visible = false
 	question_mark.scale = Vector2.ZERO
-	question_mark.modulate.a = 1.0
-	question_mark.position = Vector2.ZERO
+	question_mark.position = Vector2(0, -50)
 	
 	# ซ่อนกล่องข้อความไว้ก่อน
 	dialogue_box.visible = false
@@ -324,21 +323,20 @@ func _pop_question_mark() -> void:
 		question_tween.kill()
 	question_mark.visible = true
 	question_mark.scale = Vector2.ZERO
-	question_mark.modulate.a = 1.0
-	question_mark.position = Vector2.ZERO
+	question_mark.position = Vector2(0, -50)
 	
-	question_tween = create_tween()
-	# 1. เด้งดึ๋งขึ้นมาอย่างนุ่มนวลและเห็นชัด (0.3s ด้วย TRANS_BACK, EASE_OUT)
-	question_tween.tween_property(question_mark, "scale", Vector2.ONE, 0.3).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-	# 2. ค้างไว้ให้อ่านข้อความทันและสังเกตเห็นชัดเจนพอดี (~1.6s)
-	question_tween.tween_interval(1.6)
-	# 3. ลอยขึ้นเล็กน้อยและค่อยๆ จางหายไปอย่างนุ่มนวล (0.4s)
-	var tw_fade = question_tween.parallel()
-	tw_fade.tween_property(question_mark, "modulate:a", 0.0, 0.4).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
-	tw_fade.tween_property(question_mark, "position:y", -8.0, 0.4).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
-	question_tween.tween_callback(func():
-		question_mark.visible = false
+	# 1. จังหวะเด้งขยายขึ้นมาอย่างเห็นชัด (0.22s ด้วย TRANS_BACK)
+	var tw_pop = create_tween()
+	tw_pop.tween_property(question_mark, "scale", Vector2.ONE, 0.22).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	tw_pop.tween_callback(func():
+		if not is_instance_valid(question_mark) or not question_mark.visible:
+			return
+		# 2. ค้างไว้บนจอพร้อมลอยเด้งดึ๋งเบาๆ ขึ้นลงต่อเนื่อง (Idle Bobbing) ตราบใดที่ยังอยู่ในบทสนทนานี้
+		question_tween = create_tween().set_loops()
+		question_tween.tween_property(question_mark, "position:y", -54.0, 0.45).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+		question_tween.tween_property(question_mark, "position:y", -46.0, 0.45).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN)
 	)
+	question_tween = tw_pop
 
 func _hide_question_mark() -> void:
 	if question_tween and question_tween.is_valid():
@@ -346,8 +344,7 @@ func _hide_question_mark() -> void:
 	if is_instance_valid(question_mark):
 		question_mark.visible = false
 		question_mark.scale = Vector2.ZERO
-		question_mark.modulate.a = 1.0
-		question_mark.position = Vector2.ZERO
+		question_mark.position = Vector2(0, -50)
 
 func _pop_exclamation() -> void:
 	if exclamation_tween and exclamation_tween.is_valid():

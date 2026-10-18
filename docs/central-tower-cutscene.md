@@ -48,7 +48,8 @@ CentralTowerCutscene (Node2D) [Script: central_tower_cutscene.gd]
 ├── Stage (Node2D)
 │   ├── Vel (AnimatedSprite2D) [Position: (760, 780), Scale 4x4]
 │   │   ├── ExclamationMark (Sprite2D) [Position: (0, -60)]
-│   │   └── QuestionMark (Label) [Font: TA-8-bit.ttf 20px, Color: #FFFFFF, Outline: 4px #000000]
+│   │   └── QuestionMark (Node2D) [Position: (0, -50)]
+│   │       └── Label [Font: TA-8-bit.ttf 20px, Color: #FFFFFF, Outline: 4px #000000]
 │   └── Guardian (AnimatedSprite2D) [Position: (1320, 780), Scale 4x4, Flip H: true]
 └── MagicStoryUI (CanvasLayer: Layer 10)
     ├── SkipButton (Button) [มุมขวาบน สำหรับกดข้ามคัตซีน สไตล์เดียวกับ Ending Cutscene]

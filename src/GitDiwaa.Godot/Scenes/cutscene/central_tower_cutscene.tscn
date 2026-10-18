@@ -11,8 +11,8 @@
 [ext_resource type="Texture2D" uid="uid://cpg2rjs3k7fqy" path="res://assets/cutscene/characters/guardian/guardian-idle.png" id="9_guardian_idle"]
 [ext_resource type="Texture2D" uid="uid://d2uwr2jusv421" path="res://assets/cutscene/characters/guardian/guardian-breathe-Sheet.png" id="10_guardian_breathe"]
 [ext_resource type="Texture2D" uid="uid://degrc4atotqp2" path="res://assets/cutscene/characters/guardian/guardian-talk-Sheet.png" id="11_guardian_talk"]
-[ext_resource type="Texture2D" uid="uid://osadi21w88vx" path="res://assets/cutscene/characters/guardian/guardian-talk-blink-Sheet.png" id="12_guardian_talk_blink"]
 [ext_resource type="Texture2D" uid="uid://bb3kuorokw8h" path="res://assets/cutscene/characters/guardian/guardian-breathe-bink-Sheet.png" id="13_guardian_breathe_blink"]
+[ext_resource type="Texture2D" uid="uid://osadi21w88vx" path="res://assets/cutscene/characters/guardian/guardian-talk-blink-Sheet.png" id="14_0vf3y"]
 [ext_resource type="FontFile" uid="uid://csurxmw2vmws4" path="res://assets/fonts/TA-8-bit.ttf" id="14_font"]
 
 [sub_resource type="Animation" id="Animation_reset"]
@@ -237,6 +237,30 @@ region = Rect2(192, 0, 48, 83)
 atlas = ExtResource("10_guardian_breathe")
 region = Rect2(240, 0, 48, 83)
 
+[sub_resource type="AtlasTexture" id="AtlasTexture_guard_breathe_blink_0"]
+atlas = ExtResource("13_guardian_breathe_blink")
+region = Rect2(0, 0, 48, 83)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_guard_breathe_blink_1"]
+atlas = ExtResource("13_guardian_breathe_blink")
+region = Rect2(48, 0, 48, 83)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_guard_breathe_blink_2"]
+atlas = ExtResource("13_guardian_breathe_blink")
+region = Rect2(96, 0, 48, 83)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_guard_breathe_blink_3"]
+atlas = ExtResource("13_guardian_breathe_blink")
+region = Rect2(144, 0, 48, 83)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_guard_breathe_blink_4"]
+atlas = ExtResource("13_guardian_breathe_blink")
+region = Rect2(192, 0, 48, 83)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_guard_breathe_blink_5"]
+atlas = ExtResource("13_guardian_breathe_blink")
+region = Rect2(240, 0, 48, 83)
+
 [sub_resource type="AtlasTexture" id="AtlasTexture_guard_talk_0"]
 atlas = ExtResource("11_guardian_talk")
 region = Rect2(0, 0, 48, 83)
@@ -261,52 +285,28 @@ region = Rect2(192, 0, 48, 83)
 atlas = ExtResource("11_guardian_talk")
 region = Rect2(240, 0, 48, 83)
 
-[sub_resource type="AtlasTexture" id="AtlasTexture_guard_talk_blink_0"]
-atlas = ExtResource("12_guardian_talk_blink")
+[sub_resource type="AtlasTexture" id="AtlasTexture_j6fxq"]
+atlas = ExtResource("14_0vf3y")
 region = Rect2(0, 0, 48, 83)
 
-[sub_resource type="AtlasTexture" id="AtlasTexture_guard_talk_blink_1"]
-atlas = ExtResource("12_guardian_talk_blink")
+[sub_resource type="AtlasTexture" id="AtlasTexture_0btqx"]
+atlas = ExtResource("14_0vf3y")
 region = Rect2(48, 0, 48, 83)
 
-[sub_resource type="AtlasTexture" id="AtlasTexture_guard_talk_blink_2"]
-atlas = ExtResource("12_guardian_talk_blink")
+[sub_resource type="AtlasTexture" id="AtlasTexture_hvba0"]
+atlas = ExtResource("14_0vf3y")
 region = Rect2(96, 0, 48, 83)
 
-[sub_resource type="AtlasTexture" id="AtlasTexture_guard_talk_blink_3"]
-atlas = ExtResource("12_guardian_talk_blink")
+[sub_resource type="AtlasTexture" id="AtlasTexture_hi886"]
+atlas = ExtResource("14_0vf3y")
 region = Rect2(144, 0, 48, 83)
 
-[sub_resource type="AtlasTexture" id="AtlasTexture_guard_talk_blink_4"]
-atlas = ExtResource("12_guardian_talk_blink")
+[sub_resource type="AtlasTexture" id="AtlasTexture_jpa3l"]
+atlas = ExtResource("14_0vf3y")
 region = Rect2(192, 0, 48, 83)
 
-[sub_resource type="AtlasTexture" id="AtlasTexture_guard_talk_blink_5"]
-atlas = ExtResource("12_guardian_talk_blink")
-region = Rect2(240, 0, 48, 83)
-
-[sub_resource type="AtlasTexture" id="AtlasTexture_guard_breathe_blink_0"]
-atlas = ExtResource("13_guardian_breathe_blink")
-region = Rect2(0, 0, 48, 83)
-
-[sub_resource type="AtlasTexture" id="AtlasTexture_guard_breathe_blink_1"]
-atlas = ExtResource("13_guardian_breathe_blink")
-region = Rect2(48, 0, 48, 83)
-
-[sub_resource type="AtlasTexture" id="AtlasTexture_guard_breathe_blink_2"]
-atlas = ExtResource("13_guardian_breathe_blink")
-region = Rect2(96, 0, 48, 83)
-
-[sub_resource type="AtlasTexture" id="AtlasTexture_guard_breathe_blink_3"]
-atlas = ExtResource("13_guardian_breathe_blink")
-region = Rect2(144, 0, 48, 83)
-
-[sub_resource type="AtlasTexture" id="AtlasTexture_guard_breathe_blink_4"]
-atlas = ExtResource("13_guardian_breathe_blink")
-region = Rect2(192, 0, 48, 83)
-
-[sub_resource type="AtlasTexture" id="AtlasTexture_guard_breathe_blink_5"]
-atlas = ExtResource("13_guardian_breathe_blink")
+[sub_resource type="AtlasTexture" id="AtlasTexture_7pnmy"]
+atlas = ExtResource("14_0vf3y")
 region = Rect2(240, 0, 48, 83)
 
 [sub_resource type="SpriteFrames" id="SpriteFrames_guardian"]
@@ -386,30 +386,30 @@ animations = [{
 }],
 "loop": 0,
 "name": &"talk",
-"speed": 6.0
+"speed": 5.0
 }, {
 "frames": [{
 "duration": 2.0,
-"texture": SubResource("AtlasTexture_guard_talk_blink_0")
+"texture": SubResource("AtlasTexture_j6fxq")
 }, {
 "duration": 1.0,
-"texture": SubResource("AtlasTexture_guard_talk_blink_1")
+"texture": SubResource("AtlasTexture_0btqx")
 }, {
 "duration": 2.0,
-"texture": SubResource("AtlasTexture_guard_talk_blink_2")
+"texture": SubResource("AtlasTexture_hvba0")
 }, {
 "duration": 1.0,
-"texture": SubResource("AtlasTexture_guard_talk_blink_3")
+"texture": SubResource("AtlasTexture_hi886")
 }, {
 "duration": 2.0,
-"texture": SubResource("AtlasTexture_guard_talk_blink_4")
+"texture": SubResource("AtlasTexture_jpa3l")
 }, {
 "duration": 1.0,
-"texture": SubResource("AtlasTexture_guard_talk_blink_5")
+"texture": SubResource("AtlasTexture_7pnmy")
 }],
 "loop": 0,
 "name": &"talk_blink",
-"speed": 6.0
+"speed": 5.0
 }]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_btn_normal"]
@@ -489,13 +489,16 @@ texture_filter = 1
 position = Vector2(0, -60)
 texture = ExtResource("8_exclamation")
 
-[node name="QuestionMark" type="Label" parent="Stage/Vel" unique_id=1633430799]
+[node name="QuestionMark" type="Node2D" parent="Stage/Vel" unique_id=1633430799]
 visible = false
+position = Vector2(0, -50)
+
+[node name="Label" type="Label" parent="Stage/Vel/QuestionMark" unique_id=1633430800]
 texture_filter = 1
 offset_left = -20.0
-offset_top = -80.0
+offset_top = -20.0
 offset_right = 20.0
-offset_bottom = -40.0
+offset_bottom = 20.0
 pivot_offset = Vector2(20, 20)
 theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
