@@ -145,10 +145,9 @@ func _start_cutscene_sequence() -> void:
 	var fade_in = create_tween()
 	fade_in.tween_property(fade_overlay, "color:a", 0.0, 0.8)
 	
-	# เวลเดินเข้ามาจากทางซ้าย (-120 -> 700) ตามสเปก Open Game (ระยะ 820px ใน 4.2 วินาที @ ความเร็ว ~195-200 px/s)
+	# เวลเดินเข้ามาจากทางซ้าย (-120 -> 700) ตามสเปก Central Tower (ระยะทาง 820px ในเวลา 2.4 วินาที, TRANS_SINE, EASE_OUT)
 	entrance_tween = create_tween()
-	entrance_tween.set_trans(Tween.TRANS_LINEAR)
-	entrance_tween.tween_property(vel, "position:x", 700.0, 4.2)
+	entrance_tween.tween_property(vel, "position:x", 700.0, 2.4).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
 	
 	entrance_tween.tween_callback(func():
 		# ซิงค์จังหวะหายใจ/ผงกหัวให้เวลและมิวราเริ่มต้นที่เฟรม 0 พร้อมกันเป๊ะๆ (ตามสเปก md: 6 เฟรม @ 5 FPS [2, 1, 2, 1, 2, 1] = 1.8s)

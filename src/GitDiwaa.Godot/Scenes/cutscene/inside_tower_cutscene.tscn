@@ -193,27 +193,27 @@ animations = [{
 "speed": 5.0
 }, {
 "frames": [{
-"duration": 1.0,
+"duration": 2.0,
 "texture": SubResource("AtlasTexture_vel_walk_0")
 }, {
 "duration": 1.0,
 "texture": SubResource("AtlasTexture_vel_walk_1")
 }, {
-"duration": 1.0,
+"duration": 2.0,
 "texture": SubResource("AtlasTexture_vel_walk_2")
 }, {
 "duration": 1.0,
 "texture": SubResource("AtlasTexture_vel_walk_3")
 }, {
-"duration": 1.0,
+"duration": 2.0,
 "texture": SubResource("AtlasTexture_vel_walk_4")
 }, {
 "duration": 1.0,
 "texture": SubResource("AtlasTexture_vel_walk_5")
 }],
-"loop": true,
+"loop": 1,
 "name": &"walk",
-"speed": 8.0
+"speed": 5.0
 }]
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_mewla_idle_0"]
