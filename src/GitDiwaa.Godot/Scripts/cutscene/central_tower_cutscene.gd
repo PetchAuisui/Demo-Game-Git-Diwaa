@@ -29,7 +29,7 @@ extends Node2D
 @onready var dialogue_box: PanelContainer = $MagicStoryUI/DialogueBox
 @onready var speaker_label: Label = $MagicStoryUI/DialogueBox/Margin/VBox/SpeakerLabel
 @onready var dialogue_label: Label = $MagicStoryUI/DialogueBox/Margin/VBox/DialogueLabel
-@onready var continue_prompt: Label = $MagicStoryUI/DialogueBox/Margin/VBox/ContinuePrompt
+@onready var continue_arrow: TextureRect = $MagicStoryUI/DialogueBox/Margin/VBox/BottomRow/ArrowWrapper/ContinueArrow
 @onready var skip_button: Button = $MagicStoryUI/SkipButton
 
 
@@ -127,6 +127,7 @@ var is_transitioning: bool = false
 var typewriter_tween: Tween = null
 var exclamation_tween: Tween = null
 var question_tween: Tween = null
+var arrow_tween: Tween = null
 
 func _ready() -> void:
 	Engine.time_scale = 1.0
@@ -230,6 +231,14 @@ func _start_dialogue_sequence() -> void:
 	var tw_box = create_tween().set_parallel(true)
 	tw_box.tween_property(dialogue_box, "modulate:a", 1.0, 0.25)
 	tw_box.tween_property(dialogue_box, "scale", Vector2.ONE, 0.25).from(Vector2(0.96, 0.96)).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	
+	# เริ่มอนิเมชันลูกศรชี้ลงสำหรับบอกให้คลิกไปต่อ (ลอยเด้งดึ๋งขึ้นลงเบาๆ ตลอด)
+	if continue_arrow:
+		if arrow_tween and arrow_tween.is_valid():
+			arrow_tween.kill()
+		arrow_tween = create_tween().set_loops()
+		arrow_tween.tween_property(continue_arrow, "position:y", 4.0, 0.45).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+		arrow_tween.tween_property(continue_arrow, "position:y", 0.0, 0.45).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 	
 	_show_current_dialogue()
 
@@ -384,6 +393,8 @@ func _finish_cutscene() -> void:
 		return
 	is_transitioning = true
 	is_dialogue_active = false
+	if arrow_tween and arrow_tween.is_valid():
+		arrow_tween.kill()
 	_hide_question_mark()
 	_hide_exclamation()
 	
@@ -402,6 +413,8 @@ func _skip_cutscene() -> void:
 	if is_transitioning:
 		return
 	is_transitioning = true
+	if arrow_tween and arrow_tween.is_valid():
+		arrow_tween.kill()
 	_hide_question_mark()
 	_hide_exclamation()
 	_switch_to_gameplay()

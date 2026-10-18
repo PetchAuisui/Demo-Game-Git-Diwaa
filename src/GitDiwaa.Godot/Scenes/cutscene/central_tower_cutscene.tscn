@@ -14,6 +14,8 @@
 [ext_resource type="Texture2D" uid="uid://bb3kuorokw8h" path="res://assets/cutscene/characters/guardian/guardian-breathe-bink-Sheet.png" id="13_guardian_breathe_blink"]
 [ext_resource type="Texture2D" uid="uid://osadi21w88vx" path="res://assets/cutscene/characters/guardian/guardian-talk-blink-Sheet.png" id="14_0vf3y"]
 [ext_resource type="FontFile" uid="uid://csurxmw2vmws4" path="res://assets/fonts/TA-8-bit.ttf" id="14_font"]
+[ext_resource type="Texture2D" uid="uid://oj5c6k43q74d" path="res://assets/cutscene/frame dialog text/text dialog.png" id="15_dialog_frame"]
+[ext_resource type="Texture2D" uid="uid://djcf2i5xifya1" path="res://assets/cutscene/frame dialog text/arrow.png" id="16_dialog_arrow"]
 
 [sub_resource type="Animation" id="Animation_reset"]
 length = 0.001
@@ -436,19 +438,17 @@ corner_radius_top_right = 8
 corner_radius_bottom_right = 8
 corner_radius_bottom_left = 8
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_dialogue"]
-bg_color = Color(0.00392, 0, 0.07451, 0.96)
-border_width_left = 2
-border_width_top = 2
-border_width_right = 2
-border_width_bottom = 2
-border_color = Color(0.980392, 0.976471, 0.964706, 0.95)
-corner_radius_top_left = 10
-corner_radius_top_right = 10
-corner_radius_bottom_right = 10
-corner_radius_bottom_left = 10
-shadow_color = Color(0.00392, 0, 0.07451, 0.6)
-shadow_size = 8
+[sub_resource type="AtlasTexture" id="AtlasTexture_arrow"]
+atlas = ExtResource("16_dialog_arrow")
+region = Rect2(561, 344, 537, 334)
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_dialogue"]
+texture = ExtResource("15_dialog_frame")
+texture_margin_left = 70.0
+texture_margin_top = 45.0
+texture_margin_right = 70.0
+texture_margin_bottom = 45.0
+region_rect = Rect2(43, 191, 2086, 332)
 
 [node name="CentralTowerCutscene" type="Node2D" unique_id=2028812494]
 script = ExtResource("1_script")
@@ -548,22 +548,22 @@ anchor_left = 0.5
 anchor_top = 1.0
 anchor_right = 0.5
 anchor_bottom = 1.0
-offset_left = -580.0
-offset_top = -205.0
-offset_right = 580.0
-offset_bottom = -40.0
+offset_left = -640.0
+offset_top = -240.0
+offset_right = 640.0
+offset_bottom = -35.0
 grow_horizontal = 2
 grow_vertical = 0
 mouse_filter = 2
-theme_override_styles/panel = SubResource("StyleBoxFlat_dialogue")
+theme_override_styles/panel = SubResource("StyleBoxTexture_dialogue")
 
 [node name="Margin" type="MarginContainer" parent="MagicStoryUI/DialogueBox" unique_id=524809207]
 layout_mode = 2
 mouse_filter = 2
-theme_override_constants/margin_left = 32
-theme_override_constants/margin_top = 20
-theme_override_constants/margin_right = 32
-theme_override_constants/margin_bottom = 16
+theme_override_constants/margin_left = 48
+theme_override_constants/margin_top = 28
+theme_override_constants/margin_right = 48
+theme_override_constants/margin_bottom = 20
 
 [node name="VBox" type="VBoxContainer" parent="MagicStoryUI/DialogueBox/Margin" unique_id=624120008]
 layout_mode = 2
@@ -590,15 +590,22 @@ theme_override_fonts/font = ExtResource("14_font")
 theme_override_font_sizes/font_size = 26
 autowrap_mode = 3
 
-[node name="ContinuePrompt" type="Label" parent="MagicStoryUI/DialogueBox/Margin/VBox" unique_id=607048491]
+[node name="BottomRow" type="HBoxContainer" parent="MagicStoryUI/DialogueBox/Margin/VBox" unique_id=1928374615]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.980392, 0.976471, 0.964706, 0.95)
-theme_override_colors/font_outline_color = Color(0.00392, 0, 0.07451, 0.85)
-theme_override_constants/outline_size = 4
-theme_override_fonts/font = ExtResource("14_font")
-theme_override_font_sizes/font_size = 20
-text = "คลิกหน้าจอเพื่อไปต่อ"
-horizontal_alignment = 2
+alignment = 2
+
+[node name="ArrowWrapper" type="Control" parent="MagicStoryUI/DialogueBox/Margin/VBox/BottomRow" unique_id=1928374616]
+custom_minimum_size = Vector2(30, 20)
+layout_mode = 2
+
+[node name="ContinueArrow" type="TextureRect" parent="MagicStoryUI/DialogueBox/Margin/VBox/BottomRow/ArrowWrapper" unique_id=607048491]
+layout_mode = 0
+offset_right = 30.0
+offset_bottom = 20.0
+mouse_filter = 2
+texture = SubResource("AtlasTexture_arrow")
+expand_mode = 1
+stretch_mode = 5
 
 [node name="FadeOverlay" type="ColorRect" parent="MagicStoryUI" unique_id=423795317]
 visible = false

@@ -31,6 +31,8 @@ flowchart LR
 | **ตัวละครฝั่งซ้าย (เวล)** | `res://assets/cutscene/characters/vel/` | • `vel_Hblue_Sredyellow_idle.png` (ท่ายืน)<br>• `vel_walk_right-Sheet.png` (ท่าเดินเข้าห้อง)<br>• `vel_breathe_blink-Sheet.png` (ท่าหายใจและกระพริบตา)<br>• `vel_shockpng.png` (ท่าตกใจ) |
 | **ตัวละครฝั่งขวา (ผู้พิทักษ์)** | `res://assets/cutscene/characters/guardian/` | • `guardian-idle.png` (ท่ายืนนิ่ง)<br>• `guardian-talk-Sheet.png` (ท่าพูด)<br>• `guardian-talk-blink-Sheet.png` (ท่าพูดพร้อมกระพริบตา)<br>• `guardian-breathe-Sheet.png` (ท่าหายใจ) |
 | **เอฟเฟกต์ประกอบ** | `res://assets/cutscene/exclamation_mark.png` | ไอคอนตกใจ (!) สีแดงเด้งขึ้นเหนือศีรษะเวล |
+| **กรอบข้อความ** | `res://assets/cutscene/frame dialog text/text dialog.png` | กรอบข้อความดีไซน์พิเศษ ขอบมนโทนม่วงเข้มตัดลาเวนเดอร์ (9-slice StyleBoxTexture) |
+| **ลูกศรไปต่อ** | `res://assets/cutscene/frame dialog text/arrow.png` | ไอคอนลูกศรพิกเซลชี้ลงโทนลาเวนเดอร์ ลอยเด้งดึ๋งบอกให้คลิกไปต่อ |
 | **ฟอนต์ข้อความ** | `res://assets/fonts/TA-8-bit.ttf` | ฟอนต์พิกเซล 8-bit มาตรฐานเดียวกับ Ending Cutscene |
 
 ---
@@ -46,21 +48,56 @@ CentralTowerCutscene (Node2D) [Script: central_tower_cutscene.gd]
 ├── Background (Sprite2D) (central-tower-Sheet, hframes: 11, vframes: 12, Scale 4x4)
 ├── Atmosphere (ColorRect) (ฟิลเตอร์เงาบรรยากาศความมืดม่วงโปร่งแสง)
 ├── Stage (Node2D)
-│   ├── Vel (AnimatedSprite2D) [Position: (760, 780), Scale 4x4]
+│   ├── Vel (AnimatedSprite2D) [Spawn: (-120, 700), Target: (700, 700), Scale 4x4]
+│   │   ├── DropShadow (Sprite2D) [drop_shadow.png, Scale (0.65, 0.45), Position: (0, 38.5)]
 │   │   ├── ExclamationMark (Sprite2D) [Position: (0, -60)]
-│   │   └── QuestionMark (Node2D) [Position: (0, -50)]
+│   │   └── QuestionMark (Node2D) [Position: (0, -36)]
 │   │       └── Label [Font: TA-8-bit.ttf 20px, Color: #FFFFFF, Outline: 4px #000000]
-│   └── Guardian (AnimatedSprite2D) [Position: (1320, 780), Scale 4x4, Flip H: true]
+│   └── Guardian (AnimatedSprite2D) [Position: (1220, 700), Scale 4x4, Flip H: true]
+│       └── DropShadow (Sprite2D) [drop_shadow.png, Scale (0.65, 0.45), Position: (0, 38.5)]
 └── MagicStoryUI (CanvasLayer: Layer 10)
-    ├── SkipButton (Button) [มุมขวาบน สำหรับกดข้ามคัตซีน สไตล์เดียวกับ Ending Cutscene]
-    ├── DialogueBox (PanelContainer) [กล่องข้อความกึ่งกลางล่างจอ สไตล์เดียวกับ Ending Cutscene]
-    │   └── Margin (MarginContainer)
-    │       └── VBox (VBoxContainer)
-    │           ├── SpeakerLabel (Label) [ชื่อผู้พูด สีทอง #FFE673, ฟอนต์ TA-8-bit ขนาด 28]
-    │           ├── DialogueLabel (Label) [ข้อความคำพูด สีขาวครีม #FAF9F6, ฟอนต์ TA-8-bit ขนาด 26]
-    │           └── ContinuePrompt (Label) [คำแนะนำ 'คลิกหน้าจอเพื่อไปต่อ', ฟอนต์ TA-8-bit ขนาด 20]
+    ├── SkipButton (Button) [มุมขวาบน สำหรับกดข้ามคัตซีน]
+    ├── DialogueBox (PanelContainer) [StyleBoxTexture: text dialog.png (9-slice), Offset: T:-200, B:-25, W:1320]
+    │   └── Margin (MarginContainer) [Margin: L:44, T:22, R:44, B:16]
+    │       └── VBox (VBoxContainer) [Separation: 6]
+    │           ├── SpeakerLabel (Label) [ชื่อผู้พูด สีทอง #FFE673, ฟอนต์ TA-8-bit ขนาด 26]
+    │           ├── DialogueLabel (Label) [ข้อความคำพูด สีขาวครีม #FAF9F6, ฟอนต์ TA-8-bit ขนาด 24]
+    │           └── BottomRow (HBoxContainer) [ชิดขวา Alignment: End]
+    │               └── ArrowWrapper (Control)
+    │                   └── ContinueArrow (TextureRect) [arrow.png ลอยเด้งดึ๋งชี้ลงบอกให้ไปต่อ]
     └── FadeOverlay (ColorRect) [ม่านจอดำสำหรับเฟดเข้า-ออก]
 ```
+
+---
+
+## 3.1 มาตรฐานตำแหน่งการยืน สัดส่วน และการเดินเข้าฉากของตัวละคร (Positioning & Proportion Standard)
+
+เพื่อแก้ปัญหาตัวละครยืนเอียง ไม่สมส่วน หรือถูกกล่องข้อความบดบังเหลือเพียงศีรษะ (Puppet/Drowning Effect) มาตรฐานการจัดวางองค์ประกอบสำหรับฉากสนทนาหน้าจอ 1920×1080 (จุดกึ่งกลาง x = 960) ถูกกำหนดขึ้นดังนี้:
+
+1. **การสมมาตรซ้าย-ขวาบนแกน X (Symmetrical Alignment):**
+   - ระยะห่างจากกึ่งกลางจอ: กำหนด `d = 260px` จาก `x = 960`
+   - **เวล (ฝั่งซ้าย):** ยืนที่ `x = 700` (`960 - 260`) อยู่ในแนวทางเดินพื้นโล่งระหว่างเสาโคมไฟซ้ายและบันไดกลาง
+   - **ผู้พิทักษ์ (ฝั่งขวา):** ยืนที่ `x = 1220` (`960 + 260`) อยู่ในแนวทางเดินพื้นโล่งระหว่างบันไดกลางและเสาโคมไฟขวา
+   - ผลลัพธ์: ตัวละครทั้งสองยืนประจันหน้ากันอย่างสมมาตร กรอบประตูและอักขระเวทกลางฉากมองเห็นได้ชัดเจน ไม่เบี้ยวเอียง
+
+2. **ระดับความสูงและการยึดพื้นบนแกน Y (Grounded Height & Drop Shadow):**
+   - ตัวละคร Sprite ขนาด 48×83 ขยาย Scale 4 เท่า มีความสูง 332px จุดกำเนิด (Origin Center) อยู่ตรงกลางตัว ปลายเท้าอยู่ที่ `+154px` จาก Origin
+   - กำหนดระดับแกน Y: `position.y = 700` ส่งผลให้ปลายเท้าอยู่ที่ `y = 854` สอดคล้องกับเส้นระนาบพื้นกระเบื้องลายข้าวหลามตัดหน้าบันไดพอดี
+   - เพิ่มโหนดเงาใต้เท้า `DropShadow` (`res://assets/cutscene/props/khampri/drop_shadow.png`) วางไว้ที่ `Vector2(0, 38.5)` สเกล `Vector2(0.65, 0.45)` พร้อม `show_behind_parent = true` ช่วยให้ตัวละครดูมีน้ำหนักและติดพื้นอย่างเป็นธรรมชาติ ไม่รู้สึกลอยในอากาศ
+
+3. **สัดส่วนและการเว้นระยะของกล่องข้อความ (Dialogue Box Clearance):**
+   - กล่องข้อความ `DialogueBox` ปรับสัดส่วนให้กะทัดรัดและสวยงาม: `offset_left = -660`, `offset_top = -200`, `offset_right = 660`, `offset_bottom = -25` (ความกว้าง 1320px, ความสูง 175px, ตำแหน่งแกน Y บนจอ = `880` ถึง `1055`)
+   - ขนาดฟอนต์ปรับให้พอดีคำ: `SpeakerLabel` ขนาด 26, `DialogueLabel` ขนาด 24 (Line Spacing 8)
+   - ผลลัพธ์: ระดับขอบบนของกล่องข้อความอยู่ที่ `y = 880` ซึ่งอยู่ใต้ระดับปลายเท้าของตัวละคร (`y = 854`) มีระยะเว้นว่าง 26px ทำให้มองเห็นตัวละครครบทั้งตัว (ศีรษะ, เสื้อคลุม, ลำตัว, ขา, รองเท้า และเงาใต้เท้า) 100% ไม่ถูกกล่องข้อความบดบัง
+
+4. **การเดินเข้าฉากจากนอกจอ (Walk-in Entrance):**
+   - เวลจะเกิดที่พิกัดนอกจอซ้ายสุด: `Vector2(-120, 700)` พร้อมเปิดเล่นแอนิเมชัน `"walk"`
+   - เล่น Tween เคลื่อนที่ตามแกน X จาก `-120.0` ไปยัง `700.0` เป็นระยะทาง 820px ในเวลา 2.4 วินาที (`Tween.TRANS_SINE`, `Tween.EASE_OUT`) เสมือนก้าวขาขึ้นมายังชั้นใหม่ของหอคอย
+   - เมื่อเดินถึงจุด `700` ตัวละครจะเปลี่ยนเป็นท่า `"breathe"` หน่วง 0.35 วินาที แล้วกล่องข้อความจึงเริ่มแสดงบทสนทนาแรก
+
+> [!NOTE]
+> **การแยกส่วนมาตรฐาน (Documentation Scope):**
+> มาตรฐานตำแหน่งการยืนและการจัดสัดส่วนนี้ได้รับการบันทึกไว้ในเอกสารเพื่อเป็นเกณฑ์กลางสำหรับการสร้างฉากสนทนาทั่วไป โดย**ไม่มีการนำไปดัดแปลงหรือกระทบกับฉาก `intro_cutscene` หรือ `ending_cutscene` เดิมของโปรเจกต์** ตามข้อกำหนดที่ตกลงไว้
 
 ---
 
