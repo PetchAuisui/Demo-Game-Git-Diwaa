@@ -28,7 +28,7 @@ flowchart LR
 |---|---|---|
 | **ฉากหลัง** | `res://assets/cutscene/backgrounds/inside-tower-Sheet.png` | ห้องโถงภายในหอคอยเวท (ขนาดเฟรมละ 480×270 พิกเซล, 11×12 เฟรม = รวม 132 เฟรมวนลูป 11 วินาที, ขยาย Scale 4 เท่าเต็มจอ 1920×1080) |
 | **ตัวละครฝั่งซ้าย (เวล)** | `res://assets/cutscene/characters/vel/` | • `vel_Hblue_Sredyellow_idle.png` (ท่ายืน)<br>• `vel_walk_right-Sheet.png` (ท่าเดินเข้าห้อง)<br>• `vel_breathe_blink-Sheet.png` (ท่าหายใจและกระพริบตา)<br>• `vel_breathe-Sheet.png` (ท่าหายใจ) |
-| **ตัวละครฝั่งขวา (มิวรา)** | `res://assets/cutscene/characters/mewla/` | • `mewla_black_idle.png` (ท่ายืนนิ่ง/รอฟัง)<br>• `mewla_talk-Sheet.png` (ท่าพูด 6 เฟรมวนลูป)<br>• `mewla_success-Sheet.png` (ท่าพร้อมลุย/ดีใจ 6 เฟรมวนลูป) |
+| **ตัวละครฝั่งขวา (มิวรา)** | `res://assets/cutscene/characters/mewla/` | • `mewla_idle.png` / `mewla_black_idle.png` (ท่ายืนนิ่ง/รอฟัง)<br>• `mewla_idle-Sheet.png` (ท่าหายใจ/กระดิกหู 6 เฟรมวนลูป)<br>• `mewla_talk-Sheet.png` (ท่าพูด 6 เฟรมวนลูป)<br>• `mewla_success-Sheet.png` (ท่าพร้อมลุย/ดีใจ 6 เฟรมวนลูป)<br>• `mewla_sleep-Sheet.png` (ท่านอน 4 เฟรม) |
 | **เอฟเฟกต์ประกอบ** | `QuestionMark/Label` | ไอคอนสงสัย (?) ปรากฏขึ้นเหนือศีรษะเวลเมื่อถามว่า "เธอคือ..." |
 | **กรอบข้อความ** | `res://assets/cutscene/frame dialog text/text dialog.png` | กรอบข้อความ 9-slice StyleBoxTexture ขอบมนโทนม่วงเข้มตัดลาเวนเดอร์ |
 | **ลูกศรไปต่อ** | `res://assets/cutscene/frame dialog text/arrow.png` | ไอคอนลูกศรพิกเซลชี้ลงโทนลาเวนเดอร์ ลอยเด้งดึ๋งบอกให้คลิกไปต่อ |

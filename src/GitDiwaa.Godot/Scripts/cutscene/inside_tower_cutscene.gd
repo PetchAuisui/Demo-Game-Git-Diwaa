@@ -104,9 +104,11 @@ func _ready() -> void:
 	if anim_player.has_animation("background_loop"):
 		anim_player.play("background_loop")
 		
-	# เชื่อมต่อปุ่มข้าม
-	if skip_button and not skip_button.pressed.is_connected(_on_skip_button_pressed):
-		skip_button.pressed.connect(_on_skip_button_pressed)
+	# เชื่อมต่อปุ่มข้าม (ปิด Focus เพื่อไม่ให้ Space/Enter เผลอกดโดนปุ่ม Skip)
+	if skip_button:
+		skip_button.focus_mode = Control.FOCUS_NONE
+		if not skip_button.pressed.is_connected(_on_skip_button_pressed):
+			skip_button.pressed.connect(_on_skip_button_pressed)
 		
 	# 2. เริ่มโฟลว์เดินเข้าฉาก
 	_start_cutscene_sequence()
@@ -166,12 +168,16 @@ func _start_cutscene_sequence() -> void:
 	)
 
 func _open_dialogue_box() -> void:
+	if is_transitioning:
+		return
 	dialogue_box.visible = true
 	dialogue_box.modulate.a = 0.0
 	
 	var box_tween = create_tween()
 	box_tween.tween_property(dialogue_box, "modulate:a", 1.0, 0.25)
 	box_tween.tween_callback(func():
+		if is_transitioning:
+			return
 		current_dialogue_index = 0
 		_show_dialogue(current_dialogue_index)
 	)
@@ -203,11 +209,19 @@ func _show_dialogue(index: int) -> void:
 			mewla.play("idle")
 			mewla.set_frame_and_progress(vel.frame, vel.frame_progress)
 		
-	# อัปเดตท่าทางเวล
-	if vel_custom_anim != "":
-		vel_custom_anim = ""
-		vel.play("breathe")
-		vel.set_frame_and_progress(mewla.frame, mewla.frame_progress)
+	# อัปเดตท่าทางเวล (รองรับ vel_override และการสลับกลับมาหายใจอย่างนุ่มนวล)
+	var vel_override = data.get("vel_anim", "")
+	if vel_override != "":
+		vel_custom_anim = vel_override
+		vel.play(vel_override)
+	else:
+		if vel_custom_anim != "":
+			vel_custom_anim = ""
+			vel.play(VEL_IDLE_SEQ[vel_seq_step])
+			vel.set_frame_and_progress(mewla.frame, mewla.frame_progress)
+		elif vel.animation not in VEL_IDLE_SEQ:
+			vel.play(VEL_IDLE_SEQ[vel_seq_step])
+			vel.set_frame_and_progress(mewla.frame, mewla.frame_progress)
 		
 	# ไอคอน Emote
 	var emote = data.get("emote", "")
@@ -332,6 +346,10 @@ func _finish_cutscene() -> void:
 	
 	if entrance_tween and entrance_tween.is_valid():
 		entrance_tween.kill()
+	if typewriter_tween and typewriter_tween.is_valid():
+		typewriter_tween.kill()
+	if arrow_tween and arrow_tween.is_valid():
+		arrow_tween.kill()
 		
 	_hide_continue_arrow()
 	_hide_question_mark()
