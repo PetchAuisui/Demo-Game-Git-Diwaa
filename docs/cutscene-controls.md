@@ -1,0 +1,87 @@
+# คู่มือระบบควบคุมคัตซีน (Cutscene Controls Specification)
+
+เอกสารนี้ระบุมาตรฐาน UI ของปุ่มควบคุมคัตซีนในเกม Git Di Waa รวมถึง **ปุ่มเร่งความเร็ว (Fast-Forward)** และ **ปุ่มข้าม (Skip)** ตามสไตล์เรโทร 8-bit ของเกม
+
+---
+
+## 1. ดีไซน์และหน้าตาของปุ่ม (Design & Typography)
+
+ปุ่มควบคุมถูกจัดวางไว้ที่ **มุมขวาบนของหน้าจอ** (`PRESET_TOP_RIGHT`, `y: 20px - 60px`) เพื่อให้เห็นชัดเจนและเข้าถึงง่าย
+
+| คุณสมบัติ (Property) | ค่าที่กำหนด (Value) | คำอธิบาย |
+| :--- | :--- | :--- |
+| **ฟอนต์ (Font)** | `res://assets/fonts/TA-8-bit.ttf` | ฟอนต์พิกเซล 8-bit รองรับภาษาไทยสมบูรณ์ |
+| **ขนาดฟอนต์ (Font Size)** | `20px` | คมชัด อ่านง่ายบนหน้าจอความละเอียดสูง |
+| **สีกรอบ (Border Color)** | `Color(0.98, 0.976, 0.965, 0.85)` (`#FAF9F6`) | สีขาวนวลตัดกับฉากหลังมืด |
+| **ความหนากรอบ (Border Width)** | `2px` ทั้ง 4 ด้าน | เส้นกรอบชัดเจนสไตล์ 8-bit |
+| **ความโค้งมน (Corner Radius)** | `8px` ทั้ง 4 มุม | ขอบมนนุ่มนวลแบบโมเดิร์นเรโทร |
+| **สีพื้นหลังปกติ (Normal BG)** | `Color(0.00392, 0, 0.07451, 0.95)` (`#010013`) | น้ำเงินเข้มเกือบดำ โปร่งแสง 95% |
+| **สีพื้นหลังเมื่อชี้ (Hover BG)** | `Color(0.06, 0.04, 0.16, 0.95)` | สว่างขึ้นเล็กน้อยเมื่อนำเมาส์ไปชี้ |
+| **ระยะขอบด้านใน (Margin)** | ซ้าย/ขวา 14px, บน/ล่าง 4px | สัดส่วนพอดีกับความยาวข้อความ |
+
+---
+
+## 2. สถานะของปุ่มเร่งความเร็ว (Fast-Forward Toggle States)
+
+ปุ่มเร่งความเร็วทำหน้าที่ปรับอัตราความเร็วของทั้งเกม (`Engine.time_scale`) ผู้เล่นสามารถกดสลับได้ตลอดเวลา:
+
+### 2.1 โหมดความเร็วปกติ (`> 1.0x`)
+* **ข้อความ:** `⏵ 1.0x`
+* **สไตล์:** กรอบสีขาวนวล `Color(0.98, 0.976, 0.965, 0.85)` พื้นหลังสีดำเข้ม
+* **Time Scale:** `Engine.time_scale = 1.0`
+
+### 2.2 โหมดเร่งความเร็ว (`>> 2.5x`)
+* **ข้อความ:** `⏵⏵ 2.5x`
+* **สไตล์:** แสงนีออนม่วงเรโทรเรืองแสง (Retro Neon Glow)
+  * ขอบกรอบ: `Color(0.95, 0.45, 1.0, 1.0)` (ชมพูม่วงนีออน)
+  * พื้นหลัง: `Color(0.18, 0.05, 0.30, 0.95)`
+  * แสงเรือง (Shadow Glow): `Color(0.85, 0.25, 1.0, 0.5)` ขนาด `6px`
+* **Time Scale:** `Engine.time_scale = 2.5`
+
+---
+
+## 3. สถานะของปุ่มข้าม (Skip Button)
+
+* **ข้อความ:** `ข้าม ⏵⏵ (Esc)`
+* **คีย์ลัด:** ผู้เล่นสามารถกดปุ่ม **Esc (Escape)** บนคีย์บอร์ดได้ทันที
+* **การทำงาน:** 
+  * รีเซ็ต `Engine.time_scale = 1.0` เพื่อป้องกันไม่ให้เกมเพลย์ด่านถัดไปวิ่งเร็วเกินไป
+  * เปลี่ยนฉากไปยัง `next_scene_path` ทันที
+
+---
+
+## 4. รายการฉากที่ต้องติดตั้งใช้งาน (Where to Use)
+
+คลาสคอมโพเนนต์นี้อยู่ที่ [`src/GitDiwaa.Godot/scripts/cutscene/skip_cutscene_button.gd`](file:///c:/Users/67030311/Documents/Game-Git-Diwaa/src/GitDiwaa.Godot/scripts/cutscene/skip_cutscene_button.gd) โดยถูกเรียกใช้งานในทุกฉากคัตซีนของเกม:
+
+| ฉาก (Cutscene Scene) | ไฟล์สคริปต์ (Script Path) | ปลายทางเมื่อกดข้าม (Next Scene) |
+| :--- | :--- | :--- |
+| **1. ฉากเปิดหมู่บ้านสงบ** | `scripts/cutscene/cut_scence_normal.gd` | ฉากเปิดในห้องสมุด (`intro_cutscene.tscn`) |
+| **2. ฉากเปิดห้องสมุด** | `scripts/cutscene/intro_cutscene.gd` | ฉากวิกฤตภายนอกหอสมุด (`outside_cutscene.tscn`) |
+| **3. ฉากวิกฤตและหอคอย** | `scripts/cutscene/outside_cutscene.gd` | ด่านฝึกสอน/แซนด์บ็อกซ์แรก (`SandboxGameView.tscn`) |
+| **4. ฉากภายในหอคอย (เวลเจอมิวรา)** | `scripts/cutscene/inside_tower_cutscene.gd` | ด่านเกมเพลย์หอคอย (`SandboxGameView.tscn`) |
+| **5. ฉากหอคอยกลาง (เวลเจอผู้พิทักษ์)** | `scripts/cutscene/central_tower_cutscene.gd` | ด่านเกมเพลย์หอคอยกลาง (`SandboxGameView.tscn`) |
+| **6. ฉากจบเกมและเครดิต** | `scripts/cutscene/ending_cutscene.gd` | หน้าเมนูหลักของเกม (`StartView.tscn`) |
+
+---
+
+## 5. วิธีเรียกใช้งานในโค้ด (Usage Example)
+
+หากมีการสร้างฉากคัตซีนใหม่ขึ้นมา ให้ใส่โค้ดในฟังก์ชัน `_ready()` ของ Root Node ดังนี้:
+
+```gdscript
+func _ready() -> void:
+	Engine.time_scale = 1.0
+	
+	# เพิ่มชุดควบคุมคัตซีน (ปุ่มเร่งความเร็ว + ปุ่มข้าม)
+	var skip_ctrl = preload("res://scripts/cutscene/skip_cutscene_button.gd").new()
+	skip_ctrl.next_scene_path = "res://Scenes/SandboxGameView.tscn" # กำหนดฉากปลายทาง
+	add_child(skip_ctrl)
+
+func _exit_tree() -> void:
+	# คืนค่าความเร็วเกมเป็นปกติเสมอเมื่อออกจากฉาก
+	Engine.time_scale = 1.0
+```
+
+> [!IMPORTANT]
+> ทุกฉากที่มีการใช้งานระบบเร่งความเร็ว **ต้องมีฟังก์ชัน `_exit_tree()`** ที่สั่ง `Engine.time_scale = 1.0` เสมอ เพื่อรับประกันว่าความเร็วของเกมจะไม่ค้างไปสู่ฉากเกมเพลย์
