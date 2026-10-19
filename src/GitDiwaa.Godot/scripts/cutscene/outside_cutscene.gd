@@ -32,24 +32,16 @@ signal cutscene_finished
 
 func _ready() -> void:
 	Engine.time_scale = 1.0
-	add_child(preload("res://scripts/cutscene/skip_cutscene_button.gd").new())
+	# ฉากคั่นวิกฤตภายนอกและไตเติลหอคอย: เอาปุ่มเร่งออก เหลือเฉพาะปุ่มข้าม
+	var skip_ctrl = preload("res://scripts/cutscene/skip_cutscene_button.gd").new()
+	skip_ctrl.show_fast_forward = false
+	skip_ctrl.next_scene_path = _get_resolved_next_scene()
+	add_child(skip_ctrl)
 	_init_scene()
 	play_chaos_sequence()
 
 func _exit_tree() -> void:
 	Engine.time_scale = 1.0
-
-func _process(_delta: float) -> void:
-	# ตรวจสอบการกดค้างเพื่อเร่งสปีด (Fast-forward) แบบ Real-time
-	if can_fast_forward and not can_start and not is_starting:
-		var wants_ff: bool = Input.is_key_pressed(KEY_SPACE) or \
-			Input.is_key_pressed(KEY_ENTER) or \
-			Input.is_key_pressed(KEY_SHIFT) or \
-			Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT)
-		
-		if wants_ff != is_fast_forwarding:
-			is_fast_forwarding = wants_ff
-			Engine.time_scale = 2.5 if wants_ff else 1.0
 
 func _input(event: InputEvent) -> void:
 	if not can_start or is_starting:
