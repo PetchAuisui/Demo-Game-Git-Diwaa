@@ -1198,9 +1198,9 @@ func _on_return_menu_pressed() -> void:
 		get_tree().change_scene_to_file(start_scene_path)
 	)
 
-func _play_sfx(_player: AudioStreamPlayer) -> void:
-	# TODO: เปิดใช้งาน SFX เมื่อมีไฟล์เสียงที่สมบูรณ์ตามแผน (ปัจจุบันปิดเสียงชั่วคราวตามที่ระบุ)
-	return
+func _play_sfx(player: AudioStreamPlayer) -> void:
+	if is_instance_valid(player) and player.stream:
+		player.play()
 
 func _init_sfx() -> void:
 	sfx_fusion = _create_sfx_player("res://assets/audio/sfx_success.wav")
