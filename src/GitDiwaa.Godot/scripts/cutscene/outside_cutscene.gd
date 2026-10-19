@@ -20,7 +20,7 @@ extends Node2D
 @onready var subtitle_label: Label = $UI/TitleContainer/SubtitleLabel
 @onready var start_prompt: Label = $UI/TitleContainer/StartPrompt
 
-@export var next_scene_path: String = "res://scenes/cutscene/inside_tower_cutscene.tscn"
+@export var next_scene_path: String = "res://Scenes/SandboxGameView.tscn"
 
 var can_start: bool = false
 var is_starting: bool = false
@@ -32,7 +32,9 @@ signal cutscene_finished
 
 func _ready() -> void:
 	Engine.time_scale = 1.0
+	# ฉากคั่นวิกฤตภายนอกและไตเติลหอคอย: เอาปุ่มเร่งออก เหลือเฉพาะปุ่มข้าม
 	var skip_ctrl = preload("res://scripts/cutscene/skip_cutscene_button.gd").new()
+	skip_ctrl.show_fast_forward = false
 	skip_ctrl.next_scene_path = _get_resolved_next_scene()
 	add_child(skip_ctrl)
 	_init_scene()
@@ -41,19 +43,8 @@ func _ready() -> void:
 func _exit_tree() -> void:
 	Engine.time_scale = 1.0
 
-func _get_resolved_next_scene() -> String:
-	if next_scene_path != "" and ResourceLoader.exists(next_scene_path):
-		return next_scene_path
-	if ResourceLoader.exists("res://scenes/cutscene/inside_tower_cutscene.tscn"):
-		return "res://scenes/cutscene/inside_tower_cutscene.tscn"
-	if ResourceLoader.exists("res://Scenes/cutscene/inside_tower_cutscene.tscn"):
-		return "res://Scenes/cutscene/inside_tower_cutscene.tscn"
-	return "res://Scenes/SandboxGameView.tscn"
-
 func _input(event: InputEvent) -> void:
 	if not can_start or is_starting:
-		return
-	if event is InputEventKey and event.keycode == KEY_ESCAPE:
 		return
 	
 	if event.is_action_pressed("ui_accept") or \
@@ -102,7 +93,7 @@ func _init_scene() -> void:
 	if subtitle_label:
 		subtitle_label.text = "— ตำนานแห่งหอคอยต้นกำเนิด —"
 	if start_prompt:
-		start_prompt.text = "— กด Space หรือคลิก เพื่อเข้าสู่ด่านแรก —"
+		start_prompt.text = "คลิกหน้าจอเพื่อไปต่อ"
 	fade_overlay.color = Color(0, 0, 0, 1)
 	fade_overlay.visible = true
 
@@ -207,11 +198,11 @@ func _trigger_start_level() -> void:
 		Engine.time_scale = 1.0
 		emit_signal("cutscene_finished")
 		print("[CutsceneChaos] เข้าสู่ด่านแรกเรียบร้อย!")
-		var target_scene = _get_resolved_next_scene()
-		if target_scene != "" and ResourceLoader.exists(target_scene):
-			get_tree().change_scene_to_file(target_scene)
+		if next_scene_path != "" and ResourceLoader.exists(next_scene_path):
+			get_tree().change_scene_to_file(next_scene_path)
 		else:
-			push_warning("[OutsideCutscene] target scene not found: '%s'" % target_scene)
+			push_warning("[OutsideCutscene] next_scene_path is empty or not found: '%s'. กรุณากำหนด Path ซีนด่านแรกใน Inspector" % next_scene_path)
+			# ค่อยๆ จางจอดำออกเพื่อไม่ให้ผู้เล่นติดอยู่ในจอสีดำสนิท
 			var tw_recover = create_tween()
 			tw_recover.tween_property(fade_overlay, "color:a", 0.0, 0.5)
 			can_start = true
