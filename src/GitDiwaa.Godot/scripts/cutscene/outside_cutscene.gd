@@ -20,7 +20,7 @@ extends Node2D
 @onready var subtitle_label: Label = $UI/TitleContainer/SubtitleLabel
 @onready var start_prompt: Label = $UI/TitleContainer/StartPrompt
 
-@export var next_scene_path: String = "res://Scenes/SandboxGameView.tscn"
+@export var next_scene_path: String = "res://scenes/cutscene/inside_tower_cutscene.tscn"
 
 var can_start: bool = false
 var is_starting: bool = false
@@ -42,6 +42,15 @@ func _ready() -> void:
 
 func _exit_tree() -> void:
 	Engine.time_scale = 1.0
+
+func _get_resolved_next_scene() -> String:
+	if next_scene_path != "" and ResourceLoader.exists(next_scene_path):
+		return next_scene_path
+	if ResourceLoader.exists("res://scenes/cutscene/inside_tower_cutscene.tscn"):
+		return "res://scenes/cutscene/inside_tower_cutscene.tscn"
+	if ResourceLoader.exists("res://Scenes/cutscene/inside_tower_cutscene.tscn"):
+		return "res://Scenes/cutscene/inside_tower_cutscene.tscn"
+	return "res://Scenes/SandboxGameView.tscn"
 
 func _input(event: InputEvent) -> void:
 	if not can_start or is_starting:
@@ -198,11 +207,11 @@ func _trigger_start_level() -> void:
 		Engine.time_scale = 1.0
 		emit_signal("cutscene_finished")
 		print("[CutsceneChaos] เข้าสู่ด่านแรกเรียบร้อย!")
-		if next_scene_path != "" and ResourceLoader.exists(next_scene_path):
-			get_tree().change_scene_to_file(next_scene_path)
+		var target_scene := _get_resolved_next_scene()
+		if target_scene != "" and ResourceLoader.exists(target_scene):
+			get_tree().change_scene_to_file(target_scene)
 		else:
-			push_warning("[OutsideCutscene] next_scene_path is empty or not found: '%s'. กรุณากำหนด Path ซีนด่านแรกใน Inspector" % next_scene_path)
-			# ค่อยๆ จางจอดำออกเพื่อไม่ให้ผู้เล่นติดอยู่ในจอสีดำสนิท
+			push_warning("[OutsideCutscene] target scene not found: '%s'" % target_scene)
 			var tw_recover = create_tween()
 			tw_recover.tween_property(fade_overlay, "color:a", 0.0, 0.5)
 			can_start = true
