@@ -20,7 +20,7 @@ extends Node2D
 @onready var subtitle_label: Label = $UI/TitleContainer/SubtitleLabel
 @onready var start_prompt: Label = $UI/TitleContainer/StartPrompt
 
-@export var next_scene_path: String = "res://Scenes/SandboxGameView.tscn"
+@export var next_scene_path: String = "res://scenes/cutscene/inside_tower_cutscene.tscn"
 
 var can_start: bool = false
 var is_starting: bool = false
@@ -32,27 +32,28 @@ signal cutscene_finished
 
 func _ready() -> void:
 	Engine.time_scale = 1.0
-	add_child(preload("res://scripts/cutscene/skip_cutscene_button.gd").new())
+	var skip_ctrl = preload("res://scripts/cutscene/skip_cutscene_button.gd").new()
+	skip_ctrl.next_scene_path = _get_resolved_next_scene()
+	add_child(skip_ctrl)
 	_init_scene()
 	play_chaos_sequence()
 
 func _exit_tree() -> void:
 	Engine.time_scale = 1.0
 
-func _process(_delta: float) -> void:
-	# ตรวจสอบการกดค้างเพื่อเร่งสปีด (Fast-forward) แบบ Real-time
-	if can_fast_forward and not can_start and not is_starting:
-		var wants_ff: bool = Input.is_key_pressed(KEY_SPACE) or \
-			Input.is_key_pressed(KEY_ENTER) or \
-			Input.is_key_pressed(KEY_SHIFT) or \
-			Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT)
-		
-		if wants_ff != is_fast_forwarding:
-			is_fast_forwarding = wants_ff
-			Engine.time_scale = 2.5 if wants_ff else 1.0
+func _get_resolved_next_scene() -> String:
+	if next_scene_path != "" and ResourceLoader.exists(next_scene_path):
+		return next_scene_path
+	if ResourceLoader.exists("res://scenes/cutscene/inside_tower_cutscene.tscn"):
+		return "res://scenes/cutscene/inside_tower_cutscene.tscn"
+	if ResourceLoader.exists("res://Scenes/cutscene/inside_tower_cutscene.tscn"):
+		return "res://Scenes/cutscene/inside_tower_cutscene.tscn"
+	return "res://Scenes/SandboxGameView.tscn"
 
 func _input(event: InputEvent) -> void:
 	if not can_start or is_starting:
+		return
+	if event is InputEventKey and event.keycode == KEY_ESCAPE:
 		return
 	
 	if event.is_action_pressed("ui_accept") or \
@@ -101,7 +102,7 @@ func _init_scene() -> void:
 	if subtitle_label:
 		subtitle_label.text = "— ตำนานแห่งหอคอยต้นกำเนิด —"
 	if start_prompt:
-		start_prompt.text = "คลิกหน้าจอเพื่อไปต่อ"
+		start_prompt.text = "— กด Space หรือคลิก เพื่อเข้าสู่ด่านแรก —"
 	fade_overlay.color = Color(0, 0, 0, 1)
 	fade_overlay.visible = true
 
@@ -206,11 +207,11 @@ func _trigger_start_level() -> void:
 		Engine.time_scale = 1.0
 		emit_signal("cutscene_finished")
 		print("[CutsceneChaos] เข้าสู่ด่านแรกเรียบร้อย!")
-		if next_scene_path != "" and ResourceLoader.exists(next_scene_path):
-			get_tree().change_scene_to_file(next_scene_path)
+		var target_scene = _get_resolved_next_scene()
+		if target_scene != "" and ResourceLoader.exists(target_scene):
+			get_tree().change_scene_to_file(target_scene)
 		else:
-			push_warning("[OutsideCutscene] next_scene_path is empty or not found: '%s'. กรุณากำหนด Path ซีนด่านแรกใน Inspector" % next_scene_path)
-			# ค่อยๆ จางจอดำออกเพื่อไม่ให้ผู้เล่นติดอยู่ในจอสีดำสนิท
+			push_warning("[OutsideCutscene] target scene not found: '%s'" % target_scene)
 			var tw_recover = create_tween()
 			tw_recover.tween_property(fade_overlay, "color:a", 0.0, 0.5)
 			can_start = true

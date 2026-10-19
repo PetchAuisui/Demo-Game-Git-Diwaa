@@ -62,7 +62,7 @@
 | :--- | :--- | :--- |
 | **1. ฉากเปิดหมู่บ้านสงบ** | `scripts/cutscene/cut_scence_normal.gd` | ฉากเปิดในห้องสมุด (`intro_cutscene.tscn`) |
 | **2. ฉากเปิดห้องสมุด** | `scripts/cutscene/intro_cutscene.gd` | ฉากวิกฤตภายนอกหอสมุด (`outside_cutscene.tscn`) |
-| **3. ฉากวิกฤตและหอคอย** | `scripts/cutscene/outside_cutscene.gd` | ด่านฝึกสอน/แซนด์บ็อกซ์แรก (`SandboxGameView.tscn`) |
+| **3. ฉากวิกฤตและหอคอย** | `scripts/cutscene/outside_cutscene.gd` | ฉากภายในหอคอยเวทมนตร์ (`inside_tower_cutscene.tscn`) |
 | **4. ฉากภายในหอคอย (เวลเจอมิวรา)** | `scripts/cutscene/inside_tower_cutscene.gd` | ด่านเกมเพลย์หอคอย (`SandboxGameView.tscn`) |
 | **5. ฉากหอคอยกลาง (เวลเจอผู้พิทักษ์)** | `scripts/cutscene/central_tower_cutscene.gd` | ด่านเกมเพลย์หอคอยกลาง (`SandboxGameView.tscn`) |
 | **6. ฉากจบเกมและเครดิต** | `scripts/cutscene/ending_cutscene.gd` | หน้าเมนูหลักของเกม (`StartView.tscn`) |
