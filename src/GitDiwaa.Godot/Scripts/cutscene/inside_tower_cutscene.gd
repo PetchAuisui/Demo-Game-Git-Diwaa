@@ -23,7 +23,6 @@ extends Node2D
 @onready var exclamation_mark: Node2D = $Stage/Vel/ExclamationMark
 @onready var question_mark: Node2D = $Stage/Vel/QuestionMark
 @onready var mewla: AnimatedSprite2D = $Stage/Mewla
-@onready var magic_sparkles: CPUParticles2D = get_node_or_null("Stage/MagicSparkles")
 
 # UI Elements
 @onready var magic_ui: CanvasLayer = $MagicStoryUI
@@ -118,9 +117,6 @@ func _ready() -> void:
 	question_mark.scale = Vector2.ONE
 	question_mark.position = Vector2(0, -36)
 	
-	if magic_sparkles:
-		magic_sparkles.emitting = false
-	
 	# เล่นอนิเมชันแบ็กกราวด์ลูปวน
 	if anim_player.has_animation("background_loop"):
 		anim_player.play("background_loop")
@@ -207,11 +203,6 @@ func _warp_in_mewla_and_shock_vel() -> void:
 	warp_tween = create_tween().set_parallel(true)
 	warp_tween.tween_property(mewla, "modulate:a", 1.0, 0.75).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
 	warp_tween.tween_property(mewla, "position:y", 680.0, 0.75).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
-	
-	# เล่นเอฟเฟกต์ละอองประกายเวทมนตร์แว่บเดียว (สีฟ้าประกายทอง) รอบตัวมิวราขณะค่อยๆ เฟดปรากฏตัว
-	if magic_sparkles:
-		magic_sparkles.restart()
-		magic_sparkles.emitting = true
 	
 	# 2. เวลสังเกตเห็นมิวรากำลังปรากฏตัว (หน่วง 0.35s หลังจากมิวราเริ่มเฟดขึ้นมาจนเห็นตัวชัดเจน) แล้วค่อยตกใจกระโดด
 	if reaction_tween and reaction_tween.is_valid():
@@ -520,8 +511,6 @@ func _finish_cutscene() -> void:
 	_hide_continue_arrow()
 	_hide_question_mark()
 	_hide_exclamation()
-	if magic_sparkles:
-		magic_sparkles.emitting = false
 	
 	# เฟดจอดำ
 	var finish_tween = create_tween()
