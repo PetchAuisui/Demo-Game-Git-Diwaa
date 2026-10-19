@@ -193,10 +193,12 @@ func _init_scene_state() -> void:
 	dialogue_box.modulate = Color(1, 1, 1, 0)
 	_hide_continue_arrow()
 	
-	# ปุ่มข้าม (ปิด Focus เพื่อไม่ให้ Space/Enter เผลอกดโดนปุ่ม Skip)
-	skip_button.focus_mode = Control.FOCUS_NONE
-	if not skip_button.pressed.is_connected(_skip_cutscene):
-		skip_button.pressed.connect(_skip_cutscene)
+	# ระบบควบคุม Cutscene: ปุ่มเร่งความเร็ว (FF 2.5x) และปุ่ม [DEV] ข้าม ⏵⏵ (Esc)
+	var skip_ctrl = preload("res://scripts/cutscene/skip_cutscene_button.gd").new()
+	skip_ctrl.next_scene_path = next_scene_path
+	add_child(skip_ctrl)
+	if skip_button:
+		skip_button.visible = false
 	
 	# หน้าจอมืดไว้สำหรับเฟดเข้า
 	fade_overlay.visible = true
@@ -205,6 +207,9 @@ func _init_scene_state() -> void:
 	# เริ่มเล่นอนิเมชันของฉาก (วนลูปต่อเนื่อง)
 	if anim_player and not anim_player.is_playing():
 		anim_player.play("background_loop")
+
+func _exit_tree() -> void:
+	Engine.time_scale = 1.0
 
 
 ## -------------------------------------------------------------
