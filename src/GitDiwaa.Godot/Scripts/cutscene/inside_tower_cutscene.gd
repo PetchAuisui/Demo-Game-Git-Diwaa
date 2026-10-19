@@ -20,7 +20,7 @@ extends Node2D
 # Characters
 @onready var stage: Node2D = $Stage
 @onready var vel: AnimatedSprite2D = $Stage/Vel
-@onready var exclamation_mark: Sprite2D = $Stage/Vel/ExclamationMark
+@onready var exclamation_mark: Node2D = $Stage/Vel/ExclamationMark
 @onready var question_mark: Node2D = $Stage/Vel/QuestionMark
 @onready var mewla: AnimatedSprite2D = $Stage/Mewla
 
@@ -38,12 +38,17 @@ const VEL_IDLE_SEQ: Array[String] = ["breathe", "breathe_blink", "breathe", "bre
 var vel_seq_step: int = 0
 var vel_custom_anim: String = ""
 
+# เสียงประกอบ (Sound Effects)
+const SFX_CAT = preload("res://assets/audio/sfx_cat_meow.wav")
+const SFX_NEXT = preload("res://assets/audio/sfx_dialogue_next.wav")
+
 # Dialogue Script Data (บทสนทนาประจำฉาก)
 const DIALOGUES: Array[Dictionary] = [
 	{
 		"speaker": "มิวรา",
 		"text": "ยินดีต้อนรับสู่กิลด์แห่งหอคอยเวท",
-		"mewla_anim": "talk"
+		"mewla_anim": "talk",
+		"vel_anim": "shock"
 	},
 	{
 		"speaker": "เวล",
@@ -54,7 +59,8 @@ const DIALOGUES: Array[Dictionary] = [
 	{
 		"speaker": "มิวรา",
 		"text": "“แมวไง เห็นก็รู้ปะ” ฉันมิวรา ผู้ดูแลกิลด์\nและเป็นคนที่จะสอนนายตั้งแต่พื้นฐาน",
-		"mewla_anim": "talk"
+		"mewla_anim": "talk",
+		"sfx": "cat"
 	},
 	{
 		"speaker": "มิวรา",
@@ -77,6 +83,8 @@ var question_tween: Tween = null
 var exclamation_tween: Tween = null
 var arrow_tween: Tween = null
 var entrance_tween: Tween = null
+var warp_tween: Tween = null
+var hop_tween: Tween = null
 
 func _ready() -> void:
 	# 1. ตั้งค่าเริ่มต้นหน้าจอ
@@ -94,10 +102,13 @@ func _ready() -> void:
 	vel.play("walk")
 	vel.animation_looped.connect(_on_vel_animation_looped)
 	
+	# มิวรายังไม่ปรากฏในฉากตอนแรก (จะวาร์ปเข้ามาเมื่อเวลเดินมาหยุด)
+	mewla.visible = false
 	mewla.position = Vector2(1220, 680)
-	mewla.scale = Vector2(4, 4)
-	mewla.play("idle")
+	mewla.scale = Vector2.ZERO
+	mewla.modulate = Color(1, 1, 1, 0)
 	
+	exclamation_mark.scale = Vector2.ONE
 	question_mark.scale = Vector2.ONE
 	
 	# เล่นอนิเมชันแบ็กกราวด์ลูปวน
@@ -153,19 +164,64 @@ func _start_cutscene_sequence() -> void:
 	entrance_tween.tween_property(vel, "position:x", 700.0, 3.6)
 	
 	entrance_tween.tween_callback(func():
-		# ซิงค์จังหวะหายใจ/ผงกหัวให้เวลและมิวราเริ่มต้นที่เฟรม 0 พร้อมกันเป๊ะๆ (ตามสเปก intro_cutscene สลับสู่ breathe_blink)
-		vel_seq_step = 1
-		vel.play("breathe_blink")
+		# เวลเดินถึงตำแหน่งเป้าหมาย หยุดเดินและเปลี่ยนเป็นท่ายืนหายใจปกติ
+		vel_seq_step = 0
+		vel.play("breathe")
 		vel.set_frame_and_progress(0, 0.0)
-		mewla.play("idle")
-		mewla.set_frame_and_progress(0, 0.0)
 		
-		# หน่วงเวลาเล็กน้อยก่อนกล่องข้อความปรากฏ
+		# รอจังหวะสั้นๆ (0.3 วินาที) ก่อนที่มิวราจะวาร์ปโผล่มาอย่างกะทันหัน
 		var delay_tween = create_tween()
-		delay_tween.tween_interval(0.35)
-		delay_tween.tween_callback(func():
-			_open_dialogue_box()
-		)
+		delay_tween.tween_interval(0.3)
+		delay_tween.tween_callback(_warp_in_mewla_and_shock_vel)
+	)
+
+func _warp_in_mewla_and_shock_vel() -> void:
+	if is_transitioning:
+		return
+		
+	# 1. มิวราปรากฏตัวอย่างนุ่มนวลและสมูท (Fade-in + ค่อยๆ เลื่อนลงมาแตะพื้นอย่างแผ่วเบา ไร้เสียง)
+	mewla.visible = true
+	mewla.scale = Vector2(4.0, 4.0)
+	mewla.position = Vector2(1220.0, 660.0)
+	mewla.modulate = Color(1.0, 1.0, 1.0, 0.0)
+	mewla.play("idle")
+	
+	if warp_tween and warp_tween.is_valid():
+		warp_tween.kill()
+		
+	warp_tween = create_tween().set_parallel(true)
+	warp_tween.tween_property(mewla, "modulate:a", 1.0, 0.55).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	warp_tween.tween_property(mewla, "position:y", 680.0, 0.55).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	
+	# 2. เวลตกใจ: หน้า shock + กระโดดลอยตัวสูงแบบปรมาจารย์ใน ending-cutscene + เครื่องหมาย ! ขอบดำข้างในแดงไม่มาก ค้าง 2 วิ
+	vel.play("shock")
+	_pop_exclamation(2.0)
+	
+	if hop_tween and hop_tween.is_valid():
+		hop_tween.kill()
+		
+	var vel_shadow = vel.get_node_or_null("DropShadow")
+	
+	hop_tween = create_tween()
+	# พุ่งลอยขึ้นสู่อากาศสูงแบบกระโดด (0.38s) ด้วย TRANS_QUAD, EASE_OUT
+	hop_tween.tween_property(vel, "position:y", 610.0, 0.38).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	if vel_shadow:
+		hop_tween.parallel().tween_property(vel_shadow, "scale", Vector2(0.45, 0.30), 0.38)
+		hop_tween.parallel().tween_property(vel_shadow, "position:y", 38.5 + (680.0 - 610.0), 0.38)
+		hop_tween.parallel().tween_property(vel_shadow, "modulate:a", 0.4, 0.38)
+		
+	# ตกลงมายืนบนพื้น (0.30s) ด้วย TRANS_QUAD, EASE_IN
+	hop_tween.chain().tween_property(vel, "position:y", 680.0, 0.30).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	if vel_shadow:
+		hop_tween.parallel().tween_property(vel_shadow, "scale", Vector2(0.65, 0.45), 0.30)
+		hop_tween.parallel().tween_property(vel_shadow, "position:y", 38.5, 0.30)
+		hop_tween.parallel().tween_property(vel_shadow, "modulate:a", 1.0, 0.30)
+	
+	# 3. หน่วงเวลาให้ผู้เล่นเห็นรีแอ็กชันตกใจชัดเจน (1.3s) ก่อนเปิดกล่องข้อความ
+	var open_tween = create_tween()
+	open_tween.tween_interval(1.3)
+	open_tween.tween_callback(func():
+		_open_dialogue_box()
 	)
 
 func _open_dialogue_box() -> void:
@@ -196,6 +252,13 @@ func _show_dialogue(index: int) -> void:
 	speaker_label.text = data["speaker"]
 	dialogue_label.text = data["text"]
 	dialogue_label.visible_ratio = 0.0
+	
+	# เสียง SFX ประจำประโยค
+	var sfx = data.get("sfx", "")
+	if sfx == "cat":
+		_play_sfx(SFX_CAT)
+	else:
+		_play_sfx(SFX_NEXT)
 	
 	# ปรับสีชื่อผู้พูดและท่าทางมิวรา พร้อมส่งต่อ frame และ progress ให้จังหวะขยับตัวไม่หลุดเฟส
 	var target_mewla_anim = data.get("mewla_anim", "talk")
@@ -231,10 +294,9 @@ func _show_dialogue(index: int) -> void:
 		_pop_question_mark()
 	elif emote == "exclamation":
 		_hide_question_mark()
-		_pop_exclamation()
+		_pop_exclamation(0.8)
 	else:
 		_hide_question_mark()
-		_hide_exclamation()
 		
 	# Typewriter effect
 	if typewriter_tween and typewriter_tween.is_valid():
@@ -271,53 +333,65 @@ func _on_vel_animation_looped() -> void:
 		vel.play(VEL_IDLE_SEQ[vel_seq_step])
 
 func _pop_question_mark() -> void:
+	if question_tween and question_tween.is_valid():
+		question_tween.kill()
 	question_mark.visible = true
 	question_mark.scale = Vector2.ZERO
 	question_mark.position = Vector2(0, -36)
+	question_mark.modulate.a = 1.0
 	
-	if question_tween and question_tween.is_valid():
-		question_tween.kill()
-		
-	question_tween = create_tween()
-	question_tween.set_parallel(true)
-	question_tween.tween_property(question_mark, "scale", Vector2.ONE, 0.22).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-	question_tween.tween_property(question_mark, "modulate:a", 1.0, 0.15)
+	# 1. จังหวะเด้งขยายขึ้นมาอย่างเห็นชัด (0.22s ด้วย TRANS_BACK แบบเดียวกับ central-tower)
+	var tw_pop = create_tween()
+	tw_pop.tween_property(question_mark, "scale", Vector2.ONE, 0.22).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	tw_pop.tween_callback(func():
+		if not is_instance_valid(question_mark) or not question_mark.visible:
+			return
+		# 2. ค้างไว้บนจอพร้อมลอยเด้งดึ๋งเบาๆ ขึ้นลงต่อเนื่อง (Idle Bobbing แบบ central-tower)
+		question_tween = create_tween().set_loops()
+		question_tween.tween_property(question_mark, "position:y", -39.0, 0.45).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+		question_tween.tween_property(question_mark, "position:y", -33.0, 0.45).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN)
+	)
+	question_tween = tw_pop
 
 func _hide_question_mark() -> void:
-	if not question_mark.visible:
-		return
 	if question_tween and question_tween.is_valid():
 		question_tween.kill()
-		
-	question_tween = create_tween()
-	question_tween.tween_property(question_mark, "modulate:a", 0.0, 0.15)
-	question_tween.tween_callback(func():
+	if is_instance_valid(question_mark):
 		question_mark.visible = false
-	)
+		question_mark.scale = Vector2.ZERO
+		question_mark.position = Vector2(0, -36)
 
-func _pop_exclamation() -> void:
+func _pop_exclamation(display_duration: float = 2.0) -> void:
+	if exclamation_tween and exclamation_tween.is_valid():
+		exclamation_tween.kill()
+		
 	exclamation_mark.visible = true
 	exclamation_mark.scale = Vector2.ZERO
+	exclamation_mark.position = Vector2(0, -36)
+	exclamation_mark.modulate.a = 1.0
 	
-	if exclamation_tween and exclamation_tween.is_valid():
-		exclamation_tween.kill()
-		
 	exclamation_tween = create_tween()
-	exclamation_tween.set_parallel(true)
+	# 1. Pop เด้งขยายขึ้นมาอย่างชัดเจน (0.22s ด้วย TRANS_BACK)
 	exclamation_tween.tween_property(exclamation_mark, "scale", Vector2.ONE, 0.22).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-	exclamation_tween.tween_property(exclamation_mark, "modulate:a", 1.0, 0.15)
+	
+	# 2. ค้างไว้ประมาณ 2 วินาทีให้ผู้เล่นเห็นอาการตกใจอย่างชัดเจน แล้วค่อยๆ จางหายไปอัตโนมัติ
+	if display_duration > 0.0:
+		exclamation_tween.tween_interval(display_duration)
+		exclamation_tween.tween_property(exclamation_mark, "modulate:a", 0.0, 0.35)
+		exclamation_tween.tween_callback(func():
+			if is_instance_valid(exclamation_mark):
+				exclamation_mark.visible = false
+				exclamation_mark.scale = Vector2.ZERO
+				exclamation_mark.position = Vector2(0, -36)
+		)
 
 func _hide_exclamation() -> void:
-	if not exclamation_mark.visible:
-		return
 	if exclamation_tween and exclamation_tween.is_valid():
 		exclamation_tween.kill()
-		
-	exclamation_tween = create_tween()
-	exclamation_tween.tween_property(exclamation_mark, "modulate:a", 0.0, 0.15)
-	exclamation_tween.tween_callback(func():
+	if is_instance_valid(exclamation_mark):
 		exclamation_mark.visible = false
-	)
+		exclamation_mark.scale = Vector2.ZERO
+		exclamation_mark.position = Vector2(0, -36)
 
 func _show_continue_arrow() -> void:
 	if not continue_arrow:
@@ -351,11 +425,31 @@ func _finish_cutscene() -> void:
 	
 	if entrance_tween and entrance_tween.is_valid():
 		entrance_tween.kill()
+	if warp_tween and warp_tween.is_valid():
+		warp_tween.kill()
+	if hop_tween and hop_tween.is_valid():
+		hop_tween.kill()
 	if typewriter_tween and typewriter_tween.is_valid():
 		typewriter_tween.kill()
 	if arrow_tween and arrow_tween.is_valid():
 		arrow_tween.kill()
+	if question_tween and question_tween.is_valid():
+		question_tween.kill()
+	if exclamation_tween and exclamation_tween.is_valid():
+		exclamation_tween.kill()
 		
+	vel.position.y = 680.0
+	var vel_shadow = vel.get_node_or_null("DropShadow")
+	if vel_shadow:
+		vel_shadow.position.y = 38.5
+		vel_shadow.scale = Vector2(0.65, 0.45)
+		vel_shadow.modulate.a = 1.0
+		
+	mewla.visible = true
+	mewla.position = Vector2(1220.0, 680.0)
+	mewla.scale = Vector2(4.0, 4.0)
+	mewla.modulate = Color.WHITE
+	
 	_hide_continue_arrow()
 	_hide_question_mark()
 	_hide_exclamation()
@@ -368,4 +462,16 @@ func _finish_cutscene() -> void:
 			get_tree().change_scene_to_file(next_scene_path)
 		else:
 			push_warning("Next scene path not found: %s" % next_scene_path)
+	)
+
+func _play_sfx(stream: AudioStream, pitch_scale: float = 1.0) -> void:
+	if not stream:
+		return
+	var player = AudioStreamPlayer.new()
+	player.stream = stream
+	player.pitch_scale = pitch_scale
+	add_child(player)
+	player.play()
+	player.finished.connect(func():
+		player.queue_free()
 	)

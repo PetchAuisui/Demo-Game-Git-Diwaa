@@ -483,11 +483,25 @@ position = Vector2(0, 38.5)
 scale = Vector2(0.65, 0.45)
 texture = ExtResource("17_shadow")
 
-[node name="ExclamationMark" type="Sprite2D" parent="Stage/Vel" unique_id=1633430791]
+[node name="ExclamationMark" type="Node2D" parent="Stage/Vel" unique_id=1633430791]
 visible = false
+position = Vector2(0, -36)
+
+[node name="Label" type="Label" parent="Stage/Vel/ExclamationMark" unique_id=1633430792]
 texture_filter = 1
-position = Vector2(0, -60)
-texture = ExtResource("8_exclamation")
+offset_left = -20.0
+offset_top = -20.0
+offset_right = 20.0
+offset_bottom = 20.0
+pivot_offset = Vector2(20, 20)
+theme_override_colors/font_color = Color(0.92, 0.36, 0.36, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 4
+theme_override_fonts/font = ExtResource("14_font")
+theme_override_font_sizes/font_size = 20
+text = "!"
+horizontal_alignment = 1
+vertical_alignment = 1
 
 [node name="QuestionMark" type="Node2D" parent="Stage/Vel" unique_id=1633430801]
 visible = false
@@ -510,6 +524,7 @@ horizontal_alignment = 1
 vertical_alignment = 1
 
 [node name="Mewla" type="AnimatedSprite2D" parent="Stage" unique_id=1855813351]
+visible = false
 texture_filter = 1
 position = Vector2(1220, 680)
 scale = Vector2(4, 4)
