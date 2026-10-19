@@ -47,8 +47,7 @@ const DIALOGUES: Array[Dictionary] = [
 	{
 		"speaker": "มิวรา",
 		"text": "ยินดีต้อนรับสู่กิลด์แห่งหอคอยเวท",
-		"mewla_anim": "talk",
-		"vel_anim": "shock"
+		"mewla_anim": "talk"
 	},
 	{
 		"speaker": "เวล",
@@ -83,8 +82,11 @@ var question_tween: Tween = null
 var exclamation_tween: Tween = null
 var arrow_tween: Tween = null
 var entrance_tween: Tween = null
+var stand_tween: Tween = null
 var warp_tween: Tween = null
+var reaction_tween: Tween = null
 var hop_tween: Tween = null
+var open_box_tween: Tween = null
 
 func _ready() -> void:
 	# 1. ตั้งค่าเริ่มต้นหน้าจอ
@@ -108,8 +110,12 @@ func _ready() -> void:
 	mewla.scale = Vector2.ZERO
 	mewla.modulate = Color(1, 1, 1, 0)
 	
+	exclamation_mark.visible = false
 	exclamation_mark.scale = Vector2.ONE
+	exclamation_mark.position = Vector2(0, -42)
+	question_mark.visible = false
 	question_mark.scale = Vector2.ONE
+	question_mark.position = Vector2(0, -36)
 	
 	# เล่นอนิเมชันแบ็กกราวด์ลูปวน
 	if anim_player.has_animation("background_loop"):
@@ -169,20 +175,25 @@ func _start_cutscene_sequence() -> void:
 		vel.play("breathe")
 		vel.set_frame_and_progress(0, 0.0)
 		
-		# รอจังหวะสั้นๆ (0.3 วินาที) ก่อนที่มิวราจะวาร์ปโผล่มาอย่างกะทันหัน
-		var delay_tween = create_tween()
-		delay_tween.tween_interval(0.3)
-		delay_tween.tween_callback(_warp_in_mewla_and_shock_vel)
+		# ยืนนิ่งหายใจปกติสักครู่ (1.0 วินาที) ก่อนที่มิวราจะเริ่มปรากฏตัว
+		if stand_tween and stand_tween.is_valid():
+			stand_tween.kill()
+		stand_tween = create_tween()
+		stand_tween.tween_interval(1.0)
+		stand_tween.tween_callback(func():
+			if not is_transitioning:
+				_warp_in_mewla_and_shock_vel()
+		)
 	)
 
 func _warp_in_mewla_and_shock_vel() -> void:
 	if is_transitioning:
 		return
 		
-	# 1. มิวราปรากฏตัวอย่างนุ่มนวลและสมูท (Fade-in + ค่อยๆ เลื่อนลงมาแตะพื้นอย่างแผ่วเบา ไร้เสียง)
+	# 1. มิวราเริ่มปรากฏตัวอย่างนุ่มนวลและสมูท (Fade-in + ค่อยๆ เลื่อนลงมาแตะพื้นอย่างแผ่วเบา ไร้เสียง 0.75s)
 	mewla.visible = true
 	mewla.scale = Vector2(4.0, 4.0)
-	mewla.position = Vector2(1220.0, 660.0)
+	mewla.position = Vector2(1220.0, 655.0)
 	mewla.modulate = Color(1.0, 1.0, 1.0, 0.0)
 	mewla.play("idle")
 	
@@ -190,12 +201,28 @@ func _warp_in_mewla_and_shock_vel() -> void:
 		warp_tween.kill()
 		
 	warp_tween = create_tween().set_parallel(true)
-	warp_tween.tween_property(mewla, "modulate:a", 1.0, 0.55).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
-	warp_tween.tween_property(mewla, "position:y", 680.0, 0.55).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	warp_tween.tween_property(mewla, "modulate:a", 1.0, 0.75).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	warp_tween.tween_property(mewla, "position:y", 680.0, 0.75).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
 	
-	# 2. เวลตกใจ: หน้า shock + กระโดดลอยตัวสูงแบบปรมาจารย์ใน ending-cutscene + เครื่องหมาย ! ขอบดำข้างในแดงไม่มาก ค้าง 2 วิ
+	# 2. เวลสังเกตเห็นมิวรากำลังปรากฏตัว (หน่วง 0.35s หลังจากมิวราเริ่มเฟดขึ้นมาจนเห็นตัวชัดเจน) แล้วค่อยตกใจกระโดด
+	if reaction_tween and reaction_tween.is_valid():
+		reaction_tween.kill()
+		
+	reaction_tween = create_tween()
+	reaction_tween.tween_interval(0.35)
+	reaction_tween.tween_callback(func():
+		if is_transitioning:
+			return
+		_trigger_vel_shock_jump()
+	)
+
+func _trigger_vel_shock_jump() -> void:
+	if is_transitioning:
+		return
+		
+	# ทำหน้า shock + ตัวอักษร ! เด้งลอยขึ้นไปพร้อมกัน
 	vel.play("shock")
-	_pop_exclamation(2.0)
+	_start_exclamation_jump()
 	
 	if hop_tween and hop_tween.is_valid():
 		hop_tween.kill()
@@ -203,25 +230,37 @@ func _warp_in_mewla_and_shock_vel() -> void:
 	var vel_shadow = vel.get_node_or_null("DropShadow")
 	
 	hop_tween = create_tween()
-	# พุ่งลอยขึ้นสู่อากาศสูงแบบกระโดด (0.38s) ด้วย TRANS_QUAD, EASE_OUT
-	hop_tween.tween_property(vel, "position:y", 610.0, 0.38).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	# พุ่งลอยขึ้นสู่อากาศสูงแบบกระโดด (0.42s) ด้วย TRANS_QUAD, EASE_OUT
+	hop_tween.tween_property(vel, "position:y", 610.0, 0.42).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 	if vel_shadow:
-		hop_tween.parallel().tween_property(vel_shadow, "scale", Vector2(0.45, 0.30), 0.38)
-		hop_tween.parallel().tween_property(vel_shadow, "position:y", 38.5 + (680.0 - 610.0), 0.38)
-		hop_tween.parallel().tween_property(vel_shadow, "modulate:a", 0.4, 0.38)
+		hop_tween.parallel().tween_property(vel_shadow, "scale", Vector2(0.45, 0.30), 0.42)
+		hop_tween.parallel().tween_property(vel_shadow, "position:y", 38.5 + (680.0 - 610.0), 0.42)
+		hop_tween.parallel().tween_property(vel_shadow, "modulate:a", 0.4, 0.42)
 		
-	# ตกลงมายืนบนพื้น (0.30s) ด้วย TRANS_QUAD, EASE_IN
-	hop_tween.chain().tween_property(vel, "position:y", 680.0, 0.30).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	# ตกลงมายืนบนพื้น (0.36s) ด้วย TRANS_QUAD, EASE_IN
+	hop_tween.chain().tween_property(vel, "position:y", 680.0, 0.36).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
 	if vel_shadow:
-		hop_tween.parallel().tween_property(vel_shadow, "scale", Vector2(0.65, 0.45), 0.30)
-		hop_tween.parallel().tween_property(vel_shadow, "position:y", 38.5, 0.30)
-		hop_tween.parallel().tween_property(vel_shadow, "modulate:a", 1.0, 0.30)
+		hop_tween.parallel().tween_property(vel_shadow, "scale", Vector2(0.65, 0.45), 0.36)
+		hop_tween.parallel().tween_property(vel_shadow, "position:y", 38.5, 0.36)
+		hop_tween.parallel().tween_property(vel_shadow, "modulate:a", 1.0, 0.36)
+		
+	# เมื่อลงถึงพื้นปุ๊บ: ตัวอักษร ! หายไปทันที และเวลกลับไปทำท่าเดิมทันที ไม่ตกใจค้าง
+	hop_tween.chain().tween_callback(func():
+		_hide_exclamation_landing()
+		vel_custom_anim = ""
+		vel_seq_step = 0
+		vel.play("breathe")
+		vel.set_frame_and_progress(0, 0.0)
+	)
 	
-	# 3. หน่วงเวลาให้ผู้เล่นเห็นรีแอ็กชันตกใจชัดเจน (1.3s) ก่อนเปิดกล่องข้อความ
-	var open_tween = create_tween()
-	open_tween.tween_interval(1.3)
-	open_tween.tween_callback(func():
-		_open_dialogue_box()
+	# 3. หน่วงเวลาเล็กน้อยหลังแลนดิ้งสู่พื้น (0.65s) ให้ผู้เล่นเห็นเวลยืนหายใจปกติและตั้งสติได้ ก่อนเปิดกล่องข้อความ
+	if open_box_tween and open_box_tween.is_valid():
+		open_box_tween.kill()
+	open_box_tween = create_tween()
+	open_box_tween.tween_interval(0.42 + 0.36 + 0.65)
+	open_box_tween.tween_callback(func():
+		if not is_transitioning:
+			_open_dialogue_box()
 	)
 
 func _open_dialogue_box() -> void:
@@ -294,9 +333,10 @@ func _show_dialogue(index: int) -> void:
 		_pop_question_mark()
 	elif emote == "exclamation":
 		_hide_question_mark()
-		_pop_exclamation(0.8)
+		_pop_exclamation()
 	else:
 		_hide_question_mark()
+		_hide_exclamation()
 		
 	# Typewriter effect
 	if typewriter_tween and typewriter_tween.is_valid():
@@ -361,29 +401,41 @@ func _hide_question_mark() -> void:
 		question_mark.scale = Vector2.ZERO
 		question_mark.position = Vector2(0, -36)
 
-func _pop_exclamation(display_duration: float = 2.0) -> void:
+func _start_exclamation_jump() -> void:
 	if exclamation_tween and exclamation_tween.is_valid():
 		exclamation_tween.kill()
 		
 	exclamation_mark.visible = true
 	exclamation_mark.scale = Vector2.ZERO
-	exclamation_mark.position = Vector2(0, -36)
+	exclamation_mark.position = Vector2(0, -42)
 	exclamation_mark.modulate.a = 1.0
 	
 	exclamation_tween = create_tween()
-	# 1. Pop เด้งขยายขึ้นมาอย่างชัดเจน (0.22s ด้วย TRANS_BACK)
-	exclamation_tween.tween_property(exclamation_mark, "scale", Vector2.ONE, 0.22).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	# 1. Pop เด้งขยายขึ้นมา (0.20s) พร้อมพุ่งลอยขึ้นสู่อากาศตามเวล (ไปที่ y = -52) ใน 0.42s
+	exclamation_tween.tween_property(exclamation_mark, "scale", Vector2(1.15, 1.15), 0.20).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	exclamation_tween.parallel().tween_property(exclamation_mark, "position:y", -52.0, 0.42).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 	
-	# 2. ค้างไว้ประมาณ 2 วินาทีให้ผู้เล่นเห็นอาการตกใจอย่างชัดเจน แล้วค่อยๆ จางหายไปอัตโนมัติ
-	if display_duration > 0.0:
-		exclamation_tween.tween_interval(display_duration)
-		exclamation_tween.tween_property(exclamation_mark, "modulate:a", 0.0, 0.35)
-		exclamation_tween.tween_callback(func():
-			if is_instance_valid(exclamation_mark):
-				exclamation_mark.visible = false
-				exclamation_mark.scale = Vector2.ZERO
-				exclamation_mark.position = Vector2(0, -36)
-		)
+	# 2. ตัวอักษรลอยตามความเฉื่อยลงมาพร้อมการแลนดิ้งของเวลสู่ระดับปกติ (y = -42) ใน 0.36s
+	exclamation_tween.chain().tween_property(exclamation_mark, "scale", Vector2.ONE, 0.20).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	exclamation_tween.parallel().tween_property(exclamation_mark, "position:y", -42.0, 0.36).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+
+func _hide_exclamation_landing() -> void:
+	if exclamation_tween and exclamation_tween.is_valid():
+		exclamation_tween.kill()
+	if not is_instance_valid(exclamation_mark):
+		return
+	# ลงถึงพื้นปุ๊บ ค่อยๆ ย่อตัวหายวับไปอย่างรวดเร็ว (0.15s)
+	exclamation_tween = create_tween().set_parallel(true)
+	exclamation_tween.tween_property(exclamation_mark, "scale", Vector2.ZERO, 0.15).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	exclamation_tween.tween_property(exclamation_mark, "modulate:a", 0.0, 0.15)
+	exclamation_tween.chain().tween_callback(func():
+		if is_instance_valid(exclamation_mark):
+			exclamation_mark.visible = false
+			exclamation_mark.position = Vector2(0, -42)
+	)
+
+func _pop_exclamation() -> void:
+	_start_exclamation_jump()
 
 func _hide_exclamation() -> void:
 	if exclamation_tween and exclamation_tween.is_valid():
@@ -391,7 +443,7 @@ func _hide_exclamation() -> void:
 	if is_instance_valid(exclamation_mark):
 		exclamation_mark.visible = false
 		exclamation_mark.scale = Vector2.ZERO
-		exclamation_mark.position = Vector2(0, -36)
+		exclamation_mark.position = Vector2(0, -42)
 
 func _show_continue_arrow() -> void:
 	if not continue_arrow:
@@ -425,10 +477,16 @@ func _finish_cutscene() -> void:
 	
 	if entrance_tween and entrance_tween.is_valid():
 		entrance_tween.kill()
+	if stand_tween and stand_tween.is_valid():
+		stand_tween.kill()
 	if warp_tween and warp_tween.is_valid():
 		warp_tween.kill()
+	if reaction_tween and reaction_tween.is_valid():
+		reaction_tween.kill()
 	if hop_tween and hop_tween.is_valid():
 		hop_tween.kill()
+	if open_box_tween and open_box_tween.is_valid():
+		open_box_tween.kill()
 	if typewriter_tween and typewriter_tween.is_valid():
 		typewriter_tween.kill()
 	if arrow_tween and arrow_tween.is_valid():
