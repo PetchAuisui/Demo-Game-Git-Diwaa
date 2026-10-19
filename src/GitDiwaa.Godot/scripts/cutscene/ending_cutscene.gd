@@ -8,7 +8,7 @@ extends Node2D
 ## 5. การกลับมาของปรมาจารย์ (หลุมดำเปิด เวลสะดุ้งกระโดด หนังสือเด้งลอยค้างแล้วรับกลับมา -> อาจารย์พุ่งขึ้นมา)
 ## 6. ช่องการ์ตูนเฉลยความจริง (ขยายกรอบใหญ่ ซูมอาจารย์เด่นชัด ฉากหลังมืด 65% อาจารย์หลงลืมตกหลุมตัวเอง)
 ## 7. กล่องบทสนทนา (อาจารย์ยิ้มขี้เล่น เวลยืนนิ่ง 1 วินาทีเน้นอารมณ์ ก่อนถอนหายใจ)
-## 8. บทสรุปการเดินทางของเวล (ค่อย ๆ เฟดมืดสนิท -> ข้อความสรุปขึ้นทีละบรรทัด -> รอ 2 วินาทีหลังข้อความขึ้นครบ -> คลิกเพื่อไปต่อ -> ฉากขอบคุณและเครดิต)
+## 8. บทสรุปการเดินทางของเวล (ค่อย ๆ เฟดมืดสนิท -> ข้อความสรุปพิมพ์ขึ้นทีละบรรทัดด้วย Typewriter Effect -> ข้อความขึ้นครบแล้วจึงแสดง "คลิกหน้าจอเพื่อไปต่อ" -> คลิกเพื่อไปต่อ -> ฉากขอบคุณและเครดิต)
 
 @export var start_scene_path: String = "res://Scenes/StartView.tscn"
 
@@ -96,6 +96,7 @@ var shard_initial_positions: Array[Vector2] = []
 var current_stage: int = 1
 var is_waiting_dialogue: bool = false
 var is_waiting_epilogue: bool = false
+var is_epilogue_typing: bool = false
 var is_waiting_comic: bool = false
 var dialogue_callback: Callable = Callable()
 var is_fast_forwarding: bool = false
@@ -212,6 +213,14 @@ func _input(event: InputEvent) -> void:
 			_advance_dialogue()
 		return
 	
+	if is_epilogue_typing:
+		if event.is_action_pressed("ui_accept") or \
+		   (event is InputEventKey and event.pressed and not event.echo and (event.keycode == KEY_SPACE or event.keycode == KEY_ENTER)) or \
+		   (event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT):
+			get_viewport().set_input_as_handled()
+			_skip_epilogue_typewriter()
+		return
+	
 	if is_waiting_epilogue:
 		if event.is_action_pressed("ui_accept") or \
 		   (event is InputEventKey and event.pressed and not event.echo and (event.keycode == KEY_SPACE or event.keycode == KEY_ENTER)) or \
@@ -270,19 +279,29 @@ func _reset_all_stages() -> void:
 	if summary_container:
 		summary_container.modulate.a = 1.0
 	if summary_line1:
-		summary_line1.modulate.a = 0.0
+		summary_line1.modulate.a = 1.0
+		summary_line1.visible_characters = -1
+		summary_line1.visible_ratio = 0.0
 	if summary_line2:
-		summary_line2.modulate.a = 0.0
+		summary_line2.modulate.a = 1.0
+		summary_line2.visible_characters = -1
+		summary_line2.visible_ratio = 0.0
 	if summary_line3:
-		summary_line3.modulate.a = 0.0
+		summary_line3.modulate.a = 1.0
+		summary_line3.visible_characters = -1
+		summary_line3.visible_ratio = 0.0
 	if the_end_title:
 		the_end_title.visible = false
 		the_end_title.modulate.a = 0.0
 	if the_end_continue_prompt:
+		the_end_continue_prompt.text = "คลิกหน้าจอเพื่อไปต่อ"
 		the_end_continue_prompt.modulate.a = 0.0
+		the_end_continue_prompt.visible = false
 	if comic_continue_prompt:
 		comic_continue_prompt.modulate.a = 0.0
 	is_waiting_comic = false
+	is_epilogue_typing = false
+	is_waiting_epilogue = false
 	if comic_pulse_tween and comic_pulse_tween.is_valid():
 		comic_pulse_tween.kill()
 	if epilogue_pulse_tween and epilogue_pulse_tween.is_valid():
@@ -941,8 +960,9 @@ func _stop_sigh_puff() -> void:
 
 ## =============================================================
 ## ฉากที่ 8: บทสรุปการเดินทางของเวล (Epilogue Screen)
-## เริ่มด้วยฉากสีปกติ 1.5s -> ค่อย ๆ เฟดมืดสนิท (Pure Black) ใน 1.2s -> ข้อความสรุปขึ้นทีละบรรทัด
-## -> ลบ THE END ออก -> รอ 2 วินาทีหลังข้อความขึ้นครบ -> แสดงคลิกเพื่อไปต่อ
+## เริ่มด้วยฉากสีปกติ 1.5s -> ค่อย ๆ เฟดมืดสนิท (Pure Black) ใน 1.2s
+## -> ข้อความสรุปพิมพ์ขึ้นทีละบรรทัดด้วย Typewriter Effect
+## -> ข้อความขึ้นครบแล้วจึงแสดง "คลิกหน้าจอเพื่อไปต่อ" ขึ้นทีหลัง
 ## =============================================================
 func play_stage_8_epilogue() -> void:
 	current_stage = 8
@@ -950,6 +970,7 @@ func play_stage_8_epilogue() -> void:
 	is_fast_forwarding = false
 	Engine.time_scale = 1.0
 	is_waiting_epilogue = false
+	is_epilogue_typing = false
 	
 	_stop_sigh_puff()
 	if anger_mark:
@@ -973,18 +994,36 @@ func play_stage_8_epilogue() -> void:
 	the_end_container.visible = true
 	the_end_container.modulate = Color(1, 1, 1, 1)
 	
-	# เริ่มด้วยฉากสีปกติ และรีเซ็ตความโปร่งใสของข้อความทั้งหมด
+	# เริ่มด้วยฉากสีปกติ และเตรียมข้อความสรุปสำหรับ Typewriter Effect
 	the_end_dark_overlay.color = Color(0, 0, 0, 0.0)
 	if summary_container:
 		summary_container.modulate.a = 1.0
-	summary_line1.modulate.a = 0.0
-	summary_line2.modulate.a = 0.0
-	summary_line3.modulate.a = 0.0
+	
+	summary_line1.modulate.a = 1.0
+	summary_line1.visible_characters = -1
+	summary_line1.visible_ratio = 0.0
+	
+	summary_line2.modulate.a = 1.0
+	summary_line2.visible_characters = -1
+	summary_line2.visible_ratio = 0.0
+	
+	summary_line3.modulate.a = 1.0
+	summary_line3.visible_characters = -1
+	summary_line3.visible_ratio = 0.0
+	
 	if is_instance_valid(the_end_title):
 		the_end_title.visible = false
 		the_end_title.modulate.a = 0.0
-	the_end_continue_prompt.modulate.a = 0.0
 	
+	# ข้อความ "คลิกหน้าจอเพื่อไปต่อ" ซ่อนไว้ก่อน จะแสดงขึ้นมาหลังจากข้อความสรุปขึ้นครบทุกบรรทัดแล้ว
+	the_end_continue_prompt.text = "คลิกหน้าจอเพื่อไปต่อ"
+	the_end_continue_prompt.modulate.a = 0.0
+	the_end_continue_prompt.visible = false
+	
+	if epilogue_pulse_tween and epilogue_pulse_tween.is_valid():
+		epilogue_pulse_tween.kill()
+	if epilogue_auto_tween and epilogue_auto_tween.is_valid():
+		epilogue_auto_tween.kill()
 	if epilogue_seq_tween and epilogue_seq_tween.is_valid():
 		epilogue_seq_tween.kill()
 	epilogue_seq_tween = create_tween()
@@ -1002,32 +1041,77 @@ func play_stage_8_epilogue() -> void:
 	)
 	epilogue_seq_tween.tween_interval(0.3)
 	
-	# 3. ข้อความค่อย ๆ เฟดขึ้นทีละบรรทัดเหมือนเดิม บรรทัดละ 0.6 วินาที (เว้นช่วงระหว่างบรรทัด 0.8 วินาที)
-	epilogue_seq_tween.tween_property(summary_line1, "modulate:a", 1.0, 0.6).set_trans(Tween.TRANS_SINE)
-	epilogue_seq_tween.tween_interval(0.8)
-	epilogue_seq_tween.tween_property(summary_line2, "modulate:a", 1.0, 0.6).set_trans(Tween.TRANS_SINE)
-	epilogue_seq_tween.tween_interval(0.8)
-	epilogue_seq_tween.tween_property(summary_line3, "modulate:a", 1.0, 0.6).set_trans(Tween.TRANS_SINE)
-	
-	# 4. ลบคำว่า THE END ออกไป และหลังจากข้อความขึ้นครบ 2 วินาที จึงแสดงข้อความคลิกเพื่อไปต่อ
-	epilogue_seq_tween.tween_interval(2.0)
+	# 3. เริ่มพิมพ์ข้อความสรุปทีละบรรทัดด้วย Typewriter Effect
 	epilogue_seq_tween.tween_callback(func():
+		is_epilogue_typing = true
+	)
+	
+	# บรรทัดที่ 1: "แม้จุดเริ่มต้นจะเกิดจากความโก๊ะของปรมาจารย์" (~42 ตัวอักษร)
+	var dur1: float = clampf(float(summary_line1.text.length()) * 0.035, 1.0, 1.6)
+	epilogue_seq_tween.tween_property(summary_line1, "visible_ratio", 1.0, dur1)
+	epilogue_seq_tween.tween_interval(0.4)
+	
+	# บรรทัดที่ 2: "แต่เวลก็ได้เติบโตและกอบกู้คัมภีร์เวทต้นกำเนิด" (~42 ตัวอักษร)
+	var dur2: float = clampf(float(summary_line2.text.length()) * 0.035, 1.0, 1.6)
+	epilogue_seq_tween.tween_property(summary_line2, "visible_ratio", 1.0, dur2)
+	epilogue_seq_tween.tween_interval(0.4)
+	
+	# บรรทัดที่ 3: "คืนความสงบสุขให้แก่อาณาจักรได้สำเร็จ" (~34 ตัวอักษร)
+	var dur3: float = clampf(float(summary_line3.text.length()) * 0.035, 0.9, 1.4)
+	epilogue_seq_tween.tween_property(summary_line3, "visible_ratio", 1.0, dur3)
+	
+	# 4. หลังจากข้อความสรุปขึ้นครบทุกบรรทัดแล้ว ให้หยุดรอ 1.0 วินาที เพื่อให้ผู้เล่นอ่านอย่างเต็มตา
+	#    จากนั้นจึงแสดงข้อความ "คลิกหน้าจอเพื่อไปต่อ" ขึ้นมาทีหลัง
+	epilogue_seq_tween.tween_interval(1.0)
+	epilogue_seq_tween.tween_callback(func():
+		is_epilogue_typing = false
+		the_end_continue_prompt.visible = true
 		var tw_prompt = create_tween()
 		tw_prompt.tween_property(the_end_continue_prompt, "modulate:a", 1.0, 0.5).set_trans(Tween.TRANS_SINE)
 		tw_prompt.tween_callback(func():
 			_start_epilogue_pulse()
 			is_waiting_epilogue = true
-			
-			# เริ่มนับเวลาถอยหลัง 8 วินาทีหลังจากข้อความทั้งหมดแสดงผลเต็มที่แล้ว เผื่อผู้เล่นไม่คลิก
-			if epilogue_auto_tween and epilogue_auto_tween.is_valid():
-				epilogue_auto_tween.kill()
-			epilogue_auto_tween = create_tween()
-			epilogue_auto_tween.tween_interval(8.0)
-			epilogue_auto_tween.tween_callback(func():
-				if is_waiting_epilogue:
-					_advance_epilogue_to_credits()
-			)
+			_start_epilogue_auto_timer()
 		)
+	)
+
+func _skip_epilogue_typewriter() -> void:
+	if not is_epilogue_typing:
+		return
+	is_epilogue_typing = false
+	
+	if epilogue_seq_tween and epilogue_seq_tween.is_valid():
+		epilogue_seq_tween.kill()
+	
+	# แสดงข้อความทั้ง 3 บรรทัดขึ้นครบเต็มทันที
+	summary_line1.visible_characters = -1
+	summary_line1.visible_ratio = 1.0
+	summary_line2.visible_characters = -1
+	summary_line2.visible_ratio = 1.0
+	summary_line3.visible_characters = -1
+	summary_line3.visible_ratio = 1.0
+	
+	# แสดงข้อความ "คลิกหน้าจอเพื่อไปต่อ" ขึ้นมาทันที
+	the_end_continue_prompt.visible = true
+	if epilogue_pulse_tween and epilogue_pulse_tween.is_valid():
+		epilogue_pulse_tween.kill()
+	
+	var tw_prompt = create_tween()
+	tw_prompt.tween_property(the_end_continue_prompt, "modulate:a", 1.0, 0.3).set_trans(Tween.TRANS_SINE)
+	tw_prompt.tween_callback(func():
+		_start_epilogue_pulse()
+		is_waiting_epilogue = true
+		_start_epilogue_auto_timer()
+	)
+
+func _start_epilogue_auto_timer() -> void:
+	if epilogue_auto_tween and epilogue_auto_tween.is_valid():
+		epilogue_auto_tween.kill()
+	epilogue_auto_tween = create_tween()
+	epilogue_auto_tween.tween_interval(8.0)
+	epilogue_auto_tween.tween_callback(func():
+		if is_waiting_epilogue:
+			_advance_epilogue_to_credits()
 	)
 
 ## แอนิเมชันกระพริบนุ่มนวลสำหรับข้อความคลิกเพื่อไปต่อ
@@ -1050,6 +1134,7 @@ func _advance_epilogue_to_credits() -> void:
 	if not is_waiting_epilogue:
 		return
 	is_waiting_epilogue = false
+	is_epilogue_typing = false
 	
 	if epilogue_pulse_tween and epilogue_pulse_tween.is_valid():
 		epilogue_pulse_tween.kill()

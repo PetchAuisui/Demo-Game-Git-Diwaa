@@ -1034,7 +1034,7 @@ theme_override_colors/font_outline_color = Color(0, 0, 0, 0.85)
 theme_override_constants/outline_size = 4
 theme_override_fonts/font = ExtResource("39_font")
 theme_override_font_sizes/font_size = 22
-text = "คลิกเพื่อไปต่อ"
+text = "คลิกหน้าจอเพื่อไปต่อ"
 horizontal_alignment = 1
 
 [node name="CreditsContainer" type="Control" parent="MagicStoryUI" unique_id=305941744]
