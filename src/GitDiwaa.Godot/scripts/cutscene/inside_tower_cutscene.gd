@@ -38,10 +38,6 @@ const VEL_IDLE_SEQ: Array[String] = ["breathe", "breathe_blink", "breathe", "bre
 var vel_seq_step: int = 0
 var vel_custom_anim: String = ""
 
-# เสียงประกอบ (Sound Effects)
-const SFX_CAT = preload("res://assets/audio/sfx_cat_meow.wav")
-const SFX_NEXT = preload("res://assets/audio/sfx_dialogue_next.wav")
-
 # Dialogue Script Data (บทสนทนาประจำฉาก)
 const DIALOGUES: Array[Dictionary] = [
 	{
@@ -58,8 +54,7 @@ const DIALOGUES: Array[Dictionary] = [
 	{
 		"speaker": "มิวรา",
 		"text": "“แมวไง เห็นก็รู้ปะ” ฉันมิวรา ผู้ดูแลกิลด์\nและเป็นคนที่จะสอนนายตั้งแต่พื้นฐาน",
-		"mewla_anim": "talk",
-		"sfx": "cat"
+		"mewla_anim": "talk"
 	},
 	{
 		"speaker": "มิวรา",
@@ -121,14 +116,18 @@ func _ready() -> void:
 	if anim_player.has_animation("background_loop"):
 		anim_player.play("background_loop")
 		
-	# เชื่อมต่อปุ่มข้าม (ปิด Focus เพื่อไม่ให้ Space/Enter เผลอกดโดนปุ่ม Skip)
+	# ระบบควบคุม Cutscene: ปุ่มเร่งความเร็ว (FF 2.5x) และปุ่ม [DEV] ข้าม ⏵⏵ (Esc)
+	var skip_ctrl = preload("res://scripts/cutscene/skip_cutscene_button.gd").new()
+	skip_ctrl.next_scene_path = next_scene_path
+	add_child(skip_ctrl)
 	if skip_button:
-		skip_button.focus_mode = Control.FOCUS_NONE
-		if not skip_button.pressed.is_connected(_on_skip_button_pressed):
-			skip_button.pressed.connect(_on_skip_button_pressed)
+		skip_button.visible = false
 		
 	# 2. เริ่มโฟลว์เดินเข้าฉาก
 	_start_cutscene_sequence()
+
+func _exit_tree() -> void:
+	Engine.time_scale = 1.0
 
 func _input(event: InputEvent) -> void:
 	if is_transitioning:
@@ -291,13 +290,6 @@ func _show_dialogue(index: int) -> void:
 	speaker_label.text = data["speaker"]
 	dialogue_label.text = data["text"]
 	dialogue_label.visible_ratio = 0.0
-	
-	# เสียง SFX ประจำประโยค
-	var sfx = data.get("sfx", "")
-	if sfx == "cat":
-		_play_sfx(SFX_CAT)
-	else:
-		_play_sfx(SFX_NEXT)
 	
 	# ปรับสีชื่อผู้พูดและท่าทางมิวรา พร้อมส่งต่อ frame และ progress ให้จังหวะขยับตัวไม่หลุดเฟส
 	var target_mewla_anim = data.get("mewla_anim", "talk")
@@ -516,20 +508,9 @@ func _finish_cutscene() -> void:
 	var finish_tween = create_tween()
 	finish_tween.tween_property(fade_overlay, "color:a", 1.0, 0.6)
 	finish_tween.tween_callback(func():
+		Engine.time_scale = 1.0
 		if next_scene_path != "" and ResourceLoader.exists(next_scene_path):
 			get_tree().change_scene_to_file(next_scene_path)
 		else:
 			push_warning("Next scene path not found: %s" % next_scene_path)
-	)
-
-func _play_sfx(stream: AudioStream, pitch_scale: float = 1.0) -> void:
-	if not stream:
-		return
-	var player = AudioStreamPlayer.new()
-	player.stream = stream
-	player.pitch_scale = pitch_scale
-	add_child(player)
-	player.play()
-	player.finished.connect(func():
-		player.queue_free()
 	)
