@@ -23,7 +23,11 @@ signal cutscene_finished
 
 func _ready() -> void:
 	Engine.time_scale = 1.0
-	add_child(preload("res://scripts/cutscene/skip_cutscene_button.gd").new())
+	# ฉากภาพหมู่บ้านบรรยากาศเปิดตัว ไม่มีบทสนทนา: เอาปุ่มเร่งออก เหลือเฉพาะปุ่มข้าม
+	var skip_ctrl = preload("res://scripts/cutscene/skip_cutscene_button.gd").new()
+	skip_ctrl.show_fast_forward = false
+	skip_ctrl.next_scene_path = "res://scenes/cutscene/intro_cutscene.tscn"
+	add_child(skip_ctrl)
 	_init_scene()
 	play_normal_sequence()
 
@@ -32,7 +36,7 @@ func _exit_tree() -> void:
 
 func _init_scene() -> void:
 	is_transitioning = false
-	can_fast_forward = true
+	can_fast_forward = false
 	is_fast_forwarding = false
 	Engine.time_scale = 1.0
 	
