@@ -440,7 +440,7 @@ modulate_color = Color(0.78, 0.74, 0.82, 1)
 
 [sub_resource type="FontVariation" id="FontVariation_speaker_bold"]
 base_font = ExtResource("14_font")
-variation_embolden = 0.3
+variation_embolden = 0.6
 
 
 [node name="InsideTowerCutscene" type="Node2D" unique_id=2028812501]
@@ -599,7 +599,7 @@ theme_override_colors/font_color = Color(0.941176, 0.823529, 0.45098, 1)
 theme_override_colors/font_outline_color = Color(0.07, 0.05, 0.09, 1)
 theme_override_constants/outline_size = 3
 theme_override_fonts/font = SubResource("FontVariation_speaker_bold")
-theme_override_font_sizes/font_size = 28
+theme_override_font_sizes/font_size = 30
 text = "มิวรา"
 
 [node name="DialogueLabel" type="Label" parent="MagicStoryUI/DialogueBox/Margin/VBox" unique_id=1071406824]

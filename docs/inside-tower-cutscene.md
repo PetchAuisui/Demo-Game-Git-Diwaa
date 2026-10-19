@@ -81,7 +81,7 @@ InsideTowerCutscene (Node2D) [Script: inside_tower_cutscene.gd]
 │   ├── DialogueBox (PanelContainer) [StyleBoxTexture: text dialog.png, Offset: L:-580, R:580, T:-216, B:-36]
 │   │   ├── Margin (MarginContainer) [Margin: L:36, T:24, R:48, B:16]
 │   │   │   └── VBox (VBoxContainer) [Separation: 12]
-│   │   │       ├── SpeakerLabel (Label) [ชื่อผู้พูด ตัวหนา TA-8-bit ขนาด 28 px สีทองหม่น #F0D273 / สีฟ้าอ่อน #7AC7FF]
+│   │   │       ├── SpeakerLabel (Label) [ชื่อผู้พูด ตัวหนา TA-8-bit ขนาด 30 px สีทองหม่น #F0D273 / สีฟ้าอ่อน #7AC7FF]
 │   │   │       └── DialogueLabel (Label) [ข้อความคำพูด ฟอนต์ TA-8-bit ขนาด 26 px สีขาวจั๊ว #FFFFFF, Outline 2px, Line Spacing 8px]
 │   │   └── ArrowOverlay (Control)
 │   │       └── ArrowWrapper (Control) [Anchors: Bottom-Right (offset: -48, -34, -22, -16)]
@@ -159,7 +159,8 @@ InsideTowerCutscene (Node2D) [Script: inside_tower_cutscene.gd]
    - ลูกศรไปต่อ (`ContinueArrow`) บรรจุอยู่ภายใน `ArrowWrapper` ซึ่งยึดหมุด (Anchor) ไว้ที่มุมขวาล่างของกล่องข้อความ (`anchors_preset = 3 / Bottom-Right`, `offset_left = -48, offset_top = -34, offset_right = -22, offset_bottom = -16`)
    - แอนิเมชันลอยเด้งดึ๋งถูกสั่ง Tween เฉพาะที่ `continue_arrow.position.y` (0.0 ถึง 4.0 px) เท่านั้น โดยไม่แก้ไขพิกัดของ `arrow_wrapper` เพื่อให้ตำแหน่งลูกศรตรึงอยู่ที่มุมขวาล่างของกล่องข้อความเสมอ เช่นเดียวกับฉาก `central_tower_cutscene`
 
-8. **มาตรฐานสีชื่อผู้พูด (Speaker Nameplate Color Theming):**
+8. **มาตรฐานสีและขนาดชื่อผู้พูด (Speaker Nameplate Color Theming & Sizing):**
+   - **ขนาดและความหนาของตัวอักษรชื่อผู้พูด (Font Size 30 px, Embolden 0.6):** ปรับขนาดขึ้นเป็น **30 px** และเพิ่มความหนาตัวอักษรผ่าน `FontVariation (variation_embolden = 0.6)` (เพิ่มจากเดิม 0.3 ที่บางเกินไป) เพื่อสร้างลำดับชั้นทางสายตา (Visual Hierarchy) ให้ชื่อผู้พูดเป็นตัวหนาชัดเจน โดดเด่นกว่าข้อความบทสนทนาขนาด 26 px อย่างเป็นธรรมชาติ โดยคงขนาดและความหนาเท่ากันทุกตัวละคร (ไม่ปรับเฉพาะตัวเอก เพื่อป้องกันอาการกล่องข้อความหรือชื่อกระตุกเมื่อสลับบทพูด)
    - **ตัวละครหลัก / ผู้เล่น (Player Protagonist):** แสดงผลด้วยสีฟ้าอ่อนสดใส `#7AC7FF` (`Color(0.48, 0.78, 1.0, 1.0)`) สีเดียวกับเสื้อฮู้ดของตัวเอก โดยปัจจุบันใช้ชื่อ **"เวล"** เป็นชื่อชั่วคราว (Placeholder) และเมื่อมีระบบให้ผู้เล่นตั้งชื่อตนเอง ชื่อที่ผู้เล่นตั้งจะได้รับสีฟ้าอ่อนนี้อัตโนมัติ
    - **มิวรา (Mewla - ผู้ดูแลกิลด์):** แสดงผลด้วยสีทองอบอุ่นสไตล์เวทมนตร์ `#F0D273` (`Color(0.941, 0.824, 0.451, 1.0)`)
    - **เส้นขอบตัวอักษร:** ขอบสีดำหนา 3px เท่ากันทุกตัวละคร เพื่อให้อ่านง่าย คมชัด และนำสายตาผู้เล่นให้ทราบทันทีว่าใครกำลังพูด โดยไม่ต้องเพ่งอ่านชื่อ
