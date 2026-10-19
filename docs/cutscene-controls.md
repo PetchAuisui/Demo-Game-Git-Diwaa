@@ -54,18 +54,21 @@
 
 ---
 
-## 4. รายการฉากที่ต้องติดตั้งใช้งาน (Where to Use)
+## 4. รายการฉากและการรองรับปุ่มควบคุม (Where to Use & Fast-Forward Support)
 
-คลาสคอมโพเนนต์นี้อยู่ที่ [`src/GitDiwaa.Godot/scripts/cutscene/skip_cutscene_button.gd`](file:///c:/Users/67030311/Documents/Game-Git-Diwaa/src/GitDiwaa.Godot/scripts/cutscene/skip_cutscene_button.gd) โดยถูกเรียกใช้งานในทุกฉากคัตซีนของเกม:
+คลาสคอมโพเนนต์นี้อยู่ที่ [`src/GitDiwaa.Godot/scripts/cutscene/skip_cutscene_button.gd`](file:///c:/Users/67030311/Documents/Game-Git-Diwaa/src/GitDiwaa.Godot/scripts/cutscene/skip_cutscene_button.gd) โดยถูกเรียกใช้งานตามความเหมาะสมของแต่ละฉาก:
 
-| ฉาก (Cutscene Scene) | ไฟล์สคริปต์ (Script Path) | ปลายทางเมื่อกดข้าม (Next Scene) |
-| :--- | :--- | :--- |
-| **1. ฉากเปิดหมู่บ้านสงบ** | `scripts/cutscene/cut_scence_normal.gd` | ฉากเปิดในห้องสมุด (`intro_cutscene.tscn`) |
-| **2. ฉากเปิดห้องสมุด** | `scripts/cutscene/intro_cutscene.gd` | ฉากวิกฤตภายนอกหอสมุด (`outside_cutscene.tscn`) |
-| **3. ฉากวิกฤตและหอคอย** | `scripts/cutscene/outside_cutscene.gd` | ฉากภายในหอคอยเวทมนตร์ (`inside_tower_cutscene.tscn`) |
-| **4. ฉากภายในหอคอย (เวลเจอมิวรา)** | `scripts/cutscene/inside_tower_cutscene.gd` | ด่านเกมเพลย์หอคอย (`SandboxGameView.tscn`) |
-| **5. ฉากหอคอยกลาง (เวลเจอผู้พิทักษ์)** | `scripts/cutscene/central_tower_cutscene.gd` | ด่านเกมเพลย์หอคอยกลาง (`SandboxGameView.tscn`) |
-| **6. ฉากจบเกมและเครดิต** | `scripts/cutscene/ending_cutscene.gd` | หน้าเมนูหลักของเกม (`StartView.tscn`) |
+| ฉาก (Cutscene Scene) | มีปุ่มเร่ง 2.5x? | มีปุ่มข้าม? | ปลายทางเมื่อกดข้าม (Next Scene) | เหตุผลในการแสดง/ซ่อนปุ่มเร่ง |
+| :--- | :---: | :---: | :--- | :--- |
+| **1. ฉากเปิดหมู่บ้านสงบ** (`cut_scence_normal.tscn`) | ❌ **ไม่มี** | ✅ มี | `intro_cutscene.tscn` | ฉากภาพนิ่งทัศนียภาพ ไม่มีบทพูด ไม่จำเป็นต้องเร่ง |
+| **2. ฉากเปิดห้องสมุด** (`intro_cutscene.tscn`) | ✅ **มี** (ซ่อนตอนอ่าน) | ✅ มี | `outside_cutscene.tscn` | เร่งอนิเมชัน 21s ได้ แต่ซ่อนปุ่มเมื่อขึ้นกระดาษมนตราให้อ่าน |
+| **3. ฉากวิกฤตและหอคอย** (`outside_cutscene.tscn`) | ❌ **ไม่มี** | ✅ มี | `inside_tower_cutscene.tscn` | ฉากคั่นทรานสิชันพายุและไตเติลชื่อเกม ไม่สามารถเร่งได้ |
+| **4. ฉากภายในหอคอย** (`inside_tower_cutscene.tscn`) | ✅ **มี** | ✅ มี | `SandboxGameView.tscn` | คัตซีนบทสนทนายาวเวลเจอมิวรา เร่งความเร็วการพิมพ์ได้ |
+| **5. ฉากหอคอยกลาง** (`central_tower_cutscene.tscn`) | ✅ **มี** | ✅ มี | `SandboxGameView.tscn` | คัตซีนบทสนทนายาวเวลเจอผู้พิทักษ์ เร่งความเร็วการพิมพ์ได้ |
+| **6. ฉากจบเกม** (`ending_cutscene.tscn`) | ✅ **มี** (ซ่อนตอนจบ) | ✅ มี | `StartView.tscn` | เร่งบทพูด Stage 1-7 ได้ และซ่อนปุ่มใน Stage 8-9 สรุปส่งท้าย |
+
+> [!NOTE]
+> ฉากที่**ไม่ใช่คัตซีน**ทั้งหมด เช่น `StartView` (หน้าเริ่มเกม), `SandboxGameView` (หน้าเล่นเกม/ฝึกสอน Git), และ `DressingRoomView` (ห้องแต่งตัว) **ไม่มีปุ่มเร่งความเร็วและปุ่มข้ามคัตซีน**
 
 ---
 

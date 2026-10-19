@@ -54,6 +54,7 @@ var is_fast_forwarding: bool = false
 var can_fast_forward: bool = true
 var tw_ex_bob: Tween = null
 var tw_paper_glow: Tween = null
+var skip_ctrl = null
 
 signal cutscene_finished
 
@@ -82,7 +83,9 @@ const SHARD_LANDING_POSITIONS: Array[Vector2] = [
 
 func _ready() -> void:
 	Engine.time_scale = 1.0
-	add_child(preload("res://scripts/cutscene/skip_cutscene_button.gd").new())
+	skip_ctrl = preload("res://scripts/cutscene/skip_cutscene_button.gd").new()
+	skip_ctrl.next_scene_path = "res://scenes/cutscene/outside_cutscene.tscn"
+	add_child(skip_ctrl)
 	_init_shards()
 	_reset_cutscene_state()
 	
@@ -100,17 +103,6 @@ func _ready() -> void:
 
 func _exit_tree() -> void:
 	Engine.time_scale = 1.0
-
-func _process(_delta: float) -> void:
-	if can_fast_forward and not can_continue and not is_continuing:
-		var wants_ff: bool = Input.is_key_pressed(KEY_SPACE) or \
-			Input.is_key_pressed(KEY_ENTER) or \
-			Input.is_key_pressed(KEY_SHIFT) or \
-			Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT)
-		
-		if wants_ff != is_fast_forwarding:
-			is_fast_forwarding = wants_ff
-			Engine.time_scale = 2.5 if wants_ff else 1.0
 
 func _input(event: InputEvent) -> void:
 	if not can_continue or is_continuing:
@@ -195,6 +187,8 @@ func _reset_cutscene_state() -> void:
 	can_fast_forward = true
 	is_fast_forwarding = false
 	Engine.time_scale = 1.0
+	if skip_ctrl:
+		skip_ctrl.set_fast_forward_visible(true)
 	if exclamation_mark:
 		exclamation_mark.visible = false
 		exclamation_mark.scale = Vector2.ZERO
@@ -383,6 +377,8 @@ func _on_pickup_shard() -> void:
 func _on_reveal_magic_text() -> void:
 	if not rune_container:
 		return
+	if skip_ctrl:
+		skip_ctrl.set_fast_forward_visible(false)
 	can_fast_forward = false
 	is_fast_forwarding = false
 	Engine.time_scale = 1.0

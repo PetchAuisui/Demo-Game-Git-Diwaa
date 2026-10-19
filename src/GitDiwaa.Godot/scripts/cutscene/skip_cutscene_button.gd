@@ -10,19 +10,21 @@ extends CanvasLayer
 ##   add_child(skip_ctrl)
 
 @export var next_scene_path: String = "res://Scenes/SandboxGameView.tscn"
+@export var show_fast_forward: bool = true
+@export var show_skip: bool = true
 
 var is_fast_forward: bool = false
 var _skipping: bool = false
 
 var container: HBoxContainer
-var ff_button: Button
-var ff_content: HBoxContainer
-var ff_arrow_wrapper: Control
-var ff_arrow_label: Label
-var ff_speed_label: Label
-var ff_bounce_tween: Tween
+var ff_button: Button = null
+var ff_content: HBoxContainer = null
+var ff_arrow_wrapper: Control = null
+var ff_arrow_label: Label = null
+var ff_speed_label: Label = null
+var ff_bounce_tween: Tween = null
 
-var dev_skip_button: Button
+var dev_skip_button: Button = null
 var font_res: Font = null
 
 func _ready() -> void:
@@ -42,68 +44,82 @@ func _ready() -> void:
 	add_child(container)
 	
 	# 1. ปุ่มเร่งความเร็ว (Fast-Forward: ⏵ 1.0x <-> ⏵⏵ 2.5x พร้อมแอนิเมชันลูกศรเด้งไปทางขวา)
-	ff_button = Button.new()
-	ff_button.focus_mode = Control.FOCUS_NONE
-	ff_button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
-	ff_button.custom_minimum_size = Vector2(105, 40)
-	
-	# กล่องจัดเนื้อหาภายในปุ่ม (แยกกล่องลูกศรเพื่อทำแอนิเมชันเด้งไปทางขวา โดยตัวเลขความเร็วไม่สั่น)
-	ff_content = HBoxContainer.new()
-	ff_content.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	ff_content.alignment = BoxContainer.ALIGNMENT_CENTER
-	ff_content.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	ff_content.add_theme_constant_override("separation", 6)
-	ff_button.add_child(ff_content)
-	
-	# กรอบครอบลูกศร (Control เพื่อให้ขยับ position:x ของ ff_arrow_label ได้อิสระ)
-	ff_arrow_wrapper = Control.new()
-	ff_arrow_wrapper.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	ff_arrow_wrapper.custom_minimum_size = Vector2(16, 24)
-	ff_arrow_wrapper.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	ff_content.add_child(ff_arrow_wrapper)
-	
-	ff_arrow_label = Label.new()
-	ff_arrow_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	ff_arrow_label.text = "⏵"
-	ff_arrow_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	if font_res:
-		ff_arrow_label.add_theme_font_override("font", font_res)
-		ff_arrow_label.add_theme_font_size_override("font_size", 20)
-	ff_arrow_wrapper.add_child(ff_arrow_label)
-	
-	ff_speed_label = Label.new()
-	ff_speed_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	ff_speed_label.text = "1.0x"
-	ff_speed_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	if font_res:
-		ff_speed_label.add_theme_font_override("font", font_res)
-		ff_speed_label.add_theme_font_size_override("font_size", 20)
-	ff_content.add_child(ff_speed_label)
-	
-	_apply_ff_style(false)
-	ff_button.pressed.connect(_toggle_fast_forward)
-	ff_button.mouse_entered.connect(_on_ff_hover.bind(true))
-	ff_button.mouse_exited.connect(_on_ff_hover.bind(false))
-	container.add_child(ff_button)
+	if show_fast_forward:
+		ff_button = Button.new()
+		ff_button.focus_mode = Control.FOCUS_NONE
+		ff_button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+		ff_button.custom_minimum_size = Vector2(105, 40)
+		
+		# กล่องจัดเนื้อหาภายในปุ่ม (แยกกล่องลูกศรเพื่อทำแอนิเมชันเด้งไปทางขวา โดยตัวเลขความเร็วไม่สั่น)
+		ff_content = HBoxContainer.new()
+		ff_content.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+		ff_content.alignment = BoxContainer.ALIGNMENT_CENTER
+		ff_content.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		ff_content.add_theme_constant_override("separation", 6)
+		ff_button.add_child(ff_content)
+		
+		# กรอบครอบลูกศร (Control เพื่อให้ขยับ position:x ของ ff_arrow_label ได้อิสระ)
+		ff_arrow_wrapper = Control.new()
+		ff_arrow_wrapper.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		ff_arrow_wrapper.custom_minimum_size = Vector2(16, 24)
+		ff_arrow_wrapper.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		ff_content.add_child(ff_arrow_wrapper)
+		
+		ff_arrow_label = Label.new()
+		ff_arrow_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		ff_arrow_label.text = "⏵"
+		ff_arrow_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		if font_res:
+			ff_arrow_label.add_theme_font_override("font", font_res)
+			ff_arrow_label.add_theme_font_size_override("font_size", 20)
+		ff_arrow_wrapper.add_child(ff_arrow_label)
+		
+		ff_speed_label = Label.new()
+		ff_speed_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		ff_speed_label.text = "1.0x"
+		ff_speed_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		if font_res:
+			ff_speed_label.add_theme_font_override("font", font_res)
+			ff_speed_label.add_theme_font_size_override("font_size", 20)
+		ff_content.add_child(ff_speed_label)
+		
+		_apply_ff_style(false)
+		ff_button.pressed.connect(_toggle_fast_forward)
+		ff_button.mouse_entered.connect(_on_ff_hover.bind(true))
+		ff_button.mouse_exited.connect(_on_ff_hover.bind(false))
+		container.add_child(ff_button)
 	
 	# 2. ปุ่มข้าม (Skip: ข้าม ⏵⏵ (Esc))
-	dev_skip_button = Button.new()
-	dev_skip_button.text = "ข้าม ⏵⏵ (Esc)"
-	dev_skip_button.focus_mode = Control.FOCUS_NONE
-	dev_skip_button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
-	dev_skip_button.custom_minimum_size = Vector2(175, 40)
-	if font_res:
-		dev_skip_button.add_theme_font_override("font", font_res)
-		dev_skip_button.add_theme_font_size_override("font_size", 20)
-	_apply_skip_style()
-	dev_skip_button.pressed.connect(skip)
-	container.add_child(dev_skip_button)
+	if show_skip:
+		dev_skip_button = Button.new()
+		dev_skip_button.text = "ข้าม ⏵⏵ (Esc)"
+		dev_skip_button.focus_mode = Control.FOCUS_NONE
+		dev_skip_button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+		dev_skip_button.custom_minimum_size = Vector2(175, 40)
+		if font_res:
+			dev_skip_button.add_theme_font_override("font", font_res)
+			dev_skip_button.add_theme_font_size_override("font_size", 20)
+		_apply_skip_style()
+		dev_skip_button.pressed.connect(skip)
+		container.add_child(dev_skip_button)
+
+func set_fast_forward_visible(p_visible: bool) -> void:
+	if ff_button:
+		ff_button.visible = p_visible
+		if not p_visible and is_fast_forward:
+			_toggle_fast_forward()
+
+func set_skip_visible(p_visible: bool) -> void:
+	if dev_skip_button:
+		dev_skip_button.visible = p_visible
 
 func _exit_tree() -> void:
 	_stop_bounce_animation()
 	Engine.time_scale = 1.0
 
 func _apply_ff_style(active: bool) -> void:
+	if not ff_button:
+		return
 	var style := StyleBoxFlat.new()
 	style.corner_radius_top_left = 8
 	style.corner_radius_top_right = 8
