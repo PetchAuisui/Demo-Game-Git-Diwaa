@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://c3eaa1f2e8b4c"]
 
-[ext_resource type="Script" uid="uid://ca6pfd1q5i48k" path="res://Scripts/cutscene/ending_cutscene.gd" id="1_script"]
+[ext_resource type="Script" uid="uid://ca6pfd1q5i48k" path="res://scripts/cutscene/ending_cutscene.gd" id="1_script"]
 [ext_resource type="Texture2D" uid="uid://d1k0b34y780t7" path="res://assets/cutscene/Libary.png" id="2_library"]
 [ext_resource type="Texture2D" uid="uid://don4qpk4c43rc" path="res://assets/cutscene/characters/vel/vel_Hblue_Sredyellow_idle.png" id="6_vel_idle"]
 [ext_resource type="Texture2D" uid="uid://bwv0pcja8aiqd" path="res://assets/cutscene/characters/vel/vel_shockpng.png" id="7_vel_shock"]
@@ -831,6 +831,25 @@ theme_override_constants/outline_size = 6
 theme_override_fonts/font = ExtResource("39_font")
 theme_override_font_sizes/font_size = 22
 text = "ด้วยความแก่ชราและขี้ลืม ปรมาจารย์ทำพลังเวทรั่วไหลจนตกหลุมดำของตัวเอง!"
+horizontal_alignment = 1
+
+[node name="ComicContinuePrompt" type="Label" parent="ComicPanelContainer" unique_id=1494280457]
+modulate = Color(1, 1, 1, 0)
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = 56.0
+offset_bottom = 88.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_colors/font_color = Color(0.980392, 0.976471, 0.964706, 0.9)
+theme_override_colors/font_outline_color = Color(0.00392, 0, 0.07451, 1)
+theme_override_constants/outline_size = 5
+theme_override_fonts/font = ExtResource("39_font")
+theme_override_font_sizes/font_size = 20
+text = "คลิกหน้าจอเพื่อไปต่อ"
 horizontal_alignment = 1
 
 [node name="WhiteFlashOverlay" type="ColorRect" parent="." unique_id=1885754951]

@@ -52,6 +52,7 @@ extends Node2D
 @onready var comic_container: Control = $ComicPanelContainer
 @onready var comic_title: Label = $ComicPanelContainer/ComicTitle
 @onready var comic_caption: Label = $ComicPanelContainer/ComicCaption
+@onready var comic_continue_prompt: Label = $ComicPanelContainer/ComicContinuePrompt
 @onready var flashback_master: AnimatedSprite2D = $ComicPanelContainer/ComicPanelBg/FlashbackMaster
 @onready var flashback_hole: Sprite2D = $ComicPanelContainer/ComicPanelBg/FlashbackHole
 
@@ -85,6 +86,7 @@ var shard_initial_positions: Array[Vector2] = []
 var current_stage: int = 1
 var is_waiting_dialogue: bool = false
 var is_waiting_epilogue: bool = false
+var is_waiting_comic: bool = false
 var dialogue_callback: Callable = Callable()
 var is_fast_forwarding: bool = false
 var can_fast_forward: bool = true
@@ -95,6 +97,7 @@ var book_aura_pulse_tween: Tween = null
 var epilogue_pulse_tween: Tween = null
 var epilogue_seq_tween: Tween = null
 var epilogue_auto_tween: Tween = null
+var comic_pulse_tween: Tween = null
 var shard_drift_tweens: Array[Tween] = []
 var skip_btn_instance: CanvasLayer = null
 
@@ -111,7 +114,7 @@ func _ready() -> void:
 	Engine.time_scale = 1.0
 	
 	# เพิ่มปุ่มข้าม cutscene
-	var skip_btn = preload("res://Scripts/cutscene/skip_cutscene_button.gd").new()
+	var skip_btn = preload("res://scripts/cutscene/skip_cutscene_button.gd").new()
 	skip_btn.next_scene_path = start_scene_path
 	skip_btn_instance = skip_btn
 	add_child(skip_btn)
@@ -141,6 +144,8 @@ func _exit_tree() -> void:
 		epilogue_seq_tween.kill()
 	if epilogue_auto_tween and epilogue_auto_tween.is_valid():
 		epilogue_auto_tween.kill()
+	if comic_pulse_tween and comic_pulse_tween.is_valid():
+		comic_pulse_tween.kill()
 	for tw in shard_drift_tweens:
 		if tw and tw.is_valid():
 			tw.kill()
@@ -178,8 +183,8 @@ func _process(delta: float) -> void:
 	else:
 		camera.offset = Vector2.ZERO
 
-	# เร่งความเร็ว (Fast forward) เมื่อกดค้าง และไม่อยู่ในช่วงรอคลิกบทสนทนา
-	if can_fast_forward and not is_waiting_dialogue:
+	# เร่งความเร็ว (Fast forward) เมื่อกดค้าง และไม่อยู่ในช่วงรอคลิกบทสนทนา หรือรอคลิกภาพย้อน
+	if can_fast_forward and not is_waiting_dialogue and not is_waiting_comic:
 		var wants_ff: bool = Input.is_key_pressed(KEY_SPACE) or \
 			Input.is_key_pressed(KEY_ENTER) or \
 			Input.is_key_pressed(KEY_SHIFT) or \
@@ -190,6 +195,14 @@ func _process(delta: float) -> void:
 			Engine.time_scale = 2.5 if wants_ff else 1.0
 
 func _input(event: InputEvent) -> void:
+	if is_waiting_comic:
+		if event.is_action_pressed("ui_accept") or \
+		   (event is InputEventKey and event.pressed and not event.echo and (event.keycode == KEY_SPACE or event.keycode == KEY_ENTER)) or \
+		   (event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT):
+			get_viewport().set_input_as_handled()
+			_advance_comic_flashback()
+		return
+	
 	if is_waiting_dialogue:
 		if event.is_action_pressed("ui_accept") or \
 		   (event is InputEventKey and event.pressed and not event.echo and (event.keycode == KEY_SPACE or event.keycode == KEY_ENTER)) or \
@@ -265,6 +278,11 @@ func _reset_all_stages() -> void:
 		the_end_title.modulate.a = 0.0
 	if the_end_continue_prompt:
 		the_end_continue_prompt.modulate.a = 0.0
+	if comic_continue_prompt:
+		comic_continue_prompt.modulate.a = 0.0
+	is_waiting_comic = false
+	if comic_pulse_tween and comic_pulse_tween.is_valid():
+		comic_pulse_tween.kill()
 	if epilogue_pulse_tween and epilogue_pulse_tween.is_valid():
 		epilogue_pulse_tween.kill()
 	if epilogue_seq_tween and epilogue_seq_tween.is_valid():
@@ -776,18 +794,44 @@ func play_stage_6_comic_flashback() -> void:
 		tw_m_fall.chain().tween_property(flashback_hole, "scale", Vector2.ZERO, 0.35)
 	)
 	
-	# 6.4 ค้างกรอบภาพที่ว่างเปล่าพร้อมคำบรรยายมุกตลกให้อ่านได้เต็มที่ (~3.6s) แล้วค่อยปิดกรอบ (7.6s)
-	var tw_panel_out = create_tween()
-	tw_panel_out.tween_interval(7.6)
-	tw_panel_out.tween_callback(func():
-		var tw_out = create_tween().set_parallel(true)
-		tw_out.tween_property(comic_container, "scale", Vector2(0.3, 0.3), 0.4).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_IN)
-		tw_out.tween_property(comic_container, "modulate:a", 0.0, 0.4)
-		
-		tw_out.chain().tween_callback(func():
-			comic_container.visible = false
-			play_stage_7_dialogue()
-		)
+	# 6.4 หลังจากปรมาจารย์ตกหลุมดำไปแล้ว 1 วินาที (3.3s + 0.65s + 0.35s + 1.0s = 5.3s)
+	# แสดงข้อความ "คลิกหน้าจอเพื่อไปต่อ" และรอให้ผู้เล่นคลิกเพื่อไปต่อ
+	var tw_prompt = create_tween()
+	tw_prompt.tween_interval(5.3)
+	tw_prompt.tween_callback(func():
+		if current_stage != 6:
+			return
+		if comic_continue_prompt:
+			var tw_in = create_tween()
+			tw_in.tween_property(comic_continue_prompt, "modulate:a", 1.0, 0.4).set_trans(Tween.TRANS_SINE)
+			tw_in.tween_callback(func():
+				_start_comic_pulse()
+				is_waiting_comic = true
+			)
+	)
+
+func _start_comic_pulse() -> void:
+	if comic_pulse_tween and comic_pulse_tween.is_valid():
+		comic_pulse_tween.kill()
+	comic_pulse_tween = create_tween().set_loops()
+	comic_pulse_tween.tween_property(comic_continue_prompt, "modulate:a", 0.4, 0.8).set_trans(Tween.TRANS_SINE)
+	comic_pulse_tween.tween_property(comic_continue_prompt, "modulate:a", 1.0, 0.8).set_trans(Tween.TRANS_SINE)
+
+func _advance_comic_flashback() -> void:
+	if not is_waiting_comic:
+		return
+	is_waiting_comic = false
+	if comic_pulse_tween and comic_pulse_tween.is_valid():
+		comic_pulse_tween.kill()
+	_play_sfx(sfx_next)
+	
+	var tw_out = create_tween().set_parallel(true)
+	tw_out.tween_property(comic_container, "scale", Vector2(0.3, 0.3), 0.4).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_IN)
+	tw_out.tween_property(comic_container, "modulate:a", 0.0, 0.4)
+	
+	tw_out.chain().tween_callback(func():
+		comic_container.visible = false
+		play_stage_7_dialogue()
 	)
 
 ## =============================================================
