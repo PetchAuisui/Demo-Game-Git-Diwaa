@@ -89,12 +89,12 @@ func _ready() -> void:
 	
 	# ตั้งค่าตำแหน่งตัวละคร
 	camera.position = Vector2(960, 540)
-	vel.position = Vector2(-120, 750)
+	vel.position = Vector2(-120, 680)
 	vel.scale = Vector2(4, 4)
 	vel.play("walk")
 	vel.animation_looped.connect(_on_vel_animation_looped)
 	
-	mewla.position = Vector2(1220, 750)
+	mewla.position = Vector2(1220, 680)
 	mewla.scale = Vector2(4, 4)
 	mewla.play("idle")
 	
@@ -147,14 +147,15 @@ func _start_cutscene_sequence() -> void:
 	var fade_in = create_tween()
 	fade_in.tween_property(fade_overlay, "color:a", 0.0, 0.8)
 	
-	# เวลเดินเข้ามาจากทางซ้าย (-120 -> 700) ตามสเปก Central Tower (ระยะทาง 820px ในเวลา 2.4 วินาที, TRANS_SINE, EASE_OUT)
+	# เวลเดินเข้ามาจากทางซ้าย (-120 -> 700) จังหวะก้าวเท้าตาม intro_cutscene ปรับเพิ่มความเร็วขึ้นเล็กน้อย (ระยะทาง 820px ใน 3.6 วินาที @ ~228 px/s ครบ 2 ลูปพอดี 1.8s x 2, TRANS_LINEAR)
 	entrance_tween = create_tween()
-	entrance_tween.tween_property(vel, "position:x", 700.0, 2.4).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	entrance_tween.set_trans(Tween.TRANS_LINEAR)
+	entrance_tween.tween_property(vel, "position:x", 700.0, 3.6)
 	
 	entrance_tween.tween_callback(func():
-		# ซิงค์จังหวะหายใจ/ผงกหัวให้เวลและมิวราเริ่มต้นที่เฟรม 0 พร้อมกันเป๊ะๆ (ตามสเปก md: 6 เฟรม @ 5 FPS [2, 1, 2, 1, 2, 1] = 1.8s)
-		vel_seq_step = 0
-		vel.play("breathe")
+		# ซิงค์จังหวะหายใจ/ผงกหัวให้เวลและมิวราเริ่มต้นที่เฟรม 0 พร้อมกันเป๊ะๆ (ตามสเปก intro_cutscene สลับสู่ breathe_blink)
+		vel_seq_step = 1
+		vel.play("breathe_blink")
 		vel.set_frame_and_progress(0, 0.0)
 		mewla.play("idle")
 		mewla.set_frame_and_progress(0, 0.0)
@@ -319,19 +320,23 @@ func _hide_exclamation() -> void:
 	)
 
 func _show_continue_arrow() -> void:
-	continue_arrow.visible = true
+	if not continue_arrow:
+		return
 	if arrow_tween and arrow_tween.is_valid():
 		arrow_tween.kill()
 		
-	arrow_wrapper.position.y = 0.0
+	continue_arrow.position.y = 0.0
+	continue_arrow.visible = true
 	arrow_tween = create_tween().set_loops()
-	arrow_tween.tween_property(arrow_wrapper, "position:y", 4.0, 0.45).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
-	arrow_tween.tween_property(arrow_wrapper, "position:y", 0.0, 0.45).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	arrow_tween.tween_property(continue_arrow, "position:y", 4.0, 0.45).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	arrow_tween.tween_property(continue_arrow, "position:y", 0.0, 0.45).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 
 func _hide_continue_arrow() -> void:
-	continue_arrow.visible = false
 	if arrow_tween and arrow_tween.is_valid():
 		arrow_tween.kill()
+	if is_instance_valid(continue_arrow):
+		continue_arrow.visible = false
+		continue_arrow.position.y = 0.0
 
 func _skip_cutscene() -> void:
 	if is_transitioning:
