@@ -193,8 +193,10 @@ func _init_scene_state() -> void:
 	dialogue_box.modulate = Color(1, 1, 1, 0)
 	_hide_continue_arrow()
 	
-	# ปุ่มข้าม
-	skip_button.pressed.connect(_skip_cutscene)
+	# ปุ่มข้าม (ปิด Focus เพื่อไม่ให้ Space/Enter เผลอกดโดนปุ่ม Skip)
+	skip_button.focus_mode = Control.FOCUS_NONE
+	if not skip_button.pressed.is_connected(_skip_cutscene):
+		skip_button.pressed.connect(_skip_cutscene)
 	
 	# หน้าจอมืดไว้สำหรับเฟดเข้า
 	fade_overlay.visible = true
@@ -216,9 +218,9 @@ func _play_entrance_sequence() -> void:
 	var tw_fade_in = create_tween()
 	tw_fade_in.tween_property(fade_overlay, "color:a", 0.0, 0.8)
 	
-	# 2. เวลเดินจากนอกจอซ้าย (-120 -> 700) ข้ามระยะทาง 820px ใน 2.4 วินาที
+	# 2. เวลเดินจากนอกจอซ้าย (-120 -> 700) ข้ามระยะทาง 820px ใน 3.6 วินาที (Linear ~228 px/s ครบ 2 ลูปเดิน 1.8s x 2 พอดี)
 	entrance_tween = create_tween()
-	entrance_tween.tween_property(vel, "position:x", 700.0, 2.4).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	entrance_tween.tween_property(vel, "position:x", 700.0, 3.6).set_trans(Tween.TRANS_LINEAR)
 	entrance_tween.tween_callback(func():
 		# รีเซ็ตและซิงค์จังหวะหายใจให้เวลและผู้พิทักษ์เริ่มต้นพร้อมกันเป๊ะๆ
 		vel_seq_step = 0
@@ -227,9 +229,9 @@ func _play_entrance_sequence() -> void:
 		vel.set_frame_and_progress(0, 0.0)
 		guardian.play("breathe")
 		guardian.set_frame_and_progress(0, 0.0)
-		# หน่วงเล็กน้อย 0.35s แล้วเริ่มบทสนทนาแรก
+		# หน่วงเวลาหยุดยืนนิ่ง 1.0s ให้ตัวละครยืนหายใจปกติและตั้งสติก่อนเริ่มบทสนทนาแรก
 		var tw_wait = create_tween()
-		tw_wait.tween_interval(0.35)
+		tw_wait.tween_interval(1.0)
 		tw_wait.tween_callback(_start_dialogue_sequence)
 	)
 
@@ -304,6 +306,10 @@ func _show_current_dialogue() -> void:
 	_hide_continue_arrow()
 	
 	speaker_label.text = data["speaker"]
+	if data["speaker"] == "ผู้พิทักษ์":
+		speaker_label.add_theme_color_override("font_color", Color(0.941, 0.824, 0.451, 1.0)) # สีทองอบอุ่น
+	else:
+		speaker_label.add_theme_color_override("font_color", Color(0.48, 0.78, 1.0, 1.0)) # สีฟ้าอ่อนสดใส (เวล / ผู้เล่น)
 	dialogue_label.text = data["text"]
 	dialogue_label.visible_ratio = 0.0
 	
