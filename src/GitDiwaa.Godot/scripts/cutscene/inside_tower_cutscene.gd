@@ -147,8 +147,9 @@ func _input(event: InputEvent) -> void:
 		elif event is InputEventKey and event.pressed and not event.echo and (event.keycode == KEY_SPACE or event.keycode == KEY_ENTER):
 			wants_advance = true
 		elif event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
-			# ตรวจสอบว่าไม่ได้กดโดนปุ่ม Skip
-			if skip_button and not skip_button.get_global_rect().has_point(event.position):
+			# ไม่เลื่อนบทสนทนาเมื่อคลิกโดนปุ่มควบคุม (FF / Skip) เพื่อให้ปุ่มได้รับคลิกตามปกติ
+			var hovered := get_viewport().gui_get_hovered_control()
+			if not (hovered is BaseButton):
 				wants_advance = true
 				
 		if wants_advance:
