@@ -197,10 +197,12 @@ func _process(delta: float) -> void:
 		camera.offset = Vector2.ZERO
 
 func _input(event: InputEvent) -> void:
+	# คลิกโดนปุ่มควบคุม (FF / Skip) ต้องไม่ถูกกลืนเป็นการเลื่อนบทสนทนา
+	var over_button: bool = get_viewport().gui_get_hovered_control() is BaseButton
 	if is_waiting_comic:
 		if event.is_action_pressed("ui_accept") or \
 		   (event is InputEventKey and event.pressed and not event.echo and (event.keycode == KEY_SPACE or event.keycode == KEY_ENTER)) or \
-		   (event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT):
+		   (event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT and not over_button):
 			get_viewport().set_input_as_handled()
 			_advance_comic_flashback()
 		return
@@ -208,7 +210,7 @@ func _input(event: InputEvent) -> void:
 	if is_waiting_dialogue:
 		if event.is_action_pressed("ui_accept") or \
 		   (event is InputEventKey and event.pressed and not event.echo and (event.keycode == KEY_SPACE or event.keycode == KEY_ENTER)) or \
-		   (event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT):
+		   (event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT and not over_button):
 			get_viewport().set_input_as_handled()
 			_advance_dialogue()
 		return
@@ -216,7 +218,7 @@ func _input(event: InputEvent) -> void:
 	if is_epilogue_typing:
 		if event.is_action_pressed("ui_accept") or \
 		   (event is InputEventKey and event.pressed and not event.echo and (event.keycode == KEY_SPACE or event.keycode == KEY_ENTER)) or \
-		   (event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT):
+		   (event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT and not over_button):
 			get_viewport().set_input_as_handled()
 			_skip_epilogue_typewriter()
 		return
@@ -224,7 +226,7 @@ func _input(event: InputEvent) -> void:
 	if is_waiting_epilogue:
 		if event.is_action_pressed("ui_accept") or \
 		   (event is InputEventKey and event.pressed and not event.echo and (event.keycode == KEY_SPACE or event.keycode == KEY_ENTER)) or \
-		   (event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT):
+		   (event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT and not over_button):
 			get_viewport().set_input_as_handled()
 			_advance_epilogue_to_credits()
 		return
