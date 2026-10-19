@@ -49,6 +49,8 @@
 [ext_resource type="Texture2D" uid="uid://dc6mqbtqyme4e" path="res://assets/cutscene/sigh_puff.png" id="47_puff"]
 [ext_resource type="Texture2D" uid="uid://dbunvkxfhmyjk" path="res://assets/cutscene/characters/mewla/mewla_black_idle.png" id="48_mewla"]
 [ext_resource type="Texture2D" uid="uid://d2uwr2jusv421" path="res://assets/cutscene/characters/guardian/guardian-breathe-Sheet.png" id="49_guardian"]
+[ext_resource type="Texture2D" uid="uid://oj5c6k43q74d" path="res://assets/cutscene/frame dialog text/text dialog.png" id="50_dialog_frame"]
+[ext_resource type="Texture2D" uid="uid://djcf2i5xifya1" path="res://assets/cutscene/frame dialog text/arrow.png" id="51_dialog_arrow"]
 
 [sub_resource type="Gradient" id="Gradient_ring"]
 offsets = PackedFloat32Array(0.55, 0.72, 0.88, 1)
@@ -482,19 +484,22 @@ corner_radius_bottom_left = 12
 shadow_color = Color(0.00392, 0, 0.07451, 0.7)
 shadow_size = 14
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_dialogue"]
-bg_color = Color(0.00392, 0, 0.07451, 0.96)
-border_width_left = 2
-border_width_top = 2
-border_width_right = 2
-border_width_bottom = 2
-border_color = Color(0.980392, 0.976471, 0.964706, 0.95)
-corner_radius_top_left = 10
-corner_radius_top_right = 10
-corner_radius_bottom_right = 10
-corner_radius_bottom_left = 10
-shadow_color = Color(0.00392, 0, 0.07451, 0.6)
-shadow_size = 8
+[sub_resource type="AtlasTexture" id="AtlasTexture_arrow"]
+atlas = ExtResource("51_dialog_arrow")
+region = Rect2(561, 344, 537, 334)
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_dialogue"]
+texture = ExtResource("50_dialog_frame")
+texture_margin_left = 24.0
+texture_margin_top = 24.0
+texture_margin_right = 24.0
+texture_margin_bottom = 24.0
+region_rect = Rect2(43, 191, 2086, 332)
+modulate_color = Color(0.78, 0.74, 0.82, 1)
+
+[sub_resource type="FontVariation" id="FontVariation_speaker_bold"]
+base_font = ExtResource("39_font")
+variation_embolden = 0.6
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_btn_normal"]
 bg_color = Color(0, 0, 0, 0.95)
@@ -863,63 +868,84 @@ color = Color(0.980392, 0.976471, 0.964706, 0)
 
 [node name="DialogueBox" type="PanelContainer" parent="MagicStoryUI" unique_id=1317350055]
 visible = false
+texture_filter = 1
+custom_minimum_size = Vector2(1160, 180)
 anchors_preset = 7
 anchor_left = 0.5
 anchor_top = 1.0
 anchor_right = 0.5
 anchor_bottom = 1.0
 offset_left = -580.0
-offset_top = -205.0
+offset_top = -216.0
 offset_right = 580.0
-offset_bottom = -40.0
+offset_bottom = -36.0
 grow_horizontal = 2
 grow_vertical = 0
 mouse_filter = 2
-theme_override_styles/panel = SubResource("StyleBoxFlat_dialogue")
+theme_override_styles/panel = SubResource("StyleBoxTexture_dialogue")
 
 [node name="Margin" type="MarginContainer" parent="MagicStoryUI/DialogueBox" unique_id=1385909794]
 layout_mode = 2
 mouse_filter = 2
-theme_override_constants/margin_left = 32
-theme_override_constants/margin_top = 20
-theme_override_constants/margin_right = 32
+theme_override_constants/margin_left = 36
+theme_override_constants/margin_top = 24
+theme_override_constants/margin_right = 48
 theme_override_constants/margin_bottom = 16
 
 [node name="VBox" type="VBoxContainer" parent="MagicStoryUI/DialogueBox/Margin" unique_id=823699155]
 layout_mode = 2
 mouse_filter = 2
-theme_override_constants/separation = 8
+theme_override_constants/separation = 12
 
 [node name="SpeakerLabel" type="Label" parent="MagicStoryUI/DialogueBox/Margin/VBox" unique_id=1415030837]
 layout_mode = 2
-theme_override_colors/font_color = Color(1, 0.9, 0.45, 1)
-theme_override_colors/font_outline_color = Color(0.00392, 0, 0.07451, 0.95)
-theme_override_constants/outline_size = 6
-theme_override_fonts/font = ExtResource("39_font")
-theme_override_font_sizes/font_size = 28
+theme_override_colors/font_color = Color(0.941176, 0.823529, 0.45098, 1)
+theme_override_colors/font_outline_color = Color(0.07, 0.05, 0.09, 1)
+theme_override_constants/outline_size = 3
+theme_override_fonts/font = SubResource("FontVariation_speaker_bold")
+theme_override_font_sizes/font_size = 30
 text = "ปรมาจารย์"
 
 [node name="DialogueLabel" type="Label" parent="MagicStoryUI/DialogueBox/Margin/VBox" unique_id=1145092419]
 layout_mode = 2
 size_flags_vertical = 3
-theme_override_colors/font_color = Color(0.980392, 0.976471, 0.964706, 1)
-theme_override_colors/font_outline_color = Color(0.00392, 0, 0.07451, 0.95)
-theme_override_constants/line_spacing = 10
-theme_override_constants/outline_size = 6
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_outline_color = Color(0.07, 0.05, 0.09, 1)
+theme_override_constants/line_spacing = 8
+theme_override_constants/outline_size = 2
 theme_override_fonts/font = ExtResource("39_font")
 theme_override_font_sizes/font_size = 26
 text = "อ้าว เวล... เกิดอะไรขึ้นเนี่ย แล้วทำไมดูเหนื่อยมอมแมมแบบนี้ล่ะ?"
 autowrap_mode = 3
 
-[node name="ContinuePrompt" type="Label" parent="MagicStoryUI/DialogueBox/Margin/VBox" unique_id=1494280455]
+[node name="ArrowOverlay" type="Control" parent="MagicStoryUI/DialogueBox" unique_id=1928374614]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.980392, 0.976471, 0.964706, 0.95)
-theme_override_colors/font_outline_color = Color(0.00392, 0, 0.07451, 0.85)
-theme_override_constants/outline_size = 4
-theme_override_fonts/font = ExtResource("39_font")
-theme_override_font_sizes/font_size = 20
-text = "คลิกหน้าจอเพื่อไปต่อ"
-horizontal_alignment = 2
+mouse_filter = 2
+
+[node name="ArrowWrapper" type="Control" parent="MagicStoryUI/DialogueBox/ArrowOverlay" unique_id=1928374616]
+layout_mode = 1
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -48.0
+offset_top = -34.0
+offset_right = -22.0
+offset_bottom = -16.0
+grow_horizontal = 0
+grow_vertical = 0
+mouse_filter = 2
+
+[node name="ContinueArrow" type="TextureRect" parent="MagicStoryUI/DialogueBox/ArrowOverlay/ArrowWrapper" unique_id=607048491]
+layout_mode = 0
+offset_right = 26.0
+offset_bottom = 18.0
+mouse_filter = 2
+texture = SubResource("AtlasTexture_arrow")
+expand_mode = 1
+stretch_mode = 5
+
 
 [node name="TheEndContainer" type="Control" parent="MagicStoryUI" unique_id=305941743]
 visible = false
