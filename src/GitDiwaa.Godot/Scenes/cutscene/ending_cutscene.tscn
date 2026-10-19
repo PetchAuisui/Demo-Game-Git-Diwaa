@@ -497,7 +497,7 @@ shadow_color = Color(0.00392, 0, 0.07451, 0.6)
 shadow_size = 8
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_btn_normal"]
-bg_color = Color(0.00392, 0, 0.07451, 0.95)
+bg_color = Color(0, 0, 0, 0.95)
 border_width_left = 2
 border_width_top = 2
 border_width_right = 2
@@ -509,7 +509,7 @@ corner_radius_bottom_right = 8
 corner_radius_bottom_left = 8
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_btn_hover"]
-bg_color = Color(0.06, 0.04, 0.16, 0.95)
+bg_color = Color(0.12, 0.12, 0.12, 0.95)
 border_width_left = 2
 border_width_top = 2
 border_width_right = 2
@@ -525,7 +525,7 @@ atlas = ExtResource("49_guardian")
 region = Rect2(0, 0, 48, 83)
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_bottom_bar"]
-bg_color = Color(0.00392, 0, 0.07451, 1)
+bg_color = Color(0, 0, 0, 1)
 
 [node name="EndingCutscene" type="Node2D" unique_id=1713555345]
 texture_filter = 1
@@ -918,7 +918,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-color = Color(0.00392, 0, 0.07451, 0)
+color = Color(0, 0, 0, 0)
 
 [node name="SummaryContainer" type="VBoxContainer" parent="MagicStoryUI/TheEndContainer" unique_id=515662229]
 layout_mode = 1
@@ -928,20 +928,20 @@ anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
 offset_left = -700.0
-offset_top = -180.0
+offset_top = -90.0
 offset_right = 700.0
-offset_bottom = -20.0
+offset_bottom = 90.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
-theme_override_constants/separation = 18
+theme_override_constants/separation = 22
 alignment = 1
 
 [node name="SummaryLine1" type="Label" parent="MagicStoryUI/TheEndContainer/SummaryContainer" unique_id=515662231]
 modulate = Color(1, 1, 1, 0)
 layout_mode = 2
 theme_override_colors/font_color = Color(0.980392, 0.976471, 0.964706, 1)
-theme_override_colors/font_outline_color = Color(0.00392, 0, 0.07451, 0.95)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
 theme_override_constants/outline_size = 6
 theme_override_fonts/font = ExtResource("39_font")
 theme_override_font_sizes/font_size = 30
@@ -952,7 +952,7 @@ horizontal_alignment = 1
 modulate = Color(1, 1, 1, 0)
 layout_mode = 2
 theme_override_colors/font_color = Color(0.980392, 0.976471, 0.964706, 1)
-theme_override_colors/font_outline_color = Color(0.00392, 0, 0.07451, 0.95)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
 theme_override_constants/outline_size = 6
 theme_override_fonts/font = ExtResource("39_font")
 theme_override_font_sizes/font_size = 30
@@ -963,39 +963,12 @@ horizontal_alignment = 1
 modulate = Color(1, 1, 1, 0)
 layout_mode = 2
 theme_override_colors/font_color = Color(0.980392, 0.976471, 0.964706, 1)
-theme_override_colors/font_outline_color = Color(0.00392, 0, 0.07451, 0.95)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
 theme_override_constants/outline_size = 6
 theme_override_fonts/font = ExtResource("39_font")
 theme_override_font_sizes/font_size = 30
 text = "คืนความสงบสุขให้แก่อาณาจักรได้สำเร็จ"
 horizontal_alignment = 1
-
-[node name="TitleLabel" type="Label" parent="MagicStoryUI/TheEndContainer" unique_id=373728279]
-modulate = Color(1, 1, 1, 0)
-layout_mode = 1
-anchors_preset = 8
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -300.0
-offset_top = -10.0
-offset_right = 300.0
-offset_bottom = 70.0
-grow_horizontal = 2
-grow_vertical = 2
-theme_override_colors/font_color = Color(1, 0.9, 0.5, 1)
-theme_override_colors/font_shadow_color = Color(1, 0.7, 0.2, 0.45)
-theme_override_colors/font_outline_color = Color(0.00392, 0, 0.07451, 1)
-theme_override_constants/shadow_offset_x = 0
-theme_override_constants/shadow_offset_y = 0
-theme_override_constants/outline_size = 10
-theme_override_constants/shadow_outline_size = 18
-theme_override_fonts/font = ExtResource("39_font")
-theme_override_font_sizes/font_size = 64
-text = "THE END"
-horizontal_alignment = 1
-vertical_alignment = 1
 
 [node name="ContinuePrompt" type="Label" parent="MagicStoryUI/TheEndContainer" unique_id=1494280456]
 modulate = Color(1, 1, 1, 0)
@@ -1012,11 +985,11 @@ offset_bottom = -70.0
 grow_horizontal = 2
 grow_vertical = 0
 theme_override_colors/font_color = Color(0.980392, 0.976471, 0.964706, 0.95)
-theme_override_colors/font_outline_color = Color(0.00392, 0, 0.07451, 0.85)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 0.85)
 theme_override_constants/outline_size = 4
 theme_override_fonts/font = ExtResource("39_font")
 theme_override_font_sizes/font_size = 22
-text = "คลิกหน้าจอเพื่อไปต่อ"
+text = "คลิกเพื่อไปต่อ"
 horizontal_alignment = 1
 
 [node name="CreditsContainer" type="Control" parent="MagicStoryUI" unique_id=305941744]
@@ -1035,7 +1008,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-color = Color(0.00392, 0, 0.07451, 1)
+color = Color(0, 0, 0, 1)
 
 [node name="MagicParticles" type="CPUParticles2D" parent="MagicStoryUI/CreditsContainer" unique_id=1835182050]
 position = Vector2(960, 540)
@@ -1074,7 +1047,7 @@ alignment = 1
 layout_mode = 2
 theme_override_colors/font_color = Color(1, 0.88, 0.45, 1)
 theme_override_colors/font_shadow_color = Color(0.9, 0.6, 0.1, 0.5)
-theme_override_colors/font_outline_color = Color(0.00392, 0, 0.07451, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
 theme_override_constants/shadow_offset_x = 0
 theme_override_constants/shadow_offset_y = 0
 theme_override_constants/outline_size = 12
@@ -1086,7 +1059,7 @@ text = "GIT DI WAA"
 [node name="ThankYouLabel" type="Label" parent="MagicStoryUI/CreditsContainer/LeftContent" unique_id=1892837101]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.980392, 0.976471, 0.964706, 1)
-theme_override_colors/font_outline_color = Color(0.00392, 0, 0.07451, 0.95)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 0.95)
 theme_override_constants/outline_size = 6
 theme_override_fonts/font = ExtResource("39_font")
 theme_override_font_sizes/font_size = 36
@@ -1095,7 +1068,7 @@ text = "Thank You for Playing"
 [node name="GratitudeLabel" type="Label" parent="MagicStoryUI/CreditsContainer/LeftContent" unique_id=1892837102]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.980392, 0.976471, 0.964706, 0.95)
-theme_override_colors/font_outline_color = Color(0.00392, 0, 0.07451, 0.95)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 0.95)
 theme_override_constants/outline_size = 6
 theme_override_fonts/font = ExtResource("39_font")
 theme_override_font_sizes/font_size = 28
@@ -1126,7 +1099,7 @@ alignment = 2
 [node name="NameLabel" type="Label" parent="MagicStoryUI/CreditsContainer/RightCharactersContainer/CharVel" unique_id=1892837105]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.980392, 0.976471, 0.964706, 1)
-theme_override_colors/font_outline_color = Color(0.00392, 0, 0.07451, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
 theme_override_constants/outline_size = 6
 theme_override_fonts/font = ExtResource("39_font")
 theme_override_font_sizes/font_size = 30
@@ -1149,7 +1122,7 @@ alignment = 2
 [node name="NameLabel" type="Label" parent="MagicStoryUI/CreditsContainer/RightCharactersContainer/CharMewla" unique_id=1892837108]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.980392, 0.976471, 0.964706, 1)
-theme_override_colors/font_outline_color = Color(0.00392, 0, 0.07451, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
 theme_override_constants/outline_size = 6
 theme_override_fonts/font = ExtResource("39_font")
 theme_override_font_sizes/font_size = 30
@@ -1172,7 +1145,7 @@ alignment = 2
 [node name="NameLabel" type="Label" parent="MagicStoryUI/CreditsContainer/RightCharactersContainer/CharMaster" unique_id=1892837111]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.980392, 0.976471, 0.964706, 1)
-theme_override_colors/font_outline_color = Color(0.00392, 0, 0.07451, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
 theme_override_constants/outline_size = 6
 theme_override_fonts/font = ExtResource("39_font")
 theme_override_font_sizes/font_size = 30
@@ -1195,7 +1168,7 @@ alignment = 2
 [node name="NameLabel" type="Label" parent="MagicStoryUI/CreditsContainer/RightCharactersContainer/CharGuardian" unique_id=1892837114]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.980392, 0.976471, 0.964706, 1)
-theme_override_colors/font_outline_color = Color(0.00392, 0, 0.07451, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
 theme_override_constants/outline_size = 6
 theme_override_fonts/font = ExtResource("39_font")
 theme_override_font_sizes/font_size = 30
@@ -1232,7 +1205,7 @@ offset_right = 720.0
 offset_bottom = 20.0
 grow_vertical = 2
 theme_override_colors/font_color = Color(0.980392, 0.976471, 0.964706, 1)
-theme_override_colors/font_outline_color = Color(0.00392, 0, 0.07451, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
 theme_override_constants/outline_size = 4
 theme_override_fonts/font = ExtResource("39_font")
 theme_override_font_sizes/font_size = 24

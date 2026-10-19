@@ -8,7 +8,7 @@ extends Node2D
 ## 5. การกลับมาของปรมาจารย์ (หลุมดำเปิด เวลสะดุ้งกระโดด หนังสือเด้งลอยค้างแล้วรับกลับมา -> อาจารย์พุ่งขึ้นมา)
 ## 6. ช่องการ์ตูนเฉลยความจริง (ขยายกรอบใหญ่ ซูมอาจารย์เด่นชัด ฉากหลังมืด 65% อาจารย์หลงลืมตกหลุมตัวเอง)
 ## 7. กล่องบทสนทนา (อาจารย์ยิ้มขี้เล่น เวลยืนนิ่ง 1 วินาทีเน้นอารมณ์ ก่อนถอนหายใจ)
-## 8. บทสรุปการเดินทางของเวล (ซูมกล้องออก -> พื้นหลังมืดลงอย่างต่อเนื่อง -> ข้อความสรุปกระชับชัดเจน -> THE END)
+## 8. บทสรุปการเดินทางของเวล (ค่อย ๆ เฟดมืดสนิท -> ข้อความสรุปขึ้นทีละบรรทัด -> รอ 2 วินาทีหลังข้อความขึ้นครบ -> คลิกเพื่อไปต่อ -> ฉากขอบคุณและเครดิต)
 
 @export var start_scene_path: String = "res://Scenes/StartView.tscn"
 
@@ -63,10 +63,11 @@ extends Node2D
 @onready var continue_prompt: Label = $MagicStoryUI/DialogueBox/Margin/VBox/ContinuePrompt
 @onready var the_end_container: Control = $MagicStoryUI/TheEndContainer
 @onready var the_end_dark_overlay: ColorRect = $MagicStoryUI/TheEndContainer/DarkOverlay
+@onready var summary_container: VBoxContainer = $MagicStoryUI/TheEndContainer/SummaryContainer
 @onready var summary_line1: Label = $MagicStoryUI/TheEndContainer/SummaryContainer/SummaryLine1
 @onready var summary_line2: Label = $MagicStoryUI/TheEndContainer/SummaryContainer/SummaryLine2
 @onready var summary_line3: Label = $MagicStoryUI/TheEndContainer/SummaryContainer/SummaryLine3
-@onready var the_end_title: Label = $MagicStoryUI/TheEndContainer/TitleLabel
+@onready var the_end_title: Label = get_node_or_null("MagicStoryUI/TheEndContainer/TitleLabel") as Label
 @onready var the_end_continue_prompt: Label = $MagicStoryUI/TheEndContainer/ContinuePrompt
 @onready var credits_container: Control = $MagicStoryUI/CreditsContainer
 @onready var return_menu_btn: Button = $MagicStoryUI/CreditsContainer/BottomBar/ReturnMenuBtn
@@ -110,7 +111,7 @@ func _ready() -> void:
 	Engine.time_scale = 1.0
 	
 	# เพิ่มปุ่มข้าม cutscene
-	var skip_btn = preload("res://scripts/cutscene/skip_cutscene_button.gd").new()
+	var skip_btn = preload("res://Scripts/cutscene/skip_cutscene_button.gd").new()
 	skip_btn.next_scene_path = start_scene_path
 	skip_btn_instance = skip_btn
 	add_child(skip_btn)
@@ -250,7 +251,9 @@ func _reset_all_stages() -> void:
 	the_end_container.visible = false
 	the_end_container.modulate = Color(1, 1, 1, 1)
 	if the_end_dark_overlay:
-		the_end_dark_overlay.color = Color(0.00392, 0, 0.07451, 0.0)
+		the_end_dark_overlay.color = Color(0, 0, 0, 0.0)
+	if summary_container:
+		summary_container.modulate.a = 1.0
 	if summary_line1:
 		summary_line1.modulate.a = 0.0
 	if summary_line2:
@@ -258,6 +261,7 @@ func _reset_all_stages() -> void:
 	if summary_line3:
 		summary_line3.modulate.a = 0.0
 	if the_end_title:
+		the_end_title.visible = false
 		the_end_title.modulate.a = 0.0
 	if the_end_continue_prompt:
 		the_end_continue_prompt.modulate.a = 0.0
@@ -895,9 +899,9 @@ func _stop_sigh_puff() -> void:
 		)
 
 ## =============================================================
-## ฉากที่ 8: บทสรุปการเดินทางของเวล (The End Screen)
-## เริ่มด้วยฉากสีปกติ 2s -> คลุมดำ 45% ใน 1s -> ข้อความสรุปเฟดทีละบรรทัด
-## -> THE END สีทอง -> ซ่อนปุ่มข้าม และรอ 2s ก่อนเปิดรับคลิกไปหน้าเครดิต
+## ฉากที่ 8: บทสรุปการเดินทางของเวล (Epilogue Screen)
+## เริ่มด้วยฉากสีปกติ 1.5s -> ค่อย ๆ เฟดมืดสนิท (Pure Black) ใน 1.2s -> ข้อความสรุปขึ้นทีละบรรทัด
+## -> ลบ THE END ออก -> รอ 2 วินาทีหลังข้อความขึ้นครบ -> แสดงคลิกเพื่อไปต่อ
 ## =============================================================
 func play_stage_8_epilogue() -> void:
 	current_stage = 8
@@ -924,48 +928,47 @@ func play_stage_8_epilogue() -> void:
 	camera.position = Vector2(960, 540)
 	camera.zoom = Vector2.ONE
 	
-	# เตรียมองค์ประกอบหน้า The End
+	# เตรียมองค์ประกอบหน้าจบ
 	the_end_container.visible = true
 	the_end_container.modulate = Color(1, 1, 1, 1)
 	
 	# เริ่มด้วยฉากสีปกติ และรีเซ็ตความโปร่งใสของข้อความทั้งหมด
-	the_end_dark_overlay.color = Color(0.00392, 0, 0.07451, 0.0)
+	the_end_dark_overlay.color = Color(0, 0, 0, 0.0)
+	if summary_container:
+		summary_container.modulate.a = 1.0
 	summary_line1.modulate.a = 0.0
 	summary_line2.modulate.a = 0.0
 	summary_line3.modulate.a = 0.0
-	the_end_title.modulate.a = 0.0
+	if is_instance_valid(the_end_title):
+		the_end_title.visible = false
+		the_end_title.modulate.a = 0.0
 	the_end_continue_prompt.modulate.a = 0.0
 	
 	if epilogue_seq_tween and epilogue_seq_tween.is_valid():
 		epilogue_seq_tween.kill()
 	epilogue_seq_tween = create_tween()
 	
-	# 1. เริ่มด้วยฉากสีปกติ ให้เห็นเวลกับปรมาจารย์ชัดเจนเป็นเวลา 2 วินาที
-	epilogue_seq_tween.tween_interval(2.0)
+	# 1. เริ่มด้วยฉากสีปกติ ให้เห็นเวลกับปรมาจารย์เป็นเวลา 1.5 วินาที
+	epilogue_seq_tween.tween_interval(1.5)
 	
-	# 2. ค่อย ๆ เพิ่มชั้นสีดำคลุมฉากจากความทึบ 0% ไปเป็น 45% ภายใน 1 วินาที
-	# ชั้นดำอยู่หลังข้อความ และยังมองเห็นใบหน้ากับสีชุดตัวละครได้
-	# พร้อมค่อย ๆ ลดระดับเสียงเพลงประกอบเล็กน้อยช่วงข้อความปรากฏ
+	# 2. ค่อย ๆ เฟดเป็นสีดำสนิท (Fade to pure black) ภายใน 1.2 วินาที
 	epilogue_seq_tween.tween_callback(func():
-		_fade_bgm_volume(-6.0, 1.0)
+		_fade_bgm_volume(-6.0, 1.2)
 	)
-	epilogue_seq_tween.tween_property(the_end_dark_overlay, "color:a", 0.45, 1.0).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	epilogue_seq_tween.tween_property(the_end_dark_overlay, "color", Color(0, 0, 0, 1.0), 1.2).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	epilogue_seq_tween.tween_callback(func():
+		stage4.visible = false
+	)
+	epilogue_seq_tween.tween_interval(0.3)
 	
-	# 3. ใช้ข้อความจบเดิม สีขาว ตำแหน่งกึ่งกลางเดิม ค่อย ๆ เฟดเข้าทีละบรรทัด บรรทัดละ 0.6 วินาที
-	# เว้นระหว่างบรรทัด 0.8 วินาที และคงบรรทัดก่อนหน้าไว้ให้อ่านต่อเนื่อง
+	# 3. ข้อความค่อย ๆ เฟดขึ้นทีละบรรทัดเหมือนเดิม บรรทัดละ 0.6 วินาที (เว้นช่วงระหว่างบรรทัด 0.8 วินาที)
 	epilogue_seq_tween.tween_property(summary_line1, "modulate:a", 1.0, 0.6).set_trans(Tween.TRANS_SINE)
 	epilogue_seq_tween.tween_interval(0.8)
 	epilogue_seq_tween.tween_property(summary_line2, "modulate:a", 1.0, 0.6).set_trans(Tween.TRANS_SINE)
 	epilogue_seq_tween.tween_interval(0.8)
 	epilogue_seq_tween.tween_property(summary_line3, "modulate:a", 1.0, 0.6).set_trans(Tween.TRANS_SINE)
 	
-	# 4. เมื่อข้อความครบทุกบรรทัด รอ 1 วินาที แล้วเฟดคำว่า “THE END” เข้ามาภายใน 1 วินาที
-	# ใช้รูปแบบพิกเซลสีทองและตำแหน่งเดิม
-	epilogue_seq_tween.tween_interval(1.0)
-	epilogue_seq_tween.tween_property(the_end_title, "modulate:a", 1.0, 1.0).set_trans(Tween.TRANS_SINE)
-	
-	# 5. หลัง THE END แสดงครบแล้ว 2 วินาที จึงแสดงข้อความสำหรับไปหน้าถัดไป พร้อมเปิดรับการคลิก
-	# ป้องกันการคลิกจากฉากก่อนหน้าทำให้หน้าจบถูกข้ามทันที
+	# 4. ลบคำว่า THE END ออกไป และหลังจากข้อความขึ้นครบ 2 วินาที จึงแสดงข้อความคลิกเพื่อไปต่อ
 	epilogue_seq_tween.tween_interval(2.0)
 	epilogue_seq_tween.tween_callback(func():
 		var tw_prompt = create_tween()
@@ -974,7 +977,7 @@ func play_stage_8_epilogue() -> void:
 			_start_epilogue_pulse()
 			is_waiting_epilogue = true
 			
-			# เริ่มนับเวลาถอยหลัง 8 วินาที "หลังจาก" ข้อความทั้งหมดแสดงผลเต็มที่แล้ว เผื่อผู้เล่นไม่คลิก
+			# เริ่มนับเวลาถอยหลัง 8 วินาทีหลังจากข้อความทั้งหมดแสดงผลเต็มที่แล้ว เผื่อผู้เล่นไม่คลิก
 			if epilogue_auto_tween and epilogue_auto_tween.is_valid():
 				epilogue_auto_tween.kill()
 			epilogue_auto_tween = create_tween()
@@ -1008,7 +1011,7 @@ func _fade_bgm_volume(target_db: float, duration: float) -> void:
 		var tw = create_tween()
 		tw.tween_property(player, "volume_db", target_db, duration)
 
-## เปลี่ยนผ่านจากฉาก The End เข้าสู่หน้าขอบคุณและเครดิต
+## เปลี่ยนผ่านจากฉากบทสรุปเข้าสู่หน้าขอบคุณและเครดิต
 func _advance_epilogue_to_credits() -> void:
 	if not is_waiting_epilogue:
 		return
@@ -1024,16 +1027,23 @@ func _advance_epilogue_to_credits() -> void:
 	# ค่อย ๆ เฟดเสียงเพลงออกเมื่อออกจากหน้าจบ
 	_fade_bgm_volume(-80.0, 0.8)
 	
-	var tw_out = create_tween()
-	tw_out.tween_property(the_end_container, "modulate:a", 0.0, 0.6).set_trans(Tween.TRANS_SINE)
-	tw_out.tween_callback(func():
+	# เฟดเฉพาะข้อความสรุปและคำแนะนำคลิกออกอย่างนุ่มนวล โดยคงพื้นหลังสีดำสนิทไว้
+	var tw_out = create_tween().set_parallel(true)
+	if summary_container:
+		tw_out.tween_property(summary_container, "modulate:a", 0.0, 0.4).set_trans(Tween.TRANS_SINE)
+	else:
+		tw_out.tween_property(summary_line1, "modulate:a", 0.0, 0.4).set_trans(Tween.TRANS_SINE)
+		tw_out.tween_property(summary_line2, "modulate:a", 0.0, 0.4).set_trans(Tween.TRANS_SINE)
+		tw_out.tween_property(summary_line3, "modulate:a", 0.0, 0.4).set_trans(Tween.TRANS_SINE)
+	tw_out.tween_property(the_end_continue_prompt, "modulate:a", 0.0, 0.4).set_trans(Tween.TRANS_SINE)
+	tw_out.chain().tween_callback(func():
 		the_end_container.visible = false
 		play_stage_9_credits()
 	)
 
 ## =============================================================
 ## ฉากที่ 9: หน้าขอบคุณและเครดิตปิดฉาก (Thank You for Playing Screen)
-## กล้องเลื่อนขวา -> ซ้าย -> นิ่งกลาง พร้อมเผยฉากเครดิตและตัวละครทั้ง 4
+## พื้นหลังดำสนิท เผยฉากเครดิตและตัวละครทั้ง 4 พร้อมละอองเวทมนตร์
 ## =============================================================
 func play_stage_9_credits() -> void:
 	current_stage = 9
@@ -1048,16 +1058,39 @@ func play_stage_9_credits() -> void:
 	
 	# รีเซ็ตตำแหน่งและมุมมองกล้องให้อยู่ตรงกลางนิ่งสงบ
 	camera.position = Vector2(960, 540)
-	camera.zoom = Vector2(1.0, 1.0)
+	camera.zoom = Vector2.ONE
 	
-	# ปรากฏฉากเครดิต CreditsContainer พร้อมละอองเวทมนตร์อย่างนุ่มนวล
+	# ปรากฏฉากเครดิต CreditsContainer พื้นหลังดำสนิท 100%
 	credits_container.visible = true
-	credits_container.modulate = Color(1, 1, 1, 0.0)
+	credits_container.modulate = Color(1, 1, 1, 1.0)
 	
-	var tw_fade_in = create_tween()
-	tw_fade_in.tween_interval(0.4)
-	tw_fade_in.tween_property(credits_container, "modulate:a", 1.0, 1.8).set_trans(Tween.TRANS_SINE)
-	tw_fade_in.tween_callback(func():
+	# เตรียมให้องค์ประกอบภายในค่อย ๆ เฟดเข้ามาบนพื้นหลังสีดำสนิท
+	var left_content = credits_container.get_node_or_null("LeftContent") as Control
+	var right_chars = credits_container.get_node_or_null("RightCharactersContainer") as Control
+	var bottom_bar = credits_container.get_node_or_null("BottomBar") as Control
+	var particles = credits_container.get_node_or_null("MagicParticles") as CanvasItem
+	
+	if left_content:
+		left_content.modulate.a = 0.0
+	if right_chars:
+		right_chars.modulate.a = 0.0
+	if bottom_bar:
+		bottom_bar.modulate.a = 0.0
+	if particles:
+		particles.modulate.a = 0.0
+	
+	var tw_fade_in = create_tween().set_parallel(true)
+	tw_fade_in.tween_interval(0.3)
+	if left_content:
+		tw_fade_in.tween_property(left_content, "modulate:a", 1.0, 1.5).set_trans(Tween.TRANS_SINE)
+	if right_chars:
+		tw_fade_in.tween_property(right_chars, "modulate:a", 1.0, 1.5).set_trans(Tween.TRANS_SINE)
+	if bottom_bar:
+		tw_fade_in.tween_property(bottom_bar, "modulate:a", 1.0, 1.5).set_trans(Tween.TRANS_SINE)
+	if particles:
+		tw_fade_in.tween_property(particles, "modulate:a", 1.0, 1.5).set_trans(Tween.TRANS_SINE)
+		
+	tw_fade_in.chain().tween_callback(func():
 		if is_instance_valid(return_menu_btn):
 			return_menu_btn.grab_focus()
 	)
