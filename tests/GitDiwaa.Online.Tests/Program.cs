@@ -6,6 +6,8 @@ namespace GitDiwaa.Online.Tests;
 
 internal static class Program
 {
+    private static readonly RegisterRequest Valid = new("mage01", "นักเวท", "mage@example.com", "S3cret-Pass!");
+
     private static int Main()
     {
         var runner = new TestRunner();
@@ -98,7 +100,218 @@ internal static class Program
             Assert.Equal(FieldErrorReason.Unknown, default(FieldErrorReason));
         });
 
+        // --- Step 1.4: ValidateRegister Tests ---
+
+        runner.Run("ValidateRegister_NullRequest_Throws", static () =>
+        {
+            Assert.Throws<ArgumentNullException>(() => AccountInputValidator.ValidateRegister(null!));
+        });
+
+        runner.Run("ValidateRegister_BaselineValid_Passes", static () =>
+        {
+            AssertValid(AccountInputValidator.ValidateRegister(Valid));
+        });
+
+        runner.Run("ValidateRegister_Username_RequiredAndLength", static () =>
+        {
+            AssertFieldError(
+                AccountInputValidator.ValidateRegister(Valid with { Username = null! }),
+                AccountFields.Username,
+                FieldErrorReason.Required);
+
+            AssertFieldError(
+                AccountInputValidator.ValidateRegister(Valid with { Username = "ab" }),
+                AccountFields.Username,
+                FieldErrorReason.TooShort);
+
+            AssertFieldError(
+                AccountInputValidator.ValidateRegister(Valid with { Username = new string('a', 21) }),
+                AccountFields.Username,
+                FieldErrorReason.TooLong);
+        });
+
+        runner.Run("ValidateRegister_Username_InvalidFormat", static () =>
+        {
+            AssertFieldError(
+                AccountInputValidator.ValidateRegister(Valid with { Username = "-abc" }),
+                AccountFields.Username,
+                FieldErrorReason.InvalidFormat);
+
+            AssertFieldError(
+                AccountInputValidator.ValidateRegister(Valid with { Username = "abc-" }),
+                AccountFields.Username,
+                FieldErrorReason.InvalidFormat);
+        });
+
+        runner.Run("ValidateRegister_Username_InvalidCharacters", static () =>
+        {
+            string[] invalidCharUsernames =
+            [
+                "../x",
+                "a b",
+                "ab\nc",
+                "\u0430bc", // Cyrillic small letter 'a' (U+0430)
+                "\u212Aing" // Kelvin sign K (U+212A)
+            ];
+
+            foreach (var username in invalidCharUsernames)
+            {
+                AssertFieldError(
+                    AccountInputValidator.ValidateRegister(Valid with { Username = username }),
+                    AccountFields.Username,
+                    FieldErrorReason.InvalidCharacters);
+            }
+        });
+
+        runner.Run("ValidateRegister_Username_ValidCases", static () =>
+        {
+            string[] validUsernames =
+            [
+                " ABC ",
+                "a-b-c",
+                new string('a', 20),
+                "abc\n" // trailing newline is trimmed; stored value "abc" has no newline
+            ];
+
+            foreach (var username in validUsernames)
+            {
+                AssertValid(AccountInputValidator.ValidateRegister(Valid with { Username = username }));
+            }
+        });
+
+        runner.Run("ValidateRegister_Email_RequiredAndTooLong", static () =>
+        {
+            AssertFieldError(
+                AccountInputValidator.ValidateRegister(Valid with { Email = null! }),
+                AccountFields.Email,
+                FieldErrorReason.Required);
+
+            var email255 = new string('a', 64) + "@" + new string('b', 186) + ".com";
+            Assert.Equal(255, email255.Length);
+            AssertFieldError(
+                AccountInputValidator.ValidateRegister(Valid with { Email = email255 }),
+                AccountFields.Email,
+                FieldErrorReason.TooLong);
+        });
+
+        runner.Run("ValidateRegister_Email_InvalidCharacters", static () =>
+        {
+            AssertFieldError(
+                AccountInputValidator.ValidateRegister(Valid with { Email = "มาย@b.com" }),
+                AccountFields.Email,
+                FieldErrorReason.InvalidCharacters);
+
+            AssertFieldError(
+                AccountInputValidator.ValidateRegister(Valid with { Email = "Name <a@b.com>" }),
+                AccountFields.Email,
+                FieldErrorReason.InvalidCharacters);
+        });
+
+        runner.Run("ValidateRegister_Email_InvalidFormat", static () =>
+        {
+            string[] invalidFormatEmails =
+            [
+                "mage.example.com",
+                "a@@b.com",
+                "a@b",
+                "a@.b.com",
+                "a@b..com",
+                ".a@b.com",
+                "a.@b.com"
+            ];
+
+            foreach (var email in invalidFormatEmails)
+            {
+                AssertFieldError(
+                    AccountInputValidator.ValidateRegister(Valid with { Email = email }),
+                    AccountFields.Email,
+                    FieldErrorReason.InvalidFormat);
+            }
+        });
+
+        runner.Run("ValidateRegister_DisplayName_Cases", static () =>
+        {
+            AssertFieldError(
+                AccountInputValidator.ValidateRegister(Valid with { DisplayName = "   " }),
+                AccountFields.DisplayName,
+                FieldErrorReason.Required);
+
+            AssertFieldError(
+                AccountInputValidator.ValidateRegister(Valid with { DisplayName = new string('ก', 51) }),
+                AccountFields.DisplayName,
+                FieldErrorReason.TooLong);
+
+            string[] invalidCharNames =
+            [
+                "mage\u202E",
+                "mage\u200B",
+                "mage\nname"
+            ];
+
+            foreach (var name in invalidCharNames)
+            {
+                AssertFieldError(
+                    AccountInputValidator.ValidateRegister(Valid with { DisplayName = name }),
+                    AccountFields.DisplayName,
+                    FieldErrorReason.InvalidCharacters);
+            }
+
+            AssertValid(AccountInputValidator.ValidateRegister(Valid with { DisplayName = "นักเวท" }));
+        });
+
+        runner.Run("ValidateRegister_Password_Cases", static () =>
+        {
+            AssertFieldError(
+                AccountInputValidator.ValidateRegister(Valid with { Password = "" }),
+                AccountFields.Password,
+                FieldErrorReason.Required);
+
+            AssertFieldError(
+                AccountInputValidator.ValidateRegister(Valid with { Password = new string('p', 7) }),
+                AccountFields.Password,
+                FieldErrorReason.TooShort);
+
+            AssertValid(AccountInputValidator.ValidateRegister(Valid with { Password = new string('p', 8) }));
+            AssertValid(AccountInputValidator.ValidateRegister(Valid with { Password = new string('p', 128) }));
+
+            AssertFieldError(
+                AccountInputValidator.ValidateRegister(Valid with { Password = new string('p', 129) }),
+                AccountFields.Password,
+                FieldErrorReason.TooLong);
+
+            AssertValid(AccountInputValidator.ValidateRegister(Valid with { Password = " abc12345 " }));
+        });
+
+        runner.Run("ValidateRegister_AllEmpty_ReturnsFourRequiredErrors", static () =>
+        {
+            var errors = AccountInputValidator.ValidateRegister(new RegisterRequest("", "", "", ""));
+            Assert.Equal(4, errors.Count);
+            AssertFieldError(errors, AccountFields.Username, FieldErrorReason.Required);
+            AssertFieldError(errors, AccountFields.DisplayName, FieldErrorReason.Required);
+            AssertFieldError(errors, AccountFields.Email, FieldErrorReason.Required);
+            AssertFieldError(errors, AccountFields.Password, FieldErrorReason.Required);
+        });
+
         return runner.Complete();
+    }
+
+    private static void AssertValid(IReadOnlyList<FieldError> errors)
+    {
+        Assert.Equal(0, errors.Count, $"Expected 0 errors, but got {errors.Count}: {string.Join(", ", errors)}");
+    }
+
+    private static void AssertFieldError(IReadOnlyList<FieldError> errors, string field, FieldErrorReason reason)
+    {
+        foreach (var error in errors)
+        {
+            if (error.Field == field && error.Reason == reason)
+            {
+                return;
+            }
+        }
+
+        throw new InvalidOperationException(
+            $"Expected FieldError({field}, {reason}), but got: [{string.Join(", ", errors)}]");
     }
 }
 
