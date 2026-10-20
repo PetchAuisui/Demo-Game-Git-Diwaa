@@ -1,5 +1,6 @@
 using System.Globalization;
 using GitDiwaa.Online.Accounts;
+using GitDiwaa.Online.Accounts.Contracts;
 
 namespace GitDiwaa.Online.Tests;
 
@@ -66,6 +67,37 @@ internal static class Program
             Assert.Throws<ArgumentNullException>(() => AccountNormalizer.NormalizeEmail(null!));
         });
 
+        runner.Run("RegisterRequest_ToString_HidesPassword", static () =>
+        {
+            var request = new RegisterRequest("mage01", "Arch Mage", "mage@example.com", "S3cret-Pass!");
+            var text = request.ToString();
+
+            Assert.DoesNotContain(text, "S3cret-Pass!");
+            Assert.DoesNotContain(text, "mage@example.com");
+            Assert.Contains(text, "***");
+            Assert.Contains(text, "mage01");
+        });
+
+        runner.Run("LoginRequest_ToString_HidesPassword", static () =>
+        {
+            var request = new LoginRequest("mage01", "S3cret-Pass!", true);
+            var text = request.ToString();
+
+            Assert.DoesNotContain(text, "S3cret-Pass!");
+            Assert.Contains(text, "***");
+            Assert.Contains(text, "mage01");
+        });
+
+        runner.Run("AuthErrorCode_DefaultIsUnknown", static () =>
+        {
+            Assert.Equal(AuthErrorCode.Unknown, default(AuthErrorCode));
+        });
+
+        runner.Run("FieldErrorReason_DefaultIsUnknown", static () =>
+        {
+            Assert.Equal(FieldErrorReason.Unknown, default(FieldErrorReason));
+        });
+
         return runner.Complete();
     }
 }
@@ -121,6 +153,22 @@ internal static class Assert
         if (!EqualityComparer<T>.Default.Equals(expected, actual))
         {
             throw new InvalidOperationException(message ?? $"Expected '{expected}', but got '{actual}'.");
+        }
+    }
+
+    public static void Contains(string text, string expected)
+    {
+        if (!text.Contains(expected, StringComparison.Ordinal))
+        {
+            throw new InvalidOperationException($"Expected '{text}' to contain '{expected}'.");
+        }
+    }
+
+    public static void DoesNotContain(string text, string unexpected)
+    {
+        if (text.Contains(unexpected, StringComparison.Ordinal))
+        {
+            throw new InvalidOperationException($"Expected '{text}' NOT to contain '{unexpected}'.");
         }
     }
 
