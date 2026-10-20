@@ -38,6 +38,33 @@ public static partial class AccountInputValidator
         return errors;
     }
 
+    public static IReadOnlyList<FieldError> ValidateLogin(LoginRequest request)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+
+        var errors = new List<FieldError>(2);
+
+        if (string.IsNullOrWhiteSpace(request.Identifier))
+        {
+            errors.Add(new FieldError(AccountFields.Identifier, FieldErrorReason.Required));
+        }
+        else if (request.Identifier.Trim().Length > AccountRules.LoginIdentifierMaxLength)
+        {
+            errors.Add(new FieldError(AccountFields.Identifier, FieldErrorReason.TooLong));
+        }
+
+        if (string.IsNullOrEmpty(request.Password))
+        {
+            errors.Add(new FieldError(AccountFields.Password, FieldErrorReason.Required));
+        }
+        else if (request.Password.Length > AccountRules.PasswordMaxLength)
+        {
+            errors.Add(new FieldError(AccountFields.Password, FieldErrorReason.TooLong));
+        }
+
+        return errors;
+    }
+
     private static FieldError? ValidateUsername(string? rawUsername)
     {
         if (string.IsNullOrWhiteSpace(rawUsername))

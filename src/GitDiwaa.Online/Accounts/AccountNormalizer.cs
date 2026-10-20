@@ -13,4 +13,15 @@ public static class AccountNormalizer
         ArgumentNullException.ThrowIfNull(email);
         return email.Trim().ToLowerInvariant();
     }
+
+    public static bool IsEmailIdentifier(string identifier)
+    {
+        ArgumentNullException.ThrowIfNull(identifier);
+        return identifier.Contains('@', StringComparison.Ordinal);
+    }
+
+    public static string NormalizeIdentifier(string identifier) =>
+        IsEmailIdentifier(identifier)
+            ? NormalizeEmail(identifier)
+            : NormalizeUsername(identifier);
 }

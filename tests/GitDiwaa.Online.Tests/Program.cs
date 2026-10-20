@@ -292,6 +292,56 @@ internal static class Program
             AssertFieldError(errors, AccountFields.Password, FieldErrorReason.Required);
         });
 
+        // --- Step 1.5: ValidateLogin & Identifier Tests ---
+
+        runner.Run("ValidateLogin_NullRequest_Throws", static () =>
+        {
+            Assert.Throws<ArgumentNullException>(() => AccountInputValidator.ValidateLogin(null!));
+        });
+
+        runner.Run("ValidateLogin_Valid_Passes", static () =>
+        {
+            AssertValid(AccountInputValidator.ValidateLogin(new LoginRequest("validuser", "validpass", false)));
+        });
+
+        runner.Run("ValidateLogin_DoesNotRevealRegisterRules", static () =>
+        {
+            string[] identifiers = ["ab", "\u0430bc", "-x-", "a b"];
+            foreach (var identifier in identifiers)
+            {
+                AssertValid(AccountInputValidator.ValidateLogin(new LoginRequest(identifier, "S3cret-Pass!", false)));
+            }
+
+            AssertValid(AccountInputValidator.ValidateLogin(new LoginRequest("mage01", "short", false)));
+            AssertValid(AccountInputValidator.ValidateLogin(new LoginRequest("ab", "p", true)));
+        });
+
+        runner.Run("ValidateLogin_RequiredAndTooLong_Errors", static () =>
+        {
+            var emptyErrors = AccountInputValidator.ValidateLogin(new LoginRequest("   ", "", false));
+            Assert.Equal(2, emptyErrors.Count);
+            AssertFieldError(emptyErrors, AccountFields.Identifier, FieldErrorReason.Required);
+            AssertFieldError(emptyErrors, AccountFields.Password, FieldErrorReason.Required);
+
+            var tooLongIdentifier = new string('x', 255);
+            var tooLongPassword = new string('y', 129);
+            var longErrors = AccountInputValidator.ValidateLogin(new LoginRequest(tooLongIdentifier, tooLongPassword, false));
+            Assert.Equal(2, longErrors.Count);
+            AssertFieldError(longErrors, AccountFields.Identifier, FieldErrorReason.TooLong);
+            AssertFieldError(longErrors, AccountFields.Password, FieldErrorReason.TooLong);
+        });
+
+        runner.Run("AccountNormalizer_IsEmailIdentifier_And_NormalizeIdentifier", static () =>
+        {
+            Assert.Throws<ArgumentNullException>(() => AccountNormalizer.IsEmailIdentifier(null!));
+            Assert.True(AccountNormalizer.IsEmailIdentifier("user@example.com"));
+            Assert.True(AccountNormalizer.IsEmailIdentifier("@"));
+            Assert.False(AccountNormalizer.IsEmailIdentifier("username"));
+
+            Assert.Equal("user@example.com", AccountNormalizer.NormalizeIdentifier(" USER@EXAMPLE.COM "));
+            Assert.Equal("username", AccountNormalizer.NormalizeIdentifier(" USERNAME "));
+        });
+
         return runner.Complete();
     }
 
