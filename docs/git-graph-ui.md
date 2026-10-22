@@ -1,6 +1,6 @@
 # Git Graph ใน Godot
 
-กราฟรับ `GitRepositorySnapshot` จาก sandbox ผ่าน `SetSnapshot` และแสดงความสัมพันธ์จาก `ParentIds` ของ commit จริง แสดงสีแต่ละ lane, HEAD สีทอง, hash ย่อ และชื่อ branch
+กราฟรับ `GitRepositorySnapshot` จาก sandbox ผ่าน `set_snapshot()` และแสดงความสัมพันธ์จาก `parent_ids` ของ commit จริง แสดงสีแต่ละ lane, HEAD สีทอง, hash ย่อ และชื่อ branch
 
 - คลิกแถว commit หรือใช้ปุ่มขึ้น/ลงเมื่อกราฟมี focus เพื่อดูผู้เขียน เวลา และข้อความ commit ด้านล่าง
 - เลื่อนในกราฟเพื่อดูประวัติที่ยาวหรือมีหลาย lane

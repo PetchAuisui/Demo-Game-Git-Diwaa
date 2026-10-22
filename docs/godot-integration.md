@@ -26,14 +26,14 @@ game/
 
 ## ความสามารถของแต่ละ Component
 
-1. **TerminalPanel (`terminal_panel.gd` / `TerminalPanel.tscn`)**:
+1. **TerminalPanel (`terminal_panel.gd` / `terminal_panel.tscn`)**:
    - หน้าต่าง Terminal พร้อมปุ่ม dot ตกแต่ง
    - รองรับการกรอกคำสั่ง Git และ Built-in host commands (`help`, `clear`, `write`, `cat`, `delete`)
    - ระบบประวัติคำสั่ง (Command History) เลื่อนดูด้วยลูกศรขึ้น/ลง (Up/Down)
    - ส่ง Signal `command_submitted(command: String)`
    - แยกสีแสดงผล: Command Echo (เขียว/ขาว), Standard Output (ขาวเทา), Error (แดง), System Info (ฟ้า/เหลือง)
 
-2. **FilesPanel (`files_panel.gd` / `FilesPanel.tscn`)**:
+2. **FilesPanel (`files_panel.gd` / `files_panel.tscn`)**:
    - แสดงไฟล์และโฟลเดอร์ทั้งหมดใน Workspace แบบมีลำดับชั้น พร้อม Badge สถานะ Git (`[?]`, `[M]`, `[A]`, `[D]`, `[R]`)
    - รองรับสร้างไฟล์, สร้างโฟลเดอร์, เปลี่ยนชื่อ และลบพร้อม confirmation
    - เปิดไฟล์ด้วยปุ่มหรือดับเบิลคลิกใน embedded `CodeEdit` และบันทึกกลับ repository จริง
@@ -41,14 +41,14 @@ game/
    - แสดง success/error feedback ใน panel และล็อก action ระหว่าง operation
    - ส่ง signals สำหรับ open/save/create/create-folder/rename/delete โดยไม่เรียก filesystem จาก UI โดยตรง
 
-3. **GitGraphPanel (`git_graph_panel.gd` / `GitGraphPanel.tscn`)**:
+3. **GitGraphPanel (`git_graph_panel.gd` / `git_graph_panel.tscn`)**:
    - แสดงประวัติ Commit เป็นกราฟ / ไทม์ไลน์
    - แสดง Commit Node Circle (สีทองเมื่อเป็น HEAD ของ branch ปัจจุบัน, สีฟ้าสำหรับ commit ทั่วไป)
    - เส้นเชื่อมโยง Parent/Child
    - แสดง Short SHA, Branch Badges (`[main]`, `[feat/...]`), Subject, Author และเวลา
    - หน้า Empty State แสดง `"ยังไม่มี Commit\nสร้าง repository และ commit แล้วประวัติจะแสดงที่นี่"`
 
-4. **SandboxGameView (`sandbox_game_view.gd` / `SandboxGameView.tscn`)**:
+4. **SandboxGameView (`sandbox_game_view.gd` / `sandbox_game_view.tscn`)**:
    - พื้นหลังธีม Dark Fantasy Dungeon (หน้าต่าง Gothic, คบเพลิง Torch Glow)
    - ทำหน้าที่เป็น Mediator เชื่อมระหว่าง UI Panels กับ `GitSandboxService`
    - ทำงานกับ `RealGitSandboxService` โดยอัตโนมัติ และ Fallback ไปที่ `MockGitSandboxService` ได้อย่างไร้รอยต่อ
