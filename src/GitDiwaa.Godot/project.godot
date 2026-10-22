@@ -13,12 +13,12 @@ config_version=5
 config/name="Git-Diwaa"
 config/description="Git-Diwaa: Real Git Learning Sandbox Game"
 run/main_scene="res://Scenes/StartView.tscn"
-config/features=PackedStringArray("4.7", "C#")
+config/features=PackedStringArray("4.7")
 config/icon="res://icon.svg"
 
 [autoload]
 
-GameWindow="*res://Scripts/Common/GameWindow.cs"
+GameWindow="*res://Scripts/Common/game_window.gd"
 
 [display]
 
@@ -28,10 +28,6 @@ window/size/mode=3
 window/size/window_width_override=1920
 window/size/window_height_override=1080
 window/stretch/mode="canvas_items"
-
-[dotnet]
-
-project/assembly_name="GitDiwaa.Godot"
 
 [gui]
 

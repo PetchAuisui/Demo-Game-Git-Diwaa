@@ -39,18 +39,18 @@
 | Pull requests | รายการ (ค้นหา, Open/Closed), เปิด PR (base ← compare, Title เติมจาก commit ล่าสุดให้), หน้า PR แบบ Conversation / Commits / Files changed (diff), review, merge, ปิด PR, ลบ branch หลัง merge |
 
 แนวทางการออกแบบหน้าตา (ปรับตามฟีดแบ็กว่า "ดูยาก สีกลืนกัน")
-- **ขนาด**: เกมตั้งฟอนต์เริ่มต้น 24 แต่ GitHub จริงใช้ 14–16 จึงคูณทุกขนาด (ตัวอักษร ไอคอน ช่องไฟ) ด้วย `GitHubTheme.UiScale` (1.35) ผ่าน `GitHubTheme.S()` ถ้าจะปรับความใหญ่ทั้งหน้าให้แก้ค่าเดียว
+- **ขนาด**: เกมตั้งฟอนต์เริ่มต้น 24 แต่ GitHub จริงใช้ 14–16 จึงคูณทุกขนาด (ตัวอักษร ไอคอน ช่องไฟ) ด้วย `GitHubTheme.UI_SCALE` (1.35) ผ่าน `GitHubTheme.s()` ถ้าจะปรับความใหญ่ทั้งหน้าให้แก้ค่าเดียว
 - **สีเป็นชั้น**: `Inset` (แถบบน ช่องกรอก บล็อกโค้ด) < `Canvas` (พื้นหน้า) < `Surface` (การ์ด หัว repo) < `SurfaceRaised` (หัวการ์ด แถวที่ชี้ เมนู) ตัวอักษรและเส้นขอบสว่างกว่า GitHub เดิมเล็กน้อย ฉากเกมด้านหลังถูกบังเกือบทึบ
-- **คอลัมน์กึ่งกลาง**: เนื้อหากว้างสูงสุด `ContentMaxWidth` (ที่ขนาดจอปกติเกือบเต็มกรอบ เหลือขอบข้างละราว 40px) ทั้งแถบบน หัว repo และตัวหน้า ขอบซ้าย/ขวาตรงกัน และไม่ยืดตามจอที่กว้างกว่านั้น
+- **คอลัมน์กึ่งกลาง**: เนื้อหากว้างสูงสุด `_content_max_width()` (ที่ขนาดจอปกติเกือบเต็มกรอบ เหลือขอบข้างละราว 40px) ทั้งแถบบน หัว repo และตัวหน้า ขอบซ้าย/ขวาตรงกัน และไม่ยืดตามจอที่กว้างกว่านั้น
 - **แถบบน**: ปุ่มกลับ Sandbox พร้อมป้าย Esc, ช่อง URL, ปุ่มรีเฟรช, ป้าย "Magic Vault"
 
 โครงโค้ด UI
-- `Scripts/Common/GitHubTheme.cs` พาเลตต์ สเกล และ Theme (ปุ่ม ช่องกรอก เมนู แถบเลื่อน), `GitHubIcons.cs` ไอคอน SVG
-- `Scripts/Components/GitHubUi.cs` ชิ้นส่วนใช้ซ้ำ (แท็บ กล่องรายการ แถวคลิกได้ ป้ายสถานะ avatar แถบแจ้งผล หัวข้อมีเลขกำกับ การ์ดขั้นตอน `Step` และบล็อกคำสั่ง `CommandBlock` ที่ย้อมสีคำสั่งและคลิกเพื่อคัดลอก)
-- `DiffViewer.cs` (diff แบบการ์ดต่อไฟล์), `MarkdownView.cs` (README และคำอธิบาย PR)
+- `Scripts/Common/github_theme.gd` พาเลตต์ สเกล และ Theme (ปุ่ม ช่องกรอก เมนู แถบเลื่อน), `github_icons.gd` ไอคอน SVG
+- `Scripts/Components/github_ui.gd` ชิ้นส่วนใช้ซ้ำ (แท็บ กล่องรายการ แถวคลิกได้ ป้ายสถานะ avatar แถบแจ้งผล หัวข้อมีเลขกำกับ การ์ดขั้นตอน `step` และบล็อกคำสั่ง `command_block` ที่ย้อมสีคำสั่งและคลิกเพื่อคัดลอก)
+- `diff_viewer.gd` (diff แบบการ์ดต่อไฟล์), `markdown_view.gd` (README และคำอธิบาย PR)
 - `Scenes/RemoteRepoView.tscn` โครงคงที่ของหน้า (กรอบหน้าต่าง แถบบน หัว repo แท็บ พื้นที่เลื่อน) ปรับหน้าตาใน Godot editor ได้ ค่าสี/ขนาดใน scene ต้องตรงกับ `GitHubTheme` (สเกล ×1.35 คำนวณไว้แล้ว)
-- `Scenes/RepoListPage.tscn` (หน้ารายการ repo: การ์ดโปรไฟล์ ช่องค้นหา ปุ่ม New), `Scenes/NewRepoPage.tscn` (ฟอร์มสร้าง repo) และ `Scenes/CodePage.tscn` (แถบเครื่องมือหน้า Code: branch, Branches, Go to file, Code) แยก scene ต่อหน้า มีสคริปต์ `RepoListPage.cs` / `NewRepoPage.cs` / `CodePage.cs` ใส่ข้อมูลและต่อสัญญาณ
-- `RemoteRepoView.cs` ผูก node ของ scene นำทาง และรีเฟรช, `.Code.cs` / `.History.cs` / `.Pulls.cs` / `.Repos.cs` สร้างเนื้อหาที่เปลี่ยนตามข้อมูลด้วยโค้ด (breadcrumb ตารางไฟล์ README แถว commit PR diff)
+- `Scenes/RepoListPage.tscn` (หน้ารายการ repo: การ์ดโปรไฟล์ ช่องค้นหา ปุ่ม New), `Scenes/NewRepoPage.tscn` (ฟอร์มสร้าง repo) และ `Scenes/CodePage.tscn` (แถบเครื่องมือหน้า Code: branch, Branches, Go to file, Code) แยก scene ต่อหน้า มีสคริปต์ `repo_list_page.gd` / `new_repo_page.gd` / `code_page.gd` ใส่ข้อมูลและต่อสัญญาณ
+- `remote_repo_view.gd` ผูก node ของ scene นำทาง รีเฟรช และสร้างเนื้อหาที่เปลี่ยนตามข้อมูลด้วยโค้ด (breadcrumb ตารางไฟล์ README แถว commit PR diff)
 
 ข้อจำกัดของหน้า UI: เป็น overlay ครอบ Sandbox ต้องกลับไปพิมพ์คำสั่งใน terminal แล้วเปิดหน้าใหม่เพื่อดูผล
 

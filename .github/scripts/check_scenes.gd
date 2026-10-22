@@ -1,6 +1,6 @@
 extends SceneTree
-# Headless smoke check: every .tscn/.tres must load, and every scene must instantiate
-# (this also verifies that the C# scripts attached to nodes resolve in the built assembly).
+# Headless smoke check: every .gd/.tscn/.tres must load, and every scene must instantiate
+# (this also verifies that the GDScript attached to nodes parses and resolves its class names).
 
 var failures := 0
 
@@ -38,7 +38,7 @@ func _collect(dir_path: String, out: Array[String]) -> void:
 			continue
 		_collect(dir_path.path_join(sub), out)
 	for f in dir.get_files():
-		if f.ends_with(".tscn") or f.ends_with(".tres"):
+		if f.ends_with(".gd") or f.ends_with(".tscn") or f.ends_with(".tres"):
 			out.append(dir_path.path_join(f))
 
 

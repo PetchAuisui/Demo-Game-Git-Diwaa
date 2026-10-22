@@ -1,6 +1,6 @@
 [gd_scene load_steps=3 format=3]
 
-[ext_resource type="Script" path="res://Scripts/Components/NewRepoPage.cs" id="1_script"]
+[ext_resource type="Script" path="res://Scripts/Components/new_repo_page.gd" id="1_script"]
 
 [sub_resource type="StyleBoxFlat" id="Style_panel"]
 content_margin_left = 38.8

@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://c00kg8d5qqs1b"]
 
-[ext_resource type="Script" uid="uid://fktncet4voef" path="res://Scripts/Controllers/StartViewController.cs" id="1_controller"]
+[ext_resource type="Script" path="res://Scripts/Controllers/start_view_controller.gd" id="1_controller"]
 [ext_resource type="Texture2D" uid="uid://c6py6ntqpys64" path="res://assets/art/start_screen/start_bg.png" id="2_bg"]
 [ext_resource type="PackedScene" path="res://Scenes/StartTopBar.tscn" id="3_topbar"]
 [ext_resource type="Texture2D" uid="uid://2tl18p12rp5x" path="res://assets/art/start_screen/start_logo.png" id="4_logo"]

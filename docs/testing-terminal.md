@@ -3,8 +3,10 @@
 ## เริ่มโปรแกรม
 
 ```sh
-dotnet run --project src/GitDiwaa.Cli/GitDiwaa.Cli.csproj
+godot --headless --path src/GitDiwaa.Godot --script res://Scripts/Cli/cli_main.gd
 ```
+
+(รัน `godot --headless --path src/GitDiwaa.Godot --import` หนึ่งครั้งก่อนหลัง clone)
 
 โปรแกรมสร้าง attempt ใหม่ทุกครั้ง พร้อมโครงสร้างดังนี้:
 
