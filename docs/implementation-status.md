@@ -10,7 +10,7 @@
 
 ## หลักฐานจากชุดทดสอบปัจจุบัน
 
-อ้างอิง `tests/GitDiwaa.RealGit.Tests/run_tests.gd`
+อ้างอิง `tests/engine/run_tests.gd`
 
 | กลุ่ม | สิ่งที่ตรวจแล้ว |
 |---|---|

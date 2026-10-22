@@ -3,10 +3,10 @@
 ## เริ่มโปรแกรม
 
 ```sh
-godot --headless --path src/GitDiwaa.Godot --script res://Scripts/Cli/cli_main.gd
+godot --headless --path game --script res://engine/cli/cli_main.gd
 ```
 
-(รัน `godot --headless --path src/GitDiwaa.Godot --import` หนึ่งครั้งก่อนหลัง clone)
+(รัน `godot --headless --path game --import` หนึ่งครั้งก่อนหลัง clone)
 
 โปรแกรมสร้าง attempt ใหม่ทุกครั้ง พร้อมโครงสร้างดังนี้:
 

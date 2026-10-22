@@ -5,37 +5,23 @@ Godot Sandbox UI (GDScript) ได้รับการพัฒนาในร�
 ## โครงสร้างโมดูล (OOP Architecture)
 
 ```text
-src/GitDiwaa.Godot/
-├── project.godot                     # Godot 4.7 engine configuration
-├── Scenes/
-│   ├── SandboxGameView.tscn         # หน้าจอหลัก (Orchestrator Scene)
-│   ├── TopBarPanel.tscn             # Header Bar แสดง Level, Branch, Timer, Coins
-│   ├── FilesPanel.tscn              # Panel แสดงไฟล์ใน Workspace และสถานะ Git
-│   ├── GitGraphPanel.tscn           # Panel แสดง Commit DAG, Branch Badges, ประวัติ
-│   ├── RemoteRepoView.tscn          # โครงหน้า Remote Repository (แถบบน หัว repo พื้นที่เลื่อน)
-│   ├── RepoListPage.tscn            # หน้ารายการ repo ในหน้า Remote Repository
-│   ├── CodePage.tscn                # แถบเครื่องมือหน้า Code ของ repo
-│   ├── NewRepoPage.tscn             # ฟอร์มสร้าง repo ใหม่
-│   └── TerminalPanel.tscn           # Reusable Terminal Window และ Command Prompt
-└── Scripts/
-    ├── Core/                        # contracts + models (GitCommandResult, GitRepositorySnapshot, GitRemoteHost, ...)
-    ├── RealGit/                     # Real Git engine (session, policy, process runner, GitHub จำลอง)
-    ├── Cli/                         # Terminal CLI (cli_main.gd)
-    ├── Common/
-    │   ├── sandbox_theme_tokens.gd  # Design Tokens (Colors, StyleBoxes, Fonts)
-    │   ├── github_theme.gd          # Theme แบบ GitHub ของหน้า Remote Repository
-    │   └── game_window.gd           # autoload: F11 fullscreen
-    ├── ViewModels/                  # Workspace/File, Commit Graph และ Terminal view models
-    ├── Services/
-    │   ├── git_sandbox_service.gd       # Service Contract สำหรับ UI
-    │   ├── real_git_sandbox_service.gd  # Adapter เชื่อมกับ Real Git Engine
-    │   └── mock_git_sandbox_service.gd  # Mock Service สำหรับ Preview และ Unit Testing
-    ├── Components/
-    │   ├── top_bar_panel.gd         # Control component สำหรับ Header
-    │   ├── files_panel.gd           # Control component สำหรับแสดงและจัดการไฟล์
-    │   ├── git_graph_panel.gd       # Control component สำหรับแสดง Commit Graph
-    │   └── terminal_panel.gd        # Control component สำหรับ Terminal & ประวัติคำสั่ง
-    └── sandbox_game_view.gd         # Controller / Mediator ประสานงานระหว่าง Panels กับ Service
+game/
+├── project.godot                       # Godot 4.7 engine configuration
+├── engine/                             # logic ที่ไม่ผูกกับ UI
+│   ├── core/                           # contracts + models (GitCommandResult, GitRepositorySnapshot, GitRemoteHost, ...)
+│   ├── real_git/                       # Real Git engine (session, policy, process runner, GitHub จำลอง)
+│   └── cli/                            # Terminal CLI (cli_main.gd)
+├── features/                           # scene + script ของแต่ละฟีเจอร์อยู่ด้วยกัน
+│   ├── sandbox/                        # sandbox_game_view (Mediator), terminal_panel, files_panel,
+│   │   │                               #   git_graph_panel, commit_graph_canvas, top_bar_panel, remote_repo_button
+│   │   ├── services/                   # git_sandbox_service (contract), real_/mock_git_sandbox_service
+│   │   └── view_models/                # Workspace/File, Commit Graph และ Terminal view models
+│   ├── remote_repo/                    # remote_repo_view และหน้าย่อย, github_theme, github_icons,
+│   │                                   #   github_ui, diff_viewer, markdown_view
+│   ├── start/                          # start_view, start_top_bar, dressing_room_view และ controller
+│   └── cutscene/                       # cutscene scenes + scripts
+├── common/                             # sandbox_theme_tokens (Design Tokens), dialog_style, game_window (autoload F11)
+└── assets/                             # art, audio, fonts, icons
 ```
 
 ## ความสามารถของแต่ละ Component
@@ -81,13 +67,13 @@ FilesPanel signal → SandboxGameView → GitSandboxService
 ## วิธีการรัน
 
 ### ผ่าน Godot Engine
-หลัง clone ให้ import โปรเจกต์ครั้งหนึ่ง: `godot --headless --path src/GitDiwaa.Godot --import`
+หลัง clone ให้ import โปรเจกต์ครั้งหนึ่ง: `godot --headless --path game --import`
 
 ```sh
-godot --path src/GitDiwaa.Godot
+godot --path game
 ```
 
 ### Headless Mode (ทดสอบ)
 ```sh
-godot --headless --path src/GitDiwaa.Godot --quit-after 5
+godot --headless --path game --quit-after 5
 ```

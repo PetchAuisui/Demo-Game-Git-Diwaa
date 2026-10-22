@@ -16,7 +16,7 @@ permissions:
 
 env:
   GODOT_VERSION: 4.7.2
-  GODOT_PROJECT: src/GitDiwaa.Godot
+  GODOT_PROJECT: game
 
 jobs:
   # ---------------------------------------------------------------------------
@@ -47,12 +47,14 @@ jobs:
           git --version
 
       - name: Import project (builds the script class cache)
-        run: godot --headless --path ${{ env.GODOT_PROJECT }} --import --quit
+        run: |
+          godot --headless --path ${{ env.GODOT_PROJECT }} --import --quit
+          godot --headless --path ${{ env.GODOT_PROJECT }} --import --quit
 
       - name: Run real-git tests
         run: |
           godot --headless --path ${{ env.GODOT_PROJECT }} \
-            --script "$GITHUB_WORKSPACE/tests/GitDiwaa.RealGit.Tests/run_tests.gd" 2>&1 | tee tests.log
+            --script "$GITHUB_WORKSPACE/tests/engine/run_tests.gd" 2>&1 | tee tests.log
           test "${PIPESTATUS[0]}" -eq 0
           if grep -qE "SCRIPT ERROR|Parse Error|^FAIL" tests.log; then
             echo "::error::Engine tests reported errors"; exit 1
@@ -62,7 +64,7 @@ jobs:
         shell: bash
         run: |
           printf 'git --version\ngit config --global user.name "CI"\ngit config --global user.email ci@git-diwaa.local\ngit init\nwrite README.md Hello\ngit add README.md\ngit commit -m "ci smoke"\nsnapshot\nexit\n' \
-            | godot --headless --path ${{ env.GODOT_PROJECT }} --script res://Scripts/Cli/cli_main.gd | tee cli.txt
+            | godot --headless --path ${{ env.GODOT_PROJECT }} --script res://engine/cli/cli_main.gd | tee cli.txt
           grep -q '"Subject": "ci smoke"' cli.txt
 
       - name: Upload logs on failure
@@ -96,7 +98,9 @@ jobs:
         run: godot --version
 
       - name: Import assets headless
-        run: godot --headless --path ${{ env.GODOT_PROJECT }} --import --quit
+        run: |
+          godot --headless --path ${{ env.GODOT_PROJECT }} --import --quit
+          godot --headless --path ${{ env.GODOT_PROJECT }} --import --quit
 
       - name: Load & instantiate every script/scene/resource
         run: |
