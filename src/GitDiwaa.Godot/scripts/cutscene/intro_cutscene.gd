@@ -28,7 +28,7 @@ extends Sprite2D
 @onready var anim_player: AnimationPlayer = $AnimationPlayer
 @onready var master: AnimatedSprite2D = $Master
 @onready var vel: AnimatedSprite2D = $Vel
-@onready var exclamation_mark: Sprite2D = $Vel/ExclamationMark
+@onready var exclamation_mark: Node2D = $Vel/ExclamationMark
 @onready var black_hole: Sprite2D = $BlackHole
 @onready var room_lighting: CanvasModulate = $RoomLighting
 
@@ -214,7 +214,7 @@ func _reset_cutscene_state() -> void:
 	if exclamation_mark:
 		exclamation_mark.visible = false
 		exclamation_mark.scale = Vector2.ZERO
-		exclamation_mark.position = Vector2(0, -56)
+		exclamation_mark.position = Vector2(0, -52)
 
 ## เรียกเมื่อคัมภีร์แตกสลาย (11.8s)
 func _on_shatter_khampri() -> void:
@@ -525,7 +525,7 @@ func play_with_tween() -> void:
 	
 	exclamation_mark.visible = false
 	exclamation_mark.scale = Vector2.ZERO
-	exclamation_mark.position = Vector2(0, -56)
+	exclamation_mark.position = Vector2(0, -52)
 	
 	black_hole.visible = false
 	black_hole.position = Vector2(master_target_x, 97)
@@ -575,26 +575,32 @@ func play_with_tween() -> void:
 	tw_drop.tween_callback(func():
 		master.visible = false
 		vel.play("shock")
-		exclamation_mark.visible = true
-		exclamation_mark.position = Vector2(0, -50)
-		var tw_ex = create_tween()
-		tw_ex.tween_property(exclamation_mark, "position:y", -60.0, 0.08).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-		tw_ex.parallel().tween_property(exclamation_mark, "scale", Vector2(1.35, 1.35), 0.08)
-		tw_ex.tween_property(exclamation_mark, "position:y", -54.0, 0.10).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
-		tw_ex.parallel().tween_property(exclamation_mark, "scale", Vector2(0.95, 0.95), 0.10)
-		tw_ex.tween_property(exclamation_mark, "position:y", -57.5, 0.12).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-		tw_ex.parallel().tween_property(exclamation_mark, "scale", Vector2(1.05, 1.05), 0.12)
-		tw_ex.tween_property(exclamation_mark, "position:y", -56.0, 0.12).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
-		tw_ex.parallel().tween_property(exclamation_mark, "scale", Vector2(1.0, 1.0), 0.12)
-		tw_ex.chain().tween_callback(func():
-			if not is_instance_valid(exclamation_mark) or not exclamation_mark.visible:
-				return
-			if tw_ex_bob and tw_ex_bob.is_valid():
-				tw_ex_bob.kill()
-			tw_ex_bob = create_tween().set_loops()
-			tw_ex_bob.tween_property(exclamation_mark, "position:y", -59.5, 0.35).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
-			tw_ex_bob.tween_property(exclamation_mark, "position:y", -56.0, 0.35).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
-		)
+		# 1. เวลกระโดดสะดุ้งตัวลอย (ขึ้น y=35 ใน 0.22s, ลง y=59 ใน 0.25s)
+		var tw_vjump = create_tween()
+		tw_vjump.tween_property(vel, "position:y", 35.0, 0.22).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+		tw_vjump.tween_property(vel, "position:y", 59.0, 0.25).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+		
+		# 2. ตัวอักษร ! ตกใจบนหัว กระโดดขึ้นพร้อมกับเวลและลงพร้อมกัน
+		if is_instance_valid(exclamation_mark):
+			exclamation_mark.visible = true
+			exclamation_mark.scale = Vector2.ZERO
+			exclamation_mark.position = Vector2(0, -52)
+			exclamation_mark.modulate.a = 1.0
+			var tw_ex = create_tween()
+			# กระโดดขึ้นพร้อมกับเวล (0.22s)
+			tw_ex.tween_property(exclamation_mark, "scale", Vector2(1.15, 1.15), 0.15).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+			tw_ex.parallel().tween_property(exclamation_mark, "position:y", -58.0, 0.22).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+			# ตกลงมาพร้อมกับเวล (0.25s)
+			tw_ex.chain().tween_property(exclamation_mark, "scale", Vector2.ONE, 0.15).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+			tw_ex.parallel().tween_property(exclamation_mark, "position:y", -52.0, 0.25).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+			# แลนดิ้งถึงพื้นปุ๊บ ยุบตัวหายวับไปทันที (0.15s)
+			tw_ex.chain().tween_property(exclamation_mark, "scale", Vector2.ZERO, 0.15).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+			tw_ex.parallel().tween_property(exclamation_mark, "modulate:a", 0.0, 0.15)
+			tw_ex.chain().tween_callback(func():
+				if is_instance_valid(exclamation_mark):
+					exclamation_mark.visible = false
+					exclamation_mark.position = Vector2(0, -52)
+			)
 	)
 	
 	# 5. ปรมาจารย์จมลงหลุมดำจนมิด แล้วคัมภีร์ดีดเด้งสูงเฉียงขวาออกห่างจากเวล (9.38s -> 9.80s)
