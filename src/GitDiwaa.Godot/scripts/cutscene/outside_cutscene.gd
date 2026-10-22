@@ -28,6 +28,7 @@ var is_tower_forward: bool = true
 var is_fast_forwarding: bool = false
 var can_fast_forward: bool = true
 var skip_ctrl = null
+var current_stage: int = 1 # 1 = storm sky, 2 = chaos village, 3 = tower & title
 
 signal cutscene_finished
 
@@ -35,6 +36,7 @@ func _ready() -> void:
 	Engine.time_scale = 1.0
 	skip_ctrl = preload("res://scripts/cutscene/skip_cutscene_button.gd").new()
 	skip_ctrl.next_scene_path = _get_resolved_next_scene()
+	skip_ctrl.custom_skip_action = _on_skip_step
 	add_child(skip_ctrl)
 	_init_scene()
 	play_chaos_sequence()
@@ -43,7 +45,7 @@ func _exit_tree() -> void:
 	Engine.time_scale = 1.0
 
 func _process(_delta: float) -> void:
-	if not can_fast_forward or can_start or is_starting:
+	if not can_fast_forward or is_starting:
 		if is_fast_forwarding:
 			is_fast_forwarding = false
 			Engine.time_scale = 1.0
@@ -69,10 +71,25 @@ func _get_resolved_next_scene() -> String:
 		return "res://scenes/cutscene/inside_tower_cutscene.tscn"
 	if ResourceLoader.exists("res://Scenes/cutscene/inside_tower_cutscene.tscn"):
 		return "res://Scenes/cutscene/inside_tower_cutscene.tscn"
-	return "res://Scenes/SandboxGameView.tscn"
+	if ResourceLoader.exists("res://Scenes/SandboxGameView.tscn"):
+		return "res://Scenes/SandboxGameView.tscn"
+	if ResourceLoader.exists("res://scenes/SandboxGameView.tscn"):
+		return "res://scenes/SandboxGameView.tscn"
+	if ResourceLoader.exists("res://scenes/cutscene/cut_scence_normal.tscn"):
+		return "res://scenes/cutscene/cut_scence_normal.tscn"
+	if ResourceLoader.exists("res://Scenes/cutscene/cut_scence_normal.tscn"):
+		return "res://Scenes/cutscene/cut_scence_normal.tscn"
+	return ""
 
 func _input(event: InputEvent) -> void:
 	if not can_start or is_starting:
+		return
+	if event is InputEventKey and event.keycode == KEY_ESCAPE:
+		return
+	
+	# ป้องกันคลิกโดนปุ่ม FF / Skip ถูกกลืนเป็นการกดเริ่มด่าน
+	var hovered := get_viewport().gui_get_hovered_control()
+	if hovered is BaseButton:
 		return
 	
 	if event.is_action_pressed("ui_accept") or \
@@ -86,6 +103,7 @@ func _init_scene() -> void:
 	is_starting = false
 	can_fast_forward = true
 	is_fast_forwarding = false
+	current_stage = 1
 	Engine.time_scale = 1.0
 	is_tower_forward = true
 	
@@ -125,7 +143,58 @@ func _init_scene() -> void:
 	fade_overlay.color = Color(0, 0, 0, 1)
 	fade_overlay.visible = true
 
+func _on_skip_step() -> void:
+	if is_starting:
+		return
+	if current_stage == 1:
+		_skip_to_stage_2()
+	elif current_stage == 2:
+		_skip_to_stage_3()
+	else:
+		_trigger_start_level()
+
+func _skip_to_stage_2() -> void:
+	if current_stage >= 2 or is_starting:
+		return
+	current_stage = 2
+	if storm_sky.animation_finished.is_connected(_on_storm_sky_finished):
+		storm_sky.animation_finished.disconnect(_on_storm_sky_finished)
+	storm_sky.stop()
+	storm_sky.visible = false
+	fade_overlay.color.a = 0.0
+	
+	village.visible = true
+	village.frame = 0
+	village.modulate = Color(1, 1, 1, 1)
+	village.play("village_chaos", 1.0)
+	if not village.animation_finished.is_connected(_on_village_chaos_finished):
+		village.animation_finished.connect(_on_village_chaos_finished, CONNECT_ONE_SHOT)
+
+func _skip_to_stage_3() -> void:
+	if is_starting:
+		return
+	current_stage = 3
+	if village.animation_finished.is_connected(_on_village_chaos_finished):
+		village.animation_finished.disconnect(_on_village_chaos_finished)
+	village.stop()
+	village.visible = false
+	storm_sky.visible = false
+	fade_overlay.color.a = 0.0
+	
+	tower.visible = true
+	tower.modulate = Color(1, 1, 1, 1)
+	_start_tower_ping_pong()
+	
+	if vel_shadow:
+		vel_shadow.visible = true
+		vel_shadow.modulate.a = 0.65
+	vel.visible = true
+	vel.modulate.a = 1.0
+	
+	_reveal_game_title()
+
 func play_chaos_sequence() -> void:
+	current_stage = 1
 	# 1. ค่อย ๆ สว่างขึ้นจากจอดำสู่ท้องฟ้าพายุ 0.5 วินาที
 	var tw = create_tween()
 	tw.tween_property(fade_overlay, "color:a", 0.0, 0.5)
@@ -135,6 +204,9 @@ func play_chaos_sequence() -> void:
 	)
 
 func _on_storm_sky_finished() -> void:
+	if current_stage >= 2 and village.visible:
+		return
+	current_stage = 2
 	# 2. สลับภาพสู่บ้านเมืองโกลาหล (เล่นแอนิเมชันตั้งแต่เฟรมที่ 20 ถึงจบ 58)
 	village.visible = true
 	village.frame = 0
@@ -147,9 +219,13 @@ func _on_storm_sky_finished() -> void:
 	)
 	
 	village.play("village_chaos", 1.0)
-	village.animation_finished.connect(_on_village_chaos_finished, CONNECT_ONE_SHOT)
+	if not village.animation_finished.is_connected(_on_village_chaos_finished):
+		village.animation_finished.connect(_on_village_chaos_finished, CONNECT_ONE_SHOT)
 
 func _on_village_chaos_finished() -> void:
+	if current_stage >= 3 and tower.visible:
+		return
+	current_stage = 3
 	# 3. สลับภาพสู่หอคอยทมิฬ
 	tower.visible = true
 	tower.modulate = Color(1, 1, 1, 0)
@@ -172,7 +248,10 @@ func _on_village_chaos_finished() -> void:
 	
 	var tw_wait = create_tween()
 	tw_wait.tween_interval(1.5)
-	tw_wait.tween_callback(_reveal_game_title)
+	tw_wait.tween_callback(func():
+		if current_stage == 3 and not can_start and not is_starting:
+			_reveal_game_title()
+	)
 
 func _start_tower_ping_pong() -> void:
 	if not tower:
@@ -194,14 +273,11 @@ func _on_tower_animation_finished() -> void:
 		tower.play_backwards("tower_loop")
 
 func _reveal_game_title() -> void:
-	if skip_ctrl:
-		skip_ctrl.set_fast_forward_visible(false)
-	can_fast_forward = false
-	is_fast_forwarding = false
-	Engine.time_scale = 1.0
+	# คงปุ่มเร่งความเร็วให้มองเห็นและกดใช้งานได้ตลอดเวลา ไม่ซ่อนออก
+	can_fast_forward = true
 	
 	var tw_title = create_tween()
-	tw_title.tween_property(title_container, "modulate:a", 1.0, 1.2).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	tw_title.tween_property(title_container, "modulate:a", 1.0, 0.8).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 	
 	var tw_title_aura = create_tween().set_loops()
 	tw_title_aura.tween_property(title_label_aura, "modulate:a", 0.75, 1.6).set_trans(Tween.TRANS_SINE)
@@ -223,7 +299,7 @@ func _trigger_start_level() -> void:
 	Engine.time_scale = 1.0
 	
 	var tw_out = create_tween()
-	tw_out.tween_property(fade_overlay, "color", Color(0, 0, 0, 1), 1.0)
+	tw_out.tween_property(fade_overlay, "color", Color(0, 0, 0, 1), 0.5)
 	tw_out.tween_callback(func():
 		Engine.time_scale = 1.0
 		emit_signal("cutscene_finished")

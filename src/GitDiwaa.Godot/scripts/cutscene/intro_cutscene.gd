@@ -85,6 +85,7 @@ func _ready() -> void:
 	Engine.time_scale = 1.0
 	skip_ctrl = preload("res://scripts/cutscene/skip_cutscene_button.gd").new()
 	skip_ctrl.next_scene_path = "res://scenes/cutscene/outside_cutscene.tscn"
+	skip_ctrl.custom_skip_action = _on_skip_step
 	add_child(skip_ctrl)
 	_init_shards()
 	_reset_cutscene_state()
@@ -105,7 +106,7 @@ func _exit_tree() -> void:
 	Engine.time_scale = 1.0
 
 func _process(_delta: float) -> void:
-	if not can_fast_forward or can_continue or is_continuing:
+	if not can_fast_forward or is_continuing:
 		if is_fast_forwarding:
 			is_fast_forwarding = false
 			Engine.time_scale = 1.0
@@ -129,12 +130,65 @@ func _input(event: InputEvent) -> void:
 		return
 	if event is InputEventKey and event.keycode == KEY_ESCAPE:
 		return
+	
+	# ป้องกันการคลิกโดนปุ่มควบคุม (FF / Skip) ถูกกลืนเป็นการกดอ่านต่อ
+	var hovered := get_viewport().gui_get_hovered_control()
+	if hovered is BaseButton:
+		return
+	
 	if event.is_action_pressed("ui_accept") or \
 	   (event is InputEventKey and event.pressed and not event.echo) or \
 	   (event is InputEventMouseButton and event.pressed) or \
 	   (event is InputEventScreenTouch and event.pressed):
 		get_viewport().set_input_as_handled()
 		_trigger_continue()
+
+func _on_skip_step() -> void:
+	if is_continuing:
+		return
+	if not can_continue:
+		_skip_to_magic_text()
+	else:
+		_trigger_continue_instant()
+
+func _skip_to_magic_text() -> void:
+	if is_continuing or can_continue:
+		return
+	if anim_player and anim_player.is_playing():
+		anim_player.stop()
+	
+	vel.position = Vector2(vel_target_x + 130.0, character_y)
+	vel.visible = true
+	vel.play("breathe_blink")
+	master.visible = false
+	black_hole.visible = false
+	if exclamation_mark:
+		exclamation_mark.visible = false
+	khampri.visible = false
+	khampri_shadow.visible = false
+	
+	for s in shards:
+		if is_instance_valid(s):
+			s.visible = false
+	
+	paper_on_floor.visible = true
+	paper_on_floor.position = Vector2(vel.position.x + 8.0, character_y - 28.0)
+	paper_on_floor.scale = Vector2(0.12, 0.12)
+	paper_on_floor.modulate = Color(2.0, 1.8, 1.2, 1.0)
+	if paper_shadow:
+		paper_shadow.visible = false
+	
+	_on_reveal_magic_text()
+
+func _trigger_continue_instant() -> void:
+	if is_continuing:
+		return
+	is_continuing = true
+	can_continue = false
+	can_fast_forward = false
+	is_fast_forwarding = false
+	Engine.time_scale = 1.0
+	get_tree().change_scene_to_file("res://scenes/cutscene/outside_cutscene.tscn")
 
 func _init_shards() -> void:
 	shards.clear()
@@ -399,11 +453,7 @@ func _on_pickup_shard() -> void:
 func _on_reveal_magic_text() -> void:
 	if not rune_container:
 		return
-	if skip_ctrl:
-		skip_ctrl.set_fast_forward_visible(false)
-	can_fast_forward = false
-	is_fast_forwarding = false
-	Engine.time_scale = 1.0
+	can_fast_forward = true
 	can_continue = true
 	is_continuing = false
 	

@@ -13,6 +13,7 @@ extends CanvasLayer
 @export var show_fast_forward: bool = true
 @export var show_skip: bool = true
 
+var custom_skip_action: Callable = Callable()
 var is_fast_forward: bool = false
 var _skipping: bool = false
 
@@ -281,6 +282,9 @@ func _unhandled_key_input(event: InputEvent) -> void:
 
 func skip() -> void:
 	if not visible or _skipping:
+		return
+	if custom_skip_action.is_valid():
+		custom_skip_action.call()
 		return
 	_skipping = true
 	_stop_bounce_animation()
