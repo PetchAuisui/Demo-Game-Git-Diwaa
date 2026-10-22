@@ -2,7 +2,7 @@
 
 ## เป้าหมาย
 
-ระบบนี้ให้ผู้เล่นใช้คำสั่ง Git จริงในพื้นที่ฝึกที่เกมสร้างขึ้น รองรับการทดสอบผ่าน Terminal ในรอบแรก และเปิดทางให้ Godot C# เรียก API ชุดเดียวกันในภายหลัง
+ระบบนี้ให้ผู้เล่นใช้คำสั่ง Git จริงในพื้นที่ฝึกที่เกมสร้างขึ้น รองรับการทดสอบผ่าน Terminal ในรอบแรก และให้ Godot UI เรียก API ชุดเดียวกัน (ทั้งหมดเขียนด้วย GDScript)
 
 อ้างอิงจากเอกสารโปรเจกต์ใน Notion ณ วันที่ 1 ตุลาคม 2026 เกมต้องครอบคลุมการตั้งค่าและเริ่ม repository, status/add/commit, log/diff/restore/reset, branch/switch/merge และ local remote workflow เช่น clone/fetch/pull/push โดย repository ต้องเปลี่ยนตามผลคำสั่งจริง
 
@@ -21,17 +21,17 @@
 
 ```text
 ┌───────────────────┐       ┌──────────────────────┐
-│ Terminal CLI      │       │ Godot C# (รอบถัดไป) │
+│ Terminal CLI      │       │ Godot UI (GDScript) │
 └─────────┬─────────┘       └──────────┬───────────┘
           └──────────────┬─────────────┘
                          ▼
               ┌─────────────────────┐
-              │ GitDiwaa.Core       │
+              │ Scripts/Core        │
               │ contracts + models  │
               └──────────┬──────────┘
                          ▼
               ┌─────────────────────┐
-              │ GitDiwaa.RealGit    │
+              │ Scripts/RealGit     │
               │ session / policy /  │
               │ process / snapshot  │
               └──────────┬──────────┘
@@ -47,9 +47,9 @@
 
 | Object | Responsibility |
 |---|---|
-| `IGitGameSessionFactory` | สร้าง attempt ใหม่ให้แต่ละภารกิจ |
-| `IGitGameSession` | API หลักสำหรับสั่ง Git และอ่าน state |
-| `IPlayerFileSystem` | จัดการไฟล์เฉพาะใน working tree โดยห้ามแตะ `.git` |
+| `GitGameSessionFactory` | สร้าง attempt ใหม่ให้แต่ละภารกิจ |
+| `GitGameSession` | API หลักสำหรับสั่ง Git และอ่าน state |
+| `PlayerFileSystem` | จัดการไฟล์เฉพาะใน working tree โดยห้ามแตะ `.git` |
 | `GitCommandResult` | ผลลัพธ์ที่ UI แสดงได้โดยไม่รู้จัก process |
 | `GitRepositorySnapshot` | branch, files และ commit graph สำหรับ UI |
 | Real Git adapter | ตรวจ policy และเรียก Git จริงใน sandbox |

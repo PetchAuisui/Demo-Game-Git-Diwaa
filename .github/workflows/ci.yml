@@ -15,17 +15,16 @@ permissions:
   contents: read
 
 env:
-  DOTNET_NOLOGO: true
-  DOTNET_CLI_TELEMETRY_OPTOUT: true
-  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
   GODOT_VERSION: 4.7.2
+  GODOT_PROJECT: src/GitDiwaa.Godot
 
 jobs:
   # ---------------------------------------------------------------------------
-  # C#: Core / RealGit / Cli (no Godot needed) + the real-git test runner
+  # Real-git engine (GDScript): import the project, run the integration tests
+  # and a CLI smoke test. No UI / rendering needed.
   # ---------------------------------------------------------------------------
-  dotnet:
-    name: C# build & tests (${{ matrix.os }})
+  engine:
+    name: Engine tests (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     timeout-minutes: 20
     strategy:
@@ -35,131 +34,71 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-dotnet@v4
+      - name: Setup Godot
+        uses: chickensoft-games/setup-godot@v2
         with:
-          dotnet-version: 10.0.x
-
-      - name: Cache NuGet packages
-        uses: actions/cache@v4
-        with:
-          path: ~/.nuget/packages
-          key: nuget-dotnet-${{ runner.os }}-${{ hashFiles('src/**/*.csproj', 'tests/**/*.csproj') }}
-          restore-keys: nuget-dotnet-${{ runner.os }}-
-
-      # The committed NuGet.Config points at a local macOS Godot install; CI uses nuget.org.
-      - name: Use nuget.org as package source
-        run: |
-          cat > NuGet.Config <<'XML'
-          <?xml version="1.0" encoding="utf-8"?>
-          <configuration>
-            <packageSources>
-              <clear />
-              <add key="nuget.org" value="https://api.nuget.org/v3/index.json" />
-            </packageSources>
-          </configuration>
-          XML
+          version: ${{ env.GODOT_VERSION }}
+          use-dotnet: false
+          include-templates: false
 
       - name: Show tool versions
         run: |
-          dotnet --info
+          godot --version
           git --version
 
-      - name: Restore
-        run: |
-          dotnet restore src/GitDiwaa.Core/GitDiwaa.Core.csproj
-          dotnet restore src/GitDiwaa.RealGit/GitDiwaa.RealGit.csproj
-          dotnet restore src/GitDiwaa.Cli/GitDiwaa.Cli.csproj
-          dotnet restore tests/GitDiwaa.RealGit.Tests/GitDiwaa.RealGit.Tests.csproj
+      - name: Import project (builds the script class cache)
+        run: godot --headless --path ${{ env.GODOT_PROJECT }} --import --quit
 
-      - name: Build (Release, warnings as errors)
+      - name: Run real-git tests
         run: |
-          dotnet build tests/GitDiwaa.RealGit.Tests/GitDiwaa.RealGit.Tests.csproj -c Release --no-restore -warnaserror
-          dotnet build src/GitDiwaa.Cli/GitDiwaa.Cli.csproj -c Release --no-restore -warnaserror
-
-      - name: Check for vulnerable / deprecated packages
-        run: |
-          dotnet list tests/GitDiwaa.RealGit.Tests/GitDiwaa.RealGit.Tests.csproj package --vulnerable --include-transitive 2>&1 | tee vuln.txt
-          if grep -q "has the following vulnerable packages" vuln.txt; then
-            echo "::error::Vulnerable packages found"; exit 1
+          godot --headless --path ${{ env.GODOT_PROJECT }} \
+            --script "$GITHUB_WORKSPACE/tests/GitDiwaa.RealGit.Tests/run_tests.gd" 2>&1 | tee tests.log
+          test "${PIPESTATUS[0]}" -eq 0
+          if grep -qE "SCRIPT ERROR|Parse Error|^FAIL" tests.log; then
+            echo "::error::Engine tests reported errors"; exit 1
           fi
-
-      - name: Configure git identity for tests
-        run: |
-          git config --global user.name "CI"
-          git config --global user.email "ci@git-diwaa.local"
-          git config --global init.defaultBranch main
-
-      - name: Run real-git tests (Debug)
-        run: dotnet run --project tests/GitDiwaa.RealGit.Tests/GitDiwaa.RealGit.Tests.csproj -c Debug
-
-      - name: Run real-git tests (Release)
-        run: dotnet run --project tests/GitDiwaa.RealGit.Tests/GitDiwaa.RealGit.Tests.csproj -c Release --no-restore
 
       - name: CLI smoke test
         shell: bash
         run: |
           printf 'git --version\ngit config --global user.name "CI"\ngit config --global user.email ci@git-diwaa.local\ngit init\nwrite README.md Hello\ngit add README.md\ngit commit -m "ci smoke"\nsnapshot\nexit\n' \
-            | dotnet run --project src/GitDiwaa.Cli/GitDiwaa.Cli.csproj -c Release --no-build | tee cli.txt
+            | godot --headless --path ${{ env.GODOT_PROJECT }} --script res://Scripts/Cli/cli_main.gd | tee cli.txt
           grep -q '"Subject": "ci smoke"' cli.txt
 
+      - name: Upload logs on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: engine-logs-${{ matrix.os }}
+          path: |
+            tests.log
+            cli.txt
+
   # ---------------------------------------------------------------------------
-  # Godot: build the C# game assembly, import assets, load every scene headless
+  # Godot: import assets, load every script/scene/resource headless, run the
+  # main scene for a few frames
   # ---------------------------------------------------------------------------
   godot:
-    name: Godot build & scene check
+    name: Godot scene check
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    env:
-      GODOT_PROJECT: src/GitDiwaa.Godot
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: 10.0.x
-
-      - name: Use nuget.org as package source
-        run: |
-          cat > NuGet.Config <<'XML'
-          <?xml version="1.0" encoding="utf-8"?>
-          <configuration>
-            <packageSources>
-              <clear />
-              <add key="nuget.org" value="https://api.nuget.org/v3/index.json" />
-            </packageSources>
-          </configuration>
-          XML
-
-      - name: Cache NuGet packages
-        uses: actions/cache@v4
-        with:
-          path: ~/.nuget/packages
-          key: nuget-godot-${{ runner.os }}-${{ hashFiles('src/**/*.csproj') }}
-          restore-keys: nuget-godot-${{ runner.os }}-
-
-      - name: Setup Godot (.NET)
+      - name: Setup Godot
         uses: chickensoft-games/setup-godot@v2
         with:
           version: ${{ env.GODOT_VERSION }}
-          use-dotnet: true
+          use-dotnet: false
           include-templates: false
 
       - name: Godot version
         run: godot --version
 
-      - name: Restore
-        run: dotnet restore ${{ env.GODOT_PROJECT }}/GitDiwaa.Godot.csproj
-
-      - name: Build game assembly (warnings as errors)
-        run: dotnet build ${{ env.GODOT_PROJECT }}/GitDiwaa.Godot.csproj -c Debug --no-restore -warnaserror
-
       - name: Import assets headless
         run: godot --headless --path ${{ env.GODOT_PROJECT }} --import --quit
 
-      - name: Build via Godot (generates C# glue)
-        run: godot --headless --path ${{ env.GODOT_PROJECT }} --build-solutions --quit
-
-      - name: Load & instantiate every scene/resource
+      - name: Load & instantiate every script/scene/resource
         run: |
           godot --headless --path ${{ env.GODOT_PROJECT }} \
             --script "$GITHUB_WORKSPACE/.github/scripts/check_scenes.gd" 2>&1 | tee scenes.log
@@ -171,7 +110,7 @@ jobs:
       - name: Smoke-run main scene for a few frames
         run: |
           timeout 120 godot --headless --path ${{ env.GODOT_PROJECT }} --quit-after 120 2>&1 | tee run.log
-          if grep -qE "SCRIPT ERROR|Unhandled exception|System\..*Exception" run.log; then
+          if grep -qE "SCRIPT ERROR|Parse Error" run.log; then
             echo "::error::Main scene raised errors at startup"; exit 1
           fi
 
@@ -187,9 +126,9 @@ jobs:
   ci-success:
     name: CI success
     if: always()
-    needs: [dotnet, godot]
+    needs: [engine, godot]
     runs-on: ubuntu-latest
     steps:
       - run: |
-          echo "dotnet=${{ needs.dotnet.result }} godot=${{ needs.godot.result }}"
-          test "${{ needs.dotnet.result }}" = "success" && test "${{ needs.godot.result }}" = "success"
+          echo "engine=${{ needs.engine.result }} godot=${{ needs.godot.result }}"
+          test "${{ needs.engine.result }}" = "success" && test "${{ needs.godot.result }}" = "success"

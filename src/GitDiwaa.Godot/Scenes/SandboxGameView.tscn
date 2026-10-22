@@ -1,6 +1,6 @@
 [gd_scene load_steps=6 format=3]
 
-[ext_resource type="Script" path="res://Scripts/SandboxGameView.cs" id="1_script"]
+[ext_resource type="Script" path="res://Scripts/sandbox_game_view.gd" id="1_script"]
 [ext_resource type="Texture2D" path="res://assets/art/checkpoint-01/tower-hall.png" id="2_background"]
 [ext_resource type="PackedScene" path="res://Scenes/TopBarPanel.tscn" id="3_topbar"]
 [ext_resource type="PackedScene" path="res://Scenes/FilesPanel.tscn" id="4_files"]

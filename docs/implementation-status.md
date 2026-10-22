@@ -4,13 +4,13 @@
 
 ## ขอบเขตที่พร้อมนำเข้า main
 
-มี Core contracts, Real Git adapter, Terminal CLI, Godot Sandbox UI และ integration tests ระบบเรียก Git ที่ติดตั้งในเครื่องและสร้างพื้นที่ฝึกแยกต่อ attempt
+มี Core contracts, Real Git adapter, Terminal CLI, Godot Sandbox UI และ integration tests ทั้งหมดเขียนด้วย GDScript ระบบเรียก Git ที่ติดตั้งในเครื่องและสร้างพื้นที่ฝึกแยกต่อ attempt
 
-ผลตรวจล่าสุด: build ผ่าน 0 warnings / 0 errors, integration tests ผ่าน 11/11 กลุ่มสถานการณ์ และ Godot 4.7.2 Mono โหลดโปรเจกต์แบบ headless ได้โดยไม่มี scene/script error ผลนี้ยืนยันเฉพาะกรณีที่ทดสอบ ไม่ได้หมายความว่าทุกคำสั่ง ทุก option หรือทุกระบบปฏิบัติการได้รับการตรวจครบแล้ว
+ผลตรวจล่าสุด: integration tests ผ่าน 24/24 กลุ่มสถานการณ์ และ Godot 4.7.2 โหลดทุก scene/script แบบ headless ได้โดยไม่มี error ผลนี้ยืนยันเฉพาะกรณีที่ทดสอบ ไม่ได้หมายความว่าทุกคำสั่ง ทุก option หรือทุกระบบปฏิบัติการได้รับการตรวจครบแล้ว
 
 ## หลักฐานจากชุดทดสอบปัจจุบัน
 
-อ้างอิง `tests/GitDiwaa.RealGit.Tests/Program.cs`
+อ้างอิง `tests/GitDiwaa.RealGit.Tests/run_tests.gd`
 
 | กลุ่ม | สิ่งที่ตรวจแล้ว |
 |---|---|
