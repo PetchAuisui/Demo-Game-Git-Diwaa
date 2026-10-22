@@ -20,7 +20,11 @@ extends Node2D
 @onready var subtitle_label: Label = $UI/TitleContainer/SubtitleLabel
 @onready var start_prompt: Label = $UI/TitleContainer/StartPrompt
 
+<<<<<<< HEAD:game/features/cutscene/outside_cutscene.gd
 @export var next_scene_path: String = "res://features/cutscene/inside_tower_cutscene.tscn"
+=======
+@export var next_scene_path: String = "res://scenes/cutscene/inside_tower_cutscene.tscn"
+>>>>>>> feature-central-tower:src/GitDiwaa.Godot/scripts/cutscene/outside_cutscene.gd
 
 var can_start: bool = false
 var is_starting: bool = false
@@ -35,6 +39,7 @@ signal cutscene_finished
 func _ready() -> void:
 	Engine.time_scale = 1.0
 	skip_ctrl = preload("res://features/cutscene/skip_cutscene_button.gd").new()
+	skip_ctrl.show_fast_forward = false
 	skip_ctrl.next_scene_path = _get_resolved_next_scene()
 	skip_ctrl.custom_skip_action = _on_skip_step
 	add_child(skip_ctrl)
@@ -80,11 +85,6 @@ func _get_resolved_next_scene() -> String:
 		return "res://scenes/SandboxGameView.tscn"
 	if ResourceLoader.exists("res://features/cutscene/cut_scence_normal.tscn"):
 		return "res://features/cutscene/cut_scence_normal.tscn"
-	if ResourceLoader.exists("res://scenes/cutscene/cut_scence_normal.tscn"):
-		return "res://scenes/cutscene/cut_scence_normal.tscn"
-	if ResourceLoader.exists("res://Scenes/cutscene/cut_scence_normal.tscn"):
-		return "res://Scenes/cutscene/cut_scence_normal.tscn"
-	return ""
 	if ResourceLoader.exists("res://scenes/cutscene/cut_scence_normal.tscn"):
 		return "res://scenes/cutscene/cut_scence_normal.tscn"
 	if ResourceLoader.exists("res://Scenes/cutscene/cut_scence_normal.tscn"):

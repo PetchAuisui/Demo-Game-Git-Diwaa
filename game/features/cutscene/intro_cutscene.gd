@@ -121,7 +121,6 @@ func _process(_delta: float) -> void:
 		Engine.time_scale = 2.5 if active else 1.0
 		if skip_ctrl and not is_btn_active:
 			skip_ctrl._apply_ff_style(active)
-
 func _input(event: InputEvent) -> void:
 	if not can_continue or is_continuing:
 		return
@@ -450,7 +449,11 @@ func _on_pickup_shard() -> void:
 func _on_reveal_magic_text() -> void:
 	if not rune_container:
 		return
-	can_fast_forward = true
+	if skip_ctrl:
+		skip_ctrl.set_fast_forward_visible(false)
+	can_fast_forward = false
+	is_fast_forwarding = false
+	Engine.time_scale = 1.0
 	can_continue = true
 	is_continuing = false
 	

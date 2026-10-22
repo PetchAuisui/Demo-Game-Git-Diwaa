@@ -104,3 +104,4 @@ godot --headless --path game --script "$PWD/tests/engine/run_tests.gd"
 - [รายการและการใช้งานฟอนต์](docs/fonts.md)
 - [คู่มือระบบควบคุมคัตซีน](docs/cutscene-controls.md)
 - [คัตซีนภายในหอคอยเวท (Inside Tower Cutscene)](docs/inside-tower-cutscene.md)
+- [คัตซีนหอคอยเวทกลาง (Central Tower Cutscene)](docs/central-tower-cutscene.md)
