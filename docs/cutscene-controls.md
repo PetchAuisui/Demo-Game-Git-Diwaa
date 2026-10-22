@@ -88,29 +88,47 @@
 
 ---
 
-## 4. เส้นทางการข้ามฉาก (Scene Flow & Transition Matrix)
+## 4. เส้นทางการเชื่อมโยงและการข้ามฉากทั้งระบบ (Complete Scene Flow & Transition)
+
+แผนภาพลำดับการไหลของฉากทั้งหมดในเกม Git Di Waa (8 ฉากหลัก):
 
 ```mermaid
 flowchart TD
-    subgraph S1["1. cut_scence_normal.tscn (มีปุ่ม FF + ข้าม)"]
+    Start["1. start_view.tscn (หน้าหลัก)"] -->|"คลิกเริ่มเกม"| Normal["2. cut_scence_normal.tscn (เปิดตัวหมู่บ้าน/ท้องฟ้า)"]
+    Normal -->|"เล่นจบ / กดข้าม"| Intro["3. intro_cutscene.tscn (ห้องสมุด/คัมภีร์แตก)"]
+    Intro -->|"เล่นจบ / กดข้าม"| Outside["4. outside_cutscene.tscn (วิกฤตนอกหอคอย)"]
+    Outside -->|"เล่นจบ / กดข้าม"| InsideTower["5. inside_tower_cutscene.tscn (พบมิวราในหอคอย)"]
+    InsideTower -->|"เข้าสู่เกมเพลย์"| Sandbox["6. sandbox_game_view.tscn (ด่านฝึกสอน Git 1-15)"]
+    
+    Sandbox -.->|"ด่านที่ 16"| CentralTower["7. central_tower_cutscene.tscn (พบผู้พิทักษ์หอคอยกลาง)"]
+    CentralTower -.->|"เล่นด่านต่อ"| Sandbox
+    
+    Sandbox -.->|"เคลียร์ครบทุกด่าน"| Ending["8. ending_cutscene.tscn (ฉากจบ & เครดิตทีมพัฒนา)"]
+    Ending -->|"คลิกกลับสู่เมนูหลัก"| Start
+```
+
+### 4.1 รายละเอียดย่อยการข้ามฉากภายในคัตซีนต้นเกม (Granular Stage Skipping)
+```mermaid
+flowchart TD
+    subgraph S1["2. cut_scence_normal.tscn (มีปุ่ม FF + ข้าม)"]
         N1["หมู่บ้านสงบสุข (Village)"] -->|"กดข้าม"| N2["ท้องฟ้าสงบสุข (Peaceful Sky)"]
     end
     
-    subgraph S2["2. intro_cutscene.tscn (มีปุ่ม FF + ข้าม)"]
+    subgraph S2["3. intro_cutscene.tscn (มีปุ่ม FF + ข้าม)"]
         I1["แอนิเมชันห้องสมุด (Library Animation)"] -->|"กดข้าม"| I2["ศิลาคัมภีร์เวทมนตร์ (Magic Runes)"]
     end
     
-    subgraph S3["3. outside_cutscene.tscn"]
+    subgraph S3["4. outside_cutscene.tscn"]
         O1["เมฆพายุ (มีปุ่ม FF + ข้าม)"] -->|"กดข้าม"| O2["เมืองโกลาหล (มีปุ่ม FF + ข้าม)"]
         O2 -->|"กดข้าม / เล่นจบ"| O3["หอคอยและไตเติล Git Di Waa\n(ไม่มีปุ่มเร่งและข้าม)"]
     end
     
     N2 -->|"กดข้าม / เล่นจบ"| I1
     I2 -->|"กดข้าม / คลิกไปต่อ"| O1
-    O3 -->|"คลิกหน้าจอ / Space / Enter / Esc"| Game["เข้าสู่เกมเพลย์ด่านแรก (Level 1)"]
+    O3 -->|"คลิกหน้าจอ / Space / Enter / Esc"| Inside["5. inside_tower_cutscene.tscn"]
 ```
 
-### 4.1 สถานะการใช้งานในปัจจุบัน (Current Development Mode)
+### 4.2 สถานะการใช้งานในปัจจุบัน (Current Development Mode)
 > [!NOTE]
 > **เพื่อความสะดวกในการพัฒนาและทดสอบระบบ (Dev / Sandbox Testing):**
 > โค้ดปัจจุบันได้**เปิดใช้งานทั้งปุ่มเร่งความเร็ว (Fast-Forward 2.5x / Shift) และปุ่มข้าม (Skip / Esc) ไว้ทุกฉากคัตซีน (ฉากที่ 1–6)** เพื่อให้ทีมพัฒนาและผู้ทดสอบสามารถข้ามฉากและเร่งความเร็วเพื่อตรวจงานได้อย่างสะดวกรวดเร็ว
@@ -126,7 +144,7 @@ flowchart TD
 
 ---
 
-### 4.2 ข้อกำหนดแผนงานในอนาคตสำหรับเวอร์ชันปล่อยจริง (Production / Release Roadmap)
+### 4.3 ข้อกำหนดแผนงานในอนาคตสำหรับเวอร์ชันปล่อยจริง (Production / Release Roadmap)
 > [!IMPORTANT]
 > **แผนการปรับปรุงในอนาคต (Production Release):**
 > เมื่อตัวเกมพัฒนาเสร็จสมบูรณ์และพร้อมปล่อยให้ผู้เล่นทั่วไปเล่น ให้ปรับเปลี่ยนสเปกการแสดงผลปุ่มควบคุมตามตารางด้านล่างนี้ โดยเปิดปุ่มข้ามไว้เฉพาะฉากเปิดตัวแรกสุด และให้ผู้เล่นรับชมบทสนทนาในหอคอยรวมถึงฉากจบโดยไม่ให้กดข้าม:
