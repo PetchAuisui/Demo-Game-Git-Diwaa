@@ -193,7 +193,7 @@ func _init_scene_state() -> void:
 	dialogue_box.modulate = Color(1, 1, 1, 0)
 	_hide_continue_arrow()
 	
-	# ระบบควบคุม Cutscene: ปุ่มเร่งความเร็ว (FF 2.5x) และปุ่ม [DEV] ข้าม ⏵⏵ (Esc)
+	# ระบบควบคุม Cutscene: ปุ่มเร่งความเร็ว (FF 2.5x) และปุ่มข้าม (Skip / Esc)
 	var skip_ctrl = preload("res://features/cutscene/skip_cutscene_button.gd").new()
 	skip_ctrl.next_scene_path = next_scene_path
 	add_child(skip_ctrl)

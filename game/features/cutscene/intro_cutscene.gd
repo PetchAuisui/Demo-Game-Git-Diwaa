@@ -184,7 +184,7 @@ func _trigger_continue_instant() -> void:
 	can_fast_forward = false
 	is_fast_forwarding = false
 	Engine.time_scale = 1.0
-	get_tree().change_scene_to_file("res://scenes/cutscene/outside_cutscene.tscn")
+	get_tree().change_scene_to_file("res://features/cutscene/outside_cutscene.tscn")
 
 func _init_shards() -> void:
 	shards.clear()

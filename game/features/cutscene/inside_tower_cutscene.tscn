@@ -14,8 +14,8 @@
 [ext_resource type="Texture2D" path="res://assets/cutscene/characters/mewla/mewla_sleep-Sheet.png" id="12_mewla_sleep_sheet"]
 [ext_resource type="Texture2D" path="res://assets/cutscene/characters/mewla/mewla_idle.png" id="13_mewla_idle_single"]
 [ext_resource type="FontFile" uid="uid://csurxmw2vmws4" path="res://assets/fonts/TA-8-bit.ttf" id="14_font"]
-[ext_resource type="Texture2D" uid="uid://da542qvos8doa" path="res://assets/cutscene/frame dialog text/text dialog.png" id="15_dialog_frame"]
-[ext_resource type="Texture2D" uid="uid://cue72fb3mejrf" path="res://assets/cutscene/frame dialog text/arrow.png" id="16_dialog_arrow"]
+[ext_resource type="Texture2D" uid="uid://bg5ggrsq2t05d" path="res://assets/cutscene/frame dialog text/text dialog.png" id="15_dialog_frame"]
+[ext_resource type="Texture2D" uid="uid://dokdfulrf0b81" path="res://assets/cutscene/frame dialog text/arrow.png" id="16_dialog_arrow"]
 [ext_resource type="Texture2D" uid="uid://dmykeg4jphdb0" path="res://assets/cutscene/props/khampri/drop_shadow.png" id="17_shadow"]
 
 [sub_resource type="Animation" id="Animation_reset"]

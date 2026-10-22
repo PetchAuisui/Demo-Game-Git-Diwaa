@@ -116,9 +116,8 @@ func _ready() -> void:
 	if anim_player.has_animation("background_loop"):
 		anim_player.play("background_loop")
 		
-	# ระบบควบคุม Cutscene: ปุ่มเร่งความเร็ว (FF 2.5x) (ไม่มีปุ่มข้ามในฉากนี้)
+	# ระบบควบคุม Cutscene: ปุ่มเร่งความเร็ว (FF 2.5x) และปุ่มข้าม (Skip / Esc)
 	skip_ctrl = preload("res://features/cutscene/skip_cutscene_button.gd").new()
-	skip_ctrl.show_skip = false
 	skip_ctrl.next_scene_path = next_scene_path
 	add_child(skip_ctrl)
 		

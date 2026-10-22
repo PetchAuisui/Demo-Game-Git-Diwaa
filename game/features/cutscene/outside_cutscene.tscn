@@ -6,7 +6,7 @@
 [ext_resource type="Texture2D" uid="uid://ca16sf8y78xq6" path="res://assets/cutscene/backgrounds/tower-preview-Sheet.png" id="4_tower"]
 [ext_resource type="Texture2D" uid="uid://ljih7ud8vr83" path="res://assets/cutscene/characters/vel/vel_back.png" id="5_vel_back"]
 [ext_resource type="FontFile" uid="uid://csurxmw2vmws4" path="res://assets/fonts/TA-8-bit.ttf" id="6_ta_font"]
-[ext_resource type="FontFile" uid="uid://bfsfck8jxemjm" path="res://assets/fonts/PressStart2P-Regular.ttf" id="7_press_start"]
+[ext_resource type="FontFile" uid="uid://vgpr35vvucvw" path="res://assets/fonts/PressStart2P-Regular.ttf" id="7_press_start"]
 [ext_resource type="Texture2D" uid="uid://dmykeg4jphdb0" path="res://assets/cutscene/props/khampri/drop_shadow.png" id="8_drop_shadow"]
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_storm_0"]

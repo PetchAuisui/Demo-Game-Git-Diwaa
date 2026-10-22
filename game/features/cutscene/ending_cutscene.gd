@@ -111,6 +111,7 @@ var epilogue_seq_tween: Tween = null
 var epilogue_auto_tween: Tween = null
 var comic_pulse_tween: Tween = null
 var shard_drift_tweens: Array[Tween] = []
+var skip_btn_instance: CanvasLayer = null
 
 # Animation timers for spritesheets
 var storm_anim_timer: float = 0.0
@@ -123,6 +124,13 @@ var camera_shake_amount: float = 0.0
 
 func _ready() -> void:
 	Engine.time_scale = 1.0
+	
+	# เพิ่มปุ่มเร่งความเร็ว (FF 2.5x) และปุ่มข้าม (Skip / Esc)
+	var skip_btn = preload("res://features/cutscene/skip_cutscene_button.gd").new()
+	skip_btn.next_scene_path = start_scene_path
+	skip_btn_instance = skip_btn
+	add_child(skip_btn)
+	
 	_init_shards()
 	_reset_all_stages()
 	
@@ -157,6 +165,20 @@ func _exit_tree() -> void:
 	shard_drift_tweens.clear()
 
 func _process(delta: float) -> void:
+	# ระบบเร่งความเร็วเกม (Shift ค้าง หรือปุ่ม FF บนหน้าจอ)
+	if can_fast_forward:
+		var is_btn_active: bool = (skip_btn_instance != null and skip_btn_instance.is_fast_forward)
+		var wants_hold: bool = Input.is_key_pressed(KEY_SHIFT)
+		var active: bool = is_btn_active or wants_hold
+		if active != is_fast_forwarding:
+			is_fast_forwarding = active
+			Engine.time_scale = 2.5 if active else 1.0
+			if skip_btn_instance and not is_btn_active:
+				skip_btn_instance._apply_ff_style(active)
+	elif is_fast_forwarding:
+		is_fast_forwarding = false
+		Engine.time_scale = 1.0
+	
 	# อัปเดตเฟรมแอนิเมชันของท้องฟ้าในฉาก 2
 	if current_stage == 2:
 		storm_anim_timer += delta * 12.0
@@ -306,6 +328,8 @@ func _reset_all_stages() -> void:
 		if tw and tw.is_valid():
 			tw.kill()
 	shard_drift_tweens.clear()
+	if is_instance_valid(skip_btn_instance):
+		skip_btn_instance.visible = true
 	credits_container.visible = false
 	is_waiting_epilogue = false
 	if ring_of_light:
@@ -967,6 +991,9 @@ func play_stage_8_epilogue() -> void:
 		anger_mark.visible = false
 	if sigh_puff:
 		sigh_puff.visible = false
+	
+	if is_instance_valid(skip_btn_instance):
+		skip_btn_instance.visible = false
 	
 	# ตัวละครทั้งสองเปลี่ยนเป็นท่ายืนนิ่ง idle
 	vel.play("idle")
