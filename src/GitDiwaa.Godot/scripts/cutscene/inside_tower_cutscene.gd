@@ -35,7 +35,6 @@ extends Node2D
 # เวล (ท่าปกติวนลูป): breathe -> breathe_blink -> breathe -> breathe -> breathe_blink
 const VEL_IDLE_SEQ: Array[String] = ["breathe", "breathe_blink", "breathe", "breathe", "breathe_blink"]
 var vel_seq_step: int = 0
-var vel_custom_anim: String = ""
 
 # Dialogue Script Data (บทสนทนาประจำฉาก)
 const DIALOGUES: Array[Dictionary] = [
@@ -256,7 +255,6 @@ func _trigger_vel_shock_jump() -> void:
 	# เมื่อลงถึงพื้นปุ๊บ: ตัวอักษร ! หายไปทันที และเวลกลับไปทำท่าเดิมทันที ไม่ตกใจค้าง
 	hop_tween.chain().tween_callback(func():
 		_hide_exclamation_landing()
-		vel_custom_anim = ""
 		vel_seq_step = 0
 		vel.play("breathe")
 		vel.set_frame_and_progress(0, 0.0)
@@ -314,32 +312,16 @@ func _show_dialogue(index: int) -> void:
 			mewla.play("idle")
 			mewla.set_frame_and_progress(vel.frame, vel.frame_progress)
 		
-	# อัปเดตท่าทางเวล (รองรับ vel_override และการสลับกลับมาหายใจอย่างนุ่มนวล)
-	var vel_override = data.get("vel_anim", "")
-	if vel_override != "":
-		vel_custom_anim = vel_override
-		vel.play(vel_override)
-	else:
-		if vel_custom_anim != "":
-			vel_custom_anim = ""
-			vel.play(VEL_IDLE_SEQ[vel_seq_step])
-			vel.set_frame_and_progress(mewla.frame, mewla.frame_progress)
-		elif vel.animation not in VEL_IDLE_SEQ:
-			vel.play(VEL_IDLE_SEQ[vel_seq_step])
-			vel.set_frame_and_progress(mewla.frame, mewla.frame_progress)
-		
+	# อัปเดตท่าทางเวล (วนลูปหายใจปกติ)
+	if vel.animation not in VEL_IDLE_SEQ:
+		vel.play(VEL_IDLE_SEQ[vel_seq_step])
+		vel.set_frame_and_progress(mewla.frame, mewla.frame_progress)
 	# ไอคอน Emote
 	var emote = data.get("emote", "")
 	if emote == "question":
-		_hide_exclamation()
 		_pop_question_mark()
-	elif emote == "exclamation":
-		_hide_question_mark()
-		_pop_exclamation()
 	else:
 		_hide_question_mark()
-		_hide_exclamation()
-		
 	# Typewriter effect
 	if typewriter_tween and typewriter_tween.is_valid():
 		typewriter_tween.kill()
@@ -436,8 +418,6 @@ func _hide_exclamation_landing() -> void:
 			exclamation_mark.position = Vector2(0, -42)
 	)
 
-func _pop_exclamation() -> void:
-	_start_exclamation_jump()
 
 func _hide_exclamation() -> void:
 	if exclamation_tween and exclamation_tween.is_valid():
