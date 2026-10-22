@@ -12,22 +12,21 @@
 ## โครงสร้าง
 
 ```text
-src/GitDiwaa.Godot/              Godot 4 project (GDScript)
-├── Scenes/                      scenes ของ UI และ cutscene
-└── Scripts/
-    ├── Core/                    contracts และ models ที่ CLI/UI ใช้ร่วมกัน
-    ├── RealGit/                 adapter สำหรับ Git จริงและ sandbox ของผู้เล่น
-    ├── Cli/                     โปรแกรมทดสอบผ่าน Terminal
-    ├── Services/                service ที่ UI เรียก (Real / Mock)
-    ├── ViewModels/              view models ของ Files / Commit graph / Terminal
-    ├── Common/                  theme, ไอคอน, dialog style, window controls
-    ├── Components/              panel และหน้า UI (Terminal, Files, Git Graph, Remote Repo)
-    └── Controllers/             controller ของหน้าเริ่มเกมและห้องแต่งตัว
+game/                            Godot 4 project (GDScript)
+├── engine/                      logic ที่ไม่ผูกกับ UI
+│   ├── core/                    contracts และ models ที่ CLI/UI ใช้ร่วมกัน
+│   ├── real_git/                adapter สำหรับ Git จริงและ sandbox ของผู้เล่น
+│   └── cli/                     โปรแกรมทดสอบผ่าน Terminal
+├── features/                    แต่ละฟีเจอร์เก็บ scene + script ไว้ด้วยกัน
+│   ├── sandbox/                 หน้า Sandbox (Terminal, Files, Git Graph) + services/ + view_models/
+│   ├── remote_repo/             หน้า Remote Repository จำลอง GitHub (theme, diff, markdown)
+│   ├── start/                   หน้าเริ่มเกมและห้องแต่งตัว
+│   └── cutscene/                cutscene
+├── common/                      ของที่ใช้ร่วมกัน (theme tokens, dialog style, window controls)
+└── assets/                      art, audio, fonts, icons
 tests/
-└── GitDiwaa.RealGit.Tests/      integration tests กับ Git จริง (run_tests.gd)
-docs/
-├── architecture.md              ข้อกำหนด ขอบเขต และ data flow
-└── godot-integration.md         สถาปัตยกรรม Godot Sandbox UI
+└── engine/                      integration tests กับ Git จริง (run_tests.gd)
+docs/                            เอกสาร
 ```
 
 ## สิ่งที่ต้องมี
@@ -44,30 +43,30 @@ docs/
 Godot ต้อง import โปรเจกต์หนึ่งครั้งเพื่อสร้าง class cache ของสคริปต์
 
 ```sh
-godot --headless --path src/GitDiwaa.Godot --import
+godot --headless --path game --import
 ```
 
 ## เปิดเกม Godot Sandbox UI
 
 ```sh
-godot --path src/GitDiwaa.Godot
+godot --path game
 ```
 
 หรือทดสอบ headless mode:
 ```sh
-godot --headless --path src/GitDiwaa.Godot --quit-after 5
+godot --headless --path game --quit-after 5
 ```
 
 ## เปิดห้องทดลอง Terminal
 
 ```sh
-godot --headless --path src/GitDiwaa.Godot --script res://Scripts/Cli/cli_main.gd
+godot --headless --path game --script res://engine/cli/cli_main.gd
 ```
 
 ตัวอย่าง one-shot สำหรับตรวจ Git จริงและดู state ที่ UI จะได้รับ (option ของ CLI อยู่หลัง `--`):
 
 ```sh
-godot --headless --path src/GitDiwaa.Godot --script res://Scripts/Cli/cli_main.gd -- \
+godot --headless --path game --script res://engine/cli/cli_main.gd -- \
   --workspace /tmp/git-diwaa-lab \
   --attempt demo-1 \
   --command "git init" \
@@ -77,13 +76,13 @@ godot --headless --path src/GitDiwaa.Godot --script res://Scripts/Cli/cli_main.g
 ดู options ทั้งหมด:
 
 ```sh
-godot --headless --path src/GitDiwaa.Godot --script res://Scripts/Cli/cli_main.gd -- --help
+godot --headless --path game --script res://engine/cli/cli_main.gd -- --help
 ```
 
 ## ทดสอบ
 
 ```sh
-godot --headless --path src/GitDiwaa.Godot --script "$PWD/tests/GitDiwaa.RealGit.Tests/run_tests.gd"
+godot --headless --path game --script "$PWD/tests/engine/run_tests.gd"
 ```
 
 ชุดทดสอบสร้าง repository จริงใต้ cache directory ของระบบ และลบเฉพาะพื้นที่ทดสอบของตัวเองเมื่อจบ จบด้วย exit code 0 เมื่อผ่านทั้งหมด

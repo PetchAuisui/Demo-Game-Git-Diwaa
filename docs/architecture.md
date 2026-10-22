@@ -26,12 +26,12 @@
           └──────────────┬─────────────┘
                          ▼
               ┌─────────────────────┐
-              │ Scripts/Core        │
+              │ engine/core         │
               │ contracts + models  │
               └──────────┬──────────┘
                          ▼
               ┌─────────────────────┐
-              │ Scripts/RealGit     │
+              │ engine/real_git     │
               │ session / policy /  │
               │ process / snapshot  │
               └──────────┬──────────┘

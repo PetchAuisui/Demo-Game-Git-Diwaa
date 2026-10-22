@@ -16,6 +16,6 @@
 
 ## เปิดตรวจตัวอย่าง
 
-เปิด `Scenes/GitGraphPreview.tscn` ใน Godot และ Run Current Scene (F6) ตัวอย่างประกอบด้วย merge สอง parents, feature branch และ HEAD พร้อมตรวจ ancestry, lane split, keyboard selection และการเปลี่ยนผ่าน empty state เมื่อเริ่ม scene
+เปิด `features/sandbox/git_graph_preview.tscn` ใน Godot และ Run Current Scene (F6) ตัวอย่างประกอบด้วย merge สอง parents, feature branch และ HEAD พร้อมตรวจ ancestry, lane split, keyboard selection และการเปลี่ยนผ่าน empty state เมื่อเริ่ม scene
 
 Preview ใช้ข้อมูลตัวอย่างและไม่เขียน repository ของผู้เล่น การตรวจนี้ไม่ครอบคลุมประวัติ Git ทุกรูปแบบ โดย snapshot ปัจจุบันมีขีดจำกัด 200 commits และ parent ที่อยู่นอก snapshot จะไม่มีเส้นปลายทาง กราฟยังไม่มี zoom หรือการแก้ไข branch จากหน้าจอ
