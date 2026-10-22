@@ -54,7 +54,7 @@
 
 รายละเอียดอยู่ใน `docs/simulated-github-remote.md`
 
-- บัญชีเริ่มต้นไม่มี repo (เจ้าของ `user`, กำหนดผ่าน `playerName` ของ factory) `CreateAsync(mission, attempt)` ใช้ `RemoteSeed.NoRepository`; ส่ง `RemoteSeed.Empty()` หรือ seed ของด่านถ้าต้องการ repo `https://magic-vault.com/user/my-project.git` ตั้งต้น ไม่มีข้อมูลตัวอย่างในโค้ดจริง; `RemoteSeed` ใช้ตั้งประวัติเริ่มต้นต่อด่านได้
+- บัญชีเริ่มต้นไม่มี repo (เจ้าของ `user`, กำหนดผ่าน `player_name` ของ factory) `create(mission_id, attempt_id)` ใช้ `RemoteSeed.no_repository()`; ส่ง `RemoteSeed.empty()` หรือ seed ของด่านถ้าต้องการ repo `https://magic-vault.com/user/my-project.git` ตั้งต้น ไม่มีข้อมูลตัวอย่างในโค้ดจริง; `RemoteSeed` ใช้ตั้งประวัติเริ่มต้นต่อด่านได้
 - URL GitHub จริงถูกปฏิเสธโดย command policy (clone / remote add / remote set-url) และข้อความบอก URL ที่อนุญาต
 - `RemoteHost` รองรับ: branches (ahead/behind), commits, ไฟล์/โฟลเดอร์, ลบ branch, สร้าง PR, diff/commits/ไฟล์ที่เปลี่ยน, review, ตรวจ conflict ก่อน merge, ปิด PR, ดู PR ที่ merge แล้วย้อนหลัง
 - กติกา PR ปรับได้ด้วย `RemoteRules` (ค่าเริ่มต้นเหมาะกับ sandbox คนเดียว: review เป็นทางเลือก รีวิว PR ตัวเองได้)
@@ -64,12 +64,12 @@
 ### หน้า Remote Repository ใน Sandbox (feature/sandbox-repo-button)
 
 - ปุ่ม Remote Repo (ไอคอนก้อนเมฆ) ที่หัวพาเนล Git Graph ของ Sandbox (ไม่อยู่ที่แถบบน) เปิด `RemoteRepoView` หน้าตาเลียนแบบ GitHub dark: Quick setup เมื่อ repo ว่าง, Code (ตารางไฟล์, README Markdown, Go to file, เมนู Clone), Commits, Branches, Pull requests (รายการ, เปิด PR, Conversation / Commits / Files changed, review, merge) พร้อมแถบ URL และกด Esc เพื่อกลับ
-- `IGitSandboxService.RemoteHost` ส่ง GitHub จำลองของ session ให้หน้า UI (mock service ไม่มี จึงกดปุ่มไม่ได้) และ `RealGitSandboxService` ใช้ชื่อผู้เล่นเป็นเจ้าของ repo (ยังเป็นค่าคงที่ `user` เพราะยังไม่มีหน้า login)
+- `GitSandboxService.remote_host` ส่ง GitHub จำลองของ session ให้หน้า UI (mock service ไม่มี จึงกดปุ่มไม่ได้) และ `RealGitSandboxService` ใช้ชื่อผู้เล่นเป็นเจ้าของ repo (ยังเป็นค่าคงที่ `user` เพราะยังไม่มีหน้า login)
 - ตรวจ flow ในเกมจริงด้วยสคริปต์ที่พิมพ์คำสั่งผ่าน terminal ของ Sandbox แล้วเปิดหน้า repo, สร้าง PR, review, ดู diff, merge และกด Esc (ยังไม่มีเทสต์อัตโนมัติฝั่ง UI)
 
 ### ปรับ UX/UI หน้า Remote Repository (feature/remote-repo-ui-polish)
 
-- ขยายตัวอักษรและช่องไฟทั้งหน้า (`GitHubTheme.UiScale`) ให้อ่านง่ายเท่า UI ส่วนอื่นของเกม, แยกสีเป็นชั้น (Inset/Canvas/Surface/SurfaceRaised) ให้ตัดกันชัด และจัดเนื้อหากึ่งกลางกว้างไม่เกินที่กำหนด
+- ขยายตัวอักษรและช่องไฟทั้งหน้า (`GitHubTheme.UI_SCALE`) ให้อ่านง่ายเท่า UI ส่วนอื่นของเกม, แยกสีเป็นชั้น (INSET/CANVAS/SURFACE/SURFACE_RAISED) ให้ตัดกันชัด และจัดเนื้อหากึ่งกลางกว้างไม่เกินที่กำหนด
 - Quick setup เป็นขั้นตอน 1-2-3: คำแนะนำวิธีใช้อยู่บนสุด, คลิกคำสั่งเพื่อคัดลอก (ย้อมสี มีคำอธิบายข้างบรรทัด)
 - แถบบนมีป้าย Esc ปุ่มรีเฟรช และป้าย "Magic Vault"; หน้า PR วางเลข #N ต่อท้ายชื่อ และฟอร์มเปิด PR เติม Title จาก commit ล่าสุด; หน้า Branches แสดง ahead/behind เป็นชิป
 - ตรวจด้วยสคริปต์ที่จับภาพทุกหน้า (repo ว่าง, Code, ไฟล์, Commits, Branches, PR ทุกแท็บ, merge) ผ่านทั้ง flow

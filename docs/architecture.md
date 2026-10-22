@@ -58,10 +58,10 @@
 
 1. Host ขอสร้าง session ด้วย mission ID และ attempt ID
 2. Factory สร้าง working tree, config, disabled hooks และ local bare remote
-3. ผู้เล่นส่ง command line ผ่าน `IGitGameSession.ExecuteAsync`
+3. ผู้เล่นส่ง command line ผ่าน `GitGameSession.execute()`
 4. Adapter tokenize และตรวจ command policy
 5. Process runner เรียก Git ด้วย argument list และ environment ที่แยกไว้
-6. Host แสดง `GitCommandResult` และขอ `InspectAsync` เพื่อ refresh panels/graph
+6. Host แสดง `GitCommandResult` และขอ `inspect()` เพื่อ refresh panels/graph
 
 ## Security boundary
 

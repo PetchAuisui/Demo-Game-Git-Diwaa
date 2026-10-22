@@ -6,14 +6,14 @@
 
 ## สถานะเริ่มต้น
 
-- ทุก session เริ่มด้วยบัญชี `user` ที่ **ยังไม่มี repo เลย** ผู้เล่นสร้าง repo ว่างเองได้ไม่จำกัดผ่านปุ่ม New (ด่านที่ต้องการ repo ตั้งต้นส่ง `RemoteSeed` เข้ามาเอง เช่น `RemoteSeed.Empty()` จะได้ `https://magic-vault.com/user/my-project.git`) (`https://magic-vault.com/user/<ชื่อ>.git`) แต่ละ repo แยก branch และ PR ของตัวเอง
-- เจ้าของ (host) ใช้ชื่อ `user` ไปก่อน เปลี่ยนได้ที่ `RealGitGameSessionFactory(workspaceRoot, playerName)` เมื่อมีหน้า login ที่ตั้งชื่อผู้เล่นได้
+- ทุก session เริ่มด้วยบัญชี `user` ที่ **ยังไม่มี repo เลย** ผู้เล่นสร้าง repo ว่างเองได้ไม่จำกัดผ่านปุ่ม New (ด่านที่ต้องการ repo ตั้งต้นส่ง `RemoteSeed` เข้ามาเอง เช่น `RemoteSeed.empty()` จะได้ `https://magic-vault.com/user/my-project.git`) (`https://magic-vault.com/user/<ชื่อ>.git`) แต่ละ repo แยก branch และ PR ของตัวเอง
+- เจ้าของ (host) ใช้ชื่อ `user` ไปก่อน เปลี่ยนได้ที่ `RealGitGameSessionFactory.new(workspace_root, player_name)` เมื่อมีหน้า login ที่ตั้งชื่อผู้เล่นได้
 - ไม่มีข้อมูลตัวอย่างในโค้ดจริง ผู้เล่นต้อง push งานขึ้นไปเอง
 - ด่านที่ต้องการ remote ที่มีประวัติอยู่แล้ว (เช่น ด่าน 37 ที่ remote นำหน้า local) กำหนดผ่าน `RemoteSeed` ต่อด่าน
 
 ## ข้อมูลและการกระทำที่ host ให้ (ตาม Notion: งานหน้า Remote Repository)
 
-`IGitGameSession.RemoteAccount` (`IGitRemoteAccount`) ให้รายการ repo / เปิด repo / สร้าง repo ใหม่ ส่วน `IGitRemoteHost` ของแต่ละ repo (และ `IGitGameSession.RemoteHost` ที่เป็น repo แรก) ให้ข้อมูลและการกระทำสำหรับหน้า repo:
+`GitGameSession.remote_account` (`GitRemoteAccount`) ให้รายการ repo / เปิด repo / สร้าง repo ใหม่ ส่วน `GitRemoteHost` ของแต่ละ repo (และ `GitGameSession.remote_host` ที่เป็น repo แรก) ให้ข้อมูลและการกระทำสำหรับหน้า repo:
 
 | หมวด | สิ่งที่ host ให้ |
 |---|---|
@@ -21,7 +21,7 @@
 | Commits | ประวัติ commit ของ branch |
 | Branches | รายการ branch พร้อม ahead/behind เทียบ default branch, ลบ branch (ลบ default หรือ branch ที่มี PR เปิดอยู่ไม่ได้) |
 | Pull requests | สร้าง PR, commits / ไฟล์ที่เปลี่ยน / diff, ความเห็นรายบรรทัดใน diff (ชี้เมาส์ที่บรรทัดแล้วกด + → Write/Preview → Comment ทันที หรือ Start a review เก็บเป็น pending ส่งพร้อมตอน Submit review), review (ปุ่ม Review changes ในแท็บ Files changed → Comment / Approve / Request changes → Submit review), คอมเมนต์และ Close pull request ที่กล่องท้ายหน้า Conversation, merge, ดู PR ที่ merge แล้วย้อนหลัง |
-| repo ว่าง | `RemoteRepositoryInfo.IsEmpty` ใช้แสดงหน้า Quick setup |
+| repo ว่าง | `RemoteRepositoryInfo.is_empty` ใช้แสดงหน้า Quick setup |
 
 ## หน้า Remote Repository ใน Sandbox
 
@@ -40,7 +40,7 @@
 
 แนวทางการออกแบบหน้าตา (ปรับตามฟีดแบ็กว่า "ดูยาก สีกลืนกัน")
 - **ขนาด**: เกมตั้งฟอนต์เริ่มต้น 24 แต่ GitHub จริงใช้ 14–16 จึงคูณทุกขนาด (ตัวอักษร ไอคอน ช่องไฟ) ด้วย `GitHubTheme.UI_SCALE` (1.35) ผ่าน `GitHubTheme.s()` ถ้าจะปรับความใหญ่ทั้งหน้าให้แก้ค่าเดียว
-- **สีเป็นชั้น**: `Inset` (แถบบน ช่องกรอก บล็อกโค้ด) < `Canvas` (พื้นหน้า) < `Surface` (การ์ด หัว repo) < `SurfaceRaised` (หัวการ์ด แถวที่ชี้ เมนู) ตัวอักษรและเส้นขอบสว่างกว่า GitHub เดิมเล็กน้อย ฉากเกมด้านหลังถูกบังเกือบทึบ
+- **สีเป็นชั้น**: `INSET` (แถบบน ช่องกรอก บล็อกโค้ด) < `CANVAS` (พื้นหน้า) < `SURFACE` (การ์ด หัว repo) < `SURFACE_RAISED` (หัวการ์ด แถวที่ชี้ เมนู) ตัวอักษรและเส้นขอบสว่างกว่า GitHub เดิมเล็กน้อย ฉากเกมด้านหลังถูกบังเกือบทึบ
 - **คอลัมน์กึ่งกลาง**: เนื้อหากว้างสูงสุด `_content_max_width()` (ที่ขนาดจอปกติเกือบเต็มกรอบ เหลือขอบข้างละราว 40px) ทั้งแถบบน หัว repo และตัวหน้า ขอบซ้าย/ขวาตรงกัน และไม่ยืดตามจอที่กว้างกว่านั้น
 - **แถบบน**: ปุ่มกลับ Sandbox พร้อมป้าย Esc, ช่อง URL, ปุ่มรีเฟรช, ป้าย "Magic Vault"
 
@@ -58,18 +58,18 @@
 
 1. URL ที่ผู้เล่นเห็นเป็น URL สมมติรูปแบบ GitHub แต่ถูก rewrite (`url.<bare>.insteadOf`) ไปยัง bare repository ในโฟลเดอร์ session เท่านั้น
 2. Policy ยอมรับเฉพาะ URL ของ repo ในบัญชีนี้แบบตรงตัว (ทั้ง repo แรกและที่สร้างเพิ่ม) URL อื่นรวมถึง GitHub จริงจะไม่ผ่านและบอก URL ที่ใช้ได้
-3. `IGitRemoteHost` อ่านข้อมูลจาก bare repository จริงด้วย Git ส่วน merge ทำด้วย Git จริงแล้ว push เข้า bare remote
+3. `GitRemoteHost` อ่านข้อมูลจาก bare repository จริงด้วย Git ส่วน merge ทำด้วย Git จริงแล้ว push เข้า bare remote
 4. สถานะ PR และ review เก็บในหน่วยความจำของ session
-5. ตรวจ conflict ก่อน merge ทุกครั้งด้วย `git merge-tree` ผลสรุปอยู่ใน `PullRequestDetail.MergeBlockedReason` เพื่อให้ UI ไม่ต้องรู้กติกาเอง
+5. ตรวจ conflict ก่อน merge ทุกครั้งด้วย `git merge-tree` ผลสรุปอยู่ใน `PullRequestDetail.merge_blocked_reason` เพื่อให้ UI ไม่ต้องรู้กติกาเอง
 
 ## กติกา pull request (`RemoteRules`)
 
 | กติกา | ค่าเริ่มต้น (sandbox คนเดียว) | โหมดเข้ม (ด่าน code review) |
 |---|---|---|
-| `RequireApproval` | `false` merge ได้เลย review เป็นทางเลือก | `true` ต้อง Approve ก่อน merge |
-| `AllowSelfReview` | `true` รีวิว PR ตัวเองได้ | `false` Approve/Request changes ของตัวเองไม่ได้ (Comment ได้) |
+| `require_approval` | `false` merge ได้เลย review เป็นทางเลือก | `true` ต้อง Approve ก่อน merge |
+| `allow_self_review` | `true` รีวิว PR ตัวเองได้ | `false` Approve/Request changes ของตัวเองไม่ได้ (Comment ได้) |
 
-ตั้งต่อด่านผ่าน `RemoteSeed.Rules` เช่น ด่าน 39 (แก้ตาม Code Review)
+ตั้งต่อด่านผ่าน `RemoteSeed.rules` เช่น ด่าน 39 (แก้ตาม Code Review)
 
 ## ข้อจำกัด
 
