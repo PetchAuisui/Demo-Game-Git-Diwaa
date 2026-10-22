@@ -84,16 +84,9 @@ func _get_resolved_next_scene() -> String:
 func _input(event: InputEvent) -> void:
 	if not can_start or is_starting:
 		return
-	if event is InputEventKey and event.keycode == KEY_ESCAPE:
-		return
-	
-	# ป้องกันคลิกโดนปุ่ม FF / Skip ถูกกลืนเป็นการกดเริ่มด่าน
-	var hovered := get_viewport().gui_get_hovered_control()
-	if hovered is BaseButton:
-		return
 	
 	if event.is_action_pressed("ui_accept") or \
-	   (event is InputEventKey and event.pressed and not event.echo and (event.keycode == KEY_SPACE or event.keycode == KEY_ENTER)) or \
+	   (event is InputEventKey and event.pressed and not event.echo and (event.keycode == KEY_SPACE or event.keycode == KEY_ENTER or event.keycode == KEY_ESCAPE)) or \
 	   (event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT):
 		get_viewport().set_input_as_handled()
 		_trigger_start_level()
@@ -106,6 +99,11 @@ func _init_scene() -> void:
 	current_stage = 1
 	Engine.time_scale = 1.0
 	is_tower_forward = true
+	
+	if skip_ctrl:
+		skip_ctrl.visible = true
+		if skip_ctrl.container:
+			skip_ctrl.container.modulate.a = 1.0
 	
 	storm_sky.visible = true
 	storm_sky.frame = 0
@@ -191,6 +189,9 @@ func _skip_to_stage_3() -> void:
 	vel.visible = true
 	vel.modulate.a = 1.0
 	
+	if skip_ctrl:
+		skip_ctrl.visible = false
+	
 	_reveal_game_title()
 
 func play_chaos_sequence() -> void:
@@ -246,6 +247,15 @@ func _on_village_chaos_finished() -> void:
 	var tw_vel = create_tween()
 	tw_vel.tween_property(vel, "modulate:a", 1.0, 0.7)
 	
+	# ค่อย ๆ จางปุ่มควบคุมออกเมื่อเข้าสู่ฉากหอคอยและไตเติล
+	if skip_ctrl:
+		var tw_fade_btn = create_tween()
+		tw_fade_btn.tween_property(skip_ctrl.container, "modulate:a", 0.0, 0.5)
+		tw_fade_btn.tween_callback(func():
+			if skip_ctrl:
+				skip_ctrl.visible = false
+		)
+	
 	var tw_wait = create_tween()
 	tw_wait.tween_interval(1.5)
 	tw_wait.tween_callback(func():
@@ -273,8 +283,15 @@ func _on_tower_animation_finished() -> void:
 		tower.play_backwards("tower_loop")
 
 func _reveal_game_title() -> void:
-	# คงปุ่มเร่งความเร็วให้มองเห็นและกดใช้งานได้ตลอดเวลา ไม่ซ่อนออก
-	can_fast_forward = true
+	# หน้านี้เป็นหน้าไตเติลเกม (Git Di Waa) ซ่อนปุ่มเร่งและปุ่มข้ามออกทั้งหมดตามคำขอ
+	can_fast_forward = false
+	is_fast_forwarding = false
+	Engine.time_scale = 1.0
+	
+	if skip_ctrl:
+		if skip_ctrl.is_fast_forward:
+			skip_ctrl._toggle_fast_forward()
+		skip_ctrl.visible = false
 	
 	var tw_title = create_tween()
 	tw_title.tween_property(title_container, "modulate:a", 1.0, 0.8).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
