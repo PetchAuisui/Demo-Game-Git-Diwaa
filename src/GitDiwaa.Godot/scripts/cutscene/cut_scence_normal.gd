@@ -18,14 +18,13 @@ extends Node2D
 var is_transitioning: bool = false
 var is_fast_forwarding: bool = false
 var can_fast_forward: bool = true
+var skip_ctrl = null
 
 signal cutscene_finished
 
 func _ready() -> void:
 	Engine.time_scale = 1.0
-	# ฉากภาพหมู่บ้านบรรยากาศเปิดตัว ไม่มีบทสนทนา: เอาปุ่มเร่งออก เหลือเฉพาะปุ่มข้าม
-	var skip_ctrl = preload("res://scripts/cutscene/skip_cutscene_button.gd").new()
-	skip_ctrl.show_fast_forward = false
+	skip_ctrl = preload("res://scripts/cutscene/skip_cutscene_button.gd").new()
 	skip_ctrl.next_scene_path = "res://scenes/cutscene/intro_cutscene.tscn"
 	add_child(skip_ctrl)
 	_init_scene()
@@ -34,9 +33,29 @@ func _ready() -> void:
 func _exit_tree() -> void:
 	Engine.time_scale = 1.0
 
+func _process(_delta: float) -> void:
+	if not can_fast_forward or is_transitioning:
+		if is_fast_forwarding:
+			is_fast_forwarding = false
+			Engine.time_scale = 1.0
+		return
+	
+	var is_btn_active: bool = (skip_ctrl != null and skip_ctrl.is_fast_forward)
+	var wants_hold: bool = Input.is_key_pressed(KEY_SPACE) or \
+		Input.is_key_pressed(KEY_ENTER) or \
+		Input.is_key_pressed(KEY_SHIFT) or \
+		Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT)
+	
+	var active: bool = is_btn_active or wants_hold
+	if active != is_fast_forwarding:
+		is_fast_forwarding = active
+		Engine.time_scale = 2.5 if active else 1.0
+		if skip_ctrl and not is_btn_active:
+			skip_ctrl._apply_ff_style(active)
+
 func _init_scene() -> void:
 	is_transitioning = false
-	can_fast_forward = false
+	can_fast_forward = true
 	is_fast_forwarding = false
 	Engine.time_scale = 1.0
 	
@@ -90,6 +109,8 @@ func _on_sky_finished() -> void:
 	can_fast_forward = false
 	is_fast_forwarding = false
 	Engine.time_scale = 1.0
+	if skip_ctrl:
+		skip_ctrl.set_fast_forward_visible(false)
 	
 	var tw_fade_out = create_tween()
 	tw_fade_out.tween_property(fade_overlay, "color:a", 1.0, 0.6)

@@ -104,8 +104,30 @@ func _ready() -> void:
 func _exit_tree() -> void:
 	Engine.time_scale = 1.0
 
+func _process(_delta: float) -> void:
+	if not can_fast_forward or can_continue or is_continuing:
+		if is_fast_forwarding:
+			is_fast_forwarding = false
+			Engine.time_scale = 1.0
+		return
+	
+	var is_btn_active: bool = (skip_ctrl != null and skip_ctrl.is_fast_forward)
+	var wants_hold: bool = Input.is_key_pressed(KEY_SPACE) or \
+		Input.is_key_pressed(KEY_ENTER) or \
+		Input.is_key_pressed(KEY_SHIFT) or \
+		Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT)
+	
+	var active: bool = is_btn_active or wants_hold
+	if active != is_fast_forwarding:
+		is_fast_forwarding = active
+		Engine.time_scale = 2.5 if active else 1.0
+		if skip_ctrl and not is_btn_active:
+			skip_ctrl._apply_ff_style(active)
+
 func _input(event: InputEvent) -> void:
 	if not can_continue or is_continuing:
+		return
+	if event is InputEventKey and event.keycode == KEY_ESCAPE:
 		return
 	if event.is_action_pressed("ui_accept") or \
 	   (event is InputEventKey and event.pressed and not event.echo) or \

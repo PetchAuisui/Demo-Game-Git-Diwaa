@@ -27,14 +27,13 @@ var is_starting: bool = false
 var is_tower_forward: bool = true
 var is_fast_forwarding: bool = false
 var can_fast_forward: bool = true
+var skip_ctrl = null
 
 signal cutscene_finished
 
 func _ready() -> void:
 	Engine.time_scale = 1.0
-	# ฉากคั่นวิกฤตภายนอกและไตเติลหอคอย: เอาปุ่มเร่งออก เหลือเฉพาะปุ่มข้าม
-	var skip_ctrl = preload("res://scripts/cutscene/skip_cutscene_button.gd").new()
-	skip_ctrl.show_fast_forward = false
+	skip_ctrl = preload("res://scripts/cutscene/skip_cutscene_button.gd").new()
 	skip_ctrl.next_scene_path = _get_resolved_next_scene()
 	add_child(skip_ctrl)
 	_init_scene()
@@ -42,6 +41,26 @@ func _ready() -> void:
 
 func _exit_tree() -> void:
 	Engine.time_scale = 1.0
+
+func _process(_delta: float) -> void:
+	if not can_fast_forward or can_start or is_starting:
+		if is_fast_forwarding:
+			is_fast_forwarding = false
+			Engine.time_scale = 1.0
+		return
+	
+	var is_btn_active: bool = (skip_ctrl != null and skip_ctrl.is_fast_forward)
+	var wants_hold: bool = Input.is_key_pressed(KEY_SPACE) or \
+		Input.is_key_pressed(KEY_ENTER) or \
+		Input.is_key_pressed(KEY_SHIFT) or \
+		Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT)
+	
+	var active: bool = is_btn_active or wants_hold
+	if active != is_fast_forwarding:
+		is_fast_forwarding = active
+		Engine.time_scale = 2.5 if active else 1.0
+		if skip_ctrl and not is_btn_active:
+			skip_ctrl._apply_ff_style(active)
 
 func _get_resolved_next_scene() -> String:
 	if next_scene_path != "" and ResourceLoader.exists(next_scene_path):
@@ -175,6 +194,8 @@ func _on_tower_animation_finished() -> void:
 		tower.play_backwards("tower_loop")
 
 func _reveal_game_title() -> void:
+	if skip_ctrl:
+		skip_ctrl.set_fast_forward_visible(false)
 	can_fast_forward = false
 	is_fast_forwarding = false
 	Engine.time_scale = 1.0
