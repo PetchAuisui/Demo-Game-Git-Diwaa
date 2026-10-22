@@ -6,7 +6,7 @@ extends Node2D
 ## 2. เวล (ฝั่งซ้าย) เดินเข้ามาในห้องโถง และพบกับมิวรา (ฝั่งขวา)
 ## 3. เริ่มต้นบทสนทนา: มิวราทักทาย -> เวลถาม -> มิวราแนะนำตัวและเตรียมฝึกคาถาแรก
 ## 4. ผู้เล่นคลิกหน้าจอ หรือกด Space / Enter เพื่ออ่านบทสนทนาทีละประโยค (มี Typewriter Effect)
-## 5. เมื่อคุยจบครบทุกประโยค หรือผู้เล่นกดปุ่มข้าม (Skip / Esc) -> เฟดจอดำและสลับเข้าสู่ด่านถัดไป (SandboxGameView)
+## 5. เมื่อคุยจบครบทุกประโยค -> เฟดจอดำและสลับเข้าสู่ด่านถัดไป (SandboxGameView)
 
 @export var next_scene_path: String = "res://Scenes/SandboxGameView.tscn"
 
@@ -31,7 +31,6 @@ extends Node2D
 @onready var dialogue_label: Label = $MagicStoryUI/DialogueBox/Margin/VBox/DialogueLabel
 @onready var continue_arrow: TextureRect = $MagicStoryUI/DialogueBox/ArrowOverlay/ArrowWrapper/ContinueArrow
 @onready var arrow_wrapper: Control = $MagicStoryUI/DialogueBox/ArrowOverlay/ArrowWrapper
-@onready var skip_button: Button = $MagicStoryUI/SkipButton
 
 # เวล (ท่าปกติวนลูป): breathe -> breathe_blink -> breathe -> breathe -> breathe_blink
 const VEL_IDLE_SEQ: Array[String] = ["breathe", "breathe_blink", "breathe", "breathe", "breathe_blink"]
@@ -116,12 +115,11 @@ func _ready() -> void:
 	if anim_player.has_animation("background_loop"):
 		anim_player.play("background_loop")
 		
-	# ระบบควบคุม Cutscene: ปุ่มเร่งความเร็ว (FF 2.5x) และปุ่ม [DEV] ข้าม ⏵⏵ (Esc)
+	# ระบบควบคุม Cutscene: ปุ่มเร่งความเร็ว (FF 2.5x) (ไม่มีปุ่มข้ามในฉากนี้)
 	var skip_ctrl = preload("res://scripts/cutscene/skip_cutscene_button.gd").new()
+	skip_ctrl.show_skip = false
 	skip_ctrl.next_scene_path = next_scene_path
 	add_child(skip_ctrl)
-	if skip_button:
-		skip_button.visible = false
 		
 	# 2. เริ่มโฟลว์เดินเข้าฉาก
 	_start_cutscene_sequence()
@@ -133,12 +131,6 @@ func _input(event: InputEvent) -> void:
 	if is_transitioning:
 		return
 		
-	# กด Esc เพื่อข้ามคัตซีน
-	if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_ESCAPE:
-		get_viewport().set_input_as_handled()
-		_skip_cutscene()
-		return
-		
 	# คลิกหรือกด Space/Enter เพื่อไปต่อ
 	if is_dialogue_active:
 		var wants_advance: bool = false
@@ -147,16 +139,14 @@ func _input(event: InputEvent) -> void:
 		elif event is InputEventKey and event.pressed and not event.echo and (event.keycode == KEY_SPACE or event.keycode == KEY_ENTER):
 			wants_advance = true
 		elif event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
-			# ตรวจสอบว่าไม่ได้กดโดนปุ่ม Skip
-			if skip_button and not skip_button.get_global_rect().has_point(event.position):
+			# ไม่เลื่อนบทสนทนาเมื่อคลิกโดนปุ่มควบคุม (FF) เพื่อให้ปุ่มได้รับคลิกตามปกติ
+			var hovered := get_viewport().gui_get_hovered_control()
+			if not (hovered is BaseButton):
 				wants_advance = true
 				
 		if wants_advance:
 			get_viewport().set_input_as_handled()
 			_on_player_advance()
-
-func _on_skip_button_pressed() -> void:
-	_skip_cutscene()
 
 func _start_cutscene_sequence() -> void:
 	# เฟดสว่างเข้ามา
@@ -456,10 +446,6 @@ func _hide_continue_arrow() -> void:
 		continue_arrow.visible = false
 		continue_arrow.position.y = 0.0
 
-func _skip_cutscene() -> void:
-	if is_transitioning:
-		return
-	_finish_cutscene()
 
 func _finish_cutscene() -> void:
 	if is_transitioning:
@@ -512,5 +498,10 @@ func _finish_cutscene() -> void:
 		if next_scene_path != "" and ResourceLoader.exists(next_scene_path):
 			get_tree().change_scene_to_file(next_scene_path)
 		else:
-			push_warning("Next scene path not found: %s" % next_scene_path)
+			push_warning("[InsideTowerCutscene] next_scene_path not found: '%s'" % next_scene_path)
+			# กู้คืนหน้าจอเพื่อไม่ให้ผู้เล่นติดค้างที่จอดำ
+			var tw_recover = create_tween()
+			tw_recover.tween_property(fade_overlay, "color:a", 0.0, 0.5)
+			is_transitioning = false
+			is_dialogue_active = true
 	)
