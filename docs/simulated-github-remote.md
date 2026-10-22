@@ -45,11 +45,11 @@
 - **แถบบน**: ปุ่มกลับ Sandbox พร้อมป้าย Esc, ช่อง URL, ปุ่มรีเฟรช, ป้าย "Magic Vault"
 
 โครงโค้ด UI
-- `Scripts/Common/github_theme.gd` พาเลตต์ สเกล และ Theme (ปุ่ม ช่องกรอก เมนู แถบเลื่อน), `github_icons.gd` ไอคอน SVG
-- `Scripts/Components/github_ui.gd` ชิ้นส่วนใช้ซ้ำ (แท็บ กล่องรายการ แถวคลิกได้ ป้ายสถานะ avatar แถบแจ้งผล หัวข้อมีเลขกำกับ การ์ดขั้นตอน `step` และบล็อกคำสั่ง `command_block` ที่ย้อมสีคำสั่งและคลิกเพื่อคัดลอก)
+- `features/remote_repo/github_theme.gd` พาเลตต์ สเกล และ Theme (ปุ่ม ช่องกรอก เมนู แถบเลื่อน), `github_icons.gd` ไอคอน SVG
+- `features/remote_repo/github_ui.gd` ชิ้นส่วนใช้ซ้ำ (แท็บ กล่องรายการ แถวคลิกได้ ป้ายสถานะ avatar แถบแจ้งผล หัวข้อมีเลขกำกับ การ์ดขั้นตอน `step` และบล็อกคำสั่ง `command_block` ที่ย้อมสีคำสั่งและคลิกเพื่อคัดลอก)
 - `diff_viewer.gd` (diff แบบการ์ดต่อไฟล์), `markdown_view.gd` (README และคำอธิบาย PR)
-- `Scenes/RemoteRepoView.tscn` โครงคงที่ของหน้า (กรอบหน้าต่าง แถบบน หัว repo แท็บ พื้นที่เลื่อน) ปรับหน้าตาใน Godot editor ได้ ค่าสี/ขนาดใน scene ต้องตรงกับ `GitHubTheme` (สเกล ×1.35 คำนวณไว้แล้ว)
-- `Scenes/RepoListPage.tscn` (หน้ารายการ repo: การ์ดโปรไฟล์ ช่องค้นหา ปุ่ม New), `Scenes/NewRepoPage.tscn` (ฟอร์มสร้าง repo) และ `Scenes/CodePage.tscn` (แถบเครื่องมือหน้า Code: branch, Branches, Go to file, Code) แยก scene ต่อหน้า มีสคริปต์ `repo_list_page.gd` / `new_repo_page.gd` / `code_page.gd` ใส่ข้อมูลและต่อสัญญาณ
+- `features/remote_repo/remote_repo_view.tscn` โครงคงที่ของหน้า (กรอบหน้าต่าง แถบบน หัว repo แท็บ พื้นที่เลื่อน) ปรับหน้าตาใน Godot editor ได้ ค่าสี/ขนาดใน scene ต้องตรงกับ `GitHubTheme` (สเกล ×1.35 คำนวณไว้แล้ว)
+- `features/remote_repo/repo_list_page.tscn` (หน้ารายการ repo: การ์ดโปรไฟล์ ช่องค้นหา ปุ่ม New), `features/remote_repo/new_repo_page.tscn` (ฟอร์มสร้าง repo) และ `features/remote_repo/code_page.tscn` (แถบเครื่องมือหน้า Code: branch, Branches, Go to file, Code) แยก scene ต่อหน้า มีสคริปต์ `repo_list_page.gd` / `new_repo_page.gd` / `code_page.gd` ใส่ข้อมูลและต่อสัญญาณ
 - `remote_repo_view.gd` ผูก node ของ scene นำทาง รีเฟรช และสร้างเนื้อหาที่เปลี่ยนตามข้อมูลด้วยโค้ด (breadcrumb ตารางไฟล์ README แถว commit PR diff)
 
 ข้อจำกัดของหน้า UI: เป็น overlay ครอบ Sandbox ต้องกลับไปพิมพ์คำสั่งใน terminal แล้วเปิดหน้าใหม่เพื่อดูผล

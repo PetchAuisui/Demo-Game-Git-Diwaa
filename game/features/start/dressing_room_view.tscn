@@ -1,0 +1,583 @@
+[gd_scene format=3 uid="uid://b7qm4kvl1dr01"]
+
+[ext_resource type="Script" path="res://features/start/dressing_room_view_controller.gd" id="1_controller"]
+[ext_resource type="FontFile" uid="uid://deedcfbkojx6k" path="res://assets/fonts/ChakraPetch-Bold.ttf" id="2_font_bold"]
+[ext_resource type="FontFile" uid="uid://b8g6ela360qq1" path="res://assets/fonts/Silkscreen-Bold.ttf" id="3_font_silkscreen"]
+[ext_resource type="FontFile" uid="uid://kdsopvxcj40" path="res://assets/fonts/VT323-Regular.ttf" id="4_font_vt323"]
+[ext_resource type="Texture2D" uid="uid://0vd3e6u8e7la" path="res://assets/cutscene/characters/vel/vel_Hblue_Sredyellow_idle.png" id="5_vel_front"]
+[ext_resource type="Texture2D" path="res://assets/art/dressing_room/magic_reticle.png" id="6_reticle"]
+[ext_resource type="Texture2D" path="res://assets/art/dressing_room/pedestal.png" id="7_pedestal"]
+[ext_resource type="Texture2D" path="res://assets/art/dressing_room/item_hood_green.png" id="8_hood_green"]
+[ext_resource type="Texture2D" path="res://assets/art/dressing_room/item_hood_pink.png" id="9_hood_pink"]
+[ext_resource type="Texture2D" path="res://assets/art/dressing_room/item_hood_yellow.png" id="10_hood_yellow"]
+[ext_resource type="Texture2D" path="res://assets/art/dressing_room/item_scarf_red_gold.png" id="11_scarf_red_gold"]
+[ext_resource type="Texture2D" path="res://assets/art/dressing_room/item_scarf_silver.png" id="12_scarf_silver"]
+[ext_resource type="Texture2D" path="res://assets/art/dressing_room/item_scarf_green.png" id="13_scarf_green"]
+[ext_resource type="Texture2D" path="res://assets/art/dressing_room/item_scarf_red.png" id="14_scarf_red"]
+[ext_resource type="Texture2D" path="res://assets/art/dressing_room/item_bag_satchel.png" id="15_bag_satchel"]
+[ext_resource type="Texture2D" path="res://assets/art/dressing_room/item_bag_backpack.png" id="16_bag_backpack"]
+[ext_resource type="Texture2D" path="res://assets/art/dressing_room/item_cat_black.png" id="17_cat_black"]
+[ext_resource type="Texture2D" path="res://assets/art/dressing_room/item_cat_orange.png" id="18_cat_orange"]
+[ext_resource type="Texture2D" path="res://assets/art/dressing_room/item_cat_white.png" id="19_cat_white"]
+[ext_resource type="Texture2D" path="res://assets/art/dressing_room/cat_companion_black.png" id="20_companion_black"]
+[ext_resource type="AudioStream" uid="uid://cvlamp5b4er6q" path="res://assets/audio/sfx_click.wav" id="21_sfx_click"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx_cat_meow.wav" id="22_sfx_meow"]
+
+[sub_resource type="StyleBoxFlat" id="Style_topbar_bg"]
+content_margin_left = 36.0
+content_margin_top = 8.0
+content_margin_right = 36.0
+content_margin_bottom = 8.0
+bg_color = Color(0.478, 0.392, 0.224, 1)
+border_width_bottom = 3
+border_color = Color(0.329, 0.271, 0.153, 1)
+
+[sub_resource type="StyleBoxFlat" id="Style_topbar_btn_normal"]
+content_margin_left = 16.0
+content_margin_top = 6.0
+content_margin_right = 16.0
+content_margin_bottom = 6.0
+bg_color = Color(0.271, 0.22, 0.125, 0.9)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.651, 0.549, 0.31, 1)
+corner_radius_top_left = 16
+corner_radius_top_right = 16
+corner_radius_bottom_left = 16
+corner_radius_bottom_right = 16
+
+[sub_resource type="StyleBoxFlat" id="Style_topbar_btn_hover"]
+content_margin_left = 16.0
+content_margin_top = 6.0
+content_margin_right = 16.0
+content_margin_bottom = 6.0
+bg_color = Color(0.369, 0.302, 0.173, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.9, 0.78, 0.45, 1)
+corner_radius_top_left = 16
+corner_radius_top_right = 16
+corner_radius_bottom_left = 16
+corner_radius_bottom_right = 16
+
+[sub_resource type="StyleBoxFlat" id="Style_right_card_bg"]
+content_margin_left = 28.0
+content_margin_top = 20.0
+content_margin_right = 28.0
+content_margin_bottom = 20.0
+bg_color = Color(0.063, 0.047, 0.141, 0.92)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.18, 0.141, 0.349, 1)
+corner_radius_top_left = 16
+corner_radius_top_right = 16
+corner_radius_bottom_left = 16
+corner_radius_bottom_right = 16
+
+[sub_resource type="StyleBoxFlat" id="Style_rotate_btn_normal"]
+content_margin_left = 20.0
+content_margin_top = 8.0
+content_margin_right = 20.0
+content_margin_bottom = 8.0
+bg_color = Color(0.09, 0.071, 0.18, 0.92)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.282, 0.22, 0.478, 1)
+corner_radius_top_left = 18
+corner_radius_top_right = 18
+corner_radius_bottom_left = 18
+corner_radius_bottom_right = 18
+
+[sub_resource type="StyleBoxFlat" id="Style_rotate_btn_hover"]
+content_margin_left = 20.0
+content_margin_top = 8.0
+content_margin_right = 20.0
+content_margin_bottom = 8.0
+bg_color = Color(0.157, 0.118, 0.318, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0, 0.9, 1, 1)
+corner_radius_top_left = 18
+corner_radius_top_right = 18
+corner_radius_bottom_left = 18
+corner_radius_bottom_right = 18
+
+[sub_resource type="StyleBoxFlat" id="Style_slot_cyan"]
+content_margin_left = 10.0
+content_margin_top = 8.0
+content_margin_right = 10.0
+content_margin_bottom = 8.0
+bg_color = Color(0.047, 0.075, 0.133, 0.92)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0, 0.9, 1, 1)
+corner_radius_top_left = 12
+corner_radius_top_right = 12
+corner_radius_bottom_left = 12
+corner_radius_bottom_right = 12
+
+[sub_resource type="StyleBoxFlat" id="Style_slot_gold"]
+content_margin_left = 10.0
+content_margin_top = 8.0
+content_margin_right = 10.0
+content_margin_bottom = 8.0
+bg_color = Color(0.122, 0.09, 0.047, 0.92)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(1, 0.718, 0, 1)
+corner_radius_top_left = 12
+corner_radius_top_right = 12
+corner_radius_bottom_left = 12
+corner_radius_bottom_right = 12
+
+[sub_resource type="StyleBoxFlat" id="Style_slot_magenta"]
+content_margin_left = 10.0
+content_margin_top = 8.0
+content_margin_right = 10.0
+content_margin_bottom = 8.0
+bg_color = Color(0.11, 0.055, 0.161, 0.92)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.851, 0.275, 0.937, 1)
+corner_radius_top_left = 12
+corner_radius_top_right = 12
+corner_radius_bottom_left = 12
+corner_radius_bottom_right = 12
+
+[sub_resource type="StyleBoxFlat" id="Style_badge_cyan"]
+content_margin_left = 8.0
+content_margin_top = 3.0
+content_margin_right = 8.0
+content_margin_bottom = 3.0
+bg_color = Color(0, 0.9, 1, 0.25)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0, 0.9, 1, 1)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_left = 8
+corner_radius_bottom_right = 8
+
+[sub_resource type="StyleBoxFlat" id="Style_badge_gold"]
+content_margin_left = 8.0
+content_margin_top = 3.0
+content_margin_right = 8.0
+content_margin_bottom = 3.0
+bg_color = Color(1, 0.718, 0, 0.25)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(1, 0.718, 0, 1)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_left = 8
+corner_radius_bottom_right = 8
+
+[sub_resource type="StyleBoxFlat" id="Style_badge_magenta"]
+content_margin_left = 8.0
+content_margin_top = 3.0
+content_margin_right = 8.0
+content_margin_bottom = 3.0
+bg_color = Color(0.851, 0.275, 0.937, 0.25)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.851, 0.275, 0.937, 1)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_left = 8
+corner_radius_bottom_right = 8
+
+[node name="DressingRoomView" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_controller")
+
+[node name="BackgroundBase" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.039, 0.031, 0.098, 1)
+
+[node name="BackgroundAtmosphere" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0.18, 0.08, 0.32, 0.2)
+
+[node name="TopBar" type="PanelContainer" parent="."]
+custom_minimum_size = Vector2(0, 68)
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_bottom = 68.0
+grow_horizontal = 2
+theme_override_styles/panel = SubResource("Style_topbar_bg")
+
+[node name="TopHBox" type="HBoxContainer" parent="TopBar"]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="BackBtn" type="Button" parent="TopBar/TopHBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(170, 42)
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_fonts/font = ExtResource("2_font_bold")
+theme_override_font_sizes/font_size = 17
+theme_override_styles/normal = SubResource("Style_topbar_btn_normal")
+theme_override_styles/hover = SubResource("Style_topbar_btn_hover")
+theme_override_styles/pressed = SubResource("Style_topbar_btn_hover")
+text = "← กลับสู่หน้าหลัก"
+
+[node name="BrandTitle" type="Label" parent="TopBar/TopHBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_shadow_color = Color(0.18, 0.22, 0.32, 1)
+theme_override_constants/shadow_offset_x = 2
+theme_override_constants/shadow_offset_y = 2
+theme_override_fonts/font = ExtResource("2_font_bold")
+theme_override_font_sizes/font_size = 36
+text = "GIT Diwaa"
+vertical_alignment = 1
+
+[node name="Spacer" type="Control" parent="TopBar/TopHBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="MainMargin" type="MarginContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = 74.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 60
+theme_override_constants/margin_top = 16
+theme_override_constants/margin_right = 60
+theme_override_constants/margin_bottom = 16
+
+[node name="MainHBox" type="HBoxContainer" parent="MainMargin"]
+layout_mode = 2
+theme_override_constants/separation = 50
+
+[node name="LeftShowcase" type="VBoxContainer" parent="MainMargin/MainHBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+alignment = 1
+theme_override_constants/separation = 20
+
+[node name="StageControl" type="Control" parent="MainMargin/MainHBox/LeftShowcase"]
+custom_minimum_size = Vector2(0, 720)
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="MagicReticle" type="TextureRect" parent="MainMargin/MainHBox/LeftShowcase/StageControl"]
+texture_filter = 1
+custom_minimum_size = Vector2(560, 560)
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -280.0
+offset_top = -300.0
+offset_right = 280.0
+offset_bottom = 260.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+texture = ExtResource("6_reticle")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Pedestal" type="TextureRect" parent="MainMargin/MainHBox/LeftShowcase/StageControl"]
+texture_filter = 1
+custom_minimum_size = Vector2(380, 110)
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -190.0
+offset_top = 110.0
+offset_right = 190.0
+offset_bottom = 220.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+texture = ExtResource("7_pedestal")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="CharacterSprite" type="TextureRect" parent="MainMargin/MainHBox/LeftShowcase/StageControl"]
+unique_name_in_owner = true
+texture_filter = 1
+custom_minimum_size = Vector2(210, 360)
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -105.0
+offset_top = -200.0
+offset_right = 105.0
+offset_bottom = 160.0
+grow_horizontal = 2
+grow_vertical = 2
+texture = ExtResource("5_vel_front")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="CatCompanionSprite" type="TextureRect" parent="MainMargin/MainHBox/LeftShowcase/StageControl"]
+unique_name_in_owner = true
+texture_filter = 1
+custom_minimum_size = Vector2(100, 140)
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = 92.0
+offset_top = 35.0
+offset_right = 192.0
+offset_bottom = 175.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 0
+mouse_default_cursor_shape = 2
+texture = ExtResource("20_companion_black")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="RotationRow" type="HBoxContainer" parent="MainMargin/MainHBox/LeftShowcase"]
+layout_mode = 2
+alignment = 1
+theme_override_constants/separation = 24
+
+[node name="RotateLeftBtn" type="Button" parent="MainMargin/MainHBox/LeftShowcase/RotationRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(190, 46)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.88, 0.85, 1, 1)
+theme_override_fonts/font = ExtResource("2_font_bold")
+theme_override_font_sizes/font_size = 16
+theme_override_styles/normal = SubResource("Style_rotate_btn_normal")
+theme_override_styles/hover = SubResource("Style_rotate_btn_hover")
+theme_override_styles/pressed = SubResource("Style_rotate_btn_hover")
+text = "⟲ หมุนซ้าย (Rotate L)"
+
+[node name="RotateRightBtn" type="Button" parent="MainMargin/MainHBox/LeftShowcase/RotationRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(190, 46)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.88, 0.85, 1, 1)
+theme_override_fonts/font = ExtResource("2_font_bold")
+theme_override_font_sizes/font_size = 16
+theme_override_styles/normal = SubResource("Style_rotate_btn_normal")
+theme_override_styles/hover = SubResource("Style_rotate_btn_hover")
+theme_override_styles/pressed = SubResource("Style_rotate_btn_hover")
+text = "หมุนขวา (Rotate R) ⟳"
+
+[node name="RightWardrobePanel" type="PanelContainer" parent="MainMargin/MainHBox"]
+custom_minimum_size = Vector2(760, 0)
+layout_mode = 2
+theme_override_styles/panel = SubResource("Style_right_card_bg")
+
+[node name="CardVBox" type="VBoxContainer" parent="MainMargin/MainHBox/RightWardrobePanel"]
+layout_mode = 2
+theme_override_constants/separation = 14
+
+[node name="HeaderRow" type="HBoxContainer" parent="MainMargin/MainHBox/RightWardrobePanel/CardVBox"]
+layout_mode = 2
+
+[node name="TitleIcon" type="Label" parent="MainMargin/MainHBox/RightWardrobePanel/CardVBox/HeaderRow"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.66, 0.33, 0.97, 1)
+theme_override_fonts/font = ExtResource("2_font_bold")
+theme_override_font_sizes/font_size = 22
+text = "✨ "
+
+[node name="CardTitle" type="Label" parent="MainMargin/MainHBox/RightWardrobePanel/CardVBox/HeaderRow"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.93, 0.91, 1, 1)
+theme_override_fonts/font = ExtResource("2_font_bold")
+theme_override_font_sizes/font_size = 22
+text = "เครื่องแต่งกายเวทมนตร์"
+
+[node name="Spacer" type="Control" parent="MainMargin/MainHBox/RightWardrobePanel/CardVBox/HeaderRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="CounterLabel" type="Label" parent="MainMargin/MainHBox/RightWardrobePanel/CardVBox/HeaderRow"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.62, 0.57, 0.78, 1)
+theme_override_fonts/font = ExtResource("2_font_bold")
+theme_override_font_sizes/font_size = 15
+text = "ไอเทมปลดล็อกแล้ว "
+
+[node name="CounterValue" type="Label" parent="MainMargin/MainHBox/RightWardrobePanel/CardVBox/HeaderRow"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.82, 0.4, 1)
+theme_override_fonts/font = ExtResource("2_font_bold")
+theme_override_font_sizes/font_size = 18
+text = "0 ชิ้น"
+
+[node name="FilterTabsRow" type="HBoxContainer" parent="MainMargin/MainHBox/RightWardrobePanel/CardVBox"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="TabAll" type="Button" parent="MainMargin/MainHBox/RightWardrobePanel/CardVBox/FilterTabsRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(110, 38)
+layout_mode = 2
+theme_override_fonts/font = ExtResource("2_font_bold")
+theme_override_font_sizes/font_size = 14
+text = "ทั้งหมด (All)"
+
+[node name="TabHood" type="Button" parent="MainMargin/MainHBox/RightWardrobePanel/CardVBox/FilterTabsRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(100, 38)
+layout_mode = 2
+theme_override_fonts/font = ExtResource("2_font_bold")
+theme_override_font_sizes/font_size = 14
+text = "🧙 ฮู้ด"
+
+[node name="TabScarf" type="Button" parent="MainMargin/MainHBox/RightWardrobePanel/CardVBox/FilterTabsRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(105, 38)
+layout_mode = 2
+theme_override_fonts/font = ExtResource("2_font_bold")
+theme_override_font_sizes/font_size = 14
+text = "🧣 ผ้าพันคอ"
+
+[node name="TabBag" type="Button" parent="MainMargin/MainHBox/RightWardrobePanel/CardVBox/FilterTabsRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(100, 38)
+layout_mode = 2
+theme_override_fonts/font = ExtResource("2_font_bold")
+theme_override_font_sizes/font_size = 14
+text = "🎒 กระเป๋า"
+
+[node name="TabCat" type="Button" parent="MainMargin/MainHBox/RightWardrobePanel/CardVBox/FilterTabsRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(95, 38)
+layout_mode = 2
+theme_override_fonts/font = ExtResource("2_font_bold")
+theme_override_font_sizes/font_size = 14
+text = "🐱 แมว"
+
+[node name="ScrollArea" type="ScrollContainer" parent="MainMargin/MainHBox/RightWardrobePanel/CardVBox"]
+layout_mode = 2
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+
+[node name="EmptyStateContainer" type="CenterContainer" parent="MainMargin/MainHBox/RightWardrobePanel/CardVBox/ScrollArea"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="EmptyStateVBox" type="VBoxContainer" parent="MainMargin/MainHBox/RightWardrobePanel/CardVBox/ScrollArea/EmptyStateContainer"]
+layout_mode = 2
+alignment = 1
+theme_override_constants/separation = 12
+
+[node name="EmptyIcon" type="Label" parent="MainMargin/MainHBox/RightWardrobePanel/CardVBox/ScrollArea/EmptyStateContainer/EmptyStateVBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.66, 0.45, 0.95, 1)
+theme_override_fonts/font = ExtResource("2_font_bold")
+theme_override_font_sizes/font_size = 46
+text = "✨"
+horizontal_alignment = 1
+
+[node name="EmptyTitle" type="Label" parent="MainMargin/MainHBox/RightWardrobePanel/CardVBox/ScrollArea/EmptyStateContainer/EmptyStateVBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.9, 0.88, 1, 1)
+theme_override_fonts/font = ExtResource("2_font_bold")
+theme_override_font_sizes/font_size = 20
+text = "ตู้เสื้อผ้าว่างเปล่า"
+horizontal_alignment = 1
+
+[node name="EmptySubtitle" type="Label" parent="MainMargin/MainHBox/RightWardrobePanel/CardVBox/ScrollArea/EmptyStateContainer/EmptyStateVBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.65, 0.6, 0.78, 1)
+theme_override_fonts/font = ExtResource("2_font_bold")
+theme_override_font_sizes/font_size = 14
+text = "ยังไม่มีไอเทมเครื่องแต่งกายหรือสัตว์เลี้ยงในครอบครอง"
+horizontal_alignment = 1
+
+[node name="EmptyHint" type="Label" parent="MainMargin/MainHBox/RightWardrobePanel/CardVBox/ScrollArea/EmptyStateContainer/EmptyStateVBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.48, 0.44, 0.6, 1)
+theme_override_fonts/font = ExtResource("2_font_bold")
+theme_override_font_sizes/font_size = 13
+text = "(ไอเทมจะถูกดึงมาที่นี่หลังจากซื้อจากร้านค้า)"
+horizontal_alignment = 1
+
+[node name="ItemsGrid" type="GridContainer" parent="MainMargin/MainHBox/RightWardrobePanel/CardVBox/ScrollArea"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/h_separation = 14
+theme_override_constants/v_separation = 14
+columns = 3
+
+[node name="SfxClick" type="AudioStreamPlayer" parent="."]
+unique_name_in_owner = true
+stream = ExtResource("21_sfx_click")
+bus = &"SFX"
+
+[node name="SfxMeow" type="AudioStreamPlayer" parent="."]
+unique_name_in_owner = true
+stream = ExtResource("22_sfx_meow")
+bus = &"SFX"
+
+[node name="FadeOverlay" type="ColorRect" parent="."]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0.039, 0.031, 0.098, 1)

@@ -1,0 +1,373 @@
+[gd_scene load_steps=10 format=3]
+
+[ext_resource type="Script" path="res://features/remote_repo/remote_repo_view.gd" id="1_script"]
+[ext_resource type="Texture2D" path="res://assets/art/remote/throne-room.png" id="2_room"]
+
+[sub_resource type="StyleBoxFlat" id="Style_window"]
+bg_color = Color(0.0392157, 0.0509804, 0.0705882, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.239216, 0.266667, 0.301961, 1)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+content_margin_left = 1.0
+content_margin_top = 1.0
+content_margin_right = 1.0
+content_margin_bottom = 1.0
+
+[sub_resource type="StyleBoxFlat" id="Style_topbar"]
+content_margin_top = 13.5
+content_margin_bottom = 14.5
+bg_color = Color(0.0196078, 0.027451, 0.0392157, 1)
+border_width_bottom = 1
+border_color = Color(0.239216, 0.266667, 0.301961, 1)
+corner_radius_top_left = 9
+corner_radius_top_right = 9
+
+[sub_resource type="StyleBoxFlat" id="Style_address"]
+content_margin_left = 19.9
+content_margin_top = 6.4
+content_margin_right = 19.9
+content_margin_bottom = 6.4
+bg_color = Color(0.0666667, 0.0862745, 0.113725, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.239216, 0.266667, 0.301961, 1)
+corner_radius_top_left = 16
+corner_radius_top_right = 16
+corner_radius_bottom_right = 16
+corner_radius_bottom_left = 16
+
+[sub_resource type="StyleBoxFlat" id="Style_header"]
+content_margin_top = 21.6
+content_margin_bottom = 1.0
+bg_color = Color(0.0666667, 0.0862745, 0.113725, 1)
+border_width_bottom = 1
+border_color = Color(0.239216, 0.266667, 0.301961, 1)
+
+[sub_resource type="StyleBoxFlat" id="Style_pill_vault"]
+content_margin_left = 11.8
+content_margin_top = 2.35
+content_margin_right = 11.8
+content_margin_bottom = 2.35
+bg_color = Color(1, 1, 1, 0)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.823529, 0.6, 0.133333, 0.55)
+corner_radius_top_left = 12
+corner_radius_top_right = 12
+corner_radius_bottom_right = 12
+corner_radius_bottom_left = 12
+
+[sub_resource type="StyleBoxFlat" id="Style_pill_public"]
+content_margin_left = 11.8
+content_margin_top = 2.35
+content_margin_right = 11.8
+content_margin_bottom = 2.35
+bg_color = Color(1, 1, 1, 0)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.239216, 0.266667, 0.301961, 1)
+corner_radius_top_left = 12
+corner_radius_top_right = 12
+corner_radius_bottom_right = 12
+corner_radius_bottom_left = 12
+
+[sub_resource type="StyleBoxFlat" id="Style_keyhint"]
+content_margin_left = 11.8
+content_margin_top = 2.35
+content_margin_right = 11.8
+content_margin_bottom = 2.35
+bg_color = Color(0.0666667, 0.0862745, 0.113725, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.239216, 0.266667, 0.301961, 1)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_right = 6
+corner_radius_bottom_left = 6
+
+[node name="RemoteRepoView" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_script")
+
+[node name="Dim" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.004, 0.016, 0.035, 0.97)
+
+[node name="Margin" type="MarginContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 28
+theme_override_constants/margin_top = 84
+theme_override_constants/margin_right = 28
+theme_override_constants/margin_bottom = 28
+
+[node name="Window" type="PanelContainer" parent="Margin"]
+unique_name_in_owner = true
+clip_contents = true
+layout_mode = 2
+theme_override_styles/panel = SubResource("Style_window")
+
+[node name="RoomBackdrop" type="TextureRect" parent="Margin/Window"]
+unique_name_in_owner = true
+visible = false
+texture_filter = 1
+layout_mode = 2
+mouse_filter = 2
+texture = ExtResource("2_room")
+expand_mode = 1
+stretch_mode = 6
+
+[node name="Shade" type="ColorRect" parent="Margin/Window/RoomBackdrop"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0, 0, 0.03, 0.35)
+
+[node name="Layout" type="VBoxContainer" parent="Margin/Window"]
+layout_mode = 2
+theme_override_constants/separation = 0
+
+[node name="TopBar" type="PanelContainer" parent="Margin/Window/Layout"]
+layout_mode = 2
+mouse_filter = 1
+theme_override_styles/panel = SubResource("Style_topbar")
+
+[node name="TopMargin" type="MarginContainer" parent="Margin/Window/Layout/TopBar"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/margin_left = 22
+theme_override_constants/margin_right = 22
+
+[node name="Row" type="HBoxContainer" parent="Margin/Window/Layout/TopBar/TopMargin"]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="Left" type="HBoxContainer" parent="Margin/Window/Layout/TopBar/TopMargin/Row"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 16
+
+[node name="BackButton" type="Button" parent="Margin/Window/Layout/TopBar/TopMargin/Row/Left"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+mouse_default_cursor_shape = 2
+focus_mode = 0
+tooltip_text = "กลับไปรายการ repository"
+mouse_filter = 1
+text = "ย้อนกลับ"
+
+[node name="VaultPill" type="PanelContainer" parent="Margin/Window/Layout/TopBar/TopMargin/Row/Left"]
+layout_mode = 2
+size_flags_vertical = 4
+mouse_filter = 2
+theme_override_styles/panel = SubResource("Style_pill_vault")
+
+[node name="Label" type="Label" parent="Margin/Window/Layout/TopBar/TopMargin/Row/Left/VaultPill"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.823529, 0.6, 0.133333, 1)
+theme_override_font_sizes/font_size = 18
+text = "Magic Vault"
+
+[node name="Address" type="PanelContainer" parent="Margin/Window/Layout/TopBar/TopMargin/Row"]
+custom_minimum_size = Vector2(756, 0)
+layout_mode = 2
+size_flags_horizontal = 4
+mouse_filter = 1
+theme_override_styles/panel = SubResource("Style_address")
+
+[node name="AddressRow" type="HBoxContainer" parent="Margin/Window/Layout/TopBar/TopMargin/Row/Address"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 11
+
+[node name="LockIcon" type="TextureRect" parent="Margin/Window/Layout/TopBar/TopMargin/Row/Address/AddressRow"]
+unique_name_in_owner = true
+texture_filter = 4
+custom_minimum_size = Vector2(19, 19)
+layout_mode = 2
+size_flags_vertical = 4
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Host" type="Label" parent="Margin/Window/Layout/TopBar/TopMargin/Row/Address/AddressRow"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.607843, 0.647059, 0.690196, 1)
+theme_override_font_sizes/font_size = 19
+text = "magic-vault.com"
+
+[node name="AddressPath" type="Label" parent="Margin/Window/Layout/TopBar/TopMargin/Row/Address/AddressRow"]
+unique_name_in_owner = true
+layout_mode = 2
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.941176, 0.964706, 0.988235, 1)
+theme_override_font_sizes/font_size = 19
+
+[node name="Right" type="HBoxContainer" parent="Margin/Window/Layout/TopBar/TopMargin/Row"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 16
+alignment = 2
+
+[node name="RefreshButton" type="Button" parent="Margin/Window/Layout/TopBar/TopMargin/Row/Right"]
+unique_name_in_owner = true
+layout_mode = 2
+mouse_default_cursor_shape = 2
+focus_mode = 0
+tooltip_text = "รีเฟรชหน้านี้"
+mouse_filter = 1
+theme_type_variation = &"GhGhostButton"
+
+[node name="AvatarSlot" type="Control" parent="Margin/Window/Layout/TopBar/TopMargin/Row/Right"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(38, 38)
+layout_mode = 2
+mouse_filter = 2
+
+[node name="KeyHint" type="PanelContainer" parent="Margin/Window/Layout/TopBar/TopMargin/Row/Right"]
+layout_mode = 2
+size_flags_vertical = 4
+mouse_filter = 2
+theme_override_styles/panel = SubResource("Style_keyhint")
+
+[node name="EscLabel" type="Label" parent="Margin/Window/Layout/TopBar/TopMargin/Row/Right/KeyHint"]
+unique_name_in_owner = true
+layout_mode = 2
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.607843, 0.647059, 0.690196, 1)
+theme_override_font_sizes/font_size = 18
+text = "Esc"
+
+[node name="CloseButton" type="Button" parent="Margin/Window/Layout/TopBar/TopMargin/Row/Right"]
+unique_name_in_owner = true
+layout_mode = 2
+mouse_default_cursor_shape = 2
+focus_mode = 0
+mouse_filter = 1
+text = "ปิด"
+
+[node name="RepoHeader" type="PanelContainer" parent="Margin/Window/Layout"]
+unique_name_in_owner = true
+layout_mode = 2
+mouse_filter = 1
+theme_override_styles/panel = SubResource("Style_header")
+
+[node name="HeaderMargin" type="MarginContainer" parent="Margin/Window/Layout/RepoHeader"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/margin_left = 32
+theme_override_constants/margin_right = 32
+
+[node name="Column" type="VBoxContainer" parent="Margin/Window/Layout/RepoHeader/HeaderMargin"]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="Title" type="HBoxContainer" parent="Margin/Window/Layout/RepoHeader/HeaderMargin/Column"]
+layout_mode = 2
+theme_override_constants/separation = 11
+
+[node name="RepoIcon" type="TextureRect" parent="Margin/Window/Layout/RepoHeader/HeaderMargin/Column/Title"]
+unique_name_in_owner = true
+texture_filter = 4
+custom_minimum_size = Vector2(24, 24)
+layout_mode = 2
+size_flags_vertical = 4
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="OwnerLabel" type="Label" parent="Margin/Window/Layout/RepoHeader/HeaderMargin/Column/Title"]
+unique_name_in_owner = true
+layout_mode = 2
+mouse_filter = 0
+mouse_default_cursor_shape = 2
+tooltip_text = "กลับไปรายการ repository"
+theme_override_colors/font_color = Color(0.267, 0.576, 0.973, 1)
+theme_override_font_sizes/font_size = 27
+
+[node name="Slash" type="Label" parent="Margin/Window/Layout/RepoHeader/HeaderMargin/Column/Title"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.607843, 0.647059, 0.690196, 1)
+theme_override_font_sizes/font_size = 27
+text = "/"
+
+[node name="RepoLabel" type="Label" parent="Margin/Window/Layout/RepoHeader/HeaderMargin/Column/Title"]
+unique_name_in_owner = true
+layout_mode = 2
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.267, 0.576, 0.973, 1)
+theme_override_font_sizes/font_size = 27
+
+[node name="PublicPill" type="PanelContainer" parent="Margin/Window/Layout/RepoHeader/HeaderMargin/Column/Title"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_styles/panel = SubResource("Style_pill_public")
+
+[node name="Label" type="Label" parent="Margin/Window/Layout/RepoHeader/HeaderMargin/Column/Title/PublicPill"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.607843, 0.647059, 0.690196, 1)
+theme_override_font_sizes/font_size = 16
+text = "Public"
+
+[node name="Tabs" type="HBoxContainer" parent="Margin/Window/Layout/RepoHeader/HeaderMargin/Column"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/separation = 5
+
+[node name="Scroll" type="ScrollContainer" parent="Margin/Window/Layout"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+
+[node name="BodyMargin" type="MarginContainer" parent="Margin/Window/Layout/Scroll"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/margin_left = 32
+theme_override_constants/margin_top = 27
+theme_override_constants/margin_right = 32
+theme_override_constants/margin_bottom = 54
+
+[node name="Content" type="VBoxContainer" parent="Margin/Window/Layout/Scroll/BodyMargin"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 22
