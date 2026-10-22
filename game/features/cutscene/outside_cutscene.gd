@@ -20,7 +20,7 @@ extends Node2D
 @onready var subtitle_label: Label = $UI/TitleContainer/SubtitleLabel
 @onready var start_prompt: Label = $UI/TitleContainer/StartPrompt
 
-@export var next_scene_path: String = "res://features/sandbox/sandbox_game_view.tscn"
+@export var next_scene_path: String = "res://features/cutscene/inside_tower_cutscene.tscn"
 
 var can_start: bool = false
 var is_starting: bool = false
@@ -80,6 +80,11 @@ func _get_resolved_next_scene() -> String:
 		return "res://scenes/SandboxGameView.tscn"
 	if ResourceLoader.exists("res://features/cutscene/cut_scence_normal.tscn"):
 		return "res://features/cutscene/cut_scence_normal.tscn"
+	if ResourceLoader.exists("res://scenes/cutscene/cut_scence_normal.tscn"):
+		return "res://scenes/cutscene/cut_scence_normal.tscn"
+	if ResourceLoader.exists("res://Scenes/cutscene/cut_scence_normal.tscn"):
+		return "res://Scenes/cutscene/cut_scence_normal.tscn"
+	return ""
 	if ResourceLoader.exists("res://scenes/cutscene/cut_scence_normal.tscn"):
 		return "res://scenes/cutscene/cut_scence_normal.tscn"
 	if ResourceLoader.exists("res://Scenes/cutscene/cut_scence_normal.tscn"):

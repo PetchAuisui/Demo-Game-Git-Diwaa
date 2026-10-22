@@ -274,7 +274,7 @@ func _toggle_fast_forward() -> void:
 	_apply_ff_style(is_fast_forward)
 
 func _unhandled_key_input(event: InputEvent) -> void:
-	if not visible:
+	if not visible or not show_skip:
 		return
 	if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_ESCAPE:
 		get_viewport().set_input_as_handled()
