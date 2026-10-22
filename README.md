@@ -101,4 +101,4 @@ godot --headless --path src/GitDiwaa.Godot --script "$PWD/tests/GitDiwaa.RealGit
 - [สถาปัตยกรรม](docs/architecture.md)
 - [สถานะระบบและงานถัดไป](docs/implementation-status.md)
 - [ทดสอบผ่าน Terminal](docs/testing-terminal.md)
-- [สถาปัตยกรรม Godot Sandbox UI](docs/godot-integration.md)
+- [แนวทางเชื่อม Godot C# รอบถัดไป](docs/godot-integration.md)

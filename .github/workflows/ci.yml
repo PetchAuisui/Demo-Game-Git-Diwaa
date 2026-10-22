@@ -47,7 +47,9 @@ jobs:
           git --version
 
       - name: Import project (builds the script class cache)
-        run: godot --headless --path ${{ env.GODOT_PROJECT }} --import --quit
+        run: |
+          godot --headless --path ${{ env.GODOT_PROJECT }} --import --quit
+          godot --headless --path ${{ env.GODOT_PROJECT }} --import --quit
 
       - name: Run real-git tests
         run: |
@@ -96,7 +98,9 @@ jobs:
         run: godot --version
 
       - name: Import assets headless
-        run: godot --headless --path ${{ env.GODOT_PROJECT }} --import --quit
+        run: |
+          godot --headless --path ${{ env.GODOT_PROJECT }} --import --quit
+          godot --headless --path ${{ env.GODOT_PROJECT }} --import --quit
 
       - name: Load & instantiate every script/scene/resource
         run: |

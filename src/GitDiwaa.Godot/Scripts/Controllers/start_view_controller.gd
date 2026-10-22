@@ -114,7 +114,7 @@ func _on_start_career_pressed() -> void:
 
 	# Delay slightly for audio feedback before switching scene
 	get_tree().create_timer(0.35).timeout.connect(func() -> void:
-		get_tree().change_scene_to_file("res://Scenes/cutscene/cut_scence_normal.tscn"))
+		get_tree().change_scene_to_file("res://scenes/cutscene/cut_scence_normal.tscn"))
 
 
 func _on_resume_work_pressed() -> void:
