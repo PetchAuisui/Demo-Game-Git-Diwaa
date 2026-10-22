@@ -20,7 +20,8 @@ var container: HBoxContainer
 var ff_button: Button = null
 var ff_content: HBoxContainer = null
 var ff_arrow_wrapper: Control = null
-var ff_arrow_label: Label = null
+var ff_arrow1_label: Label = null
+var ff_arrow2_label: Label = null
 var ff_speed_label: Label = null
 var ff_bounce_tween: Tween = null
 
@@ -43,14 +44,14 @@ func _ready() -> void:
 	container.alignment = BoxContainer.ALIGNMENT_END
 	add_child(container)
 	
-	# 1. ปุ่มเร่งความเร็ว (Fast-Forward: ⏵ 1.0x <-> ⏵⏵ 2.5x พร้อมแอนิเมชันลูกศรเด้งไปทางขวา)
+	# 1. ปุ่มเร่งความเร็ว (Fast-Forward: ⏵ 1.0x <-> ⏵ ⏵ 2.5x)
 	if show_fast_forward:
 		ff_button = Button.new()
 		ff_button.focus_mode = Control.FOCUS_NONE
 		ff_button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
-		ff_button.custom_minimum_size = Vector2(105, 40)
+		ff_button.custom_minimum_size = Vector2(100, 40)
 		
-		# กล่องจัดเนื้อหาภายในปุ่ม (แยกกล่องลูกศรเพื่อทำแอนิเมชันเด้งไปทางขวา โดยตัวเลขความเร็วไม่สั่น)
+		# กล่องจัดเนื้อหาภายในปุ่ม (จัดกึ่งกลาง พร้อมเว้นระยะสม่ำเสมอ)
 		ff_content = HBoxContainer.new()
 		ff_content.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 		ff_content.alignment = BoxContainer.ALIGNMENT_CENTER
@@ -58,22 +59,39 @@ func _ready() -> void:
 		ff_content.add_theme_constant_override("separation", 6)
 		ff_button.add_child(ff_content)
 		
-		# กรอบครอบลูกศร (Control เพื่อให้ขยับ position:x ของ ff_arrow_label ได้อิสระ)
+		# กล่องครอบลูกศร (Control เพื่อขยับตำแหน่งและเด้งดึ๋งได้อิสระ)
 		ff_arrow_wrapper = Control.new()
 		ff_arrow_wrapper.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		ff_arrow_wrapper.custom_minimum_size = Vector2(16, 24)
+		ff_arrow_wrapper.custom_minimum_size = Vector2(12, 24)
 		ff_arrow_wrapper.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 		ff_content.add_child(ff_arrow_wrapper)
 		
-		ff_arrow_label = Label.new()
-		ff_arrow_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		ff_arrow_label.text = "⏵"
-		ff_arrow_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		# ลูกศรตัวที่ 1 (แสดงตลอด ชดเชยระนาบ -4px ให้ตรงระดับกึ่งกลางและระนาบเดียวกับตัวเลข 1.0x / 2.5x)
+		ff_arrow1_label = Label.new()
+		ff_arrow1_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		ff_arrow1_label.text = "⏵"
+		ff_arrow1_label.position = Vector2(0, -4)
+		ff_arrow1_label.size = Vector2(14, 24)
+		ff_arrow1_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 		if font_res:
-			ff_arrow_label.add_theme_font_override("font", font_res)
-			ff_arrow_label.add_theme_font_size_override("font_size", 20)
-		ff_arrow_wrapper.add_child(ff_arrow_label)
+			ff_arrow1_label.add_theme_font_override("font", font_res)
+			ff_arrow1_label.add_theme_font_size_override("font_size", 20)
+		ff_arrow_wrapper.add_child(ff_arrow1_label)
 		
+		# ลูกศรตัวที่ 2 (เพิ่มขึ้นมาเมื่อเร่งสปีด 2.5x เด้งไปทางขวาพร้อมลูกศรตัวที่ 1)
+		ff_arrow2_label = Label.new()
+		ff_arrow2_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		ff_arrow2_label.text = "⏵"
+		ff_arrow2_label.position = Vector2(11, -4)
+		ff_arrow2_label.size = Vector2(14, 24)
+		ff_arrow2_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		ff_arrow2_label.visible = false
+		if font_res:
+			ff_arrow2_label.add_theme_font_override("font", font_res)
+			ff_arrow2_label.add_theme_font_size_override("font_size", 20)
+		ff_arrow_wrapper.add_child(ff_arrow2_label)
+		
+		# ข้อความบอกระดับความเร็ว (1.0x / 2.5x จัดกึ่งกลางแนวตั้งเสมอ)
 		ff_speed_label = Label.new()
 		ff_speed_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		ff_speed_label.text = "1.0x"
@@ -89,13 +107,13 @@ func _ready() -> void:
 		ff_button.mouse_exited.connect(_on_ff_hover.bind(false))
 		container.add_child(ff_button)
 	
-	# 2. ปุ่มข้าม (Skip: ข้าม ⏵⏵ (Esc))
+	# 2. ปุ่มข้าม (Skip: ข้าม)
 	if show_skip:
 		dev_skip_button = Button.new()
-		dev_skip_button.text = "ข้าม ⏵⏵ (Esc)"
+		dev_skip_button.text = "ข้าม"
 		dev_skip_button.focus_mode = Control.FOCUS_NONE
 		dev_skip_button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
-		dev_skip_button.custom_minimum_size = Vector2(175, 40)
+		dev_skip_button.custom_minimum_size = Vector2(90, 40)
 		if font_res:
 			dev_skip_button.add_theme_font_override("font", font_res)
 			dev_skip_button.add_theme_font_size_override("font_size", 20)
@@ -130,93 +148,93 @@ func _apply_ff_style(active: bool) -> void:
 	style.content_margin_top = 4.0
 	style.content_margin_bottom = 4.0
 	
-	var hover_style := style.duplicate() as StyleBoxFlat
+	# สไตล์กรอบดำขอบขาวนวลแบบเดิม 8-bit ตลอดเวลา (ไม่เปลี่ยนเป็นสีม่วงนีออนตามคำขอ)
+	style.bg_color = Color(0.00392, 0, 0.07451, 0.95)
+	style.border_width_left = 2
+	style.border_width_top = 2
+	style.border_width_right = 2
+	style.border_width_bottom = 2
+	style.border_color = Color(0.980392, 0.976471, 0.964706, 0.85)
+	style.shadow_size = 0
 	
-	if active:
-		# เมื่อเร่งความเร็ว 2.5x: แสง Glow สีนีออนม่วงสไตล์เรโทร
-		style.bg_color = Color(0.18, 0.05, 0.30, 0.95)
-		style.border_width_left = 2
-		style.border_width_top = 2
-		style.border_width_right = 2
-		style.border_width_bottom = 2
-		style.border_color = Color(0.95, 0.45, 1.0, 1.0)
-		style.shadow_color = Color(0.85, 0.25, 1.0, 0.5)
-		style.shadow_size = 6
-		
-		hover_style.bg_color = Color(0.28, 0.10, 0.44, 0.95)
-		hover_style.border_color = Color(1.0, 0.65, 1.0, 1.0)
-		hover_style.shadow_color = Color(0.95, 0.45, 1.0, 0.6)
-		hover_style.shadow_size = 8
-		
-		if ff_arrow_wrapper and ff_arrow_label and ff_speed_label:
-			ff_arrow_wrapper.custom_minimum_size = Vector2(28, 24)
-			ff_arrow_label.text = "⏵⏵"
-			ff_speed_label.text = "2.5x"
-			ff_arrow_label.add_theme_color_override("font_color", Color(1.0, 0.88, 1.0, 1.0))
-			ff_speed_label.add_theme_color_override("font_color", Color(1.0, 0.88, 1.0, 1.0))
-			_start_bounce_animation()
-	else:
-		# ความเร็วปกติ 1.0x: กรอบดำขอบขาวนวล สไตล์เดียวกับปุ่มข้ามในรูปต้นฉบับ (ไม่ม่วง)
-		style.bg_color = Color(0.00392, 0, 0.07451, 0.95)
-		style.border_width_left = 2
-		style.border_width_top = 2
-		style.border_width_right = 2
-		style.border_width_bottom = 2
-		style.border_color = Color(0.980392, 0.976471, 0.964706, 0.85)
-		style.shadow_size = 0
-		
-		hover_style.bg_color = Color(0.06, 0.04, 0.16, 0.95)
-		hover_style.border_color = Color(0.980392, 0.976471, 0.964706, 1.0)
-		
-		if ff_arrow_wrapper and ff_arrow_label and ff_speed_label:
-			ff_arrow_wrapper.custom_minimum_size = Vector2(16, 24)
-			ff_arrow_label.text = "⏵"
-			ff_speed_label.text = "1.0x"
-			ff_arrow_label.add_theme_color_override("font_color", Color(0.980392, 0.976471, 0.964706, 0.9))
-			ff_speed_label.add_theme_color_override("font_color", Color(0.980392, 0.976471, 0.964706, 0.9))
-			_stop_bounce_animation()
+	var hover_style := style.duplicate() as StyleBoxFlat
+	hover_style.bg_color = Color(0.06, 0.04, 0.16, 0.95)
+	hover_style.border_color = Color(0.980392, 0.976471, 0.964706, 1.0)
 	
 	ff_button.add_theme_stylebox_override("normal", style)
 	ff_button.add_theme_stylebox_override("hover", hover_style)
 	ff_button.add_theme_stylebox_override("pressed", hover_style)
 	ff_button.add_theme_stylebox_override("focus", hover_style)
+	
+	var font_color := Color(0.980392, 0.976471, 0.964706, 0.9)
+	if ff_arrow1_label:
+		ff_arrow1_label.add_theme_color_override("font_color", font_color)
+	if ff_arrow2_label:
+		ff_arrow2_label.add_theme_color_override("font_color", font_color)
+	if ff_speed_label:
+		ff_speed_label.add_theme_color_override("font_color", font_color)
+	
+	if active:
+		if ff_arrow_wrapper:
+			ff_arrow_wrapper.custom_minimum_size = Vector2(22, 24)
+		if ff_arrow2_label:
+			ff_arrow2_label.visible = true
+			ff_arrow2_label.position = Vector2(11, -4)
+		if ff_arrow1_label:
+			ff_arrow1_label.position = Vector2(0, -4)
+		if ff_speed_label:
+			ff_speed_label.text = "2.5x"
+		_start_bounce_animation()
+	else:
+		if ff_arrow_wrapper:
+			ff_arrow_wrapper.custom_minimum_size = Vector2(12, 24)
+		if ff_arrow2_label:
+			ff_arrow2_label.visible = false
+			ff_arrow2_label.position = Vector2(11, -4)
+		if ff_arrow1_label:
+			ff_arrow1_label.position = Vector2(0, -4)
+		if ff_speed_label:
+			ff_speed_label.text = "1.0x"
+		_stop_bounce_animation()
 
 func _on_ff_hover(is_hover: bool) -> void:
-	if not ff_arrow_label or not ff_speed_label:
-		return
-	if is_fast_forward:
-		var c := Color(1.0, 1.0, 1.0, 1.0) if is_hover else Color(1.0, 0.88, 1.0, 1.0)
-		ff_arrow_label.add_theme_color_override("font_color", c)
-		ff_speed_label.add_theme_color_override("font_color", c)
-	else:
-		var c := Color(1.0, 1.0, 1.0, 1.0) if is_hover else Color(0.980392, 0.976471, 0.964706, 0.9)
-		ff_arrow_label.add_theme_color_override("font_color", c)
+	var c := Color(1.0, 1.0, 1.0, 1.0) if is_hover else Color(0.980392, 0.976471, 0.964706, 0.9)
+	if ff_arrow1_label:
+		ff_arrow1_label.add_theme_color_override("font_color", c)
+	if ff_arrow2_label:
+		ff_arrow2_label.add_theme_color_override("font_color", c)
+	if ff_speed_label:
 		ff_speed_label.add_theme_color_override("font_color", c)
 
 func _start_bounce_animation() -> void:
 	_stop_bounce_animation()
-	if not ff_arrow_label:
+	if not ff_arrow1_label or not ff_arrow2_label:
 		return
 	
-	# สร้าง Tween วนลูปขยับลูกศรพุ่งไปข้างหน้า (ขวา) แล้วเด้งกลับเป็นจังหวะต่อเนื่อง
+	# สร้าง Tween วนลูปขยับลูกศรทั้งสองตัวพุ่งไปข้างหน้า (ขวา) 3px พร้อมกัน แล้วเด้งกลับเป็นจังหวะต่อเนื่อง
 	ff_bounce_tween = create_tween().set_loops()
-	# จังหวะพุ่งไปทางขวา 5px
-	ff_bounce_tween.tween_property(ff_arrow_label, "position:x", 5.0, 0.22)\
+	ff_bounce_tween.tween_property(ff_arrow1_label, "position:x", 3.0, 0.20)\
 		.set_trans(Tween.TRANS_QUAD)\
 		.set_ease(Tween.EASE_OUT)
-	# จังหวะสปริงกลับมาตำแหน่งเดิม
-	ff_bounce_tween.tween_property(ff_arrow_label, "position:x", 0.0, 0.22)\
+	ff_bounce_tween.parallel().tween_property(ff_arrow2_label, "position:x", 14.0, 0.20)\
+		.set_trans(Tween.TRANS_QUAD)\
+		.set_ease(Tween.EASE_OUT)
+	ff_bounce_tween.chain().tween_property(ff_arrow1_label, "position:x", 0.0, 0.20)\
 		.set_trans(Tween.TRANS_QUAD)\
 		.set_ease(Tween.EASE_IN)
-	# พักจังหวะสั้นๆ ก่อนเด้งรอบถัดไป
-	ff_bounce_tween.tween_interval(0.12)
+	ff_bounce_tween.parallel().tween_property(ff_arrow2_label, "position:x", 11.0, 0.20)\
+		.set_trans(Tween.TRANS_QUAD)\
+		.set_ease(Tween.EASE_IN)
+	ff_bounce_tween.chain().tween_interval(0.10)
 
 func _stop_bounce_animation() -> void:
 	if ff_bounce_tween and ff_bounce_tween.is_valid():
 		ff_bounce_tween.kill()
 		ff_bounce_tween = null
-	if ff_arrow_label:
-		ff_arrow_label.position.x = 0.0
+	if ff_arrow1_label:
+		ff_arrow1_label.position = Vector2(0.0, -4.0)
+	if ff_arrow2_label:
+		ff_arrow2_label.position = Vector2(11.0, -4.0)
 
 func _apply_skip_style() -> void:
 	# กรอบและโทนสีเดียวกับปุ่มข้ามในรูปต้นฉบับเป๊ะๆ
