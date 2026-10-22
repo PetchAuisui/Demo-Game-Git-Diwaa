@@ -100,4 +100,4 @@ godot --headless --path game --script "$PWD/tests/engine/run_tests.gd"
 - [สถาปัตยกรรม](docs/architecture.md)
 - [สถานะระบบและงานถัดไป](docs/implementation-status.md)
 - [ทดสอบผ่าน Terminal](docs/testing-terminal.md)
-- [แนวทางเชื่อม Godot C# รอบถัดไป](docs/godot-integration.md)
+- [สถาปัตยกรรม Godot Sandbox UI](docs/godot-integration.md)
