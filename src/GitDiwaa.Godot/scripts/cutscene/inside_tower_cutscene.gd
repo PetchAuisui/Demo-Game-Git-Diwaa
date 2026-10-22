@@ -71,6 +71,8 @@ var current_dialogue_index: int = 0
 var is_dialogue_active: bool = false
 var is_typing: bool = false
 var is_transitioning: bool = false
+var is_fast_forwarding: bool = false
+var skip_ctrl = null
 var typewriter_tween: Tween = null
 var question_tween: Tween = null
 var exclamation_tween: Tween = null
@@ -116,7 +118,7 @@ func _ready() -> void:
 		anim_player.play("background_loop")
 		
 	# ระบบควบคุม Cutscene: ปุ่มเร่งความเร็ว (FF 2.5x) (ไม่มีปุ่มข้ามในฉากนี้)
-	var skip_ctrl = preload("res://scripts/cutscene/skip_cutscene_button.gd").new()
+	skip_ctrl = preload("res://scripts/cutscene/skip_cutscene_button.gd").new()
 	skip_ctrl.show_skip = false
 	skip_ctrl.next_scene_path = next_scene_path
 	add_child(skip_ctrl)
@@ -126,6 +128,24 @@ func _ready() -> void:
 
 func _exit_tree() -> void:
 	Engine.time_scale = 1.0
+
+func _process(_delta: float) -> void:
+	if is_transitioning:
+		if is_fast_forwarding:
+			is_fast_forwarding = false
+			Engine.time_scale = 1.0
+		return
+	
+	var is_btn_active: bool = (skip_ctrl != null and skip_ctrl.is_fast_forward)
+	var wants_hold: bool = Input.is_key_pressed(KEY_SHIFT) or \
+		(not is_dialogue_active and (Input.is_key_pressed(KEY_SPACE) or Input.is_key_pressed(KEY_ENTER)))
+	
+	var active: bool = is_btn_active or wants_hold
+	if active != is_fast_forwarding:
+		is_fast_forwarding = active
+		Engine.time_scale = 2.5 if active else 1.0
+		if skip_ctrl and not is_btn_active:
+			skip_ctrl._apply_ff_style(active)
 
 func _input(event: InputEvent) -> void:
 	if is_transitioning:

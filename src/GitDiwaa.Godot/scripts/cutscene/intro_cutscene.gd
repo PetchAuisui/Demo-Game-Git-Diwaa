@@ -28,7 +28,7 @@ extends Sprite2D
 @onready var anim_player: AnimationPlayer = $AnimationPlayer
 @onready var master: AnimatedSprite2D = $Master
 @onready var vel: AnimatedSprite2D = $Vel
-@onready var exclamation_mark: Sprite2D = $Vel/ExclamationMark
+@onready var exclamation_mark: Node2D = $Vel/ExclamationMark
 @onready var black_hole: Sprite2D = $BlackHole
 @onready var room_lighting: CanvasModulate = $RoomLighting
 
@@ -85,6 +85,7 @@ func _ready() -> void:
 	Engine.time_scale = 1.0
 	skip_ctrl = preload("res://scripts/cutscene/skip_cutscene_button.gd").new()
 	skip_ctrl.next_scene_path = "res://scenes/cutscene/outside_cutscene.tscn"
+	skip_ctrl.custom_skip_action = _on_skip_step
 	add_child(skip_ctrl)
 	_init_shards()
 	_reset_cutscene_state()
@@ -104,15 +105,89 @@ func _ready() -> void:
 func _exit_tree() -> void:
 	Engine.time_scale = 1.0
 
+func _process(_delta: float) -> void:
+	if not can_fast_forward or is_continuing:
+		if is_fast_forwarding:
+			is_fast_forwarding = false
+			Engine.time_scale = 1.0
+		return
+	
+	var is_btn_active: bool = (skip_ctrl != null and skip_ctrl.is_fast_forward)
+	var wants_hold: bool = Input.is_key_pressed(KEY_SPACE) or \
+		Input.is_key_pressed(KEY_ENTER) or \
+		Input.is_key_pressed(KEY_SHIFT)
+	
+	var active: bool = is_btn_active or wants_hold
+	if active != is_fast_forwarding:
+		is_fast_forwarding = active
+		Engine.time_scale = 2.5 if active else 1.0
+		if skip_ctrl and not is_btn_active:
+			skip_ctrl._apply_ff_style(active)
+
 func _input(event: InputEvent) -> void:
 	if not can_continue or is_continuing:
 		return
+	if event is InputEventKey and event.keycode == KEY_ESCAPE:
+		return
+	
+	# ป้องกันการคลิกโดนปุ่มควบคุม (FF / Skip) ถูกกลืนเป็นการกดอ่านต่อ
+	var hovered := get_viewport().gui_get_hovered_control()
+	if hovered is BaseButton:
+		return
+	
 	if event.is_action_pressed("ui_accept") or \
 	   (event is InputEventKey and event.pressed and not event.echo) or \
 	   (event is InputEventMouseButton and event.pressed) or \
 	   (event is InputEventScreenTouch and event.pressed):
 		get_viewport().set_input_as_handled()
 		_trigger_continue()
+
+func _on_skip_step() -> void:
+	if is_continuing:
+		return
+	if not can_continue:
+		_skip_to_magic_text()
+	else:
+		_trigger_continue_instant()
+
+func _skip_to_magic_text() -> void:
+	if is_continuing or can_continue:
+		return
+	if anim_player and anim_player.is_playing():
+		anim_player.stop()
+	
+	vel.position = Vector2(vel_target_x + 130.0, character_y)
+	vel.visible = true
+	vel.play("breathe_blink")
+	master.visible = false
+	black_hole.visible = false
+	if exclamation_mark:
+		exclamation_mark.visible = false
+	khampri.visible = false
+	khampri_shadow.visible = false
+	
+	for s in shards:
+		if is_instance_valid(s):
+			s.visible = false
+	
+	paper_on_floor.visible = true
+	paper_on_floor.position = Vector2(vel.position.x + 8.0, character_y - 28.0)
+	paper_on_floor.scale = Vector2(0.12, 0.12)
+	paper_on_floor.modulate = Color(2.0, 1.8, 1.2, 1.0)
+	if paper_shadow:
+		paper_shadow.visible = false
+	
+	_on_reveal_magic_text()
+
+func _trigger_continue_instant() -> void:
+	if is_continuing:
+		return
+	is_continuing = true
+	can_continue = false
+	can_fast_forward = false
+	is_fast_forwarding = false
+	Engine.time_scale = 1.0
+	get_tree().change_scene_to_file("res://scenes/cutscene/outside_cutscene.tscn")
 
 func _init_shards() -> void:
 	shards.clear()
@@ -192,7 +267,7 @@ func _reset_cutscene_state() -> void:
 	if exclamation_mark:
 		exclamation_mark.visible = false
 		exclamation_mark.scale = Vector2.ZERO
-		exclamation_mark.position = Vector2(0, -56)
+		exclamation_mark.position = Vector2(0, -52)
 
 ## เรียกเมื่อคัมภีร์แตกสลาย (11.8s)
 func _on_shatter_khampri() -> void:
@@ -377,11 +452,7 @@ func _on_pickup_shard() -> void:
 func _on_reveal_magic_text() -> void:
 	if not rune_container:
 		return
-	if skip_ctrl:
-		skip_ctrl.set_fast_forward_visible(false)
-	can_fast_forward = false
-	is_fast_forwarding = false
-	Engine.time_scale = 1.0
+	can_fast_forward = true
 	can_continue = true
 	is_continuing = false
 	
@@ -503,7 +574,7 @@ func play_with_tween() -> void:
 	
 	exclamation_mark.visible = false
 	exclamation_mark.scale = Vector2.ZERO
-	exclamation_mark.position = Vector2(0, -56)
+	exclamation_mark.position = Vector2(0, -52)
 	
 	black_hole.visible = false
 	black_hole.position = Vector2(master_target_x, 97)
@@ -553,26 +624,32 @@ func play_with_tween() -> void:
 	tw_drop.tween_callback(func():
 		master.visible = false
 		vel.play("shock")
-		exclamation_mark.visible = true
-		exclamation_mark.position = Vector2(0, -50)
-		var tw_ex = create_tween()
-		tw_ex.tween_property(exclamation_mark, "position:y", -60.0, 0.08).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-		tw_ex.parallel().tween_property(exclamation_mark, "scale", Vector2(1.35, 1.35), 0.08)
-		tw_ex.tween_property(exclamation_mark, "position:y", -54.0, 0.10).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
-		tw_ex.parallel().tween_property(exclamation_mark, "scale", Vector2(0.95, 0.95), 0.10)
-		tw_ex.tween_property(exclamation_mark, "position:y", -57.5, 0.12).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-		tw_ex.parallel().tween_property(exclamation_mark, "scale", Vector2(1.05, 1.05), 0.12)
-		tw_ex.tween_property(exclamation_mark, "position:y", -56.0, 0.12).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
-		tw_ex.parallel().tween_property(exclamation_mark, "scale", Vector2(1.0, 1.0), 0.12)
-		tw_ex.chain().tween_callback(func():
-			if not is_instance_valid(exclamation_mark) or not exclamation_mark.visible:
-				return
-			if tw_ex_bob and tw_ex_bob.is_valid():
-				tw_ex_bob.kill()
-			tw_ex_bob = create_tween().set_loops()
-			tw_ex_bob.tween_property(exclamation_mark, "position:y", -59.5, 0.35).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
-			tw_ex_bob.tween_property(exclamation_mark, "position:y", -56.0, 0.35).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
-		)
+		# 1. เวลกระโดดสะดุ้งตัวลอย (ขึ้น y=35 ใน 0.22s, ลง y=59 ใน 0.25s)
+		var tw_vjump = create_tween()
+		tw_vjump.tween_property(vel, "position:y", 35.0, 0.22).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+		tw_vjump.tween_property(vel, "position:y", 59.0, 0.25).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+		
+		# 2. ตัวอักษร ! ตกใจบนหัว กระโดดขึ้นพร้อมกับเวลและลงพร้อมกัน
+		if is_instance_valid(exclamation_mark):
+			exclamation_mark.visible = true
+			exclamation_mark.scale = Vector2.ZERO
+			exclamation_mark.position = Vector2(0, -52)
+			exclamation_mark.modulate.a = 1.0
+			var tw_ex = create_tween()
+			# กระโดดขึ้นพร้อมกับเวล (0.22s)
+			tw_ex.tween_property(exclamation_mark, "scale", Vector2(1.15, 1.15), 0.15).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+			tw_ex.parallel().tween_property(exclamation_mark, "position:y", -58.0, 0.22).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+			# ตกลงมาพร้อมกับเวล (0.25s)
+			tw_ex.chain().tween_property(exclamation_mark, "scale", Vector2.ONE, 0.15).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+			tw_ex.parallel().tween_property(exclamation_mark, "position:y", -52.0, 0.25).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+			# แลนดิ้งถึงพื้นปุ๊บ ยุบตัวหายวับไปทันที (0.15s)
+			tw_ex.chain().tween_property(exclamation_mark, "scale", Vector2.ZERO, 0.15).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+			tw_ex.parallel().tween_property(exclamation_mark, "modulate:a", 0.0, 0.15)
+			tw_ex.chain().tween_callback(func():
+				if is_instance_valid(exclamation_mark):
+					exclamation_mark.visible = false
+					exclamation_mark.position = Vector2(0, -52)
+			)
 	)
 	
 	# 5. ปรมาจารย์จมลงหลุมดำจนมิด แล้วคัมภีร์ดีดเด้งสูงเฉียงขวาออกห่างจากเวล (9.38s -> 9.80s)

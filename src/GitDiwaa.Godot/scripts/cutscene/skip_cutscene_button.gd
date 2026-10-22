@@ -126,10 +126,7 @@ func set_fast_forward_visible(p_visible: bool) -> void:
 	if ff_button:
 		ff_button.visible = p_visible
 		if not p_visible and is_fast_forward:
-			is_fast_forward = false
-			Engine.time_scale = 1.0
-			_apply_ff_style(false)
-			_stop_bounce_animation()
+			_toggle_fast_forward()
 
 func set_skip_visible(p_visible: bool) -> void:
 	if dev_skip_button:
@@ -140,21 +137,26 @@ func _exit_tree() -> void:
 	Engine.time_scale = 1.0
 
 func _apply_ff_style(active: bool) -> void:
+	if not ff_button:
+		return
 	var style := StyleBoxFlat.new()
 	style.corner_radius_top_left = 8
 	style.corner_radius_top_right = 8
 	style.corner_radius_bottom_left = 8
 	style.corner_radius_bottom_right = 8
-	style.content_margin_left = 10.0
-	style.content_margin_right = 10.0
+	style.content_margin_left = 12.0
+	style.content_margin_right = 12.0
 	style.content_margin_top = 4.0
 	style.content_margin_bottom = 4.0
+	
+	# สไตล์กรอบดำขอบขาวนวลแบบเดิม 8-bit ตลอดเวลา (ไม่เปลี่ยนเป็นสีม่วงนีออนตามคำขอ)
 	style.bg_color = Color(0.00392, 0, 0.07451, 0.95)
 	style.border_width_left = 2
 	style.border_width_top = 2
 	style.border_width_right = 2
 	style.border_width_bottom = 2
 	style.border_color = Color(0.980392, 0.976471, 0.964706, 0.85)
+	style.shadow_size = 0
 	
 	var hover_style := style.duplicate() as StyleBoxFlat
 	hover_style.bg_color = Color(0.06, 0.04, 0.16, 0.95)
