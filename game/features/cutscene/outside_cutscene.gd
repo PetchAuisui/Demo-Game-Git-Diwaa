@@ -66,24 +66,6 @@ func _get_resolved_next_scene() -> String:
 		return next_scene_path
 	if ResourceLoader.exists("res://features/cutscene/inside_tower_cutscene.tscn"):
 		return "res://features/cutscene/inside_tower_cutscene.tscn"
-	if ResourceLoader.exists("res://features/tower/inside_tower_cutscene.tscn"):
-		return "res://features/tower/inside_tower_cutscene.tscn"
-	if ResourceLoader.exists("res://scenes/cutscene/inside_tower_cutscene.tscn"):
-		return "res://scenes/cutscene/inside_tower_cutscene.tscn"
-	if ResourceLoader.exists("res://features/sandbox/sandbox_game_view.tscn"):
-		return "res://features/sandbox/sandbox_game_view.tscn"
-	if ResourceLoader.exists("res://Scenes/cutscene/inside_tower_cutscene.tscn"):
-		return "res://Scenes/cutscene/inside_tower_cutscene.tscn"
-	if ResourceLoader.exists("res://Scenes/SandboxGameView.tscn"):
-		return "res://Scenes/SandboxGameView.tscn"
-	if ResourceLoader.exists("res://scenes/SandboxGameView.tscn"):
-		return "res://scenes/SandboxGameView.tscn"
-	if ResourceLoader.exists("res://features/cutscene/cut_scence_normal.tscn"):
-		return "res://features/cutscene/cut_scence_normal.tscn"
-	if ResourceLoader.exists("res://scenes/cutscene/cut_scence_normal.tscn"):
-		return "res://scenes/cutscene/cut_scence_normal.tscn"
-	if ResourceLoader.exists("res://Scenes/cutscene/cut_scence_normal.tscn"):
-		return "res://Scenes/cutscene/cut_scence_normal.tscn"
 	return ""
 
 func _input(event: InputEvent) -> void:
