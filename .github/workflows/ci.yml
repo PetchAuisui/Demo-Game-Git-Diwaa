@@ -15,13 +15,70 @@ permissions:
   contents: read
 
 env:
+  # ต้องเป็น Godot รุ่นมาตรฐาน (ไม่ใช่ .NET/Mono) และ major.minor ต้องตรงกับ config/features ใน project.godot
   GODOT_VERSION: 4.7.2
   GODOT_PROJECT: game
 
 jobs:
   # ---------------------------------------------------------------------------
-  # Real-git engine (GDScript): import the project, run the integration tests
-  # and a CLI smoke test. No UI / rendering needed.
+  # Hygiene: ตรวจโครงสร้างโปรเจกต์ GDScript โดยไม่ต้องใช้ Godot
+  #  - ไม่มีไฟล์ C# / .NET หลงเหลือ และไม่มี .godot/ ถูก commit
+  #  - ทุก .gd ใน game/ มี .uid คู่กัน (Godot 4.4+ ใช้ .uid ผูก reference ของสคริปต์)
+  #  - Godot ใน CI ตรงกับเวอร์ชันที่ project.godot ระบุ
+  # ---------------------------------------------------------------------------
+  hygiene:
+    name: Project hygiene
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: No C# / .NET leftovers or editor cache committed
+        run: |
+          bad=$(git ls-files | grep -E '\.(cs|csproj|sln|slnx)$|(^|/)\.godot/|(^|/)\.mono/|(^|/)(bin|obj)/' || true)
+          if [ -n "$bad" ]; then
+            echo "$bad"
+            echo "::error::พบไฟล์ C#/.NET หรือแคชของ Godot ที่ไม่ควรอยู่ใน repository (โปรเจกต์นี้ใช้ GDScript ล้วน)"
+            exit 1
+          fi
+
+      # ตรวจเฉพาะใน game/ เพราะ Godot สร้าง .uid ให้เฉพาะสคริปต์ที่อยู่ใน project
+      # (.github/scripts และ tests/ รันด้วย --script จึงไม่มี .uid)
+      - name: Every GDScript file in the Godot project has a .uid file
+        run: |
+          missing=0
+          while IFS= read -r f; do
+            if ! git ls-files --error-unmatch "$f.uid" >/dev/null 2>&1; then
+              echo "::error file=$f::ไม่มี $f.uid ที่ commit คู่กัน (เปิดโปรเจกต์ใน Godot editor แล้ว commit ไฟล์ .uid ด้วย)"
+              missing=1
+            fi
+          done < <(git ls-files "$GODOT_PROJECT/*.gd")
+          exit $missing
+
+      - name: No orphan .uid files in the Godot project
+        run: |
+          orphan=0
+          while IFS= read -r u; do
+            if [ ! -f "${u%.uid}" ]; then
+              echo "::error file=$u::ไฟล์ .uid ไม่มีสคริปต์คู่กัน (ลบ .uid ที่ค้างอยู่)"
+              orphan=1
+            fi
+          done < <(git ls-files "$GODOT_PROJECT/*.gd.uid")
+          exit $orphan
+
+      - name: Godot version matches project.godot
+        run: |
+          expected="${GODOT_VERSION%.*}"
+          actual=$(sed -n 's/^config\/features=PackedStringArray("\([0-9]*\.[0-9]*\)".*/\1/p' "$GODOT_PROJECT/project.godot")
+          echo "CI Godot: $GODOT_VERSION | project.godot features: $actual"
+          if [ "$expected" != "$actual" ]; then
+            echo "::error file=$GODOT_PROJECT/project.godot::config/features ($actual) ไม่ตรงกับ GODOT_VERSION ($GODOT_VERSION) ใน ci.yml"
+            exit 1
+          fi
+
+  # ---------------------------------------------------------------------------
+  # Real-git engine (GDScript): import project, run integration tests with a
+  # real Git, then a CLI smoke test. Headless – no UI / rendering needed.
   # ---------------------------------------------------------------------------
   engine:
     name: Engine tests (${{ matrix.os }})
@@ -31,6 +88,9 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest]
+    defaults:
+      run:
+        shell: bash
     steps:
       - uses: actions/checkout@v4
 
@@ -46,25 +106,40 @@ jobs:
           godot --version
           git --version
 
+      # import รอบแรกสร้างแคชของ asset/class_name ส่วนรอบสองให้ global_script_class_cache
+      # ครบ (สคริปต์ที่อ้าง class_name ข้ามกันจะ parse ผ่านในรอบหลัง)
       - name: Import project (builds the script class cache)
         run: |
-          godot --headless --path ${{ env.GODOT_PROJECT }} --import --quit
-          godot --headless --path ${{ env.GODOT_PROJECT }} --import --quit
+          godot --headless --path "$GODOT_PROJECT" --import --quit
+          godot --headless --path "$GODOT_PROJECT" --import --quit
 
-      - name: Run real-git tests
+      - name: Run real-git integration tests
         run: |
-          godot --headless --path ${{ env.GODOT_PROJECT }} \
+          set -o pipefail
+          godot --headless --path "$GODOT_PROJECT" \
             --script "$GITHUB_WORKSPACE/tests/engine/run_tests.gd" 2>&1 | tee tests.log
-          test "${PIPESTATUS[0]}" -eq 0
-          if grep -qE "SCRIPT ERROR|Parse Error|^FAIL" tests.log; then
+          if grep -qE "SCRIPT ERROR|Parse Error|Failed loading resource|^FAIL" tests.log; then
             echo "::error::Engine tests reported errors"; exit 1
           fi
+          grep -qE "^[0-9]+/[0-9]+ real-Git integration tests passed" tests.log
 
       - name: CLI smoke test
-        shell: bash
         run: |
-          printf 'git --version\ngit config --global user.name "CI"\ngit config --global user.email ci@git-diwaa.local\ngit init\nwrite README.md Hello\ngit add README.md\ngit commit -m "ci smoke"\nsnapshot\nexit\n' \
-            | godot --headless --path ${{ env.GODOT_PROJECT }} --script res://engine/cli/cli_main.gd | tee cli.txt
+          set -o pipefail
+          printf '%s\n' \
+            'git --version' \
+            'git config --global user.name "CI"' \
+            'git config --global user.email ci@git-diwaa.local' \
+            'git init' \
+            'write README.md Hello' \
+            'git add README.md' \
+            'git commit -m "ci smoke"' \
+            'snapshot' \
+            'exit' \
+            | godot --headless --path "$GODOT_PROJECT" --script res://engine/cli/cli_main.gd 2>&1 | tee cli.txt
+          if grep -qE "SCRIPT ERROR|Parse Error|Failed loading resource" cli.txt; then
+            echo "::error::CLI raised script errors"; exit 1
+          fi
           grep -q '"Subject": "ci smoke"' cli.txt
 
       - name: Upload logs on failure
@@ -75,10 +150,12 @@ jobs:
           path: |
             tests.log
             cli.txt
+          if-no-files-found: ignore
 
   # ---------------------------------------------------------------------------
-  # Godot: import assets, load every script/scene/resource headless, run the
-  # main scene for a few frames
+  # Godot: import assets, load every script/scene/resource headless (catches
+  # GDScript parse errors and broken scene references), run the main scene for
+  # a few frames
   # ---------------------------------------------------------------------------
   godot:
     name: Godot scene check
@@ -99,22 +176,27 @@ jobs:
 
       - name: Import assets headless
         run: |
-          godot --headless --path ${{ env.GODOT_PROJECT }} --import --quit
-          godot --headless --path ${{ env.GODOT_PROJECT }} --import --quit
+          godot --headless --path "$GODOT_PROJECT" --import --quit
+          godot --headless --path "$GODOT_PROJECT" --import --quit
 
       - name: Load & instantiate every script/scene/resource
         run: |
-          godot --headless --path ${{ env.GODOT_PROJECT }} \
+          set -o pipefail
+          godot --headless --path "$GODOT_PROJECT" \
             --script "$GITHUB_WORKSPACE/.github/scripts/check_scenes.gd" 2>&1 | tee scenes.log
-          test "${PIPESTATUS[0]}" -eq 0
-          if grep -qE "SCRIPT ERROR|Parse Error|Failed loading resource" scenes.log; then
+          if grep -qE "SCRIPT ERROR|Parse Error|Failed loading resource|^FAIL" scenes.log; then
             echo "::error::Godot reported script/resource errors"; exit 1
           fi
+          # UID ใน .tscn/.tres ที่ชี้ไปหา resource ไม่เจอ: ยังโหลดได้ด้วย path จึงเตือนอย่างเดียว ไม่ทำให้ CI ล้ม
+          grep -E "invalid UID" scenes.log | sort -u | while IFS= read -r line; do
+            echo "::warning::${line}"
+          done || true
 
       - name: Smoke-run main scene for a few frames
         run: |
-          timeout 120 godot --headless --path ${{ env.GODOT_PROJECT }} --quit-after 120 2>&1 | tee run.log
-          if grep -qE "SCRIPT ERROR|Parse Error" run.log; then
+          set -o pipefail
+          timeout 120 godot --headless --path "$GODOT_PROJECT" --quit-after 120 2>&1 | tee run.log
+          if grep -qE "SCRIPT ERROR|Parse Error|Failed loading resource" run.log; then
             echo "::error::Main scene raised errors at startup"; exit 1
           fi
 
@@ -126,13 +208,17 @@ jobs:
           path: |
             scenes.log
             run.log
+          if-no-files-found: ignore
 
   ci-success:
     name: CI success
     if: always()
-    needs: [engine, godot]
+    needs: [hygiene, engine, godot]
     runs-on: ubuntu-latest
     steps:
-      - run: |
-          echo "engine=${{ needs.engine.result }} godot=${{ needs.godot.result }}"
-          test "${{ needs.engine.result }}" = "success" && test "${{ needs.godot.result }}" = "success"
+      - name: Require every job to succeed
+        run: |
+          echo "hygiene=${{ needs.hygiene.result }} engine=${{ needs.engine.result }} godot=${{ needs.godot.result }}"
+          test "${{ needs.hygiene.result }}" = "success"
+          test "${{ needs.engine.result }}" = "success"
+          test "${{ needs.godot.result }}" = "success"
