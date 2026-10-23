@@ -58,8 +58,8 @@ flowchart TD
 
 ## 3. โครงสร้าง Scene และ Node Hierarchy
 
-ไฟล์ Scene อยู่ที่: [`Scenes/cutscene/inside_tower_cutscene.tscn`](file:///c:/Users/67030311/Documents/Game-Git-Diwaa/src/GitDiwaa.Godot/Scenes/cutscene/inside_tower_cutscene.tscn)  
-สคริปต์อยู่ที่: [`Scripts/cutscene/inside_tower_cutscene.gd`](file:///c:/Users/67030311/Documents/Game-Git-Diwaa/src/GitDiwaa.Godot/Scripts/cutscene/inside_tower_cutscene.gd)
+ไฟล์ Scene อยู่ที่: [`game/features/cutscene/inside_tower_cutscene.tscn`](../game/features/cutscene/inside_tower_cutscene.tscn)  
+สคริปต์อยู่ที่: [`game/features/cutscene/inside_tower_cutscene.gd`](../game/features/cutscene/inside_tower_cutscene.gd)
 
 ```text
 InsideTowerCutscene (Node2D) [Script: inside_tower_cutscene.gd]
@@ -191,7 +191,7 @@ InsideTowerCutscene (Node2D) [Script: inside_tower_cutscene.gd]
 
 ## 4. บทสนทนาในฉาก (Dialogue Script)
 
-บทสนทนาถูกจัดเก็บในตัวแปร `DIALOGUES` ในสคริปต์ [`inside_tower_cutscene.gd`](file:///c:/Users/67030311/Documents/Game-Git-Diwaa/src/GitDiwaa.Godot/Scripts/cutscene/inside_tower_cutscene.gd):
+บทสนทนาถูกจัดเก็บในตัวแปร `DIALOGUES` ในสคริปต์ [`game/features/cutscene/inside_tower_cutscene.gd`](../game/features/cutscene/inside_tower_cutscene.gd):
 
 | ลำดับ | ผู้พูด | ข้อความบทสนทนา | ท่าทางเวล | ไอคอน Emote | ท่าทางมิวรา | เสียง SFX |
 |:---:|:---:|---|:---:|:---:|:---:|:---:|
@@ -207,10 +207,10 @@ InsideTowerCutscene (Node2D) [Script: inside_tower_cutscene.gd]
 
 ### การเชื่อมต่อเปลี่ยน Scene มายังฉากนี้:
 ```gdscript
-get_tree().change_scene_to_file("res://Scenes/cutscene/inside_tower_cutscene.tscn")
+get_tree().change_scene_to_file("res://features/cutscene/inside_tower_cutscene.tscn")
 ```
 
 ### การตั้งค่าด่านถัดไปใน Godot Inspector:
 ที่ Root Node `InsideTowerCutscene` จะมีตัวแปร Export:
-* **`Next Scene Path`**: กำหนด Path ของด่านถัดไป (ค่าเริ่มต้นคือ `"res://Scenes/SandboxGameView.tscn"`)
+* **`Next Scene Path`**: กำหนด Path ของด่านถัดไป (ค่าเริ่มต้นคือ `"res://features/sandbox/sandbox_game_view.tscn"`)
 * เมื่อจบคัตซีนหรือกดปุ่มข้าม ระบบจะพาผู้เล่นเข้าสู่ Scene นี้โดยอัตโนมัติ

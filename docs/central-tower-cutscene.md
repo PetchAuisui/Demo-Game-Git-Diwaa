@@ -39,7 +39,7 @@ flowchart LR
 
 ## 3. โครงสร้าง Scene และ Node Hierarchy
 
-ไฟล์ Scene อยู่ที่: [`Scenes/cutscene/central_tower_cutscene.tscn`](file:///c:/Users/67030311/Documents/Game-Git-Diwaa/src/GitDiwaa.Godot/Scenes/cutscene/central_tower_cutscene.tscn)
+ไฟล์ Scene อยู่ที่: [`game/features/cutscene/central_tower_cutscene.tscn`](../game/features/cutscene/central_tower_cutscene.tscn)
 
 ```text
 CentralTowerCutscene (Node2D) [Script: central_tower_cutscene.gd]
@@ -111,7 +111,7 @@ CentralTowerCutscene (Node2D) [Script: central_tower_cutscene.gd]
 
 ## 4. บทสนทนาในฉาก (Dialogue Script)
 
-บทสนทนาถูกจัดเก็บเป็น Array ของ Dictionary ในตัวแปร `DIALOGUES` ภายในสคริปต์ [`central_tower_cutscene.gd`](file:///c:/Users/67030311/Documents/Game-Git-Diwaa/src/GitDiwaa.Godot/Scripts/cutscene/central_tower_cutscene.gd):
+บทสนทนาถูกจัดเก็บเป็น Array ของ Dictionary ในตัวแปร `DIALOGUES` ภายในสคริปต์ [`game/features/cutscene/central_tower_cutscene.gd`](../game/features/cutscene/central_tower_cutscene.gd):
 
 * ตัวละครใช้ระบบ **Sequence Loops** อัตโนมัติ (ผู้พิทักษ์: ลูปพูดเมื่อถึงบท / ลูปหายใจเมื่อฟัง, เวล: ลูปหายใจต่อเนื่อง)
 * ไม่มีการตัดรีสตาร์ทเฟรม 0 เมื่อผู้เล่นคลิกเปลี่ยนประโยค
@@ -142,16 +142,16 @@ CentralTowerCutscene (Node2D) [Script: central_tower_cutscene.gd]
 ### การเชื่อมต่อจากด่านจบของ Act 1 (ด่าน 15):
 เมื่อผู้เล่นทำภารกิจด่านสุดท้ายของ Act 1 สำเร็จ ให้สั่งเปลี่ยน Scene มายังคัตซีนนี้:
 ```gdscript
-get_tree().change_scene_to_file("res://Scenes/cutscene/central_tower_cutscene.tscn")
+get_tree().change_scene_to_file("res://features/cutscene/central_tower_cutscene.tscn")
 ```
 
 ### การตั้งค่าด่านถัดไปใน Godot Inspector:
 ที่ Root Node `CentralTowerCutscene` จะมีตัวแปร Export:
-* **`Next Scene Path`**: กำหนด Path ของด่านถัดไป (ค่าเริ่มต้นคือ `"res://Scenes/SandboxGameView.tscn"`)
+* **`Next Scene Path`**: กำหนด Path ของด่านถัดไป (ค่าเริ่มต้นคือ `"res://features/sandbox/sandbox_game_view.tscn"`)
 * เมื่อจบคัตซีนหรือกดปุ่มข้าม ระบบจะพาผู้เล่นเข้าสู่ Scene นี้โดยอัตโนมัติ
 
 ### วิธีเพิ่มหรือแก้ไขบทสนทนา:
-เปิดไฟล์ [`Scripts/cutscene/central_tower_cutscene.gd`](file:///c:/Users/67030311/Documents/Game-Git-Diwaa/src/GitDiwaa.Godot/Scripts/cutscene/central_tower_cutscene.gd) และแก้ไขในอาร์เรย์ `DIALOGUES`:
+เปิดไฟล์ [`game/features/cutscene/central_tower_cutscene.gd`](../game/features/cutscene/central_tower_cutscene.gd) และแก้ไขในอาร์เรย์ `DIALOGUES`:
 ```gdscript
 {
     "speaker": "ชื่อตัวละคร",

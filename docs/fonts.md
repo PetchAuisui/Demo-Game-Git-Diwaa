@@ -10,10 +10,10 @@
 * **ที่อยู่ไฟล์:** `res://assets/fonts/TA-8-bit.ttf`
 * **ลักษณะ:** ฟอนต์พิกเซล 8-bit แท้ รองรับภาษาไทยและอังกฤษ มีเอกลักษณ์สไตล์ Retro Game ชัดเจน วรรณยุกต์และสระลงล็อกช่องพิกเซล
 * **ฉากที่ใช้งาน:**
-  * [`Scenes/cutscene/central_tower_cutscene.tscn`](file:///c:/Users/67030311/Documents/Game-Git-Diwaa/src/GitDiwaa.Godot/Scenes/cutscene/central_tower_cutscene.tscn) (หอคอยเวทกลาง)
-  * `Scenes/cutscene/intro_cutscene.tscn` (ฉากเปิดเรื่อง)
-  * `Scenes/cutscene/outside_cutscene.tscn` (ฉากนอกหอคอย)
-  * `Scenes/cutscene/ending_cutscene.tscn` (ฉากจบ)
+  * [`game/features/cutscene/central_tower_cutscene.tscn`](../game/features/cutscene/central_tower_cutscene.tscn) (หอคอยเวทกลาง)
+  * `game/features/cutscene/intro_cutscene.tscn` (ฉากเปิดเรื่อง)
+  * `game/features/cutscene/outside_cutscene.tscn` (ฉากนอกหอคอย)
+  * `game/features/cutscene/ending_cutscene.tscn` (ฉากจบ)
 
 ---
 
@@ -110,7 +110,7 @@ autowrap_mode = 3
   * ปรับขนาด `SpeakerLabel` เป็น **30 px** เพื่อสร้างลำดับชั้นทางสายตา (Visual Hierarchy) ให้เด่นชัดเหนือข้อความบทสนทนา (26 px)
   * ยกระดับความหนาของตัวอักษรชื่อผู้พูดด้วย `FontVariation (variation_embolden = 0.6)` เพื่อให้ได้ตัวหนา (Bold) ที่คมชัดสไตล์พิกเซลเรโทรอย่างแท้จริง แทนค่าเดิม 0.3 ที่บางเกินไป โดยคงขนาดและความหนาเท่ากันทุกตัวละครเพื่อความเสถียรของ UI
 * **2026-10-18:**
-  * ยืนยันการใช้งานฟอนต์ [**`TA-8-bit.ttf`**](file:///c:/Users/67030311/Documents/Game-Git-Diwaa/src/GitDiwaa.Godot/assets/fonts/TA-8-bit.ttf) เป็นฟอนต์มาตรฐานของบทสนทนาในฉาก [`central_tower_cutscene.tscn`](file:///c:/Users/67030311/Documents/Game-Git-Diwaa/src/GitDiwaa.Godot/Scenes/cutscene/central_tower_cutscene.tscn)
+  * ยืนยันการใช้งานฟอนต์ [**`TA-8-bit.ttf`**](../game/assets/fonts/TA-8-bit.ttf) เป็นฟอนต์มาตรฐานของบทสนทนาในฉาก [`central_tower_cutscene.tscn`](../game/features/cutscene/central_tower_cutscene.tscn)
   * ปรับขนาด `DialogueLabel` เป็น **26 px** และสีเป็น **สีขาวจั๊ว (`#FFFFFF`)** พร้อมขอบ 2 px และระยะห่างบรรทัด 8 px
   * ปรับขนาด `SpeakerLabel` เป็น **28 px** ใช้ `FontVariation (variation_embolden = 0.3)` สีทอง `#F0D273` ขอบ 3 px
-  * สร้างเอกสาร [`docs/fonts.md`](file:///c:/Users/67030311/Documents/Game-Git-Diwaa/docs/fonts.md) เพื่อรวบรวมข้อมูลฟอนต์ทั้งหมดในโปรเจกต์
+  * สร้างเอกสาร [`docs/fonts.md`](fonts.md) เพื่อรวบรวมข้อมูลฟอนต์ทั้งหมดในโปรเจกต์

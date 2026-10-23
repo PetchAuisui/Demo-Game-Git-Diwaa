@@ -162,7 +162,7 @@ flowchart TD
 
 ## 5. ระบบการเล่นอนิเมชันในฉากห้องสมุด (Dual Playback Modes)
 
-ในไฟล์ [`src/GitDiwaa.Godot/scripts/cutscene/intro_cutscene.gd`](file:///c:/Users/67030311/Documents/Game-Git-Diwaa/src/GitDiwaa.Godot/scripts/cutscene/intro_cutscene.gd) มีตัวแปร `@export_enum("AnimationPlayer", "ScriptTween") var playback_mode` ให้ผู้พัฒนาสามารถเลือกวิธีเล่นฉากได้ 2 รูปแบบผ่าน Inspector:
+ในไฟล์ [`game/features/cutscene/intro_cutscene.gd`](../game/features/cutscene/intro_cutscene.gd) มีตัวแปร `@export_enum("AnimationPlayer", "ScriptTween") var playback_mode` ให้ผู้พัฒนาสามารถเลือกวิธีเล่นฉากได้ 2 รูปแบบผ่าน Inspector:
 
 1. **โหมด `AnimationPlayer` (โหมดมาตรฐานเริ่มต้น - แนะนำ):**
    * เล่นแอนิเมชันชื่อ `"walk_in"` ที่กำหนด Keyframe ไว้บน Timeline ของ Node `AnimationPlayer` ใน Godot Editor
