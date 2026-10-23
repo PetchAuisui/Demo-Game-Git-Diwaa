@@ -23,7 +23,7 @@ jobs:
   # ---------------------------------------------------------------------------
   # Hygiene: ตรวจโครงสร้างโปรเจกต์ GDScript โดยไม่ต้องใช้ Godot
   #  - ไม่มีไฟล์ C# / .NET หลงเหลือ และไม่มี .godot/ ถูก commit
-  #  - ทุก .gd มี .uid คู่กัน (Godot 4.4+ ใช้ .uid ผูก reference ของสคริปต์)
+  #  - ทุก .gd ใน game/ มี .uid คู่กัน (Godot 4.4+ ใช้ .uid ผูก reference ของสคริปต์)
   #  - Godot ใน CI ตรงกับเวอร์ชันที่ project.godot ระบุ
   # ---------------------------------------------------------------------------
   hygiene:
@@ -42,7 +42,9 @@ jobs:
             exit 1
           fi
 
-      - name: Every GDScript file has a .uid file
+      # ตรวจเฉพาะใน game/ เพราะ Godot สร้าง .uid ให้เฉพาะสคริปต์ที่อยู่ใน project
+      # (.github/scripts และ tests/ รันด้วย --script จึงไม่มี .uid)
+      - name: Every GDScript file in the Godot project has a .uid file
         run: |
           missing=0
           while IFS= read -r f; do
@@ -50,10 +52,10 @@ jobs:
               echo "::error file=$f::ไม่มี $f.uid ที่ commit คู่กัน (เปิดโปรเจกต์ใน Godot editor แล้ว commit ไฟล์ .uid ด้วย)"
               missing=1
             fi
-          done < <(git ls-files '*.gd')
+          done < <(git ls-files "$GODOT_PROJECT/*.gd")
           exit $missing
 
-      - name: No orphan .uid files
+      - name: No orphan .uid files in the Godot project
         run: |
           orphan=0
           while IFS= read -r u; do
@@ -61,7 +63,7 @@ jobs:
               echo "::error file=$u::ไฟล์ .uid ไม่มีสคริปต์คู่กัน (ลบ .uid ที่ค้างอยู่)"
               orphan=1
             fi
-          done < <(git ls-files '*.gd.uid')
+          done < <(git ls-files "$GODOT_PROJECT/*.gd.uid")
           exit $orphan
 
       - name: Godot version matches project.godot
