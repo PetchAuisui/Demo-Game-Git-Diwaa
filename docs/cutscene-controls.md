@@ -100,12 +100,18 @@ flowchart TD
     Outside -->|"เล่นจบ / กดข้าม"| InsideTower["5. inside_tower_cutscene.tscn (พบมิวราในหอคอย)"]
     InsideTower -->|"เข้าสู่เกมเพลย์"| Sandbox["6. sandbox_game_view.tscn (ด่านฝึกสอน Git 1-15)"]
     
-    Sandbox -.->|"ด่านที่ 16"| CentralTower["7. central_tower_cutscene.tscn (พบผู้พิทักษ์หอคอยกลาง)"]
+    Sandbox -.->|"ด่านที่ 16 / คำสั่ง cutscene central"| CentralTower["7. central_tower_cutscene.tscn (พบผู้พิทักษ์หอคอยกลาง)"]
     CentralTower -.->|"เล่นด่านต่อ"| Sandbox
     
-    Sandbox -.->|"เคลียร์ครบทุกด่าน"| Ending["8. ending_cutscene.tscn (ฉากจบ & เครดิตทีมพัฒนา)"]
+    Sandbox -.->|"เคลียร์ครบทุกด่าน / คำสั่ง cutscene ending"| Ending["8. ending_cutscene.tscn (ฉากจบ & เครดิตทีมพัฒนา)"]
     Ending -->|"คลิกกลับสู่เมนูหลัก"| Start
 ```
+
+### 4.0 การทดสอบการเปลี่ยนฉากจาก Sandbox (Sandbox Testing Commands)
+ภายใน `sandbox_game_view.tscn` สามารถพิมพ์คำสั่งใน Terminal หรือเรียกผ่าน GDScript Method เพื่อทดสอบโฟลว์การเปลี่ยนฉากได้ทันที:
+* **คำสั่ง `cutscene central` หรือ `level 16`:** ตัดเข้าสู่ `central_tower_cutscene.tscn` (และเมื่อจบคัตซีนหรือกดข้ามจะส่งกลับมายัง Sandbox) หรือเรียกผ่านเมธอด `play_central_tower_cutscene()`
+* **คำสั่ง `cutscene ending`:** ตัดเข้าสู่ `ending_cutscene.tscn` (และเมื่อจบคัตซีนหรือกดข้ามจะส่งกลับสู่ `start_view.tscn`) หรือเรียกผ่านเมธอด `play_ending_cutscene()`
+* **คำสั่ง `cutscene`:** แสดงคำแนะนำวิธีใช้คำสั่งเปลี่ยนฉากทั้งหมดใน Terminal
 
 ### 4.1 รายละเอียดย่อยการข้ามฉากภายในคัตซีนต้นเกม (Granular Stage Skipping)
 ```mermaid
