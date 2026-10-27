@@ -35,7 +35,7 @@ public static class AccountEndpoints
 
             var apiError = new ApiError(result.Error ?? AuthErrorCode.Unknown, result.FieldErrors);
             return Results.Json(apiError, statusCode: statusCode);
-        });
+        }).RequireRateLimiting("auth");
 
         group.MapPost("/login", async (LoginRequest? request, AccountService accountService, HttpResponse response, CancellationToken ct) =>
         {
@@ -67,7 +67,7 @@ public static class AccountEndpoints
 
             var apiError = new ApiError(result.Error ?? AuthErrorCode.Unknown, result.FieldErrors);
             return Results.Json(apiError, statusCode: statusCode);
-        });
+        }).RequireRateLimiting("auth");
 
         group.MapGet("/me", (HttpContext httpContext) =>
         {
@@ -100,7 +100,7 @@ public static class AccountEndpoints
             response.Headers.WWWAuthenticate = "Bearer";
             var apiError = new ApiError(AuthErrorCode.InvalidCredentials, []);
             return Results.Json(apiError, statusCode: StatusCodes.Status401Unauthorized);
-        });
+        }).RequireRateLimiting("auth");
 
         group.MapPost("/logout", async (HttpRequest request, AccountService accountService, CancellationToken ct) =>
         {

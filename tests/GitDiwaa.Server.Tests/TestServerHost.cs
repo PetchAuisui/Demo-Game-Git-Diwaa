@@ -16,9 +16,12 @@ internal sealed class TestServerHost : IAsyncDisposable
         Client = client;
     }
 
-    public static async Task<TestServerHost> StartNewAsync(string environment = "Development")
+    public static async Task<TestServerHost> StartNewAsync(params string[] extraArgs)
     {
-        var app = ServerApp.Build(["--Logging:LogLevel:Default=Warning"], environment);
+        var argsList = new List<string> { "--Logging:LogLevel:Default=Warning" };
+        argsList.AddRange(extraArgs);
+
+        var app = ServerApp.Build(argsList.ToArray(), "Development");
         app.Urls.Add("http://127.0.0.1:0");
         await app.StartAsync();
 

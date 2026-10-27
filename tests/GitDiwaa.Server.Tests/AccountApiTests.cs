@@ -201,5 +201,66 @@ internal static class AccountApiTests
             var meResp = await host.Client.SendAsync(meReq);
             Assert.Equal(HttpStatusCode.Unauthorized, meResp.StatusCode);
         });
+
+        await runner.RunAsync("Api_Login_RateLimited_Returns429_WithRetryAfter", async static () =>
+        {
+            await using var host = await TestServerHost.StartNewAsync("--RateLimit:AuthPermitLimit=3");
+
+            var loginReq = new LoginRequest("nobody", "wrong-pass", false);
+
+            // First 3 attempts should reach endpoint logic and return 401
+            for (int i = 0; i < 3; i++)
+            {
+                var resp = await host.Client.PostAsJsonAsync("/api/v1/accounts/login", loginReq);
+                Assert.Equal(HttpStatusCode.Unauthorized, resp.StatusCode);
+            }
+
+            // 4th attempt exceeds limit of 3 -> rejected with 429
+            var rateLimitedResp = await host.Client.PostAsJsonAsync("/api/v1/accounts/login", loginReq);
+            Assert.Equal(HttpStatusCode.TooManyRequests, rateLimitedResp.StatusCode);
+            Assert.Equal("60", rateLimitedResp.Headers.RetryAfter?.Delta?.TotalSeconds.ToString());
+
+            var body = await rateLimitedResp.Content.ReadAsStringAsync();
+            Assert.Contains(body, "RateLimited");
+        });
+
+        await runner.RunAsync("Api_RateLimit_DoesNotBlockMe", async static () =>
+        {
+            await using var host = await TestServerHost.StartNewAsync("--RateLimit:AuthPermitLimit=2");
+            var reg = new RegisterRequest("mage01", "Arch Mage", "mage@example.com", "S3cret-Pass!");
+            await host.Client.PostAsJsonAsync("/api/v1/accounts/register", reg);
+
+            // Exhaust auth quota (register = 1, login = 1 -> quota used = 2/2)
+            var loginResp = await host.Client.PostAsJsonAsync("/api/v1/accounts/login", new LoginRequest("mage01", "S3cret-Pass!", false));
+            Assert.Equal(HttpStatusCode.OK, loginResp.StatusCode, "Login should succeed within the auth quota.");
+            var loginData = await loginResp.Content.ReadFromJsonAsync<LoginResponse>();
+
+            // Subsequent login exceeds quota -> must be rate limited with 429
+            var blockedLogin = await host.Client.PostAsJsonAsync("/api/v1/accounts/login", new LoginRequest("mage01", "S3cret-Pass!", false));
+            Assert.Equal(HttpStatusCode.TooManyRequests, blockedLogin.StatusCode, "Second login should exceed the auth quota.");
+
+            // But /me endpoint does not have "auth" limit applied -> should still return 200
+            using var meReq = new HttpRequestMessage(HttpMethod.Get, "/api/v1/accounts/me");
+            meReq.Headers.Add("Authorization", $"Bearer {loginData!.Token}");
+
+            var meResp = await host.Client.SendAsync(meReq);
+            Assert.Equal(HttpStatusCode.OK, meResp.StatusCode, "/me must not be limited by the auth policy.");
+        });
+
+        await runner.RunAsync("Api_OversizedBody_Returns413", async static () =>
+        {
+            await using var host = await TestServerHost.StartNewAsync();
+
+            // Create a payload larger than 16 KB (e.g. 20 KB)
+            string largePadding = new('x', 20 * 1024);
+            string json = $"{{\"identifier\":\"{largePadding}\",\"password\":\"pass\",\"rememberMe\":false}}";
+            var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+            var response = await host.Client.PostAsync("/api/v1/accounts/login", content);
+            Assert.Equal(HttpStatusCode.RequestEntityTooLarge, response.StatusCode);
+
+            var body = await response.Content.ReadAsStringAsync();
+            Assert.DoesNotContain(body, "Exception");
+        });
     }
 }
