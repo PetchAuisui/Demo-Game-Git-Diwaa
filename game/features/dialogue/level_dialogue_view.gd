@@ -625,14 +625,16 @@ func _display_choice_menu(menu_id: String) -> void:
 		return
 		
 	for c in choice_container.get_children():
+		choice_container.remove_child(c)
 		c.queue_free()
 	choice_buttons.clear()
-	active_choices.clear()
+	active_choices = []
 	
 	var menu_key = "%s_choices" % menu_id
 	var menu_info = level_data.get(menu_key, {})
 	var prompt_title = menu_info.get("prompt", "ตัวเลือกคำถาม")
-	active_choices = menu_info.get("options", [])
+	var raw_options = menu_info.get("options", [])
+	active_choices = raw_options.duplicate(true)
 	
 	speaker_label.text = prompt_title
 	speaker_label.add_theme_color_override("font_color", Color(0.941, 0.824, 0.451, 1.0))
