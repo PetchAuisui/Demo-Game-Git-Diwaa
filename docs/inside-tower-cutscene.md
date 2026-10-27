@@ -239,3 +239,37 @@ flowchart TD
 * แสดงการ์ดด่าน 15 ด่านในรูปแบบ Grid (3 แถว × 5 คอลัมน์):
   * **ด่านที่ 1:** การ์ดสีเขียว แสดงข้อความ `"ด่านที่ 1"`, `"git version"`, ดาว ⭐⭐⭐ สามารถคลิกเพื่อเข้าเล่นด่าน 1 ได้ทันที
   * **ด่านที่ 2–15:** โครงการ์ดสีเทาแบบมินิมอลตามภาพตัวอย่าง
+
+---
+
+## 6. ระบบบันทึกสถานะผู้เล่นและการเริ่มเกม (Game Progress & Start Flow)
+
+### 6.1 แผนภาพการตัดสินใจเมื่อกดปุ่มเริ่มเกม (Start Game Flow)
+
+```mermaid
+flowchart TD
+    Start["🎮 หน้าแรก (start_view.tscn)\nผู้เล่นคลิก 'START NEW CAREER'"] --> CheckSeen{"เคยดูคัตซีนเปิดตัวแล้วหรือไม่?\n(GameProgressManager.has_seen_intro_cutscene)"}
+    
+    CheckSeen -->|"ไม่เคย (เข้าเล่นครั้งแรก / false)"| Cutscene["🎬 บังคับดูฉากคัตซีนเปิดตัว\n(cut_scence_normal.tscn)"]
+    Cutscene --> PlayInside["🏛️ เดินทางเข้าห้องโถงหอคอย\n(inside_tower_cutscene.tscn)\n-> บันทึก has_seen_intro_cutscene = true"]
+    
+    CheckSeen -->|"เคยดูแล้ว (true)"| LevelSelect["🗺️ ข้ามคัตซีนเปิดหน้าเลือกรวมด่าน\n(level_select_view.tscn)"]
+    LevelSelect -->|"เลือกด่าน 1"| PlayInside
+```
+
+### 6.2 ตัวจัดการสถานะ (`game/common/game_progress_manager.gd`)
+* ใช้คลาส `GameProgressManager` บันทึกสถานะผู้เล่นลงในไฟล์คอนฟิก `user://game_progress.cfg`
+* ค่าที่บันทึก: `[progress] has_seen_intro_cutscene = bool`
+* **ฟังก์ชันการทำงาน:**
+  * `has_seen_intro_cutscene() -> bool`: ตรวจสอบว่าผู้เล่นเคยดูคัตซีนเปิดตัวแล้วหรือไม่ (คืนค่า `true` หากเคยดูแล้ว, `false` หากยังไม่เคย)
+  * `set_intro_cutscene_seen(seen: bool = true) -> void`: บันทึกว่าผู้เล่นได้ดูคัตซีนเปิดตัวแล้ว (เรียกใช้อัตโนมัติเมื่อเดินทางเข้าห้องโถงหอคอยใน `inside_tower_cutscene.gd`)
+  * `reset_progress() -> void`: ล้างสถานะเพื่อทดสอบใหม่
+
+### 6.3 เงื่อนไขการกด START NEW CAREER ในหน้าเมนูหลัก (`start_view_controller.gd`)
+* **ผู้เล่นใหม่ (ยังไม่เคยดูคัตซีน):**
+  * เมื่อกด `START NEW CAREER` ระบบจะเริ่มเล่นฉากคัตซีนเปิดตัว (`cut_scence_normal.tscn`) บังคับให้ผู้เล่นรับชมเนื้อเรื่องเปิดตัวเกม
+* **ผู้เล่นเดิม (เคยดูคัตซีนแล้ว):**
+  * เมื่อกด `START NEW CAREER` ระบบจะข้ามฉากคัตซีนเปิดตัวทั้งหมด และนำทางผู้เล่นไปยังหน้าต่างเลือกรวมด่าน (`level_select_view.tscn`) ทันที เพื่อความรวดเร็วและต่อเนื่องในการเล่น
+* **คำสั่งช่วยเหลือผ่าน Terminal ในหน้าเริ่มเกม (สำหรับ Dev & QA):**
+  * พิมพ์ `reset` หรือ `reset progress`: รีเซ็ตสถานะกลับเป็นผู้เล่นใหม่ สำหรับทดสอบฉากคัตซีนเปิดตัวซ้ำ
+  * พิมพ์ `level`: สลับไปหน้าต่างเลือกรวมด่านโดยตรง

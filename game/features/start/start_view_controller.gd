@@ -1,5 +1,7 @@
 class_name StartViewController
 extends Control
+
+const GameProgressManager = preload("res://common/game_progress_manager.gd")
 ## Controller for the Start Screen View.
 ## Orchestrates start screen navigation, audio effects, live terminal simulation,
 ## real-time system clock, and transition to Sandbox gameplay.
@@ -110,11 +112,15 @@ func _on_button_focus_entered() -> void:
 func _on_start_career_pressed() -> void:
 	_play_sfx(_sfx_click)
 	_append_terminal_text("> Executing START NEW CAREER...")
-	_append_terminal_text("> Initializing Magic Tower apprentice session...")
 
-	# Delay slightly for audio feedback before switching scene
-	get_tree().create_timer(0.35).timeout.connect(func() -> void:
-		get_tree().change_scene_to_file("res://features/cutscene/cut_scence_normal.tscn"))
+	if GameProgressManager.has_seen_intro_cutscene():
+		_append_terminal_text("> Opening Level Select screen...")
+		get_tree().create_timer(0.35).timeout.connect(func() -> void:
+			get_tree().change_scene_to_file("res://features/level_select/level_select_view.tscn"))
+	else:
+		_append_terminal_text("> Initializing Magic Tower apprentice session...")
+		get_tree().create_timer(0.35).timeout.connect(func() -> void:
+			get_tree().change_scene_to_file("res://features/cutscene/cut_scence_normal.tscn"))
 
 
 func _on_resume_work_pressed() -> void:
@@ -168,6 +174,11 @@ func _on_terminal_command_submitted(input: String) -> void:
 
 	if lower == "level" or lower == "levels" or lower == "select":
 		get_tree().change_scene_to_file("res://features/level_select/level_select_view.tscn")
+		return
+
+	if lower == "reset" or lower == "reset progress":
+		GameProgressManager.reset_progress()
+		_append_terminal_text("> Game progress reset! Next START will play intro cutscene.")
 		return
 
 	if lower == "git init":

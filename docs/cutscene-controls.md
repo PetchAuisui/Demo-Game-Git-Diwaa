@@ -90,16 +90,23 @@
 
 ## 4. เส้นทางการเชื่อมโยงและการข้ามฉากทั้งระบบ (Complete Scene Flow & Transition)
 
-แผนภาพลำดับการไหลของฉากทั้งหมดในเกม Git Di Waa (8 ฉากหลัก):
+แผนภาพลำดับการไหลของฉากทั้งหมดในเกม Git Di Waa (พร้อมระบบจดจำความคืบหน้าผู้เล่น):
 
 ```mermaid
 flowchart TD
-    Start["1. start_view.tscn (หน้าหลัก)"] -->|"คลิกเริ่มเกม"| Normal["2. cut_scence_normal.tscn (เปิดตัวหมู่บ้าน/ท้องฟ้า)"]
+    Start["1. start_view.tscn (หน้าหลัก)"] --> CheckProgress{"เคยดูคัตซีนเปิดตัวแล้วหรือไม่?\n(has_seen_intro_cutscene)"}
+    CheckProgress -->|"เข้าเล่นครั้งแรก (false)"| Normal["2. cut_scence_normal.tscn (เปิดตัวหมู่บ้าน/ท้องฟ้า)"]
     Normal -->|"เล่นจบ / กดข้าม"| Intro["3. intro_cutscene.tscn (ห้องสมุด/คัมภีร์แตก)"]
     Intro -->|"เล่นจบ / กดข้าม"| Outside["4. outside_cutscene.tscn (วิกฤตนอกหอคอย)"]
-    Outside -->|"เล่นจบ / กดข้าม"| InsideTower["5. inside_tower_cutscene.tscn (พบมิวราในหอคอย)"]
-    InsideTower -->|"เข้าสู่เกมเพลย์"| Sandbox["6. sandbox_game_view.tscn (ด่านฝึกสอน Git 1-15)"]
+    Outside -->|"เล่นจบ / กดข้าม"| InsideTower["5. inside_tower_cutscene.tscn (พบมิวราในหอคอย)\n[บันทึก: ดูคัตซีนแล้ว = true]"]
     
+    CheckProgress -->|"เคยดูแล้ว (true)"| LevelSelect["🗺️ level_select_view.tscn (หน้ารวมด่าน)"]
+    LevelSelect -->|"เลือกด่าน 1"| InsideTower
+    
+    InsideTower -->|"จบบทสนทนา"| ClearModal["⭐ level_clear_modal.tscn (สรุปดาวหลังจบด่าน)"]
+    ClearModal -->|"กลับไปหน้าเลือกด่าน / ด่านต่อไป"| LevelSelect
+    
+    InsideTower -.->|"โหมดฝึกฝน Sandbox"| Sandbox["6. sandbox_game_view.tscn (ด่านฝึกสอน Git 1-15)"]
     Sandbox -.->|"ด่านที่ 16 / คำสั่ง cutscene central"| CentralTower["7. central_tower_cutscene.tscn (พบผู้พิทักษ์หอคอยกลาง)"]
     CentralTower -.->|"เล่นด่านต่อ"| Sandbox
     
@@ -193,7 +200,26 @@ flowchart TD
 
 ## 7. ประวัติการแก้ไขและรายการคอมมิต (Changelog & Commit Specifications)
 
-### รายละเอียดการเปลี่ยนแปลงล่าสุด: กำหนดการเร่งสปีดเฉพาะปุ่ม Shift และปุ่ม FF พร้อมสงวน Spacebar/คลิก สำหรับไปต่อและแสดงข้อความครบ
+### รายละเอียดการเปลี่ยนแปลงล่าสุด: สลับฉากกด Start เป็นหน้าเลือกด่านหากเคยดูคัตซีนแล้ว พร้อมระบบจดจำสถานะผู้เล่น
+* **ชื่อคอมมิต (Commit Title):**
+  * **ไทย:** `feat(start): นำทางผู้เล่นที่เคยดูคัตซีนไปยังหน้าเลือกด่าน และบังคับคัตซีนสำหรับผู้เล่นใหม่`
+  * **Conventional Commits:** `feat(start): route returning players to level select, enforce cutscene for new players`
+* **รายละเอียดสิ่งที่ทำไป (Commit Details):**
+  1. **ระบบจดจำสถานะผู้เล่น (`GameProgressManager`):**
+     - สร้าง `res://common/game_progress_manager.gd` จัดเก็บลงไฟล์ `user://game_progress.cfg`
+     - จัดเก็บค่าสถานะ `has_seen_intro_cutscene` ตรวจสอบว่าผู้เล่นเคยเข้าชมฉากคัตซีนเปิดตัวแล้วหรือไม่
+  2. **ปรับปรุงเงื่อนไขกดปุ่ม Start ใน `start_view_controller.gd`:**
+     - ผู้เล่นใหม่ (ยังไม่เคยดู): บังคับให้รับชมฉากคัตซีนเปิดตัว (`cut_scence_normal.tscn`)
+     - ผู้เล่นเดิม (เคยดูแล้ว): ข้ามคัตซีนเปิดตัวทั้งหมด และนำทางตรงสู่หน้าต่างเลือกรวมด่าน (`level_select_view.tscn`) ทันที
+  3. **บันทึกสถานะอัตโนมัติ:**
+     - เมื่อผู้เล่นเดินทางถึงห้องโถงหอคอยเวทใน `inside_tower_cutscene.gd` จะบันทึกสถานะ `has_seen_intro_cutscene = true` ทันที
+  4. **คำสั่งทดสอบใน Terminal:**
+     - คำสั่ง `reset` / `reset progress`: ล้างสถานะเพื่อทดสอบโฟลว์ดูคัตซีนซ้ำ
+     - คำสั่ง `level`: เปิดหน้าเลือกด่านโดยตรง
+
+---
+
+### รายละเอียดการเปลี่ยนแปลงก่อนหน้า: กำหนดการเร่งสปีดเฉพาะปุ่ม Shift และปุ่ม FF พร้อมสงวน Spacebar/คลิก สำหรับไปต่อและแสดงข้อความครบ
 * **ชื่อคอมมิต (Commit Title):**
   * **ไทย:** `fix(cutscene): กำหนดให้เร่งสปีดด้วย Shift และปุ่ม FF เท่านั้น พร้อมสงวน Spacebar/คลิก สำหรับไปต่อและแสดงข้อความครบ`
   * **Conventional Commits:** `fix(cutscene): restrict fast-forward to shift key and ff button, dedicate spacebar and click to text advance`
