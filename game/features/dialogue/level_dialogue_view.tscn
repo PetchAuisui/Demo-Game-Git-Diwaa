@@ -518,7 +518,6 @@ texture = ExtResource("18_shadow")
 layer = 10
 
 [node name="DialogueBox" type="PanelContainer" parent="MagicStoryUI" unique_id=831756593]
-visible = false
 texture_filter = 1
 custom_minimum_size = Vector2(1160, 180)
 anchors_preset = 7
@@ -601,11 +600,11 @@ expand_mode = 1
 stretch_mode = 5
 
 [node name="FadeOverlay" type="ColorRect" parent="MagicStoryUI" unique_id=423795318]
-visible = true
+visible = false
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
-color = Color(0, 0, 0, 1)
+color = Color(0, 0, 0, 0)

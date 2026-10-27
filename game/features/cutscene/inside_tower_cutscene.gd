@@ -10,6 +10,8 @@ extends Node2D
 
 @export var next_scene_path: String = "res://features/dialogue/level_dialogue_view.tscn"
 
+const LEVEL_DIALOGUE_SCENE = preload("res://features/dialogue/level_dialogue_view.tscn")
+
 # Animation & Visuals
 @onready var anim_player: AnimationPlayer = $AnimationPlayer
 @onready var camera: Camera2D = $Camera2D
@@ -489,18 +491,13 @@ func _finish_cutscene() -> void:
 	_hide_question_mark()
 	_hide_exclamation()
 	
-	# เฟดจอดำ
-	var finish_tween = create_tween()
-	finish_tween.tween_property(fade_overlay, "color:a", 1.0, 0.6)
-	finish_tween.tween_callback(func():
-		Engine.time_scale = 1.0
-		if next_scene_path != "" and ResourceLoader.exists(next_scene_path):
-			get_tree().change_scene_to_file(next_scene_path)
-		else:
-			push_warning("[InsideTowerCutscene] next_scene_path not found: '%s'" % next_scene_path)
-			# กู้คืนหน้าจอเพื่อไม่ให้ผู้เล่นติดค้างที่จอดำ
-			var tw_recover = create_tween()
-			tw_recover.tween_property(fade_overlay, "color:a", 0.0, 0.5)
-			is_transitioning = false
-			is_dialogue_active = true
-	)
+	# ไม่เฟดจอดำ และคงกล่องข้อความไว้ เพื่อให้เปลี่ยนผ่านสู่บทสนทนาด่าน 1 อย่างต่อเนื่อง ไร้รอยต่อ (Seamless Transition)
+	Engine.time_scale = 1.0
+	if LEVEL_DIALOGUE_SCENE != null:
+		get_tree().change_scene_to_packed(LEVEL_DIALOGUE_SCENE)
+	elif next_scene_path != "" and ResourceLoader.exists(next_scene_path):
+		get_tree().change_scene_to_file(next_scene_path)
+	else:
+		push_warning("[InsideTowerCutscene] next_scene_path not found: '%s'" % next_scene_path)
+		is_transitioning = false
+		is_dialogue_active = true

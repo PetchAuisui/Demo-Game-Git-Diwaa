@@ -11,6 +11,7 @@ extends Node2D
 
 @export var level_number: int = 1
 @export var next_scene_path: String = "res://features/sandbox/sandbox_game_view.tscn"
+@export var fade_in_from_black: bool = false
 @export_enum("Intro & Part 1", "Part 2", "Outro") var debug_phase: int = 0
 
 # Animation & Visuals
@@ -72,10 +73,11 @@ func _ready() -> void:
 	if ResourceLoader.exists("res://assets/fonts/TA-8-bit.ttf"):
 		font_ta8bit = load("res://assets/fonts/TA-8-bit.ttf")
 		
-	# ตั้งค่าหน้าจอเริ่มต้น
-	fade_overlay.visible = true
-	fade_overlay.color = Color(0, 0, 0, 1)
-	dialogue_box.visible = false
+	# ตั้งค่าหน้าจอเริ่มต้น: เปิดกล่องข้อความพร้อมแสดงผลทันที ไม่เฟดดำ เพื่อความต่อเนื่องจากคัตซีน
+	fade_overlay.visible = fade_in_from_black
+	fade_overlay.color = Color(0, 0, 0, 1) if fade_in_from_black else Color(0, 0, 0, 0)
+	dialogue_box.visible = true
+	dialogue_box.modulate.a = 1.0
 	continue_arrow.visible = false
 	exclamation_mark.visible = false
 	question_mark.visible = false
@@ -225,17 +227,24 @@ func _format_bbcode(raw: String) -> String:
 	return result
 
 func _start_dialogue_scene() -> void:
-	var fade_in = create_tween()
-	fade_in.tween_property(fade_overlay, "color:a", 0.0, 0.5)
-	fade_in.tween_callback(func():
-		_open_dialogue_box()
-		if debug_phase == 1:
-			_load_sequence(level_data.get("part2_intro_sequence", []))
-		elif debug_phase == 2:
-			_load_sequence(level_data.get("outro_sequence", []))
-		else:
-			_load_sequence(level_data.get("intro_sequence", []))
-	)
+	if fade_in_from_black:
+		var fade_in = create_tween()
+		fade_in.tween_property(fade_overlay, "color:a", 0.0, 0.5)
+		fade_in.tween_callback(func():
+			_begin_dialogue_phase()
+		)
+	else:
+		_begin_dialogue_phase()
+
+func _begin_dialogue_phase() -> void:
+	dialogue_box.visible = true
+	dialogue_box.modulate.a = 1.0
+	if debug_phase == 1:
+		_load_sequence(level_data.get("part2_intro_sequence", []))
+	elif debug_phase == 2:
+		_load_sequence(level_data.get("outro_sequence", []))
+	else:
+		_load_sequence(level_data.get("intro_sequence", []))
 
 func _open_dialogue_box() -> void:
 	if is_transitioning:
