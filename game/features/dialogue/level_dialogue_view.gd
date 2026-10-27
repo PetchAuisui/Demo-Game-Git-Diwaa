@@ -44,10 +44,6 @@ var active_choices: Array = []
 var is_showing_choices: bool = false
 var bad_ending_panel: Control = null
 
-# Terminal Simulation Box
-var terminal_panel: PanelContainer = null
-var terminal_text_label: RichTextLabel = null
-
 # Data & Queue
 var level_data: Dictionary = {}
 var current_queue: Array = []
@@ -57,7 +53,6 @@ var is_dialogue_active: bool = false
 var is_typing: bool = false
 var is_transitioning: bool = false
 var is_fast_forwarding: bool = false
-var is_terminal_practicing: bool = false
 var skip_ctrl = null
 var font_ta8bit: Font = null
 
@@ -185,7 +180,7 @@ func _exit_tree() -> void:
 	Engine.time_scale = 1.0
 
 func _process(_delta: float) -> void:
-	if is_transitioning or is_terminal_practicing:
+	if is_transitioning:
 		if is_fast_forwarding:
 			is_fast_forwarding = false
 			Engine.time_scale = 1.0
@@ -203,7 +198,7 @@ func _process(_delta: float) -> void:
 			skip_ctrl._apply_ff_style(active)
 
 func _input(event: InputEvent) -> void:
-	if is_transitioning or is_terminal_practicing:
+	if is_transitioning:
 		return
 		
 	# การเลือกช้อยส์ด้วยแป้นตัวเลข 1, 2, 3, 4
@@ -526,8 +521,10 @@ func _show_current_queue_item() -> void:
 		if type == "choice_menu":
 			_display_choice_menu(item["menu"])
 			return
-		elif type == "terminal_practice":
-			_trigger_terminal_practice(item)
+		elif type == "goto":
+			var target_seq = item.get("target", "")
+			if target_seq != "" and level_data.has(target_seq):
+				_load_sequence(level_data[target_seq])
 			return
 		elif type == "outro_stairs":
 			_trigger_outro_stairs_walk()
@@ -694,94 +691,6 @@ func _on_choice_selected(index: int) -> void:
 	else:
 		push_warning("[LevelDialogueView] No sequence found for choice: %s" % choice_id)
 		_finish_dialogue_stage()
-
-# ==============================================================================
-# TERMINAL PRACTICE SIMULATION (จำลองการร่ายคาถา Git)
-# ==============================================================================
-
-func _trigger_terminal_practice(item: Dictionary) -> void:
-	is_terminal_practicing = true
-	is_dialogue_active = false
-	_hide_continue_arrow()
-	
-	# สร้างหน้าต่าง Terminal จำลอง
-	if not terminal_panel:
-		terminal_panel = PanelContainer.new()
-		terminal_panel.custom_minimum_size = Vector2(800, 260)
-		terminal_panel.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
-		terminal_panel.offset_left = -400
-		terminal_panel.offset_top = -240
-		terminal_panel.offset_right = 400
-		terminal_panel.offset_bottom = 20
-		
-		var term_sb = StyleBoxFlat.new()
-		term_sb.bg_color = Color(0.08, 0.06, 0.14, 0.95)
-		term_sb.border_color = Color(0.48, 0.78, 1.0, 0.8)
-		term_sb.set_border_width_all(2)
-		term_sb.set_corner_radius_all(10)
-		term_sb.content_margin_left = 20
-		term_sb.content_margin_top = 16
-		term_sb.content_margin_right = 20
-		term_sb.content_margin_bottom = 16
-		terminal_panel.add_theme_stylebox_override("panel", term_sb)
-		
-		var term_vbox = VBoxContainer.new()
-		term_vbox.add_theme_constant_override("separation", 10)
-		terminal_panel.add_child(term_vbox)
-		
-		var term_header = Label.new()
-		term_header.text = "[ แท่นร่ายคาถาเวท Git ]"
-		if font_ta8bit:
-			term_header.add_theme_font_override("font", font_ta8bit)
-			term_header.add_theme_font_size_override("font_size", 22)
-		term_header.add_theme_color_override("font_color", Color(0.941, 0.824, 0.451, 1.0))
-		term_vbox.add_child(term_header)
-		
-		terminal_text_label = RichTextLabel.new()
-		terminal_text_label.bbcode_enabled = true
-		terminal_text_label.size_flags_vertical = Control.SIZE_EXPAND_FILL
-		terminal_text_label.scroll_active = false
-		if font_ta8bit:
-			terminal_text_label.add_theme_font_override("normal_font", font_ta8bit)
-			terminal_text_label.add_theme_font_size_override("normal_font_size", 20)
-		terminal_text_label.add_theme_color_override("default_color", Color.WHITE)
-		term_vbox.add_child(terminal_text_label)
-		
-		magic_ui.add_child(terminal_panel)
-		
-	terminal_panel.visible = true
-	terminal_panel.modulate.a = 0.0
-	terminal_text_label.text = ""
-	
-	var commands: Array = item.get("commands", [])
-	var output: String = item.get("output", "")
-	var next_seq_name: String = item.get("next_sequence", "")
-	
-	var tw = create_tween()
-	tw.tween_property(terminal_panel, "modulate:a", 1.0, 0.25)
-	
-	var accumulated_text := ""
-	for cmd in commands:
-		accumulated_text += "[color=#5fffe0]$[/color] %s\n" % _highlight_code_syntax(str(cmd))
-	if output != "":
-		accumulated_text += "[color=#ffd166]%s[/color]\n" % output
-		
-	tw.tween_interval(0.3)
-	tw.tween_callback(func():
-		terminal_text_label.text = accumulated_text
-	)
-	
-	tw.tween_interval(1.6)
-	tw.tween_property(terminal_panel, "modulate:a", 0.0, 0.3)
-	tw.tween_callback(func():
-		terminal_panel.visible = false
-		is_terminal_practicing = false
-		if next_seq_name != "" and level_data.has(next_seq_name):
-			_load_sequence(level_data[next_seq_name])
-		else:
-			queue_index += 1
-			_show_current_queue_item()
-	)
 
 # ==============================================================================
 # OUTRO & TRANSITIONS

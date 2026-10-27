@@ -89,15 +89,10 @@ static func get_data() -> Dictionary:
 			{"type": "bad_ending"}
 		],
 		
-		# ช้อยส์ 4: ฉันจะลองดู (เข้าสู่การรันคำสั่ง git --version)
+		# ช้อยส์ 4: ฉันจะลองดู (เข้าสู่ขั้นสอนส่วนที่ 2)
 		"part1_try_seq": [
 			{"speaker": "เวล", "text": "ฉันจะลองดู", "mewla_anim": "idle"},
-			{
-				"type": "terminal_practice",
-				"commands": ["git --version"],
-				"output": "git version 2.50.1.windows.1",
-				"next_sequence": "part2_intro_sequence"
-			}
+			{"type": "goto", "target": "part2_intro_sequence"}
 		],
 		
 		# ======================================================================
@@ -155,18 +150,10 @@ static func get_data() -> Dictionary:
 			{"type": "choice_menu", "menu": "part2_main"}
 		],
 		
+		# ช้อยส์ 3: ฉันจะลองดู (เข้าสู่บทสรุปผ่านด่าน)
 		"part2_try_seq": [
 			{"speaker": "เวล", "text": "ฉันจะลองดู", "mewla_anim": "idle"},
-			{
-				"type": "terminal_practice",
-				"commands": [
-					"git config --global user.name \"Vel\"",
-					"git config --global user.email \"vel@magic-tower.local\"",
-					"git config --global user.name"
-				],
-				"output": "Vel",
-				"next_sequence": "outro_sequence"
-			}
+			{"type": "goto", "target": "outro_sequence"}
 		],
 		
 		# ======================================================================
