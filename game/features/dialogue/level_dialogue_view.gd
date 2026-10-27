@@ -11,6 +11,7 @@ extends Node2D
 
 @export var level_number: int = 1
 @export var next_scene_path: String = "res://features/sandbox/sandbox_game_view.tscn"
+@export var play_entrance_cutscene: bool = false
 @export var fade_in_from_black: bool = false
 @export_enum("Intro & Part 1", "Part 2", "Outro") var debug_phase: int = 0
 
@@ -64,24 +65,54 @@ var font_ta8bit: Font = null
 const VEL_IDLE_SEQ: Array[String] = ["breathe", "breathe_blink", "breathe", "breathe", "breathe_blink"]
 var vel_seq_step: int = 0
 
+# Cutscene Tweens & States
+var entrance_tween: Tween = null
+var stand_tween: Tween = null
+var warp_tween: Tween = null
+var reaction_tween: Tween = null
+var hop_tween: Tween = null
+var open_box_tween: Tween = null
+var is_in_entrance_cutscene: bool = false
+
 var typewriter_tween: Tween = null
 var question_tween: Tween = null
 var exclamation_tween: Tween = null
 var arrow_tween: Tween = null
 
+# บทสนทนาสำหรับช่วงคัตซีนเปิดตัวพบมิวราครั้งแรก (5 ประโยค)
+const INTRO_DIALOGUES: Array[Dictionary] = [
+	{
+		"speaker": "มิวรา",
+		"text": "ยินดีต้อนรับสู่กิลด์แห่งหอคอยเวท",
+		"mewla_anim": "talk"
+	},
+	{
+		"speaker": "เวล",
+		"text": "เธอคือ...",
+		"emote": "question",
+		"mewla_anim": "idle"
+	},
+	{
+		"speaker": "มิวรา",
+		"text": "“แมวไง เห็นก็รู้ปะ” ฉันมิวรา ผู้ดูแลกิลด์\nและเป็นคนที่จะสอนนายตั้งแต่พื้นฐาน",
+		"mewla_anim": "talk"
+	},
+	{
+		"speaker": "มิวรา",
+		"text": "ก่อนเข้าสู่บททดสอบของหอคอย\nนายต้องตรวจสอบว่าพลังเวทของตัวเองพร้อมใช้งานหรือยัง",
+		"mewla_anim": "talk"
+	},
+	{
+		"speaker": "มิวรา",
+		"text": "มาเริ่มคาถาแรกกัน",
+		"mewla_anim": "success"
+	}
+]
+
 func _ready() -> void:
 	if ResourceLoader.exists("res://assets/fonts/TA-8-bit.ttf"):
 		font_ta8bit = load("res://assets/fonts/TA-8-bit.ttf")
 		
-	# ตั้งค่าหน้าจอเริ่มต้น: เปิดกล่องข้อความพร้อมแสดงผลทันที ไม่เฟดดำ เพื่อความต่อเนื่องจากคัตซีน
-	fade_overlay.visible = fade_in_from_black
-	fade_overlay.color = Color(0, 0, 0, 1) if fade_in_from_black else Color(0, 0, 0, 0)
-	dialogue_box.visible = true
-	dialogue_box.modulate.a = 1.0
-	continue_arrow.visible = false
-	exclamation_mark.visible = false
-	question_mark.visible = false
-	
 	# สร้าง Choice Container ภายในกล่องข้อความเดิม (DialogueBox) ใต้ SpeakerLabel
 	var vbox = dialogue_box.get_node_or_null("Margin/VBox")
 	if vbox:
@@ -90,18 +121,14 @@ func _ready() -> void:
 		choice_container.add_theme_constant_override("separation", 6)
 		vbox.add_child(choice_container)
 		
-	# วางตำแหน่งตัวละครในท่ายืนพร้อมคุยทันที (พิกัดตามมาตรฐานใน md)
 	camera.position = Vector2(960, 540)
-	vel.position = Vector2(700, 680)
-	vel.scale = Vector2(4, 4)
-	vel.play("breathe")
-	vel.animation_looped.connect(_on_vel_animation_looped)
-	
-	mewla.visible = true
-	mewla.position = Vector2(1220, 680)
-	mewla.scale = Vector2(4, 4)
-	mewla.modulate = Color.WHITE
-	mewla.play("idle")
+	continue_arrow.visible = false
+	exclamation_mark.visible = false
+	question_mark.visible = false
+	exclamation_mark.scale = Vector2.ONE
+	exclamation_mark.position = Vector2(0, -42)
+	question_mark.scale = Vector2.ONE
+	question_mark.position = Vector2(0, -36)
 	
 	if anim_player.has_animation("background_loop"):
 		anim_player.play("background_loop")
@@ -109,13 +136,50 @@ func _ready() -> void:
 	# ปุ่มเร่งความเร็ว และปุ่มข้าม
 	skip_ctrl = preload("res://features/cutscene/skip_cutscene_button.gd").new()
 	skip_ctrl.next_scene_path = next_scene_path
+	skip_ctrl.custom_skip_action = _on_skip_step
 	add_child(skip_ctrl)
 	
 	# โหลดข้อมูลด่าน
 	_load_level_data(level_number)
 	
-	# เริ่มเปิดฉาก
-	_start_dialogue_scene()
+	if play_entrance_cutscene:
+		# เริ่มต้นในโหมดคัตซีนเดินเข้าห้องโถง
+		is_in_entrance_cutscene = true
+		fade_overlay.visible = true
+		fade_overlay.color = Color(0, 0, 0, 1)
+		dialogue_box.visible = false
+		
+		vel.position = Vector2(-120, 680)
+		vel.scale = Vector2(4, 4)
+		vel.play("walk")
+		vel.animation_looped.connect(_on_vel_animation_looped)
+		
+		mewla.visible = false
+		mewla.position = Vector2(1220, 680)
+		mewla.scale = Vector2.ZERO
+		mewla.modulate = Color(1, 1, 1, 0)
+		
+		_start_entrance_cutscene()
+	else:
+		# เริ่มต้นในโหมดบทสนทนาด่านทันที (ไม่เล่นคัตซีนเดินเข้า)
+		is_in_entrance_cutscene = false
+		fade_overlay.visible = fade_in_from_black
+		fade_overlay.color = Color(0, 0, 0, 1) if fade_in_from_black else Color(0, 0, 0, 0)
+		dialogue_box.visible = true
+		dialogue_box.modulate.a = 1.0
+		
+		vel.position = Vector2(700, 680)
+		vel.scale = Vector2(4, 4)
+		vel.play("breathe")
+		vel.animation_looped.connect(_on_vel_animation_looped)
+		
+		mewla.visible = true
+		mewla.position = Vector2(1220, 680)
+		mewla.scale = Vector2(4, 4)
+		mewla.modulate = Color.WHITE
+		mewla.play("idle")
+		
+		_start_dialogue_scene()
 
 func _exit_tree() -> void:
 	Engine.time_scale = 1.0
@@ -246,6 +310,193 @@ func _begin_dialogue_phase() -> void:
 	else:
 		_load_sequence(level_data.get("intro_sequence", []))
 
+# ==============================================================================
+# ENTRANCE CUTSCENE (เดินเข้าห้องโถง & พบมิวราก่อนเริ่มบทเรียน)
+# ==============================================================================
+
+func _start_entrance_cutscene() -> void:
+	# 1. เฟดสว่างเข้ามา
+	var fade_in = create_tween()
+	fade_in.tween_property(fade_overlay, "color:a", 0.0, 0.8)
+	
+	# 2. เวลเดินเข้ามาจากทางซ้าย (-120 -> 700) ใน 3.6 วินาที
+	entrance_tween = create_tween().set_trans(Tween.TRANS_LINEAR)
+	entrance_tween.tween_property(vel, "position:x", 700.0, 3.6)
+	entrance_tween.tween_callback(func():
+		vel_seq_step = 0
+		vel.play("breathe")
+		vel.set_frame_and_progress(0, 0.0)
+		
+		if stand_tween and stand_tween.is_valid():
+			stand_tween.kill()
+		stand_tween = create_tween()
+		stand_tween.tween_interval(1.0)
+		stand_tween.tween_callback(func():
+			if not is_transitioning:
+				_warp_in_mewla_and_shock_vel()
+		)
+	)
+
+func _warp_in_mewla_and_shock_vel() -> void:
+	if is_transitioning:
+		return
+		
+	mewla.visible = true
+	mewla.scale = Vector2(4.0, 4.0)
+	mewla.position = Vector2(1220.0, 655.0)
+	mewla.modulate = Color(1.0, 1.0, 1.0, 0.0)
+	mewla.play("idle")
+	
+	if warp_tween and warp_tween.is_valid():
+		warp_tween.kill()
+	warp_tween = create_tween().set_parallel(true)
+	warp_tween.tween_property(mewla, "modulate:a", 1.0, 0.75).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	warp_tween.tween_property(mewla, "position:y", 680.0, 0.75).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	
+	if reaction_tween and reaction_tween.is_valid():
+		reaction_tween.kill()
+	reaction_tween = create_tween()
+	reaction_tween.tween_interval(0.35)
+	reaction_tween.tween_callback(func():
+		if is_transitioning:
+			return
+		_trigger_vel_shock_jump()
+	)
+
+func _trigger_vel_shock_jump() -> void:
+	if is_transitioning:
+		return
+		
+	vel.play("shock")
+	_start_exclamation_jump()
+	
+	if hop_tween and hop_tween.is_valid():
+		hop_tween.kill()
+		
+	var vel_shadow = vel.get_node_or_null("DropShadow")
+	hop_tween = create_tween()
+	hop_tween.tween_property(vel, "position:y", 610.0, 0.42).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	if vel_shadow:
+		hop_tween.parallel().tween_property(vel_shadow, "scale", Vector2(0.45, 0.30), 0.42)
+		hop_tween.parallel().tween_property(vel_shadow, "position:y", 38.5 + (680.0 - 610.0), 0.42)
+		hop_tween.parallel().tween_property(vel_shadow, "modulate:a", 0.4, 0.42)
+		
+	hop_tween.chain().tween_property(vel, "position:y", 680.0, 0.36).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	if vel_shadow:
+		hop_tween.parallel().tween_property(vel_shadow, "scale", Vector2(0.65, 0.45), 0.36)
+		hop_tween.parallel().tween_property(vel_shadow, "position:y", 38.5, 0.36)
+		hop_tween.parallel().tween_property(vel_shadow, "modulate:a", 1.0, 0.36)
+		
+	hop_tween.chain().tween_callback(func():
+		_hide_exclamation_landing()
+		vel_seq_step = 0
+		vel.play("breathe")
+		vel.set_frame_and_progress(0, 0.0)
+	)
+	
+	if open_box_tween and open_box_tween.is_valid():
+		open_box_tween.kill()
+	open_box_tween = create_tween()
+	open_box_tween.tween_interval(0.42 + 0.36 + 0.65)
+	open_box_tween.tween_callback(func():
+		if not is_transitioning:
+			_open_dialogue_box_for_intro()
+	)
+
+func _open_dialogue_box_for_intro() -> void:
+	if is_transitioning:
+		return
+	dialogue_box.visible = true
+	dialogue_box.modulate.a = 0.0
+	
+	var box_tween = create_tween()
+	box_tween.tween_property(dialogue_box, "modulate:a", 1.0, 0.25)
+	box_tween.tween_callback(func():
+		if is_transitioning:
+			return
+		_load_sequence(INTRO_DIALOGUES)
+	)
+
+func _start_exclamation_jump() -> void:
+	if exclamation_tween and exclamation_tween.is_valid():
+		exclamation_tween.kill()
+		
+	exclamation_mark.visible = true
+	exclamation_mark.scale = Vector2.ZERO
+	exclamation_mark.position = Vector2(0, -42)
+	exclamation_mark.modulate.a = 1.0
+	
+	exclamation_tween = create_tween()
+	exclamation_tween.tween_property(exclamation_mark, "scale", Vector2(1.15, 1.15), 0.20).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	exclamation_tween.parallel().tween_property(exclamation_mark, "position:y", -52.0, 0.42).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	exclamation_tween.chain().tween_property(exclamation_mark, "scale", Vector2.ONE, 0.20).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	exclamation_tween.parallel().tween_property(exclamation_mark, "position:y", -42.0, 0.36).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+
+func _hide_exclamation_landing() -> void:
+	if exclamation_tween and exclamation_tween.is_valid():
+		exclamation_tween.kill()
+	if not is_instance_valid(exclamation_mark):
+		return
+	exclamation_tween = create_tween().set_parallel(true)
+	exclamation_tween.tween_property(exclamation_mark, "scale", Vector2.ZERO, 0.15).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	exclamation_tween.tween_property(exclamation_mark, "modulate:a", 0.0, 0.15)
+	exclamation_tween.chain().tween_callback(func():
+		if is_instance_valid(exclamation_mark):
+			exclamation_mark.visible = false
+			exclamation_mark.position = Vector2(0, -42)
+	)
+
+func _hide_exclamation() -> void:
+	if exclamation_tween and exclamation_tween.is_valid():
+		exclamation_tween.kill()
+	if is_instance_valid(exclamation_mark):
+		exclamation_mark.visible = false
+		exclamation_mark.scale = Vector2.ZERO
+		exclamation_mark.position = Vector2(0, -42)
+
+func _on_skip_step() -> void:
+	if is_in_entrance_cutscene:
+		# ข้ามเฉพาะส่วนเดินเข้าและบทนำ -> เข้าสู่บทสอนด่าน 1 ทันทีในซีนเดิม ไร้รอยต่อ
+		is_in_entrance_cutscene = false
+		if entrance_tween and entrance_tween.is_valid(): entrance_tween.kill()
+		if stand_tween and stand_tween.is_valid(): stand_tween.kill()
+		if warp_tween and warp_tween.is_valid(): warp_tween.kill()
+		if reaction_tween and reaction_tween.is_valid(): reaction_tween.kill()
+		if hop_tween and hop_tween.is_valid(): hop_tween.kill()
+		if open_box_tween and open_box_tween.is_valid(): open_box_tween.kill()
+		if typewriter_tween and typewriter_tween.is_valid(): typewriter_tween.kill()
+		
+		vel.position = Vector2(700, 680)
+		vel.play("breathe")
+		var vel_shadow = vel.get_node_or_null("DropShadow")
+		if vel_shadow:
+			vel_shadow.position.y = 38.5
+			vel_shadow.scale = Vector2(0.65, 0.45)
+			vel_shadow.modulate.a = 1.0
+			
+		mewla.visible = true
+		mewla.position = Vector2(1220, 680)
+		mewla.scale = Vector2(4, 4)
+		mewla.modulate = Color.WHITE
+		mewla.play("idle")
+		
+		_hide_exclamation()
+		_hide_question_mark()
+		_hide_continue_arrow()
+		
+		fade_overlay.visible = false
+		fade_overlay.color = Color(0, 0, 0, 0)
+		dialogue_box.visible = true
+		dialogue_box.modulate.a = 1.0
+		
+		_load_sequence(level_data.get("intro_sequence", []))
+		return
+		
+	# หากอยู่ในช่วงบทเรียนปกติแล้วกดข้าม -> ข้ามเข้าสู่ Sandbox
+	if next_scene_path != "" and ResourceLoader.exists(next_scene_path):
+		Engine.time_scale = 1.0
+		get_tree().change_scene_to_file(next_scene_path)
+
 func _open_dialogue_box() -> void:
 	if is_transitioning:
 		return
@@ -261,6 +512,11 @@ func _load_sequence(seq: Array) -> void:
 
 func _show_current_queue_item() -> void:
 	if queue_index >= current_queue.size():
+		if is_in_entrance_cutscene:
+			# จบบทนำ 5 ประโยคของคัตซีน -> ไหลเข้าสู่บทสอนด่าน 1 ในซีนเดิมทันที ไร้รอยต่อ 100%
+			is_in_entrance_cutscene = false
+			_load_sequence(level_data.get("intro_sequence", []))
+			return
 		_finish_dialogue_stage()
 		return
 		

@@ -17,6 +17,7 @@
 [ext_resource type="Texture2D" uid="uid://bg5ggrsq2t05d" path="res://assets/cutscene/frame dialog text/text dialog.png" id="15_dialog_frame"]
 [ext_resource type="Texture2D" uid="uid://dokdfulrf0b81" path="res://assets/cutscene/frame dialog text/arrow.png" id="16_dialog_arrow"]
 [ext_resource type="Texture2D" uid="uid://dmykeg4jphdb0" path="res://assets/cutscene/props/khampri/drop_shadow.png" id="17_shadow"]
+[ext_resource type="Texture2D" uid="uid://ljih7ud8vr83" path="res://assets/cutscene/characters/vel/vel_back.png" id="18_vel_back"]
 
 [sub_resource type="Animation" id="Animation_reset"]
 length = 0.001
@@ -213,6 +214,14 @@ animations = [{
 }],
 "loop": 1,
 "name": &"walk",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("18_vel_back")
+}],
+"loop": true,
+"name": &"back",
 "speed": 5.0
 }]
 
@@ -550,16 +559,20 @@ theme_override_fonts/font = SubResource("FontVariation_speaker_bold")
 theme_override_font_sizes/font_size = 30
 text = "มิวรา"
 
-[node name="DialogueLabel" type="Label" parent="MagicStoryUI/DialogueBox/Margin/VBox" unique_id=1071406824]
+[node name="DialogueLabel" type="RichTextLabel" parent="MagicStoryUI/DialogueBox/Margin/VBox" unique_id=1071406824]
 layout_mode = 2
 size_flags_vertical = 3
-theme_override_colors/font_color = Color(1, 1, 1, 1)
-theme_override_colors/font_outline_color = Color(0.07, 0.05, 0.09, 1)
-theme_override_constants/line_spacing = 8
-theme_override_constants/outline_size = 2
-theme_override_fonts/font = ExtResource("14_font")
-theme_override_font_sizes/font_size = 26
+mouse_filter = 2
+bbcode_enabled = true
+fit_content = false
+scroll_active = false
 autowrap_mode = 3
+theme_override_colors/default_color = Color(1, 1, 1, 1)
+theme_override_colors/font_outline_color = Color(0.07, 0.05, 0.09, 1)
+theme_override_constants/line_separation = 8
+theme_override_constants/outline_size = 2
+theme_override_fonts/normal_font = ExtResource("14_font")
+theme_override_font_sizes/normal_font_size = 26
 
 [node name="ArrowOverlay" type="Control" parent="MagicStoryUI/DialogueBox" unique_id=1928374615]
 layout_mode = 2
