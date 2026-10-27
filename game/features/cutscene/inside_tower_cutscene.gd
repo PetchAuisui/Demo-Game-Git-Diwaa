@@ -1,7 +1,5 @@
 extends "res://features/dialogue/level_dialogue_view.gd"
 
-const GameProgressManager = preload("res://common/game_progress_manager.gd")
-
 ## การควบคุมฉากภายในหอคอยเวท (Inside Tower Cutscene & Level 1)
 ## ลำดับเหตุการณ์ในซีนเดียวต่อเนื่อง 100% (Single Scene Pipeline):
 ## 1. เฟดเข้าจากจอดำสู่ห้องโถงภายในหอคอย (inside-tower-Sheet)

@@ -273,3 +273,15 @@ flowchart TD
 * **คำสั่งช่วยเหลือผ่าน Terminal ในหน้าเริ่มเกม (สำหรับ Dev & QA):**
   * พิมพ์ `reset` หรือ `reset progress`: รีเซ็ตสถานะกลับเป็นผู้เล่นใหม่ สำหรับทดสอบฉากคัตซีนเปิดตัวซ้ำ
   * พิมพ์ `level`: สลับไปหน้าต่างเลือกรวมด่านโดยตรง
+
+### 6.4 การยกเลิกตัวแปร static ข้าม Scene และปรับใช้ In-Scene Modal Presentation
+* **ยกเลิกการใช้ `static var` ข้ามซีนทั้งหมด:**
+  * นำ `static var start_phase` ออกจาก `level_dialogue_view.gd`
+  * นำ `static var current_step` และ `static var return_scene_path` ออกจาก `gameplay_placeholder_view.gd`
+  * ตัดการ `load()` ข้ามสคริปต์เพื่อเซ็ตค่า static ซึ่งทำให้เกิด Circular Coupling
+* **ปรับสถาปัตยกรรมของ `gameplay_placeholder_view.tscn` เป็น In-Scene Modal Presentation:**
+  * เมื่อถึงขั้นตอน `open_gameplay` (ขั้นที่ 1 หรือ 2) หรือกดปุ่มข้าม ตัววิวจะ Instantiate หน้าจำลองขึ้นมาเป็น Modal Overlay ภายในเลเยอร์ `MagicStoryUI` ทันที
+  * ส่งค่าขั้นตอนผ่านตัวแปรของออบเจกต์โดยตรง (`placeholder.current_step = step`) ตามหลัก Dependency Injection
+  * สื่อสารกลับมายังบทสนทนาเมื่อกดปุ่ม "เสร็จสิ้น" ผ่านสัญญาณ `step_finished(step)` แล้วเรียก `queue_free()` ปิดหน้าต่างลง
+  * **ผลลัพธ์:** บทสนทนาเล่นต่อเนื่องในซีนเดิมทันที 100% ไม่ต้องสลับฉากไป-มา ไม่เกิดจอดำ และไม่มีตัวแปร static ค้างในหน่วยความจำ
+  * **ระบบสำรอง (Fallback):** มีฟังก์ชัน `GameProgressManager.consume_pending_dialogue_phase()` รองรับกรณีเปิดรันซีนเดี่ยวแยกอิสระ (F6 Standalone Debug) อย่างปลอดภัย

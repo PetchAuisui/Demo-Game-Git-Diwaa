@@ -1,5 +1,7 @@
 extends Node2D
 
+const GameProgressManager = preload("res://common/game_progress_manager.gd")
+
 ## ตัวควบคุมและแสดงผลบทสนทนาประจำด่าน (Level Dialogue View)
 ## รองรับบทสนทนา ด่าน 1 ถึง ด่าน 15 แบบแยกไฟล์ข้อมูล (Data-driven)
 ##
@@ -8,8 +10,6 @@ extends Node2D
 ## - สคริปต์จะโหลดข้อมูลจาก res://features/dialogue/levels/level_%02d.gd มาแสดงผลอัตโนมัติ
 ## - รองรับ Typewriter Effect, BBCode ไฮไลต์โค้ดสไตล์ Markdown, ช้อยส์ในกล่องข้อความเดิม,
 ##   และเชื่อมต่อไปยังหน้าจำลองการเล่นภายในด่าน (Gameplay Placeholder View)
-
-static var start_phase: int = 0
 
 @export var level_number: int = 1
 @export var next_scene_path: String = "res://features/start/start_view.tscn"
@@ -154,11 +154,11 @@ func _ready() -> void:
 	# โหลดข้อมูลด่าน
 	_load_level_data(level_number)
 	
-	if start_phase > 0:
-		debug_phase = start_phase
+	var pending_phase := GameProgressManager.consume_pending_dialogue_phase()
+	if pending_phase > 0:
+		debug_phase = pending_phase
 		play_entrance_cutscene = false
 		fade_in_from_black = true
-		start_phase = 0
 	
 	if play_entrance_cutscene:
 		# เริ่มต้นในโหมดคัตซีนเดินเข้าห้องโถง
@@ -326,7 +326,9 @@ func _start_dialogue_scene() -> void:
 		var fade_in = create_tween()
 		fade_in.tween_property(fade_overlay, "color:a", 0.0, 0.4)
 
-func _begin_dialogue_phase() -> void:
+func _begin_dialogue_phase(phase: int = -1) -> void:
+	if phase >= 0:
+		debug_phase = phase
 	dialogue_box.visible = true
 	dialogue_box.modulate.a = 1.0
 	if debug_phase == 1:
@@ -496,6 +498,18 @@ func _on_skip_step() -> void:
 	_hide_exclamation()
 	_hide_question_mark()
 	_hide_continue_arrow()
+	
+	if is_in_entrance_cutscene:
+		is_in_entrance_cutscene = false
+		fade_overlay.color.a = 0.0
+		vel.position = Vector2(700, 680)
+		vel.scale = Vector2(4, 4)
+		vel.play("breathe")
+		mewla.visible = true
+		mewla.position = Vector2(1220, 680)
+		mewla.scale = Vector2(4, 4)
+		mewla.modulate = Color.WHITE
+		mewla.play("idle")
 	
 	# กดข้าม -> ไปยังหน้าเดียวกับที่กดคุยไปต่อเรื่อยๆ จนจบช่วงนั้น (Gameplay Placeholder View)
 	if debug_phase == 0:
@@ -751,18 +765,41 @@ func _open_gameplay_step(step: int) -> void:
 	_hide_continue_arrow()
 	if is_instance_valid(nav_arrows_container):
 		nav_arrows_container.visible = false
+	if is_instance_valid(dialogue_box):
+		dialogue_box.visible = false
+	if skip_ctrl:
+		skip_ctrl.visible = false
 	
-	var placeholder_script = load("res://features/dialogue/gameplay_placeholder_view.gd")
-	if placeholder_script:
-		placeholder_script.current_step = step
-		placeholder_script.return_scene_path = scene_file_path if scene_file_path != "" else "res://features/cutscene/inside_tower_cutscene.tscn"
+	var placeholder_res = load("res://features/dialogue/gameplay_placeholder_view.tscn")
+	if placeholder_res:
+		var placeholder = placeholder_res.instantiate()
+		placeholder.current_step = step
+		placeholder.return_scene_path = scene_file_path if scene_file_path != "" else "res://features/cutscene/inside_tower_cutscene.tscn"
+		placeholder.step_finished.connect(_on_gameplay_step_finished)
+		magic_ui.add_child(placeholder)
+		placeholder.modulate.a = 0.0
+		var tw = create_tween()
+		tw.tween_property(placeholder, "modulate:a", 1.0, 0.25)
+		tw.tween_callback(func():
+			is_transitioning = false
+		)
+	else:
+		is_transitioning = false
+
+func _on_gameplay_step_finished(step: int) -> void:
+	is_transitioning = false
+	sequence_history.clear()
+	if skip_ctrl:
+		skip_ctrl.visible = true
+	if is_instance_valid(dialogue_box):
+		dialogue_box.visible = true
+	if is_instance_valid(nav_arrows_container):
+		nav_arrows_container.visible = true
 	
-	var fade_tw = create_tween()
-	fade_tw.tween_property(fade_overlay, "color:a", 1.0, 0.35)
-	fade_tw.tween_callback(func():
-		Engine.time_scale = 1.0
-		get_tree().change_scene_to_file("res://features/dialogue/gameplay_placeholder_view.tscn")
-	)
+	if step == 1:
+		_begin_dialogue_phase(1)
+	else:
+		_begin_dialogue_phase(2)
 
 func _finish_dialogue_stage() -> void:
 	if is_transitioning:

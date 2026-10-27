@@ -11,6 +11,19 @@ const SAVE_PATH := "user://game_progress.cfg"
 const SECTION_PROGRESS := "progress"
 const KEY_INTRO_SEEN := "has_seen_intro_cutscene"
 
+## ตัวแปรส่งผ่านสถานะระหว่าง Scene ชั่วคราว (Transient Session State)
+## ใช้แทนการประกาศ static var ไว้บน UI View Script โดยตรง
+## พร้อมฟังก์ชัน consume ที่จะเคลียร์ค่ากลับเป็น 0 ทันทีที่อ่าน ป้องกันค่าค้างข้าม Session
+static var _pending_dialogue_phase: int = 0
+
+static func set_pending_dialogue_phase(phase: int) -> void:
+	_pending_dialogue_phase = phase
+
+static func consume_pending_dialogue_phase() -> int:
+	var phase := _pending_dialogue_phase
+	_pending_dialogue_phase = 0
+	return phase
+
 static func has_seen_intro_cutscene() -> bool:
 	var cfg := ConfigFile.new()
 	var err := cfg.load(SAVE_PATH)
