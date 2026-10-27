@@ -176,9 +176,14 @@ func _on_terminal_command_submitted(input: String) -> void:
 		get_tree().change_scene_to_file("res://features/level_select/level_select_view.tscn")
 		return
 
+	if lower == "clear 1" or lower == "complete 1":
+		GameProgressManager.set_level_cleared(1, true)
+		_append_terminal_text("> Level 1 marked as CLEARED! Card in Level Select will turn GREEN.")
+		return
+
 	if lower == "reset" or lower == "reset progress":
 		GameProgressManager.reset_progress()
-		_append_terminal_text("> Game progress reset! Next START will play intro cutscene.")
+		_append_terminal_text("> Game progress reset! All cards in Level Select are now GREY.")
 		return
 
 	if lower == "git init":

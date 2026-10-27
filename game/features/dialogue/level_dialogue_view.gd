@@ -151,6 +151,11 @@ func _ready() -> void:
 	skip_ctrl.custom_skip_action = _on_skip_step
 	add_child(skip_ctrl)
 	
+	# ตรวจสอบด่านที่เลือกจาก Level Select
+	var selected_lvl := GameProgressManager.get_selected_level_number()
+	if selected_lvl > 0:
+		level_number = selected_lvl
+		
 	# โหลดข้อมูลด่าน
 	_load_level_data(level_number)
 	
@@ -817,6 +822,9 @@ func _finish_dialogue_stage() -> void:
 		skip_ctrl.visible = false
 		
 	Engine.time_scale = 1.0
+	
+	# บันทึกสถานะว่าเล่นผ่านด่านนี้สำเร็จแล้ว (ทำให้การ์ดใน Level Select ปลดล็อกเป็นสีเขียว)
+	GameProgressManager.set_level_cleared(level_number, true)
 	
 	# แสดงหน้าสรุปผล / สรุปดาวเมื่อผ่านด่าน (Success Modal)
 	var clear_modal_res = load("res://features/dialogue/level_clear_modal.tscn")
