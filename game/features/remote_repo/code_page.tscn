@@ -1,0 +1,47 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://features/remote_repo/code_page.gd" id="1_script"]
+
+[node name="CodePage" type="VBoxContainer"]
+size_flags_horizontal = 3
+theme_override_constants/separation = 22
+script = ExtResource("1_script")
+
+[node name="Toolbar" type="HBoxContainer" parent="."]
+layout_mode = 2
+theme_override_constants/separation = 14
+
+[node name="BranchPicker" type="OptionButton" parent="Toolbar"]
+unique_name_in_owner = true
+layout_mode = 2
+mouse_filter = 1
+
+[node name="BranchesButton" type="Button" parent="Toolbar"]
+unique_name_in_owner = true
+layout_mode = 2
+mouse_default_cursor_shape = 2
+focus_mode = 0
+mouse_filter = 1
+theme_type_variation = &"GhGhostButton"
+
+[node name="Spacer" type="Control" parent="Toolbar"]
+layout_mode = 2
+size_flags_horizontal = 3
+mouse_filter = 2
+
+[node name="SearchEdit" type="LineEdit" parent="Toolbar"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(351, 0)
+layout_mode = 2
+mouse_filter = 1
+placeholder_text = "Go to file"
+clear_button_enabled = true
+
+[node name="CodeButton" type="Button" parent="Toolbar"]
+unique_name_in_owner = true
+layout_mode = 2
+mouse_default_cursor_shape = 2
+focus_mode = 0
+mouse_filter = 1
+theme_type_variation = &"GhPrimaryButton"
+text = "Code ▾"

@@ -1,0 +1,1284 @@
+[gd_scene format=3 uid="uid://c3eaa1f2e8b4c"]
+
+[ext_resource type="Script" uid="uid://ca6pfd1q5i48k" path="res://features/cutscene/ending_cutscene.gd" id="1_script"]
+[ext_resource type="Texture2D" uid="uid://d1k0b34y780t7" path="res://assets/cutscene/Libary.png" id="2_library"]
+[ext_resource type="Texture2D" uid="uid://don4qpk4c43rc" path="res://assets/cutscene/characters/vel/vel_Hblue_Sredyellow_idle.png" id="6_vel_idle"]
+[ext_resource type="Texture2D" uid="uid://bwv0pcja8aiqd" path="res://assets/cutscene/characters/vel/vel_shockpng.png" id="7_vel_shock"]
+[ext_resource type="Texture2D" uid="uid://bvfiiywfa04t3" path="res://assets/cutscene/characters/vel/vel_walk-Sheet.png" id="8_vel_walk"]
+[ext_resource type="Texture2D" uid="uid://c4bkwod3w8ii3" path="res://assets/cutscene/characters/vel/vel_angry.png" id="10_vel_angry"]
+[ext_resource type="Texture2D" uid="uid://dj1udjgebk0s5" path="res://assets/cutscene/characters/master/master_breathe-Sheet.png" id="11_master_breathe"]
+[ext_resource type="Texture2D" uid="uid://boy3laf48ahkf" path="res://assets/cutscene/characters/master/master_breathe_blink-Sheet.png" id="12_master_blink"]
+[ext_resource type="Texture2D" uid="uid://ksl18qyh4k6u" path="res://assets/cutscene/characters/master/master_idle.png" id="13_master_idle"]
+[ext_resource type="Texture2D" uid="uid://dhydmv0uo61tb" path="res://assets/cutscene/characters/master/master_walk-Sheet.png" id="14_master_walk"]
+[ext_resource type="Texture2D" uid="uid://mtyphxqftbrt" path="res://assets/cutscene/characters/master/master_shock1.png" id="16_master_shock1"]
+[ext_resource type="Texture2D" uid="uid://ov4qe4a4gprk" path="res://assets/cutscene/characters/master/master_shock2.png" id="17_master_shock2"]
+[ext_resource type="Texture2D" uid="uid://bx4bc0kje3h8q" path="res://assets/cutscene/characters/master/master_playful.png" id="18_master_playful"]
+[ext_resource type="Texture2D" uid="uid://cv4vo1ts0tik4" path="res://assets/cutscene/black_hole.png" id="19_black_hole"]
+[ext_resource type="Texture2D" uid="uid://bbl6m8brfnkxl" path="res://assets/cutscene/exclamation_mark.png" id="20_exclamation"]
+[ext_resource type="Texture2D" uid="uid://bm6lbwx34tnd3" path="res://assets/cutscene/props/khampri/Khampri.png" id="21_khampri"]
+[ext_resource type="Texture2D" uid="uid://crcap3ws8t3l8" path="res://assets/cutscene/props/khampri/khampri-null.png" id="22_khampri_null"]
+[ext_resource type="Texture2D" uid="uid://cmiovgqy6yf68" path="res://assets/cutscene/props/khampri/minikhampri1.png" id="23_m1"]
+[ext_resource type="Texture2D" uid="uid://vuubdrsnjoim" path="res://assets/cutscene/props/khampri/minikhampri2.png" id="24_m2"]
+[ext_resource type="Texture2D" uid="uid://c85nr0pshcdl0" path="res://assets/cutscene/props/khampri/minikhampri3.png" id="25_m3"]
+[ext_resource type="Texture2D" uid="uid://bberhkoqd5xuy" path="res://assets/cutscene/props/khampri/minikhampri4.png" id="26_m4"]
+[ext_resource type="Texture2D" uid="uid://begdng4y33dc8" path="res://assets/cutscene/props/khampri/minikhampri5.png" id="27_m5"]
+[ext_resource type="Texture2D" uid="uid://c666g0q22ktfe" path="res://assets/cutscene/characters/vel/vel_sigh_bink-Sheet.png" id="27_rekrb"]
+[ext_resource type="Texture2D" uid="uid://d0nnagl8j06dx" path="res://assets/cutscene/props/khampri/minikhampri6.png" id="28_m6"]
+[ext_resource type="Texture2D" uid="uid://bmws82iqtbdr6" path="res://assets/cutscene/characters/vel/vel_cat.png" id="28_rekrb"]
+[ext_resource type="Texture2D" uid="uid://bamcnoyjkfrq3" path="res://assets/cutscene/characters/vel/vel_cry.png" id="29_24i8o"]
+[ext_resource type="Texture2D" uid="uid://cu53xj1m5ee4v" path="res://assets/cutscene/props/khampri/minikhampri7.png" id="29_m7"]
+[ext_resource type="Texture2D" uid="uid://x5hsydowyheg" path="res://assets/cutscene/characters/vel/vel_hold.png" id="30_kbghs"]
+[ext_resource type="Texture2D" uid="uid://bf31knirc7elk" path="res://assets/cutscene/props/khampri/minikhampri8.png" id="30_m8"]
+[ext_resource type="Texture2D" uid="uid://movqwrr1esij" path="res://assets/cutscene/props/khampri/minikhampri9.png" id="31_m9"]
+[ext_resource type="Texture2D" uid="uid://rn8xp34dm1l1" path="res://assets/cutscene/characters/vel/vel_love.png" id="32_3ybw2"]
+[ext_resource type="Texture2D" uid="uid://vhibtx00l1kl" path="res://assets/cutscene/props/khampri/minikhampri10.png" id="32_m10"]
+[ext_resource type="Texture2D" uid="uid://bpwwyf1t2ktnv" path="res://assets/cutscene/props/khampri/minikhampri11.png" id="33_m11"]
+[ext_resource type="Texture2D" uid="uid://bmmn0lw6vs33x" path="res://assets/cutscene/props/khampri/minikhampri12.png" id="34_m12"]
+[ext_resource type="Texture2D" uid="uid://boqfopl133s5y" path="res://assets/cutscene/props/khampri/minikhampri13.png" id="35_m13"]
+[ext_resource type="Texture2D" uid="uid://cujobgtqpdh8q" path="res://assets/cutscene/props/khampri/minikhampri14.png" id="36_m14"]
+[ext_resource type="Texture2D" uid="uid://lbxd43tusjvx" path="res://assets/cutscene/props/khampri/minikhampri15.png" id="37_m15"]
+[ext_resource type="Texture2D" uid="uid://dm416ujw1i4oo" path="res://assets/cutscene/characters/master/master_cry.png" id="38_273fk"]
+[ext_resource type="Texture2D" uid="uid://b6yre4fu0rwi2" path="res://assets/cutscene/props/khampri/minikhampri16.png" id="38_m16"]
+[ext_resource type="FontFile" uid="uid://csurxmw2vmws4" path="res://assets/fonts/TA-8-bit.ttf" id="39_font"]
+[ext_resource type="Texture2D" uid="uid://pb3ftuq7l261" path="res://assets/cutscene/characters/master/master_minishcok.png" id="41_8u681"]
+[ext_resource type="Texture2D" uid="uid://dmykeg4jphdb0" path="res://assets/cutscene/props/khampri/drop_shadow.png" id="42_shadow"]
+[ext_resource type="Texture2D" uid="uid://6272rjfm3v7c" path="res://assets/cutscene/backgrounds/storm-clouds-preview-Sheet.png" id="43_storm"]
+[ext_resource type="Texture2D" uid="uid://ldg2myveluut" path="res://assets/cutscene/backgrounds/peaceful-landscape-preview-Sheet.png" id="44_peaceful"]
+[ext_resource type="Texture2D" uid="uid://dcvd3t5deskx3" path="res://assets/cutscene/backgrounds/village-normal-to-chaos-Sheet.png" id="45_village"]
+[ext_resource type="Texture2D" uid="uid://bgvwv062jgxby" path="res://assets/cutscene/anger_mark.png" id="46_anger"]
+[ext_resource type="Texture2D" uid="uid://dc6mqbtqyme4e" path="res://assets/cutscene/sigh_puff.png" id="47_puff"]
+[ext_resource type="Texture2D" uid="uid://cyqjn8io7p3d" path="res://assets/cutscene/characters/mewla/mewla_black_idle.png" id="48_mewla"]
+[ext_resource type="Texture2D" uid="uid://d2uwr2jusv421" path="res://assets/cutscene/characters/guardian/guardian-breathe-Sheet.png" id="49_guardian"]
+[ext_resource type="Texture2D" uid="uid://bg5ggrsq2t05d" path="res://assets/cutscene/frame dialog text/text dialog.png" id="50_dialog_frame"]
+[ext_resource type="Texture2D" uid="uid://dokdfulrf0b81" path="res://assets/cutscene/frame dialog text/arrow.png" id="51_dialog_arrow"]
+
+[sub_resource type="Gradient" id="Gradient_ring"]
+offsets = PackedFloat32Array(0.55, 0.72, 0.88, 1)
+colors = PackedColorArray(1, 1, 1, 0, 1, 0.95, 0.6, 0.95, 1, 0.8, 0.35, 0.7, 1, 1, 1, 0)
+
+[sub_resource type="GradientTexture2D" id="GradientTexture2D_ring"]
+gradient = SubResource("Gradient_ring")
+width = 256
+height = 256
+fill = 1
+fill_from = Vector2(0.5, 0.5)
+fill_to = Vector2(1, 0.5)
+
+[sub_resource type="Gradient" id="Gradient_aura"]
+offsets = PackedFloat32Array(0, 0.45, 0.75, 1)
+colors = PackedColorArray(1, 0.95, 0.7, 0.8, 0.7, 0.85, 1, 0.45, 0.4, 0.3, 0.8, 0.15, 0, 0, 0, 0)
+
+[sub_resource type="GradientTexture2D" id="GradientTexture2D_aura"]
+gradient = SubResource("Gradient_aura")
+width = 256
+height = 256
+fill = 1
+fill_from = Vector2(0.5, 0.5)
+fill_to = Vector2(1, 0.5)
+
+[sub_resource type="Gradient" id="Gradient_warp"]
+offsets = PackedFloat32Array(0, 0.45, 1)
+colors = PackedColorArray(0.8, 0.95, 1, 0.9, 0.4, 0.7, 1, 0.5, 0.1, 0.3, 0.8, 0)
+
+[sub_resource type="GradientTexture2D" id="GradientTexture2D_warp"]
+gradient = SubResource("Gradient_warp")
+height = 32
+fill = 1
+fill_from = Vector2(0.5, 0.5)
+fill_to = Vector2(1, 0.5)
+
+[sub_resource type="Gradient" id="Gradient_magic_speck"]
+offsets = PackedFloat32Array(0, 0.4, 0.8, 1)
+colors = PackedColorArray(1, 1, 1, 1, 0.95, 0.9, 1, 0.85, 0.7, 0.65, 1, 0.35, 0, 0, 0, 0)
+
+[sub_resource type="GradientTexture2D" id="GradientTexture2D_magic_speck"]
+gradient = SubResource("Gradient_magic_speck")
+width = 16
+height = 16
+fill = 1
+fill_from = Vector2(0.5, 0.5)
+fill_to = Vector2(1, 0.5)
+
+[sub_resource type="Gradient" id="Gradient_particle_fade"]
+offsets = PackedFloat32Array(0, 0.15, 0.8, 1)
+colors = PackedColorArray(0.980392, 0.976471, 0.964706, 0, 0.980392, 0.976471, 0.964706, 0.85, 0.980392, 0.95, 0.88, 0.75, 0.980392, 0.976471, 0.964706, 0)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_vel_angry"]
+atlas = ExtResource("10_vel_angry")
+region = Rect2(0, 0, 48, 83)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_24i8o"]
+atlas = ExtResource("27_rekrb")
+region = Rect2(0, 0, 48, 83)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_kbghs"]
+atlas = ExtResource("27_rekrb")
+region = Rect2(48, 0, 48, 83)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_3ybw2"]
+atlas = ExtResource("27_rekrb")
+region = Rect2(96, 0, 48, 83)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_273fk"]
+atlas = ExtResource("27_rekrb")
+region = Rect2(144, 0, 48, 83)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_8u681"]
+atlas = ExtResource("27_rekrb")
+region = Rect2(192, 0, 48, 83)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_50brl"]
+atlas = ExtResource("27_rekrb")
+region = Rect2(240, 0, 48, 83)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_vel_idle"]
+atlas = ExtResource("6_vel_idle")
+region = Rect2(0, 0, 48, 83)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_vel_shock"]
+atlas = ExtResource("7_vel_shock")
+region = Rect2(0, 0, 48, 83)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_vel_walk_0"]
+atlas = ExtResource("8_vel_walk")
+region = Rect2(0, 0, 48, 83)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_vel_walk_1"]
+atlas = ExtResource("8_vel_walk")
+region = Rect2(48, 0, 48, 83)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_vel_walk_2"]
+atlas = ExtResource("8_vel_walk")
+region = Rect2(96, 0, 48, 83)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_vel_walk_3"]
+atlas = ExtResource("8_vel_walk")
+region = Rect2(144, 0, 48, 83)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_vel"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_vel_angry")
+}],
+"loop": 1,
+"name": &"angry",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 2.0,
+"texture": SubResource("AtlasTexture_24i8o")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_kbghs")
+}, {
+"duration": 2.0,
+"texture": SubResource("AtlasTexture_3ybw2")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_273fk")
+}, {
+"duration": 2.0,
+"texture": SubResource("AtlasTexture_8u681")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_50brl")
+}],
+"loop": 1,
+"name": &"breathe_blink",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("28_rekrb")
+}],
+"loop": 1,
+"name": &"cat",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("29_24i8o")
+}],
+"loop": 1,
+"name": &"cry",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("30_kbghs")
+}],
+"loop": 1,
+"name": &"hold",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_vel_idle")
+}],
+"loop": 1,
+"name": &"idle",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("32_3ybw2")
+}],
+"loop": 1,
+"name": &"love",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_vel_shock")
+}],
+"loop": 1,
+"name": &"shock",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 2.0,
+"texture": SubResource("AtlasTexture_vel_walk_0")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_vel_walk_1")
+}, {
+"duration": 2.0,
+"texture": SubResource("AtlasTexture_vel_walk_2")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_vel_walk_3")
+}],
+"loop": 1,
+"name": &"walk",
+"speed": 5.0
+}]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_bns0x"]
+atlas = ExtResource("11_master_breathe")
+region = Rect2(0, 0, 48, 83)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_56dir"]
+atlas = ExtResource("11_master_breathe")
+region = Rect2(48, 0, 48, 83)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_p4kkf"]
+atlas = ExtResource("11_master_breathe")
+region = Rect2(96, 0, 48, 83)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_qqxc2"]
+atlas = ExtResource("11_master_breathe")
+region = Rect2(144, 0, 48, 83)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_usfyu"]
+atlas = ExtResource("11_master_breathe")
+region = Rect2(192, 0, 48, 83)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_0hjnm"]
+atlas = ExtResource("11_master_breathe")
+region = Rect2(240, 0, 48, 83)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_b2kj8"]
+atlas = ExtResource("12_master_blink")
+region = Rect2(0, 0, 48, 83)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_sbvyt"]
+atlas = ExtResource("12_master_blink")
+region = Rect2(48, 0, 48, 83)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_bdyxi"]
+atlas = ExtResource("12_master_blink")
+region = Rect2(96, 0, 48, 83)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_ehj15"]
+atlas = ExtResource("12_master_blink")
+region = Rect2(144, 0, 48, 83)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_e1aby"]
+atlas = ExtResource("12_master_blink")
+region = Rect2(192, 0, 48, 83)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_uikn8"]
+atlas = ExtResource("12_master_blink")
+region = Rect2(240, 0, 48, 83)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_master_shock2"]
+atlas = ExtResource("17_master_shock2")
+region = Rect2(0, 0, 48, 83)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_master_idle"]
+atlas = ExtResource("13_master_idle")
+region = Rect2(0, 0, 48, 83)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_master_playful"]
+atlas = ExtResource("18_master_playful")
+region = Rect2(0, 0, 48, 83)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_master_shock1"]
+atlas = ExtResource("16_master_shock1")
+region = Rect2(0, 0, 48, 83)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_2kj2w"]
+atlas = ExtResource("14_master_walk")
+region = Rect2(0, 0, 48, 83)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_yh3x3"]
+atlas = ExtResource("14_master_walk")
+region = Rect2(48, 0, 48, 83)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_srj5k"]
+atlas = ExtResource("14_master_walk")
+region = Rect2(96, 0, 48, 83)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_d6h35"]
+atlas = ExtResource("14_master_walk")
+region = Rect2(144, 0, 48, 83)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_b2uhe"]
+atlas = ExtResource("14_master_walk")
+region = Rect2(192, 0, 48, 83)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_30g2s"]
+atlas = ExtResource("14_master_walk")
+region = Rect2(240, 0, 48, 83)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_master"]
+animations = [{
+"frames": [{
+"duration": 2.0,
+"texture": SubResource("AtlasTexture_bns0x")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_56dir")
+}, {
+"duration": 2.0,
+"texture": SubResource("AtlasTexture_p4kkf")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_qqxc2")
+}, {
+"duration": 2.0,
+"texture": SubResource("AtlasTexture_usfyu")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_0hjnm")
+}],
+"loop": 1,
+"name": &"breathe",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 2.0,
+"texture": SubResource("AtlasTexture_b2kj8")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_sbvyt")
+}, {
+"duration": 2.0,
+"texture": SubResource("AtlasTexture_bdyxi")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_ehj15")
+}, {
+"duration": 2.0,
+"texture": SubResource("AtlasTexture_e1aby")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_uikn8")
+}],
+"loop": 1,
+"name": &"breathe_blink",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("38_273fk")
+}],
+"loop": 1,
+"name": &"cry",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_master_shock2")
+}],
+"loop": 1,
+"name": &"hold",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_master_idle")
+}],
+"loop": 1,
+"name": &"idle",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("41_8u681")
+}],
+"loop": 1,
+"name": &"minishock",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_master_playful")
+}],
+"loop": 1,
+"name": &"playful",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_master_shock1")
+}],
+"loop": 1,
+"name": &"shock1",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_master_shock2")
+}],
+"loop": 1,
+"name": &"shock2",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 2.0,
+"texture": SubResource("AtlasTexture_2kj2w")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_yh3x3")
+}, {
+"duration": 2.0,
+"texture": SubResource("AtlasTexture_srj5k")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_d6h35")
+}, {
+"duration": 2.0,
+"texture": SubResource("AtlasTexture_b2uhe")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_30g2s")
+}],
+"loop": 1,
+"name": &"walk",
+"speed": 5.0
+}]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_comic_panel"]
+bg_color = Color(0.00392, 0, 0.07451, 0.98)
+border_width_left = 4
+border_width_top = 4
+border_width_right = 4
+border_width_bottom = 4
+border_color = Color(0.980392, 0.976471, 0.964706, 1)
+corner_radius_top_left = 12
+corner_radius_top_right = 12
+corner_radius_bottom_right = 12
+corner_radius_bottom_left = 12
+shadow_color = Color(0.00392, 0, 0.07451, 0.7)
+shadow_size = 14
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_arrow"]
+atlas = ExtResource("51_dialog_arrow")
+region = Rect2(561, 344, 537, 334)
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_dialogue"]
+texture = ExtResource("50_dialog_frame")
+texture_margin_left = 24.0
+texture_margin_top = 24.0
+texture_margin_right = 24.0
+texture_margin_bottom = 24.0
+region_rect = Rect2(43, 191, 2086, 332)
+modulate_color = Color(0.78, 0.74, 0.82, 1)
+
+[sub_resource type="FontVariation" id="FontVariation_speaker_bold"]
+base_font = ExtResource("39_font")
+variation_embolden = 0.6
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_btn_normal"]
+bg_color = Color(0, 0, 0, 0.95)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.980392, 0.976471, 0.964706, 0.85)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_btn_hover"]
+bg_color = Color(0.12, 0.12, 0.12, 0.95)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.980392, 0.976471, 0.964706, 1)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_guardian_idle"]
+atlas = ExtResource("49_guardian")
+region = Rect2(0, 0, 48, 83)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_bottom_bar"]
+bg_color = Color(0, 0, 0, 1)
+
+[node name="EndingCutscene" type="Node2D" unique_id=1713555345]
+texture_filter = 1
+script = ExtResource("1_script")
+
+[node name="Camera2D" type="Camera2D" parent="." unique_id=570076719]
+position = Vector2(960, 540)
+
+[node name="Stage1_BookRestoration" type="Node2D" parent="." unique_id=833302304]
+
+[node name="PurpleDarkBg" type="ColorRect" parent="Stage1_BookRestoration" unique_id=1150218345]
+offset_right = 1920.0
+offset_bottom = 1080.0
+color = Color(0.00392, 0, 0.07451, 1)
+
+[node name="RingOfLight" type="Sprite2D" parent="Stage1_BookRestoration" unique_id=761954895]
+visible = false
+modulate = Color(1.8, 1.5, 0.9, 0)
+position = Vector2(960, 540)
+scale = Vector2(0.2, 0.2)
+texture = SubResource("GradientTexture2D_ring")
+
+[node name="BookAura" type="Sprite2D" parent="Stage1_BookRestoration" unique_id=987123999]
+visible = false
+modulate = Color(1.6, 1.4, 1.1, 0)
+position = Vector2(960, 540)
+scale = Vector2(1.8, 1.8)
+texture = SubResource("GradientTexture2D_aura")
+
+[node name="KhampriNull" type="Sprite2D" parent="Stage1_BookRestoration" unique_id=819533844]
+position = Vector2(960, 540)
+scale = Vector2(2.2, 2.2)
+texture = ExtResource("22_khampri_null")
+
+[node name="KhampriFull" type="Sprite2D" parent="Stage1_BookRestoration" unique_id=872162374]
+visible = false
+position = Vector2(960, 540)
+scale = Vector2(2.2, 2.2)
+texture = ExtResource("21_khampri")
+
+[node name="ShardsContainer" type="Node2D" parent="Stage1_BookRestoration" unique_id=714128173]
+position = Vector2(960, 540)
+
+[node name="Shard1" type="Sprite2D" parent="Stage1_BookRestoration/ShardsContainer" unique_id=468601452]
+scale = Vector2(1.4, 1.4)
+texture = ExtResource("23_m1")
+
+[node name="Shard2" type="Sprite2D" parent="Stage1_BookRestoration/ShardsContainer" unique_id=149642461]
+scale = Vector2(1.4, 1.4)
+texture = ExtResource("24_m2")
+
+[node name="Shard3" type="Sprite2D" parent="Stage1_BookRestoration/ShardsContainer" unique_id=499178280]
+scale = Vector2(1.4, 1.4)
+texture = ExtResource("25_m3")
+
+[node name="Shard4" type="Sprite2D" parent="Stage1_BookRestoration/ShardsContainer" unique_id=267025857]
+scale = Vector2(1.4, 1.4)
+texture = ExtResource("26_m4")
+
+[node name="Shard5" type="Sprite2D" parent="Stage1_BookRestoration/ShardsContainer" unique_id=1396513331]
+scale = Vector2(1.4, 1.4)
+texture = ExtResource("27_m5")
+
+[node name="Shard6" type="Sprite2D" parent="Stage1_BookRestoration/ShardsContainer" unique_id=662413120]
+scale = Vector2(1.4, 1.4)
+texture = ExtResource("28_m6")
+
+[node name="Shard7" type="Sprite2D" parent="Stage1_BookRestoration/ShardsContainer" unique_id=486169204]
+scale = Vector2(1.4, 1.4)
+texture = ExtResource("29_m7")
+
+[node name="Shard8" type="Sprite2D" parent="Stage1_BookRestoration/ShardsContainer" unique_id=297680122]
+scale = Vector2(1.4, 1.4)
+texture = ExtResource("30_m8")
+
+[node name="Shard9" type="Sprite2D" parent="Stage1_BookRestoration/ShardsContainer" unique_id=1471429257]
+scale = Vector2(1.4, 1.4)
+texture = ExtResource("31_m9")
+
+[node name="Shard10" type="Sprite2D" parent="Stage1_BookRestoration/ShardsContainer" unique_id=1471476513]
+scale = Vector2(1.4, 1.4)
+texture = ExtResource("32_m10")
+
+[node name="Shard11" type="Sprite2D" parent="Stage1_BookRestoration/ShardsContainer" unique_id=1879407160]
+scale = Vector2(1.4, 1.4)
+texture = ExtResource("33_m11")
+
+[node name="Shard12" type="Sprite2D" parent="Stage1_BookRestoration/ShardsContainer" unique_id=2000880641]
+scale = Vector2(1.4, 1.4)
+texture = ExtResource("34_m12")
+
+[node name="Shard13" type="Sprite2D" parent="Stage1_BookRestoration/ShardsContainer" unique_id=1308754401]
+scale = Vector2(1.4, 1.4)
+texture = ExtResource("35_m13")
+
+[node name="Shard14" type="Sprite2D" parent="Stage1_BookRestoration/ShardsContainer" unique_id=615020325]
+scale = Vector2(1.4, 1.4)
+texture = ExtResource("36_m14")
+
+[node name="Shard15" type="Sprite2D" parent="Stage1_BookRestoration/ShardsContainer" unique_id=442435916]
+scale = Vector2(1.4, 1.4)
+texture = ExtResource("37_m15")
+
+[node name="Shard16" type="Sprite2D" parent="Stage1_BookRestoration/ShardsContainer" unique_id=456207076]
+scale = Vector2(1.4, 1.4)
+texture = ExtResource("38_m16")
+
+[node name="Stage2_SkyRestoration" type="Node2D" parent="." unique_id=685658419]
+visible = false
+
+[node name="PeacefulSky" type="Sprite2D" parent="Stage2_SkyRestoration" unique_id=2128510706]
+position = Vector2(960, 540)
+scale = Vector2(4, 4)
+texture = ExtResource("44_peaceful")
+hframes = 11
+vframes = 6
+
+[node name="StormSky" type="Sprite2D" parent="Stage2_SkyRestoration" unique_id=433145935]
+position = Vector2(960, 540)
+scale = Vector2(4, 4)
+texture = ExtResource("43_storm")
+hframes = 11
+vframes = 6
+
+[node name="Stage3_VillageRestoration" type="Node2D" parent="." unique_id=1118347090]
+visible = false
+
+[node name="VillagePeaceful" type="Sprite2D" parent="Stage3_VillageRestoration" unique_id=1738239950]
+position = Vector2(960, 540)
+scale = Vector2(4, 4)
+texture = ExtResource("45_village")
+hframes = 11
+vframes = 6
+
+[node name="VillageChaos" type="Sprite2D" parent="Stage3_VillageRestoration" unique_id=1384775133]
+position = Vector2(960, 540)
+scale = Vector2(4, 4)
+texture = ExtResource("45_village")
+hframes = 11
+vframes = 6
+frame = 50
+
+[node name="Stage4_Library" type="Node2D" parent="." unique_id=1203391067]
+visible = false
+position = Vector2(960, 540)
+scale = Vector2(4, 4)
+
+[node name="LibraryBg" type="Sprite2D" parent="Stage4_Library" unique_id=1357302319]
+texture = ExtResource("2_library")
+
+[node name="WarpSpark" type="Sprite2D" parent="Stage4_Library" unique_id=1714623298]
+visible = false
+position = Vector2(-40, 98)
+scale = Vector2(1e-05, 1e-05)
+texture = SubResource("GradientTexture2D_warp")
+
+[node name="DarkOverlay" type="ColorRect" parent="Stage4_Library" unique_id=1629226189]
+visible = false
+offset_left = -240.0
+offset_top = -135.0
+offset_right = 240.0
+offset_bottom = 135.0
+color = Color(0.00392, 0, 0.07451, 0.6)
+
+[node name="BlackHole" type="Sprite2D" parent="Stage4_Library" unique_id=895412529]
+visible = false
+position = Vector2(40, 97)
+scale = Vector2(1e-05, 1e-05)
+texture = ExtResource("19_black_hole")
+
+[node name="KhampriShadow" type="Sprite2D" parent="Stage4_Library" unique_id=772981304]
+visible = false
+position = Vector2(-40, 98)
+scale = Vector2(0.8, 0.4)
+texture = ExtResource("42_shadow")
+
+[node name="KhampriFloating" type="Sprite2D" parent="Stage4_Library" unique_id=1683684226]
+visible = false
+position = Vector2(-40, 14)
+scale = Vector2(0.18, 0.18)
+texture = ExtResource("21_khampri")
+
+[node name="Vel" type="AnimatedSprite2D" parent="Stage4_Library" unique_id=1194527924]
+visible = false
+position = Vector2(-40, 59)
+sprite_frames = SubResource("SpriteFrames_vel")
+animation = &"breathe_blink"
+
+[node name="ExclamationMark" type="Sprite2D" parent="Stage4_Library/Vel" unique_id=861410789]
+visible = false
+position = Vector2(0, -56)
+scale = Vector2(1e-05, 1e-05)
+texture = ExtResource("20_exclamation")
+
+[node name="AngerMark" type="Sprite2D" parent="Stage4_Library/Vel" unique_id=861410790]
+visible = false
+position = Vector2(12, -32)
+scale = Vector2(1e-05, 1e-05)
+texture = ExtResource("46_anger")
+
+[node name="SighPuff" type="Sprite2D" parent="Stage4_Library/Vel" unique_id=861410791]
+visible = false
+position = Vector2(20, 14)
+scale = Vector2(1e-05, 1e-05)
+texture = ExtResource("47_puff")
+
+[node name="Master" type="AnimatedSprite2D" parent="Stage4_Library" unique_id=1568305020]
+visible = false
+position = Vector2(40, 59)
+sprite_frames = SubResource("SpriteFrames_master")
+animation = &"minishock"
+
+[node name="ComicPanelContainer" type="Control" parent="." unique_id=1676039254]
+visible = false
+layout_mode = 3
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = 500.0
+offset_top = 260.0
+offset_right = 1420.0
+offset_bottom = 820.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="ComicBackdrop" type="ColorRect" parent="ComicPanelContainer" unique_id=1956548709]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = -1.0
+anchor_top = -1.0
+anchor_right = 2.0
+anchor_bottom = 2.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.00392, 0, 0.07451, 0.94)
+
+[node name="ComicPanelBg" type="Panel" parent="ComicPanelContainer" unique_id=7641419]
+clip_contents = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_comic_panel")
+
+[node name="FlashbackLibraryBg" type="Sprite2D" parent="ComicPanelContainer/ComicPanelBg" unique_id=491396360]
+position = Vector2(460, 215)
+scale = Vector2(2.5, 2.5)
+texture = ExtResource("2_library")
+
+[node name="FlashbackHole" type="Sprite2D" parent="ComicPanelContainer/ComicPanelBg" unique_id=1760247590]
+visible = false
+position = Vector2(460, 460)
+scale = Vector2(3, 2.2)
+texture = ExtResource("19_black_hole")
+
+[node name="FlashbackMaster" type="AnimatedSprite2D" parent="ComicPanelContainer/ComicPanelBg" unique_id=610296286]
+position = Vector2(460, 345)
+scale = Vector2(2.8, 2.8)
+sprite_frames = SubResource("SpriteFrames_master")
+animation = &"breathe_blink"
+
+[node name="ComicVignette" type="ColorRect" parent="ComicPanelContainer/ComicPanelBg" unique_id=425073731]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.9, 0.75, 0.5, 0.15)
+
+[node name="ComicTitle" type="Label" parent="ComicPanelContainer" unique_id=1798673503]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_top = -42.0
+offset_bottom = -6.0
+grow_horizontal = 2
+theme_override_colors/font_color = Color(1, 0.9, 0.5, 1)
+theme_override_colors/font_outline_color = Color(0.00392, 0, 0.07451, 1)
+theme_override_constants/outline_size = 6
+theme_override_fonts/font = ExtResource("39_font")
+theme_override_font_sizes/font_size = 24
+text = "[ ภาพย้อนความทรงจำ ]"
+horizontal_alignment = 1
+
+[node name="ComicCaption" type="Label" parent="ComicPanelContainer" unique_id=1115769560]
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = 12.0
+offset_bottom = 48.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_colors/font_color = Color(0.980392, 0.976471, 0.964706, 1)
+theme_override_colors/font_outline_color = Color(0.00392, 0, 0.07451, 1)
+theme_override_constants/outline_size = 6
+theme_override_fonts/font = ExtResource("39_font")
+theme_override_font_sizes/font_size = 22
+text = "ด้วยความแก่ชราและขี้ลืม ปรมาจารย์ทำพลังเวทรั่วไหลจนตกหลุมดำของตัวเอง!"
+horizontal_alignment = 1
+
+[node name="ComicContinuePrompt" type="Label" parent="ComicPanelContainer" unique_id=1494280457]
+modulate = Color(1, 1, 1, 0)
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = 56.0
+offset_bottom = 88.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_colors/font_color = Color(0.980392, 0.976471, 0.964706, 0.9)
+theme_override_colors/font_outline_color = Color(0.00392, 0, 0.07451, 1)
+theme_override_constants/outline_size = 5
+theme_override_fonts/font = ExtResource("39_font")
+theme_override_font_sizes/font_size = 20
+text = "คลิกหน้าจอเพื่อไปต่อ"
+horizontal_alignment = 1
+
+[node name="WhiteFlashOverlay" type="ColorRect" parent="." unique_id=1885754951]
+visible = false
+offset_right = 1920.0
+offset_bottom = 1080.0
+mouse_filter = 2
+color = Color(0.980392, 0.976471, 0.964706, 0)
+
+[node name="MagicStoryUI" type="CanvasLayer" parent="." unique_id=1505822689]
+
+[node name="DialogueBox" type="PanelContainer" parent="MagicStoryUI" unique_id=1317350055]
+visible = false
+texture_filter = 1
+custom_minimum_size = Vector2(1160, 180)
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -580.0
+offset_top = -216.0
+offset_right = 580.0
+offset_bottom = -36.0
+grow_horizontal = 2
+grow_vertical = 0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxTexture_dialogue")
+
+[node name="Margin" type="MarginContainer" parent="MagicStoryUI/DialogueBox" unique_id=1385909794]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/margin_left = 36
+theme_override_constants/margin_top = 24
+theme_override_constants/margin_right = 48
+theme_override_constants/margin_bottom = 16
+
+[node name="VBox" type="VBoxContainer" parent="MagicStoryUI/DialogueBox/Margin" unique_id=823699155]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 12
+
+[node name="SpeakerLabel" type="Label" parent="MagicStoryUI/DialogueBox/Margin/VBox" unique_id=1415030837]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.941176, 0.823529, 0.45098, 1)
+theme_override_colors/font_outline_color = Color(0.07, 0.05, 0.09, 1)
+theme_override_constants/outline_size = 3
+theme_override_fonts/font = SubResource("FontVariation_speaker_bold")
+theme_override_font_sizes/font_size = 30
+text = "ปรมาจารย์"
+
+[node name="DialogueLabel" type="Label" parent="MagicStoryUI/DialogueBox/Margin/VBox" unique_id=1145092419]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_outline_color = Color(0.07, 0.05, 0.09, 1)
+theme_override_constants/line_spacing = 8
+theme_override_constants/outline_size = 2
+theme_override_fonts/font = ExtResource("39_font")
+theme_override_font_sizes/font_size = 26
+text = "อ้าว เวล... เกิดอะไรขึ้นเนี่ย แล้วทำไมดูเหนื่อยมอมแมมแบบนี้ล่ะ?"
+autowrap_mode = 3
+
+[node name="ArrowOverlay" type="Control" parent="MagicStoryUI/DialogueBox" unique_id=1928374614]
+layout_mode = 2
+mouse_filter = 2
+
+[node name="ArrowWrapper" type="Control" parent="MagicStoryUI/DialogueBox/ArrowOverlay" unique_id=1928374616]
+layout_mode = 1
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -48.0
+offset_top = -34.0
+offset_right = -22.0
+offset_bottom = -16.0
+grow_horizontal = 0
+grow_vertical = 0
+mouse_filter = 2
+
+[node name="ContinueArrow" type="TextureRect" parent="MagicStoryUI/DialogueBox/ArrowOverlay/ArrowWrapper" unique_id=607048491]
+layout_mode = 0
+offset_right = 26.0
+offset_bottom = 18.0
+mouse_filter = 2
+texture = SubResource("AtlasTexture_arrow")
+expand_mode = 1
+stretch_mode = 5
+
+
+[node name="TheEndContainer" type="Control" parent="MagicStoryUI" unique_id=305941743]
+visible = false
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="DarkOverlay" type="ColorRect" parent="MagicStoryUI/TheEndContainer" unique_id=1835182047]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 0, 0, 0)
+
+[node name="SummaryContainer" type="VBoxContainer" parent="MagicStoryUI/TheEndContainer" unique_id=515662229]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -700.0
+offset_top = -90.0
+offset_right = 700.0
+offset_bottom = 90.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme_override_constants/separation = 22
+alignment = 1
+
+[node name="SummaryLine1" type="Label" parent="MagicStoryUI/TheEndContainer/SummaryContainer" unique_id=515662231]
+modulate = Color(1, 1, 1, 0)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.980392, 0.976471, 0.964706, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 6
+theme_override_fonts/font = ExtResource("39_font")
+theme_override_font_sizes/font_size = 30
+text = "แม้จุดเริ่มต้นจะเกิดจากความโก๊ะของปรมาจารย์"
+horizontal_alignment = 1
+
+[node name="SummaryLine2" type="Label" parent="MagicStoryUI/TheEndContainer/SummaryContainer" unique_id=515662232]
+modulate = Color(1, 1, 1, 0)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.980392, 0.976471, 0.964706, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 6
+theme_override_fonts/font = ExtResource("39_font")
+theme_override_font_sizes/font_size = 30
+text = "แต่เวลก็ได้เติบโตและกอบกู้คัมภีร์เวทต้นกำเนิด"
+horizontal_alignment = 1
+
+[node name="SummaryLine3" type="Label" parent="MagicStoryUI/TheEndContainer/SummaryContainer" unique_id=515662233]
+modulate = Color(1, 1, 1, 0)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.980392, 0.976471, 0.964706, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 6
+theme_override_fonts/font = ExtResource("39_font")
+theme_override_font_sizes/font_size = 30
+text = "คืนความสงบสุขให้แก่อาณาจักรได้สำเร็จ"
+horizontal_alignment = 1
+
+[node name="ContinuePrompt" type="Label" parent="MagicStoryUI/TheEndContainer" unique_id=1494280456]
+modulate = Color(1, 1, 1, 0)
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -300.0
+offset_top = -110.0
+offset_right = 300.0
+offset_bottom = -70.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_colors/font_color = Color(0.980392, 0.976471, 0.964706, 0.95)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 0.85)
+theme_override_constants/outline_size = 4
+theme_override_fonts/font = ExtResource("39_font")
+theme_override_font_sizes/font_size = 22
+text = "คลิกหน้าจอเพื่อไปต่อ"
+horizontal_alignment = 1
+
+[node name="CreditsContainer" type="Control" parent="MagicStoryUI" unique_id=305941744]
+visible = false
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="DarkOverlay" type="ColorRect" parent="MagicStoryUI/CreditsContainer" unique_id=1835182048]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 0, 0, 1)
+
+[node name="MagicParticles" type="CPUParticles2D" parent="MagicStoryUI/CreditsContainer" unique_id=1835182050]
+position = Vector2(960, 540)
+amount = 55
+lifetime = 6.0
+preprocess = 3.0
+texture = SubResource("GradientTexture2D_magic_speck")
+emission_shape = 3
+emission_rect_extents = Vector2(960, 540)
+direction = Vector2(0.15, -1)
+spread = 35.0
+gravity = Vector2(0, -12)
+initial_velocity_min = 12.0
+initial_velocity_max = 35.0
+angular_velocity_min = -30.0
+angular_velocity_max = 30.0
+scale_amount_min = 0.35
+scale_amount_max = 0.9
+color = Color(0.980392, 0.976471, 0.964706, 0.85)
+color_ramp = SubResource("Gradient_particle_fade")
+
+[node name="LeftContent" type="VBoxContainer" parent="MagicStoryUI/CreditsContainer" unique_id=515662230]
+layout_mode = 1
+anchors_preset = 4
+anchor_top = 0.5
+anchor_bottom = 0.5
+offset_left = 120.0
+offset_top = -240.0
+offset_right = 880.0
+offset_bottom = 160.0
+grow_vertical = 2
+theme_override_constants/separation = 22
+alignment = 1
+
+[node name="GameTitleLabel" type="Label" parent="MagicStoryUI/CreditsContainer/LeftContent" unique_id=373728280]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.88, 0.45, 1)
+theme_override_colors/font_shadow_color = Color(0.9, 0.6, 0.1, 0.5)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/shadow_offset_x = 0
+theme_override_constants/shadow_offset_y = 0
+theme_override_constants/outline_size = 12
+theme_override_constants/shadow_outline_size = 20
+theme_override_fonts/font = ExtResource("39_font")
+theme_override_font_sizes/font_size = 68
+text = "GIT DI WAA"
+
+[node name="ThankYouLabel" type="Label" parent="MagicStoryUI/CreditsContainer/LeftContent" unique_id=1892837101]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.980392, 0.976471, 0.964706, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 0.95)
+theme_override_constants/outline_size = 6
+theme_override_fonts/font = ExtResource("39_font")
+theme_override_font_sizes/font_size = 36
+text = "Thank You for Playing"
+
+[node name="GratitudeLabel" type="Label" parent="MagicStoryUI/CreditsContainer/LeftContent" unique_id=1892837102]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.980392, 0.976471, 0.964706, 0.95)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 0.95)
+theme_override_constants/outline_size = 6
+theme_override_fonts/font = ExtResource("39_font")
+theme_override_font_sizes/font_size = 28
+text = "ขอบคุณที่ร่วมเดินทางไปกับเรา"
+
+[node name="RightCharactersContainer" type="HBoxContainer" parent="MagicStoryUI/CreditsContainer" unique_id=1892837103]
+texture_filter = 1
+layout_mode = 1
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -960.0
+offset_top = -430.0
+offset_right = -100.0
+offset_bottom = -140.0
+grow_horizontal = 0
+grow_vertical = 0
+theme_override_constants/separation = 40
+alignment = 1
+
+[node name="CharVel" type="VBoxContainer" parent="MagicStoryUI/CreditsContainer/RightCharactersContainer" unique_id=1892837104]
+layout_mode = 2
+theme_override_constants/separation = 12
+alignment = 2
+
+[node name="NameLabel" type="Label" parent="MagicStoryUI/CreditsContainer/RightCharactersContainer/CharVel" unique_id=1892837105]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.980392, 0.976471, 0.964706, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 6
+theme_override_fonts/font = ExtResource("39_font")
+theme_override_font_sizes/font_size = 30
+text = "เวล"
+horizontal_alignment = 1
+
+[node name="SpriteRect" type="TextureRect" parent="MagicStoryUI/CreditsContainer/RightCharactersContainer/CharVel" unique_id=1892837106]
+texture_filter = 1
+custom_minimum_size = Vector2(132, 228)
+layout_mode = 2
+texture = ExtResource("6_vel_idle")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="CharMewla" type="VBoxContainer" parent="MagicStoryUI/CreditsContainer/RightCharactersContainer" unique_id=1892837107]
+layout_mode = 2
+theme_override_constants/separation = 12
+alignment = 2
+
+[node name="NameLabel" type="Label" parent="MagicStoryUI/CreditsContainer/RightCharactersContainer/CharMewla" unique_id=1892837108]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.980392, 0.976471, 0.964706, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 6
+theme_override_fonts/font = ExtResource("39_font")
+theme_override_font_sizes/font_size = 30
+text = "มิวรา"
+horizontal_alignment = 1
+
+[node name="SpriteRect" type="TextureRect" parent="MagicStoryUI/CreditsContainer/RightCharactersContainer/CharMewla" unique_id=1892837109]
+texture_filter = 1
+custom_minimum_size = Vector2(132, 228)
+layout_mode = 2
+texture = ExtResource("48_mewla")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="CharMaster" type="VBoxContainer" parent="MagicStoryUI/CreditsContainer/RightCharactersContainer" unique_id=1892837110]
+layout_mode = 2
+theme_override_constants/separation = 12
+alignment = 2
+
+[node name="NameLabel" type="Label" parent="MagicStoryUI/CreditsContainer/RightCharactersContainer/CharMaster" unique_id=1892837111]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.980392, 0.976471, 0.964706, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 6
+theme_override_fonts/font = ExtResource("39_font")
+theme_override_font_sizes/font_size = 30
+text = "ปรมาจารย์"
+horizontal_alignment = 1
+
+[node name="SpriteRect" type="TextureRect" parent="MagicStoryUI/CreditsContainer/RightCharactersContainer/CharMaster" unique_id=1892837112]
+texture_filter = 1
+custom_minimum_size = Vector2(132, 228)
+layout_mode = 2
+texture = ExtResource("13_master_idle")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="CharGuardian" type="VBoxContainer" parent="MagicStoryUI/CreditsContainer/RightCharactersContainer" unique_id=1892837113]
+layout_mode = 2
+theme_override_constants/separation = 12
+alignment = 2
+
+[node name="NameLabel" type="Label" parent="MagicStoryUI/CreditsContainer/RightCharactersContainer/CharGuardian" unique_id=1892837114]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.980392, 0.976471, 0.964706, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 6
+theme_override_fonts/font = ExtResource("39_font")
+theme_override_font_sizes/font_size = 30
+text = "ผู้พิทักษ์"
+horizontal_alignment = 1
+
+[node name="SpriteRect" type="TextureRect" parent="MagicStoryUI/CreditsContainer/RightCharactersContainer/CharGuardian" unique_id=1892837115]
+texture_filter = 1
+custom_minimum_size = Vector2(132, 228)
+layout_mode = 2
+texture = SubResource("AtlasTexture_guardian_idle")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="BottomBar" type="Panel" parent="MagicStoryUI/CreditsContainer" unique_id=1892837116]
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -140.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_styles/panel = SubResource("StyleBoxFlat_bottom_bar")
+
+[node name="DevelopedByLabel" type="Label" parent="MagicStoryUI/CreditsContainer/BottomBar" unique_id=1892837117]
+layout_mode = 1
+anchors_preset = 4
+anchor_top = 0.5
+anchor_bottom = 0.5
+offset_left = 120.0
+offset_top = -20.0
+offset_right = 720.0
+offset_bottom = 20.0
+grow_vertical = 2
+theme_override_colors/font_color = Color(0.980392, 0.976471, 0.964706, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 4
+theme_override_fonts/font = ExtResource("39_font")
+theme_override_font_sizes/font_size = 24
+text = "Developed by Git Di Waa Team"
+vertical_alignment = 1
+
+[node name="ReturnMenuBtn" type="Button" parent="MagicStoryUI/CreditsContainer/BottomBar" unique_id=1587123478]
+layout_mode = 1
+anchors_preset = 6
+anchor_left = 1.0
+anchor_top = 0.5
+anchor_right = 1.0
+anchor_bottom = 0.5
+offset_left = -380.0
+offset_top = -32.0
+offset_right = -100.0
+offset_bottom = 32.0
+grow_horizontal = 0
+grow_vertical = 2
+mouse_default_cursor_shape = 2
+theme_override_colors/font_color = Color(0.980392, 0.976471, 0.964706, 1)
+theme_override_colors/font_hover_color = Color(0.980392, 0.976471, 0.964706, 1)
+theme_override_colors/font_pressed_color = Color(0.980392, 0.976471, 0.964706, 1)
+theme_override_colors/font_focus_color = Color(0.980392, 0.976471, 0.964706, 1)
+theme_override_fonts/font = ExtResource("39_font")
+theme_override_font_sizes/font_size = 26
+theme_override_styles/normal = SubResource("StyleBoxFlat_btn_normal")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_btn_hover")
+theme_override_styles/hover = SubResource("StyleBoxFlat_btn_hover")
+theme_override_styles/focus = SubResource("StyleBoxFlat_btn_hover")
+text = "กลับสู่เมนูหลัก"

@@ -15,163 +15,188 @@ permissions:
   contents: read
 
 env:
-  DOTNET_NOLOGO: true
-  DOTNET_CLI_TELEMETRY_OPTOUT: true
-  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
+  # ต้องเป็น Godot รุ่นมาตรฐาน (ไม่ใช่ .NET/Mono) และ major.minor ต้องตรงกับ config/features ใน project.godot
   GODOT_VERSION: 4.7.2
+  GODOT_PROJECT: game
 
 jobs:
   # ---------------------------------------------------------------------------
-  # C#: Core / RealGit / Cli (no Godot needed) + the real-git test runner
+  # Hygiene: ตรวจโครงสร้างโปรเจกต์ GDScript โดยไม่ต้องใช้ Godot
+  #  - ไม่มีไฟล์ C# / .NET หลงเหลือ และไม่มี .godot/ ถูก commit
+  #  - ทุก .gd ใน game/ มี .uid คู่กัน (Godot 4.4+ ใช้ .uid ผูก reference ของสคริปต์)
+  #  - Godot ใน CI ตรงกับเวอร์ชันที่ project.godot ระบุ
   # ---------------------------------------------------------------------------
-  dotnet:
-    name: C# build & tests (${{ matrix.os }})
+  hygiene:
+    name: Project hygiene
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: No C# / .NET leftovers or editor cache committed
+        run: |
+          bad=$(git ls-files | grep -E '\.(cs|csproj|sln|slnx)$|(^|/)\.godot/|(^|/)\.mono/|(^|/)(bin|obj)/' || true)
+          if [ -n "$bad" ]; then
+            echo "$bad"
+            echo "::error::พบไฟล์ C#/.NET หรือแคชของ Godot ที่ไม่ควรอยู่ใน repository (โปรเจกต์นี้ใช้ GDScript ล้วน)"
+            exit 1
+          fi
+
+      # ตรวจเฉพาะใน game/ เพราะ Godot สร้าง .uid ให้เฉพาะสคริปต์ที่อยู่ใน project
+      # (.github/scripts และ tests/ รันด้วย --script จึงไม่มี .uid)
+      - name: Every GDScript file in the Godot project has a .uid file
+        run: |
+          missing=0
+          while IFS= read -r f; do
+            if ! git ls-files --error-unmatch "$f.uid" >/dev/null 2>&1; then
+              echo "::error file=$f::ไม่มี $f.uid ที่ commit คู่กัน (เปิดโปรเจกต์ใน Godot editor แล้ว commit ไฟล์ .uid ด้วย)"
+              missing=1
+            fi
+          done < <(git ls-files "$GODOT_PROJECT/*.gd")
+          exit $missing
+
+      - name: No orphan .uid files in the Godot project
+        run: |
+          orphan=0
+          while IFS= read -r u; do
+            if [ ! -f "${u%.uid}" ]; then
+              echo "::error file=$u::ไฟล์ .uid ไม่มีสคริปต์คู่กัน (ลบ .uid ที่ค้างอยู่)"
+              orphan=1
+            fi
+          done < <(git ls-files "$GODOT_PROJECT/*.gd.uid")
+          exit $orphan
+
+      - name: Godot version matches project.godot
+        run: |
+          expected="${GODOT_VERSION%.*}"
+          actual=$(sed -n 's/^config\/features=PackedStringArray("\([0-9]*\.[0-9]*\)".*/\1/p' "$GODOT_PROJECT/project.godot")
+          echo "CI Godot: $GODOT_VERSION | project.godot features: $actual"
+          if [ "$expected" != "$actual" ]; then
+            echo "::error file=$GODOT_PROJECT/project.godot::config/features ($actual) ไม่ตรงกับ GODOT_VERSION ($GODOT_VERSION) ใน ci.yml"
+            exit 1
+          fi
+
+  # ---------------------------------------------------------------------------
+  # Real-git engine (GDScript): import project, run integration tests with a
+  # real Git, then a CLI smoke test. Headless – no UI / rendering needed.
+  # ---------------------------------------------------------------------------
+  engine:
+    name: Engine tests (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 20
+    timeout-minutes: 15
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest]
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: 10.0.x
-
-      - name: Cache NuGet packages
-        uses: actions/cache@v4
-        with:
-          path: ~/.nuget/packages
-          key: nuget-dotnet-${{ runner.os }}-${{ hashFiles('src/**/*.csproj', 'tests/**/*.csproj') }}
-          restore-keys: nuget-dotnet-${{ runner.os }}-
-
-      # The committed NuGet.Config points at a local macOS Godot install; CI uses nuget.org.
-      - name: Use nuget.org as package source
-        run: |
-          cat > NuGet.Config <<'XML'
-          <?xml version="1.0" encoding="utf-8"?>
-          <configuration>
-            <packageSources>
-              <clear />
-              <add key="nuget.org" value="https://api.nuget.org/v3/index.json" />
-            </packageSources>
-          </configuration>
-          XML
-
-      - name: Show tool versions
-        run: |
-          dotnet --info
-          git --version
-
-      - name: Restore
-        run: |
-          dotnet restore src/GitDiwaa.Core/GitDiwaa.Core.csproj
-          dotnet restore src/GitDiwaa.RealGit/GitDiwaa.RealGit.csproj
-          dotnet restore src/GitDiwaa.Cli/GitDiwaa.Cli.csproj
-          dotnet restore tests/GitDiwaa.RealGit.Tests/GitDiwaa.RealGit.Tests.csproj
-
-      - name: Build (Release, warnings as errors)
-        run: |
-          dotnet build tests/GitDiwaa.RealGit.Tests/GitDiwaa.RealGit.Tests.csproj -c Release --no-restore -warnaserror
-          dotnet build src/GitDiwaa.Cli/GitDiwaa.Cli.csproj -c Release --no-restore -warnaserror
-
-      - name: Check for vulnerable / deprecated packages
-        run: |
-          dotnet list tests/GitDiwaa.RealGit.Tests/GitDiwaa.RealGit.Tests.csproj package --vulnerable --include-transitive 2>&1 | tee vuln.txt
-          if grep -q "has the following vulnerable packages" vuln.txt; then
-            echo "::error::Vulnerable packages found"; exit 1
-          fi
-
-      - name: Configure git identity for tests
-        run: |
-          git config --global user.name "CI"
-          git config --global user.email "ci@git-diwaa.local"
-          git config --global init.defaultBranch main
-
-      - name: Run real-git tests (Debug)
-        run: dotnet run --project tests/GitDiwaa.RealGit.Tests/GitDiwaa.RealGit.Tests.csproj -c Debug
-
-      - name: Run real-git tests (Release)
-        run: dotnet run --project tests/GitDiwaa.RealGit.Tests/GitDiwaa.RealGit.Tests.csproj -c Release --no-restore
-
-      - name: CLI smoke test
+        os: [ubuntu-latest]
+    defaults:
+      run:
         shell: bash
-        run: |
-          printf 'git --version\ngit config --global user.name "CI"\ngit config --global user.email ci@git-diwaa.local\ngit init\nwrite README.md Hello\ngit add README.md\ngit commit -m "ci smoke"\nsnapshot\nexit\n' \
-            | dotnet run --project src/GitDiwaa.Cli/GitDiwaa.Cli.csproj -c Release --no-build | tee cli.txt
-          grep -q '"Subject": "ci smoke"' cli.txt
-
-  # ---------------------------------------------------------------------------
-  # Godot: build the C# game assembly, import assets, load every scene headless
-  # ---------------------------------------------------------------------------
-  godot:
-    name: Godot build & scene check
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
-    env:
-      GODOT_PROJECT: src/GitDiwaa.Godot
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: 10.0.x
-
-      - name: Use nuget.org as package source
-        run: |
-          cat > NuGet.Config <<'XML'
-          <?xml version="1.0" encoding="utf-8"?>
-          <configuration>
-            <packageSources>
-              <clear />
-              <add key="nuget.org" value="https://api.nuget.org/v3/index.json" />
-            </packageSources>
-          </configuration>
-          XML
-
-      - name: Cache NuGet packages
-        uses: actions/cache@v4
-        with:
-          path: ~/.nuget/packages
-          key: nuget-godot-${{ runner.os }}-${{ hashFiles('src/**/*.csproj') }}
-          restore-keys: nuget-godot-${{ runner.os }}-
-
-      - name: Setup Godot (.NET)
+      - name: Setup Godot
         uses: chickensoft-games/setup-godot@v2
         with:
           version: ${{ env.GODOT_VERSION }}
-          use-dotnet: true
+          use-dotnet: false
+          include-templates: false
+
+      - name: Show tool versions
+        run: |
+          godot --version
+          git --version
+
+      # import รอบแรกสร้างแคชของ asset/class_name ส่วนรอบสองให้ global_script_class_cache
+      # ครบ (สคริปต์ที่อ้าง class_name ข้ามกันจะ parse ผ่านในรอบหลัง)
+      - name: Import project (builds the script class cache)
+        run: |
+          godot --headless --path "$GODOT_PROJECT" --import --quit
+          godot --headless --path "$GODOT_PROJECT" --import --quit
+
+      - name: Run real-git integration tests
+        run: |
+          set -o pipefail
+          godot --headless --path "$GODOT_PROJECT" \
+            --script "$GITHUB_WORKSPACE/tests/engine/run_tests.gd" 2>&1 | tee tests.log
+          if grep -qE "SCRIPT ERROR|Parse Error|Failed loading resource|^FAIL" tests.log; then
+            echo "::error::Engine tests reported errors"; exit 1
+          fi
+          grep -qE "^[0-9]+/[0-9]+ real-Git integration tests passed" tests.log
+
+      - name: CLI smoke test
+        run: |
+          set -o pipefail
+          printf '%s\n' \
+            'git --version' \
+            'git config --global user.name "CI"' \
+            'git config --global user.email ci@git-diwaa.local' \
+            'git init' \
+            'write README.md Hello' \
+            'git add README.md' \
+            'git commit -m "ci smoke"' \
+            'snapshot' \
+            'exit' \
+            | godot --headless --path "$GODOT_PROJECT" --script res://engine/cli/cli_main.gd 2>&1 | tee cli.txt
+          if grep -qE "SCRIPT ERROR|Parse Error|Failed loading resource" cli.txt; then
+            echo "::error::CLI raised script errors"; exit 1
+          fi
+          grep -q '"Subject": "ci smoke"' cli.txt
+
+      - name: Upload logs on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: engine-logs-${{ matrix.os }}
+          path: |
+            tests.log
+            cli.txt
+          if-no-files-found: ignore
+
+  # ---------------------------------------------------------------------------
+  # Godot: import assets, load every script/scene/resource headless (catches
+  # GDScript parse errors and broken scene references), run the main scene for
+  # a few frames
+  # ---------------------------------------------------------------------------
+  godot:
+    name: Godot scene check
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Godot
+        uses: chickensoft-games/setup-godot@v2
+        with:
+          version: ${{ env.GODOT_VERSION }}
+          use-dotnet: false
           include-templates: false
 
       - name: Godot version
         run: godot --version
 
-      - name: Restore
-        run: dotnet restore ${{ env.GODOT_PROJECT }}/GitDiwaa.Godot.csproj
-
-      - name: Build game assembly (warnings as errors)
-        run: dotnet build ${{ env.GODOT_PROJECT }}/GitDiwaa.Godot.csproj -c Debug --no-restore -warnaserror
-
       - name: Import assets headless
-        run: godot --headless --path ${{ env.GODOT_PROJECT }} --import --quit
-
-      - name: Build via Godot (generates C# glue)
-        run: godot --headless --path ${{ env.GODOT_PROJECT }} --build-solutions --quit
-
-      - name: Load & instantiate every scene/resource
         run: |
-          godot --headless --path ${{ env.GODOT_PROJECT }} \
+          godot --headless --path "$GODOT_PROJECT" --import --quit
+          godot --headless --path "$GODOT_PROJECT" --import --quit
+
+      - name: Load & instantiate every script/scene/resource
+        run: |
+          set -o pipefail
+          godot --headless --path "$GODOT_PROJECT" \
             --script "$GITHUB_WORKSPACE/.github/scripts/check_scenes.gd" 2>&1 | tee scenes.log
-          test "${PIPESTATUS[0]}" -eq 0
-          if grep -qE "SCRIPT ERROR|Parse Error|Failed loading resource" scenes.log; then
+          if grep -qE "SCRIPT ERROR|Parse Error|Failed loading resource|^FAIL" scenes.log; then
             echo "::error::Godot reported script/resource errors"; exit 1
           fi
+          # UID ใน .tscn/.tres ที่ชี้ไปหา resource ไม่เจอ: ยังโหลดได้ด้วย path จึงเตือนอย่างเดียว ไม่ทำให้ CI ล้ม
+          grep -E "invalid UID" scenes.log | sort -u | while IFS= read -r line; do
+            echo "::warning::${line}"
+          done || true
 
       - name: Smoke-run main scene for a few frames
         run: |
-          timeout 120 godot --headless --path ${{ env.GODOT_PROJECT }} --quit-after 120 2>&1 | tee run.log
-          if grep -qE "SCRIPT ERROR|Unhandled exception|System\..*Exception" run.log; then
+          set -o pipefail
+          timeout 120 godot --headless --path "$GODOT_PROJECT" --quit-after 120 2>&1 | tee run.log
+          if grep -qE "SCRIPT ERROR|Parse Error|Failed loading resource" run.log; then
             echo "::error::Main scene raised errors at startup"; exit 1
           fi
 
@@ -183,13 +208,17 @@ jobs:
           path: |
             scenes.log
             run.log
+          if-no-files-found: ignore
 
   ci-success:
     name: CI success
     if: always()
-    needs: [dotnet, godot]
+    needs: [hygiene, engine, godot]
     runs-on: ubuntu-latest
     steps:
-      - run: |
-          echo "dotnet=${{ needs.dotnet.result }} godot=${{ needs.godot.result }}"
-          test "${{ needs.dotnet.result }}" = "success" && test "${{ needs.godot.result }}" = "success"
+      - name: Require every job to succeed
+        run: |
+          echo "hygiene=${{ needs.hygiene.result }} engine=${{ needs.engine.result }} godot=${{ needs.godot.result }}"
+          test "${{ needs.hygiene.result }}" = "success"
+          test "${{ needs.engine.result }}" = "success"
+          test "${{ needs.godot.result }}" = "success"
