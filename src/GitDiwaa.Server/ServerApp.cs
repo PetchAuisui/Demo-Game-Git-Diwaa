@@ -26,13 +26,9 @@ public static class ServerApp
 
         var builder = WebApplication.CreateBuilder(options);
 
-        // Ensure consistent throwing of BadHttpRequestException across all environments
         builder.Services.Configure<RouteHandlerOptions>(o => o.ThrowOnBadRequest = true);
-
-        // Our exception handler logs real 500s itself; silence the built-in duplicate that also logs every malformed request
         builder.Logging.AddFilter("Microsoft.AspNetCore.Diagnostics.ExceptionHandlerMiddleware", LogLevel.None);
 
-        // Enums serialized as string names across all responses
         builder.Services.ConfigureHttpJsonOptions(o =>
         {
             o.SerializerOptions.Converters.Add(new JsonStringEnumConverter());
@@ -46,10 +42,10 @@ public static class ServerApp
         builder.Services.AddSingleton(TimeProvider.System);
         builder.Services.AddSingleton(new AccountOptions());
         builder.Services.AddSingleton<AccountService>();
+        builder.Services.AddSingleton<RequireSessionFilter>();
 
         var app = builder.Build();
 
-        // Centralized error handler
         app.UseExceptionHandler(exceptionHandlerApp =>
         {
             exceptionHandlerApp.Run(async context =>

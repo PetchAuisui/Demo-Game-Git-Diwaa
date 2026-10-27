@@ -117,5 +117,89 @@ internal static class AccountApiTests
 
             Assert.Contains(body, "\"code\":\"InvalidCredentials\"");
         });
+        await runner.RunAsync("Api_Me_WithToken_200_WithoutToken_401", async static () =>
+        {
+            await using var host = await TestServerHost.StartNewAsync();
+            var reg = new RegisterRequest("mage01", "Arch Mage", "mage@example.com", "S3cret-Pass!");
+            await host.Client.PostAsJsonAsync("/api/v1/accounts/register", reg);
+
+            // Without token -> 401 with WWW-Authenticate header
+            var noTokenResp = await host.Client.GetAsync("/api/v1/accounts/me");
+            Assert.Equal(HttpStatusCode.Unauthorized, noTokenResp.StatusCode);
+            Assert.Equal("Bearer", noTokenResp.Headers.WwwAuthenticate.ToString());
+
+            // With valid token
+            var loginResp = await host.Client.PostAsJsonAsync("/api/v1/accounts/login", new LoginRequest("mage01", "S3cret-Pass!", false));
+            var loginData = await loginResp.Content.ReadFromJsonAsync<LoginResponse>();
+
+            using var reqMsg = new HttpRequestMessage(HttpMethod.Get, "/api/v1/accounts/me");
+            reqMsg.Headers.Add("Authorization", $"Bearer {loginData!.Token}");
+
+            var authResp = await host.Client.SendAsync(reqMsg);
+            Assert.Equal(HttpStatusCode.OK, authResp.StatusCode);
+
+            var body = await authResp.Content.ReadAsStringAsync();
+            Assert.Contains(body, "mage01");
+            Assert.Contains(body, "Arch Mage");
+        });
+
+        await runner.RunAsync("Api_Me_RejectsTokenInQueryString", async static () =>
+        {
+            await using var host = await TestServerHost.StartNewAsync();
+            var reg = new RegisterRequest("mage01", "Arch Mage", "mage@example.com", "S3cret-Pass!");
+            await host.Client.PostAsJsonAsync("/api/v1/accounts/register", reg);
+
+            var loginResp = await host.Client.PostAsJsonAsync("/api/v1/accounts/login", new LoginRequest("mage01", "S3cret-Pass!", false));
+            var loginData = await loginResp.Content.ReadFromJsonAsync<LoginResponse>();
+
+            // Passing token via query string must be rejected
+            var response = await host.Client.GetAsync($"/api/v1/accounts/me?token={loginData!.Token}");
+            Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+        });
+
+        await runner.RunAsync("Api_Refresh_ReturnsNewToken_NoStore", async static () =>
+        {
+            await using var host = await TestServerHost.StartNewAsync();
+            var reg = new RegisterRequest("mage01", "Arch Mage", "mage@example.com", "S3cret-Pass!");
+            await host.Client.PostAsJsonAsync("/api/v1/accounts/register", reg);
+
+            var loginResp = await host.Client.PostAsJsonAsync("/api/v1/accounts/login", new LoginRequest("mage01", "S3cret-Pass!", false));
+            var loginData = await loginResp.Content.ReadFromJsonAsync<LoginResponse>();
+
+            using var refreshReq = new HttpRequestMessage(HttpMethod.Post, "/api/v1/accounts/refresh");
+            refreshReq.Headers.Add("Authorization", $"bearer {loginData!.Token}"); // Case-insensitive bearer
+
+            var refreshResp = await host.Client.SendAsync(refreshReq);
+            Assert.Equal(HttpStatusCode.OK, refreshResp.StatusCode);
+            Assert.Equal("no-store", refreshResp.Headers.CacheControl?.ToString());
+
+            var refreshData = await refreshResp.Content.ReadFromJsonAsync<LoginResponse>();
+            Assert.True(refreshData is not null);
+            Assert.False(string.Equals(loginData.Token, refreshData!.Token, StringComparison.Ordinal));
+            Assert.Equal(43, refreshData.Token.Length);
+        });
+
+        await runner.RunAsync("Api_Logout_Returns204_ThenMe401", async static () =>
+        {
+            await using var host = await TestServerHost.StartNewAsync();
+            var reg = new RegisterRequest("mage01", "Arch Mage", "mage@example.com", "S3cret-Pass!");
+            await host.Client.PostAsJsonAsync("/api/v1/accounts/register", reg);
+
+            var loginResp = await host.Client.PostAsJsonAsync("/api/v1/accounts/login", new LoginRequest("mage01", "S3cret-Pass!", false));
+            var loginData = await loginResp.Content.ReadFromJsonAsync<LoginResponse>();
+
+            using var logoutReq = new HttpRequestMessage(HttpMethod.Post, "/api/v1/accounts/logout");
+            logoutReq.Headers.Add("Authorization", $"Bearer {loginData!.Token}");
+
+            var logoutResp = await host.Client.SendAsync(logoutReq);
+            Assert.Equal(HttpStatusCode.NoContent, logoutResp.StatusCode);
+
+            // After logout, accessing /me with that token must return 401
+            using var meReq = new HttpRequestMessage(HttpMethod.Get, "/api/v1/accounts/me");
+            meReq.Headers.Add("Authorization", $"Bearer {loginData.Token}");
+
+            var meResp = await host.Client.SendAsync(meReq);
+            Assert.Equal(HttpStatusCode.Unauthorized, meResp.StatusCode);
+        });
     }
 }

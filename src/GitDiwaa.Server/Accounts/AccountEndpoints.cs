@@ -1,4 +1,5 @@
 using GitDiwaa.Online.Accounts.Contracts;
+using GitDiwaa.Server.Security;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
@@ -66,6 +67,49 @@ public static class AccountEndpoints
 
             var apiError = new ApiError(result.Error ?? AuthErrorCode.Unknown, result.FieldErrors);
             return Results.Json(apiError, statusCode: statusCode);
+        });
+
+        group.MapGet("/me", (HttpContext httpContext) =>
+        {
+            var session = (AuthenticatedSession)httpContext.Items[RequireSessionFilter.SessionItemKey]!;
+            return Results.Json(session.Profile, statusCode: StatusCodes.Status200OK);
+        }).AddEndpointFilter<RequireSessionFilter>();
+
+        group.MapPost("/refresh", async (HttpRequest request, HttpResponse response, AccountService accountService, CancellationToken ct) =>
+        {
+            response.Headers.CacheControl = "no-store";
+
+            if (!RequireSessionFilter.TryReadBearerToken(request, out string token))
+            {
+                response.Headers.WWWAuthenticate = "Bearer";
+                var error = new ApiError(AuthErrorCode.InvalidCredentials, []);
+                return Results.Json(error, statusCode: StatusCodes.Status401Unauthorized);
+            }
+
+            var result = await accountService.RefreshAsync(token, ct);
+            if (result.Succeeded && result.Value is not null)
+            {
+                var loginResponse = new LoginResponse(
+                    result.Value.Profile,
+                    result.Value.Token,
+                    result.Value.ExpiresAt);
+
+                return Results.Json(loginResponse, statusCode: StatusCodes.Status200OK);
+            }
+
+            response.Headers.WWWAuthenticate = "Bearer";
+            var apiError = new ApiError(AuthErrorCode.InvalidCredentials, []);
+            return Results.Json(apiError, statusCode: StatusCodes.Status401Unauthorized);
+        });
+
+        group.MapPost("/logout", async (HttpRequest request, AccountService accountService, CancellationToken ct) =>
+        {
+            if (RequireSessionFilter.TryReadBearerToken(request, out string token))
+            {
+                await accountService.LogoutAsync(token, ct);
+            }
+
+            return Results.NoContent();
         });
     }
 }

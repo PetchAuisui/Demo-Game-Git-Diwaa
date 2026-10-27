@@ -222,5 +222,147 @@ internal static class AccountServiceTests
             Assert.Contains(text, "***");
             Assert.Contains(text, "mage01");
         });
+        // --- Session Validation, Refresh & Logout Tests (7 ข้อ) ---
+
+        await runner.RunAsync("Validate_ValidToken_ReturnsProfile_UpdatesLastUsed", async static () =>
+        {
+            var ctx = AccountTestContext.Create();
+            await ctx.Service.RegisterAsync(new RegisterRequest("mage01", "Mage", "mage@example.com", "S3cret-Pass!"));
+            var login = await ctx.Service.LoginAsync(new LoginRequest("mage01", "S3cret-Pass!", false));
+
+            ctx.Time.Advance(TimeSpan.FromMinutes(5));
+            var validate = await ctx.Service.ValidateSessionAsync(login.Value!.Token);
+
+            Assert.True(validate.Succeeded);
+            Assert.Equal("mage01", validate.Value?.Profile.Username);
+
+            Assert.True(ctx.TokenService.TryHashToken(login.Value!.Token, out string hash));
+            var storedSession = await ctx.Sessions.FindByTokenHashAsync(hash);
+            Assert.Equal(AccountTestContext.StartTime.AddMinutes(5), storedSession?.LastUsedAt);
+        });
+
+        await runner.RunAsync("Validate_Expired_Revoked_Malformed_AllInvalidCredentials", async static () =>
+        {
+            var ctx = AccountTestContext.Create();
+            await ctx.Service.RegisterAsync(new RegisterRequest("mage01", "Mage", "mage@example.com", "S3cret-Pass!"));
+            var login = await ctx.Service.LoginAsync(new LoginRequest("mage01", "S3cret-Pass!", false));
+            string token = login.Value!.Token;
+
+            // Malformed token
+            var malformedResult = await ctx.Service.ValidateSessionAsync("abc");
+            Assert.False(malformedResult.Succeeded);
+            Assert.Equal(AuthErrorCode.InvalidCredentials, malformedResult.Error);
+
+            // Expired token (> 12 hours)
+            ctx.Time.Advance(TimeSpan.FromHours(12) + TimeSpan.FromSeconds(1));
+            var expiredResult = await ctx.Service.ValidateSessionAsync(token);
+            Assert.False(expiredResult.Succeeded);
+            Assert.Equal(AuthErrorCode.InvalidCredentials, expiredResult.Error);
+
+            // Revoked token
+            await ctx.Service.LogoutAsync(token);
+            var revokedResult = await ctx.Service.ValidateSessionAsync(token);
+            Assert.False(revokedResult.Succeeded);
+            Assert.Equal(AuthErrorCode.InvalidCredentials, revokedResult.Error);
+        });
+
+        await runner.RunAsync("Validate_DisabledUser_InvalidCredentials", async static () =>
+        {
+            var ctx = AccountTestContext.Create();
+            var reg = await ctx.Service.RegisterAsync(new RegisterRequest("mage01", "Mage", "mage@example.com", "S3cret-Pass!"));
+            var login = await ctx.Service.LoginAsync(new LoginRequest("mage01", "S3cret-Pass!", false));
+
+            var user = await ctx.Users.FindByIdAsync(reg.Value!.Id);
+            await ctx.Users.UpdateAsync(user! with { Status = UserStatus.Disabled });
+
+            var validate = await ctx.Service.ValidateSessionAsync(login.Value!.Token);
+            Assert.False(validate.Succeeded);
+            Assert.Equal(AuthErrorCode.InvalidCredentials, validate.Error);
+        });
+
+        await runner.RunAsync("Refresh_RotatesToken_OldTokenStopsWorking", async static () =>
+        {
+            var ctx = AccountTestContext.Create();
+            await ctx.Service.RegisterAsync(new RegisterRequest("mage01", "Mage", "mage@example.com", "S3cret-Pass!"));
+            var login = await ctx.Service.LoginAsync(new LoginRequest("mage01", "S3cret-Pass!", false));
+            string oldToken = login.Value!.Token;
+
+            var refresh = await ctx.Service.RefreshAsync(oldToken);
+            Assert.True(refresh.Succeeded);
+            string newToken = refresh.Value!.Token;
+
+            Assert.False(string.Equals(oldToken, newToken, StringComparison.Ordinal));
+
+            var validateOld = await ctx.Service.ValidateSessionAsync(oldToken);
+            Assert.False(validateOld.Succeeded);
+            Assert.Equal(AuthErrorCode.InvalidCredentials, validateOld.Error);
+
+            var validateNew = await ctx.Service.ValidateSessionAsync(newToken);
+            Assert.True(validateNew.Succeeded);
+            Assert.Equal("mage01", validateNew.Value?.Profile.Username);
+        });
+
+        await runner.RunAsync("Refresh_ReuseOfRotatedToken_RevokesAllSessions", async static () =>
+        {
+            var ctx = AccountTestContext.Create();
+            await ctx.Service.RegisterAsync(new RegisterRequest("mage01", "Mage", "mage@example.com", "S3cret-Pass!"));
+
+            // Device A and Device B logins
+            var loginA = await ctx.Service.LoginAsync(new LoginRequest("mage01", "S3cret-Pass!", false));
+            var loginB = await ctx.Service.LoginAsync(new LoginRequest("mage01", "S3cret-Pass!", false));
+            string tokenA = loginA.Value!.Token;
+            string tokenB = loginB.Value!.Token;
+
+            // Rotate A -> gets A2
+            var refreshA = await ctx.Service.RefreshAsync(tokenA);
+            Assert.True(refreshA.Succeeded);
+            string tokenA2 = refreshA.Value!.Token;
+
+            // Reusing old tokenA triggers security breach response -> Revoke all sessions
+            var reuseAttempt = await ctx.Service.RefreshAsync(tokenA);
+            Assert.False(reuseAttempt.Succeeded);
+            Assert.Equal(AuthErrorCode.InvalidCredentials, reuseAttempt.Error);
+
+            // Both tokenA2 and tokenB must now be completely revoked
+            var validateA2 = await ctx.Service.ValidateSessionAsync(tokenA2);
+            Assert.False(validateA2.Succeeded);
+            Assert.Equal(AuthErrorCode.InvalidCredentials, validateA2.Error);
+
+            var validateB = await ctx.Service.ValidateSessionAsync(tokenB);
+            Assert.False(validateB.Succeeded);
+            Assert.Equal(AuthErrorCode.InvalidCredentials, validateB.Error);
+        });
+
+        await runner.RunAsync("Refresh_KeepsPersistence", async static () =>
+        {
+            var ctx = AccountTestContext.Create();
+            await ctx.Service.RegisterAsync(new RegisterRequest("mage01", "Mage", "mage@example.com", "S3cret-Pass!"));
+            var login = await ctx.Service.LoginAsync(new LoginRequest("mage01", "S3cret-Pass!", RememberMe: true));
+
+            ctx.Time.Advance(TimeSpan.FromDays(1));
+            var refresh = await ctx.Service.RefreshAsync(login.Value!.Token);
+
+            Assert.True(refresh.Succeeded);
+            Assert.Equal(AccountTestContext.StartTime.AddDays(1).AddDays(30), refresh.Value?.ExpiresAt);
+        });
+
+        await runner.RunAsync("Logout_RevokesSession_AndIsIdempotent", async static () =>
+        {
+            var ctx = AccountTestContext.Create();
+            await ctx.Service.RegisterAsync(new RegisterRequest("mage01", "Mage", "mage@example.com", "S3cret-Pass!"));
+            var login = await ctx.Service.LoginAsync(new LoginRequest("mage01", "S3cret-Pass!", false));
+            string token = login.Value!.Token;
+
+            // Logout 1st time
+            await ctx.Service.LogoutAsync(token);
+            var validate = await ctx.Service.ValidateSessionAsync(token);
+            Assert.False(validate.Succeeded);
+
+            // Logout 2nd time (must not throw)
+            await ctx.Service.LogoutAsync(token);
+
+            // Malformed token logout (must not throw)
+            await ctx.Service.LogoutAsync("invalid_malformed_token");
+        });
     }
 }

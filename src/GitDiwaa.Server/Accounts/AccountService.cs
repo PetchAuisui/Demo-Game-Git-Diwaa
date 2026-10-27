@@ -20,14 +20,14 @@ public sealed class AccountService
         PasswordHasher passwordHasher,
         SessionTokenService sessionTokenService,
         TimeProvider timeProvider,
-        AccountOptions options)
+        AccountOptions? options = null)
     {
-        _userRepository = userRepository;
-        _sessionRepository = sessionRepository;
-        _passwordHasher = passwordHasher;
-        _sessionTokenService = sessionTokenService;
-        _timeProvider = timeProvider;
-        _options = options;
+        _userRepository = userRepository ?? throw new ArgumentNullException(nameof(userRepository));
+        _sessionRepository = sessionRepository ?? throw new ArgumentNullException(nameof(sessionRepository));
+        _passwordHasher = passwordHasher ?? throw new ArgumentNullException(nameof(passwordHasher));
+        _sessionTokenService = sessionTokenService ?? throw new ArgumentNullException(nameof(sessionTokenService));
+        _timeProvider = timeProvider ?? throw new ArgumentNullException(nameof(timeProvider));
+        _options = options ?? new AccountOptions();
     }
 
     public async Task<AccountResult<PlayerProfile>> RegisterAsync(RegisterRequest request, CancellationToken ct = default)
@@ -83,14 +83,12 @@ public sealed class AccountService
             return AccountResult<LoginSession>.Failure(AuthErrorCode.ValidationFailed, validationErrors);
         }
 
-        string normalizedIdentifier = AccountNormalizer.NormalizeIdentifier(request.Identifier);
-        bool isEmail = AccountNormalizer.IsEmailIdentifier(request.Identifier);
+        DateTimeOffset now = _timeProvider.GetUtcNow();
 
-        UserRecord? user = isEmail
+        string normalizedIdentifier = AccountNormalizer.NormalizeIdentifier(request.Identifier);
+        UserRecord? user = AccountNormalizer.IsEmailIdentifier(request.Identifier)
             ? await _userRepository.FindByEmailAsync(normalizedIdentifier, ct)
             : await _userRepository.FindByUsernameAsync(normalizedIdentifier, ct);
-
-        DateTimeOffset now = _timeProvider.GetUtcNow();
 
         if (user is null)
         {
@@ -110,54 +108,55 @@ public sealed class AccountService
             return AccountResult<LoginSession>.Failure(AuthErrorCode.InvalidCredentials);
         }
 
-        bool isPasswordValid = _passwordHasher.Verify(request.Password, user.PasswordHash);
-        if (!isPasswordValid)
+        bool passwordMatches = _passwordHasher.Verify(request.Password, user.PasswordHash);
+        if (!passwordMatches)
         {
             int failedAttempts = user.FailedLoginCount + 1;
             DateTimeOffset? lockoutUntil = user.LockoutUntil;
 
             if (failedAttempts >= _options.MaxFailedLoginAttempts)
             {
-                lockoutUntil = now + _options.LockoutDuration;
+                lockoutUntil = now.Add(_options.LockoutDuration);
                 failedAttempts = 0;
             }
 
-            var updatedUserOnFailure = user with
+            var updatedUser = user with
             {
                 FailedLoginCount = failedAttempts,
                 LockoutUntil = lockoutUntil,
                 UpdatedAt = now
             };
 
-            await _userRepository.UpdateAsync(updatedUserOnFailure, ct);
+            await _userRepository.UpdateAsync(updatedUser, ct);
             return AccountResult<LoginSession>.Failure(AuthErrorCode.InvalidCredentials);
         }
 
-        // Login successful: reset lockout & failed counter
-        string updatedPasswordHash = user.PasswordHash;
-        if (_passwordHasher.NeedsRehash(user.PasswordHash))
+        string currentPasswordHash = user.PasswordHash;
+        if (_passwordHasher.NeedsRehash(currentPasswordHash))
         {
-            updatedPasswordHash = _passwordHasher.Hash(request.Password);
+            currentPasswordHash = _passwordHasher.Hash(request.Password);
         }
 
-        var updatedUserOnSuccess = user with
+        var successfulUser = user with
         {
+            PasswordHash = currentPasswordHash,
             FailedLoginCount = 0,
             LockoutUntil = null,
-            PasswordHash = updatedPasswordHash,
             LastLoginAt = now,
             UpdatedAt = now
         };
+        await _userRepository.UpdateAsync(successfulUser, ct);
 
-        await _userRepository.UpdateAsync(updatedUserOnSuccess, ct);
+        TimeSpan sessionLifetime = request.RememberMe
+            ? _options.PersistentSessionLifetime
+            : _options.ShortSessionLifetime;
 
+        DateTimeOffset expiresAt = now.Add(sessionLifetime);
         IssuedToken issuedToken = _sessionTokenService.CreateToken();
-        TimeSpan lifetime = request.RememberMe ? _options.PersistentSessionLifetime : _options.ShortSessionLifetime;
-        DateTimeOffset expiresAt = now + lifetime;
 
-        var session = new SessionRecord(
+        var sessionRecord = new SessionRecord(
             Id: Guid.NewGuid(),
-            UserId: user.Id,
+            UserId: successfulUser.Id,
             TokenHash: issuedToken.TokenHash,
             IsPersistent: request.RememberMe,
             CreatedAt: now,
@@ -165,11 +164,128 @@ public sealed class AccountService
             LastUsedAt: now,
             RevokedAt: null);
 
-        await _sessionRepository.AddAsync(session, ct);
+        await _sessionRepository.AddAsync(sessionRecord, ct);
 
-        var profile = new PlayerProfile(user.Id, user.Username, user.DisplayName);
+        var profile = new PlayerProfile(successfulUser.Id, successfulUser.Username, successfulUser.DisplayName);
         var loginSession = new LoginSession(profile, issuedToken.Token, expiresAt);
 
         return AccountResult<LoginSession>.Success(loginSession);
+    }
+
+    public async Task<AccountResult<AuthenticatedSession>> ValidateSessionAsync(string? token, CancellationToken ct = default)
+    {
+        DateTimeOffset now = _timeProvider.GetUtcNow();
+
+        if (!_sessionTokenService.TryHashToken(token, out string tokenHash))
+        {
+            return AccountResult<AuthenticatedSession>.Failure(AuthErrorCode.InvalidCredentials);
+        }
+
+        var session = await _sessionRepository.FindByTokenHashAsync(tokenHash, ct);
+        if (session is null)
+        {
+            return AccountResult<AuthenticatedSession>.Failure(AuthErrorCode.InvalidCredentials);
+        }
+
+        if (session.RevokedAt is not null)
+        {
+            return AccountResult<AuthenticatedSession>.Failure(AuthErrorCode.InvalidCredentials);
+        }
+
+        if (session.ExpiresAt <= now)
+        {
+            return AccountResult<AuthenticatedSession>.Failure(AuthErrorCode.InvalidCredentials);
+        }
+
+        var user = await _userRepository.FindByIdAsync(session.UserId, ct);
+        if (user is null || user.Status != UserStatus.Active)
+        {
+            return AccountResult<AuthenticatedSession>.Failure(AuthErrorCode.InvalidCredentials);
+        }
+
+        await _sessionRepository.UpdateAsync(session with { LastUsedAt = now }, ct);
+
+        var profile = new PlayerProfile(user.Id, user.Username, user.DisplayName);
+        return AccountResult<AuthenticatedSession>.Success(new AuthenticatedSession(session.Id, profile));
+    }
+
+    public async Task<AccountResult<LoginSession>> RefreshAsync(string? token, CancellationToken ct = default)
+    {
+        DateTimeOffset now = _timeProvider.GetUtcNow();
+
+        if (!_sessionTokenService.TryHashToken(token, out string tokenHash))
+        {
+            return AccountResult<LoginSession>.Failure(AuthErrorCode.InvalidCredentials);
+        }
+
+        var session = await _sessionRepository.FindByTokenHashAsync(tokenHash, ct);
+        if (session is null)
+        {
+            return AccountResult<LoginSession>.Failure(AuthErrorCode.InvalidCredentials);
+        }
+
+        // Token reuse detection: if rotated/revoked token is used again, revoke all sessions for this user
+        if (session.RevokedAt is not null)
+        {
+            await _sessionRepository.RevokeAllForUserAsync(session.UserId, now, ct);
+            return AccountResult<LoginSession>.Failure(AuthErrorCode.InvalidCredentials);
+        }
+
+        if (session.ExpiresAt <= now)
+        {
+            return AccountResult<LoginSession>.Failure(AuthErrorCode.InvalidCredentials);
+        }
+
+        var user = await _userRepository.FindByIdAsync(session.UserId, ct);
+        if (user is null || user.Status != UserStatus.Active)
+        {
+            return AccountResult<LoginSession>.Failure(AuthErrorCode.InvalidCredentials);
+        }
+
+        // Revoke current session
+        await _sessionRepository.UpdateAsync(session with { RevokedAt = now }, ct);
+
+        // Issue new rotated session
+        TimeSpan sessionLifetime = session.IsPersistent
+            ? _options.PersistentSessionLifetime
+            : _options.ShortSessionLifetime;
+
+        DateTimeOffset newExpiresAt = now.Add(sessionLifetime);
+        IssuedToken newIssuedToken = _sessionTokenService.CreateToken();
+
+        var newSessionRecord = new SessionRecord(
+            Id: Guid.NewGuid(),
+            UserId: user.Id,
+            TokenHash: newIssuedToken.TokenHash,
+            IsPersistent: session.IsPersistent,
+            CreatedAt: now,
+            ExpiresAt: newExpiresAt,
+            LastUsedAt: now,
+            RevokedAt: null);
+
+        await _sessionRepository.AddAsync(newSessionRecord, ct);
+
+        var profile = new PlayerProfile(user.Id, user.Username, user.DisplayName);
+        var loginSession = new LoginSession(profile, newIssuedToken.Token, newExpiresAt);
+
+        return AccountResult<LoginSession>.Success(loginSession);
+    }
+
+    public async Task LogoutAsync(string? token, CancellationToken ct = default)
+    {
+        DateTimeOffset now = _timeProvider.GetUtcNow();
+
+        if (!_sessionTokenService.TryHashToken(token, out string tokenHash))
+        {
+            return;
+        }
+
+        var session = await _sessionRepository.FindByTokenHashAsync(tokenHash, ct);
+        if (session is null || session.RevokedAt is not null)
+        {
+            return;
+        }
+
+        await _sessionRepository.UpdateAsync(session with { RevokedAt = now }, ct);
     }
 }
