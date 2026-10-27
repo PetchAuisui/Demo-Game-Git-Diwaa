@@ -203,7 +203,8 @@ public sealed class AccountService
             return AccountResult<AuthenticatedSession>.Failure(AuthErrorCode.InvalidCredentials);
         }
 
-        await _sessionRepository.UpdateAsync(session with { LastUsedAt = now }, ct);
+        // Atomic touch: does not overwrite RevokedAt
+        await _sessionRepository.TouchAsync(session.Id, now, ct);
 
         var profile = new PlayerProfile(user.Id, user.Username, user.DisplayName);
         return AccountResult<AuthenticatedSession>.Success(new AuthenticatedSession(session.Id, profile));
@@ -224,7 +225,6 @@ public sealed class AccountService
             return AccountResult<LoginSession>.Failure(AuthErrorCode.InvalidCredentials);
         }
 
-        // Token reuse detection: if rotated/revoked token is used again, revoke all sessions for this user
         if (session.RevokedAt is not null)
         {
             await _sessionRepository.RevokeAllForUserAsync(session.UserId, now, ct);
@@ -242,10 +242,13 @@ public sealed class AccountService
             return AccountResult<LoginSession>.Failure(AuthErrorCode.InvalidCredentials);
         }
 
-        // Revoke current session
-        await _sessionRepository.UpdateAsync(session with { RevokedAt = now }, ct);
+        // Atomic revocation race check: only one concurrent refresh request can win
+        if (!await _sessionRepository.TryRevokeAsync(session.Id, now, ct))
+        {
+            await _sessionRepository.RevokeAllForUserAsync(session.UserId, now, ct);
+            return AccountResult<LoginSession>.Failure(AuthErrorCode.InvalidCredentials);
+        }
 
-        // Issue new rotated session
         TimeSpan sessionLifetime = session.IsPersistent
             ? _options.PersistentSessionLifetime
             : _options.ShortSessionLifetime;
@@ -281,11 +284,11 @@ public sealed class AccountService
         }
 
         var session = await _sessionRepository.FindByTokenHashAsync(tokenHash, ct);
-        if (session is null || session.RevokedAt is not null)
+        if (session is null)
         {
             return;
         }
 
-        await _sessionRepository.UpdateAsync(session with { RevokedAt = now }, ct);
+        await _sessionRepository.TryRevokeAsync(session.Id, now, ct);
     }
 }

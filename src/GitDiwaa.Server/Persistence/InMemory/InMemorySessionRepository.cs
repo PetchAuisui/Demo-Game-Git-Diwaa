@@ -79,4 +79,41 @@ public sealed class InMemorySessionRepository : ISessionRepository
             return Task.CompletedTask;
         }
     }
+
+    public Task<bool> TryRevokeAsync(Guid sessionId, DateTimeOffset revokedAt, CancellationToken ct = default)
+    {
+        lock (_lock)
+        {
+            if (!_sessionsById.TryGetValue(sessionId, out var session))
+            {
+                return Task.FromResult(false);
+            }
+
+            if (session.RevokedAt is not null)
+            {
+                return Task.FromResult(false);
+            }
+
+            var revokedSession = session with { RevokedAt = revokedAt };
+            _sessionsById[sessionId] = revokedSession;
+            _sessionsByTokenHash[session.TokenHash] = revokedSession;
+            return Task.FromResult(true);
+        }
+    }
+
+    public Task TouchAsync(Guid sessionId, DateTimeOffset lastUsedAt, CancellationToken ct = default)
+    {
+        lock (_lock)
+        {
+            if (!_sessionsById.TryGetValue(sessionId, out var session))
+            {
+                return Task.CompletedTask;
+            }
+
+            var touchedSession = session with { LastUsedAt = lastUsedAt };
+            _sessionsById[sessionId] = touchedSession;
+            _sessionsByTokenHash[session.TokenHash] = touchedSession;
+            return Task.CompletedTask;
+        }
+    }
 }

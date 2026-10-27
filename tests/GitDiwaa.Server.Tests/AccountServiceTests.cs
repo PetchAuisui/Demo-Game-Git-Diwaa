@@ -364,5 +364,24 @@ internal static class AccountServiceTests
             // Malformed token logout (must not throw)
             await ctx.Service.LogoutAsync("invalid_malformed_token");
         });
+        
+        await runner.RunAsync("Refresh_ConcurrentSameToken_OnlyOneSucceeds", async static () =>
+        {
+            var ctx = AccountTestContext.Create();
+            await ctx.Service.RegisterAsync(new RegisterRequest("mage01", "Mage", "mage@example.com", "S3cret-Pass!"));
+            var login = await ctx.Service.LoginAsync(new LoginRequest("mage01", "S3cret-Pass!", false));
+            string token = login.Value!.Token;
+
+            var tasks = new Task<AccountResult<LoginSession>>[20];
+            for (int i = 0; i < 20; i++)
+            {
+                tasks[i] = Task.Run(() => ctx.Service.RefreshAsync(token));
+            }
+
+            var results = await Task.WhenAll(tasks);
+            int successCount = results.Count(r => r.Succeeded);
+
+            Assert.True(successCount <= 1, $"At most one concurrent refresh can succeed, but got {successCount}.");
+        });
     }
 }

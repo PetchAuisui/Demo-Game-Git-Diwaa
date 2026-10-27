@@ -239,5 +239,42 @@ internal static class RepositoryTests
             Assert.Equal(revokeTime, fetchedA2?.RevokedAt);
             Assert.Equal(null, fetchedB1?.RevokedAt);
         });
+        
+        await runner.RunAsync("SessionRepo_TryRevoke_SucceedsOnlyOnce", async static () =>
+        {
+            var repo = new InMemorySessionRepository();
+            var now = DateTimeOffset.UtcNow;
+            var sessionId = Guid.NewGuid();
+            var session = new SessionRecord(sessionId, Guid.NewGuid(), "hash-atomic", false, now, now.AddHours(1), now, null);
+            await repo.AddAsync(session);
+
+            var firstRevoke = await repo.TryRevokeAsync(sessionId, now.AddMinutes(1));
+            Assert.True(firstRevoke);
+
+            var secondRevoke = await repo.TryRevokeAsync(sessionId, now.AddMinutes(2));
+            Assert.False(secondRevoke);
+
+            var nonExistentRevoke = await repo.TryRevokeAsync(Guid.NewGuid(), now);
+            Assert.False(nonExistentRevoke);
+        });
+
+        await runner.RunAsync("SessionRepo_Touch_DoesNotClearRevocation", async static () =>
+        {
+            var repo = new InMemorySessionRepository();
+            var now = DateTimeOffset.UtcNow;
+            var sessionId = Guid.NewGuid();
+            var session = new SessionRecord(sessionId, Guid.NewGuid(), "hash-touch", false, now, now.AddHours(1), now, null);
+            await repo.AddAsync(session);
+
+            var revokeTime = now.AddMinutes(5);
+            await repo.TryRevokeAsync(sessionId, revokeTime);
+
+            var touchTime = now.AddMinutes(10);
+            await repo.TouchAsync(sessionId, touchTime);
+
+            var fetched = await repo.FindByTokenHashAsync("hash-touch");
+            Assert.Equal(revokeTime, fetched?.RevokedAt);
+            Assert.Equal(touchTime, fetched?.LastUsedAt);
+        });
     }
 }
