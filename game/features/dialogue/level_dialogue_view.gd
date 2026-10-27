@@ -921,6 +921,13 @@ func _create_nav_arrows() -> void:
 	if not arrow_overlay:
 		return
 		
+	# ปรับระยะขอบขวาของ Margin และเปิด fit_content เพื่อป้องกันข้อความยาวทับลูกศร ◀ ▶
+	var margin_node = dialogue_box.get_node_or_null("Margin")
+	if margin_node:
+		margin_node.add_theme_constant_override("margin_right", 96)
+	if dialogue_label:
+		dialogue_label.fit_content = true
+		
 	# ซ่อนลูกศรเดี่ยวเดิม
 	if arrow_wrapper:
 		arrow_wrapper.visible = false
@@ -936,9 +943,9 @@ func _create_nav_arrows() -> void:
 	nav_arrows_container.anchor_top = 1.0
 	nav_arrows_container.anchor_bottom = 1.0
 	nav_arrows_container.offset_left = -78.0
-	nav_arrows_container.offset_top = -40.0
+	nav_arrows_container.offset_top = -42.0
 	nav_arrows_container.offset_right = -24.0
-	nav_arrows_container.offset_bottom = -14.0
+	nav_arrows_container.offset_bottom = -16.0
 	nav_arrows_container.grow_horizontal = Control.GROW_DIRECTION_BEGIN
 	nav_arrows_container.grow_vertical = Control.GROW_DIRECTION_BEGIN
 	nav_arrows_container.alignment = BoxContainer.ALIGNMENT_END
@@ -1001,13 +1008,21 @@ func _update_nav_arrows() -> void:
 	var can_back = _can_go_back()
 	btn_arrow_back.disabled = not can_back
 	btn_arrow_back.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND if can_back else Control.CURSOR_ARROW
-	btn_arrow_back.modulate = Color(1.0, 1.0, 1.0, 1.0) if can_back else Color(1.0, 1.0, 1.0, 0.25)
+	if can_back:
+		var is_hovered = btn_arrow_back.get_global_rect().has_point(btn_arrow_back.get_global_mouse_position())
+		btn_arrow_back.modulate = Color(1.4, 1.4, 1.4, 1.0) if is_hovered else Color(1.0, 1.0, 1.0, 1.0)
+	else:
+		btn_arrow_back.modulate = Color(1.0, 1.0, 1.0, 0.25)
 	
 	# ลูกศรขวา ▶ (ไปต่อ)
 	var can_next = (is_dialogue_active or is_typing) and not is_showing_choices
 	btn_arrow_next.disabled = not can_next
 	btn_arrow_next.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND if can_next else Control.CURSOR_ARROW
-	btn_arrow_next.modulate = Color(1.0, 1.0, 1.0, 1.0) if can_next else Color(1.0, 1.0, 1.0, 0.25)
+	if can_next:
+		var is_hovered = btn_arrow_next.get_global_rect().has_point(btn_arrow_next.get_global_mouse_position())
+		btn_arrow_next.modulate = Color(1.4, 1.4, 1.4, 1.0) if is_hovered else Color(1.0, 1.0, 1.0, 1.0)
+	else:
+		btn_arrow_next.modulate = Color(1.0, 1.0, 1.0, 0.25)
 
 func _update_back_button_state() -> void:
 	_update_nav_arrows()

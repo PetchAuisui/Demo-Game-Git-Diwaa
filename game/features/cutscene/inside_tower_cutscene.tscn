@@ -542,7 +542,7 @@ layout_mode = 2
 mouse_filter = 2
 theme_override_constants/margin_left = 36
 theme_override_constants/margin_top = 24
-theme_override_constants/margin_right = 48
+theme_override_constants/margin_right = 96
 theme_override_constants/margin_bottom = 16
 
 [node name="VBox" type="VBoxContainer" parent="MagicStoryUI/DialogueBox/Margin" unique_id=140974865]
@@ -564,7 +564,7 @@ layout_mode = 2
 size_flags_vertical = 3
 mouse_filter = 2
 bbcode_enabled = true
-fit_content = false
+fit_content = true
 scroll_active = false
 autowrap_mode = 3
 theme_override_colors/default_color = Color(1, 1, 1, 1)
