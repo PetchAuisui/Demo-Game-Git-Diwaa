@@ -6,10 +6,10 @@ extends CanvasLayer
 ##
 ## วิธีใช้งานใน Cutscene:
 ##   var skip_ctrl = preload("res://features/cutscene/skip_cutscene_button.gd").new()
-##   skip_ctrl.next_scene_path = "res://features/sandbox/sandbox_game_view.tscn"
+##   skip_ctrl.next_scene_path = "res://features/start/start_view.tscn"
 ##   add_child(skip_ctrl)
 
-@export var next_scene_path: String = "res://features/sandbox/sandbox_game_view.tscn"
+@export var next_scene_path: String = "res://features/start/start_view.tscn"
 @export var show_fast_forward: bool = true
 @export var show_skip: bool = true
 

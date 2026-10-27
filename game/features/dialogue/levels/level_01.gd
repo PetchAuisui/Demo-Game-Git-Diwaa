@@ -27,10 +27,10 @@ static func get_data() -> Dictionary:
 		"part1_main_choices": {
 			"prompt": "ตัวเลือกคำถาม",
 			"options": [
-				{"text": "1. พลัง Git คืออะไร?", "id": "part1_git"},
-				{"text": "2. มีอะไรต้องระวังเป็นพิเศษไหมตอนร่ายคาถา?", "id": "part1_warning"},
-				{"text": "3. ฉันมาทำอะไรที่นี่?", "id": "part1_purpose"},
-				{"text": "4. ฉันจะลองดู", "id": "part1_try"}
+				{"text": "พลัง Git คืออะไร?", "id": "part1_git"},
+				{"text": "มีอะไรต้องระวังเป็นพิเศษไหมตอนร่ายคาถา?", "id": "part1_warning"},
+				{"text": "ฉันมาทำอะไรที่นี่?", "id": "part1_purpose"},
+				{"text": "ฉันจะลองดู", "id": "part1_try"}
 			]
 		},
 		
@@ -71,8 +71,8 @@ static func get_data() -> Dictionary:
 		"part1_purpose_sub_choices": {
 			"prompt": "นายมาที่นี่เพื่อตามหาใครหรือสิ่งใดหรือเปล่า?",
 			"options": [
-				{"text": "1. ใช่", "id": "purpose_yes"},
-				{"text": "2. ไม่", "id": "purpose_no"}
+				{"text": "ใช่", "id": "purpose_yes"},
+				{"text": "ไม่", "id": "purpose_no"}
 			]
 		},
 		
@@ -124,9 +124,9 @@ static func get_data() -> Dictionary:
 		"part2_main_choices": {
 			"prompt": "ตัวเลือกคำถาม",
 			"options": [
-				{"text": "1. ทำไมต้องมีชื่อกับอีเมล?", "id": "part2_name_email"},
-				{"text": "2. มีอะไรต้องระวังตอนร่ายคาถา?", "id": "part2_warning"},
-				{"text": "3. ฉันจะลองดู", "id": "part2_try"}
+				{"text": "ทำไมต้องมีชื่อกับอีเมล?", "id": "part2_name_email"},
+				{"text": "มีอะไรต้องระวังตอนร่ายคาถา?", "id": "part2_warning"},
+				{"text": "ฉันจะลองดู", "id": "part2_try"}
 			]
 		},
 		

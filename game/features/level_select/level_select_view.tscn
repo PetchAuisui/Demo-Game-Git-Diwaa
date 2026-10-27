@@ -1,0 +1,159 @@
+[gd_scene format=3 uid="uid://d3yq8vkm7w1a0"]
+
+[ext_resource type="Script" path="res://features/level_select/level_select_view.gd" id="1_script"]
+[ext_resource type="FontFile" uid="uid://csurxmw2vmws4" path="res://assets/fonts/TA-8-bit.ttf" id="2_font"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_window"]
+bg_color = Color(0.82, 0.82, 0.82, 1)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(0.35, 0.28, 0.22, 1)
+corner_radius_top_left = 12
+corner_radius_top_right = 12
+corner_radius_bottom_left = 12
+corner_radius_bottom_right = 12
+shadow_color = Color(0, 0, 0, 0.4)
+shadow_size = 12
+shadow_offset = Vector2(0, 6)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_titlebar"]
+bg_color = Color(0.38, 0.30, 0.24, 1)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+content_margin_left = 16.0
+content_margin_right = 12.0
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_title_btn"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_close_hover"]
+bg_color = Color(0.85, 0.2, 0.2, 0.8)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_left = 4
+corner_radius_bottom_right = 4
+
+[node name="LevelSelectView" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_script")
+
+[node name="DimBackground" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.08, 0.07, 0.12, 0.85)
+
+[node name="WindowPanel" type="PanelContainer" parent="."]
+custom_minimum_size = Vector2(1160, 720)
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -580.0
+offset_top = -360.0
+offset_right = 580.0
+offset_bottom = 360.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_window")
+
+[node name="VBoxMain" type="VBoxContainer" parent="WindowPanel"]
+layout_mode = 2
+theme_override_constants/separation = 0
+
+[node name="TitleBar" type="PanelContainer" parent="WindowPanel/VBoxMain"]
+custom_minimum_size = Vector2(0, 48)
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_titlebar")
+
+[node name="HBox" type="HBoxContainer" parent="WindowPanel/VBoxMain/TitleBar"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="TitleLabel" type="Label" parent="WindowPanel/VBoxMain/TitleBar/HBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.96, 0.96, 0.96, 1)
+theme_override_fonts/font = ExtResource("2_font")
+theme_override_font_sizes/font_size = 22
+text = "Level"
+
+[node name="Spacer" type="Control" parent="WindowPanel/VBoxMain/TitleBar/HBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="BtnMin" type="Button" parent="WindowPanel/VBoxMain/TitleBar/HBox"]
+custom_minimum_size = Vector2(32, 28)
+layout_mode = 2
+focus_mode = 0
+theme_override_fonts/font = ExtResource("2_font")
+theme_override_font_sizes/font_size = 18
+theme_override_styles/normal = SubResource("StyleBoxEmpty_title_btn")
+text = "-"
+
+[node name="BtnMax" type="Button" parent="WindowPanel/VBoxMain/TitleBar/HBox"]
+custom_minimum_size = Vector2(32, 28)
+layout_mode = 2
+focus_mode = 0
+theme_override_fonts/font = ExtResource("2_font")
+theme_override_font_sizes/font_size = 16
+theme_override_styles/normal = SubResource("StyleBoxEmpty_title_btn")
+text = "□"
+
+[node name="BtnClose" type="Button" parent="WindowPanel/VBoxMain/TitleBar/HBox"]
+custom_minimum_size = Vector2(34, 28)
+layout_mode = 2
+focus_mode = 0
+mouse_default_cursor_shape = 2
+theme_override_fonts/font = ExtResource("2_font")
+theme_override_font_sizes/font_size = 18
+theme_override_styles/normal = SubResource("StyleBoxEmpty_title_btn")
+theme_override_styles/hover = SubResource("StyleBoxFlat_close_hover")
+text = "✕"
+
+[node name="Margin" type="MarginContainer" parent="WindowPanel/VBoxMain"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/margin_left = 40
+theme_override_constants/margin_top = 28
+theme_override_constants/margin_right = 40
+theme_override_constants/margin_bottom = 36
+
+[node name="VBox" type="VBoxContainer" parent="WindowPanel/VBoxMain/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 20
+
+[node name="SelectLevelLabel" type="Label" parent="WindowPanel/VBoxMain/Margin/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.1, 0.1, 0.1, 1)
+theme_override_fonts/font = ExtResource("2_font")
+theme_override_font_sizes/font_size = 34
+text = "Select Level"
+horizontal_alignment = 1
+
+[node name="Divider" type="ColorRect" parent="WindowPanel/VBoxMain/Margin/VBox"]
+custom_minimum_size = Vector2(0, 3)
+layout_mode = 2
+color = Color(0.12, 0.12, 0.12, 1)
+
+[node name="Spacer" type="Control" parent="WindowPanel/VBoxMain/Margin/VBox"]
+custom_minimum_size = Vector2(0, 10)
+layout_mode = 2
+
+[node name="GridContainer" type="GridContainer" parent="WindowPanel/VBoxMain/Margin/VBox"]
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 3
+theme_override_constants/h_separation = 28
+theme_override_constants/v_separation = 24
+columns = 5

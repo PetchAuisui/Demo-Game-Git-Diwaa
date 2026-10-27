@@ -166,6 +166,10 @@ func _on_terminal_command_submitted(input: String) -> void:
 		_on_dressing_room_pressed()
 		return
 
+	if lower == "level" or lower == "levels" or lower == "select":
+		get_tree().change_scene_to_file("res://features/level_select/level_select_view.tscn")
+		return
+
 	if lower == "git init":
 		_append_terminal_text("Initialized empty Git repository in /magictower/spells/.git/")
 	elif lower == "git status":
