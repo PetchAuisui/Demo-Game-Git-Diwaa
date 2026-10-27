@@ -1,7 +1,4 @@
 using System.Net;
-using Microsoft.AspNetCore.Hosting.Server;
-using Microsoft.AspNetCore.Hosting.Server.Features;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace GitDiwaa.Server.Tests;
 
@@ -11,34 +8,14 @@ internal static class HealthTests
     {
         await runner.RunAsync("Health_ReturnsOk", async static () =>
         {
-            var app = ServerApp.Build(["--Logging:LogLevel:Default=Warning"], "Development");
-            app.Urls.Add("http://127.0.0.1:0");
+            await using var host = await TestServerHost.StartNewAsync();
+            var response = await host.Client.GetAsync("/health");
 
-            try
-            {
-                await app.StartAsync();
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
-                var serverAddresses = app.Services
-                    .GetRequiredService<IServer>()
-                    .Features
-                    .Get<IServerAddressesFeature>();
-
-                var boundAddress = serverAddresses?.Addresses.FirstOrDefault() ?? app.Urls.First();
-
-                using var client = new HttpClient { BaseAddress = new Uri(boundAddress) };
-                var response = await client.GetAsync("/health");
-
-                Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-
-                var content = await response.Content.ReadAsStringAsync();
-                Assert.Contains(content, "ok");
-                Assert.DoesNotContain(content, "version");
-            }
-            finally
-            {
-                await app.StopAsync();
-                await app.DisposeAsync();
-            }
+            var content = await response.Content.ReadAsStringAsync();
+            Assert.Contains(content, "ok");
+            Assert.DoesNotContain(content, "version");
         });
     }
 }

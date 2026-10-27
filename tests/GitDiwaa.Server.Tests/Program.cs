@@ -11,6 +11,7 @@ internal static class Program
         SessionTokenTests.Run(runner);
         await RepositoryTests.RunAsync(runner);
         await AccountServiceTests.RunAsync(runner);
+        await AccountApiTests.RunAsync(runner);
 
         return runner.Complete();
     }
