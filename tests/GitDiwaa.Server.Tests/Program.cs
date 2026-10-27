@@ -10,6 +10,7 @@ internal static class Program
         PasswordHasherTests.Run(runner);
         SessionTokenTests.Run(runner);
         await RepositoryTests.RunAsync(runner);
+        await AccountServiceTests.RunAsync(runner);
 
         return runner.Complete();
     }

@@ -1,4 +1,7 @@
+using GitDiwaa.Server.Accounts;
 using GitDiwaa.Server.Persistence;
+using GitDiwaa.Server.Persistence.InMemory;
+using GitDiwaa.Server.Security;
 
 namespace GitDiwaa.Server.Tests;
 
@@ -21,5 +24,28 @@ internal static class TestData
             CreatedAt: now,
             UpdatedAt: now,
             LastLoginAt: null);
+    }
+}
+
+internal sealed record AccountTestContext(
+    InMemoryUserRepository Users,
+    InMemorySessionRepository Sessions,
+    PasswordHasher Hasher,
+    SessionTokenService TokenService,
+    ManualTimeProvider Time,
+    AccountService Service)
+{
+    public static readonly DateTimeOffset StartTime = new(2026, 10, 22, 0, 0, 0, TimeSpan.Zero);
+
+    public static AccountTestContext Create(AccountOptions? options = null)
+    {
+        var users = new InMemoryUserRepository();
+        var sessions = new InMemorySessionRepository();
+        var hasher = new PasswordHasher();
+        var tokenService = new SessionTokenService();
+        var time = new ManualTimeProvider(StartTime);
+        var service = new AccountService(users, sessions, hasher, tokenService, time, options ?? new AccountOptions());
+
+        return new(users, sessions, hasher, tokenService, time, service);
     }
 }
