@@ -20,19 +20,24 @@ extends Node2D
 @onready var subtitle_label: Label = $UI/TitleContainer/SubtitleLabel
 @onready var start_prompt: Label = $UI/TitleContainer/StartPrompt
 
-@export var next_scene_path: String = "res://features/sandbox/sandbox_game_view.tscn"
+@export var next_scene_path: String = "res://features/cutscene/inside_tower_cutscene.tscn"
 
 var can_start: bool = false
 var is_starting: bool = false
 var is_tower_forward: bool = true
 var is_fast_forwarding: bool = false
 var can_fast_forward: bool = true
+var skip_ctrl = null
+var current_stage: int = 1 # 1 = storm sky, 2 = chaos village, 3 = tower & title
 
 signal cutscene_finished
 
 func _ready() -> void:
 	Engine.time_scale = 1.0
-	add_child(preload("res://features/cutscene/skip_cutscene_button.gd").new())
+	skip_ctrl = preload("res://features/cutscene/skip_cutscene_button.gd").new()
+	skip_ctrl.next_scene_path = _get_resolved_next_scene()
+	skip_ctrl.custom_skip_action = _on_skip_step
+	add_child(skip_ctrl)
 	_init_scene()
 	play_chaos_sequence()
 
@@ -40,23 +45,35 @@ func _exit_tree() -> void:
 	Engine.time_scale = 1.0
 
 func _process(_delta: float) -> void:
-	# ตรวจสอบการกดค้างเพื่อเร่งสปีด (Fast-forward) แบบ Real-time
-	if can_fast_forward and not can_start and not is_starting:
-		var wants_ff: bool = Input.is_key_pressed(KEY_SPACE) or \
-			Input.is_key_pressed(KEY_ENTER) or \
-			Input.is_key_pressed(KEY_SHIFT) or \
-			Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT)
-		
-		if wants_ff != is_fast_forwarding:
-			is_fast_forwarding = wants_ff
-			Engine.time_scale = 2.5 if wants_ff else 1.0
+	if not can_fast_forward or is_starting:
+		if is_fast_forwarding:
+			is_fast_forwarding = false
+			Engine.time_scale = 1.0
+		return
+	
+	var is_btn_active: bool = (skip_ctrl != null and skip_ctrl.is_fast_forward)
+	var wants_hold: bool = Input.is_key_pressed(KEY_SHIFT)
+	
+	var active: bool = is_btn_active or wants_hold
+	if active != is_fast_forwarding:
+		is_fast_forwarding = active
+		Engine.time_scale = 2.5 if active else 1.0
+		if skip_ctrl and not is_btn_active:
+			skip_ctrl._apply_ff_style(active)
+
+func _get_resolved_next_scene() -> String:
+	if next_scene_path != "" and ResourceLoader.exists(next_scene_path):
+		return next_scene_path
+	if ResourceLoader.exists("res://features/cutscene/inside_tower_cutscene.tscn"):
+		return "res://features/cutscene/inside_tower_cutscene.tscn"
+	return ""
 
 func _input(event: InputEvent) -> void:
 	if not can_start or is_starting:
 		return
 	
 	if event.is_action_pressed("ui_accept") or \
-	   (event is InputEventKey and event.pressed and not event.echo and (event.keycode == KEY_SPACE or event.keycode == KEY_ENTER)) or \
+	   (event is InputEventKey and event.pressed and not event.echo and (event.keycode == KEY_SPACE or event.keycode == KEY_ENTER or event.keycode == KEY_ESCAPE)) or \
 	   (event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT):
 		get_viewport().set_input_as_handled()
 		_trigger_start_level()
@@ -66,8 +83,14 @@ func _init_scene() -> void:
 	is_starting = false
 	can_fast_forward = true
 	is_fast_forwarding = false
+	current_stage = 1
 	Engine.time_scale = 1.0
 	is_tower_forward = true
+	
+	if skip_ctrl:
+		skip_ctrl.visible = true
+		if skip_ctrl.container:
+			skip_ctrl.container.modulate.a = 1.0
 	
 	storm_sky.visible = true
 	storm_sky.frame = 0
@@ -105,7 +128,61 @@ func _init_scene() -> void:
 	fade_overlay.color = Color(0, 0, 0, 1)
 	fade_overlay.visible = true
 
+func _on_skip_step() -> void:
+	if is_starting:
+		return
+	if current_stage == 1:
+		_skip_to_stage_2()
+	elif current_stage == 2:
+		_skip_to_stage_3()
+	else:
+		_trigger_start_level()
+
+func _skip_to_stage_2() -> void:
+	if current_stage >= 2 or is_starting:
+		return
+	current_stage = 2
+	if storm_sky.animation_finished.is_connected(_on_storm_sky_finished):
+		storm_sky.animation_finished.disconnect(_on_storm_sky_finished)
+	storm_sky.stop()
+	storm_sky.visible = false
+	fade_overlay.color.a = 0.0
+	
+	village.visible = true
+	village.frame = 0
+	village.modulate = Color(1, 1, 1, 1)
+	village.play("village_chaos", 1.0)
+	if not village.animation_finished.is_connected(_on_village_chaos_finished):
+		village.animation_finished.connect(_on_village_chaos_finished, CONNECT_ONE_SHOT)
+
+func _skip_to_stage_3() -> void:
+	if is_starting:
+		return
+	current_stage = 3
+	if village.animation_finished.is_connected(_on_village_chaos_finished):
+		village.animation_finished.disconnect(_on_village_chaos_finished)
+	village.stop()
+	village.visible = false
+	storm_sky.visible = false
+	fade_overlay.color.a = 0.0
+	
+	tower.visible = true
+	tower.modulate = Color(1, 1, 1, 1)
+	_start_tower_ping_pong()
+	
+	if vel_shadow:
+		vel_shadow.visible = true
+		vel_shadow.modulate.a = 0.65
+	vel.visible = true
+	vel.modulate.a = 1.0
+	
+	if skip_ctrl:
+		skip_ctrl.visible = false
+	
+	_reveal_game_title()
+
 func play_chaos_sequence() -> void:
+	current_stage = 1
 	# 1. ค่อย ๆ สว่างขึ้นจากจอดำสู่ท้องฟ้าพายุ 0.5 วินาที
 	var tw = create_tween()
 	tw.tween_property(fade_overlay, "color:a", 0.0, 0.5)
@@ -115,6 +192,9 @@ func play_chaos_sequence() -> void:
 	)
 
 func _on_storm_sky_finished() -> void:
+	if current_stage >= 2 and village.visible:
+		return
+	current_stage = 2
 	# 2. สลับภาพสู่บ้านเมืองโกลาหล (เล่นแอนิเมชันตั้งแต่เฟรมที่ 20 ถึงจบ 58)
 	village.visible = true
 	village.frame = 0
@@ -127,9 +207,13 @@ func _on_storm_sky_finished() -> void:
 	)
 	
 	village.play("village_chaos", 1.0)
-	village.animation_finished.connect(_on_village_chaos_finished, CONNECT_ONE_SHOT)
+	if not village.animation_finished.is_connected(_on_village_chaos_finished):
+		village.animation_finished.connect(_on_village_chaos_finished, CONNECT_ONE_SHOT)
 
 func _on_village_chaos_finished() -> void:
+	if current_stage >= 3 and tower.visible:
+		return
+	current_stage = 3
 	# 3. สลับภาพสู่หอคอยทมิฬ
 	tower.visible = true
 	tower.modulate = Color(1, 1, 1, 0)
@@ -150,9 +234,21 @@ func _on_village_chaos_finished() -> void:
 	var tw_vel = create_tween()
 	tw_vel.tween_property(vel, "modulate:a", 1.0, 0.7)
 	
+	# ค่อย ๆ จางปุ่มควบคุมออกเมื่อเข้าสู่ฉากหอคอยและไตเติล
+	if skip_ctrl:
+		var tw_fade_btn = create_tween()
+		tw_fade_btn.tween_property(skip_ctrl.container, "modulate:a", 0.0, 0.5)
+		tw_fade_btn.tween_callback(func():
+			if skip_ctrl:
+				skip_ctrl.visible = false
+		)
+	
 	var tw_wait = create_tween()
 	tw_wait.tween_interval(1.5)
-	tw_wait.tween_callback(_reveal_game_title)
+	tw_wait.tween_callback(func():
+		if current_stage == 3 and not can_start and not is_starting:
+			_reveal_game_title()
+	)
 
 func _start_tower_ping_pong() -> void:
 	if not tower:
@@ -174,12 +270,18 @@ func _on_tower_animation_finished() -> void:
 		tower.play_backwards("tower_loop")
 
 func _reveal_game_title() -> void:
+	# หน้านี้เป็นหน้าไตเติลเกม (Git Di Waa) ซ่อนปุ่มเร่งและปุ่มข้ามออกทั้งหมดตามคำขอ
 	can_fast_forward = false
 	is_fast_forwarding = false
 	Engine.time_scale = 1.0
 	
+	if skip_ctrl:
+		if skip_ctrl.is_fast_forward:
+			skip_ctrl._toggle_fast_forward()
+		skip_ctrl.visible = false
+	
 	var tw_title = create_tween()
-	tw_title.tween_property(title_container, "modulate:a", 1.0, 1.2).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	tw_title.tween_property(title_container, "modulate:a", 1.0, 0.8).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 	
 	var tw_title_aura = create_tween().set_loops()
 	tw_title_aura.tween_property(title_label_aura, "modulate:a", 0.75, 1.6).set_trans(Tween.TRANS_SINE)
@@ -201,16 +303,16 @@ func _trigger_start_level() -> void:
 	Engine.time_scale = 1.0
 	
 	var tw_out = create_tween()
-	tw_out.tween_property(fade_overlay, "color", Color(0, 0, 0, 1), 1.0)
+	tw_out.tween_property(fade_overlay, "color", Color(0, 0, 0, 1), 0.5)
 	tw_out.tween_callback(func():
 		Engine.time_scale = 1.0
 		emit_signal("cutscene_finished")
 		print("[CutsceneChaos] เข้าสู่ด่านแรกเรียบร้อย!")
-		if next_scene_path != "" and ResourceLoader.exists(next_scene_path):
-			get_tree().change_scene_to_file(next_scene_path)
+		var target_scene := _get_resolved_next_scene()
+		if target_scene != "" and ResourceLoader.exists(target_scene):
+			get_tree().change_scene_to_file(target_scene)
 		else:
-			push_warning("[OutsideCutscene] next_scene_path is empty or not found: '%s'. กรุณากำหนด Path ซีนด่านแรกใน Inspector" % next_scene_path)
-			# ค่อยๆ จางจอดำออกเพื่อไม่ให้ผู้เล่นติดอยู่ในจอสีดำสนิท
+			push_warning("[OutsideCutscene] target scene not found: '%s'" % target_scene)
 			var tw_recover = create_tween()
 			tw_recover.tween_property(fade_overlay, "color:a", 0.0, 0.5)
 			can_start = true

@@ -3,6 +3,9 @@ extends Control
 ## Root Orchestrator for the Git-Diwaa Sandbox Game.
 ## Follows OOP Mediator / Controller pattern to decouple UI Panels from the Git Sandbox Service.
 
+const CENTRAL_TOWER_CUTSCENE_PATH := "res://features/cutscene/central_tower_cutscene.tscn"
+const ENDING_CUTSCENE_PATH := "res://features/cutscene/ending_cutscene.tscn"
+
 var _top_bar: TopBarPanel
 var _files_panel: FilesPanel
 var _git_graph_panel: GitGraphPanel
@@ -113,6 +116,19 @@ func _on_command_submitted(command: String) -> void:
 
 	if lower == "files":
 		await _handle_files_command()
+		return
+
+	# Cutscene & Level transition commands (Dev/Testing flow to Cutscenes)
+	if lower == "cutscene central" or lower == "cutscene-central" or lower == "level 16" or lower == "level-16":
+		play_central_tower_cutscene()
+		return
+
+	if lower == "cutscene ending" or lower == "cutscene-ending" or lower == "ending":
+		play_ending_cutscene()
+		return
+
+	if lower == "cutscene" or lower == "cutscenes":
+		_show_cutscene_help()
 		return
 
 	# Execute via Git sandbox service
@@ -318,12 +334,40 @@ func _refresh_state() -> void:
 		_git_graph_panel.set_empty_state()
 
 
+## Transitions to the Central Tower cutscene (Act 2: GitHub Flow / Level 16)
+func play_central_tower_cutscene() -> void:
+	_terminal_panel.append_info("กำลังเปลี่ยนฉากไปยังหอคอยเวทกลาง (Central Tower)...")
+	_change_scene_to_cutscene(CENTRAL_TOWER_CUTSCENE_PATH)
+
+
+## Transitions to the Ending cutscene (Clear all levels / Epilogue)
+func play_ending_cutscene() -> void:
+	_terminal_panel.append_info("กำลังเปลี่ยนฉากไปยังฉากจบ (Ending Cutscene)...")
+	_change_scene_to_cutscene(ENDING_CUTSCENE_PATH)
+
+
+func _change_scene_to_cutscene(scene_path: String) -> void:
+	if ResourceLoader.exists(scene_path):
+		Engine.time_scale = 1.0
+		get_tree().change_scene_to_file(scene_path)
+	else:
+		_terminal_panel.append_error("ไม่พบไฟล์ฉาก: %s" % scene_path)
+		push_error("[SandboxGameView] Cutscene scene not found: %s" % scene_path)
+
+
+func _show_cutscene_help() -> void:
+	_terminal_panel.append_info("""คำสั่งเปลี่ยนฉาก Cutscene (สำหรับทดสอบโฟลว์เกม):
+  cutscene central  - เล่นฉากหอคอยเวทกลาง (Act 2 / ด่าน 16)
+  cutscene ending   - เล่นฉากจบของเกม (Ending & Credits)
+  level 16          - จำลองการเข้าสู่ด่าน 16 (ตัดเข้าฉากหอคอยกลาง)""")
+
+
 func _show_help() -> void:
 	_terminal_panel.append_info("""คำสั่ง Git: git --version, config, init, status, add, commit, log, diff,
             restore, reset, branch, switch, merge, clone, remote, pull, push
 
-คำสั่ง UI: write <path> <content>, cat <path>, delete <path>, files,
-           sandbox-reset, clear, help""")
+คำสั่ง UI / ทดสอบ: write <path> <content>, cat <path>, delete <path>, files,
+                  sandbox-reset, cutscene <central|ending>, level 16, clear, help""")
 
 
 func _exit_tree() -> void:

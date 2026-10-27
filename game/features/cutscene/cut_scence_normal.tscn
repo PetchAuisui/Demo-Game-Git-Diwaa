@@ -1,4 +1,4 @@
-﻿[gd_scene format=3 uid="uid://b8v7e2k4normal"]
+[gd_scene format=3 uid="uid://b8v7e2k4normal"]
 
 [ext_resource type="Script" path="res://features/cutscene/cut_scence_normal.gd" id="1_script"]
 [ext_resource type="Texture2D" uid="uid://dcvd3t5deskx3" path="res://assets/cutscene/backgrounds/village-normal-to-chaos-Sheet.png" id="2_village"]

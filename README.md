@@ -101,3 +101,7 @@ godot --headless --path game --script "$PWD/tests/engine/run_tests.gd"
 - [สถานะระบบและงานถัดไป](docs/implementation-status.md)
 - [ทดสอบผ่าน Terminal](docs/testing-terminal.md)
 - [สถาปัตยกรรม Godot Sandbox UI](docs/godot-integration.md)
+- [รายการและการใช้งานฟอนต์](docs/fonts.md)
+- [คู่มือระบบควบคุมคัตซีน](docs/cutscene-controls.md)
+- [คัตซีนภายในหอคอยเวท (Inside Tower Cutscene)](docs/inside-tower-cutscene.md)
+- [คัตซีนหอคอยเวทกลาง (Central Tower Cutscene)](docs/central-tower-cutscene.md)

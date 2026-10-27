@@ -8,7 +8,7 @@ extends Node2D
 ## 5. การกลับมาของปรมาจารย์ (หลุมดำเปิด เวลสะดุ้งกระโดด หนังสือเด้งลอยค้างแล้วรับกลับมา -> อาจารย์พุ่งขึ้นมา)
 ## 6. ช่องการ์ตูนเฉลยความจริง (ขยายกรอบใหญ่ ซูมอาจารย์เด่นชัด ฉากหลังมืด 65% อาจารย์หลงลืมตกหลุมตัวเอง)
 ## 7. กล่องบทสนทนา (อาจารย์ยิ้มขี้เล่น เวลยืนนิ่ง 1 วินาทีเน้นอารมณ์ ก่อนถอนหายใจ)
-## 8. บทสรุปการเดินทางของเวล (ซูมกล้องออก -> พื้นหลังมืดลงอย่างต่อเนื่อง -> ข้อความสรุปกระชับชัดเจน -> THE END)
+## 8. บทสรุปการเดินทางของเวล (ค่อย ๆ เฟดมืดสนิท -> ข้อความสรุปพิมพ์ขึ้นทีละบรรทัดด้วย Typewriter Effect -> ข้อความขึ้นครบแล้วจึงแสดง "คลิกหน้าจอเพื่อไปต่อ" -> คลิกเพื่อไปต่อ -> ฉากขอบคุณและเครดิต)
 
 @export var start_scene_path: String = "res://features/start/start_view.tscn"
 
@@ -52,6 +52,7 @@ extends Node2D
 @onready var comic_container: Control = $ComicPanelContainer
 @onready var comic_title: Label = $ComicPanelContainer/ComicTitle
 @onready var comic_caption: Label = $ComicPanelContainer/ComicCaption
+@onready var comic_continue_prompt: Label = $ComicPanelContainer/ComicContinuePrompt
 @onready var flashback_master: AnimatedSprite2D = $ComicPanelContainer/ComicPanelBg/FlashbackMaster
 @onready var flashback_hole: Sprite2D = $ComicPanelContainer/ComicPanelBg/FlashbackHole
 
@@ -60,40 +61,55 @@ extends Node2D
 @onready var dialogue_box: PanelContainer = $MagicStoryUI/DialogueBox
 @onready var speaker_label: Label = $MagicStoryUI/DialogueBox/Margin/VBox/SpeakerLabel
 @onready var dialogue_label: Label = $MagicStoryUI/DialogueBox/Margin/VBox/DialogueLabel
-@onready var continue_prompt: Label = $MagicStoryUI/DialogueBox/Margin/VBox/ContinuePrompt
+@onready var continue_arrow: TextureRect = $MagicStoryUI/DialogueBox/ArrowOverlay/ArrowWrapper/ContinueArrow
 @onready var the_end_container: Control = $MagicStoryUI/TheEndContainer
 @onready var the_end_dark_overlay: ColorRect = $MagicStoryUI/TheEndContainer/DarkOverlay
+@onready var summary_container: VBoxContainer = $MagicStoryUI/TheEndContainer/SummaryContainer
 @onready var summary_line1: Label = $MagicStoryUI/TheEndContainer/SummaryContainer/SummaryLine1
 @onready var summary_line2: Label = $MagicStoryUI/TheEndContainer/SummaryContainer/SummaryLine2
 @onready var summary_line3: Label = $MagicStoryUI/TheEndContainer/SummaryContainer/SummaryLine3
-@onready var the_end_title: Label = $MagicStoryUI/TheEndContainer/TitleLabel
+@onready var the_end_title: Label = get_node_or_null("MagicStoryUI/TheEndContainer/TitleLabel") as Label
 @onready var the_end_continue_prompt: Label = $MagicStoryUI/TheEndContainer/ContinuePrompt
 @onready var credits_container: Control = $MagicStoryUI/CreditsContainer
 @onready var return_menu_btn: Button = $MagicStoryUI/CreditsContainer/BottomBar/ReturnMenuBtn
 
-# Audio (SFX only, NO BGM)
-@export var bgm_player: AudioStreamPlayer = null
-var sfx_fusion: AudioStreamPlayer
-var sfx_warp: AudioStreamPlayer
-var sfx_pop: AudioStreamPlayer
-var sfx_next: AudioStreamPlayer
-var sfx_success: AudioStreamPlayer
+const STAGE_7_DIALOGUES: Array[Dictionary] = [
+	{
+		"speaker": "เวล",
+		"text": "เฮ้อ... เรื่องวุ่นวายทั้งหมดที่เกิดขึ้น สาเหตุเกิดจากท่านปรมาจารย์เหรอเนี่ย...",
+		"vel_anim": "angry",
+		"master_anim": "cry",
+		"anger_mark": true,
+	},
+	{
+		"speaker": "ปรมาจารย์",
+		"text": "ฉันเองเหรอเนี่ย... 55555",
+		"vel_anim": "breathe_blink",
+		"master_anim": "playful",
+		"sigh_puff": true,
+	}
+]
+var stage_7_dialogue_index: int = 0
 
 var shards16: Array[Sprite2D] = []
 var shard_initial_positions: Array[Vector2] = []
 var current_stage: int = 1
 var is_waiting_dialogue: bool = false
 var is_waiting_epilogue: bool = false
+var is_epilogue_typing: bool = false
+var is_waiting_comic: bool = false
 var dialogue_callback: Callable = Callable()
 var is_fast_forwarding: bool = false
 var can_fast_forward: bool = true
 var typewriter_tween: Tween = null
+var arrow_tween: Tween = null
 var anger_bounce_tween: Tween = null
 var sigh_puff_tween: Tween = null
 var book_aura_pulse_tween: Tween = null
 var epilogue_pulse_tween: Tween = null
 var epilogue_seq_tween: Tween = null
 var epilogue_auto_tween: Tween = null
+var comic_pulse_tween: Tween = null
 var shard_drift_tweens: Array[Tween] = []
 var skip_btn_instance: CanvasLayer = null
 
@@ -109,13 +125,12 @@ var camera_shake_amount: float = 0.0
 func _ready() -> void:
 	Engine.time_scale = 1.0
 	
-	# เพิ่มปุ่มข้าม cutscene
+	# เพิ่มปุ่มเร่งความเร็ว (FF 2.5x) และปุ่มข้าม (Skip / Esc)
 	var skip_btn = preload("res://features/cutscene/skip_cutscene_button.gd").new()
 	skip_btn.next_scene_path = start_scene_path
 	skip_btn_instance = skip_btn
 	add_child(skip_btn)
 	
-	_init_sfx()
 	_init_shards()
 	_reset_all_stages()
 	
@@ -128,6 +143,8 @@ func _exit_tree() -> void:
 	Engine.time_scale = 1.0
 	if typewriter_tween and typewriter_tween.is_valid():
 		typewriter_tween.kill()
+	if arrow_tween and arrow_tween.is_valid():
+		arrow_tween.kill()
 	if anger_bounce_tween and anger_bounce_tween.is_valid():
 		anger_bounce_tween.kill()
 	if sigh_puff_tween and sigh_puff_tween.is_valid():
@@ -140,12 +157,28 @@ func _exit_tree() -> void:
 		epilogue_seq_tween.kill()
 	if epilogue_auto_tween and epilogue_auto_tween.is_valid():
 		epilogue_auto_tween.kill()
+	if comic_pulse_tween and comic_pulse_tween.is_valid():
+		comic_pulse_tween.kill()
 	for tw in shard_drift_tweens:
 		if tw and tw.is_valid():
 			tw.kill()
 	shard_drift_tweens.clear()
 
 func _process(delta: float) -> void:
+	# ระบบเร่งความเร็วเกม (Shift ค้าง หรือปุ่ม FF บนหน้าจอ)
+	if can_fast_forward:
+		var is_btn_active: bool = (skip_btn_instance != null and skip_btn_instance.is_fast_forward)
+		var wants_hold: bool = Input.is_key_pressed(KEY_SHIFT)
+		var active: bool = is_btn_active or wants_hold
+		if active != is_fast_forwarding:
+			is_fast_forwarding = active
+			Engine.time_scale = 2.5 if active else 1.0
+			if skip_btn_instance and not is_btn_active:
+				skip_btn_instance._apply_ff_style(active)
+	elif is_fast_forwarding:
+		is_fast_forwarding = false
+		Engine.time_scale = 1.0
+	
 	# อัปเดตเฟรมแอนิเมชันของท้องฟ้าในฉาก 2
 	if current_stage == 2:
 		storm_anim_timer += delta * 12.0
@@ -177,24 +210,29 @@ func _process(delta: float) -> void:
 	else:
 		camera.offset = Vector2.ZERO
 
-	# เร่งความเร็ว (Fast forward) เมื่อกดค้าง และไม่อยู่ในช่วงรอคลิกบทสนทนา
-	if can_fast_forward and not is_waiting_dialogue:
-		var wants_ff: bool = Input.is_key_pressed(KEY_SPACE) or \
-			Input.is_key_pressed(KEY_ENTER) or \
-			Input.is_key_pressed(KEY_SHIFT) or \
-			Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT)
-		
-		if wants_ff != is_fast_forwarding:
-			is_fast_forwarding = wants_ff
-			Engine.time_scale = 2.5 if wants_ff else 1.0
-
 func _input(event: InputEvent) -> void:
+	if is_waiting_comic:
+		if event.is_action_pressed("ui_accept") or \
+		   (event is InputEventKey and event.pressed and not event.echo and (event.keycode == KEY_SPACE or event.keycode == KEY_ENTER)) or \
+		   (event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT):
+			get_viewport().set_input_as_handled()
+			_advance_comic_flashback()
+		return
+	
 	if is_waiting_dialogue:
 		if event.is_action_pressed("ui_accept") or \
 		   (event is InputEventKey and event.pressed and not event.echo and (event.keycode == KEY_SPACE or event.keycode == KEY_ENTER)) or \
 		   (event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT):
 			get_viewport().set_input_as_handled()
 			_advance_dialogue()
+		return
+	
+	if is_epilogue_typing:
+		if event.is_action_pressed("ui_accept") or \
+		   (event is InputEventKey and event.pressed and not event.echo and (event.keycode == KEY_SPACE or event.keycode == KEY_ENTER)) or \
+		   (event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT):
+			get_viewport().set_input_as_handled()
+			_skip_epilogue_typewriter()
 		return
 	
 	if is_waiting_epilogue:
@@ -214,10 +252,11 @@ func _advance_dialogue() -> void:
 		if typewriter_tween and typewriter_tween.is_valid():
 			typewriter_tween.kill()
 		dialogue_label.visible_ratio = 1.0
+		_show_continue_arrow()
 		return
 	
+	_hide_continue_arrow()
 	is_waiting_dialogue = false
-	_play_sfx(sfx_next)
 	
 	if dialogue_callback.is_valid():
 		dialogue_callback.call()
@@ -250,17 +289,35 @@ func _reset_all_stages() -> void:
 	the_end_container.visible = false
 	the_end_container.modulate = Color(1, 1, 1, 1)
 	if the_end_dark_overlay:
-		the_end_dark_overlay.color = Color(0.00392, 0, 0.07451, 0.0)
+		the_end_dark_overlay.color = Color(0, 0, 0, 0.0)
+	if summary_container:
+		summary_container.modulate.a = 1.0
 	if summary_line1:
-		summary_line1.modulate.a = 0.0
+		summary_line1.modulate.a = 1.0
+		summary_line1.visible_characters = -1
+		summary_line1.visible_ratio = 0.0
 	if summary_line2:
-		summary_line2.modulate.a = 0.0
+		summary_line2.modulate.a = 1.0
+		summary_line2.visible_characters = -1
+		summary_line2.visible_ratio = 0.0
 	if summary_line3:
-		summary_line3.modulate.a = 0.0
+		summary_line3.modulate.a = 1.0
+		summary_line3.visible_characters = -1
+		summary_line3.visible_ratio = 0.0
 	if the_end_title:
+		the_end_title.visible = false
 		the_end_title.modulate.a = 0.0
 	if the_end_continue_prompt:
+		the_end_continue_prompt.text = "คลิกหน้าจอเพื่อไปต่อ"
 		the_end_continue_prompt.modulate.a = 0.0
+		the_end_continue_prompt.visible = false
+	if comic_continue_prompt:
+		comic_continue_prompt.modulate.a = 0.0
+	is_waiting_comic = false
+	is_epilogue_typing = false
+	is_waiting_epilogue = false
+	if comic_pulse_tween and comic_pulse_tween.is_valid():
+		comic_pulse_tween.kill()
 	if epilogue_pulse_tween and epilogue_pulse_tween.is_valid():
 		epilogue_pulse_tween.kill()
 	if epilogue_seq_tween and epilogue_seq_tween.is_valid():
@@ -368,7 +425,6 @@ func play_stage_1_book_restoration() -> void:
 				tw.kill()
 		shard_drift_tweens.clear()
 		
-		_play_sfx(sfx_fusion)
 		camera_shake_amount = 3.0
 		
 		for s in shards16:
@@ -384,7 +440,6 @@ func play_stage_1_book_restoration() -> void:
 	var tw_complete = create_tween()
 	tw_complete.tween_interval(2.85)
 	tw_complete.tween_callback(func():
-		_play_sfx(sfx_success)
 		khampri_null.visible = false
 		khampri_full.visible = true
 		khampri_full.modulate = Color(1.2, 1.15, 1.1, 1.0)
@@ -432,7 +487,6 @@ func play_stage_1_book_restoration() -> void:
 	var tw_flash = create_tween()
 	tw_flash.tween_interval(4.3)
 	tw_flash.tween_callback(func():
-		_play_sfx(sfx_warp)
 		white_flash.visible = true
 		white_flash.color = Color(0.980392, 0.976471, 0.964706, 0.0)
 		var tw_wf = create_tween()
@@ -464,8 +518,6 @@ func play_stage_2_sky_restoration() -> void:
 	var tw_magic_sweep = create_tween()
 	tw_magic_sweep.tween_interval(1.8)
 	tw_magic_sweep.tween_callback(func():
-		_play_sfx(sfx_warp)
-		
 		# แสงสว่างวาบ 0.35s ไม่ให้จอขาวจ้าจนมองไม่เห็น
 		var tw_glare = create_tween()
 		tw_glare.tween_property(white_flash, "color:a", 0.5, 0.2)
@@ -507,8 +559,6 @@ func play_stage_3_village_restoration() -> void:
 	var tw_restore = create_tween()
 	tw_restore.tween_interval(1.8)
 	tw_restore.tween_callback(func():
-		_play_sfx(sfx_warp)
-		
 		# แสงสว่างวาบนุ่มนวล 0.35s ไม่ให้จอขาวจ้า (เหมือนฉากที่ 2)
 		var tw_glare = create_tween()
 		tw_glare.tween_property(white_flash, "color:a", 0.5, 0.2)
@@ -561,7 +611,6 @@ func play_stage_4_vel_in_library() -> void:
 	var tw_warp_vel = create_tween()
 	tw_warp_vel.tween_interval(1.2)
 	tw_warp_vel.tween_callback(func():
-		_play_sfx(sfx_warp)
 		# แสงวงเวทที่พื้นตำแหน่งเท้าของเวล
 		if warp_spark:
 			warp_spark.visible = true
@@ -605,7 +654,6 @@ func play_stage_4_vel_in_library() -> void:
 		
 		# ในจังหวะที่หนังสือถึงมือจริงๆ ➔ เปลี่ยนเป็นท่า vel_hold ทันที พร้อมเด้งเบาๆ
 		tw_drop.chain().tween_callback(func():
-			_play_sfx(sfx_pop)
 			vel.play("hold")
 			
 			var tw_bounce = create_tween()
@@ -645,8 +693,6 @@ func play_stage_5_master_return() -> void:
 	var tw_emerge = create_tween()
 	tw_emerge.tween_interval(1.8)
 	tw_emerge.tween_callback(func():
-		_play_sfx(sfx_pop)
-		
 		# อาจารย์พุ่งขึ้นมาจากหลุมดำ (40, 97)
 		master_char.visible = true
 		master_char.position = Vector2(40, 97)
@@ -761,7 +807,6 @@ func play_stage_6_comic_flashback() -> void:
 	var tw_fall = create_tween()
 	tw_fall.tween_interval(3.3)
 	tw_fall.tween_callback(func():
-		_play_sfx(sfx_warp)
 		# ดีดตัวนิดนึงแล้วร่วงดิ่งลงหลุมดำ (เหมือนฉากเปิดเรื่อง)
 		var tw_m_fall = create_tween().set_parallel(true)
 		tw_m_fall.tween_property(flashback_master, "position:y", 510.0, 0.65).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
@@ -772,78 +817,111 @@ func play_stage_6_comic_flashback() -> void:
 		tw_m_fall.chain().tween_property(flashback_hole, "scale", Vector2.ZERO, 0.35)
 	)
 	
-	# 6.4 ค้างกรอบภาพที่ว่างเปล่าพร้อมคำบรรยายมุกตลกให้อ่านได้เต็มที่ (~3.6s) แล้วค่อยปิดกรอบ (7.6s)
-	var tw_panel_out = create_tween()
-	tw_panel_out.tween_interval(7.6)
-	tw_panel_out.tween_callback(func():
-		var tw_out = create_tween().set_parallel(true)
-		tw_out.tween_property(comic_container, "scale", Vector2(0.3, 0.3), 0.4).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_IN)
-		tw_out.tween_property(comic_container, "modulate:a", 0.0, 0.4)
-		
-		tw_out.chain().tween_callback(func():
-			comic_container.visible = false
-			play_stage_7_dialogue()
-		)
+	# 6.4 หลังจากปรมาจารย์ตกหลุมดำไปแล้ว 1 วินาที (3.3s + 0.65s + 0.35s + 1.0s = 5.3s)
+	# แสดงข้อความ "คลิกหน้าจอเพื่อไปต่อ" และรอให้ผู้เล่นคลิกเพื่อไปต่อ
+	var tw_prompt = create_tween()
+	tw_prompt.tween_interval(5.3)
+	tw_prompt.tween_callback(func():
+		if current_stage != 6:
+			return
+		if comic_continue_prompt:
+			var tw_in = create_tween()
+			tw_in.tween_property(comic_continue_prompt, "modulate:a", 1.0, 0.4).set_trans(Tween.TRANS_SINE)
+			tw_in.tween_callback(func():
+				_start_comic_pulse()
+				is_waiting_comic = true
+			)
+	)
+
+func _start_comic_pulse() -> void:
+	if comic_pulse_tween and comic_pulse_tween.is_valid():
+		comic_pulse_tween.kill()
+	comic_pulse_tween = create_tween().set_loops()
+	comic_pulse_tween.tween_property(comic_continue_prompt, "modulate:a", 0.4, 0.8).set_trans(Tween.TRANS_SINE)
+	comic_pulse_tween.tween_property(comic_continue_prompt, "modulate:a", 1.0, 0.8).set_trans(Tween.TRANS_SINE)
+
+func _advance_comic_flashback() -> void:
+	if not is_waiting_comic:
+		return
+	is_waiting_comic = false
+	if comic_pulse_tween and comic_pulse_tween.is_valid():
+		comic_pulse_tween.kill()
+	
+	var tw_out = create_tween().set_parallel(true)
+	tw_out.tween_property(comic_container, "scale", Vector2(0.3, 0.3), 0.4).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_IN)
+	tw_out.tween_property(comic_container, "modulate:a", 0.0, 0.4)
+	
+	tw_out.chain().tween_callback(func():
+		comic_container.visible = false
+		play_stage_7_dialogue()
 	)
 
 ## =============================================================
-## ฉากที่ 7: บทสนทนาหลังจบ Flashback
+## ฉากที่ 7: บทสนทนาหลังจบ Flashback (Data-driven dialogues)
 ## =============================================================
 func play_stage_7_dialogue() -> void:
 	current_stage = 7
+	stage_7_dialogue_index = 0
+	_show_stage_7_current_dialogue()
+
+func _show_stage_7_current_dialogue() -> void:
+	if stage_7_dialogue_index >= STAGE_7_DIALOGUES.size():
+		_stop_anger_mark()
+		_stop_sigh_puff()
+		vel.play("idle")
+		master_char.play("idle")
+		_hide_dialogue(play_stage_8_epilogue)
+		return
 	
-	# บทที่ 2: เวลใช้หน้า angry และปรมาจารย์ใช้หน้า cry
-	vel.play("angry")
-	master_char.play("cry")
+	var data = STAGE_7_DIALOGUES[stage_7_dialogue_index]
+	vel.play(data["vel_anim"])
+	master_char.play(data["master_anim"])
 	
-	# ตอนเวลทำหน้า angry แสดงไอคอนสัญลักษณ์โกรธ (💢) pixel art ขนาดกะทัดรัด เด้งดุ๊กดิ๊กเบาๆ เหนือศีรษะ
-	if anger_mark:
+	if data.get("anger_mark", false):
+		_start_anger_mark()
+	else:
+		_stop_anger_mark()
+		
+	if data.get("sigh_puff", false):
+		_play_sigh_puff()
+	else:
+		_stop_sigh_puff()
+		
+	_show_dialogue(data["speaker"], data["text"], func():
+		stage_7_dialogue_index += 1
+		_show_stage_7_current_dialogue()
+	)
+
+func _start_anger_mark() -> void:
+	if not is_instance_valid(anger_mark):
+		return
+	if anger_bounce_tween and anger_bounce_tween.is_valid():
+		anger_bounce_tween.kill()
+	anger_mark.visible = true
+	anger_mark.position = Vector2(12, -32)
+	anger_mark.scale = Vector2.ZERO
+	var tw_pop = create_tween()
+	tw_pop.tween_property(anger_mark, "scale", Vector2(0.72, 0.72), 0.15).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	tw_pop.tween_callback(func():
+		if is_instance_valid(anger_mark) and anger_mark.visible:
+			anger_bounce_tween = create_tween().set_loops()
+			anger_bounce_tween.tween_property(anger_mark, "scale", Vector2(0.75, 0.75), 0.45).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+			anger_bounce_tween.parallel().tween_property(anger_mark, "position:y", -33.0, 0.45).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+			anger_bounce_tween.chain().tween_property(anger_mark, "scale", Vector2(0.69, 0.69), 0.45).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+			anger_bounce_tween.parallel().tween_property(anger_mark, "position:y", -31.5, 0.45).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	)
+
+func _stop_anger_mark() -> void:
+	if is_instance_valid(anger_mark) and anger_mark.visible:
 		if anger_bounce_tween and anger_bounce_tween.is_valid():
 			anger_bounce_tween.kill()
-		anger_mark.visible = true
-		anger_mark.position = Vector2(12, -32)
-		anger_mark.scale = Vector2.ZERO
-		var tw_pop = create_tween()
-		tw_pop.tween_property(anger_mark, "scale", Vector2(0.72, 0.72), 0.15).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-		tw_pop.tween_callback(func():
-			if is_instance_valid(anger_mark) and anger_mark.visible:
-				anger_bounce_tween = create_tween().set_loops()
-				# ขยับและพองยุบเบาๆ นุ่มนวล ไม่เด้งรุนแรง (gentle subtle bobbing)
-				anger_bounce_tween.tween_property(anger_mark, "scale", Vector2(0.75, 0.75), 0.45).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
-				anger_bounce_tween.parallel().tween_property(anger_mark, "position:y", -33.0, 0.45).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
-				anger_bounce_tween.chain().tween_property(anger_mark, "scale", Vector2(0.69, 0.69), 0.45).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
-				anger_bounce_tween.parallel().tween_property(anger_mark, "position:y", -31.5, 0.45).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+		var tw_ang_out = create_tween()
+		tw_ang_out.tween_property(anger_mark, "scale", Vector2.ZERO, 0.12)
+		tw_ang_out.tween_callback(func():
+			if is_instance_valid(anger_mark):
+				anger_mark.visible = false
 		)
-	
-	# ประโยคที่ 1 (ของฉาก 7): เวลพูดหลังรู้ความจริง
-	_show_dialogue(
-		"เวล",
-		"เฮ้อ... เรื่องวุ่นวายทั้งหมดที่เกิดขึ้น สาเหตุเกิดจากท่านปรมาจารย์เหรอเนี่ย...",
-		func():
-			# ปิดไอคอนอารมณ์เสียเมื่อจบประโยคของเวล
-			if is_instance_valid(anger_mark) and anger_mark.visible:
-				if anger_bounce_tween and anger_bounce_tween.is_valid():
-					anger_bounce_tween.kill()
-				var tw_ang_out = create_tween()
-				tw_ang_out.tween_property(anger_mark, "scale", Vector2.ZERO, 0.12)
-				tw_ang_out.tween_callback(func(): anger_mark.visible = false)
-			
-			# บทที่ 3: เวลใช้หน้า breathe_blink และปรมาจารย์ใช้หน้า playful พร้อมปุยลมหายใจถอนหายใจ
-			vel.play("breathe_blink")
-			master_char.play("playful")
-			_play_sigh_puff()
-			
-			# ประโยคที่ 2 (ของฉาก 7): อาจารย์ตอบ
-			_show_dialogue(
-				"ปรมาจารย์",
-				"ฉันเองเหรอเนี่ย... 55555",
-				func():
-					_stop_sigh_puff()
-					vel.play("idle")
-					master_char.play("idle")
-					_hide_dialogue(play_stage_8_epilogue)
-			)
-	)
+
 
 ## แอนิเมชันปุยลมหายใจถอนหายใจ (Sigh Puff Effect) ลอยเอื่อยๆ ข้างล่างตัว
 func _play_sigh_puff() -> void:
@@ -895,9 +973,10 @@ func _stop_sigh_puff() -> void:
 		)
 
 ## =============================================================
-## ฉากที่ 8: บทสรุปการเดินทางของเวล (The End Screen)
-## เริ่มด้วยฉากสีปกติ 2s -> คลุมดำ 45% ใน 1s -> ข้อความสรุปเฟดทีละบรรทัด
-## -> THE END สีทอง -> ซ่อนปุ่มข้าม และรอ 2s ก่อนเปิดรับคลิกไปหน้าเครดิต
+## ฉากที่ 8: บทสรุปการเดินทางของเวล (Epilogue Screen)
+## เริ่มด้วยฉากสีปกติ 1.5s -> ค่อย ๆ เฟดมืดสนิท (Pure Black) ใน 1.2s
+## -> ข้อความสรุปพิมพ์ขึ้นทีละบรรทัดด้วย Typewriter Effect
+## -> ข้อความขึ้นครบแล้วจึงแสดง "คลิกหน้าจอเพื่อไปต่อ" ขึ้นทีหลัง
 ## =============================================================
 func play_stage_8_epilogue() -> void:
 	current_stage = 8
@@ -905,6 +984,7 @@ func play_stage_8_epilogue() -> void:
 	is_fast_forwarding = false
 	Engine.time_scale = 1.0
 	is_waiting_epilogue = false
+	is_epilogue_typing = false
 	
 	_stop_sigh_puff()
 	if anger_mark:
@@ -912,7 +992,6 @@ func play_stage_8_epilogue() -> void:
 	if sigh_puff:
 		sigh_puff.visible = false
 	
-	# ซ่อนปุ่ม "ข้าม" เมื่อเข้าสู่หน้าจบนี้
 	if is_instance_valid(skip_btn_instance):
 		skip_btn_instance.visible = false
 	
@@ -924,66 +1003,128 @@ func play_stage_8_epilogue() -> void:
 	camera.position = Vector2(960, 540)
 	camera.zoom = Vector2.ONE
 	
-	# เตรียมองค์ประกอบหน้า The End
+	# เตรียมองค์ประกอบหน้าจบ
 	the_end_container.visible = true
 	the_end_container.modulate = Color(1, 1, 1, 1)
 	
-	# เริ่มด้วยฉากสีปกติ และรีเซ็ตความโปร่งใสของข้อความทั้งหมด
-	the_end_dark_overlay.color = Color(0.00392, 0, 0.07451, 0.0)
-	summary_line1.modulate.a = 0.0
-	summary_line2.modulate.a = 0.0
-	summary_line3.modulate.a = 0.0
-	the_end_title.modulate.a = 0.0
-	the_end_continue_prompt.modulate.a = 0.0
+	# เริ่มด้วยฉากสีปกติ และเตรียมข้อความสรุปสำหรับ Typewriter Effect
+	the_end_dark_overlay.color = Color(0, 0, 0, 0.0)
+	if summary_container:
+		summary_container.modulate.a = 1.0
 	
+	summary_line1.modulate.a = 1.0
+	summary_line1.visible_characters = -1
+	summary_line1.visible_ratio = 0.0
+	
+	summary_line2.modulate.a = 1.0
+	summary_line2.visible_characters = -1
+	summary_line2.visible_ratio = 0.0
+	
+	summary_line3.modulate.a = 1.0
+	summary_line3.visible_characters = -1
+	summary_line3.visible_ratio = 0.0
+	
+	if is_instance_valid(the_end_title):
+		the_end_title.visible = false
+		the_end_title.modulate.a = 0.0
+	
+	# ข้อความ "คลิกหน้าจอเพื่อไปต่อ" ซ่อนไว้ก่อน จะแสดงขึ้นมาหลังจากข้อความสรุปขึ้นครบทุกบรรทัดแล้ว
+	the_end_continue_prompt.text = "คลิกหน้าจอเพื่อไปต่อ"
+	the_end_continue_prompt.modulate.a = 0.0
+	the_end_continue_prompt.visible = false
+	
+	if epilogue_pulse_tween and epilogue_pulse_tween.is_valid():
+		epilogue_pulse_tween.kill()
+	if epilogue_auto_tween and epilogue_auto_tween.is_valid():
+		epilogue_auto_tween.kill()
 	if epilogue_seq_tween and epilogue_seq_tween.is_valid():
 		epilogue_seq_tween.kill()
 	epilogue_seq_tween = create_tween()
 	
-	# 1. เริ่มด้วยฉากสีปกติ ให้เห็นเวลกับปรมาจารย์ชัดเจนเป็นเวลา 2 วินาที
-	epilogue_seq_tween.tween_interval(2.0)
+	# 1. เริ่มด้วยฉากสีปกติ ให้เห็นเวลกับปรมาจารย์เป็นเวลา 1.5 วินาที
+	epilogue_seq_tween.tween_interval(1.5)
 	
-	# 2. ค่อย ๆ เพิ่มชั้นสีดำคลุมฉากจากความทึบ 0% ไปเป็น 45% ภายใน 1 วินาที
-	# ชั้นดำอยู่หลังข้อความ และยังมองเห็นใบหน้ากับสีชุดตัวละครได้
-	# พร้อมค่อย ๆ ลดระดับเสียงเพลงประกอบเล็กน้อยช่วงข้อความปรากฏ
+	# 2. ค่อย ๆ เฟดเป็นสีดำสนิท (Fade to pure black) ภายใน 1.2 วินาที
 	epilogue_seq_tween.tween_callback(func():
-		_fade_bgm_volume(-6.0, 1.0)
+		_fade_bgm_volume(-6.0, 1.2)
 	)
-	epilogue_seq_tween.tween_property(the_end_dark_overlay, "color:a", 0.45, 1.0).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
-	
-	# 3. ใช้ข้อความจบเดิม สีขาว ตำแหน่งกึ่งกลางเดิม ค่อย ๆ เฟดเข้าทีละบรรทัด บรรทัดละ 0.6 วินาที
-	# เว้นระหว่างบรรทัด 0.8 วินาที และคงบรรทัดก่อนหน้าไว้ให้อ่านต่อเนื่อง
-	epilogue_seq_tween.tween_property(summary_line1, "modulate:a", 1.0, 0.6).set_trans(Tween.TRANS_SINE)
-	epilogue_seq_tween.tween_interval(0.8)
-	epilogue_seq_tween.tween_property(summary_line2, "modulate:a", 1.0, 0.6).set_trans(Tween.TRANS_SINE)
-	epilogue_seq_tween.tween_interval(0.8)
-	epilogue_seq_tween.tween_property(summary_line3, "modulate:a", 1.0, 0.6).set_trans(Tween.TRANS_SINE)
-	
-	# 4. เมื่อข้อความครบทุกบรรทัด รอ 1 วินาที แล้วเฟดคำว่า “THE END” เข้ามาภายใน 1 วินาที
-	# ใช้รูปแบบพิกเซลสีทองและตำแหน่งเดิม
-	epilogue_seq_tween.tween_interval(1.0)
-	epilogue_seq_tween.tween_property(the_end_title, "modulate:a", 1.0, 1.0).set_trans(Tween.TRANS_SINE)
-	
-	# 5. หลัง THE END แสดงครบแล้ว 2 วินาที จึงแสดงข้อความสำหรับไปหน้าถัดไป พร้อมเปิดรับการคลิก
-	# ป้องกันการคลิกจากฉากก่อนหน้าทำให้หน้าจบถูกข้ามทันที
-	epilogue_seq_tween.tween_interval(2.0)
+	epilogue_seq_tween.tween_property(the_end_dark_overlay, "color", Color(0, 0, 0, 1.0), 1.2).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 	epilogue_seq_tween.tween_callback(func():
+		stage4.visible = false
+	)
+	epilogue_seq_tween.tween_interval(0.3)
+	
+	# 3. เริ่มพิมพ์ข้อความสรุปทีละบรรทัดด้วย Typewriter Effect
+	epilogue_seq_tween.tween_callback(func():
+		is_epilogue_typing = true
+	)
+	
+	# บรรทัดที่ 1: "แม้จุดเริ่มต้นจะเกิดจากความโก๊ะของปรมาจารย์" (~42 ตัวอักษร)
+	var dur1: float = clampf(float(summary_line1.text.length()) * 0.035, 1.0, 1.6)
+	epilogue_seq_tween.tween_property(summary_line1, "visible_ratio", 1.0, dur1)
+	epilogue_seq_tween.tween_interval(0.4)
+	
+	# บรรทัดที่ 2: "แต่เวลก็ได้เติบโตและกอบกู้คัมภีร์เวทต้นกำเนิด" (~42 ตัวอักษร)
+	var dur2: float = clampf(float(summary_line2.text.length()) * 0.035, 1.0, 1.6)
+	epilogue_seq_tween.tween_property(summary_line2, "visible_ratio", 1.0, dur2)
+	epilogue_seq_tween.tween_interval(0.4)
+	
+	# บรรทัดที่ 3: "คืนความสงบสุขให้แก่อาณาจักรได้สำเร็จ" (~34 ตัวอักษร)
+	var dur3: float = clampf(float(summary_line3.text.length()) * 0.035, 0.9, 1.4)
+	epilogue_seq_tween.tween_property(summary_line3, "visible_ratio", 1.0, dur3)
+	
+	# 4. หลังจากข้อความสรุปขึ้นครบทุกบรรทัดแล้ว ให้หยุดรอ 1.0 วินาที เพื่อให้ผู้เล่นอ่านอย่างเต็มตา
+	#    จากนั้นจึงแสดงข้อความ "คลิกหน้าจอเพื่อไปต่อ" ขึ้นมาทีหลัง
+	epilogue_seq_tween.tween_interval(1.0)
+	epilogue_seq_tween.tween_callback(func():
+		is_epilogue_typing = false
+		the_end_continue_prompt.visible = true
 		var tw_prompt = create_tween()
 		tw_prompt.tween_property(the_end_continue_prompt, "modulate:a", 1.0, 0.5).set_trans(Tween.TRANS_SINE)
 		tw_prompt.tween_callback(func():
 			_start_epilogue_pulse()
 			is_waiting_epilogue = true
-			
-			# เริ่มนับเวลาถอยหลัง 8 วินาที "หลังจาก" ข้อความทั้งหมดแสดงผลเต็มที่แล้ว เผื่อผู้เล่นไม่คลิก
-			if epilogue_auto_tween and epilogue_auto_tween.is_valid():
-				epilogue_auto_tween.kill()
-			epilogue_auto_tween = create_tween()
-			epilogue_auto_tween.tween_interval(8.0)
-			epilogue_auto_tween.tween_callback(func():
-				if is_waiting_epilogue:
-					_advance_epilogue_to_credits()
-			)
+			_start_epilogue_auto_timer()
 		)
+	)
+
+func _skip_epilogue_typewriter() -> void:
+	if not is_epilogue_typing:
+		return
+	is_epilogue_typing = false
+	
+	if epilogue_seq_tween and epilogue_seq_tween.is_valid():
+		epilogue_seq_tween.kill()
+	
+	# แสดงข้อความทั้ง 3 บรรทัดขึ้นครบเต็มทันที
+	summary_line1.visible_characters = -1
+	summary_line1.visible_ratio = 1.0
+	summary_line2.visible_characters = -1
+	summary_line2.visible_ratio = 1.0
+	summary_line3.visible_characters = -1
+	summary_line3.visible_ratio = 1.0
+	
+	# แสดงข้อความ "คลิกหน้าจอเพื่อไปต่อ" ขึ้นมาทันที
+	the_end_continue_prompt.visible = true
+	if epilogue_pulse_tween and epilogue_pulse_tween.is_valid():
+		epilogue_pulse_tween.kill()
+	
+	var tw_prompt = create_tween()
+	tw_prompt.tween_property(the_end_continue_prompt, "modulate:a", 1.0, 0.3).set_trans(Tween.TRANS_SINE)
+	tw_prompt.tween_callback(func():
+		_start_epilogue_pulse()
+		is_waiting_epilogue = true
+		_start_epilogue_auto_timer()
+	)
+
+func _start_epilogue_auto_timer() -> void:
+	if epilogue_auto_tween and epilogue_auto_tween.is_valid():
+		epilogue_auto_tween.kill()
+	epilogue_auto_tween = create_tween()
+	epilogue_auto_tween.tween_interval(8.0)
+	epilogue_auto_tween.tween_callback(func():
+		if is_waiting_epilogue:
+			_advance_epilogue_to_credits()
 	)
 
 ## แอนิเมชันกระพริบนุ่มนวลสำหรับข้อความคลิกเพื่อไปต่อ
@@ -996,23 +1137,17 @@ func _start_epilogue_pulse() -> void:
 
 ## ควบคุมระดับเสียงเพลงประกอบอย่างปลอดภัย (หากมีเพลงในอนาคต)
 func _fade_bgm_volume(target_db: float, duration: float) -> void:
-	var player: AudioStreamPlayer = bgm_player
-	if not is_instance_valid(player):
-		player = get_node_or_null("BGM") as AudioStreamPlayer
-	if not is_instance_valid(player):
-		for child in get_children():
-			if child is AudioStreamPlayer and child.playing and child != sfx_fusion and child != sfx_warp and child != sfx_pop and child != sfx_next and child != sfx_success:
-				player = child
-				break
+	var player = get_node_or_null("BGM") as AudioStreamPlayer
 	if is_instance_valid(player) and player.playing:
 		var tw = create_tween()
 		tw.tween_property(player, "volume_db", target_db, duration)
 
-## เปลี่ยนผ่านจากฉาก The End เข้าสู่หน้าขอบคุณและเครดิต
+## เปลี่ยนผ่านจากฉากบทสรุปเข้าสู่หน้าขอบคุณและเครดิต
 func _advance_epilogue_to_credits() -> void:
 	if not is_waiting_epilogue:
 		return
 	is_waiting_epilogue = false
+	is_epilogue_typing = false
 	
 	if epilogue_pulse_tween and epilogue_pulse_tween.is_valid():
 		epilogue_pulse_tween.kill()
@@ -1024,16 +1159,23 @@ func _advance_epilogue_to_credits() -> void:
 	# ค่อย ๆ เฟดเสียงเพลงออกเมื่อออกจากหน้าจบ
 	_fade_bgm_volume(-80.0, 0.8)
 	
-	var tw_out = create_tween()
-	tw_out.tween_property(the_end_container, "modulate:a", 0.0, 0.6).set_trans(Tween.TRANS_SINE)
-	tw_out.tween_callback(func():
+	# เฟดเฉพาะข้อความสรุปและคำแนะนำคลิกออกอย่างนุ่มนวล โดยคงพื้นหลังสีดำสนิทไว้
+	var tw_out = create_tween().set_parallel(true)
+	if summary_container:
+		tw_out.tween_property(summary_container, "modulate:a", 0.0, 0.4).set_trans(Tween.TRANS_SINE)
+	else:
+		tw_out.tween_property(summary_line1, "modulate:a", 0.0, 0.4).set_trans(Tween.TRANS_SINE)
+		tw_out.tween_property(summary_line2, "modulate:a", 0.0, 0.4).set_trans(Tween.TRANS_SINE)
+		tw_out.tween_property(summary_line3, "modulate:a", 0.0, 0.4).set_trans(Tween.TRANS_SINE)
+	tw_out.tween_property(the_end_continue_prompt, "modulate:a", 0.0, 0.4).set_trans(Tween.TRANS_SINE)
+	tw_out.chain().tween_callback(func():
 		the_end_container.visible = false
 		play_stage_9_credits()
 	)
 
 ## =============================================================
 ## ฉากที่ 9: หน้าขอบคุณและเครดิตปิดฉาก (Thank You for Playing Screen)
-## กล้องเลื่อนขวา -> ซ้าย -> นิ่งกลาง พร้อมเผยฉากเครดิตและตัวละครทั้ง 4
+## พื้นหลังดำสนิท เผยฉากเครดิตและตัวละครทั้ง 4 พร้อมละอองเวทมนตร์
 ## =============================================================
 func play_stage_9_credits() -> void:
 	current_stage = 9
@@ -1048,16 +1190,39 @@ func play_stage_9_credits() -> void:
 	
 	# รีเซ็ตตำแหน่งและมุมมองกล้องให้อยู่ตรงกลางนิ่งสงบ
 	camera.position = Vector2(960, 540)
-	camera.zoom = Vector2(1.0, 1.0)
+	camera.zoom = Vector2.ONE
 	
-	# ปรากฏฉากเครดิต CreditsContainer พร้อมละอองเวทมนตร์อย่างนุ่มนวล
+	# ปรากฏฉากเครดิต CreditsContainer พื้นหลังดำสนิท 100%
 	credits_container.visible = true
-	credits_container.modulate = Color(1, 1, 1, 0.0)
+	credits_container.modulate = Color(1, 1, 1, 1.0)
 	
-	var tw_fade_in = create_tween()
-	tw_fade_in.tween_interval(0.4)
-	tw_fade_in.tween_property(credits_container, "modulate:a", 1.0, 1.8).set_trans(Tween.TRANS_SINE)
-	tw_fade_in.tween_callback(func():
+	# เตรียมให้องค์ประกอบภายในค่อย ๆ เฟดเข้ามาบนพื้นหลังสีดำสนิท
+	var left_content = credits_container.get_node_or_null("LeftContent") as Control
+	var right_chars = credits_container.get_node_or_null("RightCharactersContainer") as Control
+	var bottom_bar = credits_container.get_node_or_null("BottomBar") as Control
+	var particles = credits_container.get_node_or_null("MagicParticles") as CanvasItem
+	
+	if left_content:
+		left_content.modulate.a = 0.0
+	if right_chars:
+		right_chars.modulate.a = 0.0
+	if bottom_bar:
+		bottom_bar.modulate.a = 0.0
+	if particles:
+		particles.modulate.a = 0.0
+	
+	var tw_fade_in = create_tween().set_parallel(true)
+	tw_fade_in.tween_interval(0.3)
+	if left_content:
+		tw_fade_in.tween_property(left_content, "modulate:a", 1.0, 1.5).set_trans(Tween.TRANS_SINE)
+	if right_chars:
+		tw_fade_in.tween_property(right_chars, "modulate:a", 1.0, 1.5).set_trans(Tween.TRANS_SINE)
+	if bottom_bar:
+		tw_fade_in.tween_property(bottom_bar, "modulate:a", 1.0, 1.5).set_trans(Tween.TRANS_SINE)
+	if particles:
+		tw_fade_in.tween_property(particles, "modulate:a", 1.0, 1.5).set_trans(Tween.TRANS_SINE)
+		
+	tw_fade_in.chain().tween_callback(func():
 		if is_instance_valid(return_menu_btn):
 			return_menu_btn.grab_focus()
 	)
@@ -1068,12 +1233,14 @@ func play_stage_9_credits() -> void:
 func _show_dialogue(speaker: String, text: String, on_continue: Callable) -> void:
 	is_waiting_dialogue = true
 	dialogue_callback = on_continue
-	
-	# รีเซ็ตความเร็วกลับสู่ปกติเพื่อให้อ่านบทสนทนาได้ชัดเจน
-	is_fast_forwarding = false
-	Engine.time_scale = 1.0
+	_hide_continue_arrow()
 	
 	speaker_label.text = speaker
+	if speaker == "เวล":
+		speaker_label.add_theme_color_override("font_color", Color(0.48, 0.78, 1.0, 1.0)) # สีฟ้าอ่อนสดใส (เวล)
+	else:
+		speaker_label.add_theme_color_override("font_color", Color(0.941, 0.824, 0.451, 1.0)) # สีทองอบอุ่น (ปรมาจารย์)
+	
 	dialogue_label.text = text
 	dialogue_label.visible_characters = -1
 	dialogue_label.visible_ratio = 0.0
@@ -1091,14 +1258,16 @@ func _show_dialogue(speaker: String, text: String, on_continue: Callable) -> voi
 	if typewriter_tween and typewriter_tween.is_valid():
 		typewriter_tween.kill()
 	
-	var duration: float = minf(float(text.length()) * 0.035, 1.5)
+	var duration: float = clampf(float(text.length()) * 0.03, 0.35, 1.4)
 	typewriter_tween = create_tween()
 	typewriter_tween.tween_property(dialogue_label, "visible_ratio", 1.0, duration)
+	typewriter_tween.tween_callback(func():
+		_show_continue_arrow()
+	)
 
 func _hide_dialogue(on_finish: Callable) -> void:
 	is_waiting_dialogue = false
-	is_fast_forwarding = false
-	Engine.time_scale = 1.0
+	_hide_continue_arrow()
 	if typewriter_tween and typewriter_tween.is_valid():
 		typewriter_tween.kill()
 		
@@ -1110,8 +1279,25 @@ func _hide_dialogue(on_finish: Callable) -> void:
 			on_finish.call()
 	)
 
+func _show_continue_arrow() -> void:
+	if not is_instance_valid(continue_arrow):
+		return
+	if arrow_tween and arrow_tween.is_valid():
+		arrow_tween.kill()
+	continue_arrow.position.y = 0.0
+	continue_arrow.visible = true
+	arrow_tween = create_tween().set_loops()
+	arrow_tween.tween_property(continue_arrow, "position:y", 4.0, 0.45).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	arrow_tween.tween_property(continue_arrow, "position:y", 0.0, 0.45).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+
+func _hide_continue_arrow() -> void:
+	if arrow_tween and arrow_tween.is_valid():
+		arrow_tween.kill()
+	if is_instance_valid(continue_arrow):
+		continue_arrow.visible = false
+		continue_arrow.position.y = 0.0
+
 func _on_return_menu_pressed() -> void:
-	_play_sfx(sfx_warp)
 	if is_instance_valid(return_menu_btn):
 		return_menu_btn.disabled = true
 	var tw = create_tween()
@@ -1121,22 +1307,5 @@ func _on_return_menu_pressed() -> void:
 		get_tree().change_scene_to_file(start_scene_path)
 	)
 
-func _play_sfx(_player: AudioStreamPlayer) -> void:
-	# TODO: เปิดใช้งาน SFX เมื่อมีไฟล์เสียงที่สมบูรณ์ตามแผน (ปัจจุบันปิดเสียงชั่วคราวตามที่ระบุ)
-	return
-
-func _init_sfx() -> void:
-	sfx_fusion = _create_sfx_player("res://assets/audio/sfx_success.wav")
-	sfx_warp = _create_sfx_player("res://assets/audio/sfx_command.wav")
-	sfx_pop = _create_sfx_player("res://assets/audio/sfx_modal.wav")
-	sfx_next = _create_sfx_player("res://assets/audio/sfx_dialogue_next.wav")
-	sfx_success = _create_sfx_player("res://assets/audio/sfx_success.wav")
-
-func _create_sfx_player(path: String) -> AudioStreamPlayer:
-	var player = AudioStreamPlayer.new()
-	if ResourceLoader.exists(path):
-		player.stream = load(path)
-	add_child(player)
-	return player
 
 
