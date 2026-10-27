@@ -196,12 +196,32 @@ func _load_level_data(num: int) -> void:
 		]
 	}
 
+func _highlight_code_syntax(code: String) -> String:
+	var parts := code.split(" ")
+	var styled_parts: Array[String] = []
+	for p in parts:
+		if p in ["git", "config"]:
+			styled_parts.append("[color=#70d6ff]%s[/color]" % p) # Sky Cyan คีย์เวิร์ด
+		elif p.begins_with("-"):
+			styled_parts.append("[color=#5fffe0]%s[/color]" % p) # Neon Pastel Mint อักขระ/แฟล็ก
+		elif p.begins_with("\"") or p.ends_with("\""):
+			styled_parts.append("[color=#ffd166]%s[/color]" % p) # Soft Gold ข้อความสตริง
+		else:
+			styled_parts.append("[color=#f8fafc]%s[/color]" % p) # Bright White ตัวระบุชื่อ
+	return " ".join(styled_parts)
+
 func _format_bbcode(raw: String) -> String:
 	var result := raw
-	# แปลง Markdown `code` เป็นโค้ดสไตล์บล็อกโปรแกรมมิ่ง (Mint Green + Dark Violet Badge)
+	# แปลง Markdown `code` เป็นโค้ดสไตล์บล็อกโปรแกรมมิ่ง (High-Contrast Neon Mint / Sky Cyan Badge)
 	var regex := RegEx.new()
 	if regex.compile("`([^`]+)`") == OK:
-		result = regex.sub(result, "[bgcolor=#1b182e][color=#6ee7b7] $1 [/color][/bgcolor]", true)
+		var matches := regex.search_all(result)
+		for i in range(matches.size() - 1, -1, -1):
+			var m = matches[i]
+			var inner = m.get_string(1)
+			var highlighted = _highlight_code_syntax(inner)
+			var replacement = "[bgcolor=#14192b] %s [/bgcolor]" % highlighted
+			result = result.left(m.get_start()) + replacement + result.substr(m.get_end())
 	return result
 
 func _start_dialogue_scene() -> void:
@@ -342,7 +362,7 @@ func _display_choice_menu(menu_id: String) -> void:
 	
 	var menu_key = "%s_choices" % menu_id
 	var menu_info = level_data.get(menu_key, {})
-	var prompt_title = menu_info.get("prompt", "คำถามให้ผู้เล่นเลือก:")
+	var prompt_title = menu_info.get("prompt", "ตัวเลือกคำถาม")
 	active_choices = menu_info.get("options", [])
 	
 	speaker_label.text = prompt_title
@@ -477,9 +497,9 @@ func _trigger_terminal_practice(item: Dictionary) -> void:
 	
 	var accumulated_text := ""
 	for cmd in commands:
-		accumulated_text += "[color=#6ee7b7]$ %s[/color]\n" % str(cmd)
+		accumulated_text += "[color=#5fffe0]$[/color] %s\n" % _highlight_code_syntax(str(cmd))
 	if output != "":
-		accumulated_text += "[color=#f0d273]%s[/color]\n" % output
+		accumulated_text += "[color=#ffd166]%s[/color]\n" % output
 		
 	tw.tween_interval(0.3)
 	tw.tween_callback(func():

@@ -15,11 +15,6 @@ static func get_data() -> Dictionary:
 		# 1. ขั้นสอน - ส่วนที่ 1: ตรวจสอบพลังเวท (git --version)
 		# ======================================================================
 		"intro_sequence": [
-			{"speaker": "มิวรา", "text": "ยินดีต้อนรับสู่กิลด์แห่งหอคอยเวท", "mewla_anim": "talk"},
-			{"speaker": "เวล", "text": "เธอคือ...", "emote": "question", "mewla_anim": "idle"},
-			{"speaker": "มิวรา", "text": "“แมวไง เห็นก็รู้ปะ” ฉันมิวรา ผู้ดูแลกิลด์ และเป็นคนที่จะสอนนายตั้งแต่พื้นฐาน", "mewla_anim": "talk"},
-			{"speaker": "มิวรา", "text": "ก่อนเข้าสู่บททดสอบของหอคอย นายต้องตรวจสอบว่าพลังเวทของตัวเองพร้อมใช้งานหรือยัง", "mewla_anim": "talk"},
-			{"speaker": "มิวรา", "text": "มาเริ่มคาถาแรกกัน", "mewla_anim": "success"},
 			{"speaker": "มิวรา", "text": "ร่ายคาถานี้ดู", "mewla_anim": "talk"},
 			{"speaker": "มิวรา", "text": "`git --version`", "mewla_anim": "talk"},
 			{"speaker": "เวล", "text": "แค่นี้เอง?", "emote": "question", "mewla_anim": "idle"},
@@ -30,7 +25,7 @@ static func get_data() -> Dictionary:
 		
 		# กล่องคำถามหลักส่วนที่ 1
 		"part1_main_choices": {
-			"prompt": "คำถามให้ผู้เล่นเลือก (ส่วนที่ 1):",
+			"prompt": "ตัวเลือกคำถาม",
 			"options": [
 				{"text": "1. พลัง Git คืออะไร?", "id": "part1_git"},
 				{"text": "2. มีอะไรต้องระวังเป็นพิเศษไหมตอนร่ายคาถา?", "id": "part1_warning"},
@@ -132,7 +127,7 @@ static func get_data() -> Dictionary:
 		
 		# กล่องคำถามหลักส่วนที่ 2
 		"part2_main_choices": {
-			"prompt": "คำถามให้ผู้เล่นเลือก (ส่วนที่ 2):",
+			"prompt": "ตัวเลือกคำถาม",
 			"options": [
 				{"text": "1. ทำไมต้องมีชื่อกับอีเมล?", "id": "part2_name_email"},
 				{"text": "2. มีอะไรต้องระวังตอนร่ายคาถา?", "id": "part2_warning"},
