@@ -46,6 +46,16 @@ var active_choices: Array = []
 var is_showing_choices: bool = false
 var bad_ending_panel: Control = null
 
+# Navigation Arrows (◀ ▶) & History
+var nav_arrows_container: HBoxContainer = null
+var btn_arrow_back: TextureButton = null
+var btn_arrow_next: TextureButton = null
+var btn_back: TextureButton = null
+var sequence_history: Array[Dictionary] = []
+
+static var _cached_arrow_left_tex: ImageTexture = null
+static var _cached_arrow_right_tex: ImageTexture = null
+
 # Data & Queue
 var level_data: Dictionary = {}
 var current_queue: Array = []
@@ -120,6 +130,9 @@ func _ready() -> void:
 		
 	camera.position = Vector2(960, 540)
 	continue_arrow.visible = false
+	if arrow_wrapper:
+		arrow_wrapper.visible = false
+	_create_nav_arrows()
 	exclamation_mark.visible = false
 	question_mark.visible = false
 	exclamation_mark.scale = Vector2.ONE
@@ -210,6 +223,14 @@ func _process(_delta: float) -> void:
 func _input(event: InputEvent) -> void:
 	if is_transitioning:
 		return
+		
+	# กดปุ่ม Left Arrow หรือ Backspace เพื่อย้อนกลับข้อความ
+	if event is InputEventKey and event.pressed and not event.echo:
+		if event.keycode == KEY_LEFT or event.keycode == KEY_BACKSPACE:
+			if (is_dialogue_active or is_showing_choices) and _can_go_back():
+				get_viewport().set_input_as_handled()
+				_on_player_back()
+				return
 		
 	# การเลือกช้อยส์ด้วยแป้นตัวเลข 1, 2, 3, 4
 	if is_showing_choices:
@@ -490,7 +511,8 @@ func _on_skip_step() -> void:
 		dialogue_box.visible = true
 		dialogue_box.modulate.a = 1.0
 		
-		_load_sequence(level_data.get("intro_sequence", []))
+		sequence_history.clear()
+		_load_sequence(level_data.get("intro_sequence", []), false)
 		return
 		
 	# หากอยู่ในช่วงบทเรียนปกติแล้วกดข้าม -> ข้ามเข้าสู่ Sandbox
@@ -506,12 +528,20 @@ func _open_dialogue_box() -> void:
 	var box_tween = create_tween()
 	box_tween.tween_property(dialogue_box, "modulate:a", 1.0, 0.25)
 
-func _load_sequence(seq: Array) -> void:
+func _load_sequence(seq: Array, record_history: bool = true) -> void:
+	if record_history and current_queue.size() > 0:
+		var last_idx = mini(queue_index, current_queue.size() - 1)
+		sequence_history.append({
+			"queue": current_queue,
+			"index": last_idx,
+			"is_showing_choices": is_showing_choices,
+			"is_in_entrance_cutscene": is_in_entrance_cutscene
+		})
 	current_queue = seq
 	queue_index = 0
 	_show_current_queue_item()
 
-func _show_current_queue_item() -> void:
+func _show_current_queue_item(skip_typewriter: bool = false) -> void:
 	if queue_index >= current_queue.size():
 		if is_in_entrance_cutscene:
 			# จบบทนำ 5 ประโยคของคัตซีน -> ไหลเข้าสู่บทสอนด่าน 1 ในซีนเดิมทันที ไร้รอยต่อ 100%
@@ -540,20 +570,18 @@ func _show_current_queue_item() -> void:
 			_trigger_bad_ending()
 			return
 			
-	_show_single_dialogue(item)
+	_show_single_dialogue(item, skip_typewriter)
 
-func _show_single_dialogue(data: Dictionary) -> void:
+func _show_single_dialogue(data: Dictionary, skip_typewriter: bool = false) -> void:
 	is_showing_choices = false
 	if choice_container:
 		choice_container.visible = false
 	dialogue_label.visible = true
 	is_dialogue_active = true
-	is_typing = true
 	_hide_continue_arrow()
 	
 	speaker_label.text = data["speaker"]
 	dialogue_label.text = _format_bbcode(data["text"])
-	dialogue_label.visible_ratio = 0.0
 	
 	# สีชื่อผู้พูด
 	var target_mewla_anim = data.get("mewla_anim", "talk")
@@ -589,13 +617,22 @@ func _show_single_dialogue(data: Dictionary) -> void:
 	if typewriter_tween and typewriter_tween.is_valid():
 		typewriter_tween.kill()
 		
-	var duration: float = clampf(float(data["text"].length()) * 0.035, 0.4, 1.6)
-	typewriter_tween = create_tween()
-	typewriter_tween.tween_property(dialogue_label, "visible_ratio", 1.0, duration)
-	typewriter_tween.tween_callback(func():
+	if skip_typewriter:
 		is_typing = false
+		dialogue_label.visible_ratio = 1.0
 		_show_continue_arrow()
-	)
+	else:
+		is_typing = true
+		dialogue_label.visible_ratio = 0.0
+		var duration: float = clampf(float(data["text"].length()) * 0.035, 0.4, 1.6)
+		typewriter_tween = create_tween()
+		typewriter_tween.tween_property(dialogue_label, "visible_ratio", 1.0, duration)
+		typewriter_tween.tween_callback(func():
+			is_typing = false
+			_show_continue_arrow()
+		)
+		
+	_update_back_button_state()
 
 func _on_player_advance() -> void:
 	if is_typing:
@@ -680,6 +717,7 @@ func _display_choice_menu(menu_id: String) -> void:
 		choice_buttons.append(btn)
 		
 	choice_container.visible = true
+	_update_back_button_state()
 
 func _on_choice_selected(index: int) -> void:
 	if index < 0 or index >= active_choices.size():
@@ -688,16 +726,15 @@ func _on_choice_selected(index: int) -> void:
 	var choice = active_choices[index]
 	var choice_id = choice.get("id", "")
 	
-	if choice_container:
-		choice_container.visible = false
-	is_showing_choices = false
-	dialogue_label.visible = true
-	
 	var seq_key = "%s_seq" % choice_id
 	var seq = level_data.get(seq_key, [])
 	if seq.size() > 0:
 		_load_sequence(seq)
 	else:
+		if choice_container:
+			choice_container.visible = false
+		is_showing_choices = false
+		dialogue_label.visible = true
 		push_warning("[LevelDialogueView] No sequence found for choice: %s" % choice_id)
 		_finish_dialogue_stage()
 
@@ -711,6 +748,8 @@ func _open_gameplay_step(step: int) -> void:
 	is_transitioning = true
 	is_dialogue_active = false
 	_hide_continue_arrow()
+	if is_instance_valid(nav_arrows_container):
+		nav_arrows_container.visible = false
 	
 	var placeholder_script = load("res://features/dialogue/gameplay_placeholder_view.gd")
 	if placeholder_script:
@@ -732,6 +771,8 @@ func _finish_dialogue_stage() -> void:
 	
 	_hide_continue_arrow()
 	_hide_question_mark()
+	if is_instance_valid(nav_arrows_container):
+		nav_arrows_container.visible = false
 	
 	var finish_tween = create_tween()
 	finish_tween.tween_property(fade_overlay, "color:a", 1.0, 0.5)
@@ -745,6 +786,8 @@ func _trigger_bad_ending() -> void:
 	is_transitioning = true
 	is_dialogue_active = false
 	_hide_continue_arrow()
+	if is_instance_valid(nav_arrows_container):
+		nav_arrows_container.visible = false
 	
 	var tw_close = create_tween()
 	tw_close.tween_property(dialogue_box, "modulate:a", 0.0, 0.4)
@@ -824,20 +867,209 @@ func _hide_question_mark() -> void:
 		question_mark.position = Vector2(0, -36)
 
 func _show_continue_arrow() -> void:
-	if not continue_arrow:
-		return
 	if arrow_tween and arrow_tween.is_valid():
 		arrow_tween.kill()
-		
-	continue_arrow.position.y = 0.0
-	continue_arrow.visible = true
-	arrow_tween = create_tween().set_loops()
-	arrow_tween.tween_property(continue_arrow, "position:y", 4.0, 0.45).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
-	arrow_tween.tween_property(continue_arrow, "position:y", 0.0, 0.45).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	if is_instance_valid(continue_arrow):
+		continue_arrow.visible = false
+	if is_instance_valid(arrow_wrapper):
+		arrow_wrapper.visible = false
+	_update_nav_arrows()
 
 func _hide_continue_arrow() -> void:
 	if arrow_tween and arrow_tween.is_valid():
 		arrow_tween.kill()
 	if is_instance_valid(continue_arrow):
 		continue_arrow.visible = false
-		continue_arrow.position.y = 0.0
+	if is_instance_valid(arrow_wrapper):
+		arrow_wrapper.visible = false
+	_update_nav_arrows()
+
+# ==============================================================================
+# NAVIGATION ARROWS SYSTEM (ลูกศร ◀ ▶ ข้างกัน)
+# ==============================================================================
+
+static func _get_nav_arrow_texture(is_left: bool) -> ImageTexture:
+	if is_left and _cached_arrow_left_tex != null:
+		return _cached_arrow_left_tex
+	if not is_left and _cached_arrow_right_tex != null:
+		return _cached_arrow_right_tex
+		
+	var arrow_stream = load("res://assets/cutscene/frame dialog text/arrow.png")
+	if not arrow_stream:
+		return null
+	var img: Image = arrow_stream.get_image()
+	if not img:
+		return null
+	var cropped: Image = img.get_region(Rect2i(561, 344, 537, 334))
+	
+	if is_left:
+		var img_left = cropped.duplicate()
+		img_left.rotate_90(CLOCKWISE)
+		_cached_arrow_left_tex = ImageTexture.create_from_image(img_left)
+		return _cached_arrow_left_tex
+	else:
+		var img_right = cropped.duplicate()
+		img_right.rotate_90(COUNTERCLOCKWISE)
+		_cached_arrow_right_tex = ImageTexture.create_from_image(img_right)
+		return _cached_arrow_right_tex
+
+func _create_nav_arrows() -> void:
+	if nav_arrows_container != null and is_instance_valid(nav_arrows_container):
+		return
+		
+	var arrow_overlay = dialogue_box.get_node_or_null("ArrowOverlay")
+	if not arrow_overlay:
+		return
+		
+	# ซ่อนลูกศรเดี่ยวเดิม
+	if arrow_wrapper:
+		arrow_wrapper.visible = false
+	if continue_arrow:
+		continue_arrow.visible = false
+		
+	nav_arrows_container = HBoxContainer.new()
+	nav_arrows_container.name = "NavArrowsContainer"
+	nav_arrows_container.layout_mode = 1
+	nav_arrows_container.anchors_preset = Control.PRESET_BOTTOM_RIGHT
+	nav_arrows_container.anchor_left = 1.0
+	nav_arrows_container.anchor_right = 1.0
+	nav_arrows_container.anchor_top = 1.0
+	nav_arrows_container.anchor_bottom = 1.0
+	nav_arrows_container.offset_left = -78.0
+	nav_arrows_container.offset_top = -40.0
+	nav_arrows_container.offset_right = -24.0
+	nav_arrows_container.offset_bottom = -14.0
+	nav_arrows_container.grow_horizontal = Control.GROW_DIRECTION_BEGIN
+	nav_arrows_container.grow_vertical = Control.GROW_DIRECTION_BEGIN
+	nav_arrows_container.alignment = BoxContainer.ALIGNMENT_END
+	nav_arrows_container.add_theme_constant_override("separation", 12)
+	
+	# 1. ปุ่มลูกศรซ้าย ◀ (ย้อนกลับ)
+	btn_arrow_back = TextureButton.new()
+	btn_arrow_back.name = "BtnArrowBack"
+	btn_arrow_back.texture_normal = _get_nav_arrow_texture(true)
+	btn_arrow_back.ignore_texture_size = true
+	btn_arrow_back.stretch_mode = TextureButton.STRETCH_KEEP_ASPECT_CENTERED
+	btn_arrow_back.custom_minimum_size = Vector2(20, 26)
+	btn_arrow_back.focus_mode = Control.FOCUS_NONE
+	btn_arrow_back.mouse_filter = Control.MOUSE_FILTER_STOP
+	btn_arrow_back.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	_setup_arrow_hover(btn_arrow_back)
+	btn_arrow_back.pressed.connect(_on_player_back)
+	nav_arrows_container.add_child(btn_arrow_back)
+	btn_back = btn_arrow_back
+	
+	# 2. ปุ่มลูกศรขวา ▶ (ไปต่อ)
+	btn_arrow_next = TextureButton.new()
+	btn_arrow_next.name = "BtnArrowNext"
+	btn_arrow_next.texture_normal = _get_nav_arrow_texture(false)
+	btn_arrow_next.ignore_texture_size = true
+	btn_arrow_next.stretch_mode = TextureButton.STRETCH_KEEP_ASPECT_CENTERED
+	btn_arrow_next.custom_minimum_size = Vector2(20, 26)
+	btn_arrow_next.focus_mode = Control.FOCUS_NONE
+	btn_arrow_next.mouse_filter = Control.MOUSE_FILTER_STOP
+	btn_arrow_next.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	_setup_arrow_hover(btn_arrow_next)
+	btn_arrow_next.pressed.connect(_on_player_advance)
+	nav_arrows_container.add_child(btn_arrow_next)
+	
+	arrow_overlay.add_child(nav_arrows_container)
+	_update_nav_arrows()
+
+func _setup_arrow_hover(btn: TextureButton) -> void:
+	btn.mouse_entered.connect(func():
+		if not btn.disabled and btn.visible:
+			var tw = create_tween()
+			tw.tween_property(btn, "modulate", Color(1.4, 1.4, 1.4, 1.0), 0.08)
+	)
+	btn.mouse_exited.connect(func():
+		if not btn.disabled and btn.visible:
+			var tw = create_tween()
+			tw.tween_property(btn, "modulate", Color(1.0, 1.0, 1.0, 1.0), 0.12)
+	)
+
+func _update_nav_arrows() -> void:
+	if not nav_arrows_container or not is_instance_valid(nav_arrows_container):
+		return
+	if not is_instance_valid(dialogue_box) or not dialogue_box.visible or is_transitioning:
+		nav_arrows_container.visible = false
+		return
+		
+	nav_arrows_container.visible = true
+	
+	# ลูกศรซ้าย ◀ (ย้อนกลับ)
+	var can_back = _can_go_back()
+	btn_arrow_back.disabled = not can_back
+	btn_arrow_back.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND if can_back else Control.CURSOR_ARROW
+	btn_arrow_back.modulate = Color(1.0, 1.0, 1.0, 1.0) if can_back else Color(1.0, 1.0, 1.0, 0.25)
+	
+	# ลูกศรขวา ▶ (ไปต่อ)
+	var can_next = (is_dialogue_active or is_typing) and not is_showing_choices
+	btn_arrow_next.disabled = not can_next
+	btn_arrow_next.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND if can_next else Control.CURSOR_ARROW
+	btn_arrow_next.modulate = Color(1.0, 1.0, 1.0, 1.0) if can_next else Color(1.0, 1.0, 1.0, 0.25)
+
+func _update_back_button_state() -> void:
+	_update_nav_arrows()
+
+func _can_go_back() -> bool:
+	if not is_instance_valid(dialogue_box) or not dialogue_box.visible:
+		return false
+	if is_transitioning:
+		return false
+	if not is_dialogue_active and not is_showing_choices:
+		return false
+	if queue_index > 0:
+		return true
+	if sequence_history.size() > 0:
+		return true
+	return false
+
+func _on_player_back() -> void:
+	if not _can_go_back():
+		return
+		
+	# 1. หยุด typewriter tween ทันที
+	if typewriter_tween and typewriter_tween.is_valid():
+		typewriter_tween.kill()
+		
+	# 2. ปิดเอฟเฟกต์เครื่องหมายคำถาม/ตกใจ
+	_hide_question_mark()
+	if is_instance_valid(exclamation_mark):
+		exclamation_mark.visible = false
+		
+	# 3. หากกำลังแสดงเมนูช้อยส์อยู่
+	if is_showing_choices:
+		is_showing_choices = false
+		if choice_container:
+			choice_container.visible = false
+		dialogue_label.visible = true
+		
+		if queue_index > 0:
+			queue_index -= 1
+			_show_current_queue_item(true)
+			_update_nav_arrows()
+			return
+		elif sequence_history.size() > 0:
+			var prev_state = sequence_history.pop_back()
+			current_queue = prev_state.get("queue", [])
+			queue_index = prev_state.get("index", 0)
+			if prev_state.has("is_in_entrance_cutscene"):
+				is_in_entrance_cutscene = prev_state["is_in_entrance_cutscene"]
+			_show_current_queue_item(true)
+			_update_nav_arrows()
+			return
+			
+	# 4. หากแสดงข้อความปกติ
+	if queue_index > 0:
+		queue_index -= 1
+		_show_current_queue_item(true)
+	elif sequence_history.size() > 0:
+		var prev_state = sequence_history.pop_back()
+		current_queue = prev_state.get("queue", [])
+		queue_index = prev_state.get("index", 0)
+		if prev_state.has("is_in_entrance_cutscene"):
+			is_in_entrance_cutscene = prev_state["is_in_entrance_cutscene"]
+		_show_current_queue_item(true)
+		
+	_update_nav_arrows()
