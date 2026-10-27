@@ -89,10 +89,10 @@ static func get_data() -> Dictionary:
 			{"type": "bad_ending"}
 		],
 		
-		# ช้อยส์ 4: ฉันจะลองดู (เข้าสู่ขั้นสอนส่วนที่ 2)
+		# ช้อยส์ 4: ฉันจะลองดู (เข้าสู่เกมเพลย์จำลองขั้นที่ 1)
 		"part1_try_seq": [
 			{"speaker": "เวล", "text": "ฉันจะลองดู", "mewla_anim": "idle"},
-			{"type": "goto", "target": "part2_intro_sequence"}
+			{"type": "open_gameplay", "step": 1}
 		],
 		
 		# ======================================================================
@@ -150,10 +150,10 @@ static func get_data() -> Dictionary:
 			{"type": "choice_menu", "menu": "part2_main"}
 		],
 		
-		# ช้อยส์ 3: ฉันจะลองดู (เข้าสู่บทสรุปผ่านด่าน)
+		# ช้อยส์ 3: ฉันจะลองดู (เข้าสู่เกมเพลย์จำลองขั้นที่ 2)
 		"part2_try_seq": [
 			{"speaker": "เวล", "text": "ฉันจะลองดู", "mewla_anim": "idle"},
-			{"type": "goto", "target": "outro_sequence"}
+			{"type": "open_gameplay", "step": 2}
 		],
 		
 		# ======================================================================
@@ -165,7 +165,6 @@ static func get_data() -> Dictionary:
 			{"speaker": "มิวรา", "text": "เกือบ... ตัวตนของนักเวทน่ะพร้อมแล้ว", "mewla_anim": "talk"},
 			{"speaker": "มิวรา", "text": "ต่อไป เราจะไปสร้าง 'คัมภีร์เวทส่วนตัว' เล่มแรกของนายกัน... ไปชั้นถัดไปกันเถอะ", "mewla_anim": "success"},
 			{"speaker": "เวล", "text": "...ทำไมหอคอยถึงไม่มีลิฟต์บ้างเนอะ เหนื่อย", "mewla_anim": "idle"},
-			{"speaker": "มิวรา", "text": "…นั้นสิ", "mewla_anim": "talk"},
-			{"type": "outro_stairs"}
+			{"speaker": "มิวรา", "text": "…นั้นสิ", "mewla_anim": "talk"}
 		]
 	}

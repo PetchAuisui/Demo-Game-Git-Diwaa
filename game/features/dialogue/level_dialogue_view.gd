@@ -7,7 +7,9 @@ extends Node2D
 ## - กำหนด @export var level_number: int เพื่อเลือกด่านที่ต้องการเล่น (ค่าเริ่มต้น: 1)
 ## - สคริปต์จะโหลดข้อมูลจาก res://features/dialogue/levels/level_%02d.gd มาแสดงผลอัตโนมัติ
 ## - รองรับ Typewriter Effect, BBCode ไฮไลต์โค้ดสไตล์ Markdown, ช้อยส์ในกล่องข้อความเดิม,
-##   ระบบฝึกร่ายคาถาจำลอง (Terminal Practice) และ คัตซีนเดินขึ้นบันไดผ่านด่าน (Stairs Outro)
+##   และเชื่อมต่อไปยังหน้าจำลองการเล่นภายในด่าน (Gameplay Placeholder View)
+
+static var start_phase: int = 0
 
 @export var level_number: int = 1
 @export var next_scene_path: String = "res://features/sandbox/sandbox_game_view.tscn"
@@ -137,6 +139,12 @@ func _ready() -> void:
 	# โหลดข้อมูลด่าน
 	_load_level_data(level_number)
 	
+	if start_phase > 0:
+		debug_phase = start_phase
+		play_entrance_cutscene = false
+		fade_in_from_black = true
+		start_phase = 0
+	
 	if play_entrance_cutscene:
 		# เริ่มต้นในโหมดคัตซีนเดินเข้าห้องโถง
 		is_in_entrance_cutscene = true
@@ -147,7 +155,8 @@ func _ready() -> void:
 		vel.position = Vector2(-120, 680)
 		vel.scale = Vector2(4, 4)
 		vel.play("walk")
-		vel.animation_looped.connect(_on_vel_animation_looped)
+		if not vel.animation_looped.is_connected(_on_vel_animation_looped):
+			vel.animation_looped.connect(_on_vel_animation_looped)
 		
 		mewla.visible = false
 		mewla.position = Vector2(1220, 680)
@@ -166,7 +175,8 @@ func _ready() -> void:
 		vel.position = Vector2(700, 680)
 		vel.scale = Vector2(4, 4)
 		vel.play("breathe")
-		vel.animation_looped.connect(_on_vel_animation_looped)
+		if not vel.animation_looped.is_connected(_on_vel_animation_looped):
+			vel.animation_looped.connect(_on_vel_animation_looped)
 		
 		mewla.visible = true
 		mewla.position = Vector2(1220, 680)
@@ -286,14 +296,10 @@ func _format_bbcode(raw: String) -> String:
 	return result
 
 func _start_dialogue_scene() -> void:
+	_begin_dialogue_phase()
 	if fade_in_from_black:
 		var fade_in = create_tween()
-		fade_in.tween_property(fade_overlay, "color:a", 0.0, 0.5)
-		fade_in.tween_callback(func():
-			_begin_dialogue_phase()
-		)
-	else:
-		_begin_dialogue_phase()
+		fade_in.tween_property(fade_overlay, "color:a", 0.0, 0.4)
 
 func _begin_dialogue_phase() -> void:
 	dialogue_box.visible = true
@@ -526,8 +532,9 @@ func _show_current_queue_item() -> void:
 			if target_seq != "" and level_data.has(target_seq):
 				_load_sequence(level_data[target_seq])
 			return
-		elif type == "outro_stairs":
-			_trigger_outro_stairs_walk()
+		elif type == "open_gameplay":
+			var step = item.get("step", 1)
+			_open_gameplay_step(step)
 			return
 		elif type == "bad_ending":
 			_trigger_bad_ending()
@@ -693,80 +700,40 @@ func _on_choice_selected(index: int) -> void:
 		_finish_dialogue_stage()
 
 # ==============================================================================
-# OUTRO & TRANSITIONS
+# GAMEPLAY PLACEHOLDER & STAGE FINISH
 # ==============================================================================
 
-func _trigger_outro_stairs_walk() -> void:
+func _open_gameplay_step(step: int) -> void:
 	if is_transitioning:
 		return
 	is_transitioning = true
 	is_dialogue_active = false
 	_hide_continue_arrow()
 	
-	var tw_close = create_tween()
-	tw_close.tween_property(dialogue_box, "modulate:a", 0.0, 0.3)
-	tw_close.tween_callback(func(): dialogue_box.visible = false)
+	var placeholder_script = load("res://features/dialogue/gameplay_placeholder_view.gd")
+	if placeholder_script:
+		placeholder_script.current_step = step
+		placeholder_script.return_scene_path = scene_file_path if scene_file_path != "" else "res://features/cutscene/inside_tower_cutscene.tscn"
 	
-	vel.play("walk")
-	var walk_past = create_tween()
-	walk_past.tween_property(vel, "position:x", 1500.0, 3.0).set_trans(Tween.TRANS_LINEAR)
-	
-	walk_past.tween_callback(func():
-		var fade_black = create_tween()
-		fade_black.tween_property(fade_overlay, "color:a", 1.0, 0.6)
-		fade_black.tween_callback(func():
-			_show_stairs_climb_scene()
-		)
+	var fade_tw = create_tween()
+	fade_tw.tween_property(fade_overlay, "color:a", 1.0, 0.35)
+	fade_tw.tween_callback(func():
+		Engine.time_scale = 1.0
+		get_tree().change_scene_to_file("res://features/dialogue/gameplay_placeholder_view.tscn")
 	)
 
-func _show_stairs_climb_scene() -> void:
-	mewla.visible = false
-	if ResourceLoader.exists("res://assets/cutscene/backgrounds/central-tower-Sheet.png"):
-		background.texture = load("res://assets/cutscene/backgrounds/central-tower-Sheet.png")
-		
-	vel.position = Vector2(960, 750)
-	if vel.sprite_frames.has_animation("back"):
-		vel.play("back")
-	else:
-		vel.play("walk")
-		
-	var fade_in = create_tween()
-	fade_in.tween_property(fade_overlay, "color:a", 0.0, 0.6)
+func _finish_dialogue_stage() -> void:
+	if is_transitioning:
+		return
+	is_transitioning = true
+	is_dialogue_active = false
 	
-	fade_in.tween_interval(0.3)
-	var climb = create_tween()
-	climb.tween_property(vel, "position:y", 715.0, 0.45).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-	climb.tween_interval(0.2)
-	climb.tween_property(vel, "position:y", 680.0, 0.45).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	_hide_continue_arrow()
+	_hide_question_mark()
 	
-	climb.tween_callback(func():
-		_show_level_cleared_banner()
-	)
-
-func _show_level_cleared_banner() -> void:
-	var banner = Label.new()
-	banner.text = "ผ่านด่านที่ %d สำเร็จ!" % level_number
-	if level_data.has("title"):
-		banner.text = "ผ่าน%s สำเร็จ!" % level_data["title"]
-		
-	banner.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	banner.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	banner.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
-	banner.modulate.a = 0.0
-	
-	if font_ta8bit:
-		banner.add_theme_font_override("font", font_ta8bit)
-		banner.add_theme_font_size_override("font_size", 32)
-	banner.add_theme_color_override("font_color", Color(0.941, 0.824, 0.451, 1.0))
-	banner.add_theme_constant_override("outline_size", 4)
-	banner.add_theme_color_override("font_outline_color", Color.BLACK)
-	magic_ui.add_child(banner)
-	
-	var tw_banner = create_tween()
-	tw_banner.tween_property(banner, "modulate:a", 1.0, 0.6)
-	tw_banner.tween_interval(1.8)
-	tw_banner.tween_property(fade_overlay, "color:a", 1.0, 0.8)
-	tw_banner.tween_callback(func():
+	var finish_tween = create_tween()
+	finish_tween.tween_property(fade_overlay, "color:a", 1.0, 0.5)
+	finish_tween.tween_callback(func():
 		Engine.time_scale = 1.0
 		if next_scene_path != "" and ResourceLoader.exists(next_scene_path):
 			get_tree().change_scene_to_file(next_scene_path)
@@ -816,23 +783,6 @@ func _trigger_bad_ending() -> void:
 			get_tree().change_scene_to_file("res://features/start/start_view.tscn")
 		)
 		vbox.add_child(btn)
-	)
-
-func _finish_dialogue_stage() -> void:
-	if is_transitioning:
-		return
-	is_transitioning = true
-	is_dialogue_active = false
-	
-	_hide_continue_arrow()
-	_hide_question_mark()
-	
-	var finish_tween = create_tween()
-	finish_tween.tween_property(fade_overlay, "color:a", 1.0, 0.5)
-	finish_tween.tween_callback(func():
-		Engine.time_scale = 1.0
-		if next_scene_path != "" and ResourceLoader.exists(next_scene_path):
-			get_tree().change_scene_to_file(next_scene_path)
 	)
 
 # ==============================================================================

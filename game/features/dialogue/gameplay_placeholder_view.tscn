@@ -1,0 +1,187 @@
+[gd_scene load_steps=8 format=3 uid="uid://d1p8y4k7m9v2z"]
+
+[ext_resource type="Script" path="res://features/dialogue/gameplay_placeholder_view.gd" id="1_script"]
+[ext_resource type="FontFile" uid="uid://csurxmw2vmws4" path="res://assets/fonts/TA-8-bit.ttf" id="2_font"]
+[ext_resource type="Texture2D" path="res://assets/art/checkpoint-01/tower-hall.png" id="3_bg"]
+
+[sub_resource type="StyleBoxFlat" id="Style_panel"]
+bg_color = Color(0.08, 0.1, 0.17, 0.96)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(0.941, 0.824, 0.451, 1)
+corner_radius_top_left = 12
+corner_radius_top_right = 12
+corner_radius_bottom_right = 12
+corner_radius_bottom_left = 12
+shadow_color = Color(0, 0, 0, 0.6)
+shadow_size = 18
+
+[sub_resource type="StyleBoxFlat" id="Style_terminal"]
+bg_color = Color(0.04, 0.05, 0.09, 0.98)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.18, 0.25, 0.4, 1)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+
+[sub_resource type="StyleBoxFlat" id="Style_btn_normal"]
+bg_color = Color(0.15, 0.2, 0.35, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.44, 0.84, 1, 1)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+content_margin_left = 24.0
+content_margin_top = 12.0
+content_margin_right = 24.0
+content_margin_bottom = 12.0
+
+[sub_resource type="StyleBoxFlat" id="Style_btn_hover"]
+bg_color = Color(0.22, 0.3, 0.52, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.941, 0.824, 0.451, 1)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+content_margin_left = 24.0
+content_margin_top = 12.0
+content_margin_right = 24.0
+content_margin_bottom = 12.0
+
+[node name="GameplayPlaceholderView" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_script")
+
+[node name="Background" type="TextureRect" parent="."]
+texture_filter = 1
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+texture = ExtResource("3_bg")
+expand_mode = 1
+stretch_mode = 6
+
+[node name="DimOverlay" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.04, 0.05, 0.09, 0.88)
+
+[node name="CenterContainer" type="CenterContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="MainPanel" type="PanelContainer" parent="CenterContainer"]
+custom_minimum_size = Vector2(980, 580)
+layout_mode = 2
+theme_override_styles/panel = SubResource("Style_panel")
+
+[node name="Margin" type="MarginContainer" parent="CenterContainer/MainPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 36
+theme_override_constants/margin_top = 28
+theme_override_constants/margin_right = 36
+theme_override_constants/margin_bottom = 28
+
+[node name="VBox" type="VBoxContainer" parent="CenterContainer/MainPanel/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="HeaderTitle" type="Label" parent="CenterContainer/MainPanel/Margin/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.7, 0.78, 0.9, 1)
+theme_override_fonts/font = ExtResource("2_font")
+theme_override_font_sizes/font_size = 18
+text = "หอคอยเวทมนตร์ Git Di Waa — จำลองหน้าพิมพ์คำสั่งในด่าน"
+
+[node name="MissionTitleLabel" type="Label" parent="CenterContainer/MainPanel/Margin/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.941, 0.824, 0.451, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 3
+theme_override_fonts/font = ExtResource("2_font")
+theme_override_font_sizes/font_size = 28
+text = "ภารกิจขั้นที่ 1: ตรวจสอบระดับพลังเวท"
+
+[node name="MissionDescLabel" type="RichTextLabel" parent="CenterContainer/MainPanel/Margin/VBox"]
+custom_minimum_size = Vector2(0, 34)
+layout_mode = 2
+theme_override_fonts/normal_font = ExtResource("2_font")
+theme_override_font_sizes/normal_font_size = 20
+bbcode_enabled = true
+text = "ร่ายคาถา [color=#70d6ff]git[/color] [color=#5fffe0]--version[/color] เพื่อตรวจสอบความพร้อมของพลัง Git ในตัวท่าน"
+fit_content = true
+
+[node name="TerminalPanel" type="PanelContainer" parent="CenterContainer/MainPanel/Margin/VBox"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_styles/panel = SubResource("Style_terminal")
+
+[node name="TerminalMargin" type="MarginContainer" parent="CenterContainer/MainPanel/Margin/VBox/TerminalPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 22
+theme_override_constants/margin_top = 18
+theme_override_constants/margin_right = 22
+theme_override_constants/margin_bottom = 18
+
+[node name="TerminalContent" type="RichTextLabel" parent="CenterContainer/MainPanel/Margin/VBox/TerminalPanel/TerminalMargin"]
+layout_mode = 2
+theme_override_fonts/normal_font = ExtResource("2_font")
+theme_override_font_sizes/normal_font_size = 20
+bbcode_enabled = true
+text = "[color=#8b949e]$[/color] [color=#70d6ff]git[/color] [color=#5fffe0]--version[/color]
+[color=#5fffe0]git version 2.43.0.magic (พลังเวท Git ตอบสนอง พร้อมใช้งาน!)[/color]
+
+[color=#ffd166]✓ การตรวจสอบพลังเวทเสร็จสมบูรณ์ พร้อมไปต่อขั้นตอนถัดไป[/color]"
+
+[node name="NoticeLabel" type="Label" parent="CenterContainer/MainPanel/Margin/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.55, 0.62, 0.72, 1)
+theme_override_fonts/font = ExtResource("2_font")
+theme_override_font_sizes/font_size = 16
+text = "(พื้นที่นี้เชื่อมต่อจำลองการทำงานภายในด่าน รอเชื่อมกับระบบเกมเพลย์พิมพ์คำสั่งฉบับเต็ม)"
+horizontal_alignment = 1
+
+[node name="BtnFinish" type="Button" parent="CenterContainer/MainPanel/Margin/VBox"]
+custom_minimum_size = Vector2(360, 52)
+layout_mode = 2
+mouse_default_cursor_shape = 2
+theme_override_colors/font_color = Color(0.95, 0.95, 0.95, 1)
+theme_override_colors/font_hover_color = Color(0.941, 0.824, 0.451, 1)
+theme_override_colors/font_focus_color = Color(0.941, 0.824, 0.451, 1)
+theme_override_fonts/font = ExtResource("2_font")
+theme_override_font_sizes/font_size = 22
+theme_override_styles/normal = SubResource("Style_btn_normal")
+theme_override_styles/hover = SubResource("Style_btn_hover")
+theme_override_styles/pressed = SubResource("Style_btn_hover")
+theme_override_styles/focus = SubResource("Style_btn_hover")
+text = "เสร็จสิ้นขั้นที่ 1 (กลับไปรายงานมิวรา)"
