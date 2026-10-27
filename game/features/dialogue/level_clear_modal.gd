@@ -16,14 +16,14 @@ extends Control
 
 func _ready() -> void:
 	if btn_replay:
+		btn_replay.focus_mode = Control.FOCUS_NONE
 		btn_replay.pressed.connect(_on_replay_pressed)
 	if btn_level_select:
+		btn_level_select.focus_mode = Control.FOCUS_NONE
 		btn_level_select.pressed.connect(_on_level_select_pressed)
 	if btn_next_level:
+		btn_next_level.focus_mode = Control.FOCUS_NONE
 		btn_next_level.pressed.connect(_on_next_level_pressed)
-		
-	if btn_next_level:
-		btn_next_level.grab_focus()
 
 func _on_replay_pressed() -> void:
 	var target = replay_scene_path
@@ -42,7 +42,11 @@ func _on_next_level_pressed() -> void:
 	_on_level_select_pressed()
 
 func _input(event: InputEvent) -> void:
-	if event is InputEventKey and event.pressed and not event.echo:
-		if event.keycode == KEY_ESCAPE:
+	# ปิดการใช้งานปุ่ม Spacebar และ Enter บนหน้าดาว เพื่อให้ผู้เล่นใช้การคลิกเมาส์เท่านั้นตามคำขอ
+	if event is InputEventKey:
+		if event.keycode == KEY_SPACE or event.keycode == KEY_ENTER or event.keycode == KEY_KP_ENTER:
+			get_viewport().set_input_as_handled()
+			return
+		if event.keycode == KEY_ESCAPE and event.pressed and not event.echo:
 			get_viewport().set_input_as_handled()
 			_on_level_select_pressed()
