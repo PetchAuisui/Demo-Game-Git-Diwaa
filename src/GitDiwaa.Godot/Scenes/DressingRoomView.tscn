@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://b7qm4kvl1dr01"]
 
-[ext_resource type="Script" uid="uid://du27w9q2x14l" path="res://Scripts/Controllers/DressingRoomViewController.cs" id="1_controller"]
+[ext_resource type="Script" path="res://Scripts/Controllers/dressing_room_view_controller.gd" id="1_controller"]
 [ext_resource type="FontFile" uid="uid://deedcfbkojx6k" path="res://assets/fonts/ChakraPetch-Bold.ttf" id="2_font_bold"]
 [ext_resource type="FontFile" uid="uid://b8g6ela360qq1" path="res://assets/fonts/Silkscreen-Bold.ttf" id="3_font_silkscreen"]
 [ext_resource type="FontFile" uid="uid://kdsopvxcj40" path="res://assets/fonts/VT323-Regular.ttf" id="4_font_vt323"]
