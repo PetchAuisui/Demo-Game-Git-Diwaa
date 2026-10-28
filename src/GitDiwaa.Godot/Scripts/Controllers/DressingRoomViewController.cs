@@ -23,6 +23,7 @@ public partial class DressingRoomViewController : Control
     private static readonly Color TabInactiveText = new(0.65f, 0.60f, 0.80f, 1.0f);
 
     private Button _backBtn = null!;
+    private Button? _toShopBtn;
     private Button _rotateLeftBtn = null!;
     private Button _rotateRightBtn = null!;
     private TextureRect _charTexture = null!;
@@ -78,6 +79,10 @@ public partial class DressingRoomViewController : Control
     private void BindNodes()
     {
         _backBtn = GetNode<Button>("%BackBtn");
+        if (HasNode("%ToShopBtn"))
+        {
+            _toShopBtn = GetNode<Button>("%ToShopBtn");
+        }
         _rotateLeftBtn = GetNode<Button>("%RotateLeftBtn");
         _rotateRightBtn = GetNode<Button>("%RotateRightBtn");
         _charTexture = GetNode<TextureRect>("%CharacterSprite");
@@ -178,6 +183,11 @@ public partial class DressingRoomViewController : Control
 
         // Interactive cat on pedestal
         _catSprite.GuiInput += OnCatGuiInput;
+
+        if (_toShopBtn != null)
+        {
+            _toShopBtn.Pressed += OnToShopPressed;
+        }
     }
 
     private void StartFadeIn()
@@ -306,6 +316,29 @@ public partial class DressingRoomViewController : Control
         else
         {
             GetTree().ChangeSceneToFile("res://Scenes/StartView.tscn");
+        }
+    }
+
+    private void OnToShopPressed()
+    {
+        if (_isLeaving) return;
+        _isLeaving = true;
+
+        PlaySfx();
+        if (_fadeOverlay != null)
+        {
+            var tween = CreateTween();
+            tween.TweenProperty(_fadeOverlay, "modulate:a", 1.0f, 0.22f)
+                 .SetTrans(Tween.TransitionType.Quad)
+                 .SetEase(Tween.EaseType.In);
+            tween.TweenCallback(Callable.From(() =>
+            {
+                GetTree().ChangeSceneToFile("res://Scenes/ShopView.tscn");
+            }));
+        }
+        else
+        {
+            GetTree().ChangeSceneToFile("res://Scenes/ShopView.tscn");
         }
     }
 

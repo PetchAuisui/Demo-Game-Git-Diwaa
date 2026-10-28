@@ -13,6 +13,7 @@ public partial class StartViewController : Control
     private Button _startCareerBtn = null!;
     private Button _resumeWorkBtn = null!;
     private Button _dressingRoomBtn = null!;
+    private Button _shopBtn = null!;
     private Button _tutorialBtn = null!;
     private Label _clockLabel = null!;
     private RichTextLabel _outputLog = null!;
@@ -45,6 +46,7 @@ public partial class StartViewController : Control
         _startCareerBtn = GetNode<Button>("%StartCareerBtn");
         _resumeWorkBtn = GetNode<Button>("%ResumeWorkBtn");
         _dressingRoomBtn = GetNode<Button>("%DressingRoomBtn");
+        _shopBtn = GetNode<Button>("%ShopBtn");
         _tutorialBtn = GetNode<Button>("%TutorialBtn");
         _clockLabel = GetNode<Label>("%ClockLabel");
         _outputLog = GetNode<RichTextLabel>("%OutputLog");
@@ -61,11 +63,13 @@ public partial class StartViewController : Control
         _startCareerBtn.Pressed += OnStartCareerPressed;
         _resumeWorkBtn.Pressed += OnResumeWorkPressed;
         _dressingRoomBtn.Pressed += OnDressingRoomPressed;
+        _shopBtn.Pressed += OnShopPressed;
         _tutorialBtn.Pressed += OnTutorialPressed;
 
         _startCareerBtn.FocusEntered += OnButtonFocusEntered;
         _resumeWorkBtn.FocusEntered += OnButtonFocusEntered;
         _dressingRoomBtn.FocusEntered += OnButtonFocusEntered;
+        _shopBtn.FocusEntered += OnButtonFocusEntered;
         _tutorialBtn.FocusEntered += OnButtonFocusEntered;
 
         _commandInput.TextSubmitted += OnTerminalCommandSubmitted;
@@ -181,6 +185,25 @@ public partial class StartViewController : Control
         };
     }
 
+    private void OnShopPressed()
+    {
+        PlaySfx(_sfxClick);
+        AppendTerminalText("> Accessing Royal Magic Bazaar & Shop...");
+
+        var timer = GetTree().CreateTimer(0.35);
+        timer.Timeout += () =>
+        {
+            if (ResourceLoader.Exists("res://Scenes/ShopView.tscn"))
+            {
+                GetTree().ChangeSceneToFile("res://Scenes/ShopView.tscn");
+            }
+            else
+            {
+                AppendTerminalText("> Magic Bazaar module initialized.");
+            }
+        };
+    }
+
     private void OnTutorialPressed()
     {
         PlaySfx(_sfxClick);
@@ -218,6 +241,12 @@ public partial class StartViewController : Control
             return;
         }
 
+        if (lower is "shop" or "bazaar" or "store" or "market")
+        {
+            OnShopPressed();
+            return;
+        }
+
         if (lower == "git init")
         {
             AppendTerminalText("Initialized empty Git repository in /magictower/spells/.git/");
@@ -240,7 +269,7 @@ public partial class StartViewController : Control
         }
         else if (lower == "help")
         {
-            AppendTerminalText("Commands: git init, git status, git add, git commit, git branch, start, wardrobe, clear, help");
+            AppendTerminalText("Commands: git init, git status, git add, git commit, git branch, start, wardrobe, shop, clear, help");
         }
         else
         {
