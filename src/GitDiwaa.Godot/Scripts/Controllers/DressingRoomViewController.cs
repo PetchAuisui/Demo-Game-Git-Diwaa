@@ -46,7 +46,7 @@ public partial class DressingRoomViewController : Control
     private int _activeCategory = 0;
 
     // Animation & Transition Guards
-    private float _catInitialY;
+    private float _catInitialOffsetTop = 35.0f;
     private bool _isCatHopping = false;
     private bool _isLeaving = false;
 
@@ -64,7 +64,7 @@ public partial class DressingRoomViewController : Control
         UpdateCategoryFilter(0);
 
         // Store ground reference position for cat hop animation
-        _catInitialY = _catSprite.Position.Y;
+        _catInitialOffsetTop = _catSprite.OffsetTop;
 
         // Awaiting items from shop - keep companion cat standing nicely beside Vel
         _catSprite.Visible = true;
@@ -208,17 +208,29 @@ public partial class DressingRoomViewController : Control
             _sfxMeow.Play();
         }
 
-        // Cute hop animation anchored to initial Y ground
+        float initialTop = _catInitialOffsetTop;
+        float initialBottom = _catInitialOffsetTop + 140.0f;
+
+        // Cute hop animation anchored to initial OffsetTop & OffsetBottom on the pedestal
         var tween = CreateTween();
-        tween.TweenProperty(_catSprite, "position:y", _catInitialY - 14.0f, 0.12f)
+        tween.TweenProperty(_catSprite, "offset_top", initialTop - 14.0f, 0.12f)
              .SetTrans(Tween.TransitionType.Quad)
              .SetEase(Tween.EaseType.Out);
-        tween.TweenProperty(_catSprite, "position:y", _catInitialY, 0.14f)
+        tween.Parallel().TweenProperty(_catSprite, "offset_bottom", initialBottom - 14.0f, 0.12f)
+             .SetTrans(Tween.TransitionType.Quad)
+             .SetEase(Tween.EaseType.Out);
+
+        tween.TweenProperty(_catSprite, "offset_top", initialTop, 0.14f)
              .SetTrans(Tween.TransitionType.Bounce)
              .SetEase(Tween.EaseType.Out);
+        tween.Parallel().TweenProperty(_catSprite, "offset_bottom", initialBottom, 0.14f)
+             .SetTrans(Tween.TransitionType.Bounce)
+             .SetEase(Tween.EaseType.Out);
+
         tween.TweenCallback(Callable.From(() =>
         {
-            _catSprite.Position = new Vector2(_catSprite.Position.X, _catInitialY);
+            _catSprite.OffsetTop = initialTop;
+            _catSprite.OffsetBottom = initialBottom;
             _isCatHopping = false;
         }));
     }
