@@ -1,3 +1,5 @@
+using System.Text;
+
 namespace GitDiwaa.Online.Accounts;
 
 public static class AccountNormalizer
@@ -24,4 +26,37 @@ public static class AccountNormalizer
         IsEmailIdentifier(identifier)
             ? NormalizeEmail(identifier)
             : NormalizeUsername(identifier);
+
+    public static string NormalizeDisplayNameKey(string displayName)
+    {
+        ArgumentNullException.ThrowIfNull(displayName);
+
+        string normalized = displayName.Normalize(NormalizationForm.FormKC).Trim();
+        if (normalized.Length == 0)
+        {
+            return string.Empty;
+        }
+
+        var sb = new StringBuilder(normalized.Length);
+        bool previousWasSpace = false;
+
+        foreach (char c in normalized)
+        {
+            if (char.IsWhiteSpace(c))
+            {
+                if (!previousWasSpace)
+                {
+                    sb.Append(' ');
+                    previousWasSpace = true;
+                }
+            }
+            else
+            {
+                sb.Append(c);
+                previousWasSpace = false;
+            }
+        }
+
+        return sb.ToString().ToLowerInvariant();
+    }
 }

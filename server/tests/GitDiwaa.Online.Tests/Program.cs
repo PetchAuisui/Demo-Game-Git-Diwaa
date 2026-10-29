@@ -100,6 +100,11 @@ internal static class Program
             Assert.Equal(FieldErrorReason.Unknown, default(FieldErrorReason));
         });
 
+        runner.Run("FieldErrorReason_HasTaken", static () =>
+        {
+            Assert.Equal("Taken", FieldErrorReason.Taken.ToString());
+        });
+
         // --- Step 1.4: ValidateRegister Tests ---
 
         runner.Run("ValidateRegister_NullRequest_Throws", static () =>
@@ -340,6 +345,52 @@ internal static class Program
 
             Assert.Equal("user@example.com", AccountNormalizer.NormalizeIdentifier(" USER@EXAMPLE.COM "));
             Assert.Equal("username", AccountNormalizer.NormalizeIdentifier(" USERNAME "));
+        });
+
+        // --- Commit S1: NormalizeDisplayNameKey Tests ---
+
+        runner.Run("NormalizeDisplayNameKey_CaseInsensitive_ProducesSameKey", static () =>
+        {
+            string key1 = AccountNormalizer.NormalizeDisplayNameKey("Hero");
+            string key2 = AccountNormalizer.NormalizeDisplayNameKey("hero");
+
+            Assert.Equal(key1, key2);
+            Assert.Equal("hero", key1);
+        });
+
+        runner.Run("NormalizeDisplayNameKey_CollapsesExtraWhitespaceAndTrims", static () =>
+        {
+            string key = AccountNormalizer.NormalizeDisplayNameKey("  ผู้กล้า   01 ");
+            Assert.Equal("ผู้กล้า 01", key);
+        });
+
+        runner.Run("NormalizeDisplayNameKey_NormalizesThaiSaraAmEquivalents", static () =>
+        {
+            // \u0E33 (Sara Am) vs \u0E4D\u0E32 (Nikhahit + Sara Aa)
+            string key1 = AccountNormalizer.NormalizeDisplayNameKey("\u0E33");
+            string key2 = AccountNormalizer.NormalizeDisplayNameKey("\u0E4D\u0E32");
+
+            Assert.Equal(key1, key2);
+        });
+
+        runner.Run("NormalizeDisplayNameKey_ConvertsFullWidthToStandardAscii", static () =>
+        {
+            // Full-width "Ｈｅｒｏ" -> "hero"
+            string key = AccountNormalizer.NormalizeDisplayNameKey("Ｈｅｒｏ");
+            Assert.Equal("hero", key);
+        });
+
+        runner.Run("NormalizeDisplayNameKey_DifferentNamesProduceDifferentKeys", static () =>
+        {
+            string key1 = AccountNormalizer.NormalizeDisplayNameKey("ผู้กล้า");
+            string key2 = AccountNormalizer.NormalizeDisplayNameKey("ผู้กล้า1");
+
+            Assert.False(key1 == key2, "Expected different keys for different display names.");
+        });
+
+        runner.Run("NormalizeDisplayNameKey_Null_Throws", static () =>
+        {
+            Assert.Throws<ArgumentNullException>(() => AccountNormalizer.NormalizeDisplayNameKey(null!));
         });
 
         return runner.Complete();
