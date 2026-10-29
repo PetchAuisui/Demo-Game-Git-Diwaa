@@ -1,10 +1,22 @@
 class_name AuthViewController
 extends Control
 
-## Controller managing tab navigation, UI transitions, and credential hygiene.
+## Controller managing tab navigation, UI transitions, credential hygiene, and validation.
+
+signal login_requested(identifier: String, password: String, remember_me: bool)
+signal register_requested(username: String, display_name: String, email: String, password: String)
 
 const EYE_ICON := preload("res://assets/icons/eye.svg")
 const EYE_OFF_ICON := preload("res://assets/icons/eye_off.svg")
+
+const FIELD_LABELS := {
+	AuthRules.FIELD_IDENTIFIER: "อีเมล หรือ ชื่อผู้ใช้งาน",
+	AuthRules.FIELD_DISPLAY_NAME: "ชื่อที่แสดง",
+	AuthRules.FIELD_USERNAME: "ชื่อผู้ใช้",
+	AuthRules.FIELD_EMAIL: "อีเมล",
+	AuthRules.FIELD_PASSWORD: "รหัสผ่าน",
+	AuthRules.FIELD_CONFIRM_PASSWORD: "ยืนยันรหัสผ่าน",
+}
 
 # --- UI References ---
 var _login_tab_btn: Button
@@ -95,6 +107,12 @@ func _wire_events() -> void:
 		_on_password_toggle.bind(_register_password_input, _register_password_toggle)
 	)
 
+	_login_submit_btn.pressed.connect(_on_login_submit)
+	_login_password_input.text_submitted.connect(func(_text: String) -> void: _on_login_submit())
+
+	_register_submit_btn.pressed.connect(_on_register_submit)
+	_confirm_password_input.text_submitted.connect(func(_text: String) -> void: _on_register_submit())
+
 
 func _on_login_tab_pressed() -> void:
 	if not _login_form.visible:
@@ -158,15 +176,24 @@ func _clear_passwords() -> void:
 
 func _reset_errors() -> void:
 	_identifier_error.visible = false
+	_identifier_error.text = ""
 	_login_password_error.visible = false
+	_login_password_error.text = ""
 	_login_status.visible = false
+	_login_status.text = ""
 
 	_display_name_error.visible = false
+	_display_name_error.text = ""
 	_username_error.visible = false
+	_username_error.text = ""
 	_email_error.visible = false
+	_email_error.text = ""
 	_register_password_error.visible = false
+	_register_password_error.text = ""
 	_confirm_password_error.visible = false
+	_confirm_password_error.text = ""
 	_register_status.visible = false
+	_register_status.text = ""
 
 
 func _apply_theme() -> void:
@@ -225,3 +252,135 @@ func _apply_theme() -> void:
 	_go_register_link.add_theme_color_override("font_color", AuthThemeTokens.LINK_TEXT)
 	_go_login_link.add_theme_color_override("font_color", AuthThemeTokens.LINK_TEXT)
 
+
+func _on_login_submit() -> void:
+	_reset_errors()
+
+	var id_reason := AuthRules.validate_login_identifier(_identifier_input.text)
+	var pw_reason := AuthRules.validate_login_password(_login_password_input.text)
+
+	var first_invalid: LineEdit = null
+
+	if not id_reason.is_empty():
+		_identifier_error.text = _message_for(AuthRules.FIELD_IDENTIFIER, id_reason)
+		_identifier_error.visible = true
+		if first_invalid == null:
+			first_invalid = _identifier_input
+
+	if not pw_reason.is_empty():
+		_login_password_error.text = _message_for(AuthRules.FIELD_PASSWORD, pw_reason)
+		_login_password_error.visible = true
+		if first_invalid == null:
+			first_invalid = _login_password_input
+
+	if first_invalid != null:
+		first_invalid.grab_focus()
+		return
+
+	var id_val := _identifier_input.text.strip_edges()
+	var pw_val := _login_password_input.text
+	var remember_val := _remember_me_check.button_pressed
+
+	login_requested.emit(id_val, pw_val, remember_val)
+	_clear_passwords()
+
+
+func _on_register_submit() -> void:
+	_reset_errors()
+
+	var dn_reason := AuthRules.validate_display_name(_display_name_input.text)
+	var un_reason := AuthRules.validate_username(_username_input.text)
+	var em_reason := AuthRules.validate_email(_email_input.text)
+	var pw_reason := AuthRules.validate_register_password(_register_password_input.text)
+
+	var cp_reason := ""
+	if _confirm_password_input.text.is_empty():
+		cp_reason = AuthRules.REQUIRED
+	elif _confirm_password_input.text != _register_password_input.text:
+		cp_reason = AuthRules.MISMATCH
+
+	var first_invalid: LineEdit = null
+
+	if not dn_reason.is_empty():
+		_display_name_error.text = _message_for(AuthRules.FIELD_DISPLAY_NAME, dn_reason)
+		_display_name_error.visible = true
+		if first_invalid == null:
+			first_invalid = _display_name_input
+
+	if not un_reason.is_empty():
+		_username_error.text = _message_for(AuthRules.FIELD_USERNAME, un_reason)
+		_username_error.visible = true
+		if first_invalid == null:
+			first_invalid = _username_input
+
+	if not em_reason.is_empty():
+		_email_error.text = _message_for(AuthRules.FIELD_EMAIL, em_reason)
+		_email_error.visible = true
+		if first_invalid == null:
+			first_invalid = _email_input
+
+	if not pw_reason.is_empty():
+		_register_password_error.text = _message_for(AuthRules.FIELD_PASSWORD, pw_reason)
+		_register_password_error.visible = true
+		if first_invalid == null:
+			first_invalid = _register_password_input
+
+	if not cp_reason.is_empty():
+		_confirm_password_error.text = _message_for(AuthRules.FIELD_CONFIRM_PASSWORD, cp_reason)
+		_confirm_password_error.visible = true
+		if first_invalid == null:
+			first_invalid = _confirm_password_input
+
+	if first_invalid != null:
+		first_invalid.grab_focus()
+		return
+
+	var un_val := _username_input.text.strip_edges()
+	var dn_val := _display_name_input.text.strip_edges()
+	var em_val := _email_input.text.strip_edges()
+	var pw_val := _register_password_input.text
+
+	register_requested.emit(un_val, dn_val, em_val, pw_val)
+	_clear_passwords()
+
+
+func _message_for(field: String, reason: String) -> String:
+	var label: String = FIELD_LABELS.get(field, "ข้อมูล")
+
+	match reason:
+		AuthRules.REQUIRED:
+			return "กรุณากรอก%s" % label
+		AuthRules.TOO_SHORT:
+			if field == AuthRules.FIELD_USERNAME:
+				return "ชื่อผู้ใช้ต้องมี %d–%d ตัวอักษร" % [
+					AuthRules.USERNAME_MIN_LEN,
+					AuthRules.USERNAME_MAX_LEN
+				]
+			if field == AuthRules.FIELD_PASSWORD:
+				return "รหัสผ่านต้องมีอย่างน้อย %d ตัวอักษร" % AuthRules.PASSWORD_MIN_LEN
+			return "%sสั้นเกินไป" % label
+		AuthRules.TOO_LONG:
+			if field == AuthRules.FIELD_USERNAME:
+				return "ชื่อผู้ใช้ต้องมี %d–%d ตัวอักษร" % [
+					AuthRules.USERNAME_MIN_LEN,
+					AuthRules.USERNAME_MAX_LEN
+				]
+			return "%sยาวเกินไป" % label
+		AuthRules.INVALID_CHARACTERS:
+			if field == AuthRules.FIELD_USERNAME:
+				return "ใช้ได้เฉพาะ a-z, 0-9 และ -"
+			if field == AuthRules.FIELD_EMAIL:
+				return "รูปแบบอีเมลไม่ถูกต้อง"
+			if field == AuthRules.FIELD_DISPLAY_NAME:
+				return "ชื่อที่แสดงมีอักขระที่ไม่รองรับ"
+			return "%sมีอักขระไม่ถูกต้อง" % label
+		AuthRules.INVALID_FORMAT:
+			if field == AuthRules.FIELD_USERNAME:
+				return "ต้องขึ้นต้นและลงท้ายด้วยตัวอักษรหรือตัวเลข"
+			if field == AuthRules.FIELD_EMAIL:
+				return "รูปแบบอีเมลไม่ถูกต้อง"
+			return "รูปแบบ%sไม่ถูกต้อง" % label
+		AuthRules.MISMATCH:
+			return "รหัสผ่านไม่ตรงกัน"
+		_:
+			return "ข้อมูล%sไม่ถูกต้อง" % label

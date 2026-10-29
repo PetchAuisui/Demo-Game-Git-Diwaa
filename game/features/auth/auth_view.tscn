@@ -320,6 +320,12 @@ theme_override_fonts/font = ExtResource("4_regular")
 theme_override_font_sizes/font_size = 20
 max_length = 50
 
+[node name="DisplayNameHint" type="Label" parent="CenterArea/Card/MarginContainer/CardVBox/RegisterForm" unique_id=1682029370]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.478431, 0.431373, 0.376471, 1)
+theme_override_fonts/font = ExtResource("4_regular")
+text = "ชื่อนี้จะแสดงในตารางอันดับ"
+
 [node name="DisplayNameError" type="Label" parent="CenterArea/Card/MarginContainer/CardVBox/RegisterForm" unique_id=1798367947]
 unique_name_in_owner = true
 visible = false
@@ -349,7 +355,7 @@ layout_mode = 2
 theme_override_colors/font_color = Color(0.478431, 0.431373, 0.376471, 1)
 theme_override_fonts/font = ExtResource("4_regular")
 theme_override_font_sizes/font_size = 16
-text = "ชื่อนี้จะแสดงในตารางอันดับและใช้ในการเข้าสู่ระบบ"
+text = "ใช้สำหรับเข้าสู่ระบบ ไม่แสดงให้ผู้อื่นเห็น"
 
 [node name="UsernameError" type="Label" parent="CenterArea/Card/MarginContainer/CardVBox/RegisterForm" unique_id=1244362759]
 unique_name_in_owner = true
