@@ -6,6 +6,7 @@ public sealed class InMemoryUserRepository : IUserRepository
     private readonly Dictionary<Guid, UserRecord> _usersById = [];
     private readonly Dictionary<string, UserRecord> _usersByUsername = new(StringComparer.Ordinal);
     private readonly Dictionary<string, UserRecord> _usersByEmail = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, UserRecord> _usersByDisplayName = new(StringComparer.Ordinal);
 
     public Task<UserRecord?> FindByIdAsync(Guid id, CancellationToken ct = default)
     {
@@ -38,7 +39,7 @@ public sealed class InMemoryUserRepository : IUserRepository
         }
     }
 
-    public Task<bool> TryAddAsync(UserRecord user, CancellationToken ct = default)
+    public Task<UserAddResult> TryAddAsync(UserRecord user, CancellationToken ct = default)
     {
         ArgumentNullException.ThrowIfNull(user);
 
@@ -48,14 +49,20 @@ public sealed class InMemoryUserRepository : IUserRepository
                 _usersByUsername.ContainsKey(user.Username) ||
                 _usersByEmail.ContainsKey(user.EmailNormalized))
             {
-                return Task.FromResult(false);
+                return Task.FromResult(UserAddResult.IdentifierTaken);
+            }
+
+            if (_usersByDisplayName.ContainsKey(user.DisplayNameKey))
+            {
+                return Task.FromResult(UserAddResult.DisplayNameTaken);
             }
 
             _usersById[user.Id] = user;
             _usersByUsername[user.Username] = user;
             _usersByEmail[user.EmailNormalized] = user;
+            _usersByDisplayName[user.DisplayNameKey] = user;
 
-            return Task.FromResult(true);
+            return Task.FromResult(UserAddResult.Added);
         }
     }
 
@@ -76,9 +83,15 @@ public sealed class InMemoryUserRepository : IUserRepository
                 throw new InvalidOperationException("Username and email cannot be changed through UpdateAsync.");
             }
 
+            if (!string.Equals(existing.DisplayNameKey, user.DisplayNameKey, StringComparison.Ordinal))
+            {
+                throw new InvalidOperationException("DisplayNameKey cannot be changed through UpdateAsync.");
+            }
+
             _usersById[user.Id] = user;
             _usersByUsername[user.Username] = user;
             _usersByEmail[user.EmailNormalized] = user;
+            _usersByDisplayName[user.DisplayNameKey] = user;
 
             return Task.CompletedTask;
         }

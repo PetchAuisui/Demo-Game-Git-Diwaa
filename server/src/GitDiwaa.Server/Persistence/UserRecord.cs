@@ -15,6 +15,7 @@ public sealed record UserRecord(
     string Email,
     string EmailNormalized,
     string DisplayName,
+    string DisplayNameKey,
     string PasswordHash,
     DateTimeOffset? EmailVerifiedAt,
     int FailedLoginCount,
@@ -30,6 +31,7 @@ public sealed record UserRecord(
                .Append(", Username = ").Append(Username)
                .Append(", Email = ***, EmailNormalized = ***")
                .Append(", DisplayName = ").Append(DisplayName)
+               .Append(", DisplayNameKey = ").Append(DisplayNameKey)
                .Append(", PasswordHash = ***")
                .Append(", EmailVerifiedAt = ").Append(EmailVerifiedAt)
                .Append(", FailedLoginCount = ").Append(FailedLoginCount)

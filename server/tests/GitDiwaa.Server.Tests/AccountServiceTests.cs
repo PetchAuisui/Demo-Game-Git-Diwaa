@@ -1,4 +1,5 @@
 using System.Security.Cryptography;
+using GitDiwaa.Online.Accounts;
 using GitDiwaa.Online.Accounts.Contracts;
 using GitDiwaa.Server.Accounts;
 using GitDiwaa.Server.Persistence;
@@ -10,7 +11,7 @@ internal static class AccountServiceTests
 {
     public static async Task RunAsync(TestRunner runner)
     {
-        // --- Registration Tests (4 ข้อ) ---
+        // --- Registration Tests (6 ข้อ) ---
 
         await runner.RunAsync("Register_Valid_StoresNormalizedUser", async static () =>
         {
@@ -68,6 +69,38 @@ internal static class AccountServiceTests
             var result2 = await ctx.Service.RegisterAsync(req2);
             Assert.False(result2.Succeeded);
             Assert.Equal(AuthErrorCode.IdentifierTaken, result2.Error);
+        });
+
+        await runner.RunAsync("Register_DuplicateDisplayName_ReturnsFieldError", async static () =>
+        {
+            var ctx = AccountTestContext.Create();
+            var req1 = new RegisterRequest("user1", "Hero", "user1@example.com", "S3cret-Pass!");
+            var res1 = await ctx.Service.RegisterAsync(req1);
+            Assert.True(res1.Succeeded);
+
+            var req2 = new RegisterRequest("user2", "hero", "user2@example.com", "S3cret-Pass!");
+            var res2 = await ctx.Service.RegisterAsync(req2);
+
+            Assert.False(res2.Succeeded);
+            Assert.Equal(AuthErrorCode.IdentifierTaken, res2.Error);
+            Assert.Equal(1, res2.FieldErrors.Count);
+            Assert.Equal(AccountFields.DisplayName, res2.FieldErrors[0].Field);
+            Assert.Equal(FieldErrorReason.Taken, res2.FieldErrors[0].Reason);
+        });
+
+        await runner.RunAsync("Register_DuplicateEmail_DoesNotRevealFieldError", async static () =>
+        {
+            var ctx = AccountTestContext.Create();
+            var req1 = new RegisterRequest("user1", "Hero1", "same@example.com", "S3cret-Pass!");
+            var res1 = await ctx.Service.RegisterAsync(req1);
+            Assert.True(res1.Succeeded);
+
+            var req2 = new RegisterRequest("user2", "Hero2", "same@example.com", "S3cret-Pass!");
+            var res2 = await ctx.Service.RegisterAsync(req2);
+
+            Assert.False(res2.Succeeded);
+            Assert.Equal(AuthErrorCode.IdentifierTaken, res2.Error);
+            Assert.Equal(0, res2.FieldErrors.Count);
         });
 
         // --- Login Tests (10 ข้อ) ---
@@ -222,6 +255,7 @@ internal static class AccountServiceTests
             Assert.Contains(text, "***");
             Assert.Contains(text, "mage01");
         });
+
         // --- Session Validation, Refresh & Logout Tests (7 ข้อ) ---
 
         await runner.RunAsync("Validate_ValidToken_ReturnsProfile_UpdatesLastUsed", async static () =>
@@ -364,7 +398,7 @@ internal static class AccountServiceTests
             // Malformed token logout (must not throw)
             await ctx.Service.LogoutAsync("invalid_malformed_token");
         });
-        
+
         await runner.RunAsync("Refresh_ConcurrentSameToken_OnlyOneSucceeds", async static () =>
         {
             var ctx = AccountTestContext.Create();

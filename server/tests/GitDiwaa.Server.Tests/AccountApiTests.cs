@@ -262,5 +262,41 @@ internal static class AccountApiTests
             var body = await response.Content.ReadAsStringAsync();
             Assert.DoesNotContain(body, "Exception");
         });
+
+        await runner.RunAsync("Api_Register_DuplicateDisplayName_Returns409WithFieldError", async static () =>
+        {
+            await using var host = await TestServerHost.StartNewAsync();
+            var first = new RegisterRequest("mage01", "Hero", "mage1@example.com", "S3cret-Pass!");
+            var second = new RegisterRequest("mage02", " hero ", "mage2@example.com", "S3cret-Pass!");
+
+            var firstResp = await host.Client.PostAsJsonAsync("/api/v1/accounts/register", first);
+            Assert.Equal(HttpStatusCode.Created, firstResp.StatusCode);
+
+            var secondResp = await host.Client.PostAsJsonAsync("/api/v1/accounts/register", second);
+            Assert.Equal(HttpStatusCode.Conflict, secondResp.StatusCode);
+
+            var body = await secondResp.Content.ReadAsStringAsync();
+            Assert.Contains(body, "\"code\":\"IdentifierTaken\"");
+            Assert.Contains(body, "\"field\":\"displayName\"");
+            Assert.Contains(body, "\"reason\":\"Taken\"");
+        });
+
+        await runner.RunAsync("Api_Register_DuplicateEmail_Returns409WithoutFieldErrors", async static () =>
+        {
+            await using var host = await TestServerHost.StartNewAsync();
+            var first = new RegisterRequest("mage01", "Hero One", "same@example.com", "S3cret-Pass!");
+            var second = new RegisterRequest("mage02", "Hero Two", "SAME@example.com", "S3cret-Pass!");
+
+            var firstResp = await host.Client.PostAsJsonAsync("/api/v1/accounts/register", first);
+            Assert.Equal(HttpStatusCode.Created, firstResp.StatusCode);
+
+            var secondResp = await host.Client.PostAsJsonAsync("/api/v1/accounts/register", second);
+            Assert.Equal(HttpStatusCode.Conflict, secondResp.StatusCode);
+
+            var body = await secondResp.Content.ReadAsStringAsync();
+            Assert.Contains(body, "\"code\":\"IdentifierTaken\"");
+            Assert.DoesNotContain(body, "email");
+            Assert.Contains(body, "\"fieldErrors\":[]");
+        });
     }
 }

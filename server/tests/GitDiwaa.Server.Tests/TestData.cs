@@ -1,3 +1,4 @@
+using GitDiwaa.Online.Accounts;
 using GitDiwaa.Server.Accounts;
 using GitDiwaa.Server.Persistence;
 using GitDiwaa.Server.Persistence.InMemory;
@@ -10,12 +11,15 @@ internal static class TestData
     public static UserRecord NewUser(string username, string email)
     {
         var now = DateTimeOffset.UtcNow;
+        var displayName = $"Test Player {username}";
+
         return new UserRecord(
             Id: Guid.NewGuid(),
             Username: username,
             Email: email,
             EmailNormalized: email.Trim().ToLowerInvariant(),
-            DisplayName: "Test Player",
+            DisplayName: displayName,
+            DisplayNameKey: AccountNormalizer.NormalizeDisplayNameKey(displayName),
             PasswordHash: "test-hash",
             EmailVerifiedAt: null,
             FailedLoginCount: 0,

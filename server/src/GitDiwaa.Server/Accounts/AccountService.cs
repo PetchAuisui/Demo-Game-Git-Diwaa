@@ -44,6 +44,7 @@ public sealed class AccountService
         string trimmedEmail = request.Email.Trim();
         string normalizedEmail = AccountNormalizer.NormalizeEmail(request.Email);
         string trimmedDisplayName = request.DisplayName.Trim();
+        string displayNameKey = AccountNormalizer.NormalizeDisplayNameKey(request.DisplayName);
 
         string passwordHash = _passwordHasher.Hash(request.Password);
         DateTimeOffset now = _timeProvider.GetUtcNow();
@@ -54,6 +55,7 @@ public sealed class AccountService
             Email: trimmedEmail,
             EmailNormalized: normalizedEmail,
             DisplayName: trimmedDisplayName,
+            DisplayNameKey: displayNameKey,
             PasswordHash: passwordHash,
             EmailVerifiedAt: null,
             FailedLoginCount: 0,
@@ -63,14 +65,16 @@ public sealed class AccountService
             UpdatedAt: now,
             LastLoginAt: null);
 
-        bool added = await _userRepository.TryAddAsync(user, ct);
-        if (!added)
+        var addResult = await _userRepository.TryAddAsync(user, ct);
+        return addResult switch
         {
-            return AccountResult<PlayerProfile>.Failure(AuthErrorCode.IdentifierTaken);
-        }
-
-        var profile = new PlayerProfile(user.Id, user.Username, user.DisplayName);
-        return AccountResult<PlayerProfile>.Success(profile);
+            UserAddResult.Added => AccountResult<PlayerProfile>.Success(new PlayerProfile(user.Id, user.Username, user.DisplayName)),
+            UserAddResult.IdentifierTaken => AccountResult<PlayerProfile>.Failure(AuthErrorCode.IdentifierTaken),
+            UserAddResult.DisplayNameTaken => AccountResult<PlayerProfile>.Failure(
+                AuthErrorCode.IdentifierTaken,
+                [new FieldError(AccountFields.DisplayName, FieldErrorReason.Taken)]),
+            _ => throw new InvalidOperationException($"Unexpected UserAddResult: {addResult}")
+        };
     }
 
     public async Task<AccountResult<LoginSession>> LoginAsync(LoginRequest request, CancellationToken ct = default)

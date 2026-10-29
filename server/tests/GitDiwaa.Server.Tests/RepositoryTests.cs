@@ -1,3 +1,4 @@
+using GitDiwaa.Online.Accounts;
 using GitDiwaa.Server.Persistence;
 using GitDiwaa.Server.Persistence.InMemory;
 
@@ -13,7 +14,7 @@ internal static class RepositoryTests
             var user = TestData.NewUser("mage01", "mage@example.com");
 
             var added = await repo.TryAddAsync(user);
-            Assert.True(added);
+            Assert.Equal(UserAddResult.Added, added);
 
             var byId = await repo.FindByIdAsync(user.Id);
             Assert.Equal(user, byId);
@@ -40,8 +41,8 @@ internal static class RepositoryTests
             var user1 = TestData.NewUser("mage01", "user1@example.com");
             var user2 = TestData.NewUser("mage01", "user2@example.com") with { Id = Guid.NewGuid() };
 
-            Assert.True(await repo.TryAddAsync(user1));
-            Assert.False(await repo.TryAddAsync(user2));
+            Assert.Equal(UserAddResult.Added, await repo.TryAddAsync(user1));
+            Assert.Equal(UserAddResult.IdentifierTaken, await repo.TryAddAsync(user2));
         });
 
         await runner.RunAsync("UserRepo_DuplicateEmail_Rejected", async static () =>
@@ -50,14 +51,14 @@ internal static class RepositoryTests
             var user1 = TestData.NewUser("mage01", "same@example.com");
             var user2 = TestData.NewUser("mage02", "same@example.com") with { Id = Guid.NewGuid() };
 
-            Assert.True(await repo.TryAddAsync(user1));
-            Assert.False(await repo.TryAddAsync(user2));
+            Assert.Equal(UserAddResult.Added, await repo.TryAddAsync(user1));
+            Assert.Equal(UserAddResult.IdentifierTaken, await repo.TryAddAsync(user2));
         });
 
         await runner.RunAsync("UserRepo_ConcurrentSameUsername_OnlyOneWins", async static () =>
         {
             var repo = new InMemoryUserRepository();
-            var tasks = new Task<bool>[50];
+            var tasks = new Task<UserAddResult>[50];
 
             for (int i = 0; i < 50; i++)
             {
@@ -66,7 +67,7 @@ internal static class RepositoryTests
             }
 
             var results = await Task.WhenAll(tasks);
-            int successCount = results.Count(r => r);
+            int successCount = results.Count(r => r == UserAddResult.Added);
 
             Assert.Equal(1, successCount, "Only exactly one task must succeed in adding duplicate username.");
         });
@@ -94,8 +95,8 @@ internal static class RepositoryTests
             var userA = TestData.NewUser("mage_a", "a@x.com");
             var userB = TestData.NewUser("mage_b", "b@x.com");
 
-            Assert.True(await repo.TryAddAsync(userA));
-            Assert.True(await repo.TryAddAsync(userB));
+            Assert.Equal(UserAddResult.Added, await repo.TryAddAsync(userA));
+            Assert.Equal(UserAddResult.Added, await repo.TryAddAsync(userB));
 
             var stealUsername = userA with { Username = userB.Username };
             await Assert.ThrowsAsync<InvalidOperationException>(() => repo.UpdateAsync(stealUsername));
@@ -108,6 +109,87 @@ internal static class RepositoryTests
 
             var fetchedBByUsername = await repo.FindByUsernameAsync(userB.Username);
             Assert.Equal(userB, fetchedBByUsername);
+        });
+
+        // --- Commit S2 Tests: Display Name Key Uniqueness ---
+
+        await runner.RunAsync("UserRepo_DuplicateDisplayNameKey_ReturnsDisplayNameTaken", async static () =>
+        {
+            var repo = new InMemoryUserRepository();
+            var user1 = TestData.NewUser("user1", "user1@example.com") with
+            {
+                DisplayName = "Hero",
+                DisplayNameKey = AccountNormalizer.NormalizeDisplayNameKey("Hero")
+            };
+            var user2 = TestData.NewUser("user2", "user2@example.com") with
+            {
+                DisplayName = "hero",
+                DisplayNameKey = AccountNormalizer.NormalizeDisplayNameKey("hero")
+            };
+
+            Assert.Equal(UserAddResult.Added, await repo.TryAddAsync(user1));
+            Assert.Equal(UserAddResult.DisplayNameTaken, await repo.TryAddAsync(user2));
+        });
+
+        await runner.RunAsync("UserRepo_DuplicateIdentifierAndDisplayName_PrioritizesIdentifierTaken", async static () =>
+        {
+            var repo = new InMemoryUserRepository();
+            var user1 = TestData.NewUser("mage01", "user1@example.com") with
+            {
+                DisplayName = "Hero",
+                DisplayNameKey = AccountNormalizer.NormalizeDisplayNameKey("Hero")
+            };
+            var user2 = TestData.NewUser("mage01", "user2@example.com") with
+            {
+                Id = Guid.NewGuid(),
+                DisplayName = "hero",
+                DisplayNameKey = AccountNormalizer.NormalizeDisplayNameKey("hero")
+            };
+
+            Assert.Equal(UserAddResult.Added, await repo.TryAddAsync(user1));
+            Assert.Equal(UserAddResult.IdentifierTaken, await repo.TryAddAsync(user2));
+        });
+
+        await runner.RunAsync("UserRepo_ConcurrentSameDisplayName_OnlyOneWins", async static () =>
+        {
+            var repo = new InMemoryUserRepository();
+            var tasks = new Task<UserAddResult>[20];
+
+            for (int i = 0; i < 20; i++)
+            {
+                var user = TestData.NewUser($"mage_{i}", $"user{i}@example.com") with
+                {
+                    Id = Guid.NewGuid(),
+                    DisplayName = "Champion",
+                    DisplayNameKey = AccountNormalizer.NormalizeDisplayNameKey("Champion")
+                };
+                tasks[i] = Task.Run(() => repo.TryAddAsync(user));
+            }
+
+            var results = await Task.WhenAll(tasks);
+            int addedCount = results.Count(r => r == UserAddResult.Added);
+            int takenCount = results.Count(r => r == UserAddResult.DisplayNameTaken);
+
+            Assert.Equal(1, addedCount);
+            Assert.Equal(19, takenCount);
+        });
+
+        await runner.RunAsync("UserRepo_Update_CannotChangeDisplayNameKey", async static () =>
+        {
+            var repo = new InMemoryUserRepository();
+            var user = TestData.NewUser("mage01", "mage@example.com") with
+            {
+                DisplayName = "Original Hero",
+                DisplayNameKey = AccountNormalizer.NormalizeDisplayNameKey("Original Hero")
+            };
+            await repo.TryAddAsync(user);
+
+            var tampered = user with
+            {
+                DisplayName = "Changed Hero",
+                DisplayNameKey = AccountNormalizer.NormalizeDisplayNameKey("Changed Hero")
+            };
+            await Assert.ThrowsAsync<InvalidOperationException>(() => repo.UpdateAsync(tampered));
         });
 
         runner.Run("UserRecord_ToString_HidesSecrets", static () =>
@@ -239,7 +321,7 @@ internal static class RepositoryTests
             Assert.Equal(revokeTime, fetchedA2?.RevokedAt);
             Assert.Equal(null, fetchedB1?.RevokedAt);
         });
-        
+
         await runner.RunAsync("SessionRepo_TryRevoke_SucceedsOnlyOnce", async static () =>
         {
             var repo = new InMemorySessionRepository();
