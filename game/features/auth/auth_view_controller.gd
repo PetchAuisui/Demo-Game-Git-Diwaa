@@ -8,6 +8,8 @@ signal register_requested(username: String, display_name: String, email: String,
 
 const EYE_ICON := preload("res://assets/icons/eye.svg")
 const EYE_OFF_ICON := preload("res://assets/icons/eye_off.svg")
+const LOGIN_BG_PATH := "res://assets/art/auth/login_bg.png"
+const REGISTER_BG_PATH := "res://assets/art/auth/register_bg.png"
 
 const FIELD_LABELS := {
 	AuthRules.FIELD_IDENTIFIER: "อีเมล หรือ ชื่อผู้ใช้งาน",
@@ -19,6 +21,7 @@ const FIELD_LABELS := {
 }
 
 # --- UI References ---
+var _background_image: TextureRect
 var _login_tab_btn: Button
 var _register_tab_btn: Button
 
@@ -62,6 +65,7 @@ func _ready() -> void:
 
 
 func _bind_nodes() -> void:
+	_background_image = get_node("%BackgroundImage") as TextureRect
 	_login_tab_btn = get_node("%LoginTabBtn") as Button
 	_register_tab_btn = get_node("%RegisterTabBtn") as Button
 
@@ -125,6 +129,7 @@ func _on_register_tab_pressed() -> void:
 
 
 func _show_login() -> void:
+	_apply_background(LOGIN_BG_PATH)
 	_login_form.visible = true
 	_register_form.visible = false
 
@@ -137,6 +142,7 @@ func _show_login() -> void:
 
 
 func _show_register() -> void:
+	_apply_background(REGISTER_BG_PATH)
 	_login_form.visible = false
 	_register_form.visible = true
 
@@ -146,6 +152,13 @@ func _show_register() -> void:
 	_reset_errors()
 
 	_display_name_input.grab_focus()
+
+
+func _apply_background(path: String) -> void:
+	if ResourceLoader.exists(path):
+		_background_image.texture = load(path) as Texture2D
+	else:
+		_background_image.texture = null
 
 
 func _on_password_toggle(pressed: bool, input: LineEdit, btn: Button) -> void:
