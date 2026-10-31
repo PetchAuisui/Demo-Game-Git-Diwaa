@@ -6,3 +6,8 @@ Library/
 .DS_Store
 git-workspaces/
 TestResults/
+
+# .NET build artifacts
+[Bb]in/
+[Oo]bj/
+
