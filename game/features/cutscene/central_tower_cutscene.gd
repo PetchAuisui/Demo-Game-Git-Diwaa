@@ -312,9 +312,9 @@ func _show_current_dialogue() -> void:
 	
 	speaker_label.text = data["speaker"]
 	if data["speaker"] == "ผู้พิทักษ์":
-		speaker_label.add_theme_color_override("font_color", Color(0.941, 0.824, 0.451, 1.0)) # สีทองอบอุ่น
+		speaker_label.add_theme_color_override("font_color", Color(0.92, 0.80, 0.44, 1.0)) # สีทองอบอุ่น
 	else:
-		speaker_label.add_theme_color_override("font_color", Color(0.48, 0.78, 1.0, 1.0)) # สีฟ้าอ่อนสดใส (เวล / ผู้เล่น)
+		speaker_label.add_theme_color_override("font_color", Color(0.45, 0.75, 0.95, 1.0)) # สีฟ้าอ่อนสดใส (เวล / ผู้เล่น)
 	dialogue_label.text = data["text"]
 	dialogue_label.visible_ratio = 0.0
 	

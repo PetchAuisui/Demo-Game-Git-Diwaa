@@ -1237,9 +1237,9 @@ func _show_dialogue(speaker: String, text: String, on_continue: Callable) -> voi
 	
 	speaker_label.text = speaker
 	if speaker == "เวล":
-		speaker_label.add_theme_color_override("font_color", Color(0.48, 0.78, 1.0, 1.0)) # สีฟ้าอ่อนสดใส (เวล)
+		speaker_label.add_theme_color_override("font_color", Color(0.45, 0.75, 0.95, 1.0)) # สีฟ้าอ่อนสดใส (เวล)
 	else:
-		speaker_label.add_theme_color_override("font_color", Color(0.941, 0.824, 0.451, 1.0)) # สีทองอบอุ่น (ปรมาจารย์)
+		speaker_label.add_theme_color_override("font_color", Color(0.92, 0.80, 0.44, 1.0)) # สีทองอบอุ่น (ปรมาจารย์)
 	
 	dialogue_label.text = text
 	dialogue_label.visible_characters = -1

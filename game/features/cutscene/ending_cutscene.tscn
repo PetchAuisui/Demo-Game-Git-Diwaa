@@ -502,6 +502,13 @@ modulate_color = Color(0.78, 0.74, 0.82, 1)
 
 [sub_resource type="FontVariation" id="FontVariation_speaker_bold"]
 base_font = ExtResource("39_chakra_bold")
+spacing_top = 6
+spacing_bottom = 2
+
+[sub_resource type="FontVariation" id="FontVariation_dialogue_reg"]
+base_font = ExtResource("39_chakra_reg")
+spacing_top = 8
+spacing_bottom = 4
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_btn_normal"]
 bg_color = Color(0, 0, 0, 0.95)
@@ -901,22 +908,18 @@ theme_override_constants/separation = 12
 
 [node name="SpeakerLabel" type="Label" parent="MagicStoryUI/DialogueBox/Margin/VBox" unique_id=1415030837]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.941176, 0.823529, 0.45098, 1)
-theme_override_colors/font_outline_color = Color(0.07, 0.05, 0.09, 1)
-theme_override_constants/outline_size = 3
+theme_override_colors/font_color = Color(0.92, 0.80, 0.44, 1)
 theme_override_fonts/font = SubResource("FontVariation_speaker_bold")
-theme_override_font_sizes/font_size = 30
+theme_override_font_sizes/font_size = 26
 text = "ปรมาจารย์"
 
 [node name="DialogueLabel" type="Label" parent="MagicStoryUI/DialogueBox/Margin/VBox" unique_id=1145092419]
 layout_mode = 2
 size_flags_vertical = 3
-theme_override_colors/font_color = Color(1, 1, 1, 1)
-theme_override_colors/font_outline_color = Color(0.07, 0.05, 0.09, 1)
-theme_override_constants/line_spacing = 8
-theme_override_constants/outline_size = 2
-theme_override_fonts/font = ExtResource("39_chakra_reg")
-theme_override_font_sizes/font_size = 26
+theme_override_colors/font_color = Color(0.88, 0.89, 0.92, 1)
+theme_override_constants/line_spacing = 10
+theme_override_fonts/font = SubResource("FontVariation_dialogue_reg")
+theme_override_font_sizes/font_size = 23
 text = "อ้าว เวล... เกิดอะไรขึ้นเนี่ย แล้วทำไมดูเหนื่อยมอมแมมแบบนี้ล่ะ?"
 autowrap_mode = 3
 
