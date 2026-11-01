@@ -39,7 +39,10 @@
 [ext_resource type="Texture2D" uid="uid://lbxd43tusjvx" path="res://assets/cutscene/props/khampri/minikhampri15.png" id="37_m15"]
 [ext_resource type="Texture2D" uid="uid://dm416ujw1i4oo" path="res://assets/cutscene/characters/master/master_cry.png" id="38_273fk"]
 [ext_resource type="Texture2D" uid="uid://b6yre4fu0rwi2" path="res://assets/cutscene/props/khampri/minikhampri16.png" id="38_m16"]
+[ext_resource type="FontFile" path="res://assets/fonts/Bungee-Regular.ttf" id="39_bungee"]
 [ext_resource type="FontFile" uid="uid://csurxmw2vmws4" path="res://assets/fonts/TA-8-bit.ttf" id="39_font"]
+[ext_resource type="FontFile" uid="uid://deedcfbkojx6k" path="res://assets/fonts/ChakraPetch-Bold.ttf" id="39_chakra_bold"]
+[ext_resource type="FontFile" path="res://assets/fonts/ChakraPetch-Regular.ttf" id="39_chakra_reg"]
 [ext_resource type="Texture2D" uid="uid://pb3ftuq7l261" path="res://assets/cutscene/characters/master/master_minishcok.png" id="41_8u681"]
 [ext_resource type="Texture2D" uid="uid://dmykeg4jphdb0" path="res://assets/cutscene/props/khampri/drop_shadow.png" id="42_shadow"]
 [ext_resource type="Texture2D" uid="uid://6272rjfm3v7c" path="res://assets/cutscene/backgrounds/storm-clouds-preview-Sheet.png" id="43_storm"]
@@ -498,8 +501,7 @@ region_rect = Rect2(43, 191, 2086, 332)
 modulate_color = Color(0.78, 0.74, 0.82, 1)
 
 [sub_resource type="FontVariation" id="FontVariation_speaker_bold"]
-base_font = ExtResource("39_font")
-variation_embolden = 0.6
+base_font = ExtResource("39_chakra_bold")
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_btn_normal"]
 bg_color = Color(0, 0, 0, 0.95)
@@ -913,7 +915,7 @@ theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_colors/font_outline_color = Color(0.07, 0.05, 0.09, 1)
 theme_override_constants/line_spacing = 8
 theme_override_constants/outline_size = 2
-theme_override_fonts/font = ExtResource("39_font")
+theme_override_fonts/font = ExtResource("39_chakra_reg")
 theme_override_font_sizes/font_size = 26
 text = "อ้าว เวล... เกิดอะไรขึ้นเนี่ย แล้วทำไมดูเหนื่อยมอมแมมแบบนี้ล่ะ?"
 autowrap_mode = 3
@@ -1097,7 +1099,7 @@ theme_override_constants/shadow_offset_x = 0
 theme_override_constants/shadow_offset_y = 0
 theme_override_constants/outline_size = 12
 theme_override_constants/shadow_outline_size = 20
-theme_override_fonts/font = ExtResource("39_font")
+theme_override_fonts/font = ExtResource("39_bungee")
 theme_override_font_sizes/font_size = 68
 text = "GIT DI WAA"
 

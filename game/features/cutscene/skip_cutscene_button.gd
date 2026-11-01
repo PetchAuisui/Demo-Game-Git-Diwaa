@@ -32,7 +32,9 @@ var font_res: Font = null
 func _ready() -> void:
 	layer = 100
 	
-	if ResourceLoader.exists("res://assets/fonts/TA-8-bit.ttf"):
+	if ResourceLoader.exists("res://assets/fonts/ChakraPetch-Bold.ttf"):
+		font_res = load("res://assets/fonts/ChakraPetch-Bold.ttf")
+	elif ResourceLoader.exists("res://assets/fonts/TA-8-bit.ttf"):
 		font_res = load("res://assets/fonts/TA-8-bit.ttf")
 	
 	container = HBoxContainer.new()

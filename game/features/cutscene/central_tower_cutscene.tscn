@@ -14,6 +14,8 @@
 [ext_resource type="Texture2D" uid="uid://bb3kuorokw8h" path="res://assets/cutscene/characters/guardian/guardian-breathe-bink-Sheet.png" id="13_guardian_breathe_blink"]
 [ext_resource type="Texture2D" uid="uid://osadi21w88vx" path="res://assets/cutscene/characters/guardian/guardian-talk-blink-Sheet.png" id="14_0vf3y"]
 [ext_resource type="FontFile" uid="uid://csurxmw2vmws4" path="res://assets/fonts/TA-8-bit.ttf" id="14_font"]
+[ext_resource type="FontFile" uid="uid://deedcfbkojx6k" path="res://assets/fonts/ChakraPetch-Bold.ttf" id="14_chakra_bold"]
+[ext_resource type="FontFile" path="res://assets/fonts/ChakraPetch-Regular.ttf" id="14_chakra_reg"]
 [ext_resource type="Texture2D" uid="uid://bg5ggrsq2t05d" path="res://assets/cutscene/frame dialog text/text dialog.png" id="15_dialog_frame"]
 [ext_resource type="Texture2D" uid="uid://dokdfulrf0b81" path="res://assets/cutscene/frame dialog text/arrow.png" id="16_dialog_arrow"]
 [ext_resource type="Texture2D" uid="uid://dmykeg4jphdb0" path="res://assets/cutscene/props/khampri/drop_shadow.png" id="17_shadow"]
@@ -454,8 +456,7 @@ region_rect = Rect2(43, 191, 2086, 332)
 modulate_color = Color(0.78, 0.74, 0.82, 1)
 
 [sub_resource type="FontVariation" id="FontVariation_speaker_bold"]
-base_font = ExtResource("14_font")
-variation_embolden = 0.6
+base_font = ExtResource("14_chakra_bold")
 
 
 [node name="CentralTowerCutscene" type="Node2D" unique_id=2028812494]
@@ -610,7 +611,7 @@ theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_colors/font_outline_color = Color(0.07, 0.05, 0.09, 1)
 theme_override_constants/line_spacing = 8
 theme_override_constants/outline_size = 2
-theme_override_fonts/font = ExtResource("14_font")
+theme_override_fonts/font = ExtResource("14_chakra_reg")
 theme_override_font_sizes/font_size = 26
 autowrap_mode = 3
 

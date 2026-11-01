@@ -15,6 +15,8 @@
 [ext_resource type="Texture2D" path="res://assets/cutscene/characters/mewla/mewla_sleep-Sheet.png" id="13_mewla_sleep_sheet"]
 [ext_resource type="Texture2D" path="res://assets/cutscene/characters/mewla/mewla_idle.png" id="14_mewla_idle_single"]
 [ext_resource type="FontFile" uid="uid://csurxmw2vmws4" path="res://assets/fonts/TA-8-bit.ttf" id="15_font"]
+[ext_resource type="FontFile" uid="uid://deedcfbkojx6k" path="res://assets/fonts/ChakraPetch-Bold.ttf" id="15_chakra_bold"]
+[ext_resource type="FontFile" path="res://assets/fonts/ChakraPetch-Regular.ttf" id="15_chakra_reg"]
 [ext_resource type="Texture2D" uid="uid://bg5ggrsq2t05d" path="res://assets/cutscene/frame dialog text/text dialog.png" id="16_dialog_frame"]
 [ext_resource type="Texture2D" uid="uid://dokdfulrf0b81" path="res://assets/cutscene/frame dialog text/arrow.png" id="17_dialog_arrow"]
 [ext_resource type="Texture2D" uid="uid://dmykeg4jphdb0" path="res://assets/cutscene/props/khampri/drop_shadow.png" id="18_shadow"]
@@ -417,8 +419,7 @@ region_rect = Rect2(43, 191, 2086, 332)
 modulate_color = Color(0.78, 0.74, 0.82, 1)
 
 [sub_resource type="FontVariation" id="FontVariation_speaker_bold"]
-base_font = ExtResource("15_font")
-variation_embolden = 0.6
+base_font = ExtResource("15_chakra_bold")
 
 [node name="LevelDialogueView" type="Node2D" unique_id=2028812501]
 script = ExtResource("1_script")
@@ -568,7 +569,7 @@ theme_override_colors/default_color = Color(1, 1, 1, 1)
 theme_override_colors/font_outline_color = Color(0.07, 0.05, 0.09, 1)
 theme_override_constants/line_separation = 8
 theme_override_constants/outline_size = 2
-theme_override_fonts/normal_font = ExtResource("15_font")
+theme_override_fonts/normal_font = ExtResource("15_chakra_reg")
 theme_override_font_sizes/normal_font_size = 26
 
 [node name="ArrowOverlay" type="Control" parent="MagicStoryUI/DialogueBox" unique_id=1928374615]

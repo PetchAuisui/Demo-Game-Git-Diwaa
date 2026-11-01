@@ -69,6 +69,8 @@ var is_transitioning: bool = false
 var is_fast_forwarding: bool = false
 var skip_ctrl = null
 var font_ta8bit: Font = null
+var font_chakra_bold: Font = null
+var font_chakra_regular: Font = null
 
 # Animation Sequence
 const VEL_IDLE_SEQ: Array[String] = ["breathe", "breathe_blink", "breathe", "breathe", "breathe_blink"]
@@ -121,6 +123,10 @@ const INTRO_DIALOGUES: Array[Dictionary] = [
 func _ready() -> void:
 	if ResourceLoader.exists("res://assets/fonts/TA-8-bit.ttf"):
 		font_ta8bit = load("res://assets/fonts/TA-8-bit.ttf")
+	if ResourceLoader.exists("res://assets/fonts/ChakraPetch-Bold.ttf"):
+		font_chakra_bold = load("res://assets/fonts/ChakraPetch-Bold.ttf")
+	if ResourceLoader.exists("res://assets/fonts/ChakraPetch-Regular.ttf"):
+		font_chakra_regular = load("res://assets/fonts/ChakraPetch-Regular.ttf")
 		
 	# สร้าง Choice Container ภายในกล่องข้อความเดิม (DialogueBox) ใต้ SpeakerLabel
 	var vbox = dialogue_box.get_node_or_null("Margin/VBox")
@@ -700,7 +706,10 @@ func _display_choice_menu(menu_id: String) -> void:
 		btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 		btn.alignment = HORIZONTAL_ALIGNMENT_LEFT
 		
-		if font_ta8bit:
+		if font_chakra_bold:
+			btn.add_theme_font_override("font", font_chakra_bold)
+			btn.add_theme_font_size_override("font_size", 22)
+		elif font_ta8bit:
 			btn.add_theme_font_override("font", font_ta8bit)
 			btn.add_theme_font_size_override("font_size", 21)
 			
@@ -865,7 +874,10 @@ func _trigger_bad_ending() -> void:
 		var title = Label.new()
 		title.text = "ขอบคุณที่เล่น Git Di Waa\n(จบแบบลับ: เข้าผิดหอคอย)"
 		title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		if font_ta8bit:
+		if font_chakra_bold:
+			title.add_theme_font_override("font", font_chakra_bold)
+			title.add_theme_font_size_override("font_size", 30)
+		elif font_ta8bit:
 			title.add_theme_font_override("font", font_ta8bit)
 			title.add_theme_font_size_override("font_size", 30)
 		title.add_theme_color_override("font_color", Color(0.98, 0.85, 0.5, 1.0))
@@ -877,7 +889,10 @@ func _trigger_bad_ending() -> void:
 		btn.text = "กลับสู่หน้าแรก"
 		btn.custom_minimum_size = Vector2(200, 48)
 		btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
-		if font_ta8bit:
+		if font_chakra_bold:
+			btn.add_theme_font_override("font", font_chakra_bold)
+			btn.add_theme_font_size_override("font_size", 22)
+		elif font_ta8bit:
 			btn.add_theme_font_override("font", font_ta8bit)
 			btn.add_theme_font_size_override("font_size", 22)
 		btn.pressed.connect(func():
