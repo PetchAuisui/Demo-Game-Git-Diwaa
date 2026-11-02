@@ -32,6 +32,7 @@ const TOO_LONG := "TooLong"
 const INVALID_CHARACTERS := "InvalidCharacters"
 const INVALID_FORMAT := "InvalidFormat"
 const MISMATCH := "Mismatch"  # client-only: confirm password
+const TAKEN := "Taken"  # server-only: display name already used by someone else
 
 static var _username_regex: RegEx
 

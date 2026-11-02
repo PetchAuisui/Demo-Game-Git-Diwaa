@@ -9,8 +9,10 @@ extends RefCounted
 ##    จะวิ่งผ่านเน็ตแบบไม่เข้ารหัส คนที่อยู่ Wi-Fi เดียวกันดักอ่านได้
 ## 3. ห้ามใส่ความลับใดๆ ในไฟล์นี้ เพราะผู้เล่นแกะไฟล์เกมอ่านได้ทุกบรรทัด
 
-# ที่อยู่ server ตอนพัฒนา: server ที่รันในเครื่องตัวเองด้วย `dotnet run` (port ดูได้จากบรรทัด "Now listening on")
-const DEV_BASE_URL := "http://127.0.0.1:5000"
+# ที่อยู่ server ตอนพัฒนา: server ที่รันในเครื่องตัวเองด้วย `dotnet run`
+# port 5280 ต้องตรงกับ server/src/GitDiwaa.Server/Properties/launchSettings.json
+# (ไม่ใช้ 5000 เพราะโปรแกรมอื่นมักจองไว้ เช่น Flask ของ Python)
+const DEV_BASE_URL := "http://127.0.0.1:5280"
 # ที่อยู่ server ตัวจริง: TODO แก้เป็นที่อยู่จริงตอนเลือก host ได้แล้ว
 # ใช้ .invalid ไว้ก่อน เพราะเป็นโดเมนที่ไม่มีอยู่จริงแน่นอน เกมจึงไม่มีทางส่งข้อมูลไปผิดที่
 const RELEASE_BASE_URL := "https://auth.invalid"

@@ -1,10 +1,12 @@
 class_name AuthViewController
 extends Control
 
-## Controller managing tab navigation, UI transitions, credential hygiene, and validation.
+## Controller managing tab navigation, UI transitions, credential hygiene, validation,
+## and sending login / register requests to the account server.
 
-signal login_requested(identifier: String, password: String, remember_me: bool)
-signal register_requested(username: String, display_name: String, email: String, password: String)
+## ส่งออกเมื่อล็อกอินสำเร็จ: session คือคำตอบของ server {"profile": {...}, "token": String, "expiresAt": String}
+## (ใน 4.4 PlayerSession จะมารับ signal นี้ไปเก็บ session แล้วพาเข้าเกม)
+signal login_succeeded(session: Dictionary, remember_me: bool)
 
 const EYE_ICON := preload("res://assets/icons/eye.svg")
 const EYE_OFF_ICON := preload("res://assets/icons/eye_off.svg")
@@ -56,9 +58,19 @@ var _register_status: Label
 var _register_submit_btn: Button
 var _go_login_link: LinkButton
 
+# --- Server ---
+var _api: AuthApiClient
+var _busy := false
+var _login_submit_text := ""
+var _register_submit_text := ""
+
 
 func _ready() -> void:
+	_api = AuthApiClient.new()
+	add_child(_api)
 	_bind_nodes()
+	_login_submit_text = _login_submit_btn.text
+	_register_submit_text = _register_submit_btn.text
 	_wire_events()
 	_apply_theme()
 	_show_login()
@@ -112,10 +124,10 @@ func _wire_events() -> void:
 	)
 
 	_login_submit_btn.pressed.connect(_on_login_submit)
-	_login_password_input.text_submitted.connect(func(_text: String) -> void: _on_login_submit())
+	_login_password_input.text_submitted.connect(func(_text: String) -> void: await _on_login_submit())
 
 	_register_submit_btn.pressed.connect(_on_register_submit)
-	_confirm_password_input.text_submitted.connect(func(_text: String) -> void: _on_register_submit())
+	_confirm_password_input.text_submitted.connect(func(_text: String) -> void: await _on_register_submit())
 
 
 func _on_login_tab_pressed() -> void:
@@ -267,6 +279,8 @@ func _apply_theme() -> void:
 
 
 func _on_login_submit() -> void:
+	if _busy:
+		return
 	_reset_errors()
 
 	var id_reason := AuthRules.validate_login_identifier(_identifier_input.text)
@@ -294,11 +308,13 @@ func _on_login_submit() -> void:
 	var pw_val := _login_password_input.text
 	var remember_val := _remember_me_check.button_pressed
 
-	login_requested.emit(id_val, pw_val, remember_val)
 	_clear_passwords()
+	await _submit_login(id_val, pw_val, remember_val)
 
 
 func _on_register_submit() -> void:
+	if _busy:
+		return
 	_reset_errors()
 
 	var dn_reason := AuthRules.validate_display_name(_display_name_input.text)
@@ -353,8 +369,8 @@ func _on_register_submit() -> void:
 	var em_val := _email_input.text.strip_edges()
 	var pw_val := _register_password_input.text
 
-	register_requested.emit(un_val, dn_val, em_val, pw_val)
 	_clear_passwords()
+	await _submit_register(un_val, dn_val, em_val, pw_val)
 
 
 func _message_for(field: String, reason: String) -> String:
@@ -393,7 +409,125 @@ func _message_for(field: String, reason: String) -> String:
 			if field == AuthRules.FIELD_EMAIL:
 				return "รูปแบบอีเมลไม่ถูกต้อง"
 			return "รูปแบบ%sไม่ถูกต้อง" % label
+		AuthRules.TAKEN:
+			if field == AuthRules.FIELD_DISPLAY_NAME:
+				return "ชื่อที่แสดงนี้มีผู้ใช้แล้ว กรุณาเลือกชื่ออื่น"
+			return "%sนี้ถูกใช้แล้ว" % label
 		AuthRules.MISMATCH:
 			return "รหัสผ่านไม่ตรงกัน"
 		_:
 			return "ข้อมูล%sไม่ถูกต้อง" % label
+
+
+# --- ส่งข้อมูลไป server ---
+# รหัสผ่านถูกล้างออกจากช่องก่อนส่งแล้ว ถ้า server ตอบว่าผิด ผู้ใช้ต้องพิมพ์ใหม่ (แอปทั่วไปก็ทำแบบนี้)
+
+func _submit_login(identifier: String, password: String, remember_me: bool) -> void:
+	_set_busy(true)
+	var result := await _api.login(identifier, password, remember_me)
+	_set_busy(false)
+
+	if result.ok:
+		_show_status(_login_status, "เข้าสู่ระบบสำเร็จ", true)
+		login_succeeded.emit(result.data, remember_me)
+		return
+
+	match result.code:
+		AuthApiResult.INVALID_CREDENTIALS:
+			# ข้อความเดียวกันทุกกรณี (รหัสผิด / ไม่มีบัญชีนี้ / ถูกพักชั่วคราว) ตามที่ server ตั้งใจ
+			# เพื่อไม่ให้ใครใช้หน้านี้เดาว่าบัญชีไหนมีอยู่จริง
+			_show_status(_login_status, "อีเมล/ชื่อผู้ใช้ หรือรหัสผ่านไม่ถูกต้อง\nหากใส่ผิดหลายครั้ง ระบบจะพักการเข้าสู่ระบบชั่วคราว", false)
+			_login_password_input.grab_focus()
+		AuthApiResult.VALIDATION_FAILED:
+			var shown := _apply_field_errors(result.field_errors, {
+				AuthRules.FIELD_IDENTIFIER: _identifier_error,
+				AuthRules.FIELD_PASSWORD: _login_password_error,
+			})
+			if not shown:
+				_show_status(_login_status, _message_for_failure(result), false)
+		_:
+			_show_status(_login_status, _message_for_failure(result), false)
+
+
+func _submit_register(username: String, display_name: String, email: String, password: String) -> void:
+	_set_busy(true)
+	var result := await _api.register(username, display_name, email, password)
+	_set_busy(false)
+
+	if result.ok:
+		# สมัครสำเร็จ: ล้างฟอร์มสมัคร (กันคนใช้เครื่องต่อเห็นข้อมูล) แล้วพาไปหน้า login พร้อมเติม username ให้
+		_clear_register_form()
+		_show_login()
+		_identifier_input.text = username
+		_show_status(_login_status, "สมัครสมาชิกสำเร็จ กรุณาเข้าสู่ระบบ", true)
+		_login_password_input.grab_focus()
+		return
+
+	if result.code == AuthApiResult.IDENTIFIER_TAKEN or result.code == AuthApiResult.VALIDATION_FAILED:
+		var shown := _apply_field_errors(result.field_errors, {
+			AuthRules.FIELD_DISPLAY_NAME: _display_name_error,
+			AuthRules.FIELD_USERNAME: _username_error,
+			AuthRules.FIELD_EMAIL: _email_error,
+			AuthRules.FIELD_PASSWORD: _register_password_error,
+		})
+		if shown:
+			return
+	_show_status(_register_status, _message_for_failure(result), false)
+
+
+## แสดง error ใต้ช่องตามที่ server บอก คืนค่า true ถ้าแสดงได้อย่างน้อย 1 ช่อง
+## ข้อความมาจาก _message_for เสมอ ไม่เอาข้อความดิบจาก server ไปแสดงบนจอ
+func _apply_field_errors(errors: Array[Dictionary], targets: Dictionary) -> bool:
+	var shown := false
+	for entry in errors:
+		var field: String = entry.get("field", "")
+		var label: Label = targets.get(field)
+		if label == null:
+			continue
+		label.text = _message_for(field, entry.get("reason", ""))
+		label.visible = true
+		shown = true
+	return shown
+
+
+func _message_for_failure(result: AuthApiResult) -> String:
+	match result.code:
+		AuthApiResult.RATE_LIMITED:
+			return "ลองหลายครั้งเกินไป กรุณารอประมาณ %d วินาทีแล้วลองใหม่" % maxi(result.retry_after_sec, 1)
+		AuthApiResult.NETWORK_UNAVAILABLE:
+			return "เชื่อมต่อ server ไม่ได้ กรุณาตรวจสอบอินเทอร์เน็ตแล้วลองใหม่"
+		AuthApiResult.IDENTIFIER_TAKEN:
+			return "ชื่อผู้ใช้หรืออีเมลนี้ถูกใช้แล้ว"
+		AuthApiResult.VALIDATION_FAILED:
+			return "ข้อมูลไม่ถูกต้อง กรุณาตรวจสอบอีกครั้ง"
+		_:
+			return "เกิดข้อผิดพลาดที่ server กรุณาลองใหม่ภายหลัง"
+
+
+func _show_status(label: Label, text: String, success: bool) -> void:
+	label.text = text
+	label.add_theme_color_override("font_color", AuthThemeTokens.SUCCESS_TEXT if success else AuthThemeTokens.ERROR_TEXT)
+	label.visible = true
+
+
+## ระหว่างรอ server: ปิดปุ่มทั้งหมด กันกดซ้ำ และกันสลับฟอร์มกลางทาง
+func _set_busy(busy: bool) -> void:
+	_busy = busy
+	var buttons: Array[BaseButton] = [
+		_login_submit_btn,
+		_register_submit_btn,
+		_login_tab_btn,
+		_register_tab_btn,
+		_go_register_link,
+		_go_login_link,
+	]
+	for btn in buttons:
+		btn.disabled = busy
+	_login_submit_btn.text = "กำลังเข้าสู่ระบบ..." if busy else _login_submit_text
+	_register_submit_btn.text = "กำลังสมัครสมาชิก..." if busy else _register_submit_text
+
+
+func _clear_register_form() -> void:
+	_display_name_input.text = ""
+	_username_input.text = ""
+	_email_input.text = ""

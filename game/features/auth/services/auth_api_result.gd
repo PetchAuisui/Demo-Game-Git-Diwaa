@@ -10,6 +10,8 @@ const NETWORK_UNAVAILABLE := "NetworkUnavailable"
 const SERVER_ERROR := "ServerError"
 const RATE_LIMITED := "RateLimited"
 const INVALID_CREDENTIALS := "InvalidCredentials"
+const VALIDATION_FAILED := "ValidationFailed"
+const IDENTIFIER_TAKEN := "IdentifierTaken"
 
 var ok := false
 var status := 0

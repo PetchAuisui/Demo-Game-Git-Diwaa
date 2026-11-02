@@ -33,6 +33,8 @@ const TOGGLE_HOVER_BG := Color("5c4a37")
 
 # --- Error Feedback ---
 const ERROR_TEXT := Color("a82828")
+# สีข้อความแจ้งผลสำเร็จ เช่น "สมัครสมาชิกสำเร็จ"
+const SUCCESS_TEXT := Color("2e6b34")
 
 
 static func create_input_style(border_color: Color = INPUT_BORDER) -> StyleBoxFlat:
