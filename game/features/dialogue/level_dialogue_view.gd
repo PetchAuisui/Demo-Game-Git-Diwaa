@@ -13,6 +13,7 @@ const GameProgressManager = preload("res://common/game_progress_manager.gd")
 
 @export var level_number: int = 1
 @export var next_scene_path: String = "res://features/start/start_view.tscn"
+@export var level_clear_scene_path: String = "res://features/cutscene/level_clear_scene.tscn"
 @export var play_entrance_cutscene: bool = false
 @export var fade_in_from_black: bool = false
 @export_enum("Intro & Part 1", "Part 2", "Outro") var debug_phase: int = 0
@@ -835,7 +836,20 @@ func _finish_dialogue_stage() -> void:
 	# บันทึกสถานะว่าเล่นผ่านด่านนี้สำเร็จแล้ว (ทำให้การ์ดใน Level Select ปลดล็อกเป็นสีเขียว)
 	GameProgressManager.set_level_cleared(level_number, true)
 	
-	# แสดงหน้าสรุปผล / สรุปดาวเมื่อผ่านด่าน (Success Modal)
+	# เปลี่ยนฉากไปยังคัตซีนเดินขึ้นบันไดและแสดงหน้าสรุปดาว (Level Clear Scene)
+	if level_clear_scene_path != "" and ResourceLoader.exists(level_clear_scene_path):
+		if is_instance_valid(fade_overlay):
+			fade_overlay.visible = true
+			var tw = create_tween()
+			tw.tween_property(fade_overlay, "color:a", 1.0, 0.35)
+			tw.tween_callback(func():
+				get_tree().change_scene_to_file(level_clear_scene_path)
+			)
+		else:
+			get_tree().change_scene_to_file(level_clear_scene_path)
+		return
+	
+	# แสดงหน้าสรุปผล / สรุปดาวเมื่อผ่านด่าน (Success Modal) เป็น Fallback
 	var clear_modal_res = load("res://features/dialogue/level_clear_modal.tscn")
 	if clear_modal_res:
 		var modal = clear_modal_res.instantiate()

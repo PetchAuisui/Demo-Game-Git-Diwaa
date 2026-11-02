@@ -176,6 +176,18 @@ tracks/5/keys = {
 "update": 0,
 "values": [Vector2(1, 1)]
 }
+tracks/6/type = "value"
+tracks/6/imported = false
+tracks/6/enabled = true
+tracks/6/path = NodePath("ui/FadeOverlay:color")
+tracks/6/interp = 1
+tracks/6/loop_wrap = true
+tracks/6/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 0,
+"values": [Color(0, 0, 0, 0)]
+}
 
 [sub_resource type="Animation" id="Animation_lcxxy"]
 resource_name = "walk-stair"
@@ -252,6 +264,18 @@ tracks/5/keys = {
 "update": 0,
 "values": [Vector2(1, 1), Vector2(0.8, 0.8), Vector2(1.04, 1.04), Vector2(1, 1)]
 }
+tracks/6/type = "value"
+tracks/6/imported = false
+tracks/6/enabled = true
+tracks/6/path = NodePath("ui/FadeOverlay:color")
+tracks/6/interp = 1
+tracks/6/loop_wrap = true
+tracks/6/keys = {
+"times": PackedFloat32Array(0, 0.25),
+"transitions": PackedFloat32Array(1, 1),
+"update": 0,
+"values": [Color(0, 0, 0, 1), Color(0, 0, 0, 0)]
+}
 
 [sub_resource type="AnimationLibrary" id="AnimationLibrary_2h6iq"]
 _data = {
@@ -284,6 +308,13 @@ libraries/ = SubResource("AnimationLibrary_2h6iq")
 autoplay = &"walk-stair"
 
 [node name="ui" type="CanvasLayer" parent="." unique_id=719551824]
+
+[node name="FadeOverlay" type="ColorRect" parent="ui" unique_id=123456789]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+color = Color(0, 0, 0, 0)
 
 [node name="LevelClearModal" parent="ui" unique_id=1998528347 instance=ExtResource("4_modal")]
 visible = false
