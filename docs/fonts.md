@@ -1,116 +1,104 @@
-# รายการและการใช้งานฟอนต์ในโปรเจกต์ (Fonts & Typography Guide)
+# คู่มือการใช้งานฟอนต์และมาตรฐาน Typography (Fonts & Typography Guide)
 
-เอกสารนี้รวบรวมรายการฟอนต์ทั้งหมดในโปรเจกต์ **Git-Diwaa** (`res://assets/fonts/`), มาตรฐานการจัดวางข้อความบทสนทนา (Cutscene Typography), และคู่มือการตั้งค่าใน Godot Engine
-
----
-
-## 1. ฟอนต์หลักสำหรับฉากคัตซีนและบทสนทนา (Cutscene Dialogue Standard)
-
-### ฟอนต์: `TA-8-bit.ttf`
-* **ที่อยู่ไฟล์:** `res://assets/fonts/TA-8-bit.ttf`
-* **ลักษณะ:** ฟอนต์พิกเซล 8-bit แท้ รองรับภาษาไทยและอังกฤษ มีเอกลักษณ์สไตล์ Retro Game ชัดเจน วรรณยุกต์และสระลงล็อกช่องพิกเซล
-* **ฉากที่ใช้งาน:**
-  * [`game/features/cutscene/central_tower_cutscene.tscn`](../game/features/cutscene/central_tower_cutscene.tscn) (หอคอยเวทกลาง)
-  * `game/features/cutscene/intro_cutscene.tscn` (ฉากเปิดเรื่อง)
-  * `game/features/cutscene/outside_cutscene.tscn` (ฉากนอกหอคอย)
-  * `game/features/cutscene/ending_cutscene.tscn` (ฉากจบ)
+เอกสารนี้รวบรวมมาตรฐานการใช้งานฟอนต์, ขนาด, สีตัวอักษร, และการตั้งค่า Typography ทั้งหมดในเกม **GIT DI WAA** (`res://assets/fonts/`) เพื่อให้เป็นมาตรฐานเดียวกันทั้งโปรเจกต์
 
 ---
 
-### ข้อกำหนดและสเปกการตั้งค่าในฉากหอคอยเวทกลาง (`central_tower_cutscene.tscn`)
+## 1. ชื่อเกม (Game Title: "GIT DI WAA")
 
-| องค์ประกอบ | โหนด (Node) | ฟอนต์ | ขนาด (Size) | สีตัวอักษร (Color) | ขอบ (Outline) | ระยะห่างบรรทัด | รายละเอียดเพิ่มเติม |
-|---|---|---|---|---|---|---|---|
-| **ชื่อผู้พูด** | `SpeakerLabel` | `TA-8-bit.ttf` (FontVariation) | **28 px** | สีทอง `#F0D273` | 3 px (`#120D17`) | - | ใช้ `FontVariation` โดยตั้งค่า `variation_embolden = 0.3` เพื่อให้เป็นตัวหนา เด่นกว่าบทพูด |
-| **บทสนทนา** | `DialogueLabel` | `TA-8-bit.ttf` (ปกติ) | **26 px** | สีขาวจั๊ว `#FFFFFF` | 2 px (`#120D17`) | **8 px** | ขนาด 26 px สระและวรรณยุกต์ไทยอ่านง่าย ไม่จม และไม่ตัดตกกล่อง |
-| **เครื่องหมายคำถาม** | `QuestionMark/Label` | `TA-8-bit.ttf` | **20 px** | สีขาว `#FFFFFF` | 4 px (`#000000`) | - | ไอคอน emote แสดงเหนือศีรษะเวล |
+| ตำแหน่งการแสดงผล | ไฟล์ Scene | ฟอนต์ | ขนาด | สีตัวอักษร (Color) | การตกแต่ง / รายละเอียด |
+|---|---|---|:---:|---|---|
+| **แถบด้านบน (Top Bar)** | `start_top_bar.tscn`<br>`dressing_room_view.tscn` | `Bungee-Regular.ttf` | **32 px** | สีขาว `#FFFFFF` | เงาตัวอักษร `#2E3852` (Offset: 2, 2) |
+| **ไตเติลคัตซีนเปิด/จบ** | `outside_cutscene.tscn`<br>`ending_cutscene.tscn` | `Bungee-Regular.ttf` | **72 px** | สีม่วงเวทมนตร์ `#B88CFA` | มีขอบ Outline นีออนเรืองแสง |
 
-#### กฎการตัดคำและช่องไฟบทสนทนา:
-1. **ป้องกันคำเฉพาะตัดแยกบรรทัด:** ใช้ Non-breaking space (`\u00A0` หรือ `\u00A0`) ระหว่างคำเฉพาะ เช่น `'Git\u00A0Flow'` และ `'GitHub\u00A0Flow'` เพื่อไม่ให้คำว่า Flow หลุดไปอยู่เดี่ยวๆ ในบรรทัดใหม่
-2. **การขึ้นบรรทัดใหม่ด้วยตนเอง (`\n`):** ใส่เครื่องหมาย `\n` แบ่งวรรคประโยคยาวที่มี 2 ใจความในบทที่ 3 และบทที่ 11 เพื่อให้อ่านสบายตา
+* **ข้อกำหนดการสะกด:** ใช้ตัวพิมพ์ใหญ่และเว้นวรรค **`GIT DI WAA`** (ไม่มีเครื่องหมายขีดกลาง)
 
 ---
 
-### 1.1 มาตรฐานการแยกสีและขนาดชื่อตัวละคร (Character Nameplate Theming & Sizing Standard)
+## 2. ระบบบทสนทนาและคัตซีน (Dialogue & Cutscene System)
 
-เพื่อช่วยให้ผู้เล่นสามารถแยกแยะผู้พูดได้ทันทีโดยไม่ต้องเพ่งอ่านชื่อตัวละคร ระบบบทสนทนาจะกำหนดชุดสีเฉพาะตามบทบาทตัวละคร (Role-Based Color Theming) และกำหนดขนาดตัวอักษรที่ชัดเจนให้กับ `SpeakerLabel`:
+ใช้ในฉาก:
+* `level_dialogue_view.tscn` (บทสนทนาในด่าน)
+* `inside_tower_cutscene.tscn` (คัตซีนในหอคอย)
+* `central_tower_cutscene.tscn` (คัตซีนหอคอยเวทกลาง)
+* `ending_cutscene.tscn` (คัตซีนฉากจบ)
 
-* **ขนาดและความหนาของตัวอักษรชื่อผู้พูด (Font Size 30 px, Embolden 0.6):**
-  * ฟอนต์หลัก `TA-8-bit.ttf` เป็นฟอนต์พิกเซลแท้ที่ไม่มีไฟล์ Bold (`.ttf`) แยกต่างหาก ใน Godot Engine จึงใช้ฟีเจอร์ **`FontVariation`** ร่วมกับพารามิเตอร์ **`variation_embolden`** เพื่อจำลองตัวหนา (Synthetic Pixel Bold)
-  * ปรับเพิ่มค่า `variation_embolden` จากเดิม **0.3** (ซึ่งบางเกินไปจนตาเปล่าแทบมองไม่ออก) ขึ้นเป็น **`0.6`**
-  * ขยายขนาดจาก 28 px ขึ้นเป็น **30 px** เพื่อสร้างลำดับชั้นทางสายตา (Visual Hierarchy) ให้ชื่อผู้พูดเป็นตัวหนาชัดเจน โดดเด่นกว่าข้อความบทสนทนาขนาด 26 px
-  * **ความสม่ำเสมอ:** คงขนาด 30 px และความหนา 0.6 เท่ากันทุกตัวละคร (ทั้งตัวเอกเวลและมิวรา) เพื่อป้องกันอาการกล่องข้อความหรือชื่อกระตุกเมื่อสลับบทพูด
+### 2.1 ข้อมูลจำเพาะในกล่องข้อความ (Dialogue Box Specifications)
 
-#### ตารางเปรียบเทียบระดับความหนา (`variation_embolden`) บนฟอนต์ `TA-8-bit.ttf`:
-| ค่า Embolden | ระดับความหนา | การแสดงผล / ความเหมาะสม |
-|:---:|---|---|
-| `0.0` | Regular (ปกติ) | เส้นเดี่ยวบางเท่าข้อความบทสนทนา ไม่มีความเด่น |
-| `0.3` | Subtle (ค่าเดิม) | หนาขึ้นเพียงเศษเสี้ยวพิกเซล ตาเปล่าแทบแยกไม่ออก |
-| **`0.6`** | **Bold (มาตรฐานใหม่)** | **หนาขึ้น 1 สโตรกพิกเซลอย่างชัดเจน ดูเป็นตัวหนาแท้จริง สระและวรรณยุกต์ไทยไม่อึดอัด** |
-| `0.8` | Extra Bold (หนาเข้ม) | หนาเด่นชัดมาก สไตล์เรโทรหนักแน่น เหมาะหากต้องการเน้นชื่อเป็นพิเศษ |
-| `1.0` | Heavy (หนาทึบ) | เส้นหนามาก สระบน-ล่างบางตัวอาจเริ่มเบียดชิด |
+| องค์ประกอบ | โหนด (Node) | ฟอนต์ / FontVariation | ขนาด | สีตัวอักษร | Outline | Spacing / Line Spacing | หมายเหตุ |
+|---|---|---|:---:|---|:---:|:---:|---|
+| **ชื่อผู้พูด** | `SpeakerLabel` | `ChakraPetch-Bold.ttf`<br>(SubResource: `FontVariation_speaker_bold`) | **26 px** | *แยกตามตัวละคร (ดูข้อ 2.2)* | ไม่มี (นำออก) | `spacing_top = 6`<br>`spacing_bottom = 2` | ป้องกันสระลอย/ตกขอบ และจัดกึ่งกลางสวยงาม |
+| **เนื้อหาบทสนทนา** | `DialogueLabel` | `ChakraPetch-Regular.ttf`<br>(SubResource: `FontVariation_dialogue_reg`) | **23 px** | ขาวนวล `#E0E3EB`<br>`Color(0.88, 0.89, 0.92, 1.0)` | ไม่มี (นำออก) | `spacing_top = 8`<br>`spacing_bottom = 4`<br>`line_spacing = 10` | `clip_contents = false` อ่านง่าย สบายตา สระไม่ซ้อน |
+| **ปุ่มตัวเลือกตอบ** | `ChoiceButton` | `ChakraPetch-Bold.ttf` | **22 px** | ขาว / ส้มตามสถานะ Hover | 2 px | - | ปุ่มเลือกตอบบทสนทนา |
+| **ปุ่มข้ามคัตซีน** | `SkipCutsceneButton` | `ChakraPetch-Bold.ttf` | **16 px** | ขาวนวลโปร่งแสง | - | - | อยู่มุมขวาบนของคัตซีน |
 
-| บทบาทตัวละคร | ชื่อในเกม (ปัจจุบัน) | โทนสี | Hex Code | Godot Color Value | ความหมาย / เอกลักษณ์ |
+---
+
+### 2.2 โทนสีชื่อตัวละครผู้พูด (Speaker Color Palette)
+
+ระบบกำหนดสีตามบทบาทของตัวละคร เพื่อให้ผู้เล่นแยกแยะผู้พูดได้ทันที:
+
+| บทบาทตัวละคร | ตัวละครตัวอย่าง | โทนสี | Hex Code | Godot Color Value | ความหมาย / เอกลักษณ์ |
 |---|---|:---:|:---:|:---:|---|
-| **ตัวละครหลัก / ผู้เล่น (Player Protagonist)** | **เวล (Vel)** *(ชื่อตั้งต้น/Placeholder)* | ฟ้าอ่อนสดใส (Sky Cyan) | `#7AC7FF` | `Color(0.48, 0.78, 1.0, 1.0)` | สีประจำตัวเอก/ผู้เล่น สอดคล้องกับฮู้ดคลุมสีฟ้า เมื่อเปิดฟีเจอร์ตั้งชื่อผู้เล่นเองในอนาคต ชื่อที่ผู้เล่นตั้งจะใช้สีฟ้าอ่อนนี้อัตโนมัติ |
-| **ผู้ดูแลกิลด์ / ผู้สอน (Guild NPC)** | **มิวรา (Mewla)** | สีทองอบอุ่น (Warm Gold) | `#F0D273` | `Color(0.941, 0.824, 0.451, 1.0)` | สีทองหม่นประกายอบอุ่น สไตล์กิลด์หอคอยเวทมนตร์ |
-| **ผู้พิทักษ์หอคอย (Tower Guardian)** | **ผู้พิทักษ์** | สีทองอบอุ่น (Warm Gold) | `#F0D273` | `Color(0.941, 0.824, 0.451, 1.0)` | สีทองหม่นของตัวละครสายเวทมนตร์และผู้สอน |
-
-> [!NOTE]
-> **การรองรับฟีเจอร์ตั้งชื่อผู้เล่นในอนาคต (Custom Player Name Support):**
-> ปัจจุบันใช้ชื่อ **"เวล"** เป็นชื่อสมมติชั่วคราว (Placeholder Name) ประจำตัวละครหลัก ในอนาคตเมื่อมีระบบเปิดให้ผู้เล่นตั้งชื่อตนเอง ระบบไดอะล็อกจะดึงชื่อที่ผู้เล่นตั้งมาแทนที่ชื่อ "เวล" ทั้งหมด โดยยังคงใช้ **สีฟ้าอ่อน `#7AC7FF`** ขนาด **30 px** และความหนา **`variation_embolden = 0.6`** เป็นมาตรฐานประจำตัวละครหลักของผู้เล่นเสมอ
-
-* **เส้นขอบ (Outline):** ใช้สีดำเข้ม (`#120D17` / `#000000`) หนา **3 px** เท่ากันทุกตัวละคร ช่วยให้ตัวอักษรคมชัด โดดเด่น และไม่กลืนกับพื้นหลังกรอบข้อความสีม่วงเข้ม
+| **ตัวเอก / ผู้เล่น** | **เวล (Vel)** | ฟ้าอ่อนสดใส (Sky Cyan) | `#73BFF2` | `Color(0.45, 0.75, 0.95, 1.0)` | สอดคล้องกับธีมชุดฮู้ดสีฟ้าของตัวเอก |
+| **ผู้ดูแล / ผู้สอน / NPC** | **มิวรา (Mewla)**<br>**ผู้พิทักษ์ (Guardian)**<br>**ปรมาจารย์ (Master)** | ทองอบอุ่น (Warm Gold) | `#EBCB70` | `Color(0.92, 0.80, 0.44, 1.0)` | สีทองอบอุ่น ประจำฝ่ายเวทมนตร์และผู้ชี้นำ |
 
 ---
 
-## 2. สรุปรายการฟอนต์ทั้งหมดในโปรเจกต์ (`res://assets/fonts/`)
+## 3. หน้าจอหลักและห้องแต่งตัว (Start Screen & Dressing Room)
 
-| ชื่อไฟล์ | สไตล์ / ประเภท | รองรับภาษาไทย | นำไปใช้งานในส่วนไหน | หมายเหตุ |
-|---|---|:---:|---|---|
-| **`TA-8-bit.ttf`** | Pixel Art 8-bit | ✅ ใช่ | คัตซีนทุกฉาก (`central_tower`, `intro`, `outside`, `ending`) | **ฟอนต์หลักของบทสนทนาในเกม** คงความเป็นเกมพิกเซล 100% (ทำตัวหนาด้วย FontVariation) |
-| **`ChakraPetch-Bold.ttf`**<br>**`ChakraPetch-SemiBold.ttf`**<br>**`ChakraPetch-Regular.ttf`** | Neo-grotesque / Sci-Fi สไตล์เรขาคณิต | ✅ ใช่ | UI หน้าแรก (`StartView.tscn`), TopBar (`StartTopBar.tscn`), ห้องแต่งตัว (`DressingRoomView.tscn`) | เหมาะกับปุ่มกด, หัวข้อ UI, ป้ายเมนู ที่ต้องการความชัดเจนอ่านเร็ว |
-| **`PressStart2P-Regular.ttf`** | Arcade 8-bit Classic | ❌ อังกฤษเท่านั้น | `outside_cutscene.tscn` (ข้อความประกอบฉาก) | ฟอนต์ Arcade ยุค 80s แท้ นิยมใช้กับคะแนนหรือระบบเกมภาษาอังกฤษ |
-| **`Silkscreen-Bold.ttf`**<br>**`Silkscreen-Regular.ttf`** | Pixel UI กะทัดรัด | ❌ อังกฤษเท่านั้น | `StartView.tscn`, `DressingRoomView.tscn` | ฟอนต์พิกเซลจิ๋วสำหรับป้ายสเตตัสและปุ่มตัวอักษรภาษาอังกฤษ |
-| **`VT323-Regular.ttf`** | Monospace Terminal CRT | ❌ อังกฤษเท่านั้น | หน้าจอเมนู (`StartView.tscn`, `DressingRoomView.tscn`) | สไตล์จอคอมพิวเตอร์เทอร์มินัลยุคเก่า เหมาะกับโค้ดและคำสั่ง CLI |
-| **`Charm-Bold.ttf`**<br>**`Charm-Regular.ttf`** | อักษรประดิษฐ์สไตล์มนต์ขลัง / แฟนตาซี | ✅ ใช่ | จัดเก็บไว้ในคลังฟอนต์ | ทรงตัวเขียนแฟนตาซี เหมาะกับหน้าคัมภีร์เวทมนตร์หรือจารึกโบราณ |
-| **`2005.ttf`** | พิกเซลไทยทรงแคบ | ✅ ใช่ | จัดเก็บไว้ในคลังฟอนต์ (เคยนำมาทดสอบ) | อัตราส่วนความกว้างต่อความสูงแคบมาก (Glyph width ~5.8px ที่ 24px) จึงไม่เหมาะกับบทสนทนาหลัก |
-| **`9Pradit-Regular.ttf`** | พิกเซลไทย 9 ประดิษฐ์ | ✅ ใช่ | จัดเก็บไว้ในคลังฟอนต์ (ทางเลือกเพิ่มเติม) | ฟอนต์พิกเซลไทยที่มีหัวชัดเจนสำหรับงานดีไซน์ทางเลือก |
+ไฟล์ Scene: `start_view.tscn`, `dressing_room_view.tscn`
+
+| ส่วนประกอบ | โหนดตัวอย่าง | ฟอนต์ | ขนาด | สีตัวอักษร | สไตล์ / การใช้งาน |
+|---|---|---|:---:|---|---|
+| **ปุ่มเมนูหลัก 3 ปุ่ม** | `StartGameBtn`<br>`ResumeWorkBtn`<br>`QuitBtn` | `Bungee-Regular.ttf` | **18 px** | สีขาว `#FFFFFF` | ปุ่มกดตัวหนาสไตล์เรโทร ชัดเจน น่ากด |
+| **หัวข้อหน้าต่าง / กรอบ** | `TitleText`<br>`WindowControls` | `TA-8-bit.ttf` | **16 px** | น้ำตาลอ่อน `#B89E80` | สไตล์หัวหน้าต่างคอมพิวเตอร์วินเทจ |
+| **คำแนะนำปุ่มกด** | `NavHint` | `TA-8-bit.ttf` | **15 px** | น้ำตาลเข้ม `#594026` | คำแนะนำการกดคีย์บอร์ด `[↑ ↓] SELECT` |
+| **หัวแท็บเทอร์มินัล & นาฬิกา** | `TerminalTag`<br>`ClockLabel` | `TA-8-bit.ttf` | **18 px** | เขียวเทอร์มินัล `#429173`<br>ทอง `#B08C57` | แถบแสดงสถานะด้านบนของหน้าต่างคำสั่ง |
+| **ข้อความประวัติเทอร์มินัล** | `OutputLog` | `VT323-Regular.ttf` | **26 px** | เขียวนีออน CRT `#4FFA76` | ข้อความประวัติการรันคำสั่ง Git |
+| **ช่องพิมพ์คำสั่งเทอร์มินัล** | `CommandInput`<br>`PromptChevron` | `VT323-Regular.ttf` | **26 px** | เขียวนีออน CRT `#4FFA76` | สไตล์หน้าจอคอมพิวเตอร์เรโทรยุค 80s |
+| **แถบสถานะด้านล่าง** | `StatusText`<br>`BuildText` | `TA-8-bit.ttf` | **16 px** | น้ำตาลเทา `#8C6B4F` | แสดงเวอร์ชัน Build และการเชื่อมต่อ |
 
 ---
 
-## 3. วิธีการกำหนดฟอนต์ใน Godot (.tscn / GDScript / C#)
+## 4. คลังฟอนต์ทั้งหมดในโปรเจกต์ (`res://assets/fonts/`)
 
-### การทำตัวหนาผ่าน `FontVariation` ใน Scene (`.tscn`)
-เนื่องจากฟอนต์ `TA-8-bit.ttf` ไม่มีไฟล์ bold แยก จึงใช้ `FontVariation` กำหนด `variation_embolden = 0.6` เพื่อให้ได้ตัวหนาพิกเซลที่คมชัด:
+| ชื่อไฟล์ฟอนต์ | ชนิดฟอนต์ | ภาษาไทย | จุดประสงค์การใช้งานหลัก |
+|---|---|:---:|---|
+| **`Bungee-Regular.ttf`** | Display Bold Rounded | ❌ อังกฤษ | **ชื่อเกม `GIT DI WAA`** และปุ่มเมนูหลักใน Start Screen |
+| **`ChakraPetch-Bold.ttf`** | Sci-Fi / Modern Geometric (หนา) | ✅ ใช่ | **ชื่อผู้พูดในบทสนทนา (`SpeakerLabel`)**, ปุ่มตัวเลือกตอบคำถาม |
+| **`ChakraPetch-Regular.ttf`** | Sci-Fi / Modern Geometric (ปกติ) | ✅ ใช่ | **เนื้อหาบทสนทนาในเกม (`DialogueLabel`)** |
+| **`TA-8-bit.ttf`** | Pixel Art 8-bit | ✅ ใช่ | หัวข้อหน้าต่าง, แถบสถานะ, ปุ่มกดนำทาง และส่วนประกอบพิกเซลเรโทร |
+| **`VT323-Regular.ttf`** | Monospace Terminal CRT | ❌ อังกฤษ | กล่องข้อความและ Command Input ของระบบ Terminal |
+| **`Mitr-Regular.ttf`**<br>**`Mitr-Medium.ttf`** | Sans-serif ทรงมนร่วมสมัย | ✅ ใช่ | ฟอนต์สำรองสำหรับระบบ UI ภาษาไทยในอนาคต |
+| **`Silkscreen-Bold.ttf`**<br>**`Silkscreen-Regular.ttf`** | Micro Pixel UI | ❌ อังกฤษ | ป้ายสเตตัสพิกเซลจิ๋วภาษาอังกฤษ |
+| **`PressStart2P-Regular.ttf`** | Arcade 8-bit Classic | ❌ อังกฤษ | ตัวเลขอาร์เคด / ข้อความย้อนยุค |
+
+---
+
+## 5. ตัวอย่างการตั้งค่า FontVariation ในโค้ด Godot (.tscn)
+
+เพื่อป้องกันปัญหาสระลอยหรือหางตัวอักษรภาษาไทยโดนตัดขอบใน Godot Engine ให้ใช้ `FontVariation` ดังนี้:
+
 ```ini
 [sub_resource type="FontVariation" id="FontVariation_speaker_bold"]
-base_font = ExtResource("14_font") # TA-8-bit.ttf
-variation_embolden = 0.6
+base_font = ExtResource("ChakraPetch-Bold")
+spacing_top = 6
+spacing_bottom = 2
+
+[sub_resource type="FontVariation" id="FontVariation_dialogue_reg"]
+base_font = ExtResource("ChakraPetch-Regular")
+spacing_top = 8
+spacing_bottom = 4
 ```
 
-### การตั้งค่าสีและ Outline ใน `Label`:
+และการตั้งค่าบนโหนด `DialogueLabel`:
 ```ini
-[node name="DialogueLabel" type="Label" parent="..."]
-theme_override_fonts/font = ExtResource("14_font")
-theme_override_font_sizes/font_size = 26
-theme_override_colors/font_color = Color(1, 1, 1, 1) # สีขาวบริสุทธิ์
-theme_override_colors/font_outline_color = Color(0.07, 0.05, 0.09, 1) # ขอบสีเข้มตัดพื้นหลัง
-theme_override_constants/outline_size = 2
-theme_override_constants/line_spacing = 8
+[node name="DialogueLabel" type="RichTextLabel" parent="..."]
+clip_contents = false
+theme_override_fonts/normal_font = SubResource("FontVariation_dialogue_reg")
+theme_override_font_sizes/normal_font_size = 23
+theme_override_colors/default_color = Color(0.88, 0.89, 0.92, 1)
+theme_override_constants/line_separation = 10
 autowrap_mode = 3
 ```
-
----
-
-## 4. บันทึกการเปลี่ยนแปลง (Revision History)
-
-* **2026-10-19:**
-  * กำหนดมาตรฐานการแยกสีชื่อตัวละครตามบทบาท (Sky Cyan `#7AC7FF` สำหรับตัวเอก/ชื่อผู้เล่น, Warm Gold `#F0D273` สำหรับ NPC มิวรา)
-  * ปรับขนาด `SpeakerLabel` เป็น **30 px** เพื่อสร้างลำดับชั้นทางสายตา (Visual Hierarchy) ให้เด่นชัดเหนือข้อความบทสนทนา (26 px)
-  * ยกระดับความหนาของตัวอักษรชื่อผู้พูดด้วย `FontVariation (variation_embolden = 0.6)` เพื่อให้ได้ตัวหนา (Bold) ที่คมชัดสไตล์พิกเซลเรโทรอย่างแท้จริง แทนค่าเดิม 0.3 ที่บางเกินไป โดยคงขนาดและความหนาเท่ากันทุกตัวละครเพื่อความเสถียรของ UI
-* **2026-10-18:**
-  * ยืนยันการใช้งานฟอนต์ [**`TA-8-bit.ttf`**](../game/assets/fonts/TA-8-bit.ttf) เป็นฟอนต์มาตรฐานของบทสนทนาในฉาก [`central_tower_cutscene.tscn`](../game/features/cutscene/central_tower_cutscene.tscn)
-  * ปรับขนาด `DialogueLabel` เป็น **26 px** และสีเป็น **สีขาวจั๊ว (`#FFFFFF`)** พร้อมขอบ 2 px และระยะห่างบรรทัด 8 px
-  * ปรับขนาด `SpeakerLabel` เป็น **28 px** ใช้ `FontVariation (variation_embolden = 0.3)` สีทอง `#F0D273` ขอบ 3 px
-  * สร้างเอกสาร [`docs/fonts.md`](fonts.md) เพื่อรวบรวมข้อมูลฟอนต์ทั้งหมดในโปรเจกต์
