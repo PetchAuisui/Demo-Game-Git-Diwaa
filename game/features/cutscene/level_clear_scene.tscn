@@ -1,0 +1,118 @@
+[gd_scene format=3 uid="uid://dr0xyqq0idyc1"]
+
+[ext_resource type="Texture2D" uid="uid://bggxv0ul3scwf" path="res://assets/cutscene/backgrounds/stairs.png" id="1_p523f"]
+[ext_resource type="Texture2D" uid="uid://bvfiiywfa04t3" path="res://assets/cutscene/characters/vel/vel_walk-Sheet.png" id="2_2y5oc"]
+[ext_resource type="Texture2D" uid="uid://ccvcnopoctw6j" path="res://assets/cutscene/characters/vel/vel_walk_right-Sheet.png" id="3_lcxxy"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_2h6iq"]
+atlas = ExtResource("2_2y5oc")
+region = Rect2(0, 0, 48, 83)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_uww2w"]
+atlas = ExtResource("2_2y5oc")
+region = Rect2(48, 0, 48, 83)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_p1yjc"]
+atlas = ExtResource("2_2y5oc")
+region = Rect2(96, 0, 48, 83)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_jc08p"]
+atlas = ExtResource("2_2y5oc")
+region = Rect2(144, 0, 48, 83)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_n58we"]
+atlas = ExtResource("2_2y5oc")
+region = Rect2(192, 0, 48, 83)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_qgjnr"]
+atlas = ExtResource("2_2y5oc")
+region = Rect2(240, 0, 48, 83)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_qa26k"]
+atlas = ExtResource("3_lcxxy")
+region = Rect2(0, 0, 48, 83)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_3he7v"]
+atlas = ExtResource("3_lcxxy")
+region = Rect2(48, 0, 48, 83)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_xy4im"]
+atlas = ExtResource("3_lcxxy")
+region = Rect2(96, 0, 48, 83)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_6gci1"]
+atlas = ExtResource("3_lcxxy")
+region = Rect2(144, 0, 48, 83)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_ybh4u"]
+atlas = ExtResource("3_lcxxy")
+region = Rect2(192, 0, 48, 83)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_gylbm"]
+atlas = ExtResource("3_lcxxy")
+region = Rect2(240, 0, 48, 83)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_ql73s"]
+animations = [{
+"frames": [{
+"duration": 2.0,
+"texture": SubResource("AtlasTexture_2h6iq")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_uww2w")
+}, {
+"duration": 2.0,
+"texture": SubResource("AtlasTexture_p1yjc")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_jc08p")
+}, {
+"duration": 2.0,
+"texture": SubResource("AtlasTexture_n58we")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_qgjnr")
+}],
+"loop": 1,
+"name": &"walk-idle",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 2.0,
+"texture": SubResource("AtlasTexture_qa26k")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_3he7v")
+}, {
+"duration": 2.0,
+"texture": SubResource("AtlasTexture_xy4im")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_6gci1")
+}, {
+"duration": 2.0,
+"texture": SubResource("AtlasTexture_ybh4u")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_gylbm")
+}],
+"loop": 1,
+"name": &"walk-right",
+"speed": 5.0
+}]
+
+[node name="LevelClearScene" type="Node2D" unique_id=1913949996]
+
+[node name="Stairs" type="Sprite2D" parent="." unique_id=110388998]
+position = Vector2(-24, -23)
+texture = ExtResource("1_p523f")
+
+[node name="vel" type="AnimatedSprite2D" parent="." unique_id=1873461857]
+position = Vector2(-215, 21)
+sprite_frames = SubResource("SpriteFrames_ql73s")
+animation = &"walk-idle"
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="." unique_id=83863215]
+root_node = NodePath("../vel")
+
+[node name="ui" type="CanvasLayer" parent="." unique_id=719551824]
