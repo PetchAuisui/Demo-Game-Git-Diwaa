@@ -152,10 +152,34 @@ tracks/3/keys = {
 "update": 1,
 "values": [false]
 }
+tracks/4/type = "value"
+tracks/4/imported = false
+tracks/4/enabled = true
+tracks/4/path = NodePath("ui/LevelClearModal:modulate")
+tracks/4/interp = 1
+tracks/4/loop_wrap = true
+tracks/4/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 0,
+"values": [Color(1, 1, 1, 1)]
+}
+tracks/5/type = "value"
+tracks/5/imported = false
+tracks/5/enabled = true
+tracks/5/path = NodePath("ui/LevelClearModal:scale")
+tracks/5/interp = 1
+tracks/5/loop_wrap = true
+tracks/5/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 0,
+"values": [Vector2(1, 1)]
+}
 
 [sub_resource type="Animation" id="Animation_lcxxy"]
 resource_name = "walk-stair"
-length = 4.5
+length = 3.5
 tracks/0/type = "value"
 tracks/0/imported = false
 tracks/0/enabled = true
@@ -163,10 +187,10 @@ tracks/0/path = NodePath("vel:position")
 tracks/0/interp = 1
 tracks/0/loop_wrap = true
 tracks/0/keys = {
-"times": PackedFloat32Array(0, 0.8, 1, 1.2, 1.4, 1.6, 1.8, 2, 2.2, 2.4, 2.6, 2.8, 3, 3.2, 3.4, 3.6, 3.8, 4),
-"transitions": PackedFloat32Array(1, 1, 0.7, 1, 0.7, 1, 0.7, 1, 0.7, 1, 0.7, 1, 0.7, 1, 0.7, 1, 0.7, 1),
+"times": PackedFloat32Array(0, 0.6, 0.75, 0.9, 1.05, 1.2, 1.35, 1.5, 1.65, 1.8, 1.95, 2.1, 2.25, 2.4, 2.52, 2.65, 2.78, 2.9, 3),
+"transitions": PackedFloat32Array(1, 1, 0.7, 1, 0.7, 1, 0.7, 1, 0.7, 1, 0.7, 1, 0.7, 1, 0.7, 1, 0.7, 1, 1),
 "update": 0,
-"values": [Vector2(628, 772), Vector2(900, 772), Vector2(960, 720), Vector2(1020, 736), Vector2(1080, 684), Vector2(1140, 700), Vector2(1200, 648), Vector2(1260, 664), Vector2(1320, 612), Vector2(1380, 628), Vector2(1440, 576), Vector2(1500, 592), Vector2(1560, 538), Vector2(1620, 552), Vector2(1680, 500), Vector2(1740, 514), Vector2(1790, 462), Vector2(1840, 476)]
+"values": [Vector2(628, 772), Vector2(900, 772), Vector2(960, 720), Vector2(1020, 736), Vector2(1080, 684), Vector2(1140, 700), Vector2(1200, 648), Vector2(1260, 664), Vector2(1320, 612), Vector2(1380, 628), Vector2(1440, 576), Vector2(1500, 592), Vector2(1560, 538), Vector2(1620, 552), Vector2(1680, 500), Vector2(1740, 514), Vector2(1840, 476), Vector2(1960, 476), Vector2(2100, 476)]
 }
 tracks/1/type = "value"
 tracks/1/imported = false
@@ -175,10 +199,10 @@ tracks/1/path = NodePath("vel:frame")
 tracks/1/interp = 1
 tracks/1/loop_wrap = true
 tracks/1/keys = {
-"times": PackedFloat32Array(0, 0.2, 0.4, 0.6, 0.8, 1.2, 1.22, 1.6, 1.62, 2, 2.02, 2.4, 2.42, 2.8, 2.82, 3.2, 3.22, 3.6, 3.62, 4),
-"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1),
+"times": PackedFloat32Array(0, 0.15, 0.3, 0.45, 0.6, 0.9, 1.02, 1.2, 1.32, 1.5, 1.62, 1.8, 1.92, 2.1, 2.22, 2.4, 2.5, 2.65, 2.78, 2.9, 3),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1),
 "update": 1,
-"values": [0, 1, 2, 3, 0, 1, 2, 3, 4, 5, 0, 1, 2, 3, 4, 5, 0, 1, 2, 3]
+"values": [0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0]
 }
 tracks/2/type = "value"
 tracks/2/imported = false
@@ -187,7 +211,7 @@ tracks/2/path = NodePath("vel:modulate")
 tracks/2/interp = 1
 tracks/2/loop_wrap = true
 tracks/2/keys = {
-"times": PackedFloat32Array(0, 4.5),
+"times": PackedFloat32Array(0, 3.5),
 "transitions": PackedFloat32Array(1, 1),
 "update": 0,
 "values": [Color(1, 1, 1, 1), Color(1, 1, 1, 1)]
@@ -199,10 +223,34 @@ tracks/3/path = NodePath("ui/LevelClearModal:visible")
 tracks/3/interp = 1
 tracks/3/loop_wrap = true
 tracks/3/keys = {
-"times": PackedFloat32Array(0, 4.2),
+"times": PackedFloat32Array(0, 3),
 "transitions": PackedFloat32Array(1, 1),
 "update": 1,
 "values": [false, true]
+}
+tracks/4/type = "value"
+tracks/4/imported = false
+tracks/4/enabled = true
+tracks/4/path = NodePath("ui/LevelClearModal:modulate")
+tracks/4/interp = 1
+tracks/4/loop_wrap = true
+tracks/4/keys = {
+"times": PackedFloat32Array(0, 3, 3.25),
+"transitions": PackedFloat32Array(1, 1, 1),
+"update": 0,
+"values": [Color(1, 1, 1, 0), Color(1, 1, 1, 0), Color(1, 1, 1, 1)]
+}
+tracks/5/type = "value"
+tracks/5/imported = false
+tracks/5/enabled = true
+tracks/5/path = NodePath("ui/LevelClearModal:scale")
+tracks/5/interp = 1
+tracks/5/loop_wrap = true
+tracks/5/keys = {
+"times": PackedFloat32Array(0, 3, 3.18, 3.32),
+"transitions": PackedFloat32Array(1, 0.5, 1.5, 1),
+"update": 0,
+"values": [Vector2(1, 1), Vector2(0.8, 0.8), Vector2(1.04, 1.04), Vector2(1, 1)]
 }
 
 [sub_resource type="AnimationLibrary" id="AnimationLibrary_2h6iq"]
@@ -233,9 +281,10 @@ frame = 1
 
 [node name="AnimationPlayer" type="AnimationPlayer" parent="." unique_id=83863215]
 libraries/ = SubResource("AnimationLibrary_2h6iq")
-autoplay = "walk-stair"
+autoplay = &"walk-stair"
 
 [node name="ui" type="CanvasLayer" parent="." unique_id=719551824]
 
 [node name="LevelClearModal" parent="ui" unique_id=1998528347 instance=ExtResource("4_modal")]
 visible = false
+pivot_offset = Vector2(960, 540)
