@@ -233,7 +233,7 @@ frame = 1
 
 [node name="AnimationPlayer" type="AnimationPlayer" parent="." unique_id=83863215]
 libraries/ = SubResource("AnimationLibrary_2h6iq")
-autoplay = "walk-stair"
+autoplay = &"walk-stair"
 
 [node name="ui" type="CanvasLayer" parent="." unique_id=719551824]
 
