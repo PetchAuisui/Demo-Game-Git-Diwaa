@@ -187,10 +187,10 @@ tracks/0/path = NodePath("vel:position")
 tracks/0/interp = 1
 tracks/0/loop_wrap = true
 tracks/0/keys = {
-"times": PackedFloat32Array(0, 0.6, 0.75, 0.9, 1.05, 1.2, 1.35, 1.5, 1.65, 1.8, 1.95, 2.1, 2.25, 2.4, 2.52, 2.65, 2.78, 2.9, 3),
-"transitions": PackedFloat32Array(1, 1, 0.7, 1, 0.7, 1, 0.7, 1, 0.7, 1, 0.7, 1, 0.7, 1, 0.7, 1, 0.7, 1, 1),
+"times": PackedFloat32Array(0, 0.27, 0.54, 0.68, 0.81, 0.95, 1.08, 1.22, 1.35, 1.49, 1.62, 1.76, 1.89, 2.03, 2.16, 2.3, 2.43, 2.57, 2.7, 2.85, 3),
+"transitions": PackedFloat32Array(1, 1, 1, 0.7, 1, 0.7, 1, 0.7, 1, 0.7, 1, 0.7, 1, 0.7, 1, 0.7, 1, 0.7, 1, 1, 1),
 "update": 0,
-"values": [Vector2(628, 772), Vector2(900, 772), Vector2(960, 720), Vector2(1020, 736), Vector2(1080, 684), Vector2(1140, 700), Vector2(1200, 648), Vector2(1260, 664), Vector2(1320, 612), Vector2(1380, 628), Vector2(1440, 576), Vector2(1500, 592), Vector2(1560, 538), Vector2(1620, 552), Vector2(1680, 500), Vector2(1740, 514), Vector2(1840, 476), Vector2(1960, 476), Vector2(2100, 476)]
+"values": [Vector2(628, 772), Vector2(760, 772), Vector2(890, 772), Vector2(950, 718), Vector2(1010, 736), Vector2(1070, 682), Vector2(1130, 700), Vector2(1190, 646), Vector2(1250, 664), Vector2(1310, 610), Vector2(1370, 628), Vector2(1430, 574), Vector2(1490, 592), Vector2(1550, 538), Vector2(1610, 556), Vector2(1670, 502), Vector2(1730, 520), Vector2(1790, 466), Vector2(1850, 484), Vector2(1935, 484), Vector2(2020, 484)]
 }
 tracks/1/type = "value"
 tracks/1/imported = false
@@ -199,10 +199,10 @@ tracks/1/path = NodePath("vel:frame")
 tracks/1/interp = 1
 tracks/1/loop_wrap = true
 tracks/1/keys = {
-"times": PackedFloat32Array(0, 0.15, 0.3, 0.45, 0.6, 0.9, 1.02, 1.2, 1.32, 1.5, 1.62, 1.8, 1.92, 2.1, 2.22, 2.4, 2.5, 2.65, 2.78, 2.9, 3),
-"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1),
+"times": PackedFloat32Array(0, 0.14, 0.27, 0.41, 0.54, 0.81, 0.95, 1.08, 1.22, 1.35, 1.49, 1.62, 1.76, 1.89, 2.03, 2.16, 2.3, 2.43, 2.57, 2.7, 2.85, 3),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1),
 "update": 1,
-"values": [0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0]
+"values": [0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1]
 }
 tracks/2/type = "value"
 tracks/2/imported = false
