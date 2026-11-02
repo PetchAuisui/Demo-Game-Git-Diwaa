@@ -3,6 +3,7 @@
 [ext_resource type="Texture2D" uid="uid://bggxv0ul3scwf" path="res://assets/cutscene/backgrounds/stairs.png" id="1_p523f"]
 [ext_resource type="Texture2D" uid="uid://bvfiiywfa04t3" path="res://assets/cutscene/characters/vel/vel_walk-Sheet.png" id="2_2y5oc"]
 [ext_resource type="Texture2D" uid="uid://ccvcnopoctw6j" path="res://assets/cutscene/characters/vel/vel_walk_right-Sheet.png" id="3_lcxxy"]
+[ext_resource type="PackedScene" uid="uid://d4e5f6g7h8jaj" path="res://features/dialogue/level_clear_modal.tscn" id="4_modal"]
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_2h6iq"]
 atlas = ExtResource("2_2y5oc")
@@ -101,18 +102,116 @@ animations = [{
 "speed": 5.0
 }]
 
+[sub_resource type="Animation" id="Animation_2y5oc"]
+length = 0.001
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("vel:position")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 0,
+"values": [Vector2(628, 772)]
+}
+tracks/1/type = "value"
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/path = NodePath("vel:frame")
+tracks/1/interp = 1
+tracks/1/loop_wrap = true
+tracks/1/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 1,
+"values": [1]
+}
+tracks/2/type = "value"
+tracks/2/imported = false
+tracks/2/enabled = true
+tracks/2/path = NodePath("vel:modulate")
+tracks/2/interp = 1
+tracks/2/loop_wrap = true
+tracks/2/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 0,
+"values": [Color(1, 1, 1, 1)]
+}
+tracks/3/type = "value"
+tracks/3/imported = false
+tracks/3/enabled = true
+tracks/3/path = NodePath("ui/LevelClearModal:visible")
+tracks/3/interp = 1
+tracks/3/loop_wrap = true
+tracks/3/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 1,
+"values": [false]
+}
+
+[sub_resource type="Animation" id="Animation_lcxxy"]
+resource_name = "walk-stair"
+length = 3.0
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("vel:position")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 1, 1.2333333, 1.5, 1.6, 1.7),
+"transitions": PackedFloat32Array(1, 1, 0.7, 1, 1, 0.7),
+"update": 0,
+"values": [Vector2(628, 772), Vector2(910, 772), Vector2(960, 730), Vector2(1000, 736), Vector2(1000, 736), Vector2(1090, 654)]
+}
+tracks/1/type = "value"
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/path = NodePath("vel:frame")
+tracks/1/interp = 1
+tracks/1/loop_wrap = true
+tracks/1/keys = {
+"times": PackedFloat32Array(0, 0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.7),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1),
+"update": 1,
+"values": [0, 1, 2, 3, 4, 5, 0, 1]
+}
+
+[sub_resource type="AnimationLibrary" id="AnimationLibrary_2h6iq"]
+_data = {
+&"RESET": SubResource("Animation_2y5oc"),
+&"walk-stair": SubResource("Animation_lcxxy")
+}
+
 [node name="LevelClearScene" type="Node2D" unique_id=1913949996]
 
+[node name="Camera2D" type="Camera2D" parent="." unique_id=485032344]
+position = Vector2(960, 540)
+
 [node name="Stairs" type="Sprite2D" parent="." unique_id=110388998]
-position = Vector2(-24, -23)
+texture_filter = 1
+position = Vector2(960, 540)
+scale = Vector2(4, 4)
 texture = ExtResource("1_p523f")
 
 [node name="vel" type="AnimatedSprite2D" parent="." unique_id=1873461857]
-position = Vector2(-215, 21)
+texture_filter = 1
+position = Vector2(628, 772)
+scale = Vector2(4, 4)
 sprite_frames = SubResource("SpriteFrames_ql73s")
-animation = &"walk-idle"
+animation = &"walk-right"
+autoplay = "walk-right"
+frame = 1
 
 [node name="AnimationPlayer" type="AnimationPlayer" parent="." unique_id=83863215]
-root_node = NodePath("../vel")
+libraries/ = SubResource("AnimationLibrary_2h6iq")
+autoplay = "walk-stair"
 
 [node name="ui" type="CanvasLayer" parent="." unique_id=719551824]
+
+[node name="LevelClearModal" parent="ui" unique_id=1998528347 instance=ExtResource("4_modal")]
+visible = false
