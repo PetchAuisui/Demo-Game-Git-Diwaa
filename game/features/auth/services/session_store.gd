@@ -128,6 +128,11 @@ static func load_session() -> Dictionary:
 	return session
 
 
+## มีไฟล์ session ที่จดจำไว้หรือเปล่า (ยังไม่ได้ตรวจว่าใช้ได้ไหม)
+static func has_saved_session() -> bool:
+	return FileAccess.file_exists(FILE_PATH)
+
+
 ## ลบ session ออกจากเครื่อง (ใช้ตอน logout, token ใช้ไม่ได้แล้ว หรือไฟล์เสีย)
 static func clear() -> void:
 	for path in [FILE_PATH, TEMP_PATH]:

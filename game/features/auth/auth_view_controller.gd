@@ -74,6 +74,7 @@ func _ready() -> void:
 	_wire_events()
 	_apply_theme()
 	_show_login()
+	_try_restore_session.call_deferred()
 
 
 func _bind_nodes() -> void:
@@ -122,6 +123,8 @@ func _wire_events() -> void:
 	_register_password_toggle.toggled.connect(
 		_on_password_toggle.bind(_register_password_input, _register_password_toggle)
 	)
+
+	login_succeeded.connect(_on_login_succeeded)
 
 	_login_submit_btn.pressed.connect(_on_login_submit)
 	_login_password_input.text_submitted.connect(func(_text: String) -> void: await _on_login_submit())
@@ -525,6 +528,39 @@ func _set_busy(busy: bool) -> void:
 		btn.disabled = busy
 	_login_submit_btn.text = "กำลังเข้าสู่ระบบ..." if busy else _login_submit_text
 	_register_submit_btn.text = "กำลังสมัครสมาชิก..." if busy else _register_submit_text
+
+
+## ตอนเปิดหน้านี้: ถ้ามี session ที่จดจำไว้ ลองล็อกอินอัตโนมัติก่อน
+func _try_restore_session() -> void:
+	if PlayerSession.is_signed_in():
+		get_tree().change_scene_to_file(PlayerSession.START_SCENE)
+		return
+	if not PlayerSession.has_saved_session():
+		return
+
+	_set_busy(true)
+	_login_submit_btn.text = "กำลังเข้าสู่ระบบอัตโนมัติ..."
+	var outcome := await PlayerSession.restore_saved_session()
+	_set_busy(false)
+
+	if outcome == PlayerSession.RESTORE_OK:
+		get_tree().change_scene_to_file(PlayerSession.START_SCENE)
+		return
+	if not PlayerSession.last_username.is_empty():
+		_identifier_input.text = PlayerSession.last_username
+		_login_password_input.grab_focus()
+	if outcome == PlayerSession.RESTORE_NEED_LOGIN:
+		_show_status(_login_status, "การเข้าสู่ระบบหมดอายุแล้ว กรุณาเข้าสู่ระบบใหม่", false)
+	elif outcome == PlayerSession.RESTORE_NETWORK_FAILED:
+		_show_status(_login_status, "เชื่อมต่อ server ไม่ได้ กรุณาตรวจสอบอินเทอร์เน็ตแล้วลองใหม่", false)
+
+
+## ล็อกอินสำเร็จ: ส่งต่อให้ PlayerSession เก็บ session แล้วพาเข้าหน้าแรกของเกม
+func _on_login_succeeded(session: Dictionary, remember_me: bool) -> void:
+	if not PlayerSession.start_session(session, remember_me):
+		_show_status(_login_status, "ข้อมูลจาก server ไม่ถูกต้อง กรุณาลองใหม่", false)
+		return
+	get_tree().change_scene_to_file(PlayerSession.START_SCENE)
 
 
 func _clear_register_form() -> void:

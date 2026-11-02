@@ -19,6 +19,7 @@ config/icon="res://icon.svg"
 [autoload]
 
 GameWindow="*res://common/game_window.gd"
+PlayerSession="*res://common/player_session.gd"
 
 [display]
 
