@@ -58,8 +58,7 @@
 | **คลิกเพื่อไปต่อ (หน้าจบ)** | `ContinuePrompt` | `ChakraPetch-Regular.ttf`<br>(SubResource: `FontVariation_summary_reg`) | **22 px** | ขาวนวล `#FAF9F6` | ไม่มี | ลอยกระพริบด้านล่างจอ ก่อนเข้าสู่หน้าเครดิต |
 | **หัวข้อเครดิต** | `ThankYouLabel` | `ChakraPetch-Bold.ttf`<br>(SubResource: `FontVariation_speaker_bold`) | **32 px** | ขาวนวล `#FAF9F6` | ไม่มี | `Thank You for Playing` |
 | **คำขอบคุณเครดิต** | `GratitudeLabel` | `ChakraPetch-Regular.ttf`<br>(SubResource: `FontVariation_summary_reg`) | **24 px** | ขาวนวล `#FAF9F6` | ไม่มี | `ขอบคุณที่ร่วมเดินทางไปกับเรา` |
-| **ชื่อตัวละครในเครดิต** | `NameLabel` (เวล) | `ChakraPetch-Bold.ttf`<br>(SubResource: `FontVariation_speaker_bold`) | **24 px** | ฟ้าอ่อน `#73BFF2` | ไม่มี | สีตาม Speaker Palette |
-| **ชื่อตัวละครในเครดิต** | `NameLabel` (มิวรา, ปรมาจารย์, ผู้พิทักษ์) | `ChakraPetch-Bold.ttf`<br>(SubResource: `FontVariation_speaker_bold`) | **24 px** | ทองอบอุ่น `#EBCB70` | ไม่มี | สีตาม Speaker Palette |
+| **ชื่อตัวละครในเครดิต** | `NameLabel` (ทุกตัวละคร) | `ChakraPetch-Bold.ttf`<br>(SubResource: `FontVariation_speaker_bold`) | **20 px** | ขาวนวล `#FAF9F6` | ไม่มี | ขนาดกะทัดรัด สบายตา อยู่เหนือสไปรต์ตัวละคร |
 | **ทีมผู้พัฒนา** | `DevelopedByLabel` | `ChakraPetch-Regular.ttf`<br>(SubResource: `FontVariation_summary_reg`) | **20 px** | ขาวโปร่งแสง (Alpha 0.9) | ไม่มี | `Developed by Git Di Waa Team` |
 | **ปุ่มกลับสู่เมนูหลัก** | `ReturnMenuBtn` | `ChakraPetch-Bold.ttf`<br>(SubResource: `FontVariation_speaker_bold`) | **22 px** | ขาวนวล `#FAF9F6` | ไม่มี | ปุ่มกดมุมขวาล่างของหน้าเครดิต |
 

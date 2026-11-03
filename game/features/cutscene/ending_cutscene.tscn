@@ -1135,9 +1135,9 @@ alignment = 2
 
 [node name="NameLabel" type="Label" parent="MagicStoryUI/CreditsContainer/RightCharactersContainer/CharVel" unique_id=1892837105]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.45098, 0.74902, 0.94902, 1)
+theme_override_colors/font_color = Color(0.980392, 0.976471, 0.964706, 1)
 theme_override_fonts/font = SubResource("FontVariation_speaker_bold")
-theme_override_font_sizes/font_size = 24
+theme_override_font_sizes/font_size = 20
 text = "เวล"
 horizontal_alignment = 1
 
@@ -1156,9 +1156,9 @@ alignment = 2
 
 [node name="NameLabel" type="Label" parent="MagicStoryUI/CreditsContainer/RightCharactersContainer/CharMewla" unique_id=1892837108]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.921569, 0.796078, 0.439216, 1)
+theme_override_colors/font_color = Color(0.980392, 0.976471, 0.964706, 1)
 theme_override_fonts/font = SubResource("FontVariation_speaker_bold")
-theme_override_font_sizes/font_size = 24
+theme_override_font_sizes/font_size = 20
 text = "มิวรา"
 horizontal_alignment = 1
 
@@ -1177,9 +1177,9 @@ alignment = 2
 
 [node name="NameLabel" type="Label" parent="MagicStoryUI/CreditsContainer/RightCharactersContainer/CharMaster" unique_id=1892837111]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.921569, 0.796078, 0.439216, 1)
+theme_override_colors/font_color = Color(0.980392, 0.976471, 0.964706, 1)
 theme_override_fonts/font = SubResource("FontVariation_speaker_bold")
-theme_override_font_sizes/font_size = 24
+theme_override_font_sizes/font_size = 20
 text = "ปรมาจารย์"
 horizontal_alignment = 1
 
@@ -1198,9 +1198,9 @@ alignment = 2
 
 [node name="NameLabel" type="Label" parent="MagicStoryUI/CreditsContainer/RightCharactersContainer/CharGuardian" unique_id=1892837114]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.921569, 0.796078, 0.439216, 1)
+theme_override_colors/font_color = Color(0.980392, 0.976471, 0.964706, 1)
 theme_override_fonts/font = SubResource("FontVariation_speaker_bold")
-theme_override_font_sizes/font_size = 24
+theme_override_font_sizes/font_size = 20
 text = "ผู้พิทักษ์"
 horizontal_alignment = 1
 
