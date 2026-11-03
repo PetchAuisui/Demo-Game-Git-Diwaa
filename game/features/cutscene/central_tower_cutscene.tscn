@@ -418,30 +418,6 @@ animations = [{
 "speed": 5.0
 }]
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_btn_normal"]
-bg_color = Color(0.00392, 0, 0.07451, 0.95)
-border_width_left = 2
-border_width_top = 2
-border_width_right = 2
-border_width_bottom = 2
-border_color = Color(0.980392, 0.976471, 0.964706, 0.85)
-corner_radius_top_left = 8
-corner_radius_top_right = 8
-corner_radius_bottom_right = 8
-corner_radius_bottom_left = 8
-
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_btn_hover"]
-bg_color = Color(0.06, 0.04, 0.16, 0.95)
-border_width_left = 2
-border_width_top = 2
-border_width_right = 2
-border_width_bottom = 2
-border_color = Color(0.980392, 0.976471, 0.964706, 1)
-corner_radius_top_left = 8
-corner_radius_top_right = 8
-corner_radius_bottom_right = 8
-corner_radius_bottom_left = 8
-
 [sub_resource type="AtlasTexture" id="AtlasTexture_arrow"]
 atlas = ExtResource("16_dialog_arrow")
 region = Rect2(561, 344, 537, 334)
@@ -549,27 +525,6 @@ texture = ExtResource("17_shadow")
 
 [node name="MagicStoryUI" type="CanvasLayer" parent="." unique_id=68041295]
 layer = 10
-
-[node name="SkipButton" type="Button" parent="MagicStoryUI" unique_id=1420712382]
-anchors_preset = 1
-anchor_left = 1.0
-anchor_right = 1.0
-offset_left = -210.0
-offset_top = 20.0
-offset_right = -30.0
-offset_bottom = 60.0
-grow_horizontal = 0
-mouse_default_cursor_shape = 2
-theme_override_colors/font_color = Color(0.980392, 0.976471, 0.964706, 0.9)
-theme_override_colors/font_focus_color = Color(0.980392, 0.976471, 0.964706, 1)
-theme_override_colors/font_hover_color = Color(0.980392, 0.976471, 0.964706, 1)
-theme_override_fonts/font = ExtResource("14_font")
-theme_override_font_sizes/font_size = 20
-theme_override_styles/normal = SubResource("StyleBoxFlat_btn_normal")
-theme_override_styles/pressed = SubResource("StyleBoxFlat_btn_hover")
-theme_override_styles/hover = SubResource("StyleBoxFlat_btn_hover")
-theme_override_styles/focus = SubResource("StyleBoxFlat_btn_hover")
-text = "ข้าม ⏵⏵ (Esc)"
 
 [node name="DialogueBox" type="PanelContainer" parent="MagicStoryUI" unique_id=831756592]
 visible = false

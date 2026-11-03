@@ -18,7 +18,7 @@ flowchart LR
 * **เมื่อเข้าสู่ฉาก:** จอค่อยๆ สว่างขึ้น เวลเดินเข้ามาจากทางซ้ายหยุดยืนประจันหน้ากับผู้พิทักษ์ที่ยืนรออยู่ทางขวา
 * **การพูดคุย:** กล่องข้อความสไตล์ Retro Fantasy ปรากฏขึ้น ตัวอักษรค่อยๆ พิมพ์ทีละตัว (Typewriter Effect)
 * **การควบคุม:** ผู้เล่นคลิกหน้าจอ หรือกด Space / Enter เพื่ออ่านบทสนทนาประโยคถัดไป
-* **การข้ามฉาก:** สามารถกดปุ่ม **"ข้าม ⏵⏵ (Esc)"** หรือกดปุ่ม `Esc` บนคีย์บอร์ดได้ตลอดเวลา เพื่อตัดเข้าสู่เกมเพลย์ทันที
+* **การข้ามฉาก:** สามารถกดปุ่ม **"ข้าม"** บนหน้าจอ หรือกดปุ่ม `Esc` บนคีย์บอร์ดได้ตลอดเวลา เพื่อตัดเข้าสู่เกมเพลย์ทันที (สร้างโดย `skip_cutscene_button.gd` ที่มุมขวาบน พร้อมปุ่มเร่งความเร็ว)
 * **เมื่อจบคัตซีน:** หน้าจอจะค่อยๆ เฟดมืดลง พร้อมปรับระดับเสียง BGM ลงอย่างนุ่มนวล แล้วเปลี่ยน Scene ไปยังด่านเกมเพลย์ที่ระบุใน `@export var next_scene_path`
 
 ---
@@ -56,7 +56,6 @@ CentralTowerCutscene (Node2D) [Script: central_tower_cutscene.gd]
 │   └── Guardian (AnimatedSprite2D) [Position: (1220, 750), Scale 4x4, Flip H: true]
 │       └── DropShadow (Sprite2D) [drop_shadow.png, Scale (0.65, 0.45), Position: (0, 38.5)]
 └── MagicStoryUI (CanvasLayer: Layer 10)
-    ├── SkipButton (Button) [มุมขวาบน สำหรับกดข้ามคัตซีน]
     ├── DialogueBox (PanelContainer) [StyleBoxTexture: text dialog.png (Hand-drawn pixel frame 9-slice, Margin 24px, Region: Rect2(43, 191, 2086, 332), Filter: Linear, Modulate: Color(0.78, 0.74, 0.82) ลดความสว่างเส้นม่วงลงไม่ให้แย่งสายตา), Offset: L:-580, R:580, T:-216, B:-36]
     │   ├── Margin (MarginContainer) [Margin: L:36, T:24, R:48, B:16]
     │   │   └── VBox (VBoxContainer) [Separation: 12]

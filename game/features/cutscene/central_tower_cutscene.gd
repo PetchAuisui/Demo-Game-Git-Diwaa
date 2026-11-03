@@ -30,7 +30,6 @@ extends Node2D
 @onready var speaker_label: Label = $MagicStoryUI/DialogueBox/Margin/VBox/SpeakerLabel
 @onready var dialogue_label: Label = $MagicStoryUI/DialogueBox/Margin/VBox/DialogueLabel
 @onready var continue_arrow: TextureRect = $MagicStoryUI/DialogueBox/ArrowOverlay/ArrowWrapper/ContinueArrow
-@onready var skip_button: Button = $MagicStoryUI/SkipButton
 
 
 # ลำดับท่าทางวนลูป (Sequence Loops)
@@ -145,6 +144,11 @@ func _input(event: InputEvent) -> void:
 		_skip_cutscene()
 		return
 		
+	# ป้องกันการคลิกโดนปุ่มควบคุม (FF / Skip) ถูกกลืนเป็นการกดอ่านต่อ
+	var hovered := get_viewport().gui_get_hovered_control()
+	if hovered is BaseButton:
+		return
+		
 	# คลิกหรือกด Space/Enter เพื่อไปต่อ
 	if is_dialogue_active:
 		var wants_advance: bool = false
@@ -153,9 +157,7 @@ func _input(event: InputEvent) -> void:
 		elif event is InputEventKey and event.pressed and not event.echo and (event.keycode == KEY_SPACE or event.keycode == KEY_ENTER):
 			wants_advance = true
 		elif event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
-			# ตรวจสอบว่าไม่ได้กดโดนปุ่ม Skip
-			if not skip_button.get_global_rect().has_point(event.position):
-				wants_advance = true
+			wants_advance = true
 				
 		if wants_advance:
 			get_viewport().set_input_as_handled()
@@ -196,9 +198,8 @@ func _init_scene_state() -> void:
 	# ระบบควบคุม Cutscene: ปุ่มเร่งความเร็ว (FF 2.5x) และปุ่มข้าม (Skip / Esc)
 	var skip_ctrl = preload("res://features/cutscene/skip_cutscene_button.gd").new()
 	skip_ctrl.next_scene_path = next_scene_path
+	skip_ctrl.custom_skip_action = _skip_cutscene
 	add_child(skip_ctrl)
-	if skip_button:
-		skip_button.visible = false
 	
 	# หน้าจอมืดไว้สำหรับเฟดเข้า
 	fade_overlay.visible = true
