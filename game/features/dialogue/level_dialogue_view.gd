@@ -48,11 +48,9 @@ var is_showing_choices: bool = false
 var bad_ending_panel: Control = null
 var is_bad_ending_typing: bool = false
 var bad_ending_tween: Tween = null
-var bad_ending_line1: RichTextLabel = null
-var bad_ending_line2: RichTextLabel = null
+var bad_ending_line1: Label = null
+var bad_ending_line2: Label = null
 var bad_ending_btn: Button = null
-var _bad_end_clusters1: Array[String] = []
-var _bad_end_clusters2: Array[String] = []
 
 const BAD_END_LINE1: String = "เศษเสี้ยวที่กระจัดกระจายและใครบางคน... ยังคงรอคอยอยู่ในความมืดมิด"
 const BAD_END_LINE2: String = "ขณะที่เวลเดินพ้นประตูหอคอยไป ทิ้งทุกคำตอบไว้เบื้องหลังตลอดกาล"
@@ -894,42 +892,6 @@ func _finish_dialogue_stage() -> void:
 		if next_scene_path != "" and ResourceLoader.exists(next_scene_path):
 			get_tree().change_scene_to_file(next_scene_path)
 
-static func _split_thai_clusters(text: String) -> Array[String]:
-	var clusters: Array[String] = []
-	var i := 0
-	while i < text.length():
-		var cluster := text[i]
-		i += 1
-		while i < text.length():
-			var code := text.unicode_at(i)
-			if (code >= 0x0E31 and code <= 0x0E3A) or (code >= 0x0E47 and code <= 0x0E4E):
-				cluster += text[i]
-				i += 1
-			else:
-				break
-		clusters.append(cluster)
-	return clusters
-
-func _set_line1_progress(step: int) -> void:
-	if not is_instance_valid(bad_ending_line1):
-		return
-	if step >= _bad_end_clusters1.size():
-		bad_ending_line1.text = "[center]%s[/center]" % BAD_END_LINE1
-	else:
-		var visible_part := "".join(_bad_end_clusters1.slice(0, step))
-		var hidden_part := "".join(_bad_end_clusters1.slice(step))
-		bad_ending_line1.text = "[center]%s[color=#ffffff00]%s[/color][/center]" % [visible_part, hidden_part]
-
-func _set_line2_progress(step: int) -> void:
-	if not is_instance_valid(bad_ending_line2):
-		return
-	if step >= _bad_end_clusters2.size():
-		bad_ending_line2.text = "[center]%s[/center]" % BAD_END_LINE2
-	else:
-		var visible_part := "".join(_bad_end_clusters2.slice(0, step))
-		var hidden_part := "".join(_bad_end_clusters2.slice(step))
-		bad_ending_line2.text = "[center]%s[color=#ffffff00]%s[/color][/center]" % [visible_part, hidden_part]
-
 func _skip_bad_ending_typewriter() -> void:
 	if not is_bad_ending_typing:
 		return
@@ -938,9 +900,11 @@ func _skip_bad_ending_typewriter() -> void:
 		bad_ending_tween.kill()
 	
 	if is_instance_valid(bad_ending_line1):
-		bad_ending_line1.text = "[center]%s[/center]" % BAD_END_LINE1
+		bad_ending_line1.visible_characters = -1
+		bad_ending_line1.visible_ratio = 1.0
 	if is_instance_valid(bad_ending_line2):
-		bad_ending_line2.text = "[center]%s[/center]" % BAD_END_LINE2
+		bad_ending_line2.visible_characters = -1
+		bad_ending_line2.visible_ratio = 1.0
 	if is_instance_valid(bad_ending_btn):
 		bad_ending_btn.visible = true
 		bad_ending_btn.modulate.a = 1.0
@@ -961,9 +925,6 @@ func _trigger_bad_ending() -> void:
 	tw_close.tween_callback(func():
 		dialogue_box.visible = false
 		
-		_bad_end_clusters1 = _split_thai_clusters(BAD_END_LINE1)
-		_bad_end_clusters2 = _split_thai_clusters(BAD_END_LINE2)
-		
 		bad_ending_panel = Control.new()
 		magic_ui.add_child(bad_ending_panel)
 		bad_ending_panel.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -974,59 +935,75 @@ func _trigger_bad_ending() -> void:
 		
 		var vbox = VBoxContainer.new()
 		vbox.alignment = BoxContainer.ALIGNMENT_CENTER
-		vbox.custom_minimum_size = Vector2(1600, 0)
 		vbox.add_theme_constant_override("separation", 22)
 		center_container.add_child(vbox)
 		
-		# บรรทัดที่ 1: "เศษเสี้ยวที่กระจัดกระจายและใครบางคน... ยังคงรอคอยอยู่ในความมืดมิด"
-		bad_ending_line1 = RichTextLabel.new()
-		bad_ending_line1.bbcode_enabled = true
-		bad_ending_line1.fit_content = true
-		bad_ending_line1.scroll_active = false
-		bad_ending_line1.autowrap_mode = TextServer.AUTOWRAP_OFF
-		bad_ending_line1.custom_minimum_size = Vector2(1600, 48)
-		if font_ta8bit:
-			bad_ending_line1.add_theme_font_override("normal_font", font_ta8bit)
-			bad_ending_line1.add_theme_font_size_override("normal_font_size", 28)
-		elif font_chakra_regular:
-			bad_ending_line1.add_theme_font_override("normal_font", font_chakra_regular)
-			bad_ending_line1.add_theme_font_size_override("normal_font_size", 26)
+		# โหลดและกำหนดฟอนต์ Chakra Petch (ฟอนต์หลักของระบบบทสนทนาและเกม)
+		var ending_font: Font = null
+		if font_chakra_regular:
+			var chakra_var = FontVariation.new()
+			chakra_var.base_font = font_chakra_regular
+			chakra_var.spacing_top = 4
+			chakra_var.spacing_bottom = 2
+			ending_font = chakra_var
 		elif font_chakra_bold:
-			bad_ending_line1.add_theme_font_override("normal_font", font_chakra_bold)
-			bad_ending_line1.add_theme_font_size_override("normal_font_size", 26)
-		bad_ending_line1.add_theme_color_override("default_color", Color.WHITE)
-		_set_line1_progress(0)
+			ending_font = font_chakra_bold
+		elif font_ta8bit:
+			ending_font = font_ta8bit
+			
+		var ending_font_size: int = 26
+		
+		# คำนวณความกว้างข้อความที่แท้จริง เพื่อตรึงขนาด Label ให้พอดีเป๊ะและจัดกึ่งกลางหน้าจออย่างสมดุล
+		var str_size1: Vector2 = Vector2(900, 46)
+		var str_size2: Vector2 = Vector2(820, 46)
+		if ending_font:
+			str_size1 = ending_font.get_string_size(BAD_END_LINE1, HORIZONTAL_ALIGNMENT_LEFT, -1, ending_font_size)
+			str_size2 = ending_font.get_string_size(BAD_END_LINE2, HORIZONTAL_ALIGNMENT_LEFT, -1, ending_font_size)
+		var w1: float = ceil(str_size1.x) + 6.0
+		var w2: float = ceil(str_size2.x) + 6.0
+		
+		# บรรทัดที่ 1: "เศษเสี้ยวที่กระจัดกระจายและใครบางคน... ยังคงรอคอยอยู่ในความมืดมิด"
+		bad_ending_line1 = Label.new()
+		bad_ending_line1.text = BAD_END_LINE1
+		bad_ending_line1.autowrap_mode = TextServer.AUTOWRAP_OFF
+		bad_ending_line1.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+		bad_ending_line1.custom_minimum_size = Vector2(w1, 46)
+		bad_ending_line1.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+		bad_ending_line1.visible_characters = -1
+		bad_ending_line1.visible_ratio = 0.0
+		if ending_font:
+			bad_ending_line1.add_theme_font_override("font", ending_font)
+			bad_ending_line1.add_theme_font_size_override("font_size", ending_font_size)
+		bad_ending_line1.add_theme_color_override("font_color", Color.WHITE)
+		bad_ending_line1.add_theme_constant_override("outline_size", 0)
 		vbox.add_child(bad_ending_line1)
 		
 		# บรรทัดที่ 2: "ขณะที่เวลเดินพ้นประตูหอคอยไป ทิ้งทุกคำตอบไว้เบื้องหลังตลอดกาล"
-		bad_ending_line2 = RichTextLabel.new()
-		bad_ending_line2.bbcode_enabled = true
-		bad_ending_line2.fit_content = true
-		bad_ending_line2.scroll_active = false
+		bad_ending_line2 = Label.new()
+		bad_ending_line2.text = BAD_END_LINE2
 		bad_ending_line2.autowrap_mode = TextServer.AUTOWRAP_OFF
-		bad_ending_line2.custom_minimum_size = Vector2(1600, 48)
-		if font_ta8bit:
-			bad_ending_line2.add_theme_font_override("normal_font", font_ta8bit)
-			bad_ending_line2.add_theme_font_size_override("normal_font_size", 28)
-		elif font_chakra_regular:
-			bad_ending_line2.add_theme_font_override("normal_font", font_chakra_regular)
-			bad_ending_line2.add_theme_font_size_override("normal_font_size", 26)
-		elif font_chakra_bold:
-			bad_ending_line2.add_theme_font_override("normal_font", font_chakra_bold)
-			bad_ending_line2.add_theme_font_size_override("normal_font_size", 26)
-		bad_ending_line2.add_theme_color_override("default_color", Color.WHITE)
-		_set_line2_progress(0)
+		bad_ending_line2.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+		bad_ending_line2.custom_minimum_size = Vector2(w2, 46)
+		bad_ending_line2.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+		bad_ending_line2.visible_characters = -1
+		bad_ending_line2.visible_ratio = 0.0
+		if ending_font:
+			bad_ending_line2.add_theme_font_override("font", ending_font)
+			bad_ending_line2.add_theme_font_size_override("font_size", ending_font_size)
+		bad_ending_line2.add_theme_color_override("font_color", Color.WHITE)
+		bad_ending_line2.add_theme_constant_override("outline_size", 0)
 		vbox.add_child(bad_ending_line2)
 		
 		# ระยะห่างก่อนแสดงปุ่ม
 		var spacer = Control.new()
-		spacer.custom_minimum_size = Vector2(0, 16)
+		spacer.custom_minimum_size = Vector2(0, 18)
 		vbox.add_child(spacer)
 		
 		# ปุ่มกลับสู่หน้าแรก
 		bad_ending_btn = Button.new()
 		bad_ending_btn.text = "กลับสู่หน้าแรก"
 		bad_ending_btn.custom_minimum_size = Vector2(220, 48)
+		bad_ending_btn.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 		bad_ending_btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 		bad_ending_btn.modulate.a = 0.0
 		bad_ending_btn.visible = false
@@ -1034,12 +1011,12 @@ func _trigger_bad_ending() -> void:
 		if font_chakra_regular:
 			bad_ending_btn.add_theme_font_override("font", font_chakra_regular)
 			bad_ending_btn.add_theme_font_size_override("font_size", 22)
-		elif font_ta8bit:
-			bad_ending_btn.add_theme_font_override("font", font_ta8bit)
-			bad_ending_btn.add_theme_font_size_override("font_size", 20)
 		elif font_chakra_bold:
 			bad_ending_btn.add_theme_font_override("font", font_chakra_bold)
 			bad_ending_btn.add_theme_font_size_override("font_size", 22)
+		elif font_ta8bit:
+			bad_ending_btn.add_theme_font_override("font", font_ta8bit)
+			bad_ending_btn.add_theme_font_size_override("font_size", 20)
 			
 		var btn_sb = StyleBoxFlat.new()
 		btn_sb.bg_color = Color(0.14, 0.12, 0.20, 0.9)
@@ -1072,11 +1049,9 @@ func _trigger_bad_ending() -> void:
 			get_tree().change_scene_to_file("res://features/start/start_view.tscn")
 		)
 		
-		var btn_center = CenterContainer.new()
-		btn_center.add_child(bad_ending_btn)
-		vbox.add_child(btn_center)
+		vbox.add_child(bad_ending_btn)
 		
-		# Typewriter Animation: พิมพ์ตัวอักษรทีละตัวอย่างสมบูรณ์แบบโดยตรึงกึ่งกลางนิ่ง ไม่เลื่อน ไม่สั่น
+		# Typewriter Animation: พิมพ์ตัวอักษรทีละตัวอย่างนิ่งสนิท อยู่ตรงกลางจอ ไม่เลื่อน ไม่สั่น
 		if bad_ending_tween and bad_ending_tween.is_valid():
 			bad_ending_tween.kill()
 		bad_ending_tween = create_tween()
@@ -1086,14 +1061,14 @@ func _trigger_bad_ending() -> void:
 			is_bad_ending_typing = true
 		)
 		
-		# พิมพ์บรรทัดที่ 1
-		var dur1: float = clampf(float(_bad_end_clusters1.size()) * 0.045, 1.2, 2.2)
-		bad_ending_tween.tween_method(Callable(self, "_set_line1_progress"), 0, _bad_end_clusters1.size(), dur1)
+		# พิมพ์บรรทัดที่ 1 ด้วย visible_ratio แบบมาตรฐานของ Godot (ไม่แก้ .text ในลูป)
+		var dur1: float = clampf(float(BAD_END_LINE1.length()) * 0.032, 1.2, 2.0)
+		bad_ending_tween.tween_property(bad_ending_line1, "visible_ratio", 1.0, dur1)
 		bad_ending_tween.tween_interval(0.4)
 		
 		# พิมพ์บรรทัดที่ 2
-		var dur2: float = clampf(float(_bad_end_clusters2.size()) * 0.045, 1.2, 2.2)
-		bad_ending_tween.tween_method(Callable(self, "_set_line2_progress"), 0, _bad_end_clusters2.size(), dur2)
+		var dur2: float = clampf(float(BAD_END_LINE2.length()) * 0.032, 1.2, 2.0)
+		bad_ending_tween.tween_property(bad_ending_line2, "visible_ratio", 1.0, dur2)
 		
 		# หยุดรอ 0.8 วินาที แล้วแสดงปุ่มกลับสู่หน้าแรก
 		bad_ending_tween.tween_interval(0.8)
