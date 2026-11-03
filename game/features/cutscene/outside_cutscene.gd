@@ -122,7 +122,7 @@ func _init_scene() -> void:
 	
 	title_container.modulate = Color(1, 1, 1, 0)
 	if subtitle_label:
-		subtitle_label.text = "— ตำนานแห่งหอคอยต้นกำเนิด —"
+		subtitle_label.text = "― ตำนานแห่งหอคอยต้นกำเนิด ―"
 	if start_prompt:
 		start_prompt.text = "คลิกหน้าจอเพื่อไปต่อ"
 	fade_overlay.color = Color(0, 0, 0, 1)
