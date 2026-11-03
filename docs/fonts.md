@@ -31,6 +31,8 @@
 | **เนื้อหาบทสนทนา** | `DialogueLabel` | `ChakraPetch-Regular.ttf`<br>(SubResource: `FontVariation_dialogue_reg`) | **23 px** | ขาวนวล `#E0E3EB`<br>`Color(0.88, 0.89, 0.92, 1.0)` | ไม่มี (นำออก) | `spacing_top = 8`<br>`spacing_bottom = 4`<br>`line_spacing = 10` | `clip_contents = false` อ่านง่าย สบายตา สระไม่ซ้อน |
 | **ปุ่มตัวเลือกตอบ** | `ChoiceButton` | `ChakraPetch-Regular.ttf`<br>(SubResource: `FontVariation_choice_reg`) | **22 px** | ขาว / สว่างขาวตอน Hover | ไม่มี | `spacing_top = 4`<br>`spacing_bottom = 2` | ปุ่มเลือกตอบบทสนทนา (ใช้ตัวปกติให้อ่านง่าย สบายตา) |
 | **ปุ่มข้ามคัตซีน** | `SkipCutsceneButton` | `ChakraPetch-Bold.ttf` | **16 px** | ขาวนวลโปร่งแสง | - | - | อยู่มุมขวาบนของคัตซีน |
+| **ข้อความสรุปฉากจบ** | `SummaryLine1..3`<br>`bad_ending_line1..2` | `ChakraPetch-Regular.ttf`<br>(SubResource: `FontVariation_summary_reg`) | **26 px** | ขาวบริสุทธิ์ `#FFFFFF`<br>`Color(1, 1, 1, 1)` | ไม่มี | `spacing_top = 4`<br>`spacing_bottom = 2` | จัดกึ่งกลางจอ พิมพ์ทีละตัวโดยตำแหน่งคงที่ ไม่สั่นไม่เลื่อน |
+| **คลิกหน้าจอเพื่อไปต่อ / กลับสู่หน้าแรก** | `ContinuePrompt`<br>`bad_ending_btn` | `ChakraPetch-Regular.ttf`<br>(SubResource: `FontVariation_summary_reg`) | **22 px** | ขาวนวล `#FAF9F6`<br>`Color(0.98, 0.98, 0.96, 0.95)` | ไม่มี | `spacing_top = 4`<br>`spacing_bottom = 2` | ข้อความกระพริบลอยด้านล่างจอ (Pulse Animation) |
 
 ---
 
@@ -42,6 +44,24 @@
 |---|---|:---:|:---:|:---:|---|
 | **ตัวเอก / ผู้เล่น** | **เวล (Vel)** | ฟ้าอ่อนสดใส (Sky Cyan) | `#73BFF2` | `Color(0.45, 0.75, 0.95, 1.0)` | สอดคล้องกับธีมชุดฮู้ดสีฟ้าของตัวเอก |
 | **ผู้ดูแล / ผู้สอน / NPC** | **มิวรา (Mewla)**<br>**ผู้พิทักษ์ (Guardian)**<br>**ปรมาจารย์ (Master)** | ทองอบอุ่น (Warm Gold) | `#EBCB70` | `Color(0.92, 0.80, 0.44, 1.0)` | สีทองอบอุ่น ประจำฝ่ายเวทมนตร์และผู้ชี้นำ |
+
+---
+
+### 2.3 ฉากจบและเครดิต (`ending_cutscene.tscn`)
+
+| ส่วนประกอบ | โหนด (Node) | ฟอนต์ / FontVariation | ขนาด | สีตัวอักษร | Outline | หมายเหตุ |
+|---|---|---|:---:|---|:---:|---|
+| **หัวข้อภาพย้อนอดีต** | `ComicTitle` | `ChakraPetch-Bold.ttf`<br>(SubResource: `FontVariation_speaker_bold`) | **24 px** | ทองสว่าง `#FFE680` | ไม่มี | `[ ภาพย้อนความทรงจำ ]` |
+| **คำบรรยายภาพย้อนอดีต** | `ComicCaption` | `ChakraPetch-Regular.ttf`<br>(SubResource: `FontVariation_dialogue_reg`) | **22 px** | ขาวนวล `#FAF9F6` | ไม่มี | คำบรรยายเหตุการณ์ความโก๊ะของปรมาจารย์ |
+| **คลิกเพื่อไปต่อ (คอมิก)** | `ComicContinuePrompt` | `ChakraPetch-Regular.ttf`<br>(SubResource: `FontVariation_summary_reg`) | **20 px** | ขาวโปร่งแสง (Alpha 0.9) | ไม่มี | คำแนะนำคลิกหน้าจอใต้ภาพย้อนอดีต |
+| **ข้อความสรุปฉากจบ** | `SummaryLine1..3` | `ChakraPetch-Regular.ttf`<br>(SubResource: `FontVariation_summary_reg`) | **26 px** | ขาวบริสุทธิ์ `#FFFFFF` | ไม่มี | พิมพ์ทีละบรรทัด จัดกึ่งกลางจออย่างสมดุล |
+| **คลิกเพื่อไปต่อ (หน้าจบ)** | `ContinuePrompt` | `ChakraPetch-Regular.ttf`<br>(SubResource: `FontVariation_summary_reg`) | **22 px** | ขาวนวล `#FAF9F6` | ไม่มี | ลอยกระพริบด้านล่างจอ ก่อนเข้าสู่หน้าเครดิต |
+| **หัวข้อเครดิต** | `ThankYouLabel` | `ChakraPetch-Bold.ttf`<br>(SubResource: `FontVariation_speaker_bold`) | **32 px** | ขาวนวล `#FAF9F6` | ไม่มี | `Thank You for Playing` |
+| **คำขอบคุณเครดิต** | `GratitudeLabel` | `ChakraPetch-Regular.ttf`<br>(SubResource: `FontVariation_summary_reg`) | **24 px** | ขาวนวล `#FAF9F6` | ไม่มี | `ขอบคุณที่ร่วมเดินทางไปกับเรา` |
+| **ชื่อตัวละครในเครดิต** | `NameLabel` (เวล) | `ChakraPetch-Bold.ttf`<br>(SubResource: `FontVariation_speaker_bold`) | **24 px** | ฟ้าอ่อน `#73BFF2` | ไม่มี | สีตาม Speaker Palette |
+| **ชื่อตัวละครในเครดิต** | `NameLabel` (มิวรา, ปรมาจารย์, ผู้พิทักษ์) | `ChakraPetch-Bold.ttf`<br>(SubResource: `FontVariation_speaker_bold`) | **24 px** | ทองอบอุ่น `#EBCB70` | ไม่มี | สีตาม Speaker Palette |
+| **ทีมผู้พัฒนา** | `DevelopedByLabel` | `ChakraPetch-Regular.ttf`<br>(SubResource: `FontVariation_summary_reg`) | **20 px** | ขาวโปร่งแสง (Alpha 0.9) | ไม่มี | `Developed by Git Di Waa Team` |
+| **ปุ่มกลับสู่เมนูหลัก** | `ReturnMenuBtn` | `ChakraPetch-Bold.ttf`<br>(SubResource: `FontVariation_speaker_bold`) | **22 px** | ขาวนวล `#FAF9F6` | ไม่มี | ปุ่มกดมุมขวาล่างของหน้าเครดิต |
 
 ---
 

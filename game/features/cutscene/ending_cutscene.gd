@@ -1012,6 +1012,29 @@ func play_stage_8_epilogue() -> void:
 	if summary_container:
 		summary_container.modulate.a = 1.0
 	
+	# คำนวณความกว้างข้อความที่แท้จริง เพื่อตรึงขนาด Label ให้พอดีเป๊ะและจัดกึ่งกลางหน้าจออย่างสมดุล (พิมพ์ไม่เลื่อน ไม่สั่น)
+	var summary_font: Font = summary_line1.get_theme_font("font")
+	var summary_fsize: int = summary_line1.get_theme_font_size("font_size")
+	if summary_font:
+		var w1: float = ceil(summary_font.get_string_size(summary_line1.text, HORIZONTAL_ALIGNMENT_LEFT, -1, summary_fsize).x) + 6.0
+		var w2: float = ceil(summary_font.get_string_size(summary_line2.text, HORIZONTAL_ALIGNMENT_LEFT, -1, summary_fsize).x) + 6.0
+		var w3: float = ceil(summary_font.get_string_size(summary_line3.text, HORIZONTAL_ALIGNMENT_LEFT, -1, summary_fsize).x) + 6.0
+		
+		summary_line1.custom_minimum_size = Vector2(w1, 46)
+		summary_line1.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+		summary_line1.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+		summary_line1.autowrap_mode = TextServer.AUTOWRAP_OFF
+		
+		summary_line2.custom_minimum_size = Vector2(w2, 46)
+		summary_line2.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+		summary_line2.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+		summary_line2.autowrap_mode = TextServer.AUTOWRAP_OFF
+		
+		summary_line3.custom_minimum_size = Vector2(w3, 46)
+		summary_line3.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+		summary_line3.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+		summary_line3.autowrap_mode = TextServer.AUTOWRAP_OFF
+	
 	summary_line1.modulate.a = 1.0
 	summary_line1.visible_characters = -1
 	summary_line1.visible_ratio = 0.0
