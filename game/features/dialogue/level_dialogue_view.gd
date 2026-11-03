@@ -47,7 +47,9 @@ var active_choices: Array = []
 var is_showing_choices: bool = false
 var bad_ending_panel: Control = null
 var is_bad_ending_typing: bool = false
+var is_bad_ending_waiting: bool = false
 var bad_ending_tween: Tween = null
+var bad_ending_pulse_tween: Tween = null
 var bad_ending_line1: Label = null
 var bad_ending_line2: Label = null
 var bad_ending_btn: Button = null
@@ -230,8 +232,11 @@ func _ready() -> void:
 func _exit_tree() -> void:
 	Engine.time_scale = 1.0
 	is_bad_ending_typing = false
+	is_bad_ending_waiting = false
 	if bad_ending_tween and bad_ending_tween.is_valid():
 		bad_ending_tween.kill()
+	if bad_ending_pulse_tween and bad_ending_pulse_tween.is_valid():
+		bad_ending_pulse_tween.kill()
 
 func _process(_delta: float) -> void:
 	if is_transitioning:
@@ -258,6 +263,13 @@ func _input(event: InputEvent) -> void:
 		   (event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT):
 			get_viewport().set_input_as_handled()
 			_skip_bad_ending_typewriter()
+			return
+	elif is_bad_ending_waiting:
+		if event.is_action_pressed("ui_accept") or \
+		   (event is InputEventKey and event.pressed and not event.echo and (event.keycode == KEY_SPACE or event.keycode == KEY_ENTER)) or \
+		   (event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT):
+			get_viewport().set_input_as_handled()
+			_on_bad_ending_exit()
 			return
 		
 	if is_transitioning:
@@ -892,6 +904,36 @@ func _finish_dialogue_stage() -> void:
 		if next_scene_path != "" and ResourceLoader.exists(next_scene_path):
 			get_tree().change_scene_to_file(next_scene_path)
 
+func _show_bad_ending_prompt() -> void:
+	is_bad_ending_typing = false
+	if not is_instance_valid(bad_ending_btn):
+		return
+	is_bad_ending_waiting = true
+	bad_ending_btn.visible = true
+	bad_ending_btn.disabled = false
+	
+	if bad_ending_pulse_tween and bad_ending_pulse_tween.is_valid():
+		bad_ending_pulse_tween.kill()
+	
+	var tw_show = create_tween()
+	tw_show.tween_property(bad_ending_btn, "modulate:a", 1.0, 0.4).set_trans(Tween.TRANS_SINE)
+	tw_show.tween_callback(func():
+		if is_bad_ending_waiting and is_instance_valid(bad_ending_btn):
+			bad_ending_pulse_tween = create_tween().set_loops()
+			bad_ending_pulse_tween.tween_property(bad_ending_btn, "modulate:a", 0.35, 0.9).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+			bad_ending_pulse_tween.tween_property(bad_ending_btn, "modulate:a", 1.0, 0.9).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	)
+
+func _on_bad_ending_exit() -> void:
+	if not is_bad_ending_waiting:
+		return
+	is_bad_ending_waiting = false
+	if bad_ending_pulse_tween and bad_ending_pulse_tween.is_valid():
+		bad_ending_pulse_tween.kill()
+	if bad_ending_tween and bad_ending_tween.is_valid():
+		bad_ending_tween.kill()
+	get_tree().change_scene_to_file("res://features/start/start_view.tscn")
+
 func _skip_bad_ending_typewriter() -> void:
 	if not is_bad_ending_typing:
 		return
@@ -905,10 +947,8 @@ func _skip_bad_ending_typewriter() -> void:
 	if is_instance_valid(bad_ending_line2):
 		bad_ending_line2.visible_characters = -1
 		bad_ending_line2.visible_ratio = 1.0
-	if is_instance_valid(bad_ending_btn):
-		bad_ending_btn.disabled = false
-		bad_ending_btn.mouse_filter = Control.MOUSE_FILTER_STOP
-		bad_ending_btn.modulate.a = 1.0
+		
+	_show_bad_ending_prompt()
 
 func _trigger_bad_ending() -> void:
 	is_transitioning = true
@@ -995,64 +1035,44 @@ func _trigger_bad_ending() -> void:
 		bad_ending_line2.add_theme_constant_override("outline_size", 0)
 		vbox.add_child(bad_ending_line2)
 		
-		# ระยะห่างก่อนแสดงปุ่ม
-		var spacer = Control.new()
-		spacer.custom_minimum_size = Vector2(0, 18)
-		vbox.add_child(spacer)
-		
-		# ปุ่มกลับสู่หน้าแรก
+		# ข้อความ "กลับสู่หน้าแรก" แบบกระพริบ อยู่ด้านล่างจอ สไตล์เดียวกับ ending_cutscene (รูปที่ 2)
 		bad_ending_btn = Button.new()
 		bad_ending_btn.text = "กลับสู่หน้าแรก"
-		bad_ending_btn.custom_minimum_size = Vector2(220, 48)
-		bad_ending_btn.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+		bad_ending_btn.flat = true
 		bad_ending_btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+		bad_ending_btn.set_anchors_preset(Control.PRESET_CENTER_BOTTOM)
+		bad_ending_btn.offset_left = -300.0
+		bad_ending_btn.offset_top = -110.0
+		bad_ending_btn.offset_right = 300.0
+		bad_ending_btn.offset_bottom = -70.0
+		bad_ending_btn.grow_horizontal = Control.GROW_DIRECTION_BOTH
+		bad_ending_btn.grow_vertical = Control.GROW_DIRECTION_BEGIN
 		bad_ending_btn.modulate.a = 0.0
-		bad_ending_btn.visible = true
+		bad_ending_btn.visible = false
 		bad_ending_btn.disabled = true
-		bad_ending_btn.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		
-		if font_chakra_regular:
+		var empty_sb = StyleBoxEmpty.new()
+		bad_ending_btn.add_theme_stylebox_override("normal", empty_sb)
+		bad_ending_btn.add_theme_stylebox_override("hover", empty_sb)
+		bad_ending_btn.add_theme_stylebox_override("pressed", empty_sb)
+		bad_ending_btn.add_theme_stylebox_override("focus", empty_sb)
+		bad_ending_btn.add_theme_color_override("font_color", Color(0.98, 0.98, 0.96, 0.95))
+		bad_ending_btn.add_theme_color_override("font_hover_color", Color.WHITE)
+		bad_ending_btn.add_theme_color_override("font_pressed_color", Color(0.85, 0.85, 0.85, 1.0))
+		bad_ending_btn.add_theme_color_override("font_focus_color", Color(0.98, 0.98, 0.96, 0.95))
+		
+		if ending_font:
+			bad_ending_btn.add_theme_font_override("font", ending_font)
+			bad_ending_btn.add_theme_font_size_override("font_size", 22)
+		elif font_chakra_regular:
 			bad_ending_btn.add_theme_font_override("font", font_chakra_regular)
 			bad_ending_btn.add_theme_font_size_override("font_size", 22)
 		elif font_chakra_bold:
 			bad_ending_btn.add_theme_font_override("font", font_chakra_bold)
 			bad_ending_btn.add_theme_font_size_override("font_size", 22)
-		elif font_ta8bit:
-			bad_ending_btn.add_theme_font_override("font", font_ta8bit)
-			bad_ending_btn.add_theme_font_size_override("font_size", 20)
 			
-		var btn_sb = StyleBoxFlat.new()
-		btn_sb.bg_color = Color(0.14, 0.12, 0.20, 0.9)
-		btn_sb.border_width_left = 2
-		btn_sb.border_width_top = 2
-		btn_sb.border_width_right = 2
-		btn_sb.border_width_bottom = 2
-		btn_sb.border_color = Color(0.85, 0.75, 0.45, 0.8)
-		btn_sb.corner_radius_top_left = 6
-		btn_sb.corner_radius_top_right = 6
-		btn_sb.corner_radius_bottom_left = 6
-		btn_sb.corner_radius_bottom_right = 6
-		btn_sb.content_margin_left = 16
-		btn_sb.content_margin_right = 16
-		btn_sb.content_margin_top = 8
-		btn_sb.content_margin_bottom = 8
-
-		var btn_hover = btn_sb.duplicate() as StyleBoxFlat
-		btn_hover.bg_color = Color(0.24, 0.20, 0.35, 0.95)
-		btn_hover.border_color = Color(1.0, 0.92, 0.65, 1.0)
-
-		bad_ending_btn.add_theme_stylebox_override("normal", btn_sb)
-		bad_ending_btn.add_theme_stylebox_override("hover", btn_hover)
-		bad_ending_btn.add_theme_stylebox_override("pressed", btn_hover)
-		bad_ending_btn.add_theme_stylebox_override("focus", btn_hover)
-		bad_ending_btn.add_theme_color_override("font_color", Color.WHITE)
-		bad_ending_btn.add_theme_color_override("font_hover_color", Color(1.0, 1.0, 1.0, 1.0))
-		
-		bad_ending_btn.pressed.connect(func():
-			get_tree().change_scene_to_file("res://features/start/start_view.tscn")
-		)
-		
-		vbox.add_child(bad_ending_btn)
+		bad_ending_btn.pressed.connect(_on_bad_ending_exit)
+		bad_ending_panel.add_child(bad_ending_btn)
 		
 		# Typewriter Animation: พิมพ์ตัวอักษรทีละตัวอย่างนิ่งสนิท อยู่ตรงกลางจอ ไม่เลื่อน ไม่สั่น
 		if bad_ending_tween and bad_ending_tween.is_valid():
@@ -1073,15 +1093,10 @@ func _trigger_bad_ending() -> void:
 		var dur2: float = clampf(float(BAD_END_LINE2.length()) * 0.032, 1.2, 2.0)
 		bad_ending_tween.tween_property(bad_ending_line2, "visible_ratio", 1.0, dur2)
 		
-		# หยุดรอ 0.8 วินาที แล้วแสดงปุ่มกลับสู่หน้าแรก (เฟด modulate.a ขึ้นมาอย่างนุ่มนวล โดยข้อความไม่ขยับ)
+		# หยุดรอ 0.8 วินาที แล้วแสดงข้อความกลับสู่หน้าแรกแบบกระพริบที่ด้านล่างจอ
 		bad_ending_tween.tween_interval(0.8)
 		bad_ending_tween.tween_callback(func():
-			is_bad_ending_typing = false
-			if is_instance_valid(bad_ending_btn):
-				bad_ending_btn.disabled = false
-				bad_ending_btn.mouse_filter = Control.MOUSE_FILTER_STOP
-				var tw_btn = create_tween()
-				tw_btn.tween_property(bad_ending_btn, "modulate:a", 1.0, 0.5)
+			_show_bad_ending_prompt()
 		)
 	)
 
