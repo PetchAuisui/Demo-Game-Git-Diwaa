@@ -79,7 +79,7 @@
 
 | ส่วนประกอบ | โหนด (Node) | ฟอนต์ / FontVariation | ขนาด | สีตัวอักษร | Outline | หมายเหตุ |
 |---|---|---|:---:|---|:---:|---|
-| **ชื่อบทคัตซีน** | `SubtitleLabel` | `ChakraPetch-Bold.ttf`<br>(SubResource: `FontVariation_sub_bold`) | **28 px** | ขาวประกายม่วงอ่อน `#F2EEFF` | ม่วงเข้ม 4px, เงา 2px | "― ตำนานแห่งหอคอยต้นกำเนิด ―" คมชัดใต้ชื่อเกมหลัก |
+| **ชื่อบทคัตซีน** | `SubtitleLabel` | `ChakraPetch-Regular.ttf`<br>(SubResource: `FontVariation_sub_reg`) | **28 px** | ขาวประกายม่วงอ่อน `#F2EEFF` | ม่วงเข้ม 2px, เงา 2px | "― ตำนานแห่งหอคอยต้นกำเนิด ―" ตัวบางโปร่งสบายตา (Regular) ใต้ชื่อเกมหลัก |
 | **คำแนะนำปุ่มกด** | `StartPrompt` | `ChakraPetch-Regular.ttf`<br>(SubResource: `FontVariation_prompt_reg`) | **22 px** | ขาวนวล `#FAF9F6` | ดำม่วง 3px | "คลิกหน้าจอเพื่อไปต่อ" กระพริบลอยด้านล่างจอ (Y = 970..1010) |
 
 ---
