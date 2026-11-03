@@ -29,7 +29,7 @@
 |---|---|---|:---:|---|:---:|:---:|---|
 | **ชื่อผู้พูด** | `SpeakerLabel` | `ChakraPetch-Bold.ttf`<br>(SubResource: `FontVariation_speaker_bold`) | **26 px** | *แยกตามตัวละคร (ดูข้อ 2.2)* | ไม่มี (นำออก) | `spacing_top = 6`<br>`spacing_bottom = 2` | ป้องกันสระลอย/ตกขอบ และจัดกึ่งกลางสวยงาม |
 | **เนื้อหาบทสนทนา** | `DialogueLabel` | `ChakraPetch-Regular.ttf`<br>(SubResource: `FontVariation_dialogue_reg`) | **23 px** | ขาวนวล `#E0E3EB`<br>`Color(0.88, 0.89, 0.92, 1.0)` | ไม่มี (นำออก) | `spacing_top = 8`<br>`spacing_bottom = 4`<br>`line_spacing = 10` | `clip_contents = false` อ่านง่าย สบายตา สระไม่ซ้อน |
-| **ปุ่มตัวเลือกตอบ** | `ChoiceButton` | `ChakraPetch-Bold.ttf` | **22 px** | ขาว / ส้มตามสถานะ Hover | 2 px | - | ปุ่มเลือกตอบบทสนทนา |
+| **ปุ่มตัวเลือกตอบ** | `ChoiceButton` | `ChakraPetch-Regular.ttf`<br>(SubResource: `FontVariation_choice_reg`) | **22 px** | ขาว / สว่างขาวตอน Hover | ไม่มี | `spacing_top = 4`<br>`spacing_bottom = 2` | ปุ่มเลือกตอบบทสนทนา (ใช้ตัวปกติให้อ่านง่าย สบายตา) |
 | **ปุ่มข้ามคัตซีน** | `SkipCutsceneButton` | `ChakraPetch-Bold.ttf` | **16 px** | ขาวนวลโปร่งแสง | - | - | อยู่มุมขวาบนของคัตซีน |
 
 ---
@@ -66,8 +66,8 @@
 | ชื่อไฟล์ฟอนต์ | ชนิดฟอนต์ | ภาษาไทย | จุดประสงค์การใช้งานหลัก |
 |---|---|:---:|---|
 | **`Bungee-Regular.ttf`** | Display Bold Rounded | ❌ อังกฤษ | **ชื่อเกม `GIT DI WAA`** และปุ่มเมนูหลักใน Start Screen |
-| **`ChakraPetch-Bold.ttf`** | Sci-Fi / Modern Geometric (หนา) | ✅ ใช่ | **ชื่อผู้พูดในบทสนทนา (`SpeakerLabel`)**, ปุ่มตัวเลือกตอบคำถาม |
-| **`ChakraPetch-Regular.ttf`** | Sci-Fi / Modern Geometric (ปกติ) | ✅ ใช่ | **เนื้อหาบทสนทนาในเกม (`DialogueLabel`)** |
+| **`ChakraPetch-Bold.ttf`** | Sci-Fi / Modern Geometric (หนา) | ✅ ใช่ | **ชื่อผู้พูดในบทสนทนา (`SpeakerLabel`)** |
+| **`ChakraPetch-Regular.ttf`** | Sci-Fi / Modern Geometric (ปกติ) | ✅ ใช่ | **เนื้อหาบทสนทนาในเกม (`DialogueLabel`)**, ปุ่มตัวเลือกตอบคำถาม (`ChoiceButton`) |
 | **`TA-8-bit.ttf`** | Pixel Art 8-bit | ✅ ใช่ | หัวข้อหน้าต่าง, แถบสถานะ, ปุ่มกดนำทาง และส่วนประกอบพิกเซลเรโทร |
 | **`VT323-Regular.ttf`** | Monospace Terminal CRT | ❌ อังกฤษ | กล่องข้อความและ Command Input ของระบบ Terminal |
 | **`Mitr-Regular.ttf`**<br>**`Mitr-Medium.ttf`** | Sans-serif ทรงมนร่วมสมัย | ✅ ใช่ | ฟอนต์สำรองสำหรับระบบ UI ภาษาไทยในอนาคต |

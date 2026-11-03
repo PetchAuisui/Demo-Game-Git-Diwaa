@@ -46,6 +46,16 @@ var choice_buttons: Array[Button] = []
 var active_choices: Array = []
 var is_showing_choices: bool = false
 var bad_ending_panel: Control = null
+var is_bad_ending_typing: bool = false
+var bad_ending_tween: Tween = null
+var bad_ending_line1: RichTextLabel = null
+var bad_ending_line2: RichTextLabel = null
+var bad_ending_btn: Button = null
+var _bad_end_clusters1: Array[String] = []
+var _bad_end_clusters2: Array[String] = []
+
+const BAD_END_LINE1: String = "เศษเสี้ยวที่กระจัดกระจายและใครบางคน... ยังคงรอคอยอยู่ในความมืดมิด"
+const BAD_END_LINE2: String = "ขณะที่เวลเดินพ้นประตูหอคอยไป ทิ้งทุกคำตอบไว้เบื้องหลังตลอดกาล"
 
 # Navigation Arrows (◀ ▶) & History
 var nav_arrows_container: HBoxContainer = null
@@ -72,6 +82,7 @@ var skip_ctrl = null
 var font_ta8bit: Font = null
 var font_chakra_bold: Font = null
 var font_chakra_regular: Font = null
+var font_choice_regular: FontVariation = null
 
 # Animation Sequence
 const VEL_IDLE_SEQ: Array[String] = ["breathe", "breathe_blink", "breathe", "breathe", "breathe_blink"]
@@ -128,6 +139,11 @@ func _ready() -> void:
 		font_chakra_bold = load("res://assets/fonts/ChakraPetch-Bold.ttf")
 	if ResourceLoader.exists("res://assets/fonts/ChakraPetch-Regular.ttf"):
 		font_chakra_regular = load("res://assets/fonts/ChakraPetch-Regular.ttf")
+		var choice_font_var = FontVariation.new()
+		choice_font_var.base_font = font_chakra_regular
+		choice_font_var.spacing_top = 4
+		choice_font_var.spacing_bottom = 2
+		font_choice_regular = choice_font_var
 		
 	# สร้าง Choice Container ภายในกล่องข้อความเดิม (DialogueBox) ใต้ SpeakerLabel
 	var vbox = dialogue_box.get_node_or_null("Margin/VBox")
@@ -215,6 +231,9 @@ func _ready() -> void:
 
 func _exit_tree() -> void:
 	Engine.time_scale = 1.0
+	is_bad_ending_typing = false
+	if bad_ending_tween and bad_ending_tween.is_valid():
+		bad_ending_tween.kill()
 
 func _process(_delta: float) -> void:
 	if is_transitioning:
@@ -235,6 +254,14 @@ func _process(_delta: float) -> void:
 			skip_ctrl._apply_ff_style(active)
 
 func _input(event: InputEvent) -> void:
+	if is_bad_ending_typing:
+		if event.is_action_pressed("ui_accept") or \
+		   (event is InputEventKey and event.pressed and not event.echo and (event.keycode == KEY_SPACE or event.keycode == KEY_ENTER)) or \
+		   (event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT):
+			get_viewport().set_input_as_handled()
+			_skip_bad_ending_typewriter()
+			return
+		
 	if is_transitioning:
 		return
 		
@@ -707,7 +734,13 @@ func _display_choice_menu(menu_id: String) -> void:
 		btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 		btn.alignment = HORIZONTAL_ALIGNMENT_LEFT
 		
-		if font_chakra_bold:
+		if font_choice_regular:
+			btn.add_theme_font_override("font", font_choice_regular)
+			btn.add_theme_font_size_override("font_size", 22)
+		elif font_chakra_regular:
+			btn.add_theme_font_override("font", font_chakra_regular)
+			btn.add_theme_font_size_override("font_size", 22)
+		elif font_chakra_bold:
 			btn.add_theme_font_override("font", font_chakra_bold)
 			btn.add_theme_font_size_override("font_size", 22)
 		elif font_ta8bit:
@@ -861,12 +894,65 @@ func _finish_dialogue_stage() -> void:
 		if next_scene_path != "" and ResourceLoader.exists(next_scene_path):
 			get_tree().change_scene_to_file(next_scene_path)
 
+static func _split_thai_clusters(text: String) -> Array[String]:
+	var clusters: Array[String] = []
+	var i := 0
+	while i < text.length():
+		var cluster := text[i]
+		i += 1
+		while i < text.length():
+			var code := text.unicode_at(i)
+			if (code >= 0x0E31 and code <= 0x0E3A) or (code >= 0x0E47 and code <= 0x0E4E):
+				cluster += text[i]
+				i += 1
+			else:
+				break
+		clusters.append(cluster)
+	return clusters
+
+func _set_line1_progress(step: int) -> void:
+	if not is_instance_valid(bad_ending_line1):
+		return
+	if step >= _bad_end_clusters1.size():
+		bad_ending_line1.text = "[center]%s[/center]" % BAD_END_LINE1
+	else:
+		var visible_part := "".join(_bad_end_clusters1.slice(0, step))
+		var hidden_part := "".join(_bad_end_clusters1.slice(step))
+		bad_ending_line1.text = "[center]%s[color=#ffffff00]%s[/color][/center]" % [visible_part, hidden_part]
+
+func _set_line2_progress(step: int) -> void:
+	if not is_instance_valid(bad_ending_line2):
+		return
+	if step >= _bad_end_clusters2.size():
+		bad_ending_line2.text = "[center]%s[/center]" % BAD_END_LINE2
+	else:
+		var visible_part := "".join(_bad_end_clusters2.slice(0, step))
+		var hidden_part := "".join(_bad_end_clusters2.slice(step))
+		bad_ending_line2.text = "[center]%s[color=#ffffff00]%s[/color][/center]" % [visible_part, hidden_part]
+
+func _skip_bad_ending_typewriter() -> void:
+	if not is_bad_ending_typing:
+		return
+	is_bad_ending_typing = false
+	if bad_ending_tween and bad_ending_tween.is_valid():
+		bad_ending_tween.kill()
+	
+	if is_instance_valid(bad_ending_line1):
+		bad_ending_line1.text = "[center]%s[/center]" % BAD_END_LINE1
+	if is_instance_valid(bad_ending_line2):
+		bad_ending_line2.text = "[center]%s[/center]" % BAD_END_LINE2
+	if is_instance_valid(bad_ending_btn):
+		bad_ending_btn.visible = true
+		bad_ending_btn.modulate.a = 1.0
+
 func _trigger_bad_ending() -> void:
 	is_transitioning = true
 	is_dialogue_active = false
 	_hide_continue_arrow()
 	if is_instance_valid(nav_arrows_container):
 		nav_arrows_container.visible = false
+	if is_instance_valid(skip_ctrl):
+		skip_ctrl.visible = false
 	
 	var tw_close = create_tween()
 	tw_close.tween_property(dialogue_box, "modulate:a", 0.0, 0.4)
@@ -875,44 +961,149 @@ func _trigger_bad_ending() -> void:
 	tw_close.tween_callback(func():
 		dialogue_box.visible = false
 		
+		_bad_end_clusters1 = _split_thai_clusters(BAD_END_LINE1)
+		_bad_end_clusters2 = _split_thai_clusters(BAD_END_LINE2)
+		
 		bad_ending_panel = Control.new()
-		bad_ending_panel.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 		magic_ui.add_child(bad_ending_panel)
+		bad_ending_panel.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+		
+		var center_container = CenterContainer.new()
+		bad_ending_panel.add_child(center_container)
+		center_container.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 		
 		var vbox = VBoxContainer.new()
 		vbox.alignment = BoxContainer.ALIGNMENT_CENTER
-		vbox.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
-		vbox.add_theme_constant_override("separation", 24)
-		bad_ending_panel.add_child(vbox)
+		vbox.custom_minimum_size = Vector2(1600, 0)
+		vbox.add_theme_constant_override("separation", 22)
+		center_container.add_child(vbox)
 		
-		var title = Label.new()
-		title.text = "ขอบคุณที่เล่น Git Di Waa\n(จบแบบลับ: เข้าผิดหอคอย)"
-		title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		if font_chakra_bold:
-			title.add_theme_font_override("font", font_chakra_bold)
-			title.add_theme_font_size_override("font_size", 30)
-		elif font_ta8bit:
-			title.add_theme_font_override("font", font_ta8bit)
-			title.add_theme_font_size_override("font_size", 30)
-		title.add_theme_color_override("font_color", Color(0.98, 0.85, 0.5, 1.0))
-		title.add_theme_constant_override("outline_size", 4)
-		title.add_theme_color_override("font_outline_color", Color.BLACK)
-		vbox.add_child(title)
+		# บรรทัดที่ 1: "เศษเสี้ยวที่กระจัดกระจายและใครบางคน... ยังคงรอคอยอยู่ในความมืดมิด"
+		bad_ending_line1 = RichTextLabel.new()
+		bad_ending_line1.bbcode_enabled = true
+		bad_ending_line1.fit_content = true
+		bad_ending_line1.scroll_active = false
+		bad_ending_line1.autowrap_mode = TextServer.AUTOWRAP_OFF
+		bad_ending_line1.custom_minimum_size = Vector2(1600, 48)
+		if font_ta8bit:
+			bad_ending_line1.add_theme_font_override("normal_font", font_ta8bit)
+			bad_ending_line1.add_theme_font_size_override("normal_font_size", 28)
+		elif font_chakra_regular:
+			bad_ending_line1.add_theme_font_override("normal_font", font_chakra_regular)
+			bad_ending_line1.add_theme_font_size_override("normal_font_size", 26)
+		elif font_chakra_bold:
+			bad_ending_line1.add_theme_font_override("normal_font", font_chakra_bold)
+			bad_ending_line1.add_theme_font_size_override("normal_font_size", 26)
+		bad_ending_line1.add_theme_color_override("default_color", Color.WHITE)
+		_set_line1_progress(0)
+		vbox.add_child(bad_ending_line1)
 		
-		var btn = Button.new()
-		btn.text = "กลับสู่หน้าแรก"
-		btn.custom_minimum_size = Vector2(200, 48)
-		btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
-		if font_chakra_bold:
-			btn.add_theme_font_override("font", font_chakra_bold)
-			btn.add_theme_font_size_override("font_size", 22)
+		# บรรทัดที่ 2: "ขณะที่เวลเดินพ้นประตูหอคอยไป ทิ้งทุกคำตอบไว้เบื้องหลังตลอดกาล"
+		bad_ending_line2 = RichTextLabel.new()
+		bad_ending_line2.bbcode_enabled = true
+		bad_ending_line2.fit_content = true
+		bad_ending_line2.scroll_active = false
+		bad_ending_line2.autowrap_mode = TextServer.AUTOWRAP_OFF
+		bad_ending_line2.custom_minimum_size = Vector2(1600, 48)
+		if font_ta8bit:
+			bad_ending_line2.add_theme_font_override("normal_font", font_ta8bit)
+			bad_ending_line2.add_theme_font_size_override("normal_font_size", 28)
+		elif font_chakra_regular:
+			bad_ending_line2.add_theme_font_override("normal_font", font_chakra_regular)
+			bad_ending_line2.add_theme_font_size_override("normal_font_size", 26)
+		elif font_chakra_bold:
+			bad_ending_line2.add_theme_font_override("normal_font", font_chakra_bold)
+			bad_ending_line2.add_theme_font_size_override("normal_font_size", 26)
+		bad_ending_line2.add_theme_color_override("default_color", Color.WHITE)
+		_set_line2_progress(0)
+		vbox.add_child(bad_ending_line2)
+		
+		# ระยะห่างก่อนแสดงปุ่ม
+		var spacer = Control.new()
+		spacer.custom_minimum_size = Vector2(0, 16)
+		vbox.add_child(spacer)
+		
+		# ปุ่มกลับสู่หน้าแรก
+		bad_ending_btn = Button.new()
+		bad_ending_btn.text = "กลับสู่หน้าแรก"
+		bad_ending_btn.custom_minimum_size = Vector2(220, 48)
+		bad_ending_btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+		bad_ending_btn.modulate.a = 0.0
+		bad_ending_btn.visible = false
+		
+		if font_chakra_regular:
+			bad_ending_btn.add_theme_font_override("font", font_chakra_regular)
+			bad_ending_btn.add_theme_font_size_override("font_size", 22)
 		elif font_ta8bit:
-			btn.add_theme_font_override("font", font_ta8bit)
-			btn.add_theme_font_size_override("font_size", 22)
-		btn.pressed.connect(func():
+			bad_ending_btn.add_theme_font_override("font", font_ta8bit)
+			bad_ending_btn.add_theme_font_size_override("font_size", 20)
+		elif font_chakra_bold:
+			bad_ending_btn.add_theme_font_override("font", font_chakra_bold)
+			bad_ending_btn.add_theme_font_size_override("font_size", 22)
+			
+		var btn_sb = StyleBoxFlat.new()
+		btn_sb.bg_color = Color(0.14, 0.12, 0.20, 0.9)
+		btn_sb.border_width_left = 2
+		btn_sb.border_width_top = 2
+		btn_sb.border_width_right = 2
+		btn_sb.border_width_bottom = 2
+		btn_sb.border_color = Color(0.85, 0.75, 0.45, 0.8)
+		btn_sb.corner_radius_top_left = 6
+		btn_sb.corner_radius_top_right = 6
+		btn_sb.corner_radius_bottom_left = 6
+		btn_sb.corner_radius_bottom_right = 6
+		btn_sb.content_margin_left = 16
+		btn_sb.content_margin_right = 16
+		btn_sb.content_margin_top = 8
+		btn_sb.content_margin_bottom = 8
+
+		var btn_hover = btn_sb.duplicate() as StyleBoxFlat
+		btn_hover.bg_color = Color(0.24, 0.20, 0.35, 0.95)
+		btn_hover.border_color = Color(1.0, 0.92, 0.65, 1.0)
+
+		bad_ending_btn.add_theme_stylebox_override("normal", btn_sb)
+		bad_ending_btn.add_theme_stylebox_override("hover", btn_hover)
+		bad_ending_btn.add_theme_stylebox_override("pressed", btn_hover)
+		bad_ending_btn.add_theme_stylebox_override("focus", btn_hover)
+		bad_ending_btn.add_theme_color_override("font_color", Color.WHITE)
+		bad_ending_btn.add_theme_color_override("font_hover_color", Color(1.0, 1.0, 1.0, 1.0))
+		
+		bad_ending_btn.pressed.connect(func():
 			get_tree().change_scene_to_file("res://features/start/start_view.tscn")
 		)
-		vbox.add_child(btn)
+		
+		var btn_center = CenterContainer.new()
+		btn_center.add_child(bad_ending_btn)
+		vbox.add_child(btn_center)
+		
+		# Typewriter Animation: พิมพ์ตัวอักษรทีละตัวอย่างสมบูรณ์แบบโดยตรึงกึ่งกลางนิ่ง ไม่เลื่อน ไม่สั่น
+		if bad_ending_tween and bad_ending_tween.is_valid():
+			bad_ending_tween.kill()
+		bad_ending_tween = create_tween()
+		
+		bad_ending_tween.tween_interval(0.4)
+		bad_ending_tween.tween_callback(func():
+			is_bad_ending_typing = true
+		)
+		
+		# พิมพ์บรรทัดที่ 1
+		var dur1: float = clampf(float(_bad_end_clusters1.size()) * 0.045, 1.2, 2.2)
+		bad_ending_tween.tween_method(Callable(self, "_set_line1_progress"), 0, _bad_end_clusters1.size(), dur1)
+		bad_ending_tween.tween_interval(0.4)
+		
+		# พิมพ์บรรทัดที่ 2
+		var dur2: float = clampf(float(_bad_end_clusters2.size()) * 0.045, 1.2, 2.2)
+		bad_ending_tween.tween_method(Callable(self, "_set_line2_progress"), 0, _bad_end_clusters2.size(), dur2)
+		
+		# หยุดรอ 0.8 วินาที แล้วแสดงปุ่มกลับสู่หน้าแรก
+		bad_ending_tween.tween_interval(0.8)
+		bad_ending_tween.tween_callback(func():
+			is_bad_ending_typing = false
+			if is_instance_valid(bad_ending_btn):
+				bad_ending_btn.visible = true
+				var tw_btn = create_tween()
+				tw_btn.tween_property(bad_ending_btn, "modulate:a", 1.0, 0.5)
+		)
 	)
 
 # ==============================================================================

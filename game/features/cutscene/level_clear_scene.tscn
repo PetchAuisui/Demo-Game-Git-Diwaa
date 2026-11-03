@@ -310,6 +310,7 @@ autoplay = &"walk-stair"
 [node name="ui" type="CanvasLayer" parent="." unique_id=719551824]
 
 [node name="FadeOverlay" type="ColorRect" parent="ui" unique_id=123456789]
+visible = false
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
