@@ -242,6 +242,13 @@ func _input(event: InputEvent) -> void:
 			get_viewport().set_input_as_handled()
 			_advance_epilogue_to_credits()
 		return
+	
+	if current_stage == 9:
+		if event.is_action_pressed("ui_accept") or \
+		   (event is InputEventKey and event.pressed and not event.echo and (event.keycode == KEY_SPACE or event.keycode == KEY_ENTER)):
+			get_viewport().set_input_as_handled()
+			_on_return_menu_pressed()
+			return
 
 func _advance_dialogue() -> void:
 	if not is_waiting_dialogue:
@@ -1244,11 +1251,6 @@ func play_stage_9_credits() -> void:
 		tw_fade_in.tween_property(bottom_bar, "modulate:a", 1.0, 1.5).set_trans(Tween.TRANS_SINE)
 	if particles:
 		tw_fade_in.tween_property(particles, "modulate:a", 1.0, 1.5).set_trans(Tween.TRANS_SINE)
-		
-	tw_fade_in.chain().tween_callback(func():
-		if is_instance_valid(return_menu_btn):
-			return_menu_btn.grab_focus()
-	)
 
 ## =============================================================
 ## ระบบกล่องข้อความบทสนทนา (Helper Functions)

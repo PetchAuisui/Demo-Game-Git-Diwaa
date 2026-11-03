@@ -60,7 +60,7 @@
 | **คำขอบคุณเครดิต** | `GratitudeLabel` | `ChakraPetch-Regular.ttf`<br>(SubResource: `FontVariation_summary_reg`) | **24 px** | ขาวนวล `#FAF9F6` | ไม่มี | `ขอบคุณที่ร่วมเดินทางไปกับเรา` |
 | **ชื่อตัวละครในเครดิต** | `NameLabel` (ทุกตัวละคร) | `ChakraPetch-Bold.ttf`<br>(SubResource: `FontVariation_speaker_bold`) | **20 px** | ขาวนวล `#FAF9F6` | ไม่มี | ขนาดกะทัดรัด สบายตา อยู่เหนือสไปรต์ตัวละคร |
 | **ทีมผู้พัฒนา** | `DevelopedByLabel` | `ChakraPetch-Regular.ttf`<br>(SubResource: `FontVariation_summary_reg`) | **20 px** | ขาวโปร่งแสง (Alpha 0.9) | ไม่มี | `Developed by Git Di Waa Team` |
-| **ปุ่มกลับสู่เมนูหลัก** | `ReturnMenuBtn` | `ChakraPetch-Bold.ttf`<br>(SubResource: `FontVariation_speaker_bold`) | **22 px** | ขาวนวล `#FAF9F6` | ไม่มี | ปุ่มกดมุมขวาล่างของหน้าเครดิต |
+| **ปุ่มกลับสู่เมนูหลัก** | `ReturnMenuBtn` | `ChakraPetch-Bold.ttf`<br>(SubResource: `FontVariation_speaker_bold`) | **20 px** | ขาวนวล `#F5F5F5` | เส้นขอบ 2px คมชัด | ปุ่มกดกลับสู่เมนูหลักมุมขวาล่างของหน้าเครดิต |
 
 ---
 
