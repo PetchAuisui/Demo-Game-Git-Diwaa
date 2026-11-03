@@ -906,7 +906,8 @@ func _skip_bad_ending_typewriter() -> void:
 		bad_ending_line2.visible_characters = -1
 		bad_ending_line2.visible_ratio = 1.0
 	if is_instance_valid(bad_ending_btn):
-		bad_ending_btn.visible = true
+		bad_ending_btn.disabled = false
+		bad_ending_btn.mouse_filter = Control.MOUSE_FILTER_STOP
 		bad_ending_btn.modulate.a = 1.0
 
 func _trigger_bad_ending() -> void:
@@ -1006,7 +1007,9 @@ func _trigger_bad_ending() -> void:
 		bad_ending_btn.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 		bad_ending_btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 		bad_ending_btn.modulate.a = 0.0
-		bad_ending_btn.visible = false
+		bad_ending_btn.visible = true
+		bad_ending_btn.disabled = true
+		bad_ending_btn.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		
 		if font_chakra_regular:
 			bad_ending_btn.add_theme_font_override("font", font_chakra_regular)
@@ -1070,12 +1073,13 @@ func _trigger_bad_ending() -> void:
 		var dur2: float = clampf(float(BAD_END_LINE2.length()) * 0.032, 1.2, 2.0)
 		bad_ending_tween.tween_property(bad_ending_line2, "visible_ratio", 1.0, dur2)
 		
-		# หยุดรอ 0.8 วินาที แล้วแสดงปุ่มกลับสู่หน้าแรก
+		# หยุดรอ 0.8 วินาที แล้วแสดงปุ่มกลับสู่หน้าแรก (เฟด modulate.a ขึ้นมาอย่างนุ่มนวล โดยข้อความไม่ขยับ)
 		bad_ending_tween.tween_interval(0.8)
 		bad_ending_tween.tween_callback(func():
 			is_bad_ending_typing = false
 			if is_instance_valid(bad_ending_btn):
-				bad_ending_btn.visible = true
+				bad_ending_btn.disabled = false
+				bad_ending_btn.mouse_filter = Control.MOUSE_FILTER_STOP
 				var tw_btn = create_tween()
 				tw_btn.tween_property(bad_ending_btn, "modulate:a", 1.0, 0.5)
 		)
