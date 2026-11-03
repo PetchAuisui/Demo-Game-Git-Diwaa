@@ -69,9 +69,9 @@
 
 | ส่วนประกอบ | โหนด (Node) | ฟอนต์ / FontVariation | ขนาด | สีตัวอักษร | Outline | หมายเหตุ |
 |---|---|---|:---:|---|:---:|---|
-| **ข้อความทำนายคัมภีร์** | `RuneRichLabel` | `ChakraPetch-Bold.ttf`<br>(SubResource: `FontVariation_rune_bold`) | **32 px** | ทองนวลสว่าง `#FAF0CC` | น้ำตาลเข้ม 3px | เอฟเฟกต์คลื่น `[wave]` ลอยเด่นบนแผ่นกระดาษเวทมนตร์ |
-| **ออร่าเรืองแสงคัมภีร์** | `RuneAuraLabel` | `ChakraPetch-Bold.ttf`<br>(SubResource: `FontVariation_rune_bold`) | **32 px** | ทองโปร่งแสง | แสงเรืองทอง 8px, เงา 12px | เลเยอร์เรืองแสงกระพริบเบื้องหลังข้อความทำนาย |
-| **คลิกเพื่อไปต่อ** | `ContinuePrompt` | `ChakraPetch-Regular.ttf`<br>(SubResource: `FontVariation_summary_reg`) | **22 px** | ขาวนวล `#FAF9F6` | ไม่มี | ลอยกระพริบใต้แผ่นกระดาษเวทมนตร์ |
+| **ข้อความทำนายคัมภีร์** | `RuneRichLabel` | `ChakraPetch-Bold.ttf`<br>(SubResource: `FontVariation_rune_bold`) | **30 px** | หมึกเวทมนตร์เข้ม `#24142E`<br>`Color(0.14, 0.08, 0.18, 1.0)` | ไม่มี (คมชัดแบบอักษรโบราณบนกระดาษ) | ตัดกับผิวกระดาษ คมชัดสะกดสายตา พร้อมเอฟเฟกต์คลื่น `[wave]` พริ้วไหว |
+| **ออร่าเรืองแสงคัมภีร์** | `RuneAuraLabel` | `ChakraPetch-Bold.ttf`<br>(SubResource: `FontVariation_rune_bold`) | **30 px** | ทองอบอุ่นโปร่งแสง | แสงเรืองทอง 6px, เงา 8px | เลเยอร์เรืองแสงกระพริบเบื้องหลังข้อความหลัก |
+| **คลิกเพื่อไปต่อ** | `ContinuePrompt` | `ChakraPetch-Regular.ttf`<br>(SubResource: `FontVariation_summary_reg`) | **22 px** | ขาวนวล `#FAF9F6` | ไม่มี | ลอยกระพริบใต้แผ่นกระดาษบนฉากหลังมืด (ตำแหน่งเดียวกับฉากจบ) |
 
 ---
 
