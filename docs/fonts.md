@@ -21,6 +21,7 @@
 * `level_dialogue_view.tscn` (บทสนทนาในด่าน)
 * `inside_tower_cutscene.tscn` (คัตซีนในหอคอย)
 * `central_tower_cutscene.tscn` (คัตซีนหอคอยเวทกลาง)
+* `intro_cutscene.tscn` (คัตซีนเปิดเรื่องหอคอยเวท)
 * `ending_cutscene.tscn` (คัตซีนฉากจบ)
 
 ### 2.1 ข้อมูลจำเพาะในกล่องข้อความ (Dialogue Box Specifications)
@@ -53,7 +54,7 @@
 |---|---|---|:---:|---|:---:|---|
 | **หัวข้อภาพย้อนอดีต** | `ComicTitle` | `ChakraPetch-Bold.ttf`<br>(SubResource: `FontVariation_speaker_bold`) | **24 px** | ทองสว่าง `#FFE680` | ไม่มี | `[ ภาพย้อนความทรงจำ ]` |
 | **คำบรรยายภาพย้อนอดีต** | `ComicCaption` | `ChakraPetch-Regular.ttf`<br>(SubResource: `FontVariation_dialogue_reg`) | **22 px** | ขาวนวล `#FAF9F6` | ไม่มี | คำบรรยายเหตุการณ์ความโก๊ะของปรมาจารย์ |
-| **คลิกเพื่อไปต่อ (คอมิก)** | `ComicContinuePrompt` | `ChakraPetch-Regular.ttf`<br>(SubResource: `FontVariation_summary_reg`) | **20 px** | ขาวโปร่งแสง (Alpha 0.9) | ไม่มี | คำแนะนำคลิกหน้าจอใต้ภาพย้อนอดีต |
+| **คลิกเพื่อไปต่อ (คอมิก)** | `ComicContinuePrompt` | `ChakraPetch-Regular.ttf`<br>(SubResource: `FontVariation_summary_reg`) | **22 px** | ขาวนวล `#FAF9F6` | ไม่มี | ลอยกระพริบด้านล่างจอ ตำแหน่งเดียวกับหน้าสรุปฉากจบ |
 | **ข้อความสรุปฉากจบ** | `SummaryLine1..3` | `ChakraPetch-Regular.ttf`<br>(SubResource: `FontVariation_summary_reg`) | **26 px** | ขาวบริสุทธิ์ `#FFFFFF` | ไม่มี | พิมพ์ทีละบรรทัด จัดกึ่งกลางจออย่างสมดุล |
 | **คลิกเพื่อไปต่อ (หน้าจบ)** | `ContinuePrompt` | `ChakraPetch-Regular.ttf`<br>(SubResource: `FontVariation_summary_reg`) | **22 px** | ขาวนวล `#FAF9F6` | ไม่มี | ลอยกระพริบด้านล่างจอ ก่อนเข้าสู่หน้าเครดิต |
 | **หัวข้อเครดิต** | `ThankYouLabel` | `ChakraPetch-Bold.ttf`<br>(SubResource: `FontVariation_speaker_bold`) | **32 px** | ขาวนวล `#FAF9F6` | ไม่มี | `Thank You for Playing` |
@@ -61,6 +62,16 @@
 | **ชื่อตัวละครในเครดิต** | `NameLabel` (ทุกตัวละคร) | `ChakraPetch-Bold.ttf`<br>(SubResource: `FontVariation_speaker_bold`) | **20 px** | ขาวนวล `#FAF9F6` | ไม่มี | ขนาดกะทัดรัด สบายตา อยู่เหนือสไปรต์ตัวละคร |
 | **ทีมผู้พัฒนา** | `DevelopedByLabel` | `ChakraPetch-Regular.ttf`<br>(SubResource: `FontVariation_summary_reg`) | **20 px** | ขาวโปร่งแสง (Alpha 0.9) | ไม่มี | `Developed by Git Di Waa Team` |
 | **ปุ่มกลับสู่เมนูหลัก** | `ReturnMenuBtn` | `ChakraPetch-Bold.ttf`<br>(SubResource: `FontVariation_speaker_bold`) | **20 px** | ขาวนวล `#F5F5F5` | เส้นขอบ 2px คมชัด | ปุ่มกดกลับสู่เมนูหลักมุมขวาล่างของหน้าเครดิต |
+
+---
+
+### 2.4 ฉากเปิดเรื่องหอคอยเวท (`intro_cutscene.tscn`)
+
+| ส่วนประกอบ | โหนด (Node) | ฟอนต์ / FontVariation | ขนาด | สีตัวอักษร | Outline | หมายเหตุ |
+|---|---|---|:---:|---|:---:|---|
+| **ข้อความทำนายคัมภีร์** | `RuneRichLabel` | `ChakraPetch-Bold.ttf`<br>(SubResource: `FontVariation_rune_bold`) | **32 px** | ทองนวลสว่าง `#FAF0CC` | น้ำตาลเข้ม 3px | เอฟเฟกต์คลื่น `[wave]` ลอยเด่นบนแผ่นกระดาษเวทมนตร์ |
+| **ออร่าเรืองแสงคัมภีร์** | `RuneAuraLabel` | `ChakraPetch-Bold.ttf`<br>(SubResource: `FontVariation_rune_bold`) | **32 px** | ทองโปร่งแสง | แสงเรืองทอง 8px, เงา 12px | เลเยอร์เรืองแสงกระพริบเบื้องหลังข้อความทำนาย |
+| **คลิกเพื่อไปต่อ** | `ContinuePrompt` | `ChakraPetch-Regular.ttf`<br>(SubResource: `FontVariation_summary_reg`) | **22 px** | ขาวนวล `#FAF9F6` | ไม่มี | ลอยกระพริบใต้แผ่นกระดาษเวทมนตร์ |
 
 ---
 

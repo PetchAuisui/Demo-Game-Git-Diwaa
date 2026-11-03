@@ -35,6 +35,8 @@
 [ext_resource type="Texture2D" uid="uid://b6yre4fu0rwi2" path="res://assets/cutscene/props/khampri/minikhampri16.png" id="33_mini16"]
 [ext_resource type="Texture2D" uid="uid://bngf0cdl4kc1q" path="res://assets/cutscene/props/khampri/paper.png" id="38_paper"]
 [ext_resource type="FontFile" uid="uid://csurxmw2vmws4" path="res://assets/fonts/TA-8-bit.ttf" id="39_ta_8_bit"]
+[ext_resource type="FontFile" uid="uid://deedcfbkojx6k" path="res://assets/fonts/ChakraPetch-Bold.ttf" id="41_chakra_bold"]
+[ext_resource type="FontFile" path="res://assets/fonts/ChakraPetch-Regular.ttf" id="42_chakra_reg"]
 [ext_resource type="Texture2D" uid="uid://dmykeg4jphdb0" path="res://assets/cutscene/props/khampri/drop_shadow.png" id="40_shadow"]
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_vypf7"]
@@ -1036,6 +1038,16 @@ _data = {
 &"walk_in": SubResource("Animation_walk_in")
 }
 
+[sub_resource type="FontVariation" id="FontVariation_rune_bold"]
+base_font = ExtResource("41_chakra_bold")
+spacing_top = 4
+spacing_bottom = 2
+
+[sub_resource type="FontVariation" id="FontVariation_summary_reg"]
+base_font = ExtResource("42_chakra_reg")
+spacing_top = 4
+spacing_bottom = 2
+
 [node name="Libary" type="Sprite2D" unique_id=2125946042]
 position = Vector2(960, 540)
 scale = Vector2(4, 4)
@@ -1305,14 +1317,14 @@ fit_content = false
 scroll_active = false
 theme_override_colors/default_color = Color(1, 0.88, 0.5, 0.35)
 theme_override_colors/font_outline_color = Color(1, 0.82, 0.4, 0.35)
-theme_override_constants/outline_size = 9
+theme_override_constants/outline_size = 8
 theme_override_colors/font_shadow_color = Color(1, 0.75, 0.3, 0.2)
 theme_override_constants/shadow_offset_x = 0
 theme_override_constants/shadow_offset_y = 0
-theme_override_constants/shadow_outline_size = 15
-theme_override_constants/line_separation = 16
-theme_override_fonts/normal_font = ExtResource("39_ta_8_bit")
-theme_override_font_sizes/normal_font_size = 46
+theme_override_constants/shadow_outline_size = 12
+theme_override_constants/line_separation = 14
+theme_override_fonts/normal_font = SubResource("FontVariation_rune_bold")
+theme_override_font_sizes/normal_font_size = 32
 text = "[center][wave amp=14.0 freq=2.0 connected=1]หากคัมภีร์แตกสลาย
 จงตามหาเศษแห่งต้นกำเนิด
 ณ หอคอย...[/wave][/center]"
@@ -1329,16 +1341,16 @@ mouse_filter = 2
 bbcode_enabled = true
 fit_content = false
 scroll_active = false
-theme_override_colors/default_color = Color(0.96, 0.9, 0.78, 1)
+theme_override_colors/default_color = Color(0.98, 0.92, 0.8, 1)
 theme_override_colors/font_outline_color = Color(0.18, 0.11, 0.05, 0.95)
-theme_override_constants/outline_size = 6
-theme_override_colors/font_shadow_color = Color(1, 0.85, 0.45, 0.2)
+theme_override_constants/outline_size = 3
+theme_override_colors/font_shadow_color = Color(1, 0.85, 0.45, 0.25)
 theme_override_constants/shadow_offset_x = 0
 theme_override_constants/shadow_offset_y = 0
-theme_override_constants/shadow_outline_size = 5
-theme_override_constants/line_separation = 16
-theme_override_fonts/normal_font = ExtResource("39_ta_8_bit")
-theme_override_font_sizes/normal_font_size = 46
+theme_override_constants/shadow_outline_size = 4
+theme_override_constants/line_separation = 14
+theme_override_fonts/normal_font = SubResource("FontVariation_rune_bold")
+theme_override_font_sizes/normal_font_size = 32
 text = "[center][wave amp=14.0 freq=2.0 connected=1]หากคัมภีร์แตกสลาย
 จงตามหาเศษแห่งต้นกำเนิด
 ณ หอคอย...[/wave][/center]"
@@ -1357,10 +1369,9 @@ offset_bottom = 56.0
 grow_horizontal = 2
 grow_vertical = 0
 mouse_filter = 2
+mouse_default_cursor_shape = 2
 theme_override_colors/font_color = Color(0.980392, 0.976471, 0.964706, 0.95)
-theme_override_colors/font_outline_color = Color(0.00392, 0, 0.07451, 0.85)
-theme_override_constants/outline_size = 4
-theme_override_fonts/font = ExtResource("39_ta_8_bit")
+theme_override_fonts/font = SubResource("FontVariation_summary_reg")
 theme_override_font_sizes/font_size = 22
 text = "คลิกหน้าจอเพื่อไปต่อ"
 horizontal_alignment = 1

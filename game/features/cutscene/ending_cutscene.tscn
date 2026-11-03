@@ -39,9 +39,9 @@
 [ext_resource type="Texture2D" uid="uid://lbxd43tusjvx" path="res://assets/cutscene/props/khampri/minikhampri15.png" id="37_m15"]
 [ext_resource type="Texture2D" uid="uid://dm416ujw1i4oo" path="res://assets/cutscene/characters/master/master_cry.png" id="38_273fk"]
 [ext_resource type="Texture2D" uid="uid://b6yre4fu0rwi2" path="res://assets/cutscene/props/khampri/minikhampri16.png" id="38_m16"]
-[ext_resource type="FontFile" path="res://assets/fonts/Bungee-Regular.ttf" id="39_bungee"]
+[ext_resource type="FontFile" uid="uid://caa27axnonbav" path="res://assets/fonts/Bungee-Regular.ttf" id="39_bungee"]
 [ext_resource type="FontFile" uid="uid://deedcfbkojx6k" path="res://assets/fonts/ChakraPetch-Bold.ttf" id="39_chakra_bold"]
-[ext_resource type="FontFile" path="res://assets/fonts/ChakraPetch-Regular.ttf" id="39_chakra_reg"]
+[ext_resource type="FontFile" uid="uid://c82lda4ldw0ve" path="res://assets/fonts/ChakraPetch-Regular.ttf" id="39_chakra_reg"]
 [ext_resource type="Texture2D" uid="uid://pb3ftuq7l261" path="res://assets/cutscene/characters/master/master_minishcok.png" id="41_8u681"]
 [ext_resource type="Texture2D" uid="uid://dmykeg4jphdb0" path="res://assets/cutscene/props/khampri/drop_shadow.png" id="42_shadow"]
 [ext_resource type="Texture2D" uid="uid://6272rjfm3v7c" path="res://assets/cutscene/backgrounds/storm-clouds-preview-Sheet.png" id="43_storm"]
@@ -88,22 +88,6 @@ height = 32
 fill = 1
 fill_from = Vector2(0.5, 0.5)
 fill_to = Vector2(1, 0.5)
-
-[sub_resource type="Gradient" id="Gradient_magic_speck"]
-offsets = PackedFloat32Array(0, 0.4, 0.8, 1)
-colors = PackedColorArray(1, 1, 1, 1, 0.95, 0.9, 1, 0.85, 0.7, 0.65, 1, 0.35, 0, 0, 0, 0)
-
-[sub_resource type="GradientTexture2D" id="GradientTexture2D_magic_speck"]
-gradient = SubResource("Gradient_magic_speck")
-width = 16
-height = 16
-fill = 1
-fill_from = Vector2(0.5, 0.5)
-fill_to = Vector2(1, 0.5)
-
-[sub_resource type="Gradient" id="Gradient_particle_fade"]
-offsets = PackedFloat32Array(0, 0.15, 0.8, 1)
-colors = PackedColorArray(0.980392, 0.976471, 0.964706, 0, 0.980392, 0.976471, 0.964706, 0.85, 0.980392, 0.95, 0.88, 0.75, 0.980392, 0.976471, 0.964706, 0)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_vel_angry"]
 atlas = ExtResource("10_vel_angry")
@@ -486,19 +470,6 @@ corner_radius_bottom_left = 12
 shadow_color = Color(0.00392, 0, 0.07451, 0.7)
 shadow_size = 14
 
-[sub_resource type="AtlasTexture" id="AtlasTexture_arrow"]
-atlas = ExtResource("51_dialog_arrow")
-region = Rect2(561, 344, 537, 334)
-
-[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_dialogue"]
-texture = ExtResource("50_dialog_frame")
-texture_margin_left = 24.0
-texture_margin_top = 24.0
-texture_margin_right = 24.0
-texture_margin_bottom = 24.0
-region_rect = Rect2(43, 191, 2086, 332)
-modulate_color = Color(0.78, 0.74, 0.82, 1)
-
 [sub_resource type="FontVariation" id="FontVariation_speaker_bold"]
 base_font = ExtResource("39_chakra_bold")
 spacing_top = 6
@@ -513,6 +484,42 @@ spacing_bottom = 4
 base_font = ExtResource("39_chakra_reg")
 spacing_top = 4
 spacing_bottom = 2
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_dialogue"]
+texture = ExtResource("50_dialog_frame")
+texture_margin_left = 24.0
+texture_margin_top = 24.0
+texture_margin_right = 24.0
+texture_margin_bottom = 24.0
+region_rect = Rect2(43, 191, 2086, 332)
+modulate_color = Color(0.78, 0.74, 0.82, 1)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_arrow"]
+atlas = ExtResource("51_dialog_arrow")
+region = Rect2(561, 344, 537, 334)
+
+[sub_resource type="Gradient" id="Gradient_magic_speck"]
+offsets = PackedFloat32Array(0, 0.4, 0.8, 1)
+colors = PackedColorArray(1, 1, 1, 1, 0.95, 0.9, 1, 0.85, 0.7, 0.65, 1, 0.35, 0, 0, 0, 0)
+
+[sub_resource type="GradientTexture2D" id="GradientTexture2D_magic_speck"]
+gradient = SubResource("Gradient_magic_speck")
+width = 16
+height = 16
+fill = 1
+fill_from = Vector2(0.5, 0.5)
+fill_to = Vector2(1, 0.5)
+
+[sub_resource type="Gradient" id="Gradient_particle_fade"]
+offsets = PackedFloat32Array(0, 0.15, 0.8, 1)
+colors = PackedColorArray(0.980392, 0.976471, 0.964706, 0, 0.980392, 0.976471, 0.964706, 0.85, 0.980392, 0.95, 0.88, 0.75, 0.980392, 0.976471, 0.964706, 0)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_guardian_idle"]
+atlas = ExtResource("49_guardian")
+region = Rect2(0, 0, 48, 83)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_bottom_bar"]
+bg_color = Color(0, 0, 0, 1)
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_btn_normal"]
 bg_color = Color(0.08, 0.08, 0.1, 0.4)
@@ -550,13 +557,6 @@ corner_radius_top_right = 6
 corner_radius_bottom_right = 6
 corner_radius_bottom_left = 6
 
-[sub_resource type="AtlasTexture" id="AtlasTexture_guardian_idle"]
-atlas = ExtResource("49_guardian")
-region = Rect2(0, 0, 48, 83)
-
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_bottom_bar"]
-bg_color = Color(0, 0, 0, 1)
-
 [node name="EndingCutscene" type="Node2D" unique_id=1713555345]
 texture_filter = 1
 script = ExtResource("1_script")
@@ -565,6 +565,7 @@ script = ExtResource("1_script")
 position = Vector2(960, 540)
 
 [node name="Stage1_BookRestoration" type="Node2D" parent="." unique_id=833302304]
+visible = false
 
 [node name="PurpleDarkBg" type="ColorRect" parent="Stage1_BookRestoration" unique_id=1150218345]
 offset_right = 1920.0
@@ -597,6 +598,7 @@ scale = Vector2(2.2, 2.2)
 texture = ExtResource("21_khampri")
 
 [node name="ShardsContainer" type="Node2D" parent="Stage1_BookRestoration" unique_id=714128173]
+visible = false
 position = Vector2(960, 540)
 
 [node name="Shard1" type="Sprite2D" parent="Stage1_BookRestoration/ShardsContainer" unique_id=468601452]
@@ -664,7 +666,6 @@ scale = Vector2(1.4, 1.4)
 texture = ExtResource("38_m16")
 
 [node name="Stage2_SkyRestoration" type="Node2D" parent="." unique_id=685658419]
-visible = false
 
 [node name="PeacefulSky" type="Sprite2D" parent="Stage2_SkyRestoration" unique_id=2128510706]
 position = Vector2(960, 540)
@@ -681,7 +682,6 @@ hframes = 11
 vframes = 6
 
 [node name="Stage3_VillageRestoration" type="Node2D" parent="." unique_id=1118347090]
-visible = false
 
 [node name="VillagePeaceful" type="Sprite2D" parent="Stage3_VillageRestoration" unique_id=1738239950]
 position = Vector2(960, 540)
@@ -862,17 +862,21 @@ horizontal_alignment = 1
 [node name="ComicContinuePrompt" type="Label" parent="ComicPanelContainer" unique_id=1494280457]
 modulate = Color(1, 1, 1, 0)
 layout_mode = 1
-anchors_preset = 12
+anchors_preset = 7
+anchor_left = 0.5
 anchor_top = 1.0
-anchor_right = 1.0
+anchor_right = 0.5
 anchor_bottom = 1.0
-offset_top = 56.0
-offset_bottom = 88.0
+offset_left = -300.0
+offset_top = 150.0
+offset_right = 300.0
+offset_bottom = 190.0
 grow_horizontal = 2
 grow_vertical = 0
-theme_override_colors/font_color = Color(0.980392, 0.976471, 0.964706, 0.9)
+mouse_default_cursor_shape = 2
+theme_override_colors/font_color = Color(0.980392, 0.976471, 0.964706, 0.95)
 theme_override_fonts/font = SubResource("FontVariation_summary_reg")
-theme_override_font_sizes/font_size = 20
+theme_override_font_sizes/font_size = 22
 text = "คลิกหน้าจอเพื่อไปต่อ"
 horizontal_alignment = 1
 
@@ -918,7 +922,7 @@ theme_override_constants/separation = 12
 
 [node name="SpeakerLabel" type="Label" parent="MagicStoryUI/DialogueBox/Margin/VBox" unique_id=1415030837]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.92, 0.80, 0.44, 1)
+theme_override_colors/font_color = Color(0.92, 0.8, 0.44, 1)
 theme_override_fonts/font = SubResource("FontVariation_speaker_bold")
 theme_override_font_sizes/font_size = 26
 text = "ปรมาจารย์"
@@ -960,7 +964,6 @@ mouse_filter = 2
 texture = SubResource("AtlasTexture_arrow")
 expand_mode = 1
 stretch_mode = 5
-
 
 [node name="TheEndContainer" type="Control" parent="MagicStoryUI" unique_id=305941743]
 visible = false
@@ -1066,9 +1069,9 @@ color = Color(0, 0, 0, 1)
 [node name="MagicParticles" type="CPUParticles2D" parent="MagicStoryUI/CreditsContainer" unique_id=1835182050]
 position = Vector2(960, 540)
 amount = 55
+texture = SubResource("GradientTexture2D_magic_speck")
 lifetime = 6.0
 preprocess = 3.0
-texture = SubResource("GradientTexture2D_magic_speck")
 emission_shape = 3
 emission_rect_extents = Vector2(960, 540)
 direction = Vector2(0.15, -1)
@@ -1266,9 +1269,9 @@ grow_horizontal = 0
 grow_vertical = 2
 mouse_default_cursor_shape = 2
 theme_override_colors/font_color = Color(0.960784, 0.960784, 0.960784, 0.95)
-theme_override_colors/font_hover_color = Color(1, 1, 1, 1)
-theme_override_colors/font_pressed_color = Color(0.85, 0.85, 0.88, 1)
 theme_override_colors/font_focus_color = Color(0.960784, 0.960784, 0.960784, 0.95)
+theme_override_colors/font_pressed_color = Color(0.85, 0.85, 0.88, 1)
+theme_override_colors/font_hover_color = Color(1, 1, 1, 1)
 theme_override_fonts/font = SubResource("FontVariation_speaker_bold")
 theme_override_font_sizes/font_size = 20
 theme_override_styles/normal = SubResource("StyleBoxFlat_btn_normal")

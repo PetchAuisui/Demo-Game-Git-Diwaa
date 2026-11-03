@@ -844,8 +844,8 @@ func _start_comic_pulse() -> void:
 	if comic_pulse_tween and comic_pulse_tween.is_valid():
 		comic_pulse_tween.kill()
 	comic_pulse_tween = create_tween().set_loops()
-	comic_pulse_tween.tween_property(comic_continue_prompt, "modulate:a", 0.4, 0.8).set_trans(Tween.TRANS_SINE)
-	comic_pulse_tween.tween_property(comic_continue_prompt, "modulate:a", 1.0, 0.8).set_trans(Tween.TRANS_SINE)
+	comic_pulse_tween.tween_property(comic_continue_prompt, "modulate:a", 0.35, 0.9).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	comic_pulse_tween.tween_property(comic_continue_prompt, "modulate:a", 1.0, 0.9).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 
 func _advance_comic_flashback() -> void:
 	if not is_waiting_comic:

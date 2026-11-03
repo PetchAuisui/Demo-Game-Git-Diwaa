@@ -1,6 +1,6 @@
-[gd_scene format=3 uid="uid://b8v7e2k4normal"]
+[gd_scene format=3 uid="uid://b7al1mid3cqel"]
 
-[ext_resource type="Script" path="res://features/cutscene/cut_scence_normal.gd" id="1_script"]
+[ext_resource type="Script" uid="uid://cw4jnne7p2x86" path="res://features/cutscene/cut_scence_normal.gd" id="1_script"]
 [ext_resource type="Texture2D" uid="uid://dcvd3t5deskx3" path="res://assets/cutscene/backgrounds/village-normal-to-chaos-Sheet.png" id="2_village"]
 [ext_resource type="Texture2D" uid="uid://ldg2myveluut" path="res://assets/cutscene/backgrounds/peaceful-landscape-preview-Sheet.png" id="3_peaceful"]
 
@@ -99,6 +99,86 @@ region = Rect2(0, 540, 480, 270)
 [sub_resource type="AtlasTexture" id="AtlasTexture_vil_23"]
 atlas = ExtResource("2_village")
 region = Rect2(480, 540, 480, 270)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_vil"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_vil_0")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_vil_1")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_vil_2")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_vil_3")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_vil_4")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_vil_5")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_vil_6")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_vil_7")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_vil_8")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_vil_9")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_vil_10")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_vil_11")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_vil_12")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_vil_13")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_vil_14")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_vil_15")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_vil_16")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_vil_17")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_vil_18")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_vil_19")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_vil_20")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_vil_21")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_vil_22")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_vil_23")
+}],
+"loop": 0,
+"name": &"village_normal",
+"speed": 6.67
+}]
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_sky_0"]
 atlas = ExtResource("3_peaceful")
@@ -364,135 +444,235 @@ region = Rect2(4320, 1350, 480, 270)
 atlas = ExtResource("3_peaceful")
 region = Rect2(4800, 1350, 480, 270)
 
-[sub_resource type="SpriteFrames" id="SpriteFrames_vil"]
-animations = [{
-"frames": [
-{"duration": 1.0, "texture": SubResource("AtlasTexture_vil_0")},
-{"duration": 1.0, "texture": SubResource("AtlasTexture_vil_1")},
-{"duration": 1.0, "texture": SubResource("AtlasTexture_vil_2")},
-{"duration": 1.0, "texture": SubResource("AtlasTexture_vil_3")},
-{"duration": 1.0, "texture": SubResource("AtlasTexture_vil_4")},
-{"duration": 1.0, "texture": SubResource("AtlasTexture_vil_5")},
-{"duration": 1.0, "texture": SubResource("AtlasTexture_vil_6")},
-{"duration": 1.0, "texture": SubResource("AtlasTexture_vil_7")},
-{"duration": 1.0, "texture": SubResource("AtlasTexture_vil_8")},
-{"duration": 1.0, "texture": SubResource("AtlasTexture_vil_9")},
-{"duration": 1.0, "texture": SubResource("AtlasTexture_vil_10")},
-{"duration": 1.0, "texture": SubResource("AtlasTexture_vil_11")},
-{"duration": 1.0, "texture": SubResource("AtlasTexture_vil_12")},
-{"duration": 1.0, "texture": SubResource("AtlasTexture_vil_13")},
-{"duration": 1.0, "texture": SubResource("AtlasTexture_vil_14")},
-{"duration": 1.0, "texture": SubResource("AtlasTexture_vil_15")},
-{"duration": 1.0, "texture": SubResource("AtlasTexture_vil_16")},
-{"duration": 1.0, "texture": SubResource("AtlasTexture_vil_17")},
-{"duration": 1.0, "texture": SubResource("AtlasTexture_vil_18")},
-{"duration": 1.0, "texture": SubResource("AtlasTexture_vil_19")},
-{"duration": 1.0, "texture": SubResource("AtlasTexture_vil_20")},
-{"duration": 1.0, "texture": SubResource("AtlasTexture_vil_21")},
-{"duration": 1.0, "texture": SubResource("AtlasTexture_vil_22")},
-{"duration": 1.0, "texture": SubResource("AtlasTexture_vil_23")}
-],
-"loop": 0,
-"name": &"village_normal",
-"speed": 6.67
-}]
-
 [sub_resource type="SpriteFrames" id="SpriteFrames_sky"]
 animations = [{
-"frames": [
-{"duration": 1.0, "texture": SubResource("AtlasTexture_sky_0")},
-{"duration": 1.0, "texture": SubResource("AtlasTexture_sky_1")},
-{"duration": 1.0, "texture": SubResource("AtlasTexture_sky_2")},
-{"duration": 1.0, "texture": SubResource("AtlasTexture_sky_3")},
-{"duration": 1.0, "texture": SubResource("AtlasTexture_sky_4")},
-{"duration": 1.0, "texture": SubResource("AtlasTexture_sky_5")},
-{"duration": 1.0, "texture": SubResource("AtlasTexture_sky_6")},
-{"duration": 1.0, "texture": SubResource("AtlasTexture_sky_7")},
-{"duration": 1.0, "texture": SubResource("AtlasTexture_sky_8")},
-{"duration": 1.0, "texture": SubResource("AtlasTexture_sky_9")},
-{"duration": 1.0, "texture": SubResource("AtlasTexture_sky_10")},
-{"duration": 1.0, "texture": SubResource("AtlasTexture_sky_11")},
-{"duration": 1.0, "texture": SubResource("AtlasTexture_sky_12")},
-{"duration": 1.0, "texture": SubResource("AtlasTexture_sky_13")},
-{"duration": 1.0, "texture": SubResource("AtlasTexture_sky_14")},
-{"duration": 1.0, "texture": SubResource("AtlasTexture_sky_15")},
-{"duration": 1.0, "texture": SubResource("AtlasTexture_sky_16")},
-{"duration": 1.0, "texture": SubResource("AtlasTexture_sky_17")},
-{"duration": 1.0, "texture": SubResource("AtlasTexture_sky_18")},
-{"duration": 1.0, "texture": SubResource("AtlasTexture_sky_19")},
-{"duration": 1.0, "texture": SubResource("AtlasTexture_sky_20")},
-{"duration": 1.0, "texture": SubResource("AtlasTexture_sky_21")},
-{"duration": 1.0, "texture": SubResource("AtlasTexture_sky_22")},
-{"duration": 1.0, "texture": SubResource("AtlasTexture_sky_23")},
-{"duration": 1.0, "texture": SubResource("AtlasTexture_sky_24")},
-{"duration": 1.0, "texture": SubResource("AtlasTexture_sky_25")},
-{"duration": 1.0, "texture": SubResource("AtlasTexture_sky_26")},
-{"duration": 1.0, "texture": SubResource("AtlasTexture_sky_27")},
-{"duration": 1.0, "texture": SubResource("AtlasTexture_sky_28")},
-{"duration": 1.0, "texture": SubResource("AtlasTexture_sky_29")},
-{"duration": 1.0, "texture": SubResource("AtlasTexture_sky_30")},
-{"duration": 1.0, "texture": SubResource("AtlasTexture_sky_31")},
-{"duration": 1.0, "texture": SubResource("AtlasTexture_sky_32")},
-{"duration": 1.0, "texture": SubResource("AtlasTexture_sky_33")},
-{"duration": 1.0, "texture": SubResource("AtlasTexture_sky_34")},
-{"duration": 1.0, "texture": SubResource("AtlasTexture_sky_35")},
-{"duration": 1.0, "texture": SubResource("AtlasTexture_sky_36")},
-{"duration": 1.0, "texture": SubResource("AtlasTexture_sky_37")},
-{"duration": 1.0, "texture": SubResource("AtlasTexture_sky_38")},
-{"duration": 1.0, "texture": SubResource("AtlasTexture_sky_39")},
-{"duration": 1.0, "texture": SubResource("AtlasTexture_sky_40")},
-{"duration": 1.0, "texture": SubResource("AtlasTexture_sky_41")},
-{"duration": 1.0, "texture": SubResource("AtlasTexture_sky_42")},
-{"duration": 1.0, "texture": SubResource("AtlasTexture_sky_43")},
-{"duration": 1.0, "texture": SubResource("AtlasTexture_sky_44")},
-{"duration": 1.0, "texture": SubResource("AtlasTexture_sky_45")},
-{"duration": 1.0, "texture": SubResource("AtlasTexture_sky_46")},
-{"duration": 1.0, "texture": SubResource("AtlasTexture_sky_47")},
-{"duration": 1.0, "texture": SubResource("AtlasTexture_sky_48")},
-{"duration": 1.0, "texture": SubResource("AtlasTexture_sky_49")},
-{"duration": 1.0, "texture": SubResource("AtlasTexture_sky_50")},
-{"duration": 1.0, "texture": SubResource("AtlasTexture_sky_51")},
-{"duration": 1.0, "texture": SubResource("AtlasTexture_sky_52")},
-{"duration": 1.0, "texture": SubResource("AtlasTexture_sky_53")},
-{"duration": 1.0, "texture": SubResource("AtlasTexture_sky_54")},
-{"duration": 1.0, "texture": SubResource("AtlasTexture_sky_55")},
-{"duration": 1.0, "texture": SubResource("AtlasTexture_sky_56")},
-{"duration": 1.0, "texture": SubResource("AtlasTexture_sky_57")},
-{"duration": 1.0, "texture": SubResource("AtlasTexture_sky_58")},
-{"duration": 1.0, "texture": SubResource("AtlasTexture_sky_59")},
-{"duration": 1.0, "texture": SubResource("AtlasTexture_sky_60")},
-{"duration": 1.0, "texture": SubResource("AtlasTexture_sky_61")},
-{"duration": 1.0, "texture": SubResource("AtlasTexture_sky_62")},
-{"duration": 1.0, "texture": SubResource("AtlasTexture_sky_63")},
-{"duration": 1.0, "texture": SubResource("AtlasTexture_sky_64")},
-{"duration": 1.0, "texture": SubResource("AtlasTexture_sky_65")}
-],
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_sky_0")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_sky_1")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_sky_2")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_sky_3")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_sky_4")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_sky_5")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_sky_6")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_sky_7")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_sky_8")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_sky_9")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_sky_10")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_sky_11")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_sky_12")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_sky_13")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_sky_14")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_sky_15")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_sky_16")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_sky_17")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_sky_18")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_sky_19")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_sky_20")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_sky_21")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_sky_22")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_sky_23")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_sky_24")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_sky_25")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_sky_26")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_sky_27")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_sky_28")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_sky_29")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_sky_30")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_sky_31")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_sky_32")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_sky_33")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_sky_34")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_sky_35")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_sky_36")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_sky_37")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_sky_38")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_sky_39")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_sky_40")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_sky_41")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_sky_42")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_sky_43")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_sky_44")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_sky_45")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_sky_46")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_sky_47")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_sky_48")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_sky_49")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_sky_50")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_sky_51")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_sky_52")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_sky_53")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_sky_54")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_sky_55")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_sky_56")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_sky_57")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_sky_58")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_sky_59")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_sky_60")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_sky_61")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_sky_62")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_sky_63")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_sky_64")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_sky_65")
+}],
 "loop": 0,
 "name": &"peaceful_sky",
 "speed": 6.67
 }]
 
-[node name="CutScenceNormal" type="Node2D"]
+[node name="CutScenceNormal" type="Node2D" unique_id=1565898123]
 script = ExtResource("1_script")
 
-[node name="Village" type="AnimatedSprite2D" parent="."]
+[node name="Village" type="AnimatedSprite2D" parent="." unique_id=1041006453]
+visible = false
 position = Vector2(960, 540)
 scale = Vector2(4, 4)
 sprite_frames = SubResource("SpriteFrames_vil")
 animation = &"village_normal"
 
-[node name="Sky" type="AnimatedSprite2D" parent="."]
+[node name="Sky" type="AnimatedSprite2D" parent="." unique_id=899643429]
 position = Vector2(960, 540)
 scale = Vector2(4, 4)
 sprite_frames = SubResource("SpriteFrames_sky")
 animation = &"peaceful_sky"
 
-[node name="Camera2D" type="Camera2D" parent="."]
+[node name="Camera2D" type="Camera2D" parent="." unique_id=1030578811]
 position = Vector2(960, 540)
 
-[node name="UI" type="CanvasLayer" parent="."]
+[node name="UI" type="CanvasLayer" parent="." unique_id=50504357]
 
-[node name="FadeOverlay" type="ColorRect" parent="UI"]
+[node name="FadeOverlay" type="ColorRect" parent="UI" unique_id=1086867568]
+visible = false
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
