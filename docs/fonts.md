@@ -111,10 +111,12 @@
 | **หัวข้อภารกิจ** | `MissionTitleLabel` | `ChakraPetch-Bold.ttf`<br>(SubResource: `FontVariation_modal_bold`) | **28 px** | ทองสว่าง `#F0D273` | ดำ 3px | "ผ่านการสอนขั้น 1" / "ผ่านการสอนขั้น 2" |
 | **ปุ่มเสร็จสิ้น** | `BtnFinish` | `ChakraPetch-Bold.ttf`<br>(SubResource: `FontVariation_modal_bold`) | **22 px** | ขาวนวล `#F2F2F2` | ไม่มี | "เสร็จสิ้น" กึ่งกลางปุ่มกว้าง 220px |
 
-#### 2.6.3 หน้าต่างเลือกรวมด่าน (`level_select_view.gd`)
+#### 2.6.3 หน้าต่างเลือกรวมด่าน (`level_select_view.tscn` / `level_select_view.gd`)
 
 | ส่วนประกอบ | โหนด / โค้ด | ฟอนต์ / FontVariation | ขนาด | สีตัวอักษร | Outline | หมายเหตุ |
 |---|---|---|:---:|---|:---:|---|
+| **หัวข้อแถบหน้าต่าง** | `TitleLabel` | `ChakraPetch-Bold.ttf`<br>(SubResource: `FontVariation_title_bold`) | **20 px** | ขาวนวล `#F5F5F5` | ไม่มี | `Level` บน TitleBar (เข้าคู่กับหน้าต่าง Modal) |
+| **หัวข้อหลัก** | `SelectLevelLabel` | `ChakraPetch-Bold.ttf`<br>(SubResource: `FontVariation_title_bold`) | **32 px** | ดำเข้ม `#1F1F1F` | ไม่มี | `Select Level` กึ่งกลางเด่นชัด คมกริบสไตล์โมเดิร์น |
 | **ชื่อการ์ดแต่ละด่าน** | `lbl_title` | `ChakraPetch-Bold.ttf`<br>(`FontVariation` spacing_top=4, bottom=2) | **22 px** | เขียวเข้ม `#0A380D` (ผ่านแล้ว)<br>เทาเข้ม `#383840` (ยังไม่ผ่าน) | ไม่มี | "ด่านที่ 1" ถึง "ด่านที่ 15" เด่นชัด สระไม่ตกขอบ |
 | **ชื่อคำสั่งประจำด่าน** | `lbl_cmd` | `ChakraPetch-Regular.ttf`<br>(`FontVariation` spacing_top=4, bottom=2) | **16 px** | เขียว `#0F4214` (ผ่านแล้ว)<br>เทา `#52525C` (ยังไม่ผ่าน) | ไม่มี | เช่น `git version` จัดกึ่งกลางใต้หัวข้อด่าน |
 | **ดาวผ่านด่าน** | `lbl_stars` | System Fallback Font | **18 px** | ทอง `#FACF19` | ไม่มี | `★ ★ ★` แสดงเฉพาะด่านที่ผ่านแล้ว |
