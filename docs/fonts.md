@@ -101,7 +101,7 @@
 | **เนื้อหาคีย์เวิร์ด** | `Body` | `ChakraPetch-Regular.ttf`<br>(SubResource: `FontVariation_modal_reg`) | **20 px** | น้ำตาลเข้ม `#402905` | ไม่มี | "การตรวจสอบพลัง หมายถึง git --version" อ่านง่าย สบายตา |
 | **ปุ่มเล่นอีกครั้ง** | `BtnReplay` | `ChakraPetch-Bold.ttf`<br>(SubResource: `FontVariation_modal_bold`) | **20 px** | ดำเทา `#2E2E2E` | ไม่มี | `↻ เล่นอีกครั้ง` (ปุ่มซ้าย กว้าง 180px) |
 | **ปุ่มกลับหน้าเลือกด่าน** | `BtnLevelSelect` | `ChakraPetch-Bold.ttf`<br>(SubResource: `FontVariation_modal_bold`) | **20 px** | ดำเทา `#2E2E2E` | ไม่มี | `☰ กลับไปหน้าเลือกด่าน` (ปุ่มกลาง กว้าง 240px) |
-| **ปุ่มด่านต่อไป** | `BtnNextLevel` | `ChakraPetch-Bold.ttf`<br>(SubResource: `FontVariation_modal_bold`) | **20 px** | น้ำตาลเข้ม `#1A0D05` | ไม่มี | `⏭ ด่านต่อไป` (ปุ่มขวา โทนส้มทอง กว้าง 180px) |
+| **ปุ่มด่านต่อไป** | `BtnNextLevel` | `ChakraPetch-Bold.ttf`<br>(SubResource: `FontVariation_modal_bold`) | **20 px** | น้ำตาลเข้ม `#1A0D05` | ไม่มี | `ด่านต่อไป` (ปุ่มขวา โทนส้มทอง กว้าง 180px) |
 
 #### 2.6.2 หน้าจำลองเล่นเกม (`gameplay_placeholder_view.tscn`)
 
