@@ -1,7 +1,13 @@
-[gd_scene load_steps=6 format=3]
+[gd_scene load_steps=8 format=3]
 
 [ext_resource type="Script" path="res://features/sandbox/top_bar_panel.gd" id="1_script"]
-[ext_resource type="FontFile" uid="uid://deedcfbkojx6k" path="res://assets/fonts/ChakraPetch-Bold.ttf" id="2_font"]
+[ext_resource type="FontFile" uid="uid://caa27axnonbav" path="res://assets/fonts/Bungee-Regular.ttf" id="2_font_bungee"]
+[ext_resource type="FontFile" uid="uid://deedcfbkojx6k" path="res://assets/fonts/ChakraPetch-Bold.ttf" id="3_font_bold"]
+
+[sub_resource type="FontVariation" id="FontVariation_bold"]
+base_font = ExtResource("3_font_bold")
+spacing_top = 4
+spacing_bottom = 2
 
 [sub_resource type="StyleBoxFlat" id="Style_topbar"]
 bg_color = Color(0.18, 0.13, 0.08, 0.96)
@@ -55,7 +61,8 @@ theme_override_constants/separation = 19
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_colors/font_color = Color(1, 0.96, 0.83, 1)
-theme_override_font_sizes/font_size = 30
+theme_override_fonts/font = ExtResource("2_font_bungee")
+theme_override_font_sizes/font_size = 28
 text = "GIT DIWAA"
 vertical_alignment = 1
 
@@ -63,7 +70,8 @@ vertical_alignment = 1
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_colors/font_color = Color(0.7, 1, 0.67, 1)
-theme_override_font_sizes/font_size = 21
+theme_override_fonts/font = SubResource("FontVariation_bold")
+theme_override_font_sizes/font_size = 20
 text = "SANDBOX"
 horizontal_alignment = 1
 vertical_alignment = 1
@@ -81,7 +89,7 @@ focus_mode = 0
 mouse_default_cursor_shape = 2
 theme_override_colors/font_color = Color(0.96, 0.96, 0.96, 1)
 theme_override_colors/font_hover_color = Color(1, 1, 1, 1)
-theme_override_fonts/font = ExtResource("2_font")
+theme_override_fonts/font = SubResource("FontVariation_bold")
 theme_override_font_sizes/font_size = 18
 theme_override_styles/normal = SubResource("Style_btn_finish")
 theme_override_styles/hover = SubResource("Style_btn_finish_hover")
