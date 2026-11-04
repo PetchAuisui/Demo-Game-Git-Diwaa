@@ -1,13 +1,8 @@
 [gd_scene format=3 uid="uid://d3yq8vkm7w1a0"]
 
 [ext_resource type="Script" path="res://features/level_select/level_select_view.gd" id="1_script"]
-[ext_resource type="FontFile" uid="uid://deedcfbkojx6k" path="res://assets/fonts/ChakraPetch-Bold.ttf" id="2_chakra_bold"]
+[ext_resource type="FontFile" uid="uid://caa27axnonbav" path="res://assets/fonts/Bungee-Regular.ttf" id="2_bungee"]
 [ext_resource type="FontFile" uid="uid://csurxmw2vmws4" path="res://assets/fonts/TA-8-bit.ttf" id="3_font"]
-
-[sub_resource type="FontVariation" id="FontVariation_title_bold"]
-base_font = ExtResource("2_chakra_bold")
-spacing_top = 4
-spacing_bottom = 2
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_window"]
 bg_color = Color(0.82, 0.82, 0.82, 1)
@@ -90,8 +85,8 @@ theme_override_constants/separation = 8
 [node name="TitleLabel" type="Label" parent="WindowPanel/VBoxMain/TitleBar/HBox"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.96, 0.96, 0.96, 1)
-theme_override_fonts/font = SubResource("FontVariation_title_bold")
-theme_override_font_sizes/font_size = 20
+theme_override_fonts/font = ExtResource("2_bungee")
+theme_override_font_sizes/font_size = 18
 text = "Level"
 
 [node name="Spacer" type="Control" parent="WindowPanel/VBoxMain/TitleBar/HBox"]
@@ -142,8 +137,8 @@ theme_override_constants/separation = 20
 [node name="SelectLevelLabel" type="Label" parent="WindowPanel/VBoxMain/Margin/VBox"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.1, 0.1, 0.1, 1)
-theme_override_fonts/font = SubResource("FontVariation_title_bold")
-theme_override_font_sizes/font_size = 32
+theme_override_fonts/font = ExtResource("2_bungee")
+theme_override_font_sizes/font_size = 30
 text = "Select Level"
 horizontal_alignment = 1
 
