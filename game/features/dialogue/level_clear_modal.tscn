@@ -3,6 +3,9 @@
 [ext_resource type="Script" path="res://features/dialogue/level_clear_modal.gd" id="1_script"]
 [ext_resource type="FontFile" uid="uid://deedcfbkojx6k" path="res://assets/fonts/ChakraPetch-Bold.ttf" id="2_chakra_bold"]
 [ext_resource type="FontFile" path="res://assets/fonts/ChakraPetch-Regular.ttf" id="3_chakra_reg"]
+[ext_resource type="Texture2D" uid="uid://du0ercqi3soo0" path="res://assets/icons/modal_replay.png" id="4_icon_replay"]
+[ext_resource type="Texture2D" uid="uid://djq5ryhi6kfpq" path="res://assets/icons/modal_level_select.png" id="5_icon_level_select"]
+[ext_resource type="Texture2D" uid="uid://cl45eqkow7pi3" path="res://assets/icons/modal_next_level.png" id="6_icon_next_level"]
 
 [sub_resource type="FontVariation" id="FontVariation_modal_bold"]
 base_font = ExtResource("2_chakra_bold")
@@ -348,48 +351,122 @@ horizontal_alignment = 1
 
 [node name="HBoxButtons" type="HBoxContainer" parent="WindowPanel/VBoxMain/Margin/VBox"]
 layout_mode = 2
-size_flags_vertical = 3
-theme_override_constants/separation = 16
+theme_override_constants/separation = 20
 alignment = 1
 
 [node name="BtnReplay" type="Button" parent="WindowPanel/VBoxMain/Margin/VBox/HBoxButtons"]
-custom_minimum_size = Vector2(180, 56)
+custom_minimum_size = Vector2(210, 92)
 layout_mode = 2
 focus_mode = 0
 mouse_default_cursor_shape = 2
-theme_override_colors/font_color = Color(0.18, 0.18, 0.18, 1)
-theme_override_fonts/font = SubResource("FontVariation_modal_bold")
-theme_override_font_sizes/font_size = 20
 theme_override_styles/normal = SubResource("StyleBoxFlat_btn_beige")
 theme_override_styles/hover = SubResource("StyleBoxFlat_btn_beige_hover")
 theme_override_styles/pressed = SubResource("StyleBoxFlat_btn_beige_hover")
 theme_override_styles/focus = SubResource("StyleBoxFlat_btn_beige_hover")
-text = "↻ เล่นอีกครั้ง"
+
+[node name="VBoxContent" type="VBoxContainer" parent="WindowPanel/VBoxMain/Margin/VBox/HBoxButtons/BtnReplay"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme_override_constants/separation = 4
+alignment = 1
+
+[node name="Icon" type="TextureRect" parent="WindowPanel/VBoxMain/Margin/VBox/HBoxButtons/BtnReplay/VBoxContent"]
+custom_minimum_size = Vector2(0, 36)
+layout_mode = 2
+mouse_filter = 2
+texture = ExtResource("4_icon_replay")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Label" type="Label" parent="WindowPanel/VBoxMain/Margin/VBox/HBoxButtons/BtnReplay/VBoxContent"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.18, 0.18, 0.18, 1)
+theme_override_fonts/font = SubResource("FontVariation_modal_bold")
+theme_override_font_sizes/font_size = 18
+text = "เล่นอีกครั้ง"
+horizontal_alignment = 1
+vertical_alignment = 1
 
 [node name="BtnLevelSelect" type="Button" parent="WindowPanel/VBoxMain/Margin/VBox/HBoxButtons"]
-custom_minimum_size = Vector2(240, 56)
+custom_minimum_size = Vector2(210, 92)
 layout_mode = 2
 focus_mode = 0
 mouse_default_cursor_shape = 2
-theme_override_colors/font_color = Color(0.18, 0.18, 0.18, 1)
-theme_override_fonts/font = SubResource("FontVariation_modal_bold")
-theme_override_font_sizes/font_size = 20
 theme_override_styles/normal = SubResource("StyleBoxFlat_btn_beige")
 theme_override_styles/hover = SubResource("StyleBoxFlat_btn_beige_hover")
 theme_override_styles/pressed = SubResource("StyleBoxFlat_btn_beige_hover")
 theme_override_styles/focus = SubResource("StyleBoxFlat_btn_beige_hover")
-text = "☰ กลับไปหน้าเลือกด่าน"
+
+[node name="VBoxContent" type="VBoxContainer" parent="WindowPanel/VBoxMain/Margin/VBox/HBoxButtons/BtnLevelSelect"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme_override_constants/separation = 4
+alignment = 1
+
+[node name="Icon" type="TextureRect" parent="WindowPanel/VBoxMain/Margin/VBox/HBoxButtons/BtnLevelSelect/VBoxContent"]
+custom_minimum_size = Vector2(0, 36)
+layout_mode = 2
+mouse_filter = 2
+texture = ExtResource("5_icon_level_select")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Label" type="Label" parent="WindowPanel/VBoxMain/Margin/VBox/HBoxButtons/BtnLevelSelect/VBoxContent"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.18, 0.18, 0.18, 1)
+theme_override_fonts/font = SubResource("FontVariation_modal_bold")
+theme_override_font_sizes/font_size = 18
+text = "กลับไปหน้าเลือกด่าน"
+horizontal_alignment = 1
+vertical_alignment = 1
 
 [node name="BtnNextLevel" type="Button" parent="WindowPanel/VBoxMain/Margin/VBox/HBoxButtons"]
-custom_minimum_size = Vector2(180, 56)
+custom_minimum_size = Vector2(210, 92)
 layout_mode = 2
 focus_mode = 0
 mouse_default_cursor_shape = 2
-theme_override_colors/font_color = Color(0.1, 0.05, 0.02, 1)
-theme_override_fonts/font = SubResource("FontVariation_modal_bold")
-theme_override_font_sizes/font_size = 20
 theme_override_styles/normal = SubResource("StyleBoxFlat_btn_orange")
 theme_override_styles/hover = SubResource("StyleBoxFlat_btn_orange_hover")
 theme_override_styles/pressed = SubResource("StyleBoxFlat_btn_orange_hover")
 theme_override_styles/focus = SubResource("StyleBoxFlat_btn_orange_hover")
+
+[node name="VBoxContent" type="VBoxContainer" parent="WindowPanel/VBoxMain/Margin/VBox/HBoxButtons/BtnNextLevel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme_override_constants/separation = 4
+alignment = 1
+
+[node name="Icon" type="TextureRect" parent="WindowPanel/VBoxMain/Margin/VBox/HBoxButtons/BtnNextLevel/VBoxContent"]
+custom_minimum_size = Vector2(0, 36)
+layout_mode = 2
+mouse_filter = 2
+texture = ExtResource("6_icon_next_level")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Label" type="Label" parent="WindowPanel/VBoxMain/Margin/VBox/HBoxButtons/BtnNextLevel/VBoxContent"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.1, 0.05, 0.02, 1)
+theme_override_fonts/font = SubResource("FontVariation_modal_bold")
+theme_override_font_sizes/font_size = 18
 text = "ด่านต่อไป"
+horizontal_alignment = 1
+vertical_alignment = 1
