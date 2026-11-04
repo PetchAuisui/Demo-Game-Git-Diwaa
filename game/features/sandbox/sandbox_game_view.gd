@@ -5,6 +5,7 @@ extends Control
 
 const CENTRAL_TOWER_CUTSCENE_PATH := "res://features/cutscene/central_tower_cutscene.tscn"
 const ENDING_CUTSCENE_PATH := "res://features/cutscene/ending_cutscene.tscn"
+const GameProgressManager = preload("res://common/game_progress_manager.gd")
 
 var _top_bar: TopBarPanel
 var _files_panel: FilesPanel
@@ -41,6 +42,7 @@ func _wire_events() -> void:
 	_files_panel.rename_entry_requested.connect(_on_rename_entry_requested)
 	_files_panel.delete_entry_requested.connect(_on_delete_entry_requested)
 	_git_graph_panel.commit_selected.connect(_on_commit_selected)
+	_top_bar.finish_pressed.connect(_on_finish_gameplay_pressed)
 
 
 ## Injects or creates the sandbox service. Allows OOP dependency injection.
@@ -67,9 +69,24 @@ func _initialize_sandbox() -> void:
 	_remote_repo_button.set_available(_sandbox_service.remote_account != null)
 	_terminal_panel.set_executing(false)
 
+	var step := GameProgressManager.get_current_gameplay_step()
+	var lvl := GameProgressManager.get_selected_level_number()
+	if step > 0:
+		_top_bar.set_mode_text("ด่านที่ %d (ขั้นที่ %d)" % [lvl, step])
+		_top_bar.set_finish_button_text("เสร็จสิ้น (ไปต่อ) ➔")
+	else:
+		_top_bar.set_finish_button_text("กลับหน้าเลือกด่าน")
+
 	if _sandbox_service.info != null:
 		_terminal_panel.set_window_title("●  ●  ●    TERMINAL — learner@diwaa:~/%s" % _sandbox_service.info.mission_id)
-		_terminal_panel.append_info("พร้อมใช้งาน — พิมพ์ help หรือเริ่มด้วย git --version\n")
+		if step == 1:
+			_terminal_panel.append_info("📜 ภารกิจด่านที่ %d (ขั้นที่ 1): ลองพิมพ์คำสั่ง 'git --version' เพื่อตรวจสอบพลัง" % lvl)
+			_terminal_panel.append_info("💡 เมื่อทดลองจนพอใจแล้ว ให้กดปุ่ม [เสร็จสิ้น (ไปต่อ)] ด้านบนขวา หรือพิมพ์ 'done' เพื่อดำเนินเนื้อเรื่องต่อ\n")
+		elif step == 2:
+			_terminal_panel.append_info("📜 ภารกิจด่านที่ %d (ขั้นที่ 2): ลองพิมพ์คำสั่ง 'git config --global user.name \"Vel\"' และ 'git config --global user.email \"vel@magic.world\"'" % lvl)
+			_terminal_panel.append_info("💡 เมื่อทดลองจนพอใจแล้ว ให้กดปุ่ม [เสร็จสิ้น (ไปต่อ)] ด้านบนขวา หรือพิมพ์ 'done' เพื่อดำเนินเนื้อเรื่องต่อ\n")
+		else:
+			_terminal_panel.append_info("พร้อมใช้งาน — พิมพ์ help หรือเริ่มด้วย git --version\n")
 
 	await _refresh_state()
 
@@ -91,6 +108,11 @@ func _on_command_submitted(command: String) -> void:
 
 	var trimmed := command.strip_edges()
 	var lower := trimmed.to_lower()
+
+	# Finished mission or exit
+	if lower in ["done", "finish", "exit", "quit"]:
+		_on_finish_gameplay_pressed()
+		return
 
 	# Built-in help handler
 	if lower == "help":
@@ -368,6 +390,28 @@ func _show_help() -> void:
 
 คำสั่ง UI / ทดสอบ: write <path> <content>, cat <path>, delete <path>, files,
                   sandbox-reset, cutscene <central|ending>, level 16, clear, help""")
+
+
+func _on_finish_gameplay_pressed() -> void:
+	var current_step := GameProgressManager.get_current_gameplay_step()
+	if current_step > 0:
+		# ส่งต่อไปยัง dialogue phase ถัดไป:
+		# จบขั้น 1 -> ไป phase 1 (part 2 intro)
+		# จบขั้น 2 -> ไป phase 2 (outro)
+		var next_phase := 1 if current_step == 1 else 2
+		GameProgressManager.set_pending_dialogue_phase(next_phase)
+		GameProgressManager.set_current_gameplay_step(0)
+		var return_scene := GameProgressManager.get_gameplay_return_scene()
+		if return_scene.is_empty():
+			return_scene = "res://features/cutscene/inside_tower_cutscene.tscn"
+		_terminal_panel.append_info("กำลังกลับสู่เนื้อเรื่อง...")
+		_change_scene_to_cutscene(return_scene)
+	else:
+		var level_select_path := "res://features/level_select/level_select_view.tscn"
+		if ResourceLoader.exists(level_select_path):
+			get_tree().change_scene_to_file(level_select_path)
+		else:
+			_change_scene_to_cutscene(CENTRAL_TOWER_CUTSCENE_PATH)
 
 
 func _exit_tree() -> void:

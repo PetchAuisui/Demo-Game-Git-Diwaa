@@ -17,6 +17,8 @@ const SECTION_LEVELS := "levels_cleared"
 ## พร้อมฟังก์ชัน consume ที่จะเคลียร์ค่ากลับเป็น 0 ทันทีที่อ่าน ป้องกันค่าค้างข้าม Session
 static var _pending_dialogue_phase: int = 0
 static var _selected_level_number: int = 1
+static var _current_gameplay_step: int = 0
+static var _gameplay_return_scene: String = "res://features/cutscene/inside_tower_cutscene.tscn"
 
 static func set_selected_level_number(level_num: int) -> void:
 	_selected_level_number = level_num
@@ -31,6 +33,18 @@ static func consume_pending_dialogue_phase() -> int:
 	var phase := _pending_dialogue_phase
 	_pending_dialogue_phase = 0
 	return phase
+
+static func set_current_gameplay_step(step: int) -> void:
+	_current_gameplay_step = step
+
+static func get_current_gameplay_step() -> int:
+	return _current_gameplay_step
+
+static func set_gameplay_return_scene(scene_path: String) -> void:
+	_gameplay_return_scene = scene_path
+
+static func get_gameplay_return_scene() -> String:
+	return _gameplay_return_scene
 
 static func has_seen_intro_cutscene() -> bool:
 	var cfg := ConfigFile.new()

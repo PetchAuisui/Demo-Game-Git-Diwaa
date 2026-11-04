@@ -828,11 +828,28 @@ func _open_gameplay_step(step: int) -> void:
 	if skip_ctrl:
 		skip_ctrl.visible = false
 	
+	GameProgressManager.set_current_gameplay_step(step)
+	var ret_path = scene_file_path if scene_file_path != "" else "res://features/cutscene/inside_tower_cutscene.tscn"
+	GameProgressManager.set_gameplay_return_scene(ret_path)
+	
+	const SANDBOX_PATH := "res://features/sandbox/sandbox_game_view.tscn"
+	if ResourceLoader.exists(SANDBOX_PATH):
+		if is_instance_valid(fade_overlay):
+			fade_overlay.visible = true
+			var tw = create_tween()
+			tw.tween_property(fade_overlay, "color:a", 1.0, 0.3)
+			tw.tween_callback(func():
+				get_tree().change_scene_to_file(SANDBOX_PATH)
+			)
+		else:
+			get_tree().change_scene_to_file(SANDBOX_PATH)
+		return
+	
 	var placeholder_res = load("res://features/dialogue/gameplay_placeholder_view.tscn")
 	if placeholder_res:
 		var placeholder = placeholder_res.instantiate()
 		placeholder.current_step = step
-		placeholder.return_scene_path = scene_file_path if scene_file_path != "" else "res://features/cutscene/inside_tower_cutscene.tscn"
+		placeholder.return_scene_path = ret_path
 		placeholder.step_finished.connect(_on_gameplay_step_finished)
 		magic_ui.add_child(placeholder)
 		placeholder.modulate.a = 0.0
