@@ -10,10 +10,28 @@ const GameProgressManager = preload("res://common/game_progress_manager.gd")
 @onready var grid_container: GridContainer = $WindowPanel/VBoxMain/Margin/VBox/GridContainer
 
 var font_res: Font = null
+var font_cmd: Font = null
 
 func _ready() -> void:
-	if ResourceLoader.exists("res://assets/fonts/TA-8-bit.ttf"):
+	if ResourceLoader.exists("res://assets/fonts/ChakraPetch-Bold.ttf"):
+		var base_bold: Font = load("res://assets/fonts/ChakraPetch-Bold.ttf")
+		var fv_title := FontVariation.new()
+		fv_title.base_font = base_bold
+		fv_title.spacing_top = 4
+		fv_title.spacing_bottom = 2
+		font_res = fv_title
+	elif ResourceLoader.exists("res://assets/fonts/TA-8-bit.ttf"):
 		font_res = load("res://assets/fonts/TA-8-bit.ttf")
+
+	if ResourceLoader.exists("res://assets/fonts/ChakraPetch-Regular.ttf"):
+		var base_reg: Font = load("res://assets/fonts/ChakraPetch-Regular.ttf")
+		var fv_cmd := FontVariation.new()
+		fv_cmd.base_font = base_reg
+		fv_cmd.spacing_top = 4
+		fv_cmd.spacing_bottom = 2
+		font_cmd = fv_cmd
+	else:
+		font_cmd = font_res
 		
 	if btn_close:
 		btn_close.pressed.connect(_on_close_pressed)
@@ -90,7 +108,7 @@ func _setup_level_grid() -> void:
 			lbl_title.add_theme_color_override("font_color", Color(0.04, 0.22, 0.05, 1.0))
 			if font_res:
 				lbl_title.add_theme_font_override("font", font_res)
-				lbl_title.add_theme_font_size_override("font_size", 20)
+				lbl_title.add_theme_font_size_override("font_size", 22)
 			vbox.add_child(lbl_title)
 			
 			var cmd_name := _get_command_for_level(i, lvl_path)
@@ -98,7 +116,10 @@ func _setup_level_grid() -> void:
 			lbl_cmd.text = cmd_name
 			lbl_cmd.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 			lbl_cmd.add_theme_color_override("font_color", Color(0.06, 0.26, 0.08, 1.0))
-			if font_res:
+			if font_cmd:
+				lbl_cmd.add_theme_font_override("font", font_cmd)
+				lbl_cmd.add_theme_font_size_override("font_size", 16)
+			elif font_res:
 				lbl_cmd.add_theme_font_override("font", font_res)
 				lbl_cmd.add_theme_font_size_override("font_size", 16)
 			vbox.add_child(lbl_cmd)
@@ -159,7 +180,7 @@ func _setup_level_grid() -> void:
 				lbl_title.add_theme_color_override("font_color", Color(0.22, 0.22, 0.25, 1.0))
 				if font_res:
 					lbl_title.add_theme_font_override("font", font_res)
-					lbl_title.add_theme_font_size_override("font_size", 20)
+					lbl_title.add_theme_font_size_override("font_size", 22)
 				vbox.add_child(lbl_title)
 				
 				var cmd_name := _get_command_for_level(i, lvl_path)
@@ -167,7 +188,10 @@ func _setup_level_grid() -> void:
 				lbl_cmd.text = cmd_name
 				lbl_cmd.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 				lbl_cmd.add_theme_color_override("font_color", Color(0.32, 0.32, 0.36, 1.0))
-				if font_res:
+				if font_cmd:
+					lbl_cmd.add_theme_font_override("font", font_cmd)
+					lbl_cmd.add_theme_font_size_override("font_size", 16)
+				elif font_res:
 					lbl_cmd.add_theme_font_override("font", font_res)
 					lbl_cmd.add_theme_font_size_override("font_size", 16)
 				vbox.add_child(lbl_cmd)
