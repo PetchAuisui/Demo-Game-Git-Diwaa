@@ -121,6 +121,27 @@
 | **ชื่อคำสั่งประจำด่าน** | `lbl_cmd` | `ChakraPetch-Regular.ttf`<br>(`FontVariation` spacing_top=4, bottom=2) | **16 px** | เขียว `#0F4214` (ผ่านแล้ว)<br>เทา `#52525C` (ยังไม่ผ่าน) | ไม่มี | เช่น `git version` จัดกึ่งกลางใต้หัวข้อด่าน |
 | **ดาวผ่านด่าน** | `lbl_stars` | System Fallback Font | **18 px** | ทอง `#FACF19` | ไม่มี | `★ ★ ★` แสดงเฉพาะด่านที่ผ่านแล้ว |
 
+#### 2.6.4 หน้าจอเกมเพลย์ Sandbox (`sandbox_game_view.tscn`)
+
+ไฟล์คอมโพเนนต์: `top_bar_panel.tscn`, `files_panel.tscn`, `git_graph_panel.tscn`, `terminal_panel.tscn`, `file_dialog_theme.tres`
+
+| ส่วนประกอบ | โหนด / โค้ด | ฟอนต์ / FontVariation | ขนาด | สีตัวอักษร | สไตล์ / การใช้งาน |
+|---|---|---|:---:|---|---|
+| **ชื่อเกมบน Top Bar** | `BrandLabel` | `Bungee-Regular.ttf` | **28 px** | ครีมทอง `#FFF5D4` | `GIT DIWAA` สไตล์ Arcade Display สอดคล้องกับหน้าเริ่มเกม |
+| **ป้ายสถานะด่าน / โหมด** | `ModeLabel` | `ChakraPetch-Bold.ttf`<br>(`FontVariation` spacing_top=4, bottom=2) | **20 px** | เขียวอ่อน `#B3FFAB` | "SANDBOX" หรือ "ด่านที่ 1 (ขั้นที่ 1)" คมชัด สระไม่ตกขอบ |
+| **ปุ่มเสร็จสิ้นภารกิจ** | `BtnFinish` | `ChakraPetch-Bold.ttf`<br>(`FontVariation` spacing_top=4, bottom=2) | **18 px** | ขาวนวล `#F5F5F5` | "เสร็จสิ้น (ไปต่อ) ➔" ปุ่มกดสีเขียวเด่นมุมบนขวา |
+| **หัวข้อพื้นที่ทำงานไฟล์** | `TitleLabel` (FilesPanel) | `ChakraPetch-Bold.ttf`<br>(`FontVariation` spacing_top=4, bottom=2) | **22 px** | ทอง `#FFC959` | "FILES — พื้นที่ทำงาน" |
+| **ปุ่มจัดการไฟล์/โฟลเดอร์** | `NewFileButton`, `NewFolderButton`<br>`OpenButton`, `RenameButton`, `DeleteButton` | `ChakraPetch-SemiBold.ttf`<br>(`FontVariation` spacing_top=4, bottom=2) | **17 px** | ตามสีประเภทการกระทำ | "+ ไฟล์", "+ โฟลเดอร์", "เปิด", "เปลี่ยนชื่อ", "ลบ" |
+| **รายการไฟล์ในไดเรกทอรี** | `FilesList` | `ChakraPetch-Regular.ttf`<br>(`FontVariation` spacing_top=4, bottom=2) | **18 px** | ฟ้าเทา `#D1D9ED` | แสดงรายชื่อไฟล์และโฟลเดอร์ใน Workspace |
+| **ปุ่มบันทึกและปิดแก้ไขไฟล์** | `SaveButton`, `CloseEditorButton` | `ChakraPetch-Bold.ttf` / `SemiBold` | **17 px** | เขียว / ขาวฟ้า | "บันทึก", "← ไฟล์" ใน Editor Mode |
+| **หัวข้อ Git Graph** | `TitleLabel` (GitGraphPanel) | `ChakraPetch-Bold.ttf`<br>(`FontVariation` spacing_top=4, bottom=2) | **22 px** | ทอง `#FFC959` | "GIT GRAPH" |
+| **ปุ่ม Remote Repo** | `RemoteRepoButton` | `ChakraPetch-SemiBold.ttf` | **16 px** | ทอง / ฟ้าเทา | "Remote Repo" พร้อมไอคอนคลาวด์ |
+| **ข้อมูล Commit ใน Graph** | `CommitGraphCanvas`, `_details` | `ChakraPetch-Regular.ttf` | **15–18 px** | เทาอ่อน / สีตาม Branch | แสดงชื่อ Commit, Author, และคำอธิบายภาษาไทย/อังกฤษ |
+| **หัวข้อ Terminal** | `TitleLabel` (TerminalPanel) | `ChakraPetch-Bold.ttf`<br>(`FontVariation` spacing_top=4, bottom=2) | **20 px** | ทอง `#FFC959` | "●  ●  ●    TERMINAL — learner@diwaa:..." |
+| **คำแนะนำคีย์ลัด Terminal** | `HintLabel` (TerminalPanel) | `ChakraPetch-Regular.ttf`<br>(`FontVariation` spacing_top=4, bottom=2) | **15 px** | ฟ้าเทา `#ADBADA` | "Enter รันคำสั่ง • ↑ ↓ ประวัติ • clear ล้างหน้าจอ..." |
+| **ปุ่ม Enter คำสั่ง** | `EnterButton` (TerminalPanel) | `ChakraPetch-Bold.ttf`<br>(`FontVariation` spacing_top=4, bottom=2) | **18 px** | ทองนวล `#F8EED1` | "Enter ↵" |
+| **กล่องโต้ตอบไฟล์ทั้งหมด** | `file_dialog_theme.tres`<br>(Dialogs, OK/Cancel) | `ChakraPetch-Regular.ttf` (Body)<br>`ChakraPetch-Bold.ttf` (Buttons) | **18 px** | คุมโทนธีมทอง/น้ำเงินเข้ม | สร้างไฟล์, สร้างโฟลเดอร์, เปลี่ยนชื่อ, ยืนยันการลบ |
+
 ---
 
 ## 3. หน้าจอหลักและห้องแต่งตัว (Start Screen & Dressing Room)
