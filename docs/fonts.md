@@ -23,6 +23,9 @@
 * `central_tower_cutscene.tscn` (คัตซีนหอคอยเวทกลาง)
 * `intro_cutscene.tscn` (คัตซีนเปิดเรื่องหอคอยเวท)
 * `ending_cutscene.tscn` (คัตซีนฉากจบ)
+* `outside_cutscene.tscn` (ฉากหน้าหอคอยก่อนเริ่มด่าน 1)
+* `level_clear_modal.tscn` (หน้าต่างสรุปผลผ่านด่าน)
+* `gameplay_placeholder_view.tscn` (หน้าจำลองเล่นเกมผ่านขั้น)
 
 ### 2.1 ข้อมูลจำเพาะในกล่องข้อความ (Dialogue Box Specifications)
 
@@ -81,6 +84,31 @@
 |---|---|---|:---:|---|:---:|---|
 | **ชื่อบทคัตซีน** | `SubtitleLabel` | `ChakraPetch-Regular.ttf`<br>(SubResource: `FontVariation_sub_reg`) | **28 px** | ขาวประกายม่วงอ่อน `#F2EEFF` | ม่วงเข้ม 2px, เงา 2px | "― ตำนานแห่งหอคอยต้นกำเนิด ―" ตัวบางโปร่งสบายตา (Regular) ใต้ชื่อเกมหลัก |
 | **คำแนะนำปุ่มกด** | `StartPrompt` | `ChakraPetch-Regular.ttf`<br>(SubResource: `FontVariation_prompt_reg`) | **22 px** | ขาวนวล `#FAF9F6` | ดำม่วง 3px | "คลิกหน้าจอเพื่อไปต่อ" กระพริบลอยด้านล่างจอ (Y = 970..1010) |
+
+---
+
+### 2.6 หมวดหน้าต่างสรุปผลและเกมเพลย์ (Gameplay & Modals)
+
+#### 2.6.1 หน้าต่างสรุปผลผ่านด่าน (`level_clear_modal.tscn`)
+
+| ส่วนประกอบ | โหนด (Node) | ฟอนต์ / FontVariation | ขนาด | สีตัวอักษร | Outline | หมายเหตุ |
+|---|---|---|:---:|---|:---:|---|
+| **หัวข้อหน้าต่าง** | `TitleLabel` | `ChakraPetch-Bold.ttf`<br>(SubResource: `FontVariation_modal_bold`) | **20 px** | ขาวนวล `#F5F5F5` | ไม่มี | `Success` บน TitleBar |
+| **หัวข้อด่าน** | `LevelTitle` | `ChakraPetch-Bold.ttf`<br>(SubResource: `FontVariation_modal_bold`) | **30 px** | ดำสนิท `#1F1F1F` | ไม่มี | "ด่านที่ 1 : git version" เด่นชัดกึ่งกลางหน้าต่าง |
+| **หัวข้อแถวสถิติ** | `Label` (Row 1..4) | `ChakraPetch-Regular.ttf`<br>(SubResource: `FontVariation_modal_reg`) | **20 px** | เทาเข้ม `#333333` | ไม่มี | "คะแนนรอบนี้", "สถิติสูงสุดเดิม", "คะแนนสะสม", "รางวัลที่ได้รับ" |
+| **ค่าคะแนนสถิติ** | `Value` (Row 1..4) | `ChakraPetch-Bold.ttf`<br>(SubResource: `FontVariation_modal_bold`) | **20 px** | ตามประเภทสถิติ | ไม่มี | ตัวเลขคะแนนหนาชัดเจน เช่น `100`, `70`, `+30`, `15 COINS` |
+| **หัวข้อคีย์เวิร์ด** | `Header` | `ChakraPetch-Bold.ttf`<br>(SubResource: `FontVariation_modal_bold`) | **20 px** | น้ำตาลทองเข้ม `#754705` | ไม่มี | `[คีย์เวิร์ดประจำด่านที่ 1]` |
+| **เนื้อหาคีย์เวิร์ด** | `Body` | `ChakraPetch-Regular.ttf`<br>(SubResource: `FontVariation_modal_reg`) | **20 px** | น้ำตาลเข้ม `#402905` | ไม่มี | "การตรวจสอบพลัง หมายถึง git --version" อ่านง่าย สบายตา |
+| **ปุ่มเล่นอีกครั้ง** | `BtnReplay` | `ChakraPetch-Bold.ttf`<br>(SubResource: `FontVariation_modal_bold`) | **20 px** | ดำเทา `#2E2E2E` | ไม่มี | `↻ เล่นอีกครั้ง` (ปุ่มซ้าย กว้าง 180px) |
+| **ปุ่มกลับหน้าเลือกด่าน** | `BtnLevelSelect` | `ChakraPetch-Bold.ttf`<br>(SubResource: `FontVariation_modal_bold`) | **20 px** | ดำเทา `#2E2E2E` | ไม่มี | `☰ กลับไปหน้าเลือกด่าน` (ปุ่มกลาง กว้าง 240px) |
+| **ปุ่มด่านต่อไป** | `BtnNextLevel` | `ChakraPetch-Bold.ttf`<br>(SubResource: `FontVariation_modal_bold`) | **20 px** | น้ำตาลเข้ม `#1A0D05` | ไม่มี | `⏭ ด่านต่อไป` (ปุ่มขวา โทนส้มทอง กว้าง 180px) |
+
+#### 2.6.2 หน้าจำลองเล่นเกม (`gameplay_placeholder_view.tscn`)
+
+| ส่วนประกอบ | โหนด (Node) | ฟอนต์ / FontVariation | ขนาด | สีตัวอักษร | Outline | หมายเหตุ |
+|---|---|---|:---:|---|:---:|---|
+| **หัวข้อภารกิจ** | `MissionTitleLabel` | `ChakraPetch-Bold.ttf`<br>(SubResource: `FontVariation_modal_bold`) | **28 px** | ทองสว่าง `#F0D273` | ดำ 3px | "ผ่านการสอนขั้น 1" / "ผ่านการสอนขั้น 2" |
+| **ปุ่มเสร็จสิ้น** | `BtnFinish` | `ChakraPetch-Bold.ttf`<br>(SubResource: `FontVariation_modal_bold`) | **22 px** | ขาวนวล `#F2F2F2` | ไม่มี | "เสร็จสิ้น" กึ่งกลางปุ่มกว้าง 220px |
 
 ---
 

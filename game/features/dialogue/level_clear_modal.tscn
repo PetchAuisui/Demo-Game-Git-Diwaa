@@ -1,7 +1,18 @@
 [gd_scene format=3 uid="uid://d4e5f6g7h8jaj"]
 
 [ext_resource type="Script" path="res://features/dialogue/level_clear_modal.gd" id="1_script"]
-[ext_resource type="FontFile" uid="uid://csurxmw2vmws4" path="res://assets/fonts/TA-8-bit.ttf" id="2_font"]
+[ext_resource type="FontFile" uid="uid://deedcfbkojx6k" path="res://assets/fonts/ChakraPetch-Bold.ttf" id="2_chakra_bold"]
+[ext_resource type="FontFile" path="res://assets/fonts/ChakraPetch-Regular.ttf" id="3_chakra_reg"]
+
+[sub_resource type="FontVariation" id="FontVariation_modal_bold"]
+base_font = ExtResource("2_chakra_bold")
+spacing_top = 4
+spacing_bottom = 2
+
+[sub_resource type="FontVariation" id="FontVariation_modal_reg"]
+base_font = ExtResource("3_chakra_reg")
+spacing_top = 4
+spacing_bottom = 2
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_modal"]
 bg_color = Color(0.87, 0.87, 0.87, 1)
@@ -151,7 +162,7 @@ theme_override_styles/panel = SubResource("StyleBoxFlat_modal_titlebar")
 [node name="TitleLabel" type="Label" parent="WindowPanel/VBoxMain/TitleBar"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.96, 0.96, 0.96, 1)
-theme_override_fonts/font = ExtResource("2_font")
+theme_override_fonts/font = SubResource("FontVariation_modal_bold")
 theme_override_font_sizes/font_size = 20
 text = "Success"
 
@@ -170,8 +181,8 @@ theme_override_constants/separation = 16
 [node name="LevelTitle" type="Label" parent="WindowPanel/VBoxMain/Margin/VBox"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.12, 0.12, 0.12, 1)
-theme_override_fonts/font = ExtResource("2_font")
-theme_override_font_sizes/font_size = 32
+theme_override_fonts/font = SubResource("FontVariation_modal_bold")
+theme_override_font_sizes/font_size = 30
 text = "ด่านที่ 1 : git version"
 horizontal_alignment = 1
 
@@ -218,8 +229,8 @@ layout_mode = 2
 [node name="Label" type="Label" parent="WindowPanel/VBoxMain/Margin/VBox/ScorePanel/VBoxScore/Row1"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.2, 0.2, 0.2, 1)
-theme_override_fonts/font = ExtResource("2_font")
-theme_override_font_sizes/font_size = 18
+theme_override_fonts/font = SubResource("FontVariation_modal_reg")
+theme_override_font_sizes/font_size = 20
 text = "คะแนนรอบนี้"
 
 [node name="Spacer" type="Control" parent="WindowPanel/VBoxMain/Margin/VBox/ScorePanel/VBoxScore/Row1"]
@@ -229,8 +240,8 @@ size_flags_horizontal = 3
 [node name="Value" type="Label" parent="WindowPanel/VBoxMain/Margin/VBox/ScorePanel/VBoxScore/Row1"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.2, 0.2, 0.2, 1)
-theme_override_fonts/font = ExtResource("2_font")
-theme_override_font_sizes/font_size = 18
+theme_override_fonts/font = SubResource("FontVariation_modal_bold")
+theme_override_font_sizes/font_size = 20
 text = "100"
 
 [node name="Line1" type="ColorRect" parent="WindowPanel/VBoxMain/Margin/VBox/ScorePanel/VBoxScore"]
@@ -244,8 +255,8 @@ layout_mode = 2
 [node name="Label" type="Label" parent="WindowPanel/VBoxMain/Margin/VBox/ScorePanel/VBoxScore/Row2"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.2, 0.2, 0.2, 1)
-theme_override_fonts/font = ExtResource("2_font")
-theme_override_font_sizes/font_size = 18
+theme_override_fonts/font = SubResource("FontVariation_modal_reg")
+theme_override_font_sizes/font_size = 20
 text = "สถิติสูงสุดเดิม"
 
 [node name="Spacer" type="Control" parent="WindowPanel/VBoxMain/Margin/VBox/ScorePanel/VBoxScore/Row2"]
@@ -255,8 +266,8 @@ size_flags_horizontal = 3
 [node name="Value" type="Label" parent="WindowPanel/VBoxMain/Margin/VBox/ScorePanel/VBoxScore/Row2"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.2, 0.2, 0.2, 1)
-theme_override_fonts/font = ExtResource("2_font")
-theme_override_font_sizes/font_size = 18
+theme_override_fonts/font = SubResource("FontVariation_modal_bold")
+theme_override_font_sizes/font_size = 20
 text = "70"
 
 [node name="Line2" type="ColorRect" parent="WindowPanel/VBoxMain/Margin/VBox/ScorePanel/VBoxScore"]
@@ -270,8 +281,8 @@ layout_mode = 2
 [node name="Label" type="Label" parent="WindowPanel/VBoxMain/Margin/VBox/ScorePanel/VBoxScore/Row3"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.2, 0.2, 0.2, 1)
-theme_override_fonts/font = ExtResource("2_font")
-theme_override_font_sizes/font_size = 18
+theme_override_fonts/font = SubResource("FontVariation_modal_reg")
+theme_override_font_sizes/font_size = 20
 text = "คะแนนสะสม"
 
 [node name="Spacer" type="Control" parent="WindowPanel/VBoxMain/Margin/VBox/ScorePanel/VBoxScore/Row3"]
@@ -281,8 +292,8 @@ size_flags_horizontal = 3
 [node name="Value" type="Label" parent="WindowPanel/VBoxMain/Margin/VBox/ScorePanel/VBoxScore/Row3"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.18, 0.58, 0.20, 1)
-theme_override_fonts/font = ExtResource("2_font")
-theme_override_font_sizes/font_size = 18
+theme_override_fonts/font = SubResource("FontVariation_modal_bold")
+theme_override_font_sizes/font_size = 20
 text = "+30"
 
 [node name="Line3" type="ColorRect" parent="WindowPanel/VBoxMain/Margin/VBox/ScorePanel/VBoxScore"]
@@ -296,8 +307,8 @@ layout_mode = 2
 [node name="Label" type="Label" parent="WindowPanel/VBoxMain/Margin/VBox/ScorePanel/VBoxScore/Row4"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.2, 0.2, 0.2, 1)
-theme_override_fonts/font = ExtResource("2_font")
-theme_override_font_sizes/font_size = 18
+theme_override_fonts/font = SubResource("FontVariation_modal_reg")
+theme_override_font_sizes/font_size = 20
 text = "รางวัลที่ได้รับ"
 
 [node name="Spacer" type="Control" parent="WindowPanel/VBoxMain/Margin/VBox/ScorePanel/VBoxScore/Row4"]
@@ -307,8 +318,8 @@ size_flags_horizontal = 3
 [node name="Value" type="Label" parent="WindowPanel/VBoxMain/Margin/VBox/ScorePanel/VBoxScore/Row4"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.76, 0.52, 0.10, 1)
-theme_override_fonts/font = ExtResource("2_font")
-theme_override_font_sizes/font_size = 18
+theme_override_fonts/font = SubResource("FontVariation_modal_bold")
+theme_override_font_sizes/font_size = 20
 text = "15 COINS"
 
 [node name="KeywordPanel" type="PanelContainer" parent="WindowPanel/VBoxMain/Margin/VBox"]
@@ -322,16 +333,16 @@ theme_override_constants/separation = 2
 [node name="Header" type="Label" parent="WindowPanel/VBoxMain/Margin/VBox/KeywordPanel/VBoxKW"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.46, 0.28, 0.02, 1)
-theme_override_fonts/font = ExtResource("2_font")
-theme_override_font_sizes/font_size = 18
+theme_override_fonts/font = SubResource("FontVariation_modal_bold")
+theme_override_font_sizes/font_size = 20
 text = "[คีย์เวิร์ดประจำด่านที่ 1]"
 horizontal_alignment = 1
 
 [node name="Body" type="Label" parent="WindowPanel/VBoxMain/Margin/VBox/KeywordPanel/VBoxKW"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.25, 0.16, 0.02, 1)
-theme_override_fonts/font = ExtResource("2_font")
-theme_override_font_sizes/font_size = 18
+theme_override_fonts/font = SubResource("FontVariation_modal_reg")
+theme_override_font_sizes/font_size = 20
 text = "การตรวจสอบพลัง หมายถึง git --version"
 horizontal_alignment = 1
 
@@ -342,13 +353,13 @@ theme_override_constants/separation = 16
 alignment = 1
 
 [node name="BtnReplay" type="Button" parent="WindowPanel/VBoxMain/Margin/VBox/HBoxButtons"]
-custom_minimum_size = Vector2(170, 56)
+custom_minimum_size = Vector2(180, 56)
 layout_mode = 2
 focus_mode = 0
 mouse_default_cursor_shape = 2
 theme_override_colors/font_color = Color(0.18, 0.18, 0.18, 1)
-theme_override_fonts/font = ExtResource("2_font")
-theme_override_font_sizes/font_size = 18
+theme_override_fonts/font = SubResource("FontVariation_modal_bold")
+theme_override_font_sizes/font_size = 20
 theme_override_styles/normal = SubResource("StyleBoxFlat_btn_beige")
 theme_override_styles/hover = SubResource("StyleBoxFlat_btn_beige_hover")
 theme_override_styles/pressed = SubResource("StyleBoxFlat_btn_beige_hover")
@@ -356,13 +367,13 @@ theme_override_styles/focus = SubResource("StyleBoxFlat_btn_beige_hover")
 text = "↻ เล่นอีกครั้ง"
 
 [node name="BtnLevelSelect" type="Button" parent="WindowPanel/VBoxMain/Margin/VBox/HBoxButtons"]
-custom_minimum_size = Vector2(200, 56)
+custom_minimum_size = Vector2(240, 56)
 layout_mode = 2
 focus_mode = 0
 mouse_default_cursor_shape = 2
 theme_override_colors/font_color = Color(0.18, 0.18, 0.18, 1)
-theme_override_fonts/font = ExtResource("2_font")
-theme_override_font_sizes/font_size = 18
+theme_override_fonts/font = SubResource("FontVariation_modal_bold")
+theme_override_font_sizes/font_size = 20
 theme_override_styles/normal = SubResource("StyleBoxFlat_btn_beige")
 theme_override_styles/hover = SubResource("StyleBoxFlat_btn_beige_hover")
 theme_override_styles/pressed = SubResource("StyleBoxFlat_btn_beige_hover")
@@ -370,13 +381,13 @@ theme_override_styles/focus = SubResource("StyleBoxFlat_btn_beige_hover")
 text = "☰ กลับไปหน้าเลือกด่าน"
 
 [node name="BtnNextLevel" type="Button" parent="WindowPanel/VBoxMain/Margin/VBox/HBoxButtons"]
-custom_minimum_size = Vector2(170, 56)
+custom_minimum_size = Vector2(180, 56)
 layout_mode = 2
 focus_mode = 0
 mouse_default_cursor_shape = 2
 theme_override_colors/font_color = Color(0.1, 0.05, 0.02, 1)
-theme_override_fonts/font = ExtResource("2_font")
-theme_override_font_sizes/font_size = 18
+theme_override_fonts/font = SubResource("FontVariation_modal_bold")
+theme_override_font_sizes/font_size = 20
 theme_override_styles/normal = SubResource("StyleBoxFlat_btn_orange")
 theme_override_styles/hover = SubResource("StyleBoxFlat_btn_orange_hover")
 theme_override_styles/pressed = SubResource("StyleBoxFlat_btn_orange_hover")
