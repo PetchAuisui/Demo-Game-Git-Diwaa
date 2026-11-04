@@ -38,6 +38,10 @@ func _ready() -> void:
 	_input_edit.text_submitted.connect(func(_text: String) -> void: _submit_from_input())
 	_enter_button.pressed.connect(_submit_from_input)
 	_input_edit.gui_input.connect(_on_input_gui_input)
+	_output_log.gui_input.connect(func(event: InputEvent) -> void:
+		if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+			_input_edit.grab_focus()
+	)
 
 	DialogStyle.apply(_commit_dialog, DialogStyle.SUCCESS, "✓", "Commit message", false, _commit_input)
 	_commit_dialog.size = Vector2i(780, 100)
