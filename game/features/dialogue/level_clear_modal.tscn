@@ -376,7 +376,8 @@ theme_override_constants/separation = 4
 alignment = 1
 
 [node name="Icon" type="TextureRect" parent="WindowPanel/VBoxMain/Margin/VBox/HBoxButtons/BtnReplay/VBoxContent"]
-custom_minimum_size = Vector2(0, 36)
+texture_filter = 4
+custom_minimum_size = Vector2(0, 38)
 layout_mode = 2
 mouse_filter = 2
 texture = ExtResource("4_icon_replay")
@@ -415,7 +416,8 @@ theme_override_constants/separation = 4
 alignment = 1
 
 [node name="Icon" type="TextureRect" parent="WindowPanel/VBoxMain/Margin/VBox/HBoxButtons/BtnLevelSelect/VBoxContent"]
-custom_minimum_size = Vector2(0, 36)
+texture_filter = 4
+custom_minimum_size = Vector2(0, 38)
 layout_mode = 2
 mouse_filter = 2
 texture = ExtResource("5_icon_level_select")
@@ -454,7 +456,8 @@ theme_override_constants/separation = 4
 alignment = 1
 
 [node name="Icon" type="TextureRect" parent="WindowPanel/VBoxMain/Margin/VBox/HBoxButtons/BtnNextLevel/VBoxContent"]
-custom_minimum_size = Vector2(0, 36)
+texture_filter = 4
+custom_minimum_size = Vector2(0, 38)
 layout_mode = 2
 mouse_filter = 2
 texture = ExtResource("6_icon_next_level")
