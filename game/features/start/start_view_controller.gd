@@ -1,7 +1,6 @@
 class_name StartViewController
 extends Control
 
-const GameProgressManager = preload("res://common/game_progress_manager.gd")
 ## Controller for the Start Screen View.
 ## Orchestrates start screen navigation, audio effects, live terminal simulation,
 ## real-time system clock, and transition to Sandbox gameplay.
@@ -177,13 +176,19 @@ func _on_terminal_command_submitted(input: String) -> void:
 		return
 
 	if lower == "clear 1" or lower == "complete 1":
-		GameProgressManager.set_level_cleared(1, true)
-		_append_terminal_text("> Level 1 marked as CLEARED! Card in Level Select will turn GREEN.")
+		if OS.is_debug_build():
+			GameProgressManager.set_level_cleared(1, true)
+			_append_terminal_text("> [DEBUG] Level 1 marked as CLEARED! Card in Level Select will turn GREEN.")
+		else:
+			_append_terminal_text("Command only available in debug builds.")
 		return
 
 	if lower == "reset" or lower == "reset progress":
-		GameProgressManager.reset_progress()
-		_append_terminal_text("> Game progress reset! All cards in Level Select are now GREY.")
+		if OS.is_debug_build():
+			GameProgressManager.reset_progress()
+			_append_terminal_text("> [DEBUG] Game progress reset! All cards in Level Select are now GREY.")
+		else:
+			_append_terminal_text("Command only available in debug builds.")
 		return
 
 	if lower == "git init":
