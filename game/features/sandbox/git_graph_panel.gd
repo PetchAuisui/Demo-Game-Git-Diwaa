@@ -26,16 +26,19 @@ func _ready() -> void:
 	_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	var font_regular = load("res://assets/fonts/ChakraPetch-Regular.ttf")
 	_canvas = CommitGraphCanvas.new()
 	_canvas.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_canvas.add_theme_font_override("font", preload("res://assets/fonts/ChakraPetch-Regular.ttf"))
+	if font_regular:
+		_canvas.add_theme_font_override("font", font_regular)
 	_scroll.add_child(_canvas)
 	layout.add_child(_scroll)
 	_details = Label.new()
 	_details.text = "เลือกจุดบันทึกเพื่อดูรายละเอียด"
 	_details.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_details.custom_minimum_size = Vector2(0, 48)
-	_details.add_theme_font_override("font", preload("res://assets/fonts/ChakraPetch-Regular.ttf"))
+	if font_regular:
+		_details.add_theme_font_override("font", font_regular)
 	_details.add_theme_font_size_override("font_size", 15)
 	_details.add_theme_color_override("font_color", Color("a3b2ca"))
 	layout.add_child(_details)
