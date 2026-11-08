@@ -115,7 +115,6 @@ var _torch_timer := 0.0
 func _ready() -> void:
 	_load_resources()
 	_bind_nodes()
-	_init_torches()
 	_wire_navbar()
 	_spawn_tower_platforms()
 	_init_game_progression()
@@ -210,20 +209,12 @@ func _bind_nodes() -> void:
 		path_renderer.draw.connect(_on_draw_path)
 
 
-func _init_torches() -> void:
-	for node in get_tree().get_nodes_in_group("torch_flames"):
-		if node is ColorRect:
-			_torch_flames.append(node)
+
 
 
 func _process(delta: float) -> void:
 	# เอฟเฟกต์ไฟคบเพลิงกะพริบ
-	_torch_timer += delta
-	if _torch_timer >= 0.16:
-		_torch_timer = 0.0
-		for flame in _torch_flames:
-			flame.color = Color(0.96, 0.62, 0.07, 1.0) if randf() > 0.5 else Color(0.99, 0.88, 0.28, 1.0)
-			flame.scale.y = 0.9 + randf() * 0.25
+	pass
 
 
 
@@ -514,22 +505,6 @@ func _spawn_tower_platforms() -> void:
 		inner_margin.add_child(hbox)
 		slab_btn.add_child(inner_margin)
 
-		# ชิ้นส่วนคัมภีร์เรืองแสงลอยเหนือแท่น
-		if stg["has_scripture"] and not is_cleared and tex_khampri:
-			var book_rect := TextureRect.new()
-			book_rect.name = "ScriptureGlow"
-			book_rect.texture = tex_khampri
-			book_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-			book_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-			book_rect.custom_minimum_size = Vector2(28.0, 30.0)
-			book_rect.size = Vector2(28.0, 30.0)
-			book_rect.position = Vector2(p_width - 36.0, -22.0)
-			book_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
-			plat.add_child(book_rect)
-
-			var tw := create_tween().set_loops()
-			tw.tween_property(book_rect, "position:y", -26.0, 0.8).set_trans(Tween.TRANS_SINE)
-			tw.tween_property(book_rect, "position:y", -20.0, 0.8).set_trans(Tween.TRANS_SINE)
 
 		var current_idx := i
 		if is_unlocked:
