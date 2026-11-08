@@ -58,6 +58,11 @@ var _register_status: Label
 var _register_submit_btn: Button
 var _go_login_link: LinkButton
 
+# Connection (แถบแจ้งเตือนเมื่อติดต่อ server ไม่ได้ อยู่เหนือฟอร์ม เห็นได้ทั้งสองแท็บ)
+var _connection_panel: VBoxContainer
+var _connection_label: Label
+var _retry_connection_btn: Button
+
 # --- Server ---
 var _api: AuthApiClient
 var _busy := false
@@ -74,7 +79,7 @@ func _ready() -> void:
 	_wire_events()
 	_apply_theme()
 	_show_login()
-	_try_restore_session.call_deferred()
+	_check_connection.call_deferred()
 
 
 func _bind_nodes() -> void:
@@ -110,6 +115,10 @@ func _bind_nodes() -> void:
 	_register_submit_btn = get_node("%RegisterSubmitBtn") as Button
 	_go_login_link = get_node("%GoLoginLink") as LinkButton
 
+	_connection_panel = get_node("%ConnectionPanel") as VBoxContainer
+	_connection_label = get_node("%ConnectionLabel") as Label
+	_retry_connection_btn = get_node("%RetryConnectionBtn") as Button
+
 
 func _wire_events() -> void:
 	_login_tab_btn.pressed.connect(_on_login_tab_pressed)
@@ -125,6 +134,7 @@ func _wire_events() -> void:
 	)
 
 	login_succeeded.connect(_on_login_succeeded)
+	_retry_connection_btn.pressed.connect(_check_connection)
 
 	_login_submit_btn.pressed.connect(_on_login_submit)
 	_login_password_input.text_submitted.connect(func(_text: String) -> void: await _on_login_submit())
@@ -249,7 +259,7 @@ func _apply_theme() -> void:
 	var btn_pressed := AuthThemeTokens.create_button_style(AuthThemeTokens.BUTTON_PRESSED_BG)
 	var btn_disabled := AuthThemeTokens.create_button_style(AuthThemeTokens.BUTTON_DISABLED_BG)
 
-	var submit_buttons: Array[Button] = [_login_submit_btn, _register_submit_btn]
+	var submit_buttons: Array[Button] = [_login_submit_btn, _register_submit_btn, _retry_connection_btn]
 	for btn in submit_buttons:
 		btn.add_theme_stylebox_override("normal", btn_normal)
 		btn.add_theme_stylebox_override("hover", btn_hover)
@@ -523,6 +533,7 @@ func _set_busy(busy: bool) -> void:
 		_register_tab_btn,
 		_go_register_link,
 		_go_login_link,
+		_retry_connection_btn,
 	]
 	for btn in buttons:
 		btn.disabled = busy
@@ -530,11 +541,35 @@ func _set_busy(busy: bool) -> void:
 	_register_submit_btn.text = "กำลังสมัครสมาชิก..." if busy else _register_submit_text
 
 
-## ตอนเปิดหน้านี้: ถ้ามี session ที่จดจำไว้ ลองล็อกอินอัตโนมัติก่อน
-func _try_restore_session() -> void:
+## เช็คว่าติดต่อ server ได้ไหม (ตอนเปิดหน้านี้ และตอนกด "ลองเชื่อมต่อใหม่")
+## ติดต่อได้ → ลองล็อกอินอัตโนมัติต่อ / ติดต่อไม่ได้ → ขึ้นแถบแจ้งเตือนพร้อมปุ่มลองใหม่
+## ผลของการเช็คนี้ใช้แค่ตัดสินว่าจะแสดงอะไรบนจอ ไม่ได้ใช้ตัดสินสิทธิ์ใดๆ
+func _check_connection() -> void:
+	if _busy:
+		return
 	if PlayerSession.is_signed_in():
 		get_tree().change_scene_to_file(PlayerSession.START_SCENE)
 		return
+
+	_set_busy(true)
+	_login_submit_btn.text = "กำลังเชื่อมต่อ server..."
+	var result := await _api.health()
+	_set_busy(false)
+
+	if not result.ok:
+		_show_connection_problem(result)
+		return
+	_connection_panel.visible = false
+	await _try_restore_session()
+
+
+func _show_connection_problem(result: AuthApiResult) -> void:
+	_connection_label.text = _message_for_failure(result)
+	_connection_panel.visible = true
+
+
+## ถ้ามี session ที่จดจำไว้ ลองล็อกอินอัตโนมัติ (เรียกหลังเช็คแล้วว่าติดต่อ server ได้)
+func _try_restore_session() -> void:
 	if not PlayerSession.has_saved_session():
 		return
 
@@ -552,7 +587,8 @@ func _try_restore_session() -> void:
 	if outcome == PlayerSession.RESTORE_NEED_LOGIN:
 		_show_status(_login_status, "การเข้าสู่ระบบหมดอายุแล้ว กรุณาเข้าสู่ระบบใหม่", false)
 	elif outcome == PlayerSession.RESTORE_NETWORK_FAILED:
-		_show_status(_login_status, "เชื่อมต่อ server ไม่ได้ กรุณาตรวจสอบอินเทอร์เน็ตแล้วลองใหม่", false)
+		# server หลุดไประหว่างเช็คกับต่ออายุ: ขึ้นแถบแจ้งเตือนเดียวกัน กดลองใหม่ได้
+		_show_connection_problem(AuthApiResult.failure(0, AuthApiResult.NETWORK_UNAVAILABLE))
 
 
 ## ล็อกอินสำเร็จ: ส่งต่อให้ PlayerSession เก็บ session แล้วพาเข้าหน้าแรกของเกม
