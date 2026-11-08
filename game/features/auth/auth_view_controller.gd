@@ -75,6 +75,14 @@ var _guest_name_error: Label
 var _guest_start_btn: Button
 var _guest_back_link: LinkButton
 
+# Age gate (ถามปีเกิดครั้งแรก)
+var _tab_strip: Control
+var _age_gate_form: VBoxContainer
+var _birth_year_option: OptionButton
+var _age_gate_error: Label
+var _age_confirm_btn: Button
+var _age_notice: Label
+
 # --- Server ---
 var _api: AuthApiClient
 var _busy := false
@@ -90,8 +98,7 @@ func _ready() -> void:
 	_register_submit_text = _register_submit_btn.text
 	_wire_events()
 	_apply_theme()
-	_show_login()
-	_check_connection.call_deferred()
+	_route_by_age()
 
 
 func _bind_nodes() -> void:
@@ -140,6 +147,13 @@ func _bind_nodes() -> void:
 	_guest_start_btn = get_node("%GuestStartBtn") as Button
 	_guest_back_link = get_node("%GuestBackLink") as LinkButton
 
+	_tab_strip = get_node("%TabStrip") as Control
+	_age_gate_form = get_node("%AgeGateForm") as VBoxContainer
+	_birth_year_option = get_node("%BirthYearOption") as OptionButton
+	_age_gate_error = get_node("%AgeGateError") as Label
+	_age_confirm_btn = get_node("%AgeConfirmBtn") as Button
+	_age_notice = get_node("%AgeNotice") as Label
+
 
 func _wire_events() -> void:
 	_login_tab_btn.pressed.connect(_on_login_tab_pressed)
@@ -163,6 +177,7 @@ func _wire_events() -> void:
 	_guest_back_link.pressed.connect(_show_login)
 	_guest_start_btn.pressed.connect(_on_guest_start)
 	_guest_name_input.text_submitted.connect(func(_text: String) -> void: _on_guest_start())
+	_age_confirm_btn.pressed.connect(_on_age_confirm)
 
 	_login_submit_btn.pressed.connect(_on_login_submit)
 	_login_password_input.text_submitted.connect(func(_text: String) -> void: await _on_login_submit())
@@ -222,6 +237,64 @@ func _show_guest() -> void:
 
 	_guest_name_input.text = GuestStore.load_name()
 	_guest_name_input.grab_focus()
+
+
+## เปิดหน้านี้: ยังไม่เคยตอบปีเกิด → ถามก่อน / อายุไม่ถึงเกณฑ์ → เล่นแบบไม่ล็อกอินเท่านั้น / ถึงเกณฑ์ → หน้าเข้าสู่ระบบปกติ
+func _route_by_age() -> void:
+	if PlayerSession.has_player():
+		get_tree().change_scene_to_file.call_deferred(PlayerSession.START_SCENE)
+		return
+	if not AgeGate.has_answer():
+		_show_age_gate()
+		return
+	if not AgeGate.is_online_allowed():
+		_show_under_age()
+		return
+	_show_login()
+	_check_connection.call_deferred()
+
+
+func _show_age_gate() -> void:
+	_apply_background(LOGIN_BG_PATH)
+	_tab_strip.visible = false
+	_connection_panel.visible = false
+	_login_form.visible = false
+	_register_form.visible = false
+	_guest_form.visible = false
+	_age_gate_form.visible = true
+	_age_gate_error.visible = false
+
+	# ตัวเลือกแรกเป็นคำแนะนำ (id 0) ที่เหลือ id = ปีเกิด ค.ศ. แสดงเป็น พ.ศ.
+	_birth_year_option.clear()
+	_birth_year_option.add_item("เลือกปีเกิด", 0)
+	var year_now := AgeGate.current_year()
+	for year in range(year_now, year_now - AgeGate.MAX_AGE - 1, -1):
+		_birth_year_option.add_item("พ.ศ. %d (ค.ศ. %d)" % [year + 543, year], year)
+	_birth_year_option.select(0)
+	_birth_year_option.grab_focus()
+
+
+func _on_age_confirm() -> void:
+	var birth_year := _birth_year_option.get_selected_id()
+	if birth_year == 0 or not AgeGate.is_valid_birth_year(birth_year):
+		_age_gate_error.text = "กรุณาเลือกปีเกิด"
+		_age_gate_error.visible = true
+		return
+	if not AgeGate.save_birth_year(birth_year):
+		# บันทึกไม่ได้ก็ไปต่อได้ แค่ครั้งหน้าที่เปิดเกมจะถามใหม่
+		push_warning("AuthView: could not save the birth year.")
+	_age_gate_form.visible = false
+	_tab_strip.visible = true
+	_route_by_age()
+
+
+## อายุไม่ถึงเกณฑ์: ซ่อนการเข้าสู่ระบบ/สมัครทั้งหมด เหลือแค่เล่นแบบไม่ล็อกอิน
+func _show_under_age() -> void:
+	_show_guest()
+	_tab_strip.visible = false
+	_connection_panel.visible = false
+	_guest_back_link.visible = false
+	_age_notice.visible = true
 
 
 func _apply_background(path: String) -> void:
@@ -307,7 +380,7 @@ func _apply_theme() -> void:
 	var btn_pressed := AuthThemeTokens.create_button_style(AuthThemeTokens.BUTTON_PRESSED_BG)
 	var btn_disabled := AuthThemeTokens.create_button_style(AuthThemeTokens.BUTTON_DISABLED_BG)
 
-	var submit_buttons: Array[Button] = [_login_submit_btn, _register_submit_btn, _retry_connection_btn, _offline_play_btn, _guest_start_btn]
+	var submit_buttons: Array[Button] = [_login_submit_btn, _register_submit_btn, _retry_connection_btn, _offline_play_btn, _guest_start_btn, _age_confirm_btn]
 	for btn in submit_buttons:
 		btn.add_theme_stylebox_override("normal", btn_normal)
 		btn.add_theme_stylebox_override("hover", btn_hover)
@@ -340,6 +413,14 @@ func _apply_theme() -> void:
 	_go_guest_link.add_theme_color_override("font_color", AuthThemeTokens.LINK_TEXT)
 	_change_guest_name_link.add_theme_color_override("font_color", AuthThemeTokens.TEXT_MUTED)
 	_guest_back_link.add_theme_color_override("font_color", AuthThemeTokens.LINK_TEXT)
+
+	var option_style := AuthThemeTokens.create_input_style(AuthThemeTokens.INPUT_BORDER)
+	var option_focus := AuthThemeTokens.create_input_style(AuthThemeTokens.INPUT_BORDER_FOCUS)
+	for state_name in ["normal", "hover", "pressed"]:
+		_birth_year_option.add_theme_stylebox_override(state_name, option_style)
+	_birth_year_option.add_theme_stylebox_override("focus", option_focus)
+	for color_name in ["font_color", "font_hover_color", "font_pressed_color", "font_focus_color"]:
+		_birth_year_option.add_theme_color_override(color_name, AuthThemeTokens.TEXT_PRIMARY)
 
 
 func _on_login_submit() -> void:

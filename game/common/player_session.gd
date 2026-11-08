@@ -76,6 +76,9 @@ func get_token() -> String:
 
 ## เริ่ม session จากคำตอบของ server ตอนล็อกอิน คืนค่า false ถ้าข้อมูลจาก server ผิดรูปแบบ
 func start_session(login_data: Dictionary, remember_me: bool) -> bool:
+	# ผู้เล่นอายุต่ำกว่าเกณฑ์ใช้บัญชีออนไลน์ไม่ได้ (เช็คซ้ำตรงนี้ด้วย เผื่อหน้าจอไหนลืมเช็ค)
+	if not AgeGate.is_online_allowed():
+		return false
 	var session := SessionStore.from_login_response(login_data)
 	if session.is_empty():
 		return false
@@ -172,7 +175,7 @@ func get_saved_display_name() -> String:
 ## ความปลอดภัย: ไม่โหลด token ขึ้นมาในโหมดนี้ (token ยังอยู่ในไฟล์ไว้ล็อกอินอัตโนมัติครั้งหน้า)
 ## และข้อมูลในไฟล์ผู้เล่นแก้เองได้ จึงห้ามให้โหมดนี้ปลดล็อกอะไรที่ server ต้องเป็นผู้ตัดสิน
 func start_offline() -> bool:
-	if state == State.ONLINE:
+	if state == State.ONLINE or not AgeGate.is_online_allowed():
 		return false
 	var saved := SessionStore.load_session()
 	if saved.is_empty():
@@ -204,6 +207,8 @@ func start_guest(raw_name: String) -> bool:
 ## ล็อกอินอัตโนมัติด้วย session ที่จดจำไว้ โดยขอ token ใบใหม่จาก server (token ใบเก่าจะใช้ไม่ได้อีก)
 ## คืนค่าเป็น RESTORE_* ตัวใดตัวหนึ่ง
 func restore_saved_session() -> String:
+	if not AgeGate.is_online_allowed():
+		return RESTORE_NONE
 	var saved := SessionStore.load_session()
 	if saved.is_empty():
 		return RESTORE_NONE

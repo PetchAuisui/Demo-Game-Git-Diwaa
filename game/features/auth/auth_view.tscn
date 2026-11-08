@@ -56,6 +56,7 @@ stretch_mode = 6
 layout_mode = 1
 
 [node name="TabStrip" type="Control" parent="." unique_id=2125638877]
+unique_name_in_owner = true
 layout_mode = 1
 anchors_preset = 10
 anchor_right = 1.0
@@ -568,6 +569,17 @@ text = "ความคืบหน้าจะเก็บไว้ในเค
 horizontal_alignment = 1
 autowrap_mode = 2
 
+[node name="AgeNotice" type="Label" parent="CenterArea/Card/MarginContainer/CardVBox/GuestForm" unique_id=335698451]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+theme_override_colors/font_color = Color(0.172549, 0.141176, 0.113725, 1)
+theme_override_fonts/font = ExtResource("3_semibold")
+theme_override_font_sizes/font_size = 18
+text = "บัญชีออนไลน์สำหรับผู้มีอายุ 20 ปีขึ้นไป คุณเล่นได้แบบไม่ล็อกอิน"
+horizontal_alignment = 1
+autowrap_mode = 2
+
 [node name="GuestNameLabel" type="Label" parent="CenterArea/Card/MarginContainer/CardVBox/GuestForm" unique_id=2097330199]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.172549, 0.141176, 0.113725, 1)
@@ -616,3 +628,56 @@ theme_override_colors/font_color = Color(0.737255, 0.490196, 0.278431, 1)
 theme_override_fonts/font = ExtResource("3_semibold")
 theme_override_font_sizes/font_size = 18
 text = "กลับไปหน้าเข้าสู่ระบบ"
+
+[node name="AgeGateForm" type="VBoxContainer" parent="CenterArea/Card/MarginContainer/CardVBox" unique_id=635534952]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="AgeTitle" type="Label" parent="CenterArea/Card/MarginContainer/CardVBox/AgeGateForm" unique_id=1909061738]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.172549, 0.141176, 0.113725, 1)
+theme_override_fonts/font = ExtResource("2_bold")
+theme_override_font_sizes/font_size = 34
+text = "ก่อนเริ่มเล่น"
+horizontal_alignment = 1
+
+[node name="AgeSubtitle" type="Label" parent="CenterArea/Card/MarginContainer/CardVBox/AgeGateForm" unique_id=514898683]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.478431, 0.431373, 0.376471, 1)
+theme_override_fonts/font = ExtResource("4_regular")
+theme_override_font_sizes/font_size = 20
+text = "กรุณาเลือกปีเกิดของคุณ ข้อมูลนี้เก็บไว้ในเครื่องนี้เท่านั้น ไม่ถูกส่งไปที่ server"
+horizontal_alignment = 1
+autowrap_mode = 2
+
+[node name="BirthYearLabel" type="Label" parent="CenterArea/Card/MarginContainer/CardVBox/AgeGateForm" unique_id=595198027]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.172549, 0.141176, 0.113725, 1)
+theme_override_fonts/font = ExtResource("3_semibold")
+theme_override_font_sizes/font_size = 20
+text = "ปีเกิด"
+
+[node name="BirthYearOption" type="OptionButton" parent="CenterArea/Card/MarginContainer/CardVBox/AgeGateForm" unique_id=453840736]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 52)
+layout_mode = 2
+theme_override_fonts/font = ExtResource("4_regular")
+theme_override_font_sizes/font_size = 20
+
+[node name="AgeGateError" type="Label" parent="CenterArea/Card/MarginContainer/CardVBox/AgeGateForm" unique_id=249371955]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+theme_override_colors/font_color = Color(0.658824, 0.156863, 0.156863, 1)
+theme_override_fonts/font = ExtResource("4_regular")
+theme_override_font_sizes/font_size = 16
+
+[node name="AgeConfirmBtn" type="Button" parent="CenterArea/Card/MarginContainer/CardVBox/AgeGateForm" unique_id=2012923669]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 56)
+layout_mode = 2
+theme_override_fonts/font = ExtResource("2_bold")
+theme_override_font_sizes/font_size = 22
+text = "ยืนยัน"
