@@ -858,10 +858,10 @@ func _update_hud_display(stg: Dictionary) -> void:
 	if btn_launch:
 		if is_unlocked:
 			btn_launch.disabled = false
-			btn_launch.text = "⚔️ เข้าสู่ด่าน (ENTER STAGE) ➔" if not is_cleared else "✨ ทบทวนด่าน (REPLAY) ➔"
+			btn_launch.text = "เข้าสู่ด่าน" if not is_cleared else "ทบทวนด่าน"
 		else:
 			btn_launch.disabled = true
-			btn_launch.text = "🔒 ด่านยังล็อกอยู่ (LOCKED)"
+			btn_launch.text = "ยังไม่ปลดล็อก"
 
 
 func _scroll_to_y(target_y: int, animate: bool = true) -> void:

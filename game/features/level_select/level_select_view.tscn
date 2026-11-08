@@ -180,64 +180,68 @@ corner_radius_bottom_left = 3
 corner_radius_bottom_right = 3
 
 [sub_resource type="StyleBoxFlat" id="Style_btn_launch"]
-content_margin_left = 28.0
-content_margin_top = 12.0
-content_margin_right = 28.0
-content_margin_bottom = 12.0
-bg_color = Color(0.85, 0.52, 0.08, 1)
+content_margin_left = 24.0
+content_margin_top = 10.0
+content_margin_right = 24.0
+content_margin_bottom = 10.0
+bg_color = Color(0.16, 0.12, 0.08, 0.96)
 border_width_left = 2
 border_width_top = 2
 border_width_right = 2
-border_width_bottom = 4
-border_color = Color(0.98, 0.85, 0.42, 1)
+border_width_bottom = 3
+border_color = Color(0.82, 0.58, 0.16, 0.95)
 corner_radius_top_left = 4
 corner_radius_top_right = 4
 corner_radius_bottom_left = 4
 corner_radius_bottom_right = 4
+shadow_color = Color(0, 0, 0, 0.4)
+shadow_size = 3
 
 [sub_resource type="StyleBoxFlat" id="Style_btn_launch_hover"]
-content_margin_left = 28.0
-content_margin_top = 12.0
-content_margin_right = 28.0
-content_margin_bottom = 12.0
-bg_color = Color(0.96, 0.62, 0.12, 1)
+content_margin_left = 24.0
+content_margin_top = 10.0
+content_margin_right = 24.0
+content_margin_bottom = 10.0
+bg_color = Color(0.24, 0.17, 0.10, 0.98)
 border_width_left = 2
 border_width_top = 2
 border_width_right = 2
-border_width_bottom = 4
-border_color = Color(1, 0.94, 0.65, 1)
+border_width_bottom = 3
+border_color = Color(0.96, 0.72, 0.22, 1)
 corner_radius_top_left = 4
 corner_radius_top_right = 4
 corner_radius_bottom_left = 4
 corner_radius_bottom_right = 4
+shadow_color = Color(0.96, 0.62, 0.08, 0.25)
+shadow_size = 5
 
 [sub_resource type="StyleBoxFlat" id="Style_btn_launch_pressed"]
-content_margin_left = 28.0
-content_margin_top = 14.0
-content_margin_right = 28.0
-content_margin_bottom = 10.0
-bg_color = Color(0.72, 0.42, 0.06, 1)
+content_margin_left = 24.0
+content_margin_top = 12.0
+content_margin_right = 24.0
+content_margin_bottom = 8.0
+bg_color = Color(0.12, 0.09, 0.06, 0.98)
 border_width_left = 2
-border_width_top = 4
+border_width_top = 3
 border_width_right = 2
-border_width_bottom = 2
-border_color = Color(0.90, 0.72, 0.32, 1)
+border_width_bottom = 1
+border_color = Color(0.68, 0.46, 0.12, 1)
 corner_radius_top_left = 4
 corner_radius_top_right = 4
 corner_radius_bottom_left = 4
 corner_radius_bottom_right = 4
 
 [sub_resource type="StyleBoxFlat" id="Style_btn_launch_disabled"]
-content_margin_left = 28.0
-content_margin_top = 12.0
-content_margin_right = 28.0
-content_margin_bottom = 12.0
-bg_color = Color(0.16, 0.16, 0.20, 0.8)
+content_margin_left = 24.0
+content_margin_top = 10.0
+content_margin_right = 24.0
+content_margin_bottom = 10.0
+bg_color = Color(0.08, 0.09, 0.12, 0.85)
 border_width_left = 1
 border_width_top = 1
 border_width_right = 1
 border_width_bottom = 2
-border_color = Color(0.26, 0.26, 0.32, 0.8)
+border_color = Color(0.18, 0.22, 0.28, 0.8)
 corner_radius_top_left = 4
 corner_radius_top_right = 4
 corner_radius_bottom_left = 4
@@ -665,18 +669,21 @@ text_overrun_behavior = 3
 
 [node name="BtnLaunch" type="Button" parent="LayoutVBox/BottomHUD/HBox"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(280, 52)
+custom_minimum_size = Vector2(200, 48)
 layout_mode = 2
 size_flags_vertical = 4
 mouse_default_cursor_shape = 2
-theme_override_colors/font_color = Color(0.14, 0.07, 0.02, 1)
+theme_override_colors/font_color = Color(0.96, 0.88, 0.65, 1)
+theme_override_colors/font_hover_color = Color(1, 0.96, 0.82, 1)
+theme_override_colors/font_pressed_color = Color(0.84, 0.75, 0.52, 1)
+theme_override_colors/font_disabled_color = Color(0.42, 0.48, 0.56, 0.7)
 theme_override_fonts/font = ExtResource("3_chakra_bold")
-theme_override_font_sizes/font_size = 18
+theme_override_font_sizes/font_size = 16
 theme_override_styles/normal = SubResource("Style_btn_launch")
 theme_override_styles/hover = SubResource("Style_btn_launch_hover")
 theme_override_styles/pressed = SubResource("Style_btn_launch_pressed")
 theme_override_styles/disabled = SubResource("Style_btn_launch_disabled")
-text = "⚔️ เข้าสู่ด่าน (ENTER STAGE) ➔"
+text = "เข้าสู่ด่าน"
 
 [node name="SfxClick" type="AudioStreamPlayer" parent="."]
 unique_name_in_owner = true
