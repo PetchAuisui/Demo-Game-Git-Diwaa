@@ -858,7 +858,7 @@ func _update_hud_display(stg: Dictionary) -> void:
 func _scroll_to_y(target_y: int, animate: bool = true) -> void:
 	if not scroll_chamber:
 		return
-	var clamped_y := clampi(target_y, 0, 3600)
+	var clamped_y := clampi(target_y, 0, 3200)
 	if animate:
 		var tw := create_tween()
 		tw.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
