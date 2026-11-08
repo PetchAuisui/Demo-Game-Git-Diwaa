@@ -10,6 +10,7 @@
 [ext_resource type="AudioStream" path="res://assets/audio/sfx_click.wav" id="8_sfx_click"]
 [ext_resource type="AudioStream" path="res://assets/audio/sfx_command.wav" id="9_sfx_jump"]
 [ext_resource type="AudioStream" path="res://assets/audio/sfx_cat_meow.wav" id="10_sfx_meow"]
+[ext_resource type="Texture2D" path="res://assets/art/dressing_room/pedestal.png" id="11_pedestal"]
 
 [sub_resource type="StyleBoxFlat" id="Style_navbar"]
 bg_color = Color(0.078, 0.063, 0.047, 0.98)
@@ -467,7 +468,7 @@ offset_top = 10.0
 offset_right = 600.0
 offset_bottom = 60.0
 mouse_filter = 2
-texture = ExtResource("6_pedestal")
+texture = ExtResource("11_pedestal")
 expand_mode = 1
 stretch_mode = 5
 modulate = Color(0.5, 0.55, 0.65, 0.8)
@@ -479,7 +480,7 @@ offset_top = 10.0
 offset_right = 1380.0
 offset_bottom = 60.0
 mouse_filter = 2
-texture = ExtResource("6_pedestal")
+texture = ExtResource("11_pedestal")
 expand_mode = 1
 stretch_mode = 5
 modulate = Color(0.5, 0.55, 0.65, 0.8)
