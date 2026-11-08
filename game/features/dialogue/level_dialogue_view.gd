@@ -829,8 +829,6 @@ func _open_gameplay_step(step: int) -> void:
 	_hide_continue_arrow()
 	if is_instance_valid(nav_arrows_container):
 		nav_arrows_container.visible = false
-	if is_instance_valid(dialogue_box):
-		dialogue_box.visible = false
 	if skip_ctrl:
 		skip_ctrl.visible = false
 	
@@ -842,12 +840,20 @@ func _open_gameplay_step(step: int) -> void:
 	if ResourceLoader.exists(SANDBOX_PATH):
 		if is_instance_valid(fade_overlay):
 			fade_overlay.visible = true
-			var tw = create_tween()
+			fade_overlay.color = Color(0, 0, 0, 0)
+			var tw = create_tween().set_parallel(true)
+			# ค่อยๆ เฟดกล่องข้อความจางลงพร้อมกับเฟดจอดำเข้ามาอย่างนุ่มนวล
+			if is_instance_valid(dialogue_box):
+				tw.tween_property(dialogue_box, "modulate:a", 0.0, 0.25)
 			tw.tween_property(fade_overlay, "color:a", 1.0, 0.3)
-			tw.tween_callback(func():
+			tw.chain().tween_callback(func():
+				if is_instance_valid(dialogue_box):
+					dialogue_box.visible = false
 				get_tree().change_scene_to_file(SANDBOX_PATH)
 			)
 		else:
+			if is_instance_valid(dialogue_box):
+				dialogue_box.visible = false
 			get_tree().change_scene_to_file(SANDBOX_PATH)
 		return
 	

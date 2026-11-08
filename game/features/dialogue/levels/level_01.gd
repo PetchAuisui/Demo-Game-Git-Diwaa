@@ -89,9 +89,8 @@ static func get_data() -> Dictionary:
 			{"type": "bad_ending"}
 		],
 		
-		# ช้อยส์ 4: ฉันจะลองดู (เข้าสู่เกมเพลย์จำลองขั้นที่ 1)
+		# ช้อยส์ 4: ฉันจะลองดู (เข้าสู่เกมเพลย์จำลองขั้นที่ 1 ทันที)
 		"part1_try_seq": [
-			{"speaker": "เวล", "text": "ฉันจะลองดู", "mewla_anim": "idle"},
 			{"type": "open_gameplay", "step": 1}
 		],
 		
@@ -150,9 +149,8 @@ static func get_data() -> Dictionary:
 			{"type": "choice_menu", "menu": "part2_main"}
 		],
 		
-		# ช้อยส์ 3: ฉันจะลองดู (เข้าสู่เกมเพลย์จำลองขั้นที่ 2)
+		# ช้อยส์ 3: ฉันจะลองดู (เข้าสู่เกมเพลย์จำลองขั้นที่ 2 ทันที)
 		"part2_try_seq": [
-			{"speaker": "เวล", "text": "ฉันจะลองดู", "mewla_anim": "idle"},
 			{"type": "open_gameplay", "step": 2}
 		],
 		
