@@ -447,15 +447,22 @@ func _finish_cutscene() -> void:
 	_hide_exclamation()
 	
 	# ซ่อนกล่องข้อความ
-	var tw_box = create_tween()
-	tw_box.tween_property(dialogue_box, "modulate:a", 0.0, 0.2)
+	if is_instance_valid(dialogue_box):
+		var tw_box = create_tween()
+		tw_box.tween_property(dialogue_box, "modulate:a", 0.0, 0.2)
 	
 	# เฟดจอดำ และเปลี่ยนซีน
-	var tw_fade_out = create_tween()
-	tw_fade_out.tween_property(fade_overlay, "color:a", 1.0, 0.6)
-	tw_fade_out.tween_callback(func():
+	if is_instance_valid(fade_overlay):
+		fade_overlay.visible = true
+		var tw_fade_out = create_tween()
+		tw_fade_out.tween_property(fade_overlay, "color:a", 1.0, 0.4)
+		tw_fade_out.tween_callback(func():
+			await get_tree().process_frame
+			await get_tree().process_frame
+			_switch_to_gameplay()
+		)
+	else:
 		_switch_to_gameplay()
-	)
 
 func _skip_cutscene() -> void:
 	if is_transitioning:
@@ -466,6 +473,13 @@ func _skip_cutscene() -> void:
 	_hide_continue_arrow()
 	_hide_question_mark()
 	_hide_exclamation()
+	if is_instance_valid(dialogue_box):
+		dialogue_box.visible = false
+	if is_instance_valid(fade_overlay):
+		fade_overlay.visible = true
+		fade_overlay.color = Color(0, 0, 0, 1) # ตัดเข้าจอดำสนิททันที
+	await get_tree().process_frame
+	await get_tree().process_frame
 	_switch_to_gameplay()
 
 func _switch_to_gameplay() -> void:
