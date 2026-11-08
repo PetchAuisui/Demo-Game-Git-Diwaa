@@ -62,6 +62,7 @@ var _go_login_link: LinkButton
 var _connection_panel: VBoxContainer
 var _connection_label: Label
 var _retry_connection_btn: Button
+var _offline_play_btn: Button
 
 # --- Server ---
 var _api: AuthApiClient
@@ -118,6 +119,7 @@ func _bind_nodes() -> void:
 	_connection_panel = get_node("%ConnectionPanel") as VBoxContainer
 	_connection_label = get_node("%ConnectionLabel") as Label
 	_retry_connection_btn = get_node("%RetryConnectionBtn") as Button
+	_offline_play_btn = get_node("%OfflinePlayBtn") as Button
 
 
 func _wire_events() -> void:
@@ -135,6 +137,7 @@ func _wire_events() -> void:
 
 	login_succeeded.connect(_on_login_succeeded)
 	_retry_connection_btn.pressed.connect(_check_connection)
+	_offline_play_btn.pressed.connect(_on_offline_play_pressed)
 
 	_login_submit_btn.pressed.connect(_on_login_submit)
 	_login_password_input.text_submitted.connect(func(_text: String) -> void: await _on_login_submit())
@@ -259,7 +262,7 @@ func _apply_theme() -> void:
 	var btn_pressed := AuthThemeTokens.create_button_style(AuthThemeTokens.BUTTON_PRESSED_BG)
 	var btn_disabled := AuthThemeTokens.create_button_style(AuthThemeTokens.BUTTON_DISABLED_BG)
 
-	var submit_buttons: Array[Button] = [_login_submit_btn, _register_submit_btn, _retry_connection_btn]
+	var submit_buttons: Array[Button] = [_login_submit_btn, _register_submit_btn, _retry_connection_btn, _offline_play_btn]
 	for btn in submit_buttons:
 		btn.add_theme_stylebox_override("normal", btn_normal)
 		btn.add_theme_stylebox_override("hover", btn_hover)
@@ -534,6 +537,7 @@ func _set_busy(busy: bool) -> void:
 		_go_register_link,
 		_go_login_link,
 		_retry_connection_btn,
+		_offline_play_btn,
 	]
 	for btn in buttons:
 		btn.disabled = busy
@@ -566,6 +570,25 @@ func _check_connection() -> void:
 func _show_connection_problem(result: AuthApiResult) -> void:
 	_connection_label.text = _message_for_failure(result)
 	_connection_panel.visible = true
+
+	# ปุ่มเล่นออฟไลน์: ขึ้นเฉพาะตอน server ติดต่อไม่ได้จริง (เน็ตหลุด / server ล่ม)
+	# ไม่ขึ้นตอนถูกจำกัดจำนวนครั้ง (429) เพราะ server ยังอยู่ แค่ต้องรอ
+	# และต้องมีบัญชีที่จดจำไว้ในเครื่องนี้ด้วย
+	var server_unreachable := result.code in [AuthApiResult.NETWORK_UNAVAILABLE, AuthApiResult.SERVER_ERROR]
+	var saved_name := PlayerSession.get_saved_display_name() if server_unreachable else ""
+	_offline_play_btn.visible = not saved_name.is_empty()
+	if _offline_play_btn.visible:
+		_offline_play_btn.text = "เล่นแบบออฟไลน์ในชื่อ %s" % saved_name
+
+
+func _on_offline_play_pressed() -> void:
+	if _busy:
+		return
+	if not PlayerSession.start_offline():
+		_offline_play_btn.visible = false
+		_connection_label.text = "ไม่พบบัญชีที่จดจำไว้ในเครื่องนี้ กรุณาเชื่อมต่อ server แล้วเข้าสู่ระบบ"
+		return
+	get_tree().change_scene_to_file(PlayerSession.START_SCENE)
 
 
 ## ถ้ามี session ที่จดจำไว้ ลองล็อกอินอัตโนมัติ (เรียกหลังเช็คแล้วว่าติดต่อ server ได้)

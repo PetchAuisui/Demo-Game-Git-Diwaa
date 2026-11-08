@@ -9,7 +9,10 @@ extends Node
 ## ส่งออกทุกครั้งที่สถานะการล็อกอินเปลี่ยน (ล็อกอิน / ออกจากระบบ)
 signal session_changed
 
-enum State { SIGNED_OUT, ONLINE }
+## SIGNED_OUT = ยังไม่ได้เข้าสู่ระบบ
+## ONLINE = เข้าสู่ระบบแล้วและติดต่อ server ได้ ใช้ฟีเจอร์ออนไลน์ได้
+## OFFLINE = ใช้บัญชีที่จดจำไว้ในเครื่องตอนติดต่อ server ไม่ได้ เล่นได้แต่ใช้ฟีเจอร์ออนไลน์ไม่ได้
+enum State { SIGNED_OUT, ONLINE, OFFLINE }
 
 # หน้าที่พาไปหลังล็อกอินสำเร็จ (หน้าแรกของทีม)
 const START_SCENE := "res://features/start/start_view.tscn"
@@ -89,6 +92,39 @@ func sign_out() -> void:
 
 func has_saved_session() -> bool:
 	return SessionStore.has_saved_session()
+
+
+## ใช้ฟีเจอร์ออนไลน์ได้ไหม (leaderboard, เปลี่ยนชื่อ ฯลฯ) หน้าอื่นต้องเช็คตัวนี้ ไม่ใช่ is_signed_in()
+func is_online() -> bool:
+	return state == State.ONLINE
+
+
+## ชื่อที่แสดงของบัญชีที่จดจำไว้ในเครื่อง ("" ถ้าไม่มี) ใช้บอกผู้เล่นว่าจะเล่นออฟไลน์ในชื่อไหน
+func get_saved_display_name() -> String:
+	var saved := SessionStore.load_session()
+	if saved.is_empty():
+		return ""
+	var saved_profile: Dictionary = saved["profile"]
+	return saved_profile["display_name"]
+
+
+## เข้าเล่นแบบออฟไลน์ด้วยบัญชีที่จดจำไว้ในเครื่อง ใช้ตอนติดต่อ server ไม่ได้เท่านั้น
+## ไม่มีวันหมดอายุ (token หมดอายุแค่ทำให้ใช้ฟีเจอร์ออนไลน์ไม่ได้)
+## ความปลอดภัย: ไม่โหลด token ขึ้นมาในโหมดนี้ (token ยังอยู่ในไฟล์ไว้ล็อกอินอัตโนมัติครั้งหน้า)
+## และข้อมูลในไฟล์ผู้เล่นแก้เองได้ จึงห้ามให้โหมดนี้ปลดล็อกอะไรที่ server ต้องเป็นผู้ตัดสิน
+func start_offline() -> bool:
+	if state == State.ONLINE:
+		return false
+	var saved := SessionStore.load_session()
+	if saved.is_empty():
+		return false
+	var saved_profile: Dictionary = saved["profile"]
+	_session = {"profile": saved_profile.duplicate()}
+	_remembered = true
+	last_username = saved_profile["username"]
+	state = State.OFFLINE
+	session_changed.emit()
+	return true
 
 
 ## ล็อกอินอัตโนมัติด้วย session ที่จดจำไว้ โดยขอ token ใบใหม่จาก server (token ใบเก่าจะใช้ไม่ได้อีก)
