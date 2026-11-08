@@ -106,6 +106,8 @@ var font_ta_pixel: Font
 var _current_stage_idx: int = 0
 var _platform_nodes: Dictionary = {}
 var _is_jumping := false
+var _target_queue_idx: int = -1
+var _jump_tween: Tween = null
 var _is_muted := false
 var _idle_bob_timer := 0.0
 var _torch_flames: Array[ColorRect] = []
@@ -116,8 +118,8 @@ func _ready() -> void:
 	_load_resources()
 	_bind_nodes()
 	_wire_navbar()
-	_spawn_tower_platforms()
 	_init_game_progression()
+	_spawn_tower_platforms()
 	_setup_character_and_cat()
 
 	# เลื่อนมุมมองกล้องไปยังตำแหน่งด่านเริ่มต้นของผู้เล่นทันที
@@ -278,13 +280,15 @@ func _init_game_progression() -> void:
 	if stars_label:
 		stars_label.text = str(total_stars)
 
-	# ด่านเริ่มต้นของผู้เล่น
-	var target_id := clampi(highest_cleared_id + 1, 1, 40)
+	# ด่านเริ่มต้นของผู้เล่น: เมื่อกลับมาที่หน้าด่าน เวลจะยืนที่ด่านล่าสุดที่ผ่านแล้ว
+	# และปลดล็อกด่านถัดไปรอไว้ ถ้ากดคลิกหรือกดลูกศรเวลจึงจะกระโดดไปด่านถัดไป
+	var target_id := highest_cleared_id if highest_cleared_id > 0 else 1
 	for i in range(TOWER_STAGES.size()):
 		if TOWER_STAGES[i]["id"] == target_id:
 			_current_stage_idx = i
 			break
 
+	_target_queue_idx = _current_stage_idx
 	_update_hud_display(TOWER_STAGES[_current_stage_idx])
 
 
@@ -597,13 +601,10 @@ func _setup_character_and_cat() -> void:
 
 
 func _on_platform_selected(idx: int) -> void:
-	if _is_jumping:
-		return
-	if idx == _current_stage_idx:
+	if idx == _current_stage_idx and not _is_jumping:
 		_on_launch_stage_pressed()
 		return
-
-	_jump_to_stage(idx, true)
+	_try_navigate_stage(idx)
 
 
 func _on_locked_platform_clicked(idx: int) -> void:
@@ -618,58 +619,181 @@ func _on_locked_platform_clicked(idx: int) -> void:
 		)
 
 
-func _jump_to_stage(target_idx: int, animate: bool = true) -> void:
+func _try_navigate_stage(target_idx: int) -> void:
 	if target_idx < 0 or target_idx >= TOWER_STAGES.size():
 		return
 
-	_current_stage_idx = target_idx
+	var target_stg: Dictionary = TOWER_STAGES[target_idx]
+	var target_id: int = target_stg["id"]
+	var is_unlocked: bool = (target_id == 1) or GameProgressManager.is_level_cleared(target_id - 1)
+
+	if not is_unlocked:
+		_on_locked_platform_clicked(target_idx)
+		return
+
+	_target_queue_idx = target_idx
+
+	if not _is_jumping:
+		_step_towards_queued_target()
+
+
+func _step_towards_queued_target() -> void:
+	if _target_queue_idx == -1 or _target_queue_idx == _current_stage_idx:
+		# ถึงจุดหมายปลายทางแล้ว หรือหยุดเดิน: ยืนตัวตรง หายใจตามปกติ
+		_is_jumping = false
+		_target_queue_idx = _current_stage_idx
+		if vel_anim:
+			vel_anim.play("breathe")
+		var curr_stg := TOWER_STAGES[_current_stage_idx]
+		if vel_hero:
+			vel_hero.position = Vector2(curr_stg["x"] - 24.0, curr_stg["y"] - 107.0)
+			vel_hero.scale = Vector2.ONE
+		return
+
+	var step_dir := 1 if _target_queue_idx > _current_stage_idx else -1
+	var next_step_idx := _current_stage_idx + step_dir
+
+	var next_stg: Dictionary = TOWER_STAGES[next_step_idx]
+	var next_id: int = next_stg["id"]
+	var is_unlocked: bool = (next_id == 1) or GameProgressManager.is_level_cleared(next_id - 1)
+	if not is_unlocked:
+		_target_queue_idx = _current_stage_idx
+		_is_jumping = false
+		if vel_anim:
+			vel_anim.play("breathe")
+		return
+
+	_perform_jump_step(next_step_idx)
+
+
+func _perform_jump_step(next_idx: int) -> void:
+	_is_jumping = true
+	var prev_idx := _current_stage_idx
+	_current_stage_idx = next_idx
+
+	_update_platform_highlight(prev_idx, false)
+	_update_platform_highlight(_current_stage_idx, true)
+
 	var stg := TOWER_STAGES[_current_stage_idx]
 	_update_hud_display(stg)
 	_highlight_act(int(stg["act"]))
 
 	var target_vel_pos := Vector2(stg["x"] - 24.0, stg["y"] - 107.0)
-
-	if not animate:
-		if vel_hero:
-			vel_hero.position = target_vel_pos
-		if vel_anim:
-			vel_anim.play("breathe")
-		_scroll_to_y(int(stg["y"]) - 460, false)
-		return
-
-	_is_jumping = true
-	_play_sfx(sfx_jump)
-
-	var start_vel_pos := vel_hero.position
+	var start_vel_pos := vel_hero.position if vel_hero else target_vel_pos
 	var is_moving_right := target_vel_pos.x >= start_vel_pos.x
 
-	# หันหน้าไปตามทิศทางที่จะไป: ถ้าไปขวา flip_h = false, ถ้าไปซ้าย flip_h = true
+	# เล่นแอนิเมชันเดิน/วิ่งต่อเนื่อง ("ถ้าผู้เล่นเดินต่อเนื่องให้ทำท่าวิ่งไปเรื่อยๆ")
 	if vel_anim:
 		vel_anim.flip_h = not is_moving_right
 		vel_anim.play("walk")
 
+	_play_sfx(sfx_jump)
 	_scroll_to_y(int(stg["y"]) - 460, true)
 
-	var jump_duration := 0.45
+	var has_more_steps := (_target_queue_idx != _current_stage_idx)
+	var jump_duration := 0.32 if has_more_steps else 0.42
 	var peak_height := 90.0
 
-	var tw := create_tween()
-	tw.tween_method(func(t: float):
+	if _jump_tween and _jump_tween.is_valid():
+		_jump_tween.kill()
+
+	_jump_tween = create_tween()
+	_jump_tween.tween_method(func(t: float):
+		if not vel_hero:
+			return
 		var curr_x := lerpf(start_vel_pos.x, target_vel_pos.x, t)
 		var base_y := lerpf(start_vel_pos.y, target_vel_pos.y, t)
 		var arc_y := 4.0 * peak_height * t * (1.0 - t)
 		vel_hero.position = Vector2(curr_x, base_y - arc_y)
 	, 0.0, 1.0, jump_duration).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 
-	get_tree().create_timer(jump_duration).timeout.connect(func():
+	_jump_tween.finished.connect(func():
 		_play_sfx(sfx_click)
+		_step_towards_queued_target()
+	)
 
-		# เมื่อถึงจุดหมาย กลับมายืนท่าปกติ หายใจตามเดิม (ไม่เอาตัวดึ๊งๆ ยืนนิ่งสนิท)
+
+func _jump_to_stage(target_idx: int, animate: bool = true) -> void:
+	if target_idx < 0 or target_idx >= TOWER_STAGES.size():
+		return
+
+	if not animate:
+		if _jump_tween and _jump_tween.is_valid():
+			_jump_tween.kill()
+		_is_jumping = false
+		var prev_idx := _current_stage_idx
+		_current_stage_idx = target_idx
+		_target_queue_idx = target_idx
+		_update_platform_highlight(prev_idx, false)
+		_update_platform_highlight(_current_stage_idx, true)
+
+		var stg := TOWER_STAGES[_current_stage_idx]
+		_update_hud_display(stg)
+		_highlight_act(int(stg["act"]))
+
+		var target_vel_pos := Vector2(stg["x"] - 24.0, stg["y"] - 107.0)
+		if vel_hero:
+			vel_hero.position = target_vel_pos
+			vel_hero.scale = Vector2.ONE
 		if vel_anim:
 			vel_anim.play("breathe")
-		vel_hero.scale = Vector2.ONE
-		_is_jumping = false
-	)
+		_scroll_to_y(int(stg["y"]) - 460, false)
+		return
+
+	_try_navigate_stage(target_idx)
+
+
+func _update_platform_highlight(idx: int, is_active: bool) -> void:
+	if idx < 0 or idx >= TOWER_STAGES.size():
+		return
+	var stg: Dictionary = TOWER_STAGES[idx]
+	var stg_id: int = stg["id"]
+	if not _platform_nodes.has(stg_id):
+		return
+	var plat: Control = _platform_nodes[stg_id]
+	var slab_btn := plat.get_node_or_null("SlabBtn") as Button
+	if not slab_btn:
+		return
+
+	var is_cleared := GameProgressManager.is_level_cleared(stg_id)
+	var is_unlocked := (stg_id == 1) or GameProgressManager.is_level_cleared(stg_id - 1)
+
+	var sb_norm := StyleBoxFlat.new()
+	sb_norm.corner_radius_top_left = 4
+	sb_norm.corner_radius_top_right = 4
+	sb_norm.corner_radius_bottom_left = 4
+	sb_norm.corner_radius_bottom_right = 4
+	sb_norm.border_width_left = 2
+	sb_norm.border_width_top = 2
+	sb_norm.border_width_right = 2
+	sb_norm.border_width_bottom = 3
+
+	if is_active:
+		sb_norm.bg_color = Color(0.18, 0.13, 0.08, 0.96)
+		sb_norm.border_color = Color(0.96, 0.62, 0.07, 1.0)
+		sb_norm.shadow_color = Color(0.96, 0.62, 0.04, 0.38)
+		sb_norm.shadow_size = 6
+	elif is_cleared:
+		sb_norm.bg_color = Color(0.08, 0.12, 0.18, 0.95)
+		sb_norm.border_color = Color(0.28, 0.38, 0.52, 1.0)
+		sb_norm.shadow_color = Color(0.0, 0.0, 0.0, 0.4)
+		sb_norm.shadow_size = 3
+	elif is_unlocked:
+		sb_norm.bg_color = Color(0.13, 0.10, 0.07, 0.95)
+		sb_norm.border_color = Color(0.72, 0.48, 0.16, 1.0)
+	else:
+		sb_norm.bg_color = Color(0.06, 0.07, 0.10, 0.92)
+		sb_norm.border_color = Color(0.14, 0.17, 0.24, 0.85)
+
+	var sb_hover := sb_norm.duplicate() as StyleBoxFlat
+	sb_hover.bg_color = sb_norm.bg_color.lightened(0.15)
+	if is_unlocked:
+		sb_hover.border_color = Color(0.98, 0.88, 0.47, 1.0)
+	else:
+		sb_hover.border_color = Color(0.22, 0.28, 0.38, 1.0)
+
+	slab_btn.add_theme_stylebox_override("normal", sb_norm)
+	slab_btn.add_theme_stylebox_override("hover", sb_hover)
 
 
 func _update_hud_display(stg: Dictionary) -> void:
@@ -834,12 +958,14 @@ func _input(event: InputEvent) -> void:
 		if event.keycode == KEY_ESCAPE:
 			get_viewport().set_input_as_handled()
 			_on_back_pressed()
-		elif event.keycode == KEY_UP or event.keycode == KEY_W:
+		elif event.keycode == KEY_UP or event.keycode == KEY_W or event.keycode == KEY_RIGHT or event.keycode == KEY_D:
 			get_viewport().set_input_as_handled()
-			_jump_to_stage(clampi(_current_stage_idx + 1, 0, TOWER_STAGES.size() - 1), true)
-		elif event.keycode == KEY_DOWN or event.keycode == KEY_S:
+			var base_idx := _target_queue_idx if _is_jumping and _target_queue_idx != -1 else _current_stage_idx
+			_try_navigate_stage(base_idx + 1)
+		elif event.keycode == KEY_DOWN or event.keycode == KEY_S or event.keycode == KEY_LEFT or event.keycode == KEY_A:
 			get_viewport().set_input_as_handled()
-			_jump_to_stage(clampi(_current_stage_idx - 1, 0, TOWER_STAGES.size() - 1), true)
+			var base_idx := _target_queue_idx if _is_jumping and _target_queue_idx != -1 else _current_stage_idx
+			_try_navigate_stage(base_idx - 1)
 		elif event.keycode == KEY_ENTER or event.keycode == KEY_SPACE:
 			get_viewport().set_input_as_handled()
 			_on_launch_stage_pressed()
