@@ -8,5 +8,6 @@ public enum AuthErrorCode
     IdentifierTaken,
     RateLimited,
     NetworkUnavailable,
-    ServerError
+    ServerError,
+    DisplayNameChangeCooldown
 }

@@ -65,6 +65,19 @@ public static partial class AccountInputValidator
         return errors;
     }
 
+    public static IReadOnlyList<FieldError> ValidateChangeDisplayName(ChangeDisplayNameRequest request)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+
+        var errors = new List<FieldError>(1);
+        if (ValidateDisplayName(request.DisplayName) is { } displayNameError)
+        {
+            errors.Add(displayNameError);
+        }
+
+        return errors;
+    }
+
     private static FieldError? ValidateUsername(string? rawUsername)
     {
         if (string.IsNullOrWhiteSpace(rawUsername))

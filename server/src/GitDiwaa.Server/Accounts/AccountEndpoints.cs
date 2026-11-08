@@ -1,3 +1,4 @@
+using System.Globalization;
 using GitDiwaa.Online.Accounts.Contracts;
 using GitDiwaa.Server.Security;
 using Microsoft.AspNetCore.Builder;
@@ -74,6 +75,51 @@ public static class AccountEndpoints
             var session = (AuthenticatedSession)httpContext.Items[RequireSessionFilter.SessionItemKey]!;
             return Results.Json(session.Profile, statusCode: StatusCodes.Status200OK);
         }).AddEndpointFilter<RequireSessionFilter>();
+
+        // เปลี่ยนชื่อที่แสดง: ต้อง login (token ใน Authorization header) และใช้ rate limit แบบเดียวกับ login
+        // ผู้ใช้ที่จะถูกเปลี่ยนชื่อมาจาก session เท่านั้น เปลี่ยนชื่อของคนอื่นไม่ได้
+        group.MapPatch("/me/display-name", async (
+            ChangeDisplayNameRequest? request,
+            HttpContext httpContext,
+            AccountService accountService,
+            TimeProvider timeProvider,
+            CancellationToken ct) =>
+        {
+            httpContext.Response.Headers.CacheControl = "no-store";
+
+            if (request is null)
+            {
+                var emptyError = new ApiError(AuthErrorCode.ValidationFailed, []);
+                return Results.Json(emptyError, statusCode: StatusCodes.Status400BadRequest);
+            }
+
+            var session = (AuthenticatedSession)httpContext.Items[RequireSessionFilter.SessionItemKey]!;
+            var result = await accountService.ChangeDisplayNameAsync(session.Profile.Id, request, ct);
+            if (result.Succeeded && result.Value is not null)
+            {
+                return Results.Json(result.Value, statusCode: StatusCodes.Status200OK);
+            }
+
+            if (result.Error == AuthErrorCode.DisplayNameChangeCooldown && result.Value is not null)
+            {
+                // บอก client ว่าต้องรออีกกี่วินาทีถึงจะเปลี่ยนชื่อได้
+                double waitSeconds = (result.Value.NextChangeAllowedAt - timeProvider.GetUtcNow()).TotalSeconds;
+                long retryAfter = Math.Max(1, (long)Math.Ceiling(waitSeconds));
+                httpContext.Response.Headers.RetryAfter = retryAfter.ToString(CultureInfo.InvariantCulture);
+            }
+
+            int statusCode = result.Error switch
+            {
+                AuthErrorCode.ValidationFailed => StatusCodes.Status400BadRequest,
+                AuthErrorCode.IdentifierTaken => StatusCodes.Status409Conflict,
+                AuthErrorCode.DisplayNameChangeCooldown => StatusCodes.Status409Conflict,
+                AuthErrorCode.InvalidCredentials => StatusCodes.Status401Unauthorized,
+                _ => StatusCodes.Status400BadRequest
+            };
+
+            var apiError = new ApiError(result.Error ?? AuthErrorCode.Unknown, result.FieldErrors);
+            return Results.Json(apiError, statusCode: statusCode);
+        }).AddEndpointFilter<RequireSessionFilter>().RequireRateLimiting("auth");
 
         group.MapPost("/refresh", async (HttpRequest request, HttpResponse response, AccountService accountService, CancellationToken ct) =>
         {

@@ -78,11 +78,10 @@ internal static class RepositoryTests
             var user = TestData.NewUser("mage01", "mage@example.com");
             await repo.TryAddAsync(user);
 
-            var updated = user with { DisplayName = "Arch Mage Supreme", FailedLoginCount = 2 };
+            var updated = user with { FailedLoginCount = 2 };
             await repo.UpdateAsync(updated);
 
             var fetched = await repo.FindByIdAsync(user.Id);
-            Assert.Equal("Arch Mage Supreme", fetched?.DisplayName);
             Assert.Equal(2, fetched?.FailedLoginCount);
 
             var unknownUser = TestData.NewUser("nobody", "nobody@example.com") with { Id = Guid.NewGuid() };
@@ -174,7 +173,7 @@ internal static class RepositoryTests
             Assert.Equal(19, takenCount);
         });
 
-        await runner.RunAsync("UserRepo_Update_CannotChangeDisplayNameKey", async static () =>
+        await runner.RunAsync("UserRepo_Update_IgnoresDisplayNameChanges", async static () =>
         {
             var repo = new InMemoryUserRepository();
             var user = TestData.NewUser("mage01", "mage@example.com") with
@@ -189,7 +188,11 @@ internal static class RepositoryTests
                 DisplayName = "Changed Hero",
                 DisplayNameKey = AccountNormalizer.NormalizeDisplayNameKey("Changed Hero")
             };
-            await Assert.ThrowsAsync<InvalidOperationException>(() => repo.UpdateAsync(tampered));
+            await repo.UpdateAsync(tampered);
+
+            var fetched = await repo.FindByIdAsync(user.Id);
+            Assert.Equal("Original Hero", fetched?.DisplayName);
+            Assert.Equal(AccountNormalizer.NormalizeDisplayNameKey("Original Hero"), fetched?.DisplayNameKey);
         });
 
         runner.Run("UserRecord_ToString_HidesSecrets", static () =>

@@ -12,6 +12,7 @@ internal static class Program
         await RepositoryTests.RunAsync(runner);
         await AccountServiceTests.RunAsync(runner);
         await AccountApiTests.RunAsync(runner);
+        await DisplayNameTests.RunAsync(runner);
 
         return runner.Complete();
     }

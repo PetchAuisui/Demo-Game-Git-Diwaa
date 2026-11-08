@@ -278,6 +278,81 @@ public sealed class AccountService
         return AccountResult<LoginSession>.Success(loginSession);
     }
 
+    /// <summary>
+    /// เปลี่ยนชื่อที่แสดงของผู้ใช้ที่ login อยู่ (userId ต้องมาจาก session ที่ตรวจแล้วเท่านั้น ห้ามรับจาก request)
+    /// สำเร็จ: Value คือโปรไฟล์ใหม่ + เวลาที่เปลี่ยนได้อีกครั้ง
+    /// ยังไม่ครบกำหนด: Error = DisplayNameChangeCooldown และ Value บอกเวลาที่เปลี่ยนได้อีกครั้ง
+    /// </summary>
+    public async Task<AccountResult<ChangeDisplayNameResponse>> ChangeDisplayNameAsync(
+        Guid userId,
+        ChangeDisplayNameRequest request,
+        CancellationToken ct = default)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+
+        var validationErrors = AccountInputValidator.ValidateChangeDisplayName(request);
+        if (validationErrors.Count > 0)
+        {
+            return AccountResult<ChangeDisplayNameResponse>.Failure(AuthErrorCode.ValidationFailed, validationErrors);
+        }
+
+        DateTimeOffset now = _timeProvider.GetUtcNow();
+        string trimmedDisplayName = request.DisplayName.Trim();
+        string displayNameKey = AccountNormalizer.NormalizeDisplayNameKey(request.DisplayName);
+
+        var user = await _userRepository.FindByIdAsync(userId, ct);
+        if (user is null || user.Status != UserStatus.Active)
+        {
+            return AccountResult<ChangeDisplayNameResponse>.Failure(AuthErrorCode.InvalidCredentials);
+        }
+
+        // ชื่อเดิมทุกตัวอักษร: ไม่ต้องเปลี่ยน และไม่นับเป็นการใช้สิทธิ์เปลี่ยนชื่อ
+        if (string.Equals(user.DisplayName, trimmedDisplayName, StringComparison.Ordinal))
+        {
+            return AccountResult<ChangeDisplayNameResponse>.Success(ToChangeResponse(user, now));
+        }
+
+        var outcome = await _userRepository.TryChangeDisplayNameAsync(
+            userId,
+            trimmedDisplayName,
+            displayNameKey,
+            now,
+            _options.DisplayNameChangeCooldown,
+            ct);
+
+        return outcome.Result switch
+        {
+            DisplayNameChangeResult.Changed when outcome.User is not null =>
+                AccountResult<ChangeDisplayNameResponse>.Success(ToChangeResponse(outcome.User, now)),
+            DisplayNameChangeResult.CooldownActive when outcome.User is not null =>
+                new AccountResult<ChangeDisplayNameResponse>(
+                    ToChangeResponse(outcome.User, now),
+                    AuthErrorCode.DisplayNameChangeCooldown,
+                    []),
+            DisplayNameChangeResult.DisplayNameTaken =>
+                AccountResult<ChangeDisplayNameResponse>.Failure(
+                    AuthErrorCode.IdentifierTaken,
+                    [new FieldError(AccountFields.DisplayName, FieldErrorReason.Taken)]),
+            DisplayNameChangeResult.UserNotFound =>
+                AccountResult<ChangeDisplayNameResponse>.Failure(AuthErrorCode.InvalidCredentials),
+            _ => throw new InvalidOperationException($"Unexpected DisplayNameChangeResult: {outcome.Result}")
+        };
+    }
+
+    private ChangeDisplayNameResponse ToChangeResponse(UserRecord user, DateTimeOffset now)
+    {
+        DateTimeOffset nextChangeAllowedAt = user.DisplayNameChangedAt is { } lastChange
+            ? lastChange.Add(_options.DisplayNameChangeCooldown)
+            : now;
+        if (nextChangeAllowedAt < now)
+        {
+            nextChangeAllowedAt = now;
+        }
+
+        var profile = new PlayerProfile(user.Id, user.Username, user.DisplayName);
+        return new ChangeDisplayNameResponse(profile, nextChangeAllowedAt);
+    }
+
     public async Task LogoutAsync(string? token, CancellationToken ct = default)
     {
         DateTimeOffset now = _timeProvider.GetUtcNow();

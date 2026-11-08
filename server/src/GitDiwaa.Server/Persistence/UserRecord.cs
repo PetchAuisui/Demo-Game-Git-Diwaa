@@ -23,7 +23,8 @@ public sealed record UserRecord(
     UserStatus Status,
     DateTimeOffset CreatedAt,
     DateTimeOffset UpdatedAt,
-    DateTimeOffset? LastLoginAt)
+    DateTimeOffset? LastLoginAt,
+    DateTimeOffset? DisplayNameChangedAt = null)
 {
     private bool PrintMembers(StringBuilder builder)
     {
@@ -39,7 +40,8 @@ public sealed record UserRecord(
                .Append(", Status = ").Append(Status)
                .Append(", CreatedAt = ").Append(CreatedAt)
                .Append(", UpdatedAt = ").Append(UpdatedAt)
-               .Append(", LastLoginAt = ").Append(LastLoginAt);
+               .Append(", LastLoginAt = ").Append(LastLoginAt)
+               .Append(", DisplayNameChangedAt = ").Append(DisplayNameChangedAt);
         return true;
     }
 }
