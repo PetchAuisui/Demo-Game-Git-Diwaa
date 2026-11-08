@@ -131,6 +131,8 @@ var entrance_tween: Tween = null
 
 func _ready() -> void:
 	Engine.time_scale = 1.0
+	if next_scene_path != "" and ResourceLoader.exists(next_scene_path):
+		ResourceLoader.load_threaded_request(next_scene_path)
 	_init_scene_state()
 	_play_entrance_sequence()
 
@@ -456,11 +458,7 @@ func _finish_cutscene() -> void:
 		fade_overlay.visible = true
 		var tw_fade_out = create_tween()
 		tw_fade_out.tween_property(fade_overlay, "color:a", 1.0, 0.4)
-		tw_fade_out.tween_callback(func():
-			await get_tree().process_frame
-			await get_tree().process_frame
-			_switch_to_gameplay()
-		)
+		tw_fade_out.tween_callback(_switch_to_gameplay)
 	else:
 		_switch_to_gameplay()
 
@@ -475,16 +473,20 @@ func _skip_cutscene() -> void:
 	_hide_exclamation()
 	if is_instance_valid(dialogue_box):
 		dialogue_box.visible = false
-	if is_instance_valid(fade_overlay):
-		fade_overlay.visible = true
-		fade_overlay.color = Color(0, 0, 0, 1) # ตัดเข้าจอดำสนิททันที
-	await get_tree().process_frame
-	await get_tree().process_frame
 	_switch_to_gameplay()
 
 func _switch_to_gameplay() -> void:
 	Engine.time_scale = 1.0
 	if next_scene_path != "" and ResourceLoader.exists(next_scene_path):
-		get_tree().change_scene_to_file(next_scene_path)
+		var packed: PackedScene = null
+		var load_status := ResourceLoader.load_threaded_get_status(next_scene_path)
+		if load_status == ResourceLoader.THREAD_LOAD_LOADED or load_status == ResourceLoader.THREAD_LOAD_IN_PROGRESS:
+			packed = ResourceLoader.load_threaded_get(next_scene_path) as PackedScene
+		if not packed:
+			packed = load(next_scene_path) as PackedScene
+		if packed:
+			get_tree().change_scene_to_packed(packed)
+		else:
+			get_tree().change_scene_to_file(next_scene_path)
 	else:
 		push_warning("[CentralTowerCutscene] next_scene_path not found: '%s'" % next_scene_path)

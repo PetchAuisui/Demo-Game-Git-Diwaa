@@ -16,6 +16,8 @@ extends Node2D
 @export var fade_in_from_black: bool = false
 @export_enum("Intro & Part 1", "Part 2", "Outro") var debug_phase: int = 0
 
+const SANDBOX_PATH := "res://features/sandbox/sandbox_game_view.tscn"
+
 # Animation & Visuals
 @onready var anim_player: AnimationPlayer = $AnimationPlayer
 @onready var camera: Camera2D = $Camera2D
@@ -171,6 +173,10 @@ func _ready() -> void:
 	skip_ctrl.next_scene_path = next_scene_path
 	skip_ctrl.custom_skip_action = _on_skip_step
 	add_child(skip_ctrl)
+	
+	# โหลดฉาก Sandbox รอไว้ล่วงหน้าใน Background Thread ทันทีที่เริ่มฉาก
+	if ResourceLoader.exists(SANDBOX_PATH):
+		ResourceLoader.load_threaded_request(SANDBOX_PATH)
 	
 	# ตรวจสอบด่านที่เลือกจาก Level Select
 	var selected_lvl := GameProgressManager.get_selected_level_number()
@@ -840,16 +846,18 @@ func _open_gameplay_step(step: int) -> void:
 	var ret_path = scene_file_path if scene_file_path != "" else "res://features/cutscene/inside_tower_cutscene.tscn"
 	GameProgressManager.set_gameplay_return_scene(ret_path)
 	
-	const SANDBOX_PATH := "res://features/sandbox/sandbox_game_view.tscn"
 	if ResourceLoader.exists(SANDBOX_PATH):
-		if is_instance_valid(fade_overlay):
-			fade_overlay.visible = true
-			fade_overlay.color = Color(0, 0, 0, 1) # ตัดเข้าจอดำสนิททันที
+		var sandbox_packed: PackedScene = null
+		var load_status := ResourceLoader.load_threaded_get_status(SANDBOX_PATH)
+		if load_status == ResourceLoader.THREAD_LOAD_LOADED or load_status == ResourceLoader.THREAD_LOAD_IN_PROGRESS:
+			sandbox_packed = ResourceLoader.load_threaded_get(SANDBOX_PATH) as PackedScene
+		if not sandbox_packed:
+			sandbox_packed = load(SANDBOX_PATH) as PackedScene
 		
-		# บังคับให้ Godot เรนเดอร์จอดำสนิทขึ้นจอ เพื่อไม่ให้เห็นภาพตัวละครค้างติดตาขณะโหลดซีน Sandbox
-		await get_tree().process_frame
-		await get_tree().process_frame
-		get_tree().change_scene_to_file(SANDBOX_PATH)
+		if sandbox_packed:
+			get_tree().change_scene_to_packed(sandbox_packed)
+		else:
+			get_tree().change_scene_to_file(SANDBOX_PATH)
 		return
 	
 	var placeholder_res = load("res://features/dialogue/gameplay_placeholder_view.tscn")

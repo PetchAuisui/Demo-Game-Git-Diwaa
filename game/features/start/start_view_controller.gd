@@ -35,6 +35,10 @@ func _ready() -> void:
 	_load_preview_animation()
 	_start_career_btn.grab_focus()
 
+	const SANDBOX_PATH := "res://features/sandbox/sandbox_game_view.tscn"
+	if ResourceLoader.exists(SANDBOX_PATH):
+		ResourceLoader.load_threaded_request(SANDBOX_PATH)
+
 
 func _bind_nodes() -> void:
 	_start_career_btn = get_node("%StartCareerBtn")
@@ -131,17 +135,17 @@ func _on_resume_work_pressed() -> void:
 
 
 func _transition_to_scene(target_path: String) -> void:
-	var canvas_layer := CanvasLayer.new()
-	canvas_layer.layer = 128
-	var overlay := ColorRect.new()
-	overlay.color = Color.BLACK
-	overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	overlay.mouse_filter = Control.MOUSE_FILTER_STOP
-	canvas_layer.add_child(overlay)
-	add_child(canvas_layer)
-	await get_tree().process_frame
-	await get_tree().process_frame
-	get_tree().change_scene_to_file(target_path)
+	var packed: PackedScene = null
+	var load_status := ResourceLoader.load_threaded_get_status(target_path)
+	if load_status == ResourceLoader.THREAD_LOAD_LOADED or load_status == ResourceLoader.THREAD_LOAD_IN_PROGRESS:
+		packed = ResourceLoader.load_threaded_get(target_path) as PackedScene
+	if not packed and ResourceLoader.exists(target_path):
+		packed = load(target_path) as PackedScene
+		
+	if packed:
+		get_tree().change_scene_to_packed(packed)
+	else:
+		get_tree().change_scene_to_file(target_path)
 
 
 func _on_dressing_room_pressed() -> void:
