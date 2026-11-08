@@ -12,6 +12,7 @@ const RATE_LIMITED := "RateLimited"
 const INVALID_CREDENTIALS := "InvalidCredentials"
 const VALIDATION_FAILED := "ValidationFailed"
 const IDENTIFIER_TAKEN := "IdentifierTaken"
+const DISPLAY_NAME_CHANGE_COOLDOWN := "DisplayNameChangeCooldown"
 
 var ok := false
 var status := 0

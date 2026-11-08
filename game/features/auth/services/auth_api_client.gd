@@ -13,6 +13,8 @@ const MAX_CODE_LENGTH := 64
 const MAX_FIELD_ERRORS := 16
 const DEFAULT_RETRY_AFTER_SEC := 60
 const MAX_RETRY_AFTER_SEC := 3600
+# Display-name cooldown is 14 days on the server; accept a little more, never unbounded.
+const MAX_COOLDOWN_RETRY_AFTER_SEC := 15 * 24 * 60 * 60
 
 var _http: HTTPRequest
 var _busy := false
@@ -57,6 +59,13 @@ func refresh(token: String) -> AuthApiResult:
 
 func logout(token: String) -> AuthApiResult:
 	return await _send(HTTPClient.METHOD_POST, AuthConfig.API_PREFIX + "/logout", null, token, AuthConfig.REQUEST_TIMEOUT_SEC)
+
+
+func change_display_name(token: String, display_name: String) -> AuthApiResult:
+	if token.is_empty():
+		return AuthApiResult.failure(0, AuthApiResult.INVALID_CREDENTIALS)
+	var body := {"displayName": display_name}
+	return await _send(HTTPClient.METHOD_PATCH, AuthConfig.API_PREFIX + "/me/display-name", body, token, AuthConfig.REQUEST_TIMEOUT_SEC)
 
 
 func me(token: String) -> AuthApiResult:
@@ -125,6 +134,8 @@ func _parse_response(result: int, status: int, headers: PackedStringArray, raw: 
 		if code_value is String and not code_value.is_empty() and code_value.length() <= MAX_CODE_LENGTH:
 			var failed := AuthApiResult.failure(status, code_value)
 			failed.field_errors = _read_field_errors(parsed.get("fieldErrors"))
+			if code_value == AuthApiResult.DISPLAY_NAME_CHANGE_COOLDOWN:
+				failed.retry_after_sec = _read_retry_after(headers, MAX_COOLDOWN_RETRY_AFTER_SEC)
 			return failed
 
 	return AuthApiResult.failure(status, AuthApiResult.SERVER_ERROR)
@@ -146,7 +157,7 @@ func _read_field_errors(value: Variant) -> Array[Dictionary]:
 	return errors
 
 
-func _read_retry_after(headers: PackedStringArray) -> int:
+func _read_retry_after(headers: PackedStringArray, max_sec: int = MAX_RETRY_AFTER_SEC) -> int:
 	for header: String in headers:
 		var separator := header.find(":")
 		if separator <= 0:
@@ -155,7 +166,7 @@ func _read_retry_after(headers: PackedStringArray) -> int:
 			continue
 		var value := header.substr(separator + 1).strip_edges()
 		if value.is_valid_int():
-			return clampi(value.to_int(), 0, MAX_RETRY_AFTER_SEC)
+			return clampi(value.to_int(), 0, max_sec)
 	return DEFAULT_RETRY_AFTER_SEC
 
 

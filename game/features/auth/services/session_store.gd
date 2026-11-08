@@ -149,6 +149,11 @@ static func _derive_key() -> String:
 
 ## แปลงเวลาแบบ ISO 8601 ที่ server ส่งมา (เช่น "2026-12-02T09:00:00.1234567+00:00") เป็น unix time
 ## server ส่งเวลาเป็น UTC เสมอ จึงตัดเศษวินาทีและ timezone ทิ้งได้ คืนค่า 0 ถ้ารูปแบบผิด
+## แปลงเวลา UTC จาก server เป็น unix time ให้ไฟล์อื่นใช้ (คืนค่า 0 ถ้ารูปแบบผิด)
+static func parse_utc_unix(value: Variant) -> int:
+	return _parse_utc_unix(value)
+
+
 static func _parse_utc_unix(value: Variant) -> int:
 	if not (value is String) or value.length() < 19:
 		return 0

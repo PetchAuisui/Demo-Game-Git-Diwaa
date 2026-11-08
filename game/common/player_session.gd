@@ -18,6 +18,8 @@ enum State { SIGNED_OUT, ONLINE, OFFLINE, GUEST }
 # หน้าที่พาไปหลังล็อกอินสำเร็จ (หน้าแรกของทีม)
 const START_SCENE := "res://features/start/start_view.tscn"
 const AUTH_SCENE := "res://features/auth/auth_view.tscn"
+# หน้า "บัญชีของฉัน" (ดูชื่อ / เปลี่ยนชื่อ / ออกจากระบบ) ทีมเปิดได้ด้วย change_scene_to_file(ACCOUNT_SCENE)
+const ACCOUNT_SCENE := "res://features/auth/account_view.tscn"
 
 # ผลของการล็อกอินอัตโนมัติตอนเปิดเกม (restore_saved_session)
 const RESTORE_NONE := "none"  # ไม่มี session ที่จดจำไว้
@@ -31,6 +33,8 @@ var _remembered := false
 var _api: AuthApiClient
 ## username ล่าสุดที่เคยล็อกอินในเครื่องนี้ ใช้เติมช่องให้ตอนต้องล็อกอินใหม่ (ไม่ใช่ความลับในเครื่องตัวเอง)
 var last_username := ""
+## เวลา (unix) ที่เปลี่ยนชื่อที่แสดงได้อีกครั้ง 0 = ยังไม่รู้ ใช้แค่บอกผู้เล่น server เป็นผู้ตัดสินจริง
+var display_name_next_change_unix := 0
 
 
 func _ready() -> void:
@@ -77,6 +81,7 @@ func start_session(login_data: Dictionary, remember_me: bool) -> bool:
 		return false
 	_session = session
 	_remembered = remember_me
+	display_name_next_change_unix = 0
 	state = State.ONLINE
 	if remember_me:
 		if not SessionStore.save(session):
@@ -102,9 +107,46 @@ func sign_out() -> void:
 	state = State.SIGNED_OUT
 	SessionStore.clear()
 	session_changed.emit()
+	display_name_next_change_unix = 0
 	if not token.is_empty():
-		# ถ้าเน็ตหลุดก็ไม่เป็นไร ในเครื่องลบไปแล้ว และ token จะหมดอายุเองบน server
-		await _api.logout(token)
+		# แจ้ง server เบื้องหลัง ไม่ต้องให้หน้าจอรอ ถ้าเน็ตหลุดก็ไม่เป็นไร ในเครื่องลบไปแล้ว และ token จะหมดอายุเองบน server
+		_logout_on_server.call_deferred(token)
+
+
+func _logout_on_server(token: String) -> void:
+	await _api.logout(token)
+
+
+## เปลี่ยนชื่อที่แสดง (ออนไลน์เท่านั้น) server เป็นผู้ตัดสินเรื่องชื่อซ้ำและกฎ 14 วัน
+## สำเร็จ: อัปเดตชื่อในเครื่อง (และในไฟล์ถ้าจดจำไว้) แล้วส่ง session_changed
+func change_display_name(new_name: String) -> AuthApiResult:
+	if state != State.ONLINE:
+		return AuthApiResult.failure(0, AuthApiResult.NETWORK_UNAVAILABLE)
+	var result := await _api.change_display_name(get_token(), new_name.strip_edges())
+
+	if result.code == AuthApiResult.DISPLAY_NAME_CHANGE_COOLDOWN:
+		display_name_next_change_unix = int(Time.get_unix_time_from_system()) + result.retry_after_sec
+	if not result.ok:
+		return result
+
+	# ตรวจคำตอบของ server ก่อนเชื่อ: ต้องเป็นบัญชีเดิม และชื่อต้องผ่านกติกา
+	var profile: Variant = result.data.get("profile")
+	if not (profile is Dictionary):
+		return AuthApiResult.failure(result.status, AuthApiResult.SERVER_ERROR)
+	var new_id: Variant = (profile as Dictionary).get("id")
+	var display_name: Variant = (profile as Dictionary).get("displayName")
+	if not (new_id is String) or new_id != get_user_id():
+		return AuthApiResult.failure(result.status, AuthApiResult.SERVER_ERROR)
+	if not (display_name is String) or not AuthRules.validate_display_name(display_name).is_empty():
+		return AuthApiResult.failure(result.status, AuthApiResult.SERVER_ERROR)
+
+	var session_profile: Dictionary = _session["profile"]
+	session_profile["display_name"] = display_name
+	display_name_next_change_unix = SessionStore.parse_utc_unix(result.data.get("nextChangeAllowedAt"))
+	if _remembered and not SessionStore.save(_session):
+		push_warning("PlayerSession: could not save the new display name.")
+	session_changed.emit()
+	return result
 
 
 func has_saved_session() -> bool:
