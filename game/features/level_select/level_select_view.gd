@@ -523,6 +523,14 @@ func _spawn_tower_platforms() -> void:
 
 
 		var current_idx := i
+		# แสดงรายละเอียดด่านใน HUD เมื่อนำเมาส์มาวางค้างไว้ (Hover / Hold)
+		slab_btn.mouse_entered.connect(func():
+			_update_hud_display(TOWER_STAGES[current_idx])
+		)
+		slab_btn.mouse_exited.connect(func():
+			_update_hud_display(TOWER_STAGES[_current_stage_idx])
+		)
+
 		if is_unlocked:
 			slab_btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 			slab_btn.pressed.connect(func():
