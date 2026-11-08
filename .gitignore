@@ -7,7 +7,3 @@ Library/
 git-workspaces/
 TestResults/
 
-# .NET build artifacts
-[Bb]in/
-[Oo]bj/
-
