@@ -827,6 +827,10 @@ func _open_gameplay_step(step: int) -> void:
 	is_transitioning = true
 	is_dialogue_active = false
 	_hide_continue_arrow()
+	if is_instance_valid(choice_container):
+		choice_container.visible = false
+	if is_instance_valid(dialogue_box):
+		dialogue_box.visible = false
 	if is_instance_valid(nav_arrows_container):
 		nav_arrows_container.visible = false
 	if skip_ctrl:
@@ -840,21 +844,12 @@ func _open_gameplay_step(step: int) -> void:
 	if ResourceLoader.exists(SANDBOX_PATH):
 		if is_instance_valid(fade_overlay):
 			fade_overlay.visible = true
-			fade_overlay.color = Color(0, 0, 0, 0)
-			var tw = create_tween().set_parallel(true)
-			# ค่อยๆ เฟดกล่องข้อความจางลงพร้อมกับเฟดจอดำเข้ามาอย่างนุ่มนวล
-			if is_instance_valid(dialogue_box):
-				tw.tween_property(dialogue_box, "modulate:a", 0.0, 0.25)
-			tw.tween_property(fade_overlay, "color:a", 1.0, 0.3)
-			tw.chain().tween_callback(func():
-				if is_instance_valid(dialogue_box):
-					dialogue_box.visible = false
-				get_tree().change_scene_to_file(SANDBOX_PATH)
-			)
-		else:
-			if is_instance_valid(dialogue_box):
-				dialogue_box.visible = false
-			get_tree().change_scene_to_file(SANDBOX_PATH)
+			fade_overlay.color = Color(0, 0, 0, 1) # ตัดเข้าจอดำสนิททันที
+		
+		# บังคับให้ Godot เรนเดอร์จอดำสนิทขึ้นจอ เพื่อไม่ให้เห็นภาพตัวละครค้างติดตาขณะโหลดซีน Sandbox
+		await get_tree().process_frame
+		await get_tree().process_frame
+		get_tree().change_scene_to_file(SANDBOX_PATH)
 		return
 	
 	var placeholder_res = load("res://features/dialogue/gameplay_placeholder_view.tscn")
