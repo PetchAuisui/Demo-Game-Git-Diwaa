@@ -6,20 +6,20 @@ extends Control
 @export var brick_height: float = 16.0
 @export var mortar_thickness: float = 2.0
 
-# Dark Gothic Fantasy warm stone palette (harmonized with game's dark gothic amber & obsidian palette)
-const MORTAR_COLOR := Color(0.05, 0.04, 0.04, 1.0)
-const BORDER_COLOR := Color(0.278, 0.176, 0.102, 1.0)
-const HIGHLIGHT_COLOR := Color(0.28, 0.21, 0.16, 0.75)
-const SHADOW_COLOR := Color(0.025, 0.02, 0.02, 0.90)
+# Dark Gothic Fantasy grey stone palette (หินศิลาโกธิคสีเทา คมชัด สวยงาม มีมิติ)
+const MORTAR_COLOR := Color(0.06, 0.07, 0.09, 1.0)
+const BORDER_COLOR := Color(0.18, 0.22, 0.28, 1.0)
+const HIGHLIGHT_COLOR := Color(0.35, 0.38, 0.44, 0.75)
+const SHADOW_COLOR := Color(0.04, 0.05, 0.06, 0.90)
 
 const BRICK_PALETTE: Array[Color] = [
-	Color(0.18, 0.13, 0.10, 1.0),
-	Color(0.15, 0.11, 0.08, 1.0),
-	Color(0.21, 0.15, 0.11, 1.0),
-	Color(0.16, 0.12, 0.09, 1.0),
-	Color(0.19, 0.14, 0.10, 1.0),
-	Color(0.14, 0.10, 0.08, 1.0),
-	Color(0.17, 0.12, 0.09, 1.0),
+	Color(0.20, 0.22, 0.25, 1.0),
+	Color(0.17, 0.19, 0.22, 1.0),
+	Color(0.23, 0.25, 0.28, 1.0),
+	Color(0.19, 0.21, 0.24, 1.0),
+	Color(0.15, 0.17, 0.20, 1.0),
+	Color(0.22, 0.24, 0.27, 1.0),
+	Color(0.18, 0.20, 0.23, 1.0),
 ]
 
 func _ready() -> void:
