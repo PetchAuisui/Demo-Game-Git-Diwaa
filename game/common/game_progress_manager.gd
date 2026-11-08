@@ -46,31 +46,33 @@ static func set_gameplay_return_scene(scene_path: String) -> void:
 static func get_gameplay_return_scene() -> String:
 	return _gameplay_return_scene
 
+static var _cached_cfg: ConfigFile = null
+
+static func _get_config() -> ConfigFile:
+	if _cached_cfg == null:
+		_cached_cfg = ConfigFile.new()
+		var _err := _cached_cfg.load(SAVE_PATH)
+	return _cached_cfg
+
+static func _save_config() -> void:
+	if _cached_cfg != null:
+		_cached_cfg.save(SAVE_PATH)
+
 static func has_seen_intro_cutscene() -> bool:
-	var cfg := ConfigFile.new()
-	var err := cfg.load(SAVE_PATH)
-	if err == OK:
-		return cfg.get_value(SECTION_PROGRESS, KEY_INTRO_SEEN, false)
-	return false
+	return _get_config().get_value(SECTION_PROGRESS, KEY_INTRO_SEEN, false)
 
 static func set_intro_cutscene_seen(seen: bool = true) -> void:
-	var cfg := ConfigFile.new()
-	var _err := cfg.load(SAVE_PATH)
+	var cfg := _get_config()
 	cfg.set_value(SECTION_PROGRESS, KEY_INTRO_SEEN, seen)
-	cfg.save(SAVE_PATH)
+	_save_config()
 
 static func is_level_cleared(level_num: int) -> bool:
-	var cfg := ConfigFile.new()
-	var err := cfg.load(SAVE_PATH)
-	if err == OK:
-		return cfg.get_value(SECTION_LEVELS, "level_%d" % level_num, false)
-	return false
+	return _get_config().get_value(SECTION_LEVELS, "level_%d" % level_num, false)
 
 static func set_level_cleared(level_num: int, cleared: bool = true) -> void:
-	var cfg := ConfigFile.new()
-	var _err := cfg.load(SAVE_PATH)
+	var cfg := _get_config()
 	cfg.set_value(SECTION_LEVELS, "level_%d" % level_num, cleared)
-	cfg.save(SAVE_PATH)
+	_save_config()
 
 static func reset_progress() -> void:
 	var cfg := ConfigFile.new()
@@ -78,3 +80,4 @@ static func reset_progress() -> void:
 	for i in range(1, 16):
 		cfg.set_value(SECTION_LEVELS, "level_%d" % i, false)
 	cfg.save(SAVE_PATH)
+	_cached_cfg = cfg

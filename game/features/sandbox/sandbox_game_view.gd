@@ -5,7 +5,6 @@ extends Control
 
 const CENTRAL_TOWER_CUTSCENE_PATH := "res://features/cutscene/central_tower_cutscene.tscn"
 const ENDING_CUTSCENE_PATH := "res://features/cutscene/ending_cutscene.tscn"
-const GameProgressManager = preload("res://common/game_progress_manager.gd")
 
 var _top_bar: TopBarPanel
 var _files_panel: FilesPanel

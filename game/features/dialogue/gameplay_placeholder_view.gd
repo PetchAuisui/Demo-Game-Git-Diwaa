@@ -7,8 +7,6 @@ extends Control
 
 signal step_finished(step: int)
 
-const GameProgressManager = preload("res://common/game_progress_manager.gd")
-
 @export var current_step: int = 1
 @export var return_scene_path: String = "res://features/cutscene/inside_tower_cutscene.tscn"
 
