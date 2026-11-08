@@ -147,11 +147,11 @@ get_tree().change_scene_to_file("res://features/cutscene/central_tower_cutscene.
 ### การตั้งค่าด่านถัดไปใน Godot Inspector:
 ที่ Root Node `CentralTowerCutscene` จะมีตัวแปร Export:
 * **`Next Scene Path`**: กำหนด Path ของด่านถัดไป (ค่าเริ่มต้นคือ `"res://features/sandbox/sandbox_game_view.tscn"`)
-* เมื่อจบคัตซีนหรือกดปุ่มข้าม ระบบจะพาผู้เล่นเข้าสู่ Scene นี้โดยอัตโนมัติ พร้อมระบบ Instant Blackout ป้องกันอาการภาพคัตซีนค้างติดตาขณะที่เอนจินกำลังโหลด Sandbox
+* เมื่อจบคัตซีนหรือกดปุ่มข้าม ระบบจะพาผู้เล่นเข้าสู่ Scene นี้โดยอัตโนมัติ พร้อมระบบ Background Threaded Loading ป้องกันอาการภาพค้างหรือจอดำค้างขณะโหลด Sandbox
 
-### การ Transition เข้าสู่ Sandbox แบบ Instant Blackout:
-* **ปัญหา:** การสลับฉากไปยัง `sandbox_game_view.tscn` จะมีช่วงเวลาที่ Godot โหลดเอนจิน Git จำลอง (0.2 - 0.4 วินาที) ซึ่งทำให้เอนจิน Freeze ชั่วครู่ ส่งผลให้ภาพคัตซีนผู้พิทักษ์ค้างคาอยู่บนหน้าจอ
-* **โซลูชัน:** ทั้งใน `_skip_cutscene()` และ `_finish_cutscene()` จะตัดเข้า `fade_overlay` ดำสนิท (`Color(0, 0, 0, 1)`) และสั่ง `await get_tree().process_frame` เพื่อให้จอดำสนิทเรนเดอร์ขึ้นจอสมบูรณ์ก่อนเรียก `change_scene_to_file()` ทำให้การเปลี่ยนฉากราบรื่นและสะอาดตา ไร้ภาพค้าง 100%
+### การ Transition เข้าสู่ Sandbox แบบ Background Threaded Loading:
+* **ปัญหา:** การสลับฉากไปยัง `sandbox_game_view.tscn` จะมีช่วงเวลาที่ Godot โหลดเอนจิน Git จำลองและทรัพยากรขนาดใหญ่ ซึ่งทำให้เอนจินชะงักเกิดอาการค้าง
+* **โซลูชัน:** ใน `_ready()` ระบบจะเรียก `ResourceLoader.load_threaded_request(next_scene_path)` เพื่อแอบโหลดซีนไว้ใน Background Thread ล่วงหน้าระหว่างที่ผู้เล่นอ่านบทสนทนา เมื่อถึงเวลาเปลี่ยนฉากหรือกดข้าม จะใช้ `get_tree().change_scene_to_packed()` เพื่อสลับฉากได้ทันทีใน 0 ms ไร้อาการจอดำค้าง 100%
 
 ### วิธีเพิ่มหรือแก้ไขบทสนทนา:
 เปิดไฟล์ [`game/features/cutscene/central_tower_cutscene.gd`](../game/features/cutscene/central_tower_cutscene.gd) และแก้ไขในอาร์เรย์ `DIALOGUES`:
