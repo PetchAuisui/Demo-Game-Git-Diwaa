@@ -992,6 +992,10 @@ func _trigger_bad_ending() -> void:
 	if is_instance_valid(skip_ctrl):
 		skip_ctrl.visible = false
 	
+	# เปิดใช้งาน FadeOverlay และเริ่มเฟดจอดำสนิท
+	fade_overlay.visible = true
+	fade_overlay.color = Color(0, 0, 0, 0)
+	
 	var tw_close = create_tween()
 	tw_close.tween_property(dialogue_box, "modulate:a", 0.0, 0.4)
 	tw_close.parallel().tween_property(fade_overlay, "color:a", 1.0, 0.8)
@@ -1002,6 +1006,12 @@ func _trigger_bad_ending() -> void:
 		bad_ending_panel = Control.new()
 		magic_ui.add_child(bad_ending_panel)
 		bad_ending_panel.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+		
+		# แผ่นพื้นหลังสีดำสนิทคลุมเต็มจอ เพื่อการันตีความมืดมิด 100%
+		var bg_black = ColorRect.new()
+		bg_black.color = Color(0, 0, 0, 1)
+		bg_black.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+		bad_ending_panel.add_child(bg_black)
 		
 		var center_container = CenterContainer.new()
 		bad_ending_panel.add_child(center_container)
