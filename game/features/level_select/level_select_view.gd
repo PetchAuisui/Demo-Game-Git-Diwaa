@@ -497,11 +497,23 @@ func _spawn_tower_platforms() -> void:
 			star_icon.text = "★★★"
 			star_icon.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 			star_icon.add_theme_color_override("font_color", Color(0.98, 0.82, 0.10, 1.0))
+			star_icon.add_theme_color_override("font_outline_color", Color(0.12, 0.08, 0.02, 0.9))
+			star_icon.add_theme_constant_override("outline_size", 2)
 			if font_ta_pixel:
 				star_icon.add_theme_font_override("font", font_ta_pixel)
-				star_icon.add_theme_font_size_override("font_size", 11)
+			star_icon.add_theme_font_size_override("font_size", 16)
 			hbox.add_child(star_icon)
-
+		elif is_unlocked:
+			var star_icon := Label.new()
+			star_icon.text = "★★★"
+			star_icon.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+			star_icon.add_theme_color_override("font_color", Color(0.42, 0.48, 0.56, 0.85))
+			star_icon.add_theme_color_override("font_outline_color", Color(0.08, 0.10, 0.14, 0.9))
+			star_icon.add_theme_constant_override("outline_size", 2)
+			if font_ta_pixel:
+				star_icon.add_theme_font_override("font", font_ta_pixel)
+			star_icon.add_theme_font_size_override("font_size", 16)
+			hbox.add_child(star_icon)
 		inner_margin.add_child(hbox)
 		slab_btn.add_child(inner_margin)
 
