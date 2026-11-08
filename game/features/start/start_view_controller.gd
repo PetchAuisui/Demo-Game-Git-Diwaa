@@ -126,8 +126,22 @@ func _on_resume_work_pressed() -> void:
 	_play_sfx(_sfx_click)
 	_append_terminal_text("> Resuming active repository session...")
 
-	get_tree().create_timer(0.35).timeout.connect(func() -> void:
-		get_tree().change_scene_to_file("res://features/sandbox/sandbox_game_view.tscn"))
+	get_tree().create_timer(0.2).timeout.connect(func() -> void:
+		_transition_to_scene("res://features/sandbox/sandbox_game_view.tscn"))
+
+
+func _transition_to_scene(target_path: String) -> void:
+	var canvas_layer := CanvasLayer.new()
+	canvas_layer.layer = 128
+	var overlay := ColorRect.new()
+	overlay.color = Color.BLACK
+	overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	overlay.mouse_filter = Control.MOUSE_FILTER_STOP
+	canvas_layer.add_child(overlay)
+	add_child(canvas_layer)
+	await get_tree().process_frame
+	await get_tree().process_frame
+	get_tree().change_scene_to_file(target_path)
 
 
 func _on_dressing_room_pressed() -> void:
