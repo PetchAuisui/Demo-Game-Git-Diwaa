@@ -106,27 +106,14 @@ grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_controller")
 
-[node name="Background" type="TextureRect" parent="." unique_id=1596843002]
-texture_filter = 1
+[node name="Background" type="ColorRect" parent="." unique_id=1596843002]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-texture = ExtResource("2_bg")
-expand_mode = 1
-stretch_mode = 6
-
-[node name="Atmosphere" type="ColorRect" parent="." unique_id=653970451]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-mouse_filter = 2
-color = Color(0.03, 0.02, 0.06, 0.08)
+color = Color(0.02, 0.02, 0.03, 1)
 
 [node name="TopBar" parent="." unique_id=1990034810 instance=ExtResource("3_topbar")]
 unique_name_in_owner = true
