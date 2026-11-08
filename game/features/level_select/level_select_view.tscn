@@ -16,46 +16,6 @@ bg_color = Color(0.078, 0.063, 0.047, 0.98)
 border_width_bottom = 2
 border_color = Color(0.278, 0.176, 0.102, 1)
 
-[sub_resource type="StyleBoxFlat" id="Style_wand_box"]
-bg_color = Color(0.165, 0.090, 0.051, 1)
-border_width_left = 1
-border_width_top = 1
-border_width_right = 1
-border_width_bottom = 1
-border_color = Color(0.851, 0.467, 0.024, 1)
-corner_radius_top_left = 2
-corner_radius_top_right = 2
-corner_radius_bottom_left = 2
-corner_radius_bottom_right = 2
-
-[sub_resource type="StyleBoxFlat" id="Style_wand_box_hover"]
-bg_color = Color(0.25, 0.14, 0.08, 1)
-border_width_left = 1
-border_width_top = 1
-border_width_right = 1
-border_width_bottom = 1
-border_color = Color(0.96, 0.62, 0.15, 1)
-corner_radius_top_left = 2
-corner_radius_top_right = 2
-corner_radius_bottom_left = 2
-corner_radius_bottom_right = 2
-
-[sub_resource type="StyleBoxFlat" id="Style_stages_badge"]
-content_margin_left = 8.0
-content_margin_top = 2.0
-content_margin_right = 8.0
-content_margin_bottom = 2.0
-bg_color = Color(0.165, 0.090, 0.051, 1)
-border_width_left = 1
-border_width_top = 1
-border_width_right = 1
-border_width_bottom = 1
-border_color = Color(0.353, 0.220, 0.125, 1)
-corner_radius_top_left = 3
-corner_radius_top_right = 3
-corner_radius_bottom_left = 3
-corner_radius_bottom_right = 3
-
 [sub_resource type="StyleBoxFlat" id="Style_tab_act"]
 content_margin_left = 12.0
 content_margin_top = 4.0
@@ -278,18 +238,6 @@ theme_override_constants/separation = 14
 layout_mode = 2
 theme_override_constants/separation = 10
 
-[node name="BtnWand" type="Button" parent="LayoutVBox/TopNavbar/NavMargin/NavHBox/BrandHBox"]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(28, 28)
-layout_mode = 2
-size_flags_vertical = 4
-tooltip_text = "กลับสู่หน้าหลัก (ESC)"
-mouse_default_cursor_shape = 2
-theme_override_styles/normal = SubResource("Style_wand_box")
-theme_override_styles/hover = SubResource("Style_wand_box_hover")
-theme_override_styles/pressed = SubResource("Style_wand_box_hover")
-text = "🪄"
-
 [node name="BrandTitle" type="Label" parent="LayoutVBox/TopNavbar/NavMargin/NavHBox/BrandHBox"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.961, 0.620, 0.043, 1)
@@ -313,19 +261,6 @@ theme_override_colors/font_color = Color(0.604, 0.467, 0.341, 1)
 theme_override_fonts/font = ExtResource("5_ta_pixel")
 theme_override_font_sizes/font_size = 11
 text = "TOWER ROADMAP"
-vertical_alignment = 1
-
-[node name="StagesBadge" type="PanelContainer" parent="LayoutVBox/TopNavbar/NavMargin/NavHBox/BrandHBox"]
-layout_mode = 2
-size_flags_vertical = 4
-theme_override_styles/panel = SubResource("Style_stages_badge")
-
-[node name="StagesLabel" type="Label" parent="LayoutVBox/TopNavbar/NavMargin/NavHBox/BrandHBox/StagesBadge"]
-layout_mode = 2
-theme_override_colors/font_color = Color(0.961, 0.620, 0.043, 1)
-theme_override_fonts/font = ExtResource("3_chakra_bold")
-theme_override_font_sizes/font_size = 11
-text = "40 ด่าน"
 vertical_alignment = 1
 
 [node name="SpacerLeft" type="Control" parent="LayoutVBox/TopNavbar/NavMargin/NavHBox"]

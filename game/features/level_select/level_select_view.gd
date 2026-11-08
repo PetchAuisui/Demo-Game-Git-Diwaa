@@ -69,7 +69,6 @@ var sfx_jump: AudioStreamPlayer
 var sfx_meow: AudioStreamPlayer
 
 # Navbar Nodes
-var btn_wand: Button
 var btn_back: Button
 var btn_act1: Button
 var btn_act2: Button
@@ -188,7 +187,6 @@ func _bind_nodes() -> void:
 	sfx_jump = get_node_or_null("%SfxJump")
 	sfx_meow = get_node_or_null("%SfxMeow")
 
-	btn_wand = get_node_or_null("%BtnWand")
 	btn_back = get_node_or_null("%BtnBack")
 	btn_act1 = get_node_or_null("%BtnAct1")
 	btn_act2 = get_node_or_null("%BtnAct2")
@@ -220,8 +218,6 @@ func _process(delta: float) -> void:
 
 
 func _wire_navbar() -> void:
-	if btn_wand:
-		btn_wand.pressed.connect(_on_back_pressed)
 	if btn_back:
 		btn_back.pressed.connect(_on_back_pressed)
 	if btn_act1:
