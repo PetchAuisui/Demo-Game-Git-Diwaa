@@ -144,11 +144,6 @@ func _input(event: InputEvent) -> void:
 		_skip_cutscene()
 		return
 		
-	# ป้องกันการคลิกโดนปุ่มควบคุม (FF / Skip) ถูกกลืนเป็นการกดอ่านต่อ
-	var hovered := get_viewport().gui_get_hovered_control()
-	if hovered is BaseButton:
-		return
-		
 	# คลิกหรือกด Space/Enter เพื่อไปต่อ
 	if is_dialogue_active:
 		var wants_advance: bool = false
@@ -157,7 +152,10 @@ func _input(event: InputEvent) -> void:
 		elif event is InputEventKey and event.pressed and not event.echo and (event.keycode == KEY_SPACE or event.keycode == KEY_ENTER):
 			wants_advance = true
 		elif event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
-			wants_advance = true
+			# ป้องกันการคลิกโดนปุ่มควบคุม (FF / Skip) ถูกกลืนเป็นการกดอ่านต่อ
+			var hovered := get_viewport().gui_get_hovered_control()
+			if not (hovered is BaseButton):
+				wants_advance = true
 				
 		if wants_advance:
 			get_viewport().set_input_as_handled()
