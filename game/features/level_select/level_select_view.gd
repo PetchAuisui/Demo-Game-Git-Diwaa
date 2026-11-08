@@ -534,34 +534,6 @@ func _spawn_tower_platforms() -> void:
 		tower_content.add_child(plat)
 		_platform_nodes[stg_id] = plat
 
-	# เงาปรมาจารย์ Git ผู้สาบสูญที่ยอดหอคอย
-	if tex_guardian:
-		var master_node := Control.new()
-		master_node.name = "MasterSilhouette"
-		master_node.position = Vector2(1440.0 - 24.0, 150.0 - 80.0)
-		master_node.size = Vector2(48.0, 83.0)
-
-		var master_sprite := TextureRect.new()
-		master_sprite.texture = tex_guardian
-		master_sprite.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-		master_sprite.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-		master_sprite.set_anchors_preset(Control.PRESET_FULL_RECT)
-		master_sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-		master_sprite.modulate = Color(0.15, 0.10, 0.28, 0.95)
-		master_node.add_child(master_sprite)
-
-		var aura_label := Label.new()
-		aura_label.text = "⚔️ ปรมาจารย์ Git ผู้สาบสูญ"
-		aura_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		aura_label.position = Vector2(-70.0, -22.0)
-		aura_label.size = Vector2(190.0, 20.0)
-		aura_label.add_theme_color_override("font_color", Color(0.85, 0.70, 0.95, 1.0))
-		if font_ta_pixel:
-			aura_label.add_theme_font_override("font", font_ta_pixel)
-			aura_label.add_theme_font_size_override("font_size", 10)
-		master_node.add_child(aura_label)
-
-		tower_content.add_child(master_node)
 
 	if path_renderer:
 		path_renderer.queue_redraw()
