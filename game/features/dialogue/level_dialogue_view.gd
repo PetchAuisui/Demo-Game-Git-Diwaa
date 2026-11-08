@@ -551,6 +551,7 @@ func _on_skip_step() -> void:
 	if is_in_entrance_cutscene:
 		is_in_entrance_cutscene = false
 		fade_overlay.color.a = 0.0
+		fade_overlay.visible = false
 		vel.position = Vector2(700, 680)
 		vel.scale = Vector2(4, 4)
 		vel.play("breathe")
@@ -559,6 +560,8 @@ func _on_skip_step() -> void:
 		mewla.scale = Vector2(4, 4)
 		mewla.modulate = Color.WHITE
 		mewla.play("idle")
+		_begin_dialogue_phase(0)
+		return
 	
 	# กดข้าม -> ไปยังหน้าเดียวกับที่กดคุยไปต่อเรื่อยๆ จนจบช่วงนั้น (Gameplay Placeholder View)
 	if debug_phase == 0:
