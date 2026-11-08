@@ -75,7 +75,6 @@ var btn_act1: Button
 var btn_act2: Button
 var btn_act3: Button
 var btn_focus_current: Button
-var stars_label: Label
 var btn_sound: Button
 
 # Bottom HUD Nodes
@@ -195,7 +194,6 @@ func _bind_nodes() -> void:
 	btn_act2 = get_node_or_null("%BtnAct2")
 	btn_act3 = get_node_or_null("%BtnAct3")
 	btn_focus_current = get_node_or_null("%BtnFocusCurrent")
-	stars_label = get_node_or_null("%StarsLabel")
 	btn_sound = get_node_or_null("%BtnSound")
 
 	hud_no_badge = get_node_or_null("%HudLevelBadge")
@@ -276,9 +274,6 @@ func _init_game_progression() -> void:
 			total_stars += 3
 			if stg_id > highest_cleared_id:
 				highest_cleared_id = stg_id
-
-	if stars_label:
-		stars_label.text = str(total_stars)
 
 	# ด่านเริ่มต้นของผู้เล่น: เมื่อกลับมาที่หน้าด่าน เวลจะยืนที่ด่านล่าสุดที่ผ่านแล้ว
 	# และปลดล็อกด่านถัดไปรอไว้ ถ้ากดคลิกหรือกดลูกศรเวลจึงจะกระโดดไปด่านถัดไป
