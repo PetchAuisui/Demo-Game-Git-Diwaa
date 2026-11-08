@@ -10,7 +10,7 @@
 [ext_resource type="AudioStream" path="res://assets/audio/sfx_click.wav" id="8_sfx_click"]
 [ext_resource type="AudioStream" path="res://assets/audio/sfx_command.wav" id="9_sfx_jump"]
 [ext_resource type="AudioStream" path="res://assets/audio/sfx_cat_meow.wav" id="10_sfx_meow"]
-[ext_resource type="Texture2D" path="res://assets/art/dressing_room/pedestal.png" id="11_pedestal"]
+[ext_resource type="Script" path="res://features/level_select/brick_wall_pillar.gd" id="11_brick_wall"]
 
 [sub_resource type="StyleBoxFlat" id="Style_navbar"]
 bg_color = Color(0.078, 0.063, 0.047, 0.98)
@@ -360,6 +360,10 @@ custom_minimum_size = Vector2(80, 0)
 layout_mode = 2
 theme_override_styles/panel = SubResource("Style_pillar")
 
+[node name="LeftBrickWall" type="Control" parent="LayoutVBox/MainChamberArea/LeftPillar"]
+layout_mode = 2
+script = ExtResource("11_brick_wall")
+
 [node name="ScrollChamber" type="ScrollContainer" parent="LayoutVBox/MainChamberArea"]
 unique_name_in_owner = true
 layout_mode = 2
@@ -467,6 +471,11 @@ stretch_mode = 5
 custom_minimum_size = Vector2(80, 0)
 layout_mode = 2
 theme_override_styles/panel = SubResource("Style_pillar")
+
+[node name="RightBrickWall" type="Control" parent="LayoutVBox/MainChamberArea/RightPillar"]
+layout_mode = 2
+script = ExtResource("11_brick_wall")
+is_right_side = true
 
 [node name="BottomHUD" type="PanelContainer" parent="LayoutVBox"]
 custom_minimum_size = Vector2(0, 96)
