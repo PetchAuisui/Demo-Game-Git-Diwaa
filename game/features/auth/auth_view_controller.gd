@@ -12,6 +12,8 @@ const EYE_ICON := preload("res://assets/icons/eye.svg")
 const EYE_OFF_ICON := preload("res://assets/icons/eye_off.svg")
 const LOGIN_BG_PATH := "res://assets/art/auth/login_bg.png"
 const REGISTER_BG_PATH := "res://assets/art/auth/register_bg.png"
+# ชื่อ guest ที่โชว์บนลิงก์ยาวได้สุดกี่ตัวอักษร (ชื่อยาวกว่านี้ตัดแล้วต่อด้วย …) กันลิงก์ดันการ์ดจนกว้างเกิน
+const GUEST_NAME_PREVIEW_LEN := 20
 
 const FIELD_LABELS := {
 	AuthRules.FIELD_IDENTIFIER: "อีเมล หรือ ชื่อผู้ใช้งาน",
@@ -63,6 +65,15 @@ var _connection_panel: VBoxContainer
 var _connection_label: Label
 var _retry_connection_btn: Button
 var _offline_play_btn: Button
+
+# Guest (เล่นแบบไม่ล็อกอิน)
+var _go_guest_link: LinkButton
+var _change_guest_name_link: LinkButton
+var _guest_form: VBoxContainer
+var _guest_name_input: LineEdit
+var _guest_name_error: Label
+var _guest_start_btn: Button
+var _guest_back_link: LinkButton
 
 # --- Server ---
 var _api: AuthApiClient
@@ -121,6 +132,14 @@ func _bind_nodes() -> void:
 	_retry_connection_btn = get_node("%RetryConnectionBtn") as Button
 	_offline_play_btn = get_node("%OfflinePlayBtn") as Button
 
+	_go_guest_link = get_node("%GoGuestLink") as LinkButton
+	_change_guest_name_link = get_node("%ChangeGuestNameLink") as LinkButton
+	_guest_form = get_node("%GuestForm") as VBoxContainer
+	_guest_name_input = get_node("%GuestNameInput") as LineEdit
+	_guest_name_error = get_node("%GuestNameError") as Label
+	_guest_start_btn = get_node("%GuestStartBtn") as Button
+	_guest_back_link = get_node("%GuestBackLink") as LinkButton
+
 
 func _wire_events() -> void:
 	_login_tab_btn.pressed.connect(_on_login_tab_pressed)
@@ -138,6 +157,12 @@ func _wire_events() -> void:
 	login_succeeded.connect(_on_login_succeeded)
 	_retry_connection_btn.pressed.connect(_check_connection)
 	_offline_play_btn.pressed.connect(_on_offline_play_pressed)
+
+	_go_guest_link.pressed.connect(_on_go_guest_pressed)
+	_change_guest_name_link.pressed.connect(_show_guest)
+	_guest_back_link.pressed.connect(_show_login)
+	_guest_start_btn.pressed.connect(_on_guest_start)
+	_guest_name_input.text_submitted.connect(func(_text: String) -> void: _on_guest_start())
 
 	_login_submit_btn.pressed.connect(_on_login_submit)
 	_login_password_input.text_submitted.connect(func(_text: String) -> void: await _on_login_submit())
@@ -160,11 +185,13 @@ func _show_login() -> void:
 	_apply_background(LOGIN_BG_PATH)
 	_login_form.visible = true
 	_register_form.visible = false
+	_guest_form.visible = false
 
 	_login_tab_btn.button_pressed = true
 
 	_clear_passwords()
 	_reset_errors()
+	_refresh_guest_link()
 
 	_identifier_input.grab_focus()
 
@@ -173,6 +200,7 @@ func _show_register() -> void:
 	_apply_background(REGISTER_BG_PATH)
 	_login_form.visible = false
 	_register_form.visible = true
+	_guest_form.visible = false
 
 	_register_tab_btn.button_pressed = true
 
@@ -180,6 +208,20 @@ func _show_register() -> void:
 	_reset_errors()
 
 	_display_name_input.grab_focus()
+
+
+## หน้าเล่นแบบไม่ล็อกอิน: เติมชื่อที่เคยใช้ไว้ให้
+func _show_guest() -> void:
+	_apply_background(LOGIN_BG_PATH)
+	_login_form.visible = false
+	_register_form.visible = false
+	_guest_form.visible = true
+
+	_clear_passwords()
+	_reset_errors()
+
+	_guest_name_input.text = GuestStore.load_name()
+	_guest_name_input.grab_focus()
 
 
 func _apply_background(path: String) -> void:
@@ -235,6 +277,8 @@ func _reset_errors() -> void:
 	_confirm_password_error.text = ""
 	_register_status.visible = false
 	_register_status.text = ""
+	_guest_name_error.visible = false
+	_guest_name_error.text = ""
 
 
 func _apply_theme() -> void:
@@ -248,7 +292,8 @@ func _apply_theme() -> void:
 		_username_input,
 		_email_input,
 		_register_password_input,
-		_confirm_password_input
+		_confirm_password_input,
+		_guest_name_input,
 	]
 
 	for input in inputs:
@@ -262,7 +307,7 @@ func _apply_theme() -> void:
 	var btn_pressed := AuthThemeTokens.create_button_style(AuthThemeTokens.BUTTON_PRESSED_BG)
 	var btn_disabled := AuthThemeTokens.create_button_style(AuthThemeTokens.BUTTON_DISABLED_BG)
 
-	var submit_buttons: Array[Button] = [_login_submit_btn, _register_submit_btn, _retry_connection_btn, _offline_play_btn]
+	var submit_buttons: Array[Button] = [_login_submit_btn, _register_submit_btn, _retry_connection_btn, _offline_play_btn, _guest_start_btn]
 	for btn in submit_buttons:
 		btn.add_theme_stylebox_override("normal", btn_normal)
 		btn.add_theme_stylebox_override("hover", btn_hover)
@@ -292,6 +337,9 @@ func _apply_theme() -> void:
 
 	_go_register_link.add_theme_color_override("font_color", AuthThemeTokens.LINK_TEXT)
 	_go_login_link.add_theme_color_override("font_color", AuthThemeTokens.LINK_TEXT)
+	_go_guest_link.add_theme_color_override("font_color", AuthThemeTokens.LINK_TEXT)
+	_change_guest_name_link.add_theme_color_override("font_color", AuthThemeTokens.TEXT_MUTED)
+	_guest_back_link.add_theme_color_override("font_color", AuthThemeTokens.LINK_TEXT)
 
 
 func _on_login_submit() -> void:
@@ -538,6 +586,10 @@ func _set_busy(busy: bool) -> void:
 		_go_login_link,
 		_retry_connection_btn,
 		_offline_play_btn,
+		_go_guest_link,
+		_change_guest_name_link,
+		_guest_start_btn,
+		_guest_back_link,
 	]
 	for btn in buttons:
 		btn.disabled = busy
@@ -551,7 +603,7 @@ func _set_busy(busy: bool) -> void:
 func _check_connection() -> void:
 	if _busy:
 		return
-	if PlayerSession.is_signed_in():
+	if PlayerSession.has_player():
 		get_tree().change_scene_to_file(PlayerSession.START_SCENE)
 		return
 
@@ -589,6 +641,53 @@ func _on_offline_play_pressed() -> void:
 		_connection_label.text = "ไม่พบบัญชีที่จดจำไว้ในเครื่องนี้ กรุณาเชื่อมต่อ server แล้วเข้าสู่ระบบ"
 		return
 	get_tree().change_scene_to_file(PlayerSession.START_SCENE)
+
+
+## เริ่มเล่นแบบไม่ล็อกอิน: ตรวจชื่อด้วยกติกาเดียวกับชื่อที่แสดง แล้วบันทึกไว้ในเครื่อง
+func _on_guest_start() -> void:
+	if _busy:
+		return
+	_guest_name_error.visible = false
+	var display_name := _guest_name_input.text.strip_edges()
+	var reason := AuthRules.validate_display_name(display_name)
+	if not reason.is_empty():
+		_guest_name_error.text = _message_for(AuthRules.FIELD_DISPLAY_NAME, reason)
+		_guest_name_error.visible = true
+		_guest_name_input.grab_focus()
+		return
+	if not GuestStore.save_name(display_name):
+		# บันทึกไม่ได้ก็ยังเล่นได้ แค่ครั้งหน้าต้องพิมพ์ชื่อใหม่
+		push_warning("AuthView: could not save the guest name.")
+	if not PlayerSession.start_guest(display_name):
+		_guest_name_error.text = "เริ่มเล่นไม่ได้ กรุณาลองใหม่"
+		_guest_name_error.visible = true
+		return
+	get_tree().change_scene_to_file(PlayerSession.START_SCENE)
+
+
+## กดลิงก์ guest ในหน้าเข้าสู่ระบบ: ถ้าเคยตั้งชื่อไว้แล้ว เข้าเกมในชื่อนั้นเลย ไม่ต้องกรอกซ้ำ
+## ยังไม่เคยตั้งชื่อ (หรือไฟล์ชื่อเสีย) → ไปหน้าตั้งชื่อ
+func _on_go_guest_pressed() -> void:
+	if _busy:
+		return
+	var saved_name := GuestStore.load_name()
+	if saved_name.is_empty() or not PlayerSession.start_guest(saved_name):
+		_show_guest()
+		return
+	get_tree().change_scene_to_file(PlayerSession.START_SCENE)
+
+
+## ข้อความบนลิงก์ guest: ถ้าเคยตั้งชื่อไว้ บอกชื่อที่จะใช้ และโชว์ลิงก์ "เปลี่ยนชื่อ"
+func _refresh_guest_link() -> void:
+	var saved_name := GuestStore.load_name()
+	_change_guest_name_link.visible = not saved_name.is_empty()
+	if saved_name.is_empty():
+		_go_guest_link.text = "เล่นโดยไม่ต้องสมัคร"
+		return
+	var shown := saved_name
+	if shown.length() > GUEST_NAME_PREVIEW_LEN:
+		shown = shown.left(GUEST_NAME_PREVIEW_LEN) + "…"
+	_go_guest_link.text = "เล่นต่อในชื่อ %s" % shown
 
 
 ## ถ้ามี session ที่จดจำไว้ ลองล็อกอินอัตโนมัติ (เรียกหลังเช็คแล้วว่าติดต่อ server ได้)

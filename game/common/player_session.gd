@@ -12,7 +12,8 @@ signal session_changed
 ## SIGNED_OUT = ยังไม่ได้เข้าสู่ระบบ
 ## ONLINE = เข้าสู่ระบบแล้วและติดต่อ server ได้ ใช้ฟีเจอร์ออนไลน์ได้
 ## OFFLINE = ใช้บัญชีที่จดจำไว้ในเครื่องตอนติดต่อ server ไม่ได้ เล่นได้แต่ใช้ฟีเจอร์ออนไลน์ไม่ได้
-enum State { SIGNED_OUT, ONLINE, OFFLINE }
+## GUEST = เล่นแบบไม่ล็อกอิน ไม่มีบัญชี ใช้ชื่อที่ตั้งเองในเครื่อง ใช้ฟีเจอร์ออนไลน์ไม่ได้
+enum State { SIGNED_OUT, ONLINE, OFFLINE, GUEST }
 
 # หน้าที่พาไปหลังล็อกอินสำเร็จ (หน้าแรกของทีม)
 const START_SCENE := "res://features/start/start_view.tscn"
@@ -37,7 +38,17 @@ func _ready() -> void:
 	add_child(_api)
 
 
+## มีบัญชีจริงอยู่ไหม (ONLINE หรือ OFFLINE) guest ไม่นับ
 func is_signed_in() -> bool:
+	return state == State.ONLINE or state == State.OFFLINE
+
+
+func is_guest() -> bool:
+	return state == State.GUEST
+
+
+## มีผู้เล่นพร้อมเล่นแล้วหรือยัง (บัญชีจริง หรือ guest)
+func has_player() -> bool:
 	return state != State.SIGNED_OUT
 
 
@@ -79,6 +90,12 @@ func start_session(login_data: Dictionary, remember_me: bool) -> bool:
 
 ## ออกจากระบบ: ลบ session ในเครื่องก่อน แล้วค่อยแจ้ง server ให้ยกเลิก token
 func sign_out() -> void:
+	if state == State.GUEST:
+		# guest ไม่มีบัญชี: แค่ออกจากโหมด guest ห้ามลบ session ของบัญชีที่จดจำไว้ในเครื่อง
+		_session = {}
+		state = State.SIGNED_OUT
+		session_changed.emit()
+		return
 	var token := get_token()
 	_session = {}
 	_remembered = false
@@ -123,6 +140,21 @@ func start_offline() -> bool:
 	_remembered = true
 	last_username = saved_profile["username"]
 	state = State.OFFLINE
+	session_changed.emit()
+	return true
+
+
+## เข้าเล่นแบบไม่ล็อกอิน (guest) ด้วยชื่อที่ตั้งเอง คืนค่า false ถ้าชื่อไม่ผ่านกติกา
+## ชื่อนี้อยู่ในเครื่องเท่านั้น ห้ามส่งไป server / leaderboard (หน้าอื่นเช็คด้วย is_online())
+func start_guest(raw_name: String) -> bool:
+	if state == State.ONLINE:
+		return false
+	var display_name := raw_name.strip_edges()
+	if not AuthRules.validate_display_name(display_name).is_empty():
+		return false
+	_session = {"profile": {"id": "", "username": "", "display_name": display_name}}
+	_remembered = false
+	state = State.GUEST
 	session_changed.emit()
 	return true
 

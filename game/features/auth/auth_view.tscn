@@ -314,6 +314,27 @@ theme_override_fonts/font = ExtResource("3_semibold")
 theme_override_font_sizes/font_size = 18
 text = "สมัครสมาชิกที่นี่"
 
+[node name="GuestRow" type="HBoxContainer" parent="CenterArea/Card/MarginContainer/CardVBox/LoginForm" unique_id=632962146]
+layout_mode = 2
+alignment = 1
+
+[node name="GoGuestLink" type="LinkButton" parent="CenterArea/Card/MarginContainer/CardVBox/LoginForm/GuestRow" unique_id=867504918]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.737255, 0.490196, 0.278431, 1)
+theme_override_fonts/font = ExtResource("3_semibold")
+theme_override_font_sizes/font_size = 18
+text = "เล่นโดยไม่ต้องสมัคร"
+
+[node name="ChangeGuestNameLink" type="LinkButton" parent="CenterArea/Card/MarginContainer/CardVBox/LoginForm/GuestRow" unique_id=1738204517]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+theme_override_colors/font_color = Color(0.478431, 0.431373, 0.376471, 1)
+theme_override_fonts/font = ExtResource("4_regular")
+theme_override_font_sizes/font_size = 16
+text = "เปลี่ยนชื่อ"
+
 [node name="RegisterForm" type="VBoxContainer" parent="CenterArea/Card/MarginContainer/CardVBox" unique_id=314743291]
 unique_name_in_owner = true
 visible = false
@@ -523,3 +544,75 @@ theme_override_colors/font_color = Color(0.737255, 0.490196, 0.278431, 1)
 theme_override_fonts/font = ExtResource("3_semibold")
 theme_override_font_sizes/font_size = 18
 text = "เข้าสู่ระบบ"
+
+[node name="GuestForm" type="VBoxContainer" parent="CenterArea/Card/MarginContainer/CardVBox" unique_id=1272897033]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="GuestTitle" type="Label" parent="CenterArea/Card/MarginContainer/CardVBox/GuestForm" unique_id=1330391347]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.172549, 0.141176, 0.113725, 1)
+theme_override_fonts/font = ExtResource("2_bold")
+theme_override_font_sizes/font_size = 34
+text = "เล่นแบบไม่ล็อกอิน"
+horizontal_alignment = 1
+
+[node name="GuestSubtitle" type="Label" parent="CenterArea/Card/MarginContainer/CardVBox/GuestForm" unique_id=2058245067]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.478431, 0.431373, 0.376471, 1)
+theme_override_fonts/font = ExtResource("4_regular")
+theme_override_font_sizes/font_size = 20
+text = "ความคืบหน้าจะเก็บไว้ในเครื่องนี้เท่านั้น ใช้ฟีเจอร์ออนไลน์และตารางอันดับไม่ได้"
+horizontal_alignment = 1
+autowrap_mode = 2
+
+[node name="GuestNameLabel" type="Label" parent="CenterArea/Card/MarginContainer/CardVBox/GuestForm" unique_id=2097330199]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.172549, 0.141176, 0.113725, 1)
+theme_override_fonts/font = ExtResource("3_semibold")
+theme_override_font_sizes/font_size = 20
+text = "ชื่อในเกม"
+
+[node name="GuestNameInput" type="LineEdit" parent="CenterArea/Card/MarginContainer/CardVBox/GuestForm" unique_id=266897585]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 52)
+layout_mode = 2
+theme_override_fonts/font = ExtResource("4_regular")
+theme_override_font_sizes/font_size = 20
+max_length = 50
+
+[node name="GuestNameHint" type="Label" parent="CenterArea/Card/MarginContainer/CardVBox/GuestForm" unique_id=2047469578]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.478431, 0.431373, 0.376471, 1)
+theme_override_fonts/font = ExtResource("4_regular")
+text = "ชื่อนี้ใช้ในเครื่องนี้เท่านั้น ไม่ถูกส่งไปที่ server"
+
+[node name="GuestNameError" type="Label" parent="CenterArea/Card/MarginContainer/CardVBox/GuestForm" unique_id=251752058]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+theme_override_colors/font_color = Color(0.658824, 0.156863, 0.156863, 1)
+theme_override_fonts/font = ExtResource("4_regular")
+theme_override_font_sizes/font_size = 16
+
+[node name="GuestStartBtn" type="Button" parent="CenterArea/Card/MarginContainer/CardVBox/GuestForm" unique_id=406932795]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 56)
+layout_mode = 2
+theme_override_fonts/font = ExtResource("2_bold")
+theme_override_font_sizes/font_size = 22
+text = "เริ่มเล่น"
+
+[node name="GuestBackRow" type="HBoxContainer" parent="CenterArea/Card/MarginContainer/CardVBox/GuestForm" unique_id=431417252]
+layout_mode = 2
+alignment = 1
+
+[node name="GuestBackLink" type="LinkButton" parent="CenterArea/Card/MarginContainer/CardVBox/GuestForm/GuestBackRow" unique_id=580028785]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.737255, 0.490196, 0.278431, 1)
+theme_override_fonts/font = ExtResource("3_semibold")
+theme_override_font_sizes/font_size = 18
+text = "กลับไปหน้าเข้าสู่ระบบ"
