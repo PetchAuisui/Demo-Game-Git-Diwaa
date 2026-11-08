@@ -595,6 +595,7 @@ text = "▼ ACT 1: THE SPIRAL STAIRWAY — บันไดวนไต่หอ�
 
 [node name="BlackCat" type="Control" parent="LayoutVBox/MainChamberArea/ScrollChamber/TowerContent"]
 unique_name_in_owner = true
+visible = false
 z_index = 24
 layout_mode = 0
 offset_left = 984.0

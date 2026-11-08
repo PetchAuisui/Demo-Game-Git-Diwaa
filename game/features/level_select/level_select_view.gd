@@ -61,6 +61,7 @@ var tower_content: Control
 var path_renderer: Control
 var vel_hero: Control
 var vel_sprite: TextureRect
+var vel_anim: AnimatedSprite2D
 var black_cat: Control
 var cat_sprite: TextureRect
 var sfx_click: AudioStreamPlayer
@@ -224,14 +225,7 @@ func _process(delta: float) -> void:
 			flame.color = Color(0.96, 0.62, 0.07, 1.0) if randf() > 0.5 else Color(0.99, 0.88, 0.28, 1.0)
 			flame.scale.y = 0.9 + randf() * 0.25
 
-	# แอนิเมชันหายใจดุ๊กดิ๊กของตัวละครและแมวดำเมื่อยืนนิ่ง
-	if not _is_jumping and vel_hero and vel_hero.visible:
-		_idle_bob_timer += delta * 3.5
-		var bob_offset := sin(_idle_bob_timer) * 1.5
-		if vel_sprite:
-			vel_sprite.position.y = bob_offset
-		if cat_sprite:
-			cat_sprite.position.y = sin(_idle_bob_timer + 0.4) * 1.2
+
 
 
 func _wire_navbar() -> void:
@@ -588,33 +582,59 @@ func _spawn_tower_platforms() -> void:
 
 
 func _setup_character_and_cat() -> void:
-	if not vel_hero or not black_cat:
+	if not vel_hero:
 		return
 
-	vel_hero.z_index = 25
-	black_cat.z_index = 24
+	# ซ่อนแมวดำตามคำสั่ง (เอาแมวออกไปก่อน)
+	if black_cat:
+		black_cat.visible = false
 
-	if vel_sprite and tex_vel_idle:
-		vel_sprite.texture = tex_vel_idle
-	if cat_sprite and tex_cat:
-		cat_sprite.texture = tex_cat
+	vel_hero.z_index = 25
+	vel_hero.pivot_offset = Vector2(24.0, 83.0)
+
+	# สร้างแอนิเมชันสำหรับเวล (5.0 FPS, Frame Durations [2.0, 1.0, 2.0, 1.0, 2.0, 1.0] ตามสเปก)
+	if not vel_anim:
+		var frames := SpriteFrames.new()
+		var frame_durations: Array[float] = [2.0, 1.0, 2.0, 1.0, 2.0, 1.0]
+
+		frames.add_animation("breathe")
+		frames.set_animation_loop("breathe", true)
+		frames.set_animation_speed("breathe", 5.0)
+
+		var tex_breathe := load("res://assets/cutscene/characters/vel/vel_breathe_blink-Sheet.png") as Texture2D
+		if tex_breathe:
+			for f in range(6):
+				var atlas := AtlasTexture.new()
+				atlas.atlas = tex_breathe
+				atlas.region = Rect2(f * 48, 0, 48, 83)
+				frames.add_frame("breathe", atlas, frame_durations[f])
+
+		frames.add_animation("walk")
+		frames.set_animation_loop("walk", true)
+		frames.set_animation_speed("walk", 5.0)
+
+		var tex_walk := load("res://assets/cutscene/characters/vel/vel_walk_right-Sheet.png") as Texture2D
+		if tex_walk:
+			for f in range(6):
+				var atlas := AtlasTexture.new()
+				atlas.atlas = tex_walk
+				atlas.region = Rect2(f * 48, 0, 48, 83)
+				frames.add_frame("walk", atlas, frame_durations[f])
+
+		vel_anim = AnimatedSprite2D.new()
+		vel_anim.name = "VelAnim"
+		vel_anim.sprite_frames = frames
+		vel_anim.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+		vel_anim.position = Vector2(24.0, 41.5)
+		if vel_sprite:
+			vel_sprite.visible = false
+		vel_hero.add_child(vel_anim)
+
+	if vel_anim:
+		vel_anim.play("breathe")
 
 	var stg := TOWER_STAGES[_current_stage_idx]
 	vel_hero.position = Vector2(stg["x"] - 24.0, stg["y"] - 68.0)
-	black_cat.position = Vector2(stg["x"] + 24.0, stg["y"] - 50.0)
-
-	var cat_btn := Button.new()
-	cat_btn.flat = true
-	cat_btn.focus_mode = Control.FOCUS_NONE
-	cat_btn.set_anchors_preset(Control.PRESET_FULL_RECT)
-	cat_btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
-	cat_btn.pressed.connect(func():
-		_play_sfx(sfx_meow)
-		var tw := create_tween()
-		tw.tween_property(black_cat, "scale", Vector2(1.2, 0.8), 0.1)
-		tw.tween_property(black_cat, "scale", Vector2(1.0, 1.0), 0.15)
-	)
-	black_cat.add_child(cat_btn)
 
 
 func _on_platform_selected(idx: int) -> void:
@@ -649,13 +669,12 @@ func _jump_to_stage(target_idx: int, animate: bool = true) -> void:
 	_highlight_act(int(stg["act"]))
 
 	var target_vel_pos := Vector2(stg["x"] - 24.0, stg["y"] - 68.0)
-	var target_cat_pos := Vector2(stg["x"] + 24.0, stg["y"] - 50.0)
 
 	if not animate:
 		if vel_hero:
 			vel_hero.position = target_vel_pos
-		if black_cat:
-			black_cat.position = target_cat_pos
+		if vel_anim:
+			vel_anim.play("breathe")
 		_scroll_to_y(int(stg["y"]) - 460, false)
 		return
 
@@ -663,20 +682,19 @@ func _jump_to_stage(target_idx: int, animate: bool = true) -> void:
 	_play_sfx(sfx_jump)
 
 	var start_vel_pos := vel_hero.position
-	var start_cat_pos := black_cat.position
-	var dir_x := 1.0 if target_vel_pos.x >= start_vel_pos.x else -1.0
+	var is_moving_right := target_vel_pos.x >= start_vel_pos.x
 
-	if vel_sprite:
-		vel_sprite.scale = Vector2(1.2 * dir_x, 0.8)
-	if vel_sprite and tex_vel_jump:
-		vel_sprite.texture = tex_vel_jump
+	# หันหน้าไปตามทิศทางที่จะไป: ถ้าไปขวา flip_h = false, ถ้าไปซ้าย flip_h = true
+	if vel_anim:
+		vel_anim.flip_h = not is_moving_right
+		vel_anim.play("walk")
 
 	_scroll_to_y(int(stg["y"]) - 460, true)
 
-	var jump_duration := 0.42
+	var jump_duration := 0.45
 	var peak_height := 90.0
 
-	var tw := create_tween().set_parallel(true)
+	var tw := create_tween()
 	tw.tween_method(func(t: float):
 		var curr_x := lerpf(start_vel_pos.x, target_vel_pos.x, t)
 		var base_y := lerpf(start_vel_pos.y, target_vel_pos.y, t)
@@ -684,24 +702,13 @@ func _jump_to_stage(target_idx: int, animate: bool = true) -> void:
 		vel_hero.position = Vector2(curr_x, base_y - arc_y)
 	, 0.0, 1.0, jump_duration).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 
-	get_tree().create_timer(0.08).timeout.connect(func():
-		var cat_tw := create_tween()
-		cat_tw.tween_method(func(t: float):
-			var curr_x := lerpf(start_cat_pos.x, target_cat_pos.x, t)
-			var base_y := lerpf(start_cat_pos.y, target_cat_pos.y, t)
-			var arc_y := 3.5 * (peak_height * 0.75) * t * (1.0 - t)
-			black_cat.position = Vector2(curr_x, base_y - arc_y)
-		, 0.0, 1.0, jump_duration).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-	)
-
 	get_tree().create_timer(jump_duration).timeout.connect(func():
 		_play_sfx(sfx_click)
-		if vel_sprite and tex_vel_idle:
-			vel_sprite.texture = tex_vel_idle
 
-		var land_tw := create_tween()
-		land_tw.tween_property(vel_sprite, "scale", Vector2(1.2 * dir_x, 0.8), 0.08)
-		land_tw.tween_property(vel_sprite, "scale", Vector2(1.0 * dir_x, 1.0), 0.12)
+		# เมื่อถึงจุดหมาย กลับมายืนท่าปกติ หายใจตามเดิม (ไม่เอาตัวดึ๊งๆ ยืนนิ่งสนิท)
+		if vel_anim:
+			vel_anim.play("breathe")
+		vel_hero.scale = Vector2.ONE
 		_is_jumping = false
 	)
 
