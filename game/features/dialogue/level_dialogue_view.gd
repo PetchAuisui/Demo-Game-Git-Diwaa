@@ -1,7 +1,5 @@
 extends Node2D
 
-const GameProgressManager = preload("res://common/game_progress_manager.gd")
-
 ## ตัวควบคุมและแสดงผลบทสนทนาประจำด่าน (Level Dialogue View)
 ## รองรับบทสนทนา ด่าน 1 ถึง ด่าน 15 แบบแยกไฟล์ข้อมูล (Data-driven)
 ##
@@ -335,9 +333,10 @@ func _load_level_data(num: int) -> void:
 	push_warning("[LevelDialogueView] Data file not found for level %d at %s. Using fallback." % [num, path])
 	level_data = {
 		"title": "ด่านที่ %d" % num,
+		"is_fallback": true,
 		"intro_sequence": [
-			{"speaker": "มิวรา", "text": "ยินดีต้อนรับสู่ด่านที่ %d" % num, "mewla_anim": "talk"},
-			{"speaker": "เวล", "text": "มาเริ่มกันเลย!", "mewla_anim": "idle"}
+			{"speaker": "มิวรา", "text": "ยินดีต้อนรับสู่ด่านที่ %d (ยังไม่มีข้อมูลบทเรียน)" % num, "mewla_anim": "talk"},
+			{"speaker": "เวล", "text": "ดูเหมือนด่านนี้กำลังอยู่ระหว่างการพัฒนา", "mewla_anim": "idle"}
 		]
 	}
 
@@ -571,10 +570,11 @@ func _on_skip_step() -> void:
 		_open_gameplay_step(2)
 		return
 	elif debug_phase == 2:
-		_finish_dialogue_stage()
+		var is_fallback: bool = level_data.get("is_fallback", false)
+		_finish_dialogue_stage(not is_fallback)
 		return
 		
-	_finish_dialogue_stage()
+	_finish_dialogue_stage(false)
 
 func _open_dialogue_box() -> void:
 	if is_transitioning:
@@ -604,7 +604,10 @@ func _show_current_queue_item(skip_typewriter: bool = false) -> void:
 			is_in_entrance_cutscene = false
 			_load_sequence(level_data.get("intro_sequence", []))
 			return
-		_finish_dialogue_stage()
+		# บันทึกผ่านด่านเฉพาะเมื่อเล่น outro_sequence จบสมบูรณ์ (หรือ debug_phase == 2) และไม่ใช่ข้อมูล fallback
+		var is_fallback: bool = level_data.get("is_fallback", false)
+		var is_outro: bool = not is_fallback and ((current_queue == level_data.get("outro_sequence", [])) or (debug_phase == 2))
+		_finish_dialogue_stage(is_outro)
 		return
 		
 	var item = current_queue[queue_index]
@@ -807,12 +810,12 @@ func _on_choice_selected(index: int) -> void:
 	if seq.size() > 0:
 		_load_sequence(seq)
 	else:
+		push_error("[LevelDialogueView] No sequence found for choice: %s" % choice_id)
+		# ถ้าไม่พบ sequence ของช้อยส์ ให้คงหน้าตัวเลือกไว้ เพื่อให้ผู้เล่นเลือกข้ออื่นต่อได้ ไม่หลุดไปจบด่าน
 		if choice_container:
-			choice_container.visible = false
-		is_showing_choices = false
-		dialogue_label.visible = true
-		push_warning("[LevelDialogueView] No sequence found for choice: %s" % choice_id)
-		_finish_dialogue_stage()
+			choice_container.visible = true
+		is_showing_choices = true
+		dialogue_label.visible = false
 
 # ==============================================================================
 # GAMEPLAY PLACEHOLDER & STAGE FINISH
@@ -879,7 +882,7 @@ func _on_gameplay_step_finished(step: int) -> void:
 	else:
 		_begin_dialogue_phase(2)
 
-func _finish_dialogue_stage() -> void:
+func _finish_dialogue_stage(mark_cleared: bool = true) -> void:
 	if is_transitioning:
 		return
 	is_transitioning = true
@@ -896,11 +899,12 @@ func _finish_dialogue_stage() -> void:
 		
 	Engine.time_scale = 1.0
 	
-	# บันทึกสถานะว่าเล่นผ่านด่านนี้สำเร็จแล้ว (ทำให้การ์ดใน Level Select ปลดล็อกเป็นสีเขียว)
-	GameProgressManager.set_level_cleared(level_number, true)
+	# บันทึกสถานะว่าเล่นผ่านด่านนี้สำเร็จเฉพาะเมื่อ mark_cleared เป็น true
+	if mark_cleared:
+		GameProgressManager.set_level_cleared(level_number, true)
 	
 	# เปลี่ยนฉากไปยังคัตซีนเดินขึ้นบันไดและแสดงหน้าสรุปดาว (Level Clear Scene)
-	if level_clear_scene_path != "" and ResourceLoader.exists(level_clear_scene_path):
+	if mark_cleared and level_clear_scene_path != "" and ResourceLoader.exists(level_clear_scene_path):
 		if is_instance_valid(fade_overlay):
 			fade_overlay.visible = true
 			var tw = create_tween()
@@ -912,6 +916,15 @@ func _finish_dialogue_stage() -> void:
 			get_tree().change_scene_to_file(level_clear_scene_path)
 		return
 	
+	# ถ้าไม่ได้ mark_cleared (เช่น เกิด error หรือด่าน fallback ที่ยังไม่มีข้อมูล) ให้กลับไปหน้า Level Select
+	if not mark_cleared:
+		const LEVEL_SELECT_PATH := "res://features/level_select/level_select_view.tscn"
+		if ResourceLoader.exists(LEVEL_SELECT_PATH):
+			get_tree().change_scene_to_file(LEVEL_SELECT_PATH)
+		elif next_scene_path != "" and ResourceLoader.exists(next_scene_path):
+			get_tree().change_scene_to_file(next_scene_path)
+		return
+
 	# แสดงหน้าสรุปผล / สรุปดาวเมื่อผ่านด่าน (Success Modal) เป็น Fallback
 	var clear_modal_res = load("res://features/dialogue/level_clear_modal.tscn")
 	if clear_modal_res:
