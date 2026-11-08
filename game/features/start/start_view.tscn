@@ -12,6 +12,7 @@
 [ext_resource type="FontFile" uid="uid://kdsopvxcj40" path="res://assets/fonts/VT323-Regular.ttf" id="10_font_vt323"]
 [ext_resource type="AudioStream" uid="uid://cvlamp5b4er6q" path="res://assets/audio/sfx_click.wav" id="10_sfx_click"]
 [ext_resource type="AudioStream" uid="uid://okd1lm33qdyj" path="res://assets/audio/sfx_command.wav" id="11_sfx_cmd"]
+[ext_resource type="Script" path="res://features/start/start_dust_particles.gd" id="12_dust_particles"]
 
 [sub_resource type="StyleBoxFlat" id="Style_window_frame"]
 bg_color = Color(0.141, 0.082, 0.043, 1)
@@ -114,6 +115,16 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 color = Color(0.02, 0.02, 0.03, 1)
+
+[node name="BackgroundDust" type="Control" parent="." unique_id=741028491]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("12_dust_particles")
 
 [node name="TopBar" parent="." unique_id=1990034810 instance=ExtResource("3_topbar")]
 unique_name_in_owner = true
