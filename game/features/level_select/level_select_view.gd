@@ -634,7 +634,7 @@ func _setup_character_and_cat() -> void:
 		vel_anim.play("breathe")
 
 	var stg := TOWER_STAGES[_current_stage_idx]
-	vel_hero.position = Vector2(stg["x"] - 24.0, stg["y"] - 68.0)
+	vel_hero.position = Vector2(stg["x"] - 24.0, stg["y"] - 107.0)
 
 
 func _on_platform_selected(idx: int) -> void:
@@ -668,7 +668,7 @@ func _jump_to_stage(target_idx: int, animate: bool = true) -> void:
 	_update_hud_display(stg)
 	_highlight_act(int(stg["act"]))
 
-	var target_vel_pos := Vector2(stg["x"] - 24.0, stg["y"] - 68.0)
+	var target_vel_pos := Vector2(stg["x"] - 24.0, stg["y"] - 107.0)
 
 	if not animate:
 		if vel_hero:
