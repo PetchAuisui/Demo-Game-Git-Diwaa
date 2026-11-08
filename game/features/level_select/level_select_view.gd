@@ -584,6 +584,20 @@ func _setup_character_and_cat() -> void:
 				atlas.region = Rect2(f * 48, 0, 48, 83)
 				frames.add_frame("walk", atlas, frame_durations[f])
 
+		frames.add_animation("hold")
+		frames.set_animation_loop("hold", true)
+		frames.set_animation_speed("hold", 5.0)
+		var tex_hold := load("res://assets/cutscene/characters/vel/vel_hold.png") as Texture2D
+		if tex_hold:
+			frames.add_frame("hold", tex_hold, 1.0)
+
+		frames.add_animation("stand_straight")
+		frames.set_animation_loop("stand_straight", true)
+		frames.set_animation_speed("stand_straight", 5.0)
+		var tex_straight := load("res://assets/cutscene/characters/vel/vel_Hblue_Sredyellow_idle.png") as Texture2D
+		if tex_straight:
+			frames.add_frame("stand_straight", tex_straight, 1.0)
+
 		vel_anim = AnimatedSprite2D.new()
 		vel_anim.name = "VelAnim"
 		vel_anim.sprite_frames = frames
@@ -682,17 +696,31 @@ func _perform_jump_step(next_idx: int) -> void:
 	var start_vel_pos := vel_hero.position if vel_hero else target_vel_pos
 	var is_moving_right := target_vel_pos.x >= start_vel_pos.x
 
-	# เล่นแอนิเมชันเดิน/วิ่งต่อเนื่อง ("ถ้าผู้เล่นเดินต่อเนื่องให้ทำท่าวิ่งไปเรื่อยๆ")
+	var prev_stg_id: int = TOWER_STAGES[prev_idx]["id"]
+	var next_stg_id: int = TOWER_STAGES[next_idx]["id"]
+	var is_between_15_and_16 := (prev_stg_id == 15 and next_stg_id == 16) or (prev_stg_id == 16 and next_stg_id == 15)
+
+	# เล่นแอนิเมชันตามเงื่อนไข
 	if vel_anim:
-		vel_anim.flip_h = not is_moving_right
-		vel_anim.play("walk")
+		if is_between_15_and_16:
+			vel_anim.flip_h = false
+			if next_stg_id == 15:
+				# ตอนระหว่าง 15-16 ลงมาจาก 16 สู่ 15 -> ให้ท่า hold ที่ยกแขน
+				vel_anim.play("hold")
+			else:
+				# ตอนระหว่าง 15-16 ขึ้นจาก 15 สู่ 16 -> ให้ท่าตัวยืนตรงปกติ
+				vel_anim.play("stand_straight")
+		else:
+			# เดิน/วิ่งต่อเนื่องทั่วไป
+			vel_anim.flip_h = not is_moving_right
+			vel_anim.play("walk")
 
 	_play_sfx(sfx_jump)
 	_scroll_to_y(int(stg["y"]) - 460, true)
 
 	var has_more_steps := (_target_queue_idx != _current_stage_idx)
-	var jump_duration := 0.32 if has_more_steps else 0.42
-	var peak_height := 90.0
+	var jump_duration := 0.65 if is_between_15_and_16 else (0.32 if has_more_steps else 0.42)
+	var peak_height := 50.0 if is_between_15_and_16 else 90.0
 
 	if _jump_tween and _jump_tween.is_valid():
 		_jump_tween.kill()
