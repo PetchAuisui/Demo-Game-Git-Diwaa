@@ -29,6 +29,7 @@ var _cursor_visible := true
 
 
 func _ready() -> void:
+	GameProgressManager.randomize_hat_color()
 	_bind_nodes()
 	_wire_events()
 	_update_clock()

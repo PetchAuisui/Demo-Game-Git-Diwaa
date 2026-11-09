@@ -20,6 +20,48 @@ static var _selected_level_number: int = 1
 static var _current_gameplay_step: int = 0
 static var _gameplay_return_scene: String = "res://features/cutscene/inside_tower_cutscene.tscn"
 
+## การสุ่มสีหมวกเวทมนตร์ 3 สี (ม่วง, ฟ้า, เขียว) เมื่อเริ่มเข้าเกมใหม่ อัตราดรอปเท่ากัน 1/3 (Equal Drop Rate)
+enum HatColor {
+	PURPLE = 0,
+	BLUE = 1,
+	GREEN = 2,
+}
+
+const HAT_TEXTURE_PATHS: Array[String] = [
+	"res://assets/art/hats/hat_witch_purple.png",
+	"res://assets/art/hats/hat_witch_blue.png",
+	"res://assets/art/hats/hat_witch_green.png",
+]
+
+static var _current_hat_color: int = -1
+
+static func randomize_hat_color() -> int:
+	_current_hat_color = randi() % 3
+	return _current_hat_color
+
+static func get_current_hat_color() -> int:
+	if _current_hat_color < 0:
+		randomize_hat_color()
+	return _current_hat_color
+
+static func get_current_hat_texture() -> Texture2D:
+	var idx := get_current_hat_color()
+	var path := HAT_TEXTURE_PATHS[idx]
+	if ResourceLoader.exists(path):
+		return load(path)
+	return null
+
+static func get_current_hat_color_name() -> String:
+	match get_current_hat_color():
+		HatColor.PURPLE:
+			return "Purple"
+		HatColor.BLUE:
+			return "Blue"
+		HatColor.GREEN:
+			return "Green"
+		_:
+			return "Unknown"
+
 static func set_selected_level_number(level_num: int) -> void:
 	_selected_level_number = level_num
 
