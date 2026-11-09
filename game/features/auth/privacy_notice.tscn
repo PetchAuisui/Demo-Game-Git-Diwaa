@@ -120,7 +120,11 @@ theme_override_fonts/font = ExtResource("4_regular")
 theme_override_font_sizes/font_size = 18
 text = "ฉันได้อ่านและรับทราบนโยบายความเป็นส่วนตัว (จำเป็น)"
 
-[node name="LeaderboardCheck" type="CheckBox" parent="CenterArea/Card/MarginContainer/CardVBox/ConsentBox" unique_id=344159433]
+[node name="LeaderboardRow" type="HBoxContainer" parent="CenterArea/Card/MarginContainer/CardVBox/ConsentBox" unique_id=1906711423]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="LeaderboardCheck" type="CheckBox" parent="CenterArea/Card/MarginContainer/CardVBox/ConsentBox/LeaderboardRow" unique_id=344159433]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_colors/font_color = Color(0.172549, 0.141176, 0.113725, 1)
@@ -133,12 +137,19 @@ theme_override_fonts/font = ExtResource("4_regular")
 theme_override_font_sizes/font_size = 18
 text = "แสดงชื่อที่แสดงของฉันบนตารางอันดับ (ไม่บังคับ)"
 
-[node name="LeaderboardHint" type="Label" parent="CenterArea/Card/MarginContainer/CardVBox/ConsentBox" unique_id=266851055]
+[node name="LeaderboardHelp" type="Button" parent="CenterArea/Card/MarginContainer/CardVBox/ConsentBox/LeaderboardRow" unique_id=1252298196]
+custom_minimum_size = Vector2(28, 28)
 layout_mode = 2
-theme_override_colors/font_color = Color(0.478431, 0.431373, 0.376471, 1)
-theme_override_fonts/font = ExtResource("4_regular")
-theme_override_font_sizes/font_size = 14
-text = "ไม่ติ๊กก็เล่นได้ปกติ เปลี่ยนได้ภายหลังในหน้าบัญชี"
+size_flags_vertical = 4
+tooltip_text = "เลือกได้ตามใจ ไม่มีผลต่อการสมัครหรือการเล่น\nติ๊ก: ชื่อที่แสดงของคุณจะขึ้นบนตารางอันดับให้ผู้เล่นคนอื่นเห็น\nไม่ติ๊ก: เล่นได้ทุกอย่างตามปกติ แค่ชื่อจะไม่ขึ้นบนตารางอันดับ\nเปลี่ยนใจได้ทุกเมื่อในหน้า \"บัญชีของฉัน\""
+focus_mode = 0
+mouse_default_cursor_shape = 16
+theme_override_colors/font_color = Color(0.737255, 0.490196, 0.278431, 1)
+theme_override_colors/font_hover_color = Color(0.439216, 0.32549, 0.207843, 1)
+theme_override_fonts/font = ExtResource("2_bold")
+theme_override_font_sizes/font_size = 18
+text = "?"
+flat = true
 
 [node name="ButtonRow" type="HBoxContainer" parent="CenterArea/Card/MarginContainer/CardVBox" unique_id=2096442694]
 layout_mode = 2
