@@ -127,15 +127,18 @@ func _input(event: InputEvent) -> void:
 	if event is InputEventKey and event.keycode == KEY_ESCAPE:
 		return
 	
-	# ป้องกันการคลิกโดนปุ่มควบคุม (FF / Skip) ถูกกลืนเป็นการกดอ่านต่อ
-	var hovered := get_viewport().gui_get_hovered_control()
-	if hovered is BaseButton:
-		return
-	
+	var wants_continue := false
 	if event.is_action_pressed("ui_accept") or \
 	   (event is InputEventKey and event.pressed and not event.echo) or \
-	   (event is InputEventMouseButton and event.pressed) or \
 	   (event is InputEventScreenTouch and event.pressed):
+		wants_continue = true
+	elif event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+		# ป้องกันการคลิกโดนปุ่มควบคุม (FF / Skip) ถูกกลืนเป็นการกดอ่านต่อ
+		var hovered := get_viewport().gui_get_hovered_control()
+		if not (hovered is BaseButton):
+			wants_continue = true
+	
+	if wants_continue:
 		get_viewport().set_input_as_handled()
 		_trigger_continue()
 

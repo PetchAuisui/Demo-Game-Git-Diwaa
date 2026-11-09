@@ -14,6 +14,8 @@ var _remote_repo_button: RemoteRepoButton
 
 var _sandbox_service: GitSandboxService
 var _is_initialized := false
+## คำสั่ง git ที่รันสำเร็จในรอบนี้ (ตัวพิมพ์เล็ก) ใช้ตรวจเงื่อนไขภารกิจก่อนกลับสู่เนื้อเรื่อง
+var _successful_commands: PackedStringArray = []
 
 
 func _ready() -> void:
@@ -41,6 +43,7 @@ func _wire_events() -> void:
 	_files_panel.rename_entry_requested.connect(_on_rename_entry_requested)
 	_files_panel.delete_entry_requested.connect(_on_delete_entry_requested)
 	_git_graph_panel.commit_selected.connect(_on_commit_selected)
+	_top_bar.finish_pressed.connect(_on_finish_gameplay_pressed)
 
 
 ## Injects or creates the sandbox service. Allows OOP dependency injection.
@@ -67,9 +70,26 @@ func _initialize_sandbox() -> void:
 	_remote_repo_button.set_available(_sandbox_service.remote_account != null)
 	_terminal_panel.set_executing(false)
 
+	var step := GameProgressManager.get_current_gameplay_step()
+	var lvl := GameProgressManager.get_selected_level_number()
+	if step > 0:
+		_top_bar.set_mode_text("ด่านที่ %d (ขั้นที่ %d)" % [lvl, step])
+		_top_bar.set_finish_button_text("เสร็จสิ้น (ไปต่อ) ➔")
+	else:
+		_top_bar.set_finish_button_text("กลับหน้าเลือกด่าน")
+
 	if _sandbox_service.info != null:
 		_terminal_panel.set_window_title("●  ●  ●    TERMINAL — learner@diwaa:~/%s" % _sandbox_service.info.mission_id)
-		_terminal_panel.append_info("พร้อมใช้งาน — พิมพ์ help หรือเริ่มด้วย git --version\n")
+		if step > 0:
+			var step_info := LevelDataLoader.get_gameplay_step(lvl, step)
+			var hints: Array = step_info.get("hints", [])
+			if hints.is_empty():
+				_terminal_panel.append_info("📜 ภารกิจด่านที่ %d (ขั้นที่ %d)" % [lvl, step])
+			for hint in hints:
+				_terminal_panel.append_info("[ด่านที่ %d] %s" % [lvl, hint])
+			_terminal_panel.append_info("💡 เมื่อทำภารกิจครบแล้ว ให้กดปุ่ม [เสร็จสิ้น (ไปต่อ)] ด้านบนขวา หรือพิมพ์ 'done' เพื่อดำเนินเนื้อเรื่องต่อ\n")
+		else:
+			_terminal_panel.append_info("พร้อมใช้งาน — พิมพ์ help หรือเริ่มด้วย git --version\n")
 
 	await _refresh_state()
 
@@ -91,6 +111,11 @@ func _on_command_submitted(command: String) -> void:
 
 	var trimmed := command.strip_edges()
 	var lower := trimmed.to_lower()
+
+	# Finished mission or exit
+	if lower in ["done", "finish", "exit", "quit"]:
+		_on_finish_gameplay_pressed()
+		return
 
 	# Built-in help handler
 	if lower == "help":
@@ -136,6 +161,7 @@ func _on_command_submitted(command: String) -> void:
 	var result := await _sandbox_service.execute(trimmed)
 
 	if result.success:
+		_successful_commands.append(lower)
 		if not result.standard_output.strip_edges().is_empty():
 			_terminal_panel.append_output(result.standard_output.strip_edges(false, true))
 		else:
@@ -370,6 +396,55 @@ func _show_help() -> void:
                   sandbox-reset, cutscene <central|ending>, level 16, clear, help""")
 
 
+func _on_finish_gameplay_pressed() -> void:
+	var current_step := GameProgressManager.get_current_gameplay_step()
+	if current_step > 0:
+		var missing := _get_missing_requirements(current_step)
+		if not missing.is_empty():
+			_terminal_panel.append_error("ยังทำภารกิจไม่ครบ — ลองร่ายคาถาเหล่านี้ให้สำเร็จก่อน:\n  " + "\n  ".join(missing))
+			return
+		# ส่งต่อไปยัง dialogue phase ถัดไป:
+		# จบขั้น 1 -> ไป phase 1 (part 2 intro)
+		# จบขั้น 2 -> ไป phase 2 (outro)
+		var next_phase := 1 if current_step == 1 else 2
+		GameProgressManager.set_pending_dialogue_phase(next_phase)
+		GameProgressManager.set_current_gameplay_step(0)
+		var return_scene := GameProgressManager.get_gameplay_return_scene()
+		if return_scene.is_empty():
+			return_scene = "res://features/cutscene/inside_tower_cutscene.tscn"
+		_terminal_panel.append_info("กำลังกลับสู่เนื้อเรื่อง...")
+		_change_scene_to_cutscene(return_scene)
+	else:
+		var level_select_path := "res://features/level_select/level_select_view.tscn"
+		if ResourceLoader.exists(level_select_path):
+			get_tree().change_scene_to_file(level_select_path)
+		else:
+			_change_scene_to_cutscene(CENTRAL_TOWER_CUTSCENE_PATH)
+
+
+## คืนรายการคำสั่งที่ภารกิจของขั้นนี้ต้องการ แต่ผู้เล่นยังไม่ได้รันสำเร็จ
+func _get_missing_requirements(step: int) -> PackedStringArray:
+	var missing: PackedStringArray = []
+	var step_info := LevelDataLoader.get_gameplay_step(GameProgressManager.get_selected_level_number(), step)
+	for req in step_info.get("required", []):
+		var tokens: Array = req.get("match", [])
+		var satisfied := false
+		for cmd in _successful_commands:
+			var has_all := true
+			for token in tokens:
+				if not cmd.contains(str(token).to_lower()):
+					has_all = false
+					break
+			if has_all:
+				satisfied = true
+				break
+		if not satisfied:
+			missing.append(str(req.get("label", " ".join(tokens))))
+	return missing
+
+
 func _exit_tree() -> void:
+	# ออกจาก Sandbox ทางใดก็ตาม (เช่น คำสั่ง cutscene / level 16) ให้ล้างขั้นภารกิจ ไม่ให้ค้างไปรอบถัดไป
+	GameProgressManager.set_current_gameplay_step(0)
 	if _sandbox_service != null:
 		_sandbox_service.dispose()

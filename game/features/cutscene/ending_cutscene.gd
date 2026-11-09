@@ -242,6 +242,13 @@ func _input(event: InputEvent) -> void:
 			get_viewport().set_input_as_handled()
 			_advance_epilogue_to_credits()
 		return
+	
+	if current_stage == 9:
+		if event.is_action_pressed("ui_accept") or \
+		   (event is InputEventKey and event.pressed and not event.echo and (event.keycode == KEY_SPACE or event.keycode == KEY_ENTER)):
+			get_viewport().set_input_as_handled()
+			_on_return_menu_pressed()
+			return
 
 func _advance_dialogue() -> void:
 	if not is_waiting_dialogue:
@@ -837,8 +844,8 @@ func _start_comic_pulse() -> void:
 	if comic_pulse_tween and comic_pulse_tween.is_valid():
 		comic_pulse_tween.kill()
 	comic_pulse_tween = create_tween().set_loops()
-	comic_pulse_tween.tween_property(comic_continue_prompt, "modulate:a", 0.4, 0.8).set_trans(Tween.TRANS_SINE)
-	comic_pulse_tween.tween_property(comic_continue_prompt, "modulate:a", 1.0, 0.8).set_trans(Tween.TRANS_SINE)
+	comic_pulse_tween.tween_property(comic_continue_prompt, "modulate:a", 0.35, 0.9).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	comic_pulse_tween.tween_property(comic_continue_prompt, "modulate:a", 1.0, 0.9).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 
 func _advance_comic_flashback() -> void:
 	if not is_waiting_comic:
@@ -1011,6 +1018,29 @@ func play_stage_8_epilogue() -> void:
 	the_end_dark_overlay.color = Color(0, 0, 0, 0.0)
 	if summary_container:
 		summary_container.modulate.a = 1.0
+	
+	# คำนวณความกว้างข้อความที่แท้จริง เพื่อตรึงขนาด Label ให้พอดีเป๊ะและจัดกึ่งกลางหน้าจออย่างสมดุล (พิมพ์ไม่เลื่อน ไม่สั่น)
+	var summary_font: Font = summary_line1.get_theme_font("font")
+	var summary_fsize: int = summary_line1.get_theme_font_size("font_size")
+	if summary_font:
+		var w1: float = ceil(summary_font.get_string_size(summary_line1.text, HORIZONTAL_ALIGNMENT_LEFT, -1, summary_fsize).x) + 6.0
+		var w2: float = ceil(summary_font.get_string_size(summary_line2.text, HORIZONTAL_ALIGNMENT_LEFT, -1, summary_fsize).x) + 6.0
+		var w3: float = ceil(summary_font.get_string_size(summary_line3.text, HORIZONTAL_ALIGNMENT_LEFT, -1, summary_fsize).x) + 6.0
+		
+		summary_line1.custom_minimum_size = Vector2(w1, 46)
+		summary_line1.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+		summary_line1.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+		summary_line1.autowrap_mode = TextServer.AUTOWRAP_OFF
+		
+		summary_line2.custom_minimum_size = Vector2(w2, 46)
+		summary_line2.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+		summary_line2.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+		summary_line2.autowrap_mode = TextServer.AUTOWRAP_OFF
+		
+		summary_line3.custom_minimum_size = Vector2(w3, 46)
+		summary_line3.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+		summary_line3.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+		summary_line3.autowrap_mode = TextServer.AUTOWRAP_OFF
 	
 	summary_line1.modulate.a = 1.0
 	summary_line1.visible_characters = -1
@@ -1221,11 +1251,6 @@ func play_stage_9_credits() -> void:
 		tw_fade_in.tween_property(bottom_bar, "modulate:a", 1.0, 1.5).set_trans(Tween.TRANS_SINE)
 	if particles:
 		tw_fade_in.tween_property(particles, "modulate:a", 1.0, 1.5).set_trans(Tween.TRANS_SINE)
-		
-	tw_fade_in.chain().tween_callback(func():
-		if is_instance_valid(return_menu_btn):
-			return_menu_btn.grab_focus()
-	)
 
 ## =============================================================
 ## ระบบกล่องข้อความบทสนทนา (Helper Functions)
@@ -1237,9 +1262,9 @@ func _show_dialogue(speaker: String, text: String, on_continue: Callable) -> voi
 	
 	speaker_label.text = speaker
 	if speaker == "เวล":
-		speaker_label.add_theme_color_override("font_color", Color(0.48, 0.78, 1.0, 1.0)) # สีฟ้าอ่อนสดใส (เวล)
+		speaker_label.add_theme_color_override("font_color", Color(0.45, 0.75, 0.95, 1.0)) # สีฟ้าอ่อนสดใส (เวล)
 	else:
-		speaker_label.add_theme_color_override("font_color", Color(0.941, 0.824, 0.451, 1.0)) # สีทองอบอุ่น (ปรมาจารย์)
+		speaker_label.add_theme_color_override("font_color", Color(0.92, 0.80, 0.44, 1.0)) # สีทองอบอุ่น (ปรมาจารย์)
 	
 	dialogue_label.text = text
 	dialogue_label.visible_characters = -1

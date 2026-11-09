@@ -6,10 +6,10 @@ extends CanvasLayer
 ##
 ## วิธีใช้งานใน Cutscene:
 ##   var skip_ctrl = preload("res://features/cutscene/skip_cutscene_button.gd").new()
-##   skip_ctrl.next_scene_path = "res://features/sandbox/sandbox_game_view.tscn"
+##   skip_ctrl.next_scene_path = "res://features/start/start_view.tscn"
 ##   add_child(skip_ctrl)
 
-@export var next_scene_path: String = "res://features/sandbox/sandbox_game_view.tscn"
+@export var next_scene_path: String = "res://features/start/start_view.tscn"
 @export var show_fast_forward: bool = true
 @export var show_skip: bool = true
 
@@ -32,7 +32,9 @@ var font_res: Font = null
 func _ready() -> void:
 	layer = 100
 	
-	if ResourceLoader.exists("res://assets/fonts/TA-8-bit.ttf"):
+	if ResourceLoader.exists("res://assets/fonts/ChakraPetch-Bold.ttf"):
+		font_res = load("res://assets/fonts/ChakraPetch-Bold.ttf")
+	elif ResourceLoader.exists("res://assets/fonts/TA-8-bit.ttf"):
 		font_res = load("res://assets/fonts/TA-8-bit.ttf")
 	
 	container = HBoxContainer.new()
