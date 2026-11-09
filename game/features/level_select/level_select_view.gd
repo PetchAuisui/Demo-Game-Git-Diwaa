@@ -851,8 +851,8 @@ func _perform_jump_step(next_idx: int) -> void:
 	_scroll_to_stage_idx(_current_stage_idx, true)
 
 	var has_more_steps := (_target_queue_idx != _current_stage_idx)
-	var jump_duration := 0.65 if is_between_15_and_16 else (0.32 if has_more_steps else 0.42)
-	var peak_height := 65.0 if is_between_15_and_16 else 105.0
+	var jump_duration := 0.72 if is_between_15_and_16 else (0.42 if has_more_steps else 0.50)
+	var peak_height := 65.0 if is_between_15_and_16 else 95.0
 
 	if _jump_tween and _jump_tween.is_valid():
 		_jump_tween.kill()
@@ -865,11 +865,14 @@ func _perform_jump_step(next_idx: int) -> void:
 		var base_y := lerpf(start_vel_pos.y, target_vel_pos.y, t)
 		var arc_y := 4.0 * peak_height * t * (1.0 - t)
 		vel_hero.position = Vector2(curr_x, base_y - arc_y)
-	, 0.0, 1.0, jump_duration).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	, 0.0, 1.0, jump_duration).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 
 	_jump_tween.finished.connect(func():
 		_play_sfx(sfx_click)
-		_step_towards_queued_target()
+		if _target_queue_idx != _current_stage_idx and _target_queue_idx != -1:
+			get_tree().create_timer(0.06).timeout.connect(_step_towards_queued_target)
+		else:
+			_step_towards_queued_target()
 	)
 
 
@@ -1096,14 +1099,16 @@ func _scroll_to_stage_idx(stage_idx: int, animate: bool = true) -> void:
 	_highlight_act(int(stg["act"]))
 	_update_hud_display(stg)
 
-	var target_y := int(stg["y"]) - 540
+	var center_offset := int(scroll_chamber.size.y * 0.5) if scroll_chamber and scroll_chamber.size.y > 0 else 540
+	var target_y := int(stg["y"]) - center_offset
 	_scroll_to_y(target_y, animate)
 
 
 func _sync_view_stage_with_scroll() -> void:
 	if not scroll_chamber or TOWER_STAGES.is_empty():
 		return
-	var center_y := float(scroll_chamber.scroll_vertical + 540)
+	var center_offset := float(scroll_chamber.size.y * 0.5) if scroll_chamber and scroll_chamber.size.y > 0 else 540.0
+	var center_y := float(scroll_chamber.scroll_vertical) + center_offset
 	var closest_idx := 0
 	var min_dist := 999999.0
 	for i in range(TOWER_STAGES.size()):
@@ -1127,8 +1132,8 @@ func _scroll_to_y(target_y: int, animate: bool = true) -> void:
 
 	if animate:
 		_scroll_tween = create_tween()
-		_scroll_tween.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-		_scroll_tween.tween_property(scroll_chamber, "scroll_vertical", clamped_y, 0.22)
+		_scroll_tween.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+		_scroll_tween.tween_property(scroll_chamber, "scroll_vertical", clamped_y, 0.48)
 	else:
 		scroll_chamber.scroll_vertical = clamped_y
 
@@ -1288,97 +1293,39 @@ func _play_sfx(player: AudioStreamPlayer) -> void:
 
 
 func _navigate_directional(dir: Vector2) -> void:
-	var base_idx := _target_queue_idx if _is_jumping and _target_queue_idx != -1 else _current_stage_idx
+	# ป้องกันการรับอินพุตรัวขณะกำลังกระโดดอยู่ เพื่อให้การกด 1 ครั้ง = ขยับ 1 ด่านแน่นอน
+	if _is_jumping:
+		return
+
+	var base_idx := _current_stage_idx
 	if base_idx < 0 or base_idx >= TOWER_STAGES.size():
 		return
 
 	var curr_stg: Dictionary = TOWER_STAGES[base_idx]
-	var act_num: int = int(curr_stg["act"])
 	var target_idx := -1
 
-	if act_num == 3: # Act 3: 5x4 Grid (indices 20 to 39)
-		if dir == Vector2.UP:
-			if base_idx + 5 < 40:
-				target_idx = base_idx + 5
-		elif dir == Vector2.DOWN:
-			if base_idx - 5 >= 20:
-				target_idx = base_idx - 5
-			else:
-				# Exit Act 3 down to Act 2 (Boss 20)
-				target_idx = 19
-		elif dir == Vector2.RIGHT:
-			if (base_idx - 20) % 5 < 4 and base_idx + 1 < 40:
-				target_idx = base_idx + 1
-		elif dir == Vector2.LEFT:
-			if (base_idx - 20) % 5 > 0 and base_idx - 1 >= 20:
-				target_idx = base_idx - 1
-
-	elif act_num == 2: # Act 2: Loop (indices 15 to 19 -> stages 16 to 20)
-		# 15: stg 16 (top 960, 560)
-		# 16: stg 17 (right 1200, 700)
-		# 17: stg 18 (bot-right 1120, 920)
-		# 18: stg 19 (bot-left 800, 920)
-		# 19: stg 20 (left 720, 700)
-		if dir == Vector2.UP:
-			if base_idx == 15:
-				target_idx = 20 if GameProgressManager.is_level_cleared(20) else 15
-			elif base_idx == 16:
-				target_idx = 15
-			elif base_idx == 17:
-				target_idx = 16
-			elif base_idx == 18:
-				target_idx = 19
-			elif base_idx == 19:
-				target_idx = 20 if GameProgressManager.is_level_cleared(20) else 15
-		elif dir == Vector2.DOWN:
-			if base_idx == 15:
-				target_idx = 14 # down to Act 1
-			elif base_idx == 16:
-				target_idx = 17
-			elif base_idx == 17:
-				target_idx = 18
-			elif base_idx == 18:
-				target_idx = 14 # down to Act 1
-			elif base_idx == 19:
-				target_idx = 18
-		elif dir == Vector2.RIGHT:
-			if base_idx == 15:
-				target_idx = 16
-			elif base_idx == 19:
-				target_idx = 15
-			elif base_idx == 18:
-				target_idx = 17
-			elif base_idx == 16:
-				target_idx = 17
-		elif dir == Vector2.LEFT:
-			if base_idx == 15:
-				target_idx = 19
-			elif base_idx == 16:
-				target_idx = 15
-			elif base_idx == 17:
-				target_idx = 18
-			elif base_idx == 19:
-				target_idx = 18
-
-	else: # Act 1: Winding Tower (indices 0 to 14 -> stages 1 to 15)
-		if dir == Vector2.UP:
+	if dir == Vector2.UP:
+		# ลูกศรขึ้น หรือ W: ก้าวขึ้นหอคอยไปด่านถัดไปทีละ 1 ด่านเสมอ
+		target_idx = base_idx + 1
+	elif dir == Vector2.DOWN:
+		# ลูกศรลง หรือ S: ถอยลงหอคอยไปด่านก่อนหน้าทีละ 1 ด่านเสมอ (ไม่ข้ามด่าน)
+		target_idx = base_idx - 1
+	elif dir == Vector2.RIGHT:
+		# ลูกศรขวา หรือ D: ก้าวไปข้างหน้าตามเส้นทางหรือแท่นทางขวา
+		if base_idx + 1 < TOWER_STAGES.size() and TOWER_STAGES[base_idx + 1]["x"] > curr_stg["x"]:
 			target_idx = base_idx + 1
-		elif dir == Vector2.DOWN:
+		elif base_idx - 1 >= 0 and TOWER_STAGES[base_idx - 1]["x"] > curr_stg["x"]:
 			target_idx = base_idx - 1
-		elif dir == Vector2.RIGHT:
-			if base_idx + 1 < 15 and TOWER_STAGES[base_idx + 1]["x"] > curr_stg["x"]:
-				target_idx = base_idx + 1
-			elif base_idx - 1 >= 0 and TOWER_STAGES[base_idx - 1]["x"] > curr_stg["x"]:
-				target_idx = base_idx - 1
-			else:
-				target_idx = base_idx + 1
-		elif dir == Vector2.LEFT:
-			if base_idx + 1 < 15 and TOWER_STAGES[base_idx + 1]["x"] < curr_stg["x"]:
-				target_idx = base_idx + 1
-			elif base_idx - 1 >= 0 and TOWER_STAGES[base_idx - 1]["x"] < curr_stg["x"]:
-				target_idx = base_idx - 1
-			else:
-				target_idx = base_idx - 1
+		else:
+			target_idx = base_idx + 1
+	elif dir == Vector2.LEFT:
+		# ลูกศรซ้าย หรือ A: ถอยหลังตามเส้นทางหรือแท่นทางซ้าย
+		if base_idx - 1 >= 0 and TOWER_STAGES[base_idx - 1]["x"] < curr_stg["x"]:
+			target_idx = base_idx - 1
+		elif base_idx + 1 < TOWER_STAGES.size() and TOWER_STAGES[base_idx + 1]["x"] < curr_stg["x"]:
+			target_idx = base_idx + 1
+		else:
+			target_idx = base_idx - 1
 
 	if target_idx >= 0 and target_idx < TOWER_STAGES.size() and target_idx != base_idx:
 		_try_navigate_stage(target_idx)
