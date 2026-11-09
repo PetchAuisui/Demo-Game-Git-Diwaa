@@ -51,7 +51,15 @@ static var _cached_cfg: ConfigFile = null
 static func _get_config() -> ConfigFile:
 	if _cached_cfg == null:
 		_cached_cfg = ConfigFile.new()
-		var _err := _cached_cfg.load(SAVE_PATH)
+		if FileAccess.file_exists(SAVE_PATH):
+			var err := _cached_cfg.load(SAVE_PATH)
+			if err != OK:
+				# ไฟล์เซฟเสีย/อ่านไม่ได้: สำรองไฟล์เดิมไว้ก่อน เพื่อไม่ให้การบันทึกครั้งถัดไปเขียนทับความคืบหน้าจนหายหมด
+				var abs_path := ProjectSettings.globalize_path(SAVE_PATH)
+				var backup_err := DirAccess.copy_absolute(abs_path, abs_path + ".corrupt.bak")
+				push_warning("[GameProgressManager] Failed to load %s (error %d). Backup %s." % [
+					SAVE_PATH, err, "saved to game_progress.cfg.corrupt.bak" if backup_err == OK else "FAILED (error %d)" % backup_err])
+				_cached_cfg = ConfigFile.new()
 	return _cached_cfg
 
 static func _save_config() -> void:
