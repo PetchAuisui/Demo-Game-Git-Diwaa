@@ -43,7 +43,8 @@ const BRICK_PALETTE: Array[Color] = [
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	queue_redraw()
-	resized.connect(queue_redraw)
+	if not resized.is_connected(queue_redraw):
+		resized.connect(queue_redraw)
 
 
 func _draw() -> void:

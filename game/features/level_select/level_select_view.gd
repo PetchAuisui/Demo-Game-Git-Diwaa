@@ -904,6 +904,8 @@ func _perform_direct_leap(to_idx: int) -> void:
 			var queued_dir := _buffered_dir
 			_buffered_dir = Vector2.ZERO
 			_navigate_directional(queued_dir)
+			if not _is_jumping:
+				_step_towards_queued_target()
 		else:
 			# หน่วงเวลา 0.28s ก่อนสลับเป็นท่ายืนตรงหายใจ เพื่อให้ถ้าผู้เล่นกดเดินต่อเนื่อง แอนิเมชันวิ่งจะไม่สะดุด
 			_landing_seq_id += 1
@@ -1062,6 +1064,8 @@ func _perform_jump_step(next_idx: int) -> void:
 			var queued_dir := _buffered_dir
 			_buffered_dir = Vector2.ZERO
 			_navigate_directional(queued_dir)
+			if not _is_jumping:
+				_step_towards_queued_target()
 		elif _target_queue_idx != _current_stage_idx and _target_queue_idx != -1:
 			get_tree().create_timer(0.06).timeout.connect(_step_towards_queued_target)
 		else:
@@ -1558,7 +1562,7 @@ func _input(event: InputEvent) -> void:
 					_sync_view_stage_with_scroll()
 				_scroll_to_stage_idx(_view_stage_idx - 1, true)
 	elif event is InputEventKey and event.pressed:
-		var is_nav_key := (
+		var is_nav_key: bool = (
 			event.keycode == KEY_UP or event.keycode == KEY_W or
 			event.keycode == KEY_DOWN or event.keycode == KEY_S or
 			event.keycode == KEY_LEFT or event.keycode == KEY_A or
