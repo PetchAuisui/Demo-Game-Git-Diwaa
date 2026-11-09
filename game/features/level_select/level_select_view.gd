@@ -109,6 +109,13 @@ const VEL_SCALE: float = 1.5
 const PLAT_HEIGHT: float = 80.0
 const VEL_Y_OFFSET: float = 119.0
 
+# Gothic Minimal Navbar Palette
+const NAV_COLOR_ACTIVE := Color(0.722, 0.604, 0.404, 1.0)     # #B89A67 Antique gold
+const NAV_COLOR_COMPLETED := Color(0.510, 0.604, 0.569, 1.0)  # #829A91 Muted sage green
+const NAV_COLOR_LOCKED := Color(0.467, 0.459, 0.553, 1.0)     # #77758D Muted lavender-gray
+const NAV_COLOR_PRIMARY := Color(0.894, 0.875, 0.835, 1.0)    # #E4DFD5 Primary text
+const NAV_COLOR_SECONDARY := Color(0.604, 0.588, 0.667, 1.0)  # #9A96AA Secondary text
+
 # State variables
 var _current_stage_idx: int = 0
 var _view_stage_idx: int = 0
@@ -256,6 +263,16 @@ func _wire_navbar() -> void:
 		btn_act3.pressed.connect(func(): _on_act_button_pressed(3))
 	if btn_focus_current:
 		btn_focus_current.pressed.connect(_on_continue_pressed)
+		btn_focus_current.text = "ดำเนินต่อ →"
+		btn_focus_current.add_theme_color_override("font_color", NAV_COLOR_ACTIVE)
+		btn_focus_current.add_theme_color_override("font_hover_color", NAV_COLOR_PRIMARY)
+		btn_focus_current.add_theme_color_override("font_pressed_color", NAV_COLOR_SECONDARY)
+		btn_focus_current.add_theme_color_override("font_focus_color", NAV_COLOR_ACTIVE)
+		var empty_continue_sb := StyleBoxEmpty.new()
+		btn_focus_current.add_theme_stylebox_override("normal", empty_continue_sb)
+		btn_focus_current.add_theme_stylebox_override("hover", empty_continue_sb)
+		btn_focus_current.add_theme_stylebox_override("pressed", empty_continue_sb)
+		btn_focus_current.add_theme_stylebox_override("focus", empty_continue_sb)
 	if btn_sound:
 		btn_sound.pressed.connect(_on_toggle_sound)
 	if btn_launch:
@@ -336,62 +353,79 @@ func _refresh_act_tabs(active_act: int) -> void:
 
 	var curr_prog := p1 if active_act == 1 else (p2 if active_act == 2 else p3)
 	if act_progress_label:
-		act_progress_label.text = "ACT %d — %d / %d LEVELS" % [active_act, curr_prog["cleared"], curr_prog["total"]]
-		if curr_prog["is_completed"]:
-			act_progress_label.add_theme_color_override("font_color", Color(0.45, 0.88, 0.60, 1.0))
-		elif not curr_prog["is_unlocked"]:
-			act_progress_label.add_theme_color_override("font_color", Color(0.55, 0.60, 0.70, 0.85))
-		else:
-			act_progress_label.add_theme_color_override("font_color", Color(0.96, 0.78, 0.35, 1.0))
+		act_progress_label.text = "ACT %d · %d / %d LEVELS" % [active_act, curr_prog["cleared"], curr_prog["total"]]
+		act_progress_label.add_theme_color_override("font_color", NAV_COLOR_SECONDARY)
 
 
 func _style_act_button(btn: Button, act_num: int, is_active: bool, prog: Dictionary) -> void:
 	if not btn:
 		return
+
 	var text_base := "ACT %d" % act_num
 	if prog["is_completed"]:
 		btn.text = "%s ✓" % text_base
-	elif not prog["is_unlocked"]:
-		btn.text = "🔒 %s" % text_base
 	else:
 		btn.text = text_base
 
-	var sb: StyleBoxFlat
-	var existing_sb := btn.get_theme_stylebox("normal")
-	if existing_sb and existing_sb is StyleBoxFlat:
-		sb = existing_sb.duplicate() as StyleBoxFlat
-	else:
-		sb = StyleBoxFlat.new()
-		sb.corner_radius_top_left = 4
-		sb.corner_radius_top_right = 4
-		sb.corner_radius_bottom_left = 4
-		sb.corner_radius_bottom_right = 4
-		sb.border_width_left = 1
-		sb.border_width_top = 1
-		sb.border_width_right = 1
+	var empty_sb := StyleBoxEmpty.new()
 
 	if is_active:
-		sb.bg_color = Color(0.18, 0.14, 0.08, 1.0)
-		sb.border_color = Color(0.96, 0.62, 0.07, 1.0)
-		sb.border_width_bottom = 3
-		btn.add_theme_color_override("font_color", Color(0.98, 0.88, 0.47, 1.0))
-	elif prog["is_completed"]:
-		sb.bg_color = Color(0.08, 0.14, 0.10, 1.0)
-		sb.border_color = Color(0.28, 0.52, 0.36, 1.0)
-		sb.border_width_bottom = 2
-		btn.add_theme_color_override("font_color", Color(0.45, 0.85, 0.60, 1.0))
-	elif not prog["is_unlocked"]:
-		sb.bg_color = Color(0.06, 0.07, 0.10, 0.8)
-		sb.border_color = Color(0.18, 0.22, 0.28, 0.6)
-		sb.border_width_bottom = 2
-		btn.add_theme_color_override("font_color", Color(0.40, 0.46, 0.55, 0.7))
-	else:
-		sb.bg_color = Color(0.10, 0.12, 0.17, 1.0)
-		sb.border_color = Color(0.25, 0.32, 0.44, 1.0)
-		sb.border_width_bottom = 2
-		btn.add_theme_color_override("font_color", Color(0.70, 0.78, 0.88, 1.0))
+		# Active Act: Antique gold text, subtle 2px bottom underline, flat transparent background
+		var sb_active := StyleBoxFlat.new()
+		sb_active.bg_color = Color(0, 0, 0, 0)
+		sb_active.draw_center = false
+		sb_active.border_width_left = 0
+		sb_active.border_width_top = 0
+		sb_active.border_width_right = 0
+		sb_active.border_width_bottom = 2
+		sb_active.border_color = NAV_COLOR_ACTIVE
+		sb_active.content_margin_left = 10.0
+		sb_active.content_margin_right = 10.0
+		sb_active.content_margin_top = 6.0
+		sb_active.content_margin_bottom = 4.0
 
-	btn.add_theme_stylebox_override("normal", sb)
+		btn.add_theme_color_override("font_color", NAV_COLOR_ACTIVE)
+		btn.add_theme_color_override("font_hover_color", NAV_COLOR_PRIMARY)
+		btn.add_theme_color_override("font_pressed_color", NAV_COLOR_ACTIVE)
+		btn.add_theme_color_override("font_focus_color", NAV_COLOR_ACTIVE)
+		btn.add_theme_stylebox_override("normal", sb_active)
+		btn.add_theme_stylebox_override("hover", sb_active)
+		btn.add_theme_stylebox_override("pressed", sb_active)
+		btn.add_theme_stylebox_override("focus", sb_active)
+		btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	elif prog["is_completed"]:
+		# Completed Act: Muted sage green text, subtle checkmark, flat tab
+		btn.add_theme_color_override("font_color", NAV_COLOR_COMPLETED)
+		btn.add_theme_color_override("font_hover_color", NAV_COLOR_PRIMARY)
+		btn.add_theme_color_override("font_pressed_color", NAV_COLOR_COMPLETED)
+		btn.add_theme_color_override("font_focus_color", NAV_COLOR_COMPLETED)
+		btn.add_theme_stylebox_override("normal", empty_sb)
+		btn.add_theme_stylebox_override("hover", empty_sb)
+		btn.add_theme_stylebox_override("pressed", empty_sb)
+		btn.add_theme_stylebox_override("focus", empty_sb)
+		btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	elif not prog["is_unlocked"]:
+		# Locked Act: Muted lavender-gray text, reduced visual emphasis
+		btn.add_theme_color_override("font_color", NAV_COLOR_LOCKED)
+		btn.add_theme_color_override("font_hover_color", NAV_COLOR_LOCKED)
+		btn.add_theme_color_override("font_pressed_color", NAV_COLOR_LOCKED)
+		btn.add_theme_color_override("font_focus_color", NAV_COLOR_LOCKED)
+		btn.add_theme_stylebox_override("normal", empty_sb)
+		btn.add_theme_stylebox_override("hover", empty_sb)
+		btn.add_theme_stylebox_override("pressed", empty_sb)
+		btn.add_theme_stylebox_override("focus", empty_sb)
+		btn.mouse_default_cursor_shape = Control.CURSOR_ARROW
+	else:
+		# Unlocked, Inactive Act: Secondary muted text, clean flat tab
+		btn.add_theme_color_override("font_color", NAV_COLOR_SECONDARY)
+		btn.add_theme_color_override("font_hover_color", NAV_COLOR_PRIMARY)
+		btn.add_theme_color_override("font_pressed_color", NAV_COLOR_SECONDARY)
+		btn.add_theme_color_override("font_focus_color", NAV_COLOR_SECONDARY)
+		btn.add_theme_stylebox_override("normal", empty_sb)
+		btn.add_theme_stylebox_override("hover", empty_sb)
+		btn.add_theme_stylebox_override("pressed", empty_sb)
+		btn.add_theme_stylebox_override("focus", empty_sb)
+		btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 
 
 func _on_act_button_pressed(act_num: int) -> void:
