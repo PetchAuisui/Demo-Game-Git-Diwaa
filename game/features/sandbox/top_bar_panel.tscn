@@ -1,79 +1,134 @@
-[gd_scene load_steps=8 format=3]
+[gd_scene load_steps=9 format=3]
 
 [ext_resource type="Script" path="res://features/sandbox/top_bar_panel.gd" id="1_script"]
 [ext_resource type="FontFile" uid="uid://caa27axnonbav" path="res://assets/fonts/Bungee-Regular.ttf" id="2_font_bungee"]
 [ext_resource type="FontFile" uid="uid://deedcfbkojx6k" path="res://assets/fonts/ChakraPetch-Bold.ttf" id="3_font_bold"]
+[ext_resource type="FontFile" path="res://assets/fonts/TA-8-bit.ttf" id="4_font_ta8bit"]
+[ext_resource type="Texture2D" path="res://assets/art/hats/hat_witch_purple.png" id="5_hat_purple"]
 
-[sub_resource type="FontVariation" id="FontVariation_bold"]
-base_font = ExtResource("3_font_bold")
-spacing_top = 4
-spacing_bottom = 2
+[sub_resource type="StyleBoxEmpty" id="Style_brand_btn"]
 
 [sub_resource type="StyleBoxFlat" id="Style_topbar"]
-bg_color = Color(0.18, 0.13, 0.08, 0.96)
-border_width_bottom = 5
-border_color = Color(0.91, 0.69, 0.27, 1)
+bg_color = Color(0.078, 0.063, 0.047, 0.98)
+border_width_bottom = 2
+border_color = Color(0.278, 0.176, 0.102, 1)
 
 [sub_resource type="StyleBoxFlat" id="Style_btn_finish"]
+content_margin_left = 14.0
+content_margin_top = 4.0
+content_margin_right = 14.0
+content_margin_bottom = 4.0
 bg_color = Color(0.18, 0.52, 0.22, 1)
-border_width_left = 2
-border_width_top = 2
-border_width_right = 2
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
 border_width_bottom = 2
 border_color = Color(0.35, 0.75, 0.40, 1)
-corner_radius_top_left = 8
-corner_radius_top_right = 8
-corner_radius_bottom_left = 8
-corner_radius_bottom_right = 8
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_left = 4
+corner_radius_bottom_right = 4
 
 [sub_resource type="StyleBoxFlat" id="Style_btn_finish_hover"]
+content_margin_left = 14.0
+content_margin_top = 4.0
+content_margin_right = 14.0
+content_margin_bottom = 4.0
 bg_color = Color(0.24, 0.65, 0.28, 1)
-border_width_left = 2
-border_width_top = 2
-border_width_right = 2
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
 border_width_bottom = 2
 border_color = Color(0.50, 0.90, 0.55, 1)
-corner_radius_top_left = 8
-corner_radius_top_right = 8
-corner_radius_bottom_left = 8
-corner_radius_bottom_right = 8
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_left = 4
+corner_radius_bottom_right = 4
 
 [node name="TopBarPanel" type="PanelContainer"]
+custom_minimum_size = Vector2(0, 48)
 anchors_preset = 10
 anchor_right = 1.0
-offset_bottom = 72.0
+offset_bottom = 48.0
 grow_horizontal = 2
 theme_override_styles/panel = SubResource("Style_topbar")
 script = ExtResource("1_script")
 
 [node name="TopMargin" type="MarginContainer" parent="."]
 layout_mode = 2
-theme_override_constants/margin_left = 30
-theme_override_constants/margin_top = 8
-theme_override_constants/margin_right = 30
-theme_override_constants/margin_bottom = 8
+theme_override_constants/margin_left = 24
+theme_override_constants/margin_top = 6
+theme_override_constants/margin_right = 24
+theme_override_constants/margin_bottom = 6
 
 [node name="Header" type="HBoxContainer" parent="TopMargin"]
 layout_mode = 2
-theme_override_constants/separation = 19
+theme_override_constants/separation = 14
 
-[node name="BrandLabel" type="Label" parent="TopMargin/Header"]
-unique_name_in_owner = true
+[node name="BrandHBox" type="HBoxContainer" parent="TopMargin/Header"]
 layout_mode = 2
-theme_override_colors/font_color = Color(1, 0.96, 0.83, 1)
+theme_override_constants/separation = 10
+
+[node name="BrandBtn" type="Button" parent="TopMargin/Header/BrandHBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(148, 36)
+layout_mode = 2
+focus_mode = 0
+mouse_default_cursor_shape = 0
+theme_override_styles/focus = SubResource("Style_brand_btn")
+theme_override_styles/disabled = SubResource("Style_brand_btn")
+theme_override_styles/hover = SubResource("Style_brand_btn")
+theme_override_styles/pressed = SubResource("Style_brand_btn")
+theme_override_styles/normal = SubResource("Style_brand_btn")
+flat = true
+
+[node name="BrandLabel" type="Label" parent="TopMargin/Header/BrandHBox/BrandBtn"]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 4
+anchor_top = 0.5
+anchor_bottom = 0.5
+offset_left = 12.0
+offset_top = -14.0
+offset_right = 146.0
+offset_bottom = 14.0
+grow_vertical = 2
+theme_override_colors/font_color = Color(0.961, 0.620, 0.043, 1)
+theme_override_colors/font_shadow_color = Color(0.290, 0.122, 0.020, 1)
+theme_override_constants/shadow_offset_x = 0
+theme_override_constants/shadow_offset_y = 2
 theme_override_fonts/font = ExtResource("2_font_bungee")
-theme_override_font_sizes/font_size = 28
-text = "GIT DIWAA"
+theme_override_font_sizes/font_size = 20
+text = "GIT DI WAA"
 vertical_alignment = 1
 
-[node name="ModeLabel" type="Label" parent="TopMargin/Header"]
+[node name="BrandHat" type="TextureRect" parent="TopMargin/Header/BrandHBox/BrandBtn"]
+unique_name_in_owner = true
+texture_filter = 1
+layout_mode = 1
+offset_left = 3.0
+offset_top = -4.0
+offset_right = 29.0
+offset_bottom = 16.0
+pivot_offset = Vector2(13, 20)
+mouse_filter = 2
+texture = ExtResource("5_hat_purple")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Divider" type="ColorRect" parent="TopMargin/Header/BrandHBox"]
+custom_minimum_size = Vector2(1, 18)
+layout_mode = 2
+size_flags_vertical = 4
+color = Color(0.239, 0.153, 0.098, 1)
+
+[node name="ModeLabel" type="Label" parent="TopMargin/Header/BrandHBox"]
 unique_name_in_owner = true
 layout_mode = 2
-theme_override_colors/font_color = Color(0.7, 1, 0.67, 1)
-theme_override_fonts/font = SubResource("FontVariation_bold")
-theme_override_font_sizes/font_size = 20
+theme_override_colors/font_color = Color(0.604, 0.467, 0.341, 1)
+theme_override_fonts/font = ExtResource("4_font_ta8bit")
+theme_override_font_sizes/font_size = 16
 text = "SANDBOX"
-horizontal_alignment = 1
 vertical_alignment = 1
 
 [node name="Spacer" type="Control" parent="TopMargin/Header"]
@@ -82,15 +137,15 @@ size_flags_horizontal = 3
 
 [node name="BtnFinish" type="Button" parent="TopMargin/Header"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(180, 42)
+custom_minimum_size = Vector2(160, 32)
 layout_mode = 2
 size_flags_vertical = 4
 focus_mode = 0
 mouse_default_cursor_shape = 2
 theme_override_colors/font_color = Color(0.96, 0.96, 0.96, 1)
 theme_override_colors/font_hover_color = Color(1, 1, 1, 1)
-theme_override_fonts/font = SubResource("FontVariation_bold")
-theme_override_font_sizes/font_size = 18
+theme_override_fonts/font = ExtResource("3_font_bold")
+theme_override_font_sizes/font_size = 13
 theme_override_styles/normal = SubResource("Style_btn_finish")
 theme_override_styles/hover = SubResource("Style_btn_finish_hover")
 theme_override_styles/pressed = SubResource("Style_btn_finish_hover")

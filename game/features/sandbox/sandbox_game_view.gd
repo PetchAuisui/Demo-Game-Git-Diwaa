@@ -42,6 +42,7 @@ func _wire_events() -> void:
 	_files_panel.delete_entry_requested.connect(_on_delete_entry_requested)
 	_git_graph_panel.commit_selected.connect(_on_commit_selected)
 	_top_bar.finish_pressed.connect(_on_finish_gameplay_pressed)
+	_top_bar.brand_pressed.connect(func(): get_tree().change_scene_to_file("res://features/level_select/level_select_view.tscn"))
 
 
 ## Injects or creates the sandbox service. Allows OOP dependency injection.

@@ -16,6 +16,9 @@ const TAB_INACTIVE_BORDER := Color(0.180, 0.137, 0.333, 1.0) # #2E2355
 const TAB_ACTIVE_TEXT := Color(1.0, 1.0, 1.0, 1.0)
 const TAB_INACTIVE_TEXT := Color(0.65, 0.60, 0.80, 1.0)
 
+var _brand_btn: Button
+var _brand_title: Label
+var _brand_hat: TextureRect
 var _back_btn: Button
 var _rotate_left_btn: Button
 var _rotate_right_btn: Button
@@ -70,6 +73,12 @@ func _ready() -> void:
 
 
 func _bind_nodes() -> void:
+	_brand_btn = get_node_or_null("%BrandBtn")
+	_brand_title = get_node_or_null("%BrandTitle")
+	_brand_hat = get_node_or_null("%BrandHat")
+	if _brand_hat:
+		_brand_hat.texture = GameProgressManager.get_current_hat_texture()
+
 	_back_btn = get_node("%BackBtn")
 	_rotate_left_btn = get_node("%RotateLeftBtn")
 	_rotate_right_btn = get_node("%RotateRightBtn")
@@ -125,6 +134,9 @@ static func _tab_style(fill: Color, border: Color, border_width: int) -> StyleBo
 
 
 func _wire_events() -> void:
+	if _brand_btn:
+		_brand_btn.mouse_entered.connect(_on_brand_hover.bind(true))
+		_brand_btn.mouse_exited.connect(_on_brand_hover.bind(false))
 	_back_btn.pressed.connect(_on_back_pressed)
 	_rotate_left_btn.pressed.connect(_on_rotate_left)
 	_rotate_right_btn.pressed.connect(_on_rotate_right)
@@ -216,6 +228,19 @@ func _apply_tab_style(button: Button, is_active: bool) -> void:
 	button.add_theme_stylebox_override("hover", style)
 	button.add_theme_stylebox_override("pressed", style)
 	button.add_theme_color_override("font_color", TAB_ACTIVE_TEXT if is_active else TAB_INACTIVE_TEXT)
+
+
+func _on_brand_hover(is_hover: bool) -> void:
+	if _brand_hat:
+		var tw := create_tween()
+		if is_hover:
+			tw.tween_property(_brand_hat, "position:y", -7.0, 0.10).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+			tw.parallel().tween_property(_brand_hat, "rotation_degrees", -6.0, 0.10)
+			tw.tween_property(_brand_hat, "position:y", -4.0, 0.12).set_trans(Tween.TRANS_BOUNCE).set_ease(Tween.EASE_OUT)
+			tw.parallel().tween_property(_brand_hat, "rotation_degrees", 0.0, 0.12)
+		else:
+			tw.tween_property(_brand_hat, "position:y", -4.0, 0.10)
+			tw.parallel().tween_property(_brand_hat, "rotation_degrees", 0.0, 0.10)
 
 
 func _on_back_pressed() -> void:
