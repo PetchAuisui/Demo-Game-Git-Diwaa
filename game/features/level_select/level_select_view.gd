@@ -346,10 +346,55 @@ func _spawn_tower_platforms() -> void:
 		var is_cleared := GameProgressManager.is_level_cleared(stg_id)
 		var is_unlocked := (stg_id == 1) or GameProgressManager.is_level_cleared(stg_id - 1)
 		var is_current := (i == _current_stage_idx)
-		var p_width: float = maxf(float(stg["width"]) * 1.35, 340.0)
+		var act_num: int = int(stg["act"])
+
+		var p_width: float
+		var plat_height: float
+		var margin_h: int
+		var margin_v: int
+		var content_sep: int
+		var badge_dim: float
+		var num_font_sz: int
+		var title_font_sz: int
+		var cmd_font_sz: int
+		var star_font_sz: int
+
+		if act_num == 1:
+			p_width = maxf(float(stg["width"]) * 1.35, 340.0)
+			plat_height = PLAT_HEIGHT
+			margin_h = 12
+			margin_v = 6
+			content_sep = 12
+			badge_dim = 50.0
+			num_font_sz = 20
+			title_font_sz = 18
+			cmd_font_sz = 15
+			star_font_sz = 22
+		elif act_num == 2:
+			p_width = 260.0
+			plat_height = PLAT_HEIGHT
+			margin_h = 10
+			margin_v = 6
+			content_sep = 10
+			badge_dim = 48.0
+			num_font_sz = 19
+			title_font_sz = 17
+			cmd_font_sz = 14
+			star_font_sz = 20
+		else: # act_num == 3
+			p_width = 204.0
+			plat_height = 70.0
+			margin_h = 8
+			margin_v = 4
+			content_sep = 8
+			badge_dim = 42.0
+			num_font_sz = 17
+			title_font_sz = 15
+			cmd_font_sz = 12
+			star_font_sz = 16
+
 		var p_x: float = stg["x"]
 		var p_y: float = stg["y"]
-		var plat_height: float = PLAT_HEIGHT
 
 		var plat := Control.new()
 		plat.name = "Platform_%02d" % stg_id
@@ -435,19 +480,19 @@ func _spawn_tower_platforms() -> void:
 		var inner_margin := MarginContainer.new()
 		inner_margin.set_anchors_preset(Control.PRESET_FULL_RECT)
 		inner_margin.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		inner_margin.add_theme_constant_override("margin_left", 12)
-		inner_margin.add_theme_constant_override("margin_right", 12)
-		inner_margin.add_theme_constant_override("margin_top", 6)
-		inner_margin.add_theme_constant_override("margin_bottom", 6)
+		inner_margin.add_theme_constant_override("margin_left", margin_h)
+		inner_margin.add_theme_constant_override("margin_right", margin_h)
+		inner_margin.add_theme_constant_override("margin_top", margin_v)
+		inner_margin.add_theme_constant_override("margin_bottom", margin_v)
 
 		var hbox := HBoxContainer.new()
 		hbox.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		hbox.add_theme_constant_override("separation", 12)
+		hbox.add_theme_constant_override("separation", content_sep)
 		hbox.set_anchors_preset(Control.PRESET_FULL_RECT)
 
 		# 3.1 ป้ายเหรียญศิลาแสดงเลขด่าน (ฝั่งซ้าย)
 		var num_badge := PanelContainer.new()
-		num_badge.custom_minimum_size = Vector2(50.0, 50.0)
+		num_badge.custom_minimum_size = Vector2(badge_dim, badge_dim)
 		num_badge.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 		num_badge.mouse_filter = Control.MOUSE_FILTER_IGNORE
 
@@ -472,10 +517,10 @@ func _spawn_tower_platforms() -> void:
 		num_lbl.add_theme_color_override("font_color", badge_num_color)
 		if font_bungee:
 			num_lbl.add_theme_font_override("font", font_bungee)
-			num_lbl.add_theme_font_size_override("font_size", 20)
+			num_lbl.add_theme_font_size_override("font_size", num_font_sz)
 		elif font_ta_pixel:
 			num_lbl.add_theme_font_override("font", font_ta_pixel)
-			num_lbl.add_theme_font_size_override("font_size", 18)
+			num_lbl.add_theme_font_size_override("font_size", num_font_sz - 2)
 		num_badge.add_child(num_lbl)
 		hbox.add_child(num_badge)
 
@@ -485,7 +530,7 @@ func _spawn_tower_platforms() -> void:
 			info_vbox.mouse_filter = Control.MOUSE_FILTER_IGNORE
 			info_vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 			info_vbox.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-			info_vbox.add_theme_constant_override("separation", 3)
+			info_vbox.add_theme_constant_override("separation", 2 if act_num == 3 else 3)
 
 			var title_lbl := Label.new()
 			title_lbl.text = str(stg["title"])
@@ -493,7 +538,7 @@ func _spawn_tower_platforms() -> void:
 			title_lbl.add_theme_color_override("font_color", title_color)
 			if font_chakra_bold:
 				title_lbl.add_theme_font_override("font", font_chakra_bold)
-				title_lbl.add_theme_font_size_override("font_size", 18)
+				title_lbl.add_theme_font_size_override("font_size", title_font_sz)
 			info_vbox.add_child(title_lbl)
 
 			var cmd_lbl := Label.new()
@@ -505,7 +550,7 @@ func _spawn_tower_platforms() -> void:
 				cmd_lbl.add_theme_color_override("font_color", Color(0.35, 0.45, 0.55, 0.75))
 			if font_ta_pixel:
 				cmd_lbl.add_theme_font_override("font", font_ta_pixel)
-				cmd_lbl.add_theme_font_size_override("font_size", 15)
+				cmd_lbl.add_theme_font_size_override("font_size", cmd_font_sz)
 			info_vbox.add_child(cmd_lbl)
 
 			hbox.add_child(info_vbox)
@@ -516,7 +561,8 @@ func _spawn_tower_platforms() -> void:
 			lock_rect.texture = tex_lock
 			lock_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 			lock_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-			lock_rect.custom_minimum_size = Vector2(26.0, 30.0)
+			var lock_size: float = 22.0 if act_num == 3 else 26.0
+			lock_rect.custom_minimum_size = Vector2(lock_size, lock_size * 1.15)
 			lock_rect.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 			lock_rect.modulate = Color(0.55, 0.62, 0.72, 0.85)
 			lock_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -530,7 +576,7 @@ func _spawn_tower_platforms() -> void:
 			star_icon.add_theme_constant_override("outline_size", 2)
 			if font_ta_pixel:
 				star_icon.add_theme_font_override("font", font_ta_pixel)
-			star_icon.add_theme_font_size_override("font_size", 22)
+			star_icon.add_theme_font_size_override("font_size", star_font_sz)
 			hbox.add_child(star_icon)
 		elif is_unlocked:
 			var star_icon := Label.new()
@@ -541,7 +587,7 @@ func _spawn_tower_platforms() -> void:
 			star_icon.add_theme_constant_override("outline_size", 2)
 			if font_ta_pixel:
 				star_icon.add_theme_font_override("font", font_ta_pixel)
-			star_icon.add_theme_font_size_override("font_size", 22)
+			star_icon.add_theme_font_size_override("font_size", star_font_sz)
 			hbox.add_child(star_icon)
 		inner_margin.add_child(hbox)
 		slab_btn.add_child(inner_margin)
