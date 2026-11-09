@@ -12,7 +12,21 @@
 [ext_resource type="FontFile" uid="uid://kdsopvxcj40" path="res://assets/fonts/VT323-Regular.ttf" id="10_font_vt323"]
 [ext_resource type="AudioStream" uid="uid://cvlamp5b4er6q" path="res://assets/audio/sfx_click.wav" id="10_sfx_click"]
 [ext_resource type="AudioStream" uid="uid://okd1lm33qdyj" path="res://assets/audio/sfx_command.wav" id="11_sfx_cmd"]
-[ext_resource type="Script" path="res://features/start/start_dust_particles.gd" id="12_dust_particles"]
+[sub_resource type="Gradient" id="Gradient_magic_speck"]
+offsets = PackedFloat32Array(0, 0.4, 0.8, 1)
+colors = PackedColorArray(1, 1, 1, 1, 0.95, 0.9, 1, 0.85, 0.7, 0.65, 1, 0.35, 0, 0, 0, 0)
+
+[sub_resource type="GradientTexture2D" id="GradientTexture2D_magic_speck"]
+gradient = SubResource("Gradient_magic_speck")
+width = 16
+height = 16
+fill = 1
+fill_from = Vector2(0.5, 0.5)
+fill_to = Vector2(1, 0.5)
+
+[sub_resource type="Gradient" id="Gradient_particle_fade"]
+offsets = PackedFloat32Array(0, 0.15, 0.8, 1)
+colors = PackedColorArray(0.980392, 0.976471, 0.964706, 0, 0.980392, 0.976471, 0.964706, 0.85, 0.980392, 0.95, 0.88, 0.75, 0.980392, 0.976471, 0.964706, 0)
 
 [sub_resource type="StyleBoxFlat" id="Style_window_frame"]
 bg_color = Color(0.141, 0.082, 0.043, 1)
@@ -116,15 +130,25 @@ grow_horizontal = 2
 grow_vertical = 2
 color = Color(0.02, 0.02, 0.03, 1)
 
-[node name="BackgroundDust" type="Control" parent="." unique_id=741028491]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-mouse_filter = 2
-script = ExtResource("12_dust_particles")
+[node name="MagicParticles" type="CPUParticles2D" parent="." unique_id=1835182050]
+position = Vector2(960, 540)
+amount = 65
+texture = SubResource("GradientTexture2D_magic_speck")
+lifetime = 6.0
+preprocess = 3.0
+emission_shape = 3
+emission_rect_extents = Vector2(960, 540)
+direction = Vector2(0.15, -1)
+spread = 35.0
+gravity = Vector2(0, -12)
+initial_velocity_min = 12.0
+initial_velocity_max = 35.0
+angular_velocity_min = -30.0
+angular_velocity_max = 30.0
+scale_amount_min = 0.35
+scale_amount_max = 0.9
+color = Color(0.980392, 0.976471, 0.964706, 0.85)
+color_ramp = SubResource("Gradient_particle_fade")
 
 [node name="TopBar" parent="." unique_id=1990034810 instance=ExtResource("3_topbar")]
 unique_name_in_owner = true
