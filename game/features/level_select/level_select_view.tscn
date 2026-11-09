@@ -13,7 +13,7 @@
 [ext_resource type="Script" path="res://features/level_select/brick_wall_pillar.gd" id="11_brick_wall"]
 [ext_resource type="Texture2D" path="res://assets/art/hats/hat_witch_purple.png" id="12_hat_purple"]
 [ext_resource type="Script" path="res://features/level_select/twilight_sky_background.gd" id="13_sky"]
-[ext_resource type="Script" path="res://features/level_select/act3_brick_floors.gd" id="14_act3_floors"]
+[ext_resource type="Script" path="res://features/level_select/act_divider_walls.gd" id="14_act_dividers"]
 
 [sub_resource type="StyleBoxEmpty" id="Style_brand_btn"]
 
@@ -476,11 +476,11 @@ horizontal_scroll_mode = 0
 
 [node name="TowerContent" type="Control" parent="LayoutVBox/MainChamberArea/ScrollChamber"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(1760, 8200)
+custom_minimum_size = Vector2(1760, 4600)
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="Act3BrickFloors" type="Control" parent="LayoutVBox/MainChamberArea/ScrollChamber/TowerContent"]
+[node name="ActDividerWalls" type="Control" parent="LayoutVBox/MainChamberArea/ScrollChamber/TowerContent"]
 unique_name_in_owner = true
 layout_mode = 1
 anchors_preset = 15
@@ -489,7 +489,7 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
-script = ExtResource("14_act3_floors")
+script = ExtResource("14_act_dividers")
 
 [node name="PathRenderer" type="Control" parent="LayoutVBox/MainChamberArea/ScrollChamber/TowerContent"]
 unique_name_in_owner = true
@@ -503,35 +503,35 @@ mouse_filter = 2
 
 [node name="Act3CitadelBanner" type="Label" parent="LayoutVBox/MainChamberArea/ScrollChamber/TowerContent"]
 layout_mode = 0
-offset_left = 80.0
-offset_top = 40.0
+offset_left = 100.0
+offset_top = 465.0
 offset_right = 1680.0
-offset_bottom = 72.0
+offset_bottom = 495.0
 theme_override_colors/font_color = Color(0.96, 0.62, 0.07, 1)
 theme_override_fonts/font = ExtResource("3_chakra_bold")
-theme_override_font_sizes/font_size = 20
+theme_override_font_sizes/font_size = 18
 text = "▲ ACT 3: THE SUMMIT CITADEL — ยอดหอคอยและการกู้คืนคัมภีร์ Git โบราณ (ด่าน 21–40)"
 
 [node name="Act2ChamberBanner" type="Label" parent="LayoutVBox/MainChamberArea/ScrollChamber/TowerContent"]
 layout_mode = 0
-offset_left = 80.0
-offset_top = 4650.0
+offset_left = 100.0
+offset_top = 1040.0
 offset_right = 1680.0
-offset_bottom = 4682.0
+offset_bottom = 1070.0
 theme_override_colors/font_color = Color(0.35, 0.82, 0.60, 1)
 theme_override_fonts/font = ExtResource("3_chakra_bold")
-theme_override_font_sizes/font_size = 20
+theme_override_font_sizes/font_size = 18
 text = "▲ ACT 2: THE COLLAB CHAMBER — โถงคลังเวทกลางและ GitHub Flow (ด่าน 16–20)"
 
 [node name="Act1StairwayBanner" type="Label" parent="LayoutVBox/MainChamberArea/ScrollChamber/TowerContent"]
 layout_mode = 0
-offset_left = 80.0
-offset_top = 8080.0
+offset_left = 100.0
+offset_top = 4470.0
 offset_right = 1680.0
-offset_bottom = 8110.0
+offset_bottom = 4500.0
 theme_override_colors/font_color = Color(0.38, 0.74, 0.98, 1)
 theme_override_fonts/font = ExtResource("3_chakra_bold")
-theme_override_font_sizes/font_size = 20
+theme_override_font_sizes/font_size = 18
 text = "▼ ACT 1: THE SPIRAL STAIRWAY — บันไดวนไต่หอคอยแห่งการฝึกตน (ด่าน 01–15)"
 
 [node name="BlackCat" type="Control" parent="LayoutVBox/MainChamberArea/ScrollChamber/TowerContent"]
