@@ -1,5 +1,8 @@
 extends Control
 
+## ฉากบทสนทนาประจำด่าน (ไม่เล่นคัตซีนเดินเข้าห้องโถงซ้ำ ซึ่งเล่นเฉพาะครั้งแรกผ่าน inside_tower_cutscene)
+const LEVEL_DIALOGUE_SCENE := "res://features/dialogue/level_dialogue_view.tscn"
+
 ## หน้าต่างเลือกรวมด่าน (Level Select View)
 ## แสดงโครงสร้างหน้าต่าง Level / Select Level พร้อมรายการด่าน 15 ด่าน (Grid 3x5)
 ## สอดคล้องกับข้อกำหนดและภาพตัวอย่างในระบบ
@@ -39,18 +42,6 @@ func _ready() -> void:
 func _on_close_pressed() -> void:
 	get_tree().change_scene_to_file("res://features/start/start_view.tscn")
 
-func _get_command_for_level(i: int, lvl_path: String) -> String:
-	var cmd_name := "git version" if i == 1 else "git command"
-	if ResourceLoader.exists(lvl_path):
-		var script = load(lvl_path)
-		if script and script.has_method("get_data"):
-			var data = script.get_data()
-			if data.has("commands") and data["commands"].size() > 0:
-				cmd_name = str(data["commands"][0]).replace("--", "")
-			elif data.has("title"):
-				cmd_name = str(data["title"])
-	return cmd_name
-
 func _setup_level_grid() -> void:
 	if not grid_container:
 		return
@@ -60,18 +51,17 @@ func _setup_level_grid() -> void:
 		child.queue_free()
 		
 	for i in range(1, 16):
-		var lvl_path := "res://features/dialogue/levels/level_%02d.gd" % i
-		var has_level := ResourceLoader.exists(lvl_path)
+		var has_level := LevelDataLoader.has_level(i)
 		var is_cleared := GameProgressManager.is_level_cleared(i)
 		var is_unlocked := (i == 1) or GameProgressManager.is_level_cleared(i - 1)
-		var is_playable := has_level and is_unlocked
+		var is_playable := has_level and (is_unlocked or is_cleared)
 		
-		var btn := _build_level_card(i, is_cleared, is_playable, lvl_path)
+		var btn := _build_level_card(i, is_cleared, is_playable)
 		grid_container.add_child(btn)
 		if i == 1:
 			btn.grab_focus()
 
-func _build_level_card(i: int, is_cleared: bool, is_playable: bool, lvl_path: String) -> Button:
+func _build_level_card(i: int, is_cleared: bool, is_playable: bool) -> Button:
 	var btn := Button.new()
 	btn.custom_minimum_size = Vector2(180, 110)
 	btn.focus_mode = Control.FOCUS_ALL
@@ -124,7 +114,7 @@ func _build_level_card(i: int, is_cleared: bool, is_playable: bool, lvl_path: St
 	btn.add_theme_stylebox_override("pressed", sb_hover if is_cleared else sb_normal)
 	btn.add_theme_stylebox_override("focus", sb_hover)
 
-	if is_cleared or is_playable:
+	if is_playable:
 		btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 		
 		var vbox := VBoxContainer.new()
@@ -143,7 +133,7 @@ func _build_level_card(i: int, is_cleared: bool, is_playable: bool, lvl_path: St
 			lbl_title.add_theme_font_size_override("font_size", 22)
 		vbox.add_child(lbl_title)
 		
-		var cmd_name := _get_command_for_level(i, lvl_path)
+		var cmd_name := LevelDataLoader.get_display_command(i)
 		var lbl_cmd := Label.new()
 		lbl_cmd.text = cmd_name
 		lbl_cmd.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -169,7 +159,7 @@ func _build_level_card(i: int, is_cleared: bool, is_playable: bool, lvl_path: St
 		var level_idx := i
 		btn.pressed.connect(func():
 			GameProgressManager.set_selected_level_number(level_idx)
-			get_tree().change_scene_to_file("res://features/cutscene/inside_tower_cutscene.tscn")
+			get_tree().change_scene_to_file(LEVEL_DIALOGUE_SCENE)
 		)
 	else:
 		btn.mouse_default_cursor_shape = Control.CURSOR_FORBIDDEN

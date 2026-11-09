@@ -11,10 +11,15 @@ extends Control
 @export var level_number: int = 1
 @export var level_command: String = "git version"
 @export var level_keyword: String = "การตรวจสอบพลัง หมายถึง git --version"
-@export var replay_scene_path: String = "res://features/cutscene/inside_tower_cutscene.tscn"
+@export var replay_scene_path: String = "res://features/dialogue/level_dialogue_view.tscn"
 @export var level_select_scene_path: String = "res://features/level_select/level_select_view.tscn"
 
+@onready var level_title_label: Label = $WindowPanel/VBoxMain/Margin/VBox/LevelTitle
+@onready var keyword_header_label: Label = $WindowPanel/VBoxMain/Margin/VBox/KeywordPanel/VBoxKW/Header
+@onready var keyword_body_label: Label = $WindowPanel/VBoxMain/Margin/VBox/KeywordPanel/VBoxKW/Body
+
 func _ready() -> void:
+	_apply_level_info()
 	if btn_replay:
 		btn_replay.focus_mode = Control.FOCUS_NONE
 		btn_replay.pressed.connect(_on_replay_pressed)
@@ -25,10 +30,24 @@ func _ready() -> void:
 		btn_next_level.focus_mode = Control.FOCUS_NONE
 		btn_next_level.pressed.connect(_on_next_level_pressed)
 
+## ดึงข้อมูลด่านที่เพิ่งเล่นจบ (ด่านที่เลือกไว้) มาแสดงชื่อคำสั่งและคีย์เวิร์ดประจำด่าน
+func _apply_level_info() -> void:
+	level_number = GameProgressManager.get_selected_level_number()
+	var data := LevelDataLoader.load_data(level_number)
+	if not data.is_empty():
+		level_command = LevelDataLoader.get_display_command(level_number, data)
+		level_keyword = str(data.get("clear_keyword", level_keyword))
+	if level_title_label:
+		level_title_label.text = "ด่านที่ %d : %s" % [level_number, level_command]
+	if keyword_header_label:
+		keyword_header_label.text = "[คีย์เวิร์ดประจำด่านที่ %d]" % level_number
+	if keyword_body_label:
+		keyword_body_label.text = level_keyword
+
 func _on_replay_pressed() -> void:
 	var target = replay_scene_path
 	if target == "" or not ResourceLoader.exists(target):
-		target = "res://features/cutscene/inside_tower_cutscene.tscn"
+		target = "res://features/dialogue/level_dialogue_view.tscn"
 	get_tree().change_scene_to_file(target)
 
 func _on_level_select_pressed() -> void:
