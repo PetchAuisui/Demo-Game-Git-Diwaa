@@ -476,7 +476,7 @@ horizontal_scroll_mode = 0
 
 [node name="TowerContent" type="Control" parent="LayoutVBox/MainChamberArea/ScrollChamber"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(1760, 4600)
+custom_minimum_size = Vector2(1760, 5250)
 layout_mode = 2
 size_flags_horizontal = 3
 
@@ -504,9 +504,9 @@ mouse_filter = 2
 [node name="Act3CitadelBanner" type="Label" parent="LayoutVBox/MainChamberArea/ScrollChamber/TowerContent"]
 layout_mode = 0
 offset_left = 100.0
-offset_top = 465.0
+offset_top = 1070.0
 offset_right = 1680.0
-offset_bottom = 495.0
+offset_bottom = 1100.0
 theme_override_colors/font_color = Color(0.96, 0.62, 0.07, 1)
 theme_override_fonts/font = ExtResource("3_chakra_bold")
 theme_override_font_sizes/font_size = 18
@@ -515,9 +515,9 @@ text = "▲ ACT 3: THE SUMMIT CITADEL — ยอดหอคอยและก�
 [node name="Act2ChamberBanner" type="Label" parent="LayoutVBox/MainChamberArea/ScrollChamber/TowerContent"]
 layout_mode = 0
 offset_left = 100.0
-offset_top = 1040.0
+offset_top = 1645.0
 offset_right = 1680.0
-offset_bottom = 1070.0
+offset_bottom = 1675.0
 theme_override_colors/font_color = Color(0.35, 0.82, 0.60, 1)
 theme_override_fonts/font = ExtResource("3_chakra_bold")
 theme_override_font_sizes/font_size = 18
@@ -526,9 +526,9 @@ text = "▲ ACT 2: THE COLLAB CHAMBER — โถงคลังเวทกล�
 [node name="Act1StairwayBanner" type="Label" parent="LayoutVBox/MainChamberArea/ScrollChamber/TowerContent"]
 layout_mode = 0
 offset_left = 100.0
-offset_top = 4470.0
+offset_top = 5075.0
 offset_right = 1680.0
-offset_bottom = 4500.0
+offset_bottom = 5105.0
 theme_override_colors/font_color = Color(0.38, 0.74, 0.98, 1)
 theme_override_fonts/font = ExtResource("3_chakra_bold")
 theme_override_font_sizes/font_size = 18
@@ -540,9 +540,9 @@ visible = false
 z_index = 24
 layout_mode = 0
 offset_left = 984.0
-offset_top = 4700.0
+offset_top = 5305.0
 offset_right = 1018.0
-offset_bottom = 4752.0
+offset_bottom = 5357.0
 
 [node name="CatSprite" type="TextureRect" parent="LayoutVBox/MainChamberArea/ScrollChamber/TowerContent/BlackCat"]
 unique_name_in_owner = true
