@@ -97,12 +97,6 @@ func _draw_act3_environmental_backdrop(left_b: float, right_b: float) -> void:
 	draw_line(Vector2(right_b, 580.0), Vector2(right_b - 40.0, 620.0), Color(0.24, 0.27, 0.34, 0.5), 2.0)
 	draw_line(Vector2(right_b, 820.0), Vector2(right_b - 40.0, 860.0), Color(0.24, 0.27, 0.34, 0.5), 2.0)
 
-	# แท่นบูชาปรมาจารย์ Git บนยอดหอคอย (Summit Spire Altar at y = 50)
-	var altar_pos := Vector2(960.0, 52.0)
-	draw_arc(altar_pos, 48.0, 0, TAU, 32, Color(0.722, 0.604, 0.404, 0.25), 1.5)
-	draw_arc(altar_pos, 32.0, 0, TAU, 24, Color(0.961, 0.620, 0.043, 0.35), 1.5)
-	draw_circle(altar_pos, 20.0, Color(0.961, 0.78, 0.35, 0.10))
-
 
 ## 2. ประตูศิลาปราการโบราณคั่นระหว่าง Act 2 และ Act 3 (Distinctive Stone Gateway at y = 1080)
 func _draw_act2_to_act3_gateway(left_b: float, right_b: float) -> void:
