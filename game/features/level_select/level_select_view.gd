@@ -153,10 +153,20 @@ func _ready() -> void:
 	_spawn_tower_platforms()
 	_setup_character_and_cat()
 
-	# เลื่อนมุมมองกล้องไปยังตำแหน่งด่านเริ่มต้นของผู้เล่นทันที
-	get_tree().create_timer(0.05).timeout.connect(func():
-		_jump_to_stage(_current_stage_idx, false)
-	)
+	# เลื่อนมุมมองกล้องไปยังตำแหน่งด่านเริ่มต้นของผู้เล่นทันทีหลังจากที่ layout เสร็จสมบูรณ์
+	_initial_scroll_to_current_stage()
+
+
+func _initial_scroll_to_current_stage() -> void:
+	await get_tree().process_frame
+	await get_tree().process_frame
+	_jump_to_stage(_current_stage_idx, false)
+	if scroll_chamber and tower_content:
+		var stg: Dictionary = TOWER_STAGES[_current_stage_idx]
+		var center_offset := int(scroll_chamber.size.y * 0.5) if scroll_chamber and scroll_chamber.size.y > 0 else 540
+		var target_y := int(stg["y"]) - center_offset
+		var max_scroll := maxi(0, int(tower_content.custom_minimum_size.y - scroll_chamber.size.y))
+		scroll_chamber.scroll_vertical = clampi(target_y, 0, max_scroll)
 
 
 func _load_resources() -> void:
@@ -456,15 +466,19 @@ func _on_act_button_pressed(act_num: int) -> void:
 		return
 
 	_play_sfx(sfx_click)
-	var target_stage_idx := 0
+	var center_offset := int(scroll_chamber.size.y * 0.5) if scroll_chamber and scroll_chamber.size.y > 0 else 540
+	var target_y := 0
 	if act_num == 1:
-		target_stage_idx = 0
+		target_y = int(TOWER_STAGES[0]["y"]) - center_offset
+		_view_stage_idx = 0
 	elif act_num == 2:
-		target_stage_idx = 15
+		target_y = 750 - center_offset
+		_view_stage_idx = 15
 	else:
-		target_stage_idx = 20
+		target_y = 0
+		_view_stage_idx = 20
 
-	_scroll_to_stage_idx(target_stage_idx, true)
+	_scroll_to_y(target_y, true)
 	_refresh_act_tabs(act_num)
 
 

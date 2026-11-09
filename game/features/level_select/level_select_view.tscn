@@ -20,9 +20,9 @@
 [sub_resource type="StyleBoxEmpty" id="Style_hint_panel"]
 
 [sub_resource type="StyleBoxFlat" id="Style_navbar"]
-bg_color = Color(0.063, 0.059, 0.11, 0.98)
+bg_color = Color(0.078, 0.063, 0.047, 0.98)
 border_width_bottom = 2
-border_color = Color(0.18, 0.16, 0.24, 0.9)
+border_color = Color(0.278, 0.176, 0.102, 1)
 
 [sub_resource type="StyleBoxEmpty" id="Style_empty"]
 
@@ -36,48 +36,48 @@ border_width_bottom = 2
 border_color = Color(0.722, 0.604, 0.404, 1)
 
 [sub_resource type="StyleBoxFlat" id="Style_tab_act"]
-content_margin_left = 18.0
+content_margin_left = 16.0
 content_margin_top = 8.0
-content_margin_right = 18.0
+content_margin_right = 16.0
 content_margin_bottom = 8.0
-bg_color = Color(0.098, 0.122, 0.173, 1)
+bg_color = Color(0.271, 0.22, 0.125, 0.9)
 border_width_left = 1
 border_width_top = 1
 border_width_right = 1
-border_width_bottom = 2
-border_color = Color(0.200, 0.251, 0.341, 1)
+border_width_bottom = 1
+border_color = Color(0.490, 0.388, 0.212, 1)
 corner_radius_top_left = 4
 corner_radius_top_right = 4
 corner_radius_bottom_left = 4
 corner_radius_bottom_right = 4
 
 [sub_resource type="StyleBoxFlat" id="Style_tab_act_hover"]
-content_margin_left = 18.0
+content_margin_left = 16.0
 content_margin_top = 8.0
-content_margin_right = 18.0
+content_margin_right = 16.0
 content_margin_bottom = 8.0
-bg_color = Color(0.137, 0.169, 0.239, 1)
+bg_color = Color(0.369, 0.302, 0.173, 1)
 border_width_left = 1
 border_width_top = 1
 border_width_right = 1
-border_width_bottom = 2
-border_color = Color(0.282, 0.345, 0.471, 1)
+border_width_bottom = 1
+border_color = Color(0.9, 0.78, 0.45, 1)
 corner_radius_top_left = 4
 corner_radius_top_right = 4
 corner_radius_bottom_left = 4
 corner_radius_bottom_right = 4
 
 [sub_resource type="StyleBoxFlat" id="Style_tab_act_pressed"]
-content_margin_left = 18.0
+content_margin_left = 16.0
 content_margin_top = 9.0
-content_margin_right = 18.0
+content_margin_right = 16.0
 content_margin_bottom = 7.0
-bg_color = Color(0.08, 0.10, 0.14, 1)
+bg_color = Color(0.200, 0.160, 0.090, 1.0)
 border_width_left = 1
 border_width_top = 2
 border_width_right = 1
 border_width_bottom = 1
-border_color = Color(0.18, 0.22, 0.30, 1)
+border_color = Color(0.490, 0.388, 0.212, 1)
 corner_radius_top_left = 4
 corner_radius_top_right = 4
 corner_radius_bottom_left = 4
@@ -445,8 +445,8 @@ layout_mode = 2
 size_flags_vertical = 4
 tooltip_text = "กลับสู่หน้าเมนูหลัก (Esc)"
 mouse_default_cursor_shape = 2
-theme_override_colors/font_color = Color(0.85, 0.88, 0.95, 1)
-theme_override_colors/font_hover_color = Color(0.98, 0.88, 0.47, 1)
+theme_override_colors/font_color = Color(0.961, 0.878, 0.741, 1)
+theme_override_colors/font_hover_color = Color(1, 0.88, 0.47, 1)
 theme_override_fonts/font = ExtResource("3_chakra_bold")
 theme_override_font_sizes/font_size = 16
 theme_override_styles/normal = SubResource("Style_tab_act")
