@@ -71,6 +71,19 @@ func change_display_name(token: String, display_name: String) -> AuthApiResult:
 	return await _send(HTTPClient.METHOD_PATCH, AuthConfig.API_PREFIX + "/me/display-name", body, token, AuthConfig.REQUEST_TIMEOUT_SEC)
 
 
+func get_leaderboard_consent(token: String) -> AuthApiResult:
+	if token.is_empty():
+		return AuthApiResult.failure(0, AuthApiResult.INVALID_CREDENTIALS)
+	return await _send(HTTPClient.METHOD_GET, AuthConfig.API_PREFIX + "/me/leaderboard-consent", null, token, AuthConfig.REQUEST_TIMEOUT_SEC)
+
+
+func set_leaderboard_consent(token: String, granted: bool, policy_version: String) -> AuthApiResult:
+	if token.is_empty():
+		return AuthApiResult.failure(0, AuthApiResult.INVALID_CREDENTIALS)
+	var body := {"granted": granted, "policyVersion": policy_version}
+	return await _send(HTTPClient.METHOD_PUT, AuthConfig.API_PREFIX + "/me/leaderboard-consent", body, token, AuthConfig.REQUEST_TIMEOUT_SEC)
+
+
 func me(token: String) -> AuthApiResult:
 	return await _send(HTTPClient.METHOD_GET, AuthConfig.API_PREFIX + "/me", null, token, AuthConfig.REQUEST_TIMEOUT_SEC)
 

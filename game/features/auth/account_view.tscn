@@ -150,6 +150,64 @@ theme_override_fonts/font = ExtResource("2_bold")
 theme_override_font_sizes/font_size = 20
 text = "เปลี่ยนชื่อ"
 
+[node name="LeaderboardSection" type="VBoxContainer" parent="CenterArea/Card/MarginContainer/CardVBox" unique_id=945501225]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="LeaderboardLabel" type="Label" parent="CenterArea/Card/MarginContainer/CardVBox/LeaderboardSection" unique_id=675245090]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.172549, 0.141176, 0.113725, 1)
+theme_override_fonts/font = ExtResource("3_semibold")
+theme_override_font_sizes/font_size = 20
+text = "ตารางอันดับ"
+
+[node name="LeaderboardCheck" type="CheckBox" parent="CenterArea/Card/MarginContainer/CardVBox/LeaderboardSection" unique_id=526752861]
+unique_name_in_owner = true
+layout_mode = 2
+disabled = true
+theme_override_colors/font_color = Color(0.172549, 0.141176, 0.113725, 1)
+theme_override_colors/font_focus_color = Color(0.172549, 0.141176, 0.113725, 1)
+theme_override_colors/font_pressed_color = Color(0.172549, 0.141176, 0.113725, 1)
+theme_override_colors/font_hover_color = Color(0.172549, 0.141176, 0.113725, 1)
+theme_override_colors/font_hover_pressed_color = Color(0.172549, 0.141176, 0.113725, 1)
+theme_override_colors/font_disabled_color = Color(0.478431, 0.431373, 0.376471, 0.6)
+theme_override_fonts/font = ExtResource("4_regular")
+theme_override_font_sizes/font_size = 18
+text = "แสดงชื่อที่แสดงของฉันบนตารางอันดับ"
+
+[node name="LeaderboardStatus" type="Label" parent="CenterArea/Card/MarginContainer/CardVBox/LeaderboardSection" unique_id=1098773867]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+theme_override_colors/font_color = Color(0.478431, 0.431373, 0.376471, 1)
+theme_override_fonts/font = ExtResource("4_regular")
+theme_override_font_sizes/font_size = 16
+autowrap_mode = 2
+
+[node name="PrivacyRow" type="VBoxContainer" parent="CenterArea/Card/MarginContainer/CardVBox" unique_id=1068084652]
+layout_mode = 2
+theme_override_constants/separation = 2
+
+[node name="PrivacyLink" type="LinkButton" parent="CenterArea/Card/MarginContainer/CardVBox/PrivacyRow" unique_id=448310426]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 4
+theme_override_colors/font_color = Color(0.737255, 0.490196, 0.278431, 1)
+theme_override_fonts/font = ExtResource("3_semibold")
+theme_override_font_sizes/font_size = 16
+text = "นโยบายความเป็นส่วนตัว"
+
+[node name="ContactLabel" type="Label" parent="CenterArea/Card/MarginContainer/CardVBox/PrivacyRow" unique_id=1735011817]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.478431, 0.431373, 0.376471, 1)
+theme_override_fonts/font = ExtResource("4_regular")
+theme_override_font_sizes/font_size = 14
+horizontal_alignment = 1
+autowrap_mode = 2
+
 [node name="SignOutBtn" type="Button" parent="CenterArea/Card/MarginContainer/CardVBox" unique_id=1954283086]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 52)

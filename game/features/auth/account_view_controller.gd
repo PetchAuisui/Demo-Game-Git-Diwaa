@@ -18,6 +18,13 @@ var _rename_status: Label
 var _rename_btn: Button
 var _sign_out_btn: Button
 var _back_btn: Button
+var _leaderboard_section: VBoxContainer
+var _leaderboard_check: CheckBox
+var _leaderboard_status: Label
+var _privacy_link: LinkButton
+var _contact_label: Label
+# โหลดสถานะการยินยอมจาก server สำเร็จแล้วหรือยัง (ยังไม่สำเร็จ = ห้ามให้กด เพราะไม่รู้ค่าจริง)
+var _leaderboard_loaded := false
 
 var _busy := false
 # กดเปลี่ยนชื่อครั้งแรก = ขอให้ยืนยัน, ครั้งที่สอง = ส่งจริง (เพราะเปลี่ยนแล้วต้องรอ 14 วัน)
@@ -45,6 +52,11 @@ func _bind_nodes() -> void:
 	_rename_btn = get_node("%RenameBtn") as Button
 	_sign_out_btn = get_node("%SignOutBtn") as Button
 	_back_btn = get_node("%BackBtn") as Button
+	_leaderboard_section = get_node("%LeaderboardSection") as VBoxContainer
+	_leaderboard_check = get_node("%LeaderboardCheck") as CheckBox
+	_leaderboard_status = get_node("%LeaderboardStatus") as Label
+	_privacy_link = get_node("%PrivacyLink") as LinkButton
+	_contact_label = get_node("%ContactLabel") as Label
 
 
 func _wire_events() -> void:
@@ -53,6 +65,8 @@ func _wire_events() -> void:
 	_rename_input.text_changed.connect(func(_text: String) -> void: _cancel_confirm())
 	_sign_out_btn.pressed.connect(_on_sign_out_pressed)
 	_back_btn.pressed.connect(_on_back_pressed)
+	_leaderboard_check.toggled.connect(_on_leaderboard_toggled)
+	_privacy_link.pressed.connect(func() -> void: PrivacyNotice.open(get_tree()))
 	PlayerSession.session_changed.connect(_refresh)
 
 
@@ -77,6 +91,7 @@ func _apply_theme() -> void:
 ## เปิดหน้านี้ตรงๆ (เช่น กด F6) ตอนยังไม่มีผู้เล่น: ลองล็อกอินอัตโนมัติ ไม่ได้ก็กลับหน้าเข้าสู่ระบบ
 func _ensure_player() -> void:
 	if PlayerSession.has_player():
+		await _load_leaderboard_consent()
 		return
 	if not PlayerSession.has_saved_session():
 		get_tree().change_scene_to_file(PlayerSession.AUTH_SCENE)
@@ -88,6 +103,7 @@ func _ensure_player() -> void:
 		get_tree().change_scene_to_file(PlayerSession.AUTH_SCENE)
 		return
 	_refresh()
+	await _load_leaderboard_consent()
 
 
 func _refresh() -> void:
@@ -108,6 +124,8 @@ func _refresh() -> void:
 			_mode_label.text = ""
 
 	_rename_section.visible = PlayerSession.is_online()
+	_leaderboard_section.visible = PlayerSession.is_online()
+	_contact_label.text = "แจ้งปัญหา หรือขอลบบัญชี: %s" % PrivacyPolicy.CONTACT_EMAIL
 	_sign_out_btn.text = "ออกจากโหมดไม่ล็อกอิน" if PlayerSession.is_guest() else "ออกจากระบบ"
 	_update_rename_hint()
 
@@ -173,6 +191,65 @@ func _on_sign_out_pressed() -> void:
 	get_tree().change_scene_to_file(PlayerSession.AUTH_SCENE)
 
 
+## โหลดสถานะการยินยอมจาก server (ออนไลน์เท่านั้น) แสดงตามค่าจริงบน server เสมอ
+func _load_leaderboard_consent() -> void:
+	if not PlayerSession.is_online():
+		return
+	_set_busy(true)
+	var result := await PlayerSession.get_leaderboard_consent()
+	if not is_inside_tree():
+		return
+	var value: Variant = result.data.get("leaderboardOptIn") if result.ok else null
+	_leaderboard_loaded = value is bool
+	if _leaderboard_loaded:
+		_leaderboard_check.set_pressed_no_signal(value)
+		_leaderboard_status.visible = false
+	else:
+		_show_leaderboard_status("โหลดสถานะตารางอันดับไม่สำเร็จ ลองเปิดหน้านี้ใหม่อีกครั้ง", AuthThemeTokens.ERROR_TEXT)
+	_set_busy(false)
+
+
+## ติ๊ก = ให้ความยินยอม, เอาติ๊กออก = ถอนความยินยอม (ถอนได้ง่ายเท่ากับให้)
+func _on_leaderboard_toggled(pressed: bool) -> void:
+	if _busy or not _leaderboard_loaded:
+		_leaderboard_check.set_pressed_no_signal(not pressed)
+		return
+	_set_busy(true)
+	var result := await PlayerSession.set_leaderboard_consent(pressed)
+	if not is_inside_tree():
+		return
+	var value: Variant = result.data.get("leaderboardOptIn") if result.ok else null
+	if value is bool:
+		_leaderboard_check.set_pressed_no_signal(value)
+		var message := "บันทึกแล้ว: ชื่อของคุณจะแสดงบนตารางอันดับ" if value else "บันทึกแล้ว: ชื่อของคุณจะไม่แสดงบนตารางอันดับ"
+		_show_leaderboard_status(message, AuthThemeTokens.SUCCESS_TEXT)
+	else:
+		# ไม่สำเร็จ: กลับไปค่าเดิม ห้ามแสดงค่าที่ server ยังไม่ได้บันทึก
+		_leaderboard_check.set_pressed_no_signal(not pressed)
+		_show_leaderboard_status(_consent_failure_message(result), AuthThemeTokens.ERROR_TEXT)
+	_set_busy(false)
+
+
+func _consent_failure_message(result: AuthApiResult) -> String:
+	match result.code:
+		AuthApiResult.VALIDATION_FAILED:
+			return "เกมเวอร์ชันนี้ใช้นโยบายฉบับเก่า กรุณาอัปเดตเกมแล้วลองใหม่"
+		AuthApiResult.RATE_LIMITED:
+			return "ลองหลายครั้งเกินไป กรุณารอประมาณ %d วินาทีแล้วลองใหม่" % maxi(result.retry_after_sec, 1)
+		AuthApiResult.NETWORK_UNAVAILABLE:
+			return "เชื่อมต่อ server ไม่ได้ กรุณาลองใหม่"
+		AuthApiResult.INVALID_CREDENTIALS:
+			return "การเข้าสู่ระบบหมดอายุแล้ว กรุณาออกจากระบบแล้วเข้าสู่ระบบใหม่"
+		_:
+			return "บันทึกไม่สำเร็จ กรุณาลองใหม่ภายหลัง"
+
+
+func _show_leaderboard_status(text: String, color: Color) -> void:
+	_leaderboard_status.text = text
+	_leaderboard_status.add_theme_color_override("font_color", color)
+	_leaderboard_status.visible = true
+
+
 func _on_back_pressed() -> void:
 	if _busy:
 		return
@@ -186,6 +263,7 @@ func _set_busy(busy: bool) -> void:
 	_back_btn.disabled = busy
 	_rename_input.editable = not busy
 	_rename_btn.text = "กำลังดำเนินการ..." if busy else _rename_btn_text
+	_leaderboard_check.disabled = busy or not _leaderboard_loaded
 
 
 func _show_rename_status(text: String, color: Color) -> void:

@@ -120,6 +120,21 @@ func _logout_on_server(token: String) -> void:
 	await _api.logout(token)
 
 
+## ดูว่าตอนนี้ยินยอมให้แสดงชื่อบนตารางอันดับไหม (ออนไลน์เท่านั้น)
+## สำเร็จ: result.data["leaderboardOptIn"] เป็น bool (ตรวจชนิดอีกครั้งก่อนใช้)
+func get_leaderboard_consent() -> AuthApiResult:
+	if state != State.ONLINE:
+		return AuthApiResult.failure(0, AuthApiResult.NETWORK_UNAVAILABLE)
+	return await _api.get_leaderboard_consent(get_token())
+
+
+## ให้หรือถอนความยินยอมแสดงชื่อบนตารางอันดับ ส่งเวอร์ชันนโยบายที่เกมนี้แสดงไปด้วย
+func set_leaderboard_consent(granted: bool) -> AuthApiResult:
+	if state != State.ONLINE:
+		return AuthApiResult.failure(0, AuthApiResult.NETWORK_UNAVAILABLE)
+	return await _api.set_leaderboard_consent(get_token(), granted, PrivacyPolicy.VERSION)
+
+
 ## เปลี่ยนชื่อที่แสดง (ออนไลน์เท่านั้น) server เป็นผู้ตัดสินเรื่องชื่อซ้ำและกฎ 14 วัน
 ## สำเร็จ: อัปเดตชื่อในเครื่อง (และในไฟล์ถ้าจดจำไว้) แล้วส่ง session_changed
 func change_display_name(new_name: String) -> AuthApiResult:
