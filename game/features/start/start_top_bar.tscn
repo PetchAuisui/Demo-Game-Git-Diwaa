@@ -14,35 +14,35 @@ border_width_bottom = 2
 border_color = Color(0.278, 0.176, 0.102, 1)
 
 [node name="StartTopBar" type="PanelContainer"]
-custom_minimum_size = Vector2(0, 48)
+custom_minimum_size = Vector2(0, 72)
 anchors_preset = 10
 anchor_right = 1.0
-offset_bottom = 48.0
+offset_bottom = 72.0
 grow_horizontal = 2
 theme_override_styles/panel = SubResource("Style_topbar_bg")
 script = ExtResource("1_script")
 
 [node name="Margin" type="MarginContainer" parent="."]
 layout_mode = 2
-theme_override_constants/margin_left = 24
-theme_override_constants/margin_top = 6
-theme_override_constants/margin_right = 24
-theme_override_constants/margin_bottom = 6
+theme_override_constants/margin_left = 32
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 32
+theme_override_constants/margin_bottom = 10
 
 [node name="HBox" type="HBoxContainer" parent="Margin"]
 layout_mode = 2
-theme_override_constants/separation = 14
+theme_override_constants/separation = 20
 
 [node name="BrandHBox" type="HBoxContainer" parent="Margin/HBox"]
 layout_mode = 2
-theme_override_constants/separation = 10
+theme_override_constants/separation = 16
 
 [node name="BrandBtn" type="Button" parent="Margin/HBox/BrandHBox"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(148, 36)
+custom_minimum_size = Vector2(210, 48)
 layout_mode = 2
 focus_mode = 0
-mouse_default_cursor_shape = 0
+mouse_default_cursor_shape = 2
 theme_override_styles/focus = SubResource("Style_brand_btn")
 theme_override_styles/disabled = SubResource("Style_brand_btn")
 theme_override_styles/hover = SubResource("Style_brand_btn")
@@ -56,17 +56,17 @@ layout_mode = 1
 anchors_preset = 4
 anchor_top = 0.5
 anchor_bottom = 0.5
-offset_left = 12.0
-offset_top = -14.0
-offset_right = 146.0
-offset_bottom = 14.0
+offset_left = 16.0
+offset_top = -18.0
+offset_right = 205.0
+offset_bottom = 18.0
 grow_vertical = 2
 theme_override_colors/font_color = Color(0.961, 0.620, 0.043, 1)
 theme_override_colors/font_shadow_color = Color(0.290, 0.122, 0.020, 1)
 theme_override_constants/shadow_offset_x = 0
 theme_override_constants/shadow_offset_y = 2
 theme_override_fonts/font = ExtResource("2_font_bungee")
-theme_override_font_sizes/font_size = 20
+theme_override_font_sizes/font_size = 26
 text = "GIT DI WAA"
 vertical_alignment = 1
 
@@ -74,18 +74,18 @@ vertical_alignment = 1
 unique_name_in_owner = true
 texture_filter = 1
 layout_mode = 1
-offset_left = 3.0
-offset_top = -4.0
-offset_right = 29.0
-offset_bottom = 16.0
-pivot_offset = Vector2(13, 20)
+offset_left = 4.0
+offset_top = -7.0
+offset_right = 36.0
+offset_bottom = 19.0
+pivot_offset = Vector2(16, 26)
 mouse_filter = 2
 texture = ExtResource("5_hat_purple")
 expand_mode = 1
 stretch_mode = 5
 
 [node name="Divider" type="ColorRect" parent="Margin/HBox/BrandHBox"]
-custom_minimum_size = Vector2(1, 18)
+custom_minimum_size = Vector2(2, 28)
 layout_mode = 2
 size_flags_vertical = 4
 color = Color(0.239, 0.153, 0.098, 1)
@@ -94,7 +94,7 @@ color = Color(0.239, 0.153, 0.098, 1)
 layout_mode = 2
 theme_override_colors/font_color = Color(0.604, 0.467, 0.341, 1)
 theme_override_fonts/font = ExtResource("4_font_ta8bit")
-theme_override_font_sizes/font_size = 16
+theme_override_font_sizes/font_size = 20
 text = "MAIN CONSOLE"
 vertical_alignment = 1
 

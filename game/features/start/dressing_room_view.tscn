@@ -29,45 +29,45 @@
 [sub_resource type="StyleBoxEmpty" id="Style_brand_btn"]
 
 [sub_resource type="StyleBoxFlat" id="Style_topbar_bg"]
-content_margin_left = 24.0
-content_margin_top = 6.0
-content_margin_right = 24.0
-content_margin_bottom = 6.0
+content_margin_left = 32.0
+content_margin_top = 10.0
+content_margin_right = 32.0
+content_margin_bottom = 10.0
 bg_color = Color(0.078, 0.063, 0.047, 0.98)
 border_width_bottom = 2
 border_color = Color(0.278, 0.176, 0.102, 1)
 
 [sub_resource type="StyleBoxFlat" id="Style_topbar_btn_normal"]
-content_margin_left = 16.0
-content_margin_top = 6.0
-content_margin_right = 16.0
-content_margin_bottom = 6.0
+content_margin_left = 18.0
+content_margin_top = 8.0
+content_margin_right = 18.0
+content_margin_bottom = 8.0
 bg_color = Color(0.271, 0.22, 0.125, 0.9)
 border_width_left = 1
 border_width_top = 1
 border_width_right = 1
 border_width_bottom = 1
 border_color = Color(0.651, 0.549, 0.31, 1)
-corner_radius_top_left = 16
-corner_radius_top_right = 16
-corner_radius_bottom_left = 16
-corner_radius_bottom_right = 16
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_left = 4
+corner_radius_bottom_right = 4
 
 [sub_resource type="StyleBoxFlat" id="Style_topbar_btn_hover"]
-content_margin_left = 16.0
-content_margin_top = 6.0
-content_margin_right = 16.0
-content_margin_bottom = 6.0
+content_margin_left = 18.0
+content_margin_top = 8.0
+content_margin_right = 18.0
+content_margin_bottom = 8.0
 bg_color = Color(0.369, 0.302, 0.173, 1)
 border_width_left = 1
 border_width_top = 1
 border_width_right = 1
 border_width_bottom = 1
 border_color = Color(0.9, 0.78, 0.45, 1)
-corner_radius_top_left = 16
-corner_radius_top_right = 16
-corner_radius_bottom_left = 16
-corner_radius_bottom_right = 16
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_left = 4
+corner_radius_bottom_right = 4
 
 [sub_resource type="StyleBoxFlat" id="Style_right_card_bg"]
 content_margin_left = 28.0
@@ -242,28 +242,28 @@ mouse_filter = 2
 color = Color(0.18, 0.08, 0.32, 0.2)
 
 [node name="TopBar" type="PanelContainer" parent="."]
-custom_minimum_size = Vector2(0, 48)
+custom_minimum_size = Vector2(0, 72)
 layout_mode = 1
 anchors_preset = 10
 anchor_right = 1.0
-offset_bottom = 48.0
+offset_bottom = 72.0
 grow_horizontal = 2
 theme_override_styles/panel = SubResource("Style_topbar_bg")
 
 [node name="TopHBox" type="HBoxContainer" parent="TopBar"]
 layout_mode = 2
-theme_override_constants/separation = 14
+theme_override_constants/separation = 20
 
 [node name="BrandHBox" type="HBoxContainer" parent="TopBar/TopHBox"]
 layout_mode = 2
-theme_override_constants/separation = 10
+theme_override_constants/separation = 16
 
 [node name="BrandBtn" type="Button" parent="TopBar/TopHBox/BrandHBox"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(148, 36)
+custom_minimum_size = Vector2(210, 48)
 layout_mode = 2
 focus_mode = 0
-mouse_default_cursor_shape = 0
+mouse_default_cursor_shape = 2
 theme_override_styles/focus = SubResource("Style_brand_btn")
 theme_override_styles/disabled = SubResource("Style_brand_btn")
 theme_override_styles/hover = SubResource("Style_brand_btn")
@@ -277,17 +277,17 @@ layout_mode = 1
 anchors_preset = 4
 anchor_top = 0.5
 anchor_bottom = 0.5
-offset_left = 12.0
-offset_top = -14.0
-offset_right = 146.0
-offset_bottom = 14.0
+offset_left = 16.0
+offset_top = -18.0
+offset_right = 205.0
+offset_bottom = 18.0
 grow_vertical = 2
 theme_override_colors/font_color = Color(0.961, 0.620, 0.043, 1)
 theme_override_colors/font_shadow_color = Color(0.290, 0.122, 0.020, 1)
 theme_override_constants/shadow_offset_x = 0
 theme_override_constants/shadow_offset_y = 2
 theme_override_fonts/font = ExtResource("2_font_bungee")
-theme_override_font_sizes/font_size = 20
+theme_override_font_sizes/font_size = 26
 text = "GIT DI WAA"
 vertical_alignment = 1
 
@@ -295,18 +295,18 @@ vertical_alignment = 1
 unique_name_in_owner = true
 texture_filter = 1
 layout_mode = 1
-offset_left = 3.0
-offset_top = -4.0
-offset_right = 29.0
-offset_bottom = 16.0
-pivot_offset = Vector2(13, 20)
+offset_left = 4.0
+offset_top = -7.0
+offset_right = 36.0
+offset_bottom = 19.0
+pivot_offset = Vector2(16, 26)
 mouse_filter = 2
 texture = ExtResource("24_hat_purple")
 expand_mode = 1
 stretch_mode = 5
 
 [node name="Divider" type="ColorRect" parent="TopBar/TopHBox/BrandHBox"]
-custom_minimum_size = Vector2(1, 18)
+custom_minimum_size = Vector2(2, 28)
 layout_mode = 2
 size_flags_vertical = 4
 color = Color(0.239, 0.153, 0.098, 1)
@@ -315,7 +315,7 @@ color = Color(0.239, 0.153, 0.098, 1)
 layout_mode = 2
 theme_override_colors/font_color = Color(0.604, 0.467, 0.341, 1)
 theme_override_fonts/font = ExtResource("23_font_ta8bit")
-theme_override_font_sizes/font_size = 16
+theme_override_font_sizes/font_size = 20
 text = "DRESSING ROOM"
 vertical_alignment = 1
 
@@ -325,14 +325,14 @@ size_flags_horizontal = 3
 
 [node name="BackBtn" type="Button" parent="TopBar/TopHBox"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(140, 32)
+custom_minimum_size = Vector2(160, 44)
 layout_mode = 2
 size_flags_vertical = 4
 mouse_default_cursor_shape = 2
 theme_override_colors/font_color = Color(0.961, 0.620, 0.043, 1)
 theme_override_colors/font_hover_color = Color(1, 0.88, 0.47, 1)
 theme_override_fonts/font = ExtResource("2_font_bold")
-theme_override_font_sizes/font_size = 13
+theme_override_font_sizes/font_size = 16
 theme_override_styles/normal = SubResource("Style_topbar_btn_normal")
 theme_override_styles/hover = SubResource("Style_topbar_btn_hover")
 theme_override_styles/pressed = SubResource("Style_topbar_btn_hover")
@@ -343,7 +343,7 @@ layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_top = 52.0
+offset_top = 76.0
 grow_horizontal = 2
 grow_vertical = 2
 theme_override_constants/margin_left = 60
