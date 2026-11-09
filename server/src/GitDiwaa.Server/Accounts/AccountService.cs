@@ -1,6 +1,7 @@
 using GitDiwaa.Online.Accounts;
 using GitDiwaa.Online.Accounts.Contracts;
 using GitDiwaa.Server.Persistence;
+using GitDiwaa.Server.Persistence.InMemory;
 using GitDiwaa.Server.Security;
 
 namespace GitDiwaa.Server.Accounts;
@@ -13,6 +14,7 @@ public sealed class AccountService
     private readonly SessionTokenService _sessionTokenService;
     private readonly TimeProvider _timeProvider;
     private readonly AccountOptions _options;
+    private readonly IConsentRepository _consentRepository;
 
     public AccountService(
         IUserRepository userRepository,
@@ -20,7 +22,8 @@ public sealed class AccountService
         PasswordHasher passwordHasher,
         SessionTokenService sessionTokenService,
         TimeProvider timeProvider,
-        AccountOptions? options = null)
+        AccountOptions? options = null,
+        IConsentRepository? consentRepository = null)
     {
         _userRepository = userRepository ?? throw new ArgumentNullException(nameof(userRepository));
         _sessionRepository = sessionRepository ?? throw new ArgumentNullException(nameof(sessionRepository));
@@ -28,6 +31,8 @@ public sealed class AccountService
         _sessionTokenService = sessionTokenService ?? throw new ArgumentNullException(nameof(sessionTokenService));
         _timeProvider = timeProvider ?? throw new ArgumentNullException(nameof(timeProvider));
         _options = options ?? new AccountOptions();
+        // server จริงได้ตัวที่ลงทะเบียนใน ServerApp เสมอ ตัว in-memory นี้มีไว้ให้เทสเก่าที่ไม่ได้ส่งมาใช้ได้
+        _consentRepository = consentRepository ?? new InMemoryConsentRepository();
     }
 
     public async Task<AccountResult<PlayerProfile>> RegisterAsync(RegisterRequest request, CancellationToken ct = default)
@@ -63,9 +68,16 @@ public sealed class AccountService
             Status: UserStatus.Active,
             CreatedAt: now,
             UpdatedAt: now,
-            LastLoginAt: null);
+            LastLoginAt: null,
+            LeaderboardOptIn: request.LeaderboardOptIn);
 
         var addResult = await _userRepository.TryAddAsync(user, ct);
+        if (addResult == UserAddResult.Added)
+        {
+            // บันทึกการตัดสินใจตอนสมัครเสมอ ทั้งยินยอมและไม่ยินยอม
+            await _consentRepository.AddAsync(
+                NewLeaderboardConsent(user.Id, request.LeaderboardOptIn, request.PolicyVersion, now), ct);
+        }
         return addResult switch
         {
             UserAddResult.Added => AccountResult<PlayerProfile>.Success(new PlayerProfile(user.Id, user.Username, user.DisplayName)),
@@ -352,6 +364,62 @@ public sealed class AccountService
         var profile = new PlayerProfile(user.Id, user.Username, user.DisplayName);
         return new ChangeDisplayNameResponse(profile, nextChangeAllowedAt);
     }
+
+    public async Task<AccountResult<LeaderboardConsentResponse>> GetLeaderboardConsentAsync(
+        Guid userId,
+        CancellationToken ct = default)
+    {
+        var user = await _userRepository.FindByIdAsync(userId, ct);
+        if (user is null || user.Status != UserStatus.Active)
+        {
+            return AccountResult<LeaderboardConsentResponse>.Failure(AuthErrorCode.InvalidCredentials);
+        }
+
+        return AccountResult<LeaderboardConsentResponse>.Success(new LeaderboardConsentResponse(user.LeaderboardOptIn));
+    }
+
+    /// <summary>
+    /// ให้หรือถอนความยินยอมแสดงชื่อบนตารางอันดับ (ถอนได้ง่ายเท่ากับให้ ตาม PDPA) และบันทึกหลักฐานทุกครั้ง
+    /// userId ต้องมาจาก session ที่ตรวจแล้วเท่านั้น
+    /// </summary>
+    public async Task<AccountResult<LeaderboardConsentResponse>> SetLeaderboardConsentAsync(
+        Guid userId,
+        LeaderboardConsentRequest request,
+        CancellationToken ct = default)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+
+        var validationErrors = AccountInputValidator.ValidateLeaderboardConsent(request);
+        if (validationErrors.Count > 0)
+        {
+            return AccountResult<LeaderboardConsentResponse>.Failure(AuthErrorCode.ValidationFailed, validationErrors);
+        }
+
+        var existing = await _userRepository.FindByIdAsync(userId, ct);
+        if (existing is null || existing.Status != UserStatus.Active)
+        {
+            return AccountResult<LeaderboardConsentResponse>.Failure(AuthErrorCode.InvalidCredentials);
+        }
+
+        DateTimeOffset now = _timeProvider.GetUtcNow();
+        var updated = await _userRepository.TrySetLeaderboardOptInAsync(userId, request.Granted, now, ct);
+        if (updated is null)
+        {
+            return AccountResult<LeaderboardConsentResponse>.Failure(AuthErrorCode.InvalidCredentials);
+        }
+
+        await _consentRepository.AddAsync(NewLeaderboardConsent(userId, request.Granted, request.PolicyVersion, now), ct);
+        return AccountResult<LeaderboardConsentResponse>.Success(new LeaderboardConsentResponse(updated.LeaderboardOptIn));
+    }
+
+    private static ConsentRecord NewLeaderboardConsent(Guid userId, bool granted, string? policyVersion, DateTimeOffset now) =>
+        new(
+            Id: Guid.NewGuid(),
+            UserId: userId,
+            Purpose: ConsentPurposes.LeaderboardDisplay,
+            PolicyVersion: policyVersion ?? "unspecified",
+            Granted: granted,
+            RecordedAt: now);
 
     public async Task LogoutAsync(string? token, CancellationToken ct = default)
     {

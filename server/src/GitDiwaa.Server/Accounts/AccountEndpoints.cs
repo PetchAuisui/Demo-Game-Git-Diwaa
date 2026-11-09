@@ -121,6 +121,57 @@ public static class AccountEndpoints
             return Results.Json(apiError, statusCode: statusCode);
         }).AddEndpointFilter<RequireSessionFilter>().RequireRateLimiting("auth");
 
+        // ความยินยอมแสดงชื่อบนตารางอันดับ: ดูได้ และให้ / ถอนได้ตลอดเวลา (ต้อง login)
+        group.MapGet("/me/leaderboard-consent", async (
+            HttpContext httpContext,
+            AccountService accountService,
+            CancellationToken ct) =>
+        {
+            httpContext.Response.Headers.CacheControl = "no-store";
+
+            var session = (AuthenticatedSession)httpContext.Items[RequireSessionFilter.SessionItemKey]!;
+            var result = await accountService.GetLeaderboardConsentAsync(session.Profile.Id, ct);
+            if (result.Succeeded && result.Value is not null)
+            {
+                return Results.Json(result.Value, statusCode: StatusCodes.Status200OK);
+            }
+
+            var apiError = new ApiError(result.Error ?? AuthErrorCode.Unknown, result.FieldErrors);
+            return Results.Json(apiError, statusCode: StatusCodes.Status401Unauthorized);
+        }).AddEndpointFilter<RequireSessionFilter>();
+
+        group.MapPut("/me/leaderboard-consent", async (
+            LeaderboardConsentRequest? request,
+            HttpContext httpContext,
+            AccountService accountService,
+            CancellationToken ct) =>
+        {
+            httpContext.Response.Headers.CacheControl = "no-store";
+
+            if (request is null)
+            {
+                var emptyError = new ApiError(AuthErrorCode.ValidationFailed, []);
+                return Results.Json(emptyError, statusCode: StatusCodes.Status400BadRequest);
+            }
+
+            var session = (AuthenticatedSession)httpContext.Items[RequireSessionFilter.SessionItemKey]!;
+            var result = await accountService.SetLeaderboardConsentAsync(session.Profile.Id, request, ct);
+            if (result.Succeeded && result.Value is not null)
+            {
+                return Results.Json(result.Value, statusCode: StatusCodes.Status200OK);
+            }
+
+            int statusCode = result.Error switch
+            {
+                AuthErrorCode.ValidationFailed => StatusCodes.Status400BadRequest,
+                AuthErrorCode.InvalidCredentials => StatusCodes.Status401Unauthorized,
+                _ => StatusCodes.Status400BadRequest
+            };
+
+            var apiError = new ApiError(result.Error ?? AuthErrorCode.Unknown, result.FieldErrors);
+            return Results.Json(apiError, statusCode: statusCode);
+        }).AddEndpointFilter<RequireSessionFilter>().RequireRateLimiting("auth");
+
         group.MapPost("/refresh", async (HttpRequest request, HttpResponse response, AccountService accountService, CancellationToken ct) =>
         {
             response.Headers.CacheControl = "no-store";

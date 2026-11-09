@@ -90,7 +90,8 @@ public sealed class InMemoryUserRepository : IUserRepository
             {
                 DisplayName = existing.DisplayName,
                 DisplayNameKey = existing.DisplayNameKey,
-                DisplayNameChangedAt = existing.DisplayNameChangedAt
+                DisplayNameChangedAt = existing.DisplayNameChangedAt,
+                LeaderboardOptIn = existing.LeaderboardOptIn
             };
 
             _usersById[merged.Id] = merged;
@@ -99,6 +100,25 @@ public sealed class InMemoryUserRepository : IUserRepository
             _usersByDisplayName[merged.DisplayNameKey] = merged;
 
             return Task.CompletedTask;
+        }
+    }
+
+    public Task<UserRecord?> TrySetLeaderboardOptInAsync(Guid userId, bool optIn, DateTimeOffset now, CancellationToken ct = default)
+    {
+        lock (_lock)
+        {
+            if (!_usersById.TryGetValue(userId, out var existing))
+            {
+                return Task.FromResult<UserRecord?>(null);
+            }
+
+            var updated = existing with { LeaderboardOptIn = optIn, UpdatedAt = now };
+            _usersById[updated.Id] = updated;
+            _usersByUsername[updated.Username] = updated;
+            _usersByEmail[updated.EmailNormalized] = updated;
+            _usersByDisplayName[updated.DisplayNameKey] = updated;
+
+            return Task.FromResult<UserRecord?>(updated);
         }
     }
 

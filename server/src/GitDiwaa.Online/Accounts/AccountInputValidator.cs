@@ -35,6 +35,12 @@ public static partial class AccountInputValidator
             errors.Add(passwordError);
         }
 
+        // ยินยอมแสดงชื่อบนตารางอันดับตอนสมัคร: ต้องบอกว่าเห็นนโยบายเวอร์ชันไหน
+        if (ValidatePolicyVersion(request.PolicyVersion, required: request.LeaderboardOptIn) is { } policyError)
+        {
+            errors.Add(policyError);
+        }
+
         return errors;
     }
 
@@ -76,6 +82,35 @@ public static partial class AccountInputValidator
         }
 
         return errors;
+    }
+
+    public static IReadOnlyList<FieldError> ValidateLeaderboardConsent(LeaderboardConsentRequest request)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+
+        var errors = new List<FieldError>(1);
+        if (ValidatePolicyVersion(request.PolicyVersion, required: true) is { } policyError)
+        {
+            errors.Add(policyError);
+        }
+
+        return errors;
+    }
+
+    // ต้องเป็นเวอร์ชันปัจจุบันเท่านั้น: ไม่บันทึกการยินยอมกับนโยบายที่ผู้เล่นไม่ได้เห็นจริง
+    private static FieldError? ValidatePolicyVersion(string? policyVersion, bool required)
+    {
+        if (string.IsNullOrEmpty(policyVersion))
+        {
+            return required ? new FieldError(AccountFields.PolicyVersion, FieldErrorReason.Required) : null;
+        }
+
+        if (!string.Equals(policyVersion, PrivacyPolicy.CurrentVersion, StringComparison.Ordinal))
+        {
+            return new FieldError(AccountFields.PolicyVersion, FieldErrorReason.InvalidFormat);
+        }
+
+        return null;
     }
 
     private static FieldError? ValidateUsername(string? rawUsername)

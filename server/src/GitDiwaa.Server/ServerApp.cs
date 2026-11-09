@@ -48,6 +48,7 @@ public static class ServerApp
         // Register repositories and core services as Singletons
         builder.Services.AddSingleton<IUserRepository, InMemoryUserRepository>();
         builder.Services.AddSingleton<ISessionRepository, InMemorySessionRepository>();
+        builder.Services.AddSingleton<IConsentRepository, InMemoryConsentRepository>();
         builder.Services.AddSingleton<PasswordHasher>();
         builder.Services.AddSingleton<SessionTokenService>();
         builder.Services.AddSingleton(TimeProvider.System);

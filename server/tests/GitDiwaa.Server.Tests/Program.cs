@@ -13,6 +13,7 @@ internal static class Program
         await AccountServiceTests.RunAsync(runner);
         await AccountApiTests.RunAsync(runner);
         await DisplayNameTests.RunAsync(runner);
+        await ConsentTests.RunAsync(runner);
 
         return runner.Complete();
     }

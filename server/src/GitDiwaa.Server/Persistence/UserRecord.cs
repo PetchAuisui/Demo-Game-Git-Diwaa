@@ -24,7 +24,8 @@ public sealed record UserRecord(
     DateTimeOffset CreatedAt,
     DateTimeOffset UpdatedAt,
     DateTimeOffset? LastLoginAt,
-    DateTimeOffset? DisplayNameChangedAt = null)
+    DateTimeOffset? DisplayNameChangedAt = null,
+    bool LeaderboardOptIn = false)
 {
     private bool PrintMembers(StringBuilder builder)
     {
@@ -41,7 +42,8 @@ public sealed record UserRecord(
                .Append(", CreatedAt = ").Append(CreatedAt)
                .Append(", UpdatedAt = ").Append(UpdatedAt)
                .Append(", LastLoginAt = ").Append(LastLoginAt)
-               .Append(", DisplayNameChangedAt = ").Append(DisplayNameChangedAt);
+               .Append(", DisplayNameChangedAt = ").Append(DisplayNameChangedAt)
+               .Append(", LeaderboardOptIn = ").Append(LeaderboardOptIn);
         return true;
     }
 }
