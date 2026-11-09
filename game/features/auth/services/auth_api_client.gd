@@ -34,13 +34,16 @@ func health() -> AuthApiResult:
 	return await _send(HTTPClient.METHOD_GET, "/health", null, "", AuthConfig.HEALTH_TIMEOUT_SEC)
 
 
-func register(username: String, display_name: String, email: String, password: String) -> AuthApiResult:
+func register(username: String, display_name: String, email: String, password: String, policy_version: String = "", leaderboard_opt_in: bool = false) -> AuthApiResult:
 	var body := {
 		"username": username,
 		"displayName": display_name,
 		"email": email,
 		"password": password,
+		"leaderboardOptIn": leaderboard_opt_in,
 	}
+	if not policy_version.is_empty():
+		body["policyVersion"] = policy_version
 	return await _send(HTTPClient.METHOD_POST, AuthConfig.API_PREFIX + "/register", body, "", AuthConfig.REQUEST_TIMEOUT_SEC)
 
 

@@ -83,6 +83,9 @@ var _age_gate_error: Label
 var _age_confirm_btn: Button
 var _age_notice: Label
 
+# หน้าต่างนโยบายตอนสมัครเปิดอยู่ไหม (กันกดสมัครซ้ำจนเปิดซ้อน)
+var _consent_open := false
+
 # --- Server ---
 var _api: AuthApiClient
 var _busy := false
@@ -153,6 +156,7 @@ func _bind_nodes() -> void:
 	_age_gate_error = get_node("%AgeGateError") as Label
 	_age_confirm_btn = get_node("%AgeConfirmBtn") as Button
 	_age_notice = get_node("%AgeNotice") as Label
+
 
 
 func _wire_events() -> void:
@@ -458,7 +462,7 @@ func _on_login_submit() -> void:
 
 
 func _on_register_submit() -> void:
-	if _busy:
+	if _busy or _consent_open:
 		return
 	_reset_errors()
 
@@ -514,8 +518,19 @@ func _on_register_submit() -> void:
 	var em_val := _email_input.text.strip_edges()
 	var pw_val := _register_password_input.text
 
+	# ก่อนส่งจริง: เปิดนโยบายให้อ่านจนจบ ติ๊กรับทราบ และเลือกเรื่องตารางอันดับ
+	_consent_open = true
+	var notice := PrivacyNotice.open_for_sign_up(get_tree())
+	if notice == null:
+		_consent_open = false
+		return
+	var choice: Array = await notice.closed
+	_consent_open = false
+	if not choice[0]:
+		return  # ยกเลิก: ข้อมูลในฟอร์มยังอยู่ แก้แล้วกดสมัครใหม่ได้
+
 	_clear_passwords()
-	await _submit_register(un_val, dn_val, em_val, pw_val)
+	await _submit_register(un_val, dn_val, em_val, pw_val, choice[1])
 
 
 func _message_for(field: String, reason: String) -> String:
@@ -594,9 +609,13 @@ func _submit_login(identifier: String, password: String, remember_me: bool) -> v
 			_show_status(_login_status, _message_for_failure(result), false)
 
 
-func _submit_register(username: String, display_name: String, email: String, password: String) -> void:
+func _submit_register(username: String, display_name: String, email: String, password: String, leaderboard_opt_in: bool) -> void:
 	_set_busy(true)
-	var result := await _api.register(username, display_name, email, password)
+	# ส่งเวอร์ชันนโยบายที่ผู้เล่นเห็น และการยินยอมแสดงชื่อบนตารางอันดับ (ค่าเริ่มต้น = ไม่ยินยอม)
+	var result := await _api.register(
+		username, display_name, email, password,
+		PrivacyPolicy.VERSION, leaderboard_opt_in
+	)
 	_set_busy(false)
 
 	if result.ok:
