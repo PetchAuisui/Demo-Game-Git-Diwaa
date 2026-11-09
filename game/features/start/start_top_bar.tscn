@@ -39,7 +39,7 @@ theme_override_constants/separation = 16
 
 [node name="BrandBtn" type="Button" parent="Margin/HBox/BrandHBox"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(210, 48)
+custom_minimum_size = Vector2(174, 48)
 layout_mode = 2
 focus_mode = 0
 mouse_default_cursor_shape = 2
@@ -58,7 +58,7 @@ anchor_top = 0.5
 anchor_bottom = 0.5
 offset_left = 16.0
 offset_top = -18.0
-offset_right = 205.0
+offset_right = 174.0
 offset_bottom = 18.0
 grow_vertical = 2
 theme_override_colors/font_color = Color(0.961, 0.620, 0.043, 1)
