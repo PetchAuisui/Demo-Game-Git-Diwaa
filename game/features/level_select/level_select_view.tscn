@@ -211,6 +211,25 @@ corner_radius_top_right = 4
 corner_radius_bottom_left = 4
 corner_radius_bottom_right = 4
 
+[sub_resource type="StyleBoxFlat" id="Style_act_header_tab"]
+content_margin_left = 22.0
+content_margin_top = 7.0
+content_margin_right = 22.0
+content_margin_bottom = 7.0
+bg_color = Color(0.12, 0.09, 0.05, 0.94)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 2
+border_color = Color(0.76, 0.58, 0.28, 1)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_left = 4
+corner_radius_bottom_right = 4
+shadow_color = Color(0, 0, 0, 0.35)
+shadow_size = 4
+shadow_offset = Vector2(0, 2)
+
 [node name="LevelSelectView" type="Control"]
 layout_mode = 3
 anchors_preset = 15
@@ -501,39 +520,6 @@ grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
 
-[node name="Act3CitadelBanner" type="Label" parent="LayoutVBox/MainChamberArea/ScrollChamber/TowerContent"]
-layout_mode = 0
-offset_left = 100.0
-offset_top = 1112.0
-offset_right = 1680.0
-offset_bottom = 1142.0
-theme_override_colors/font_color = Color(0.96, 0.62, 0.07, 1)
-theme_override_fonts/font = ExtResource("3_chakra_bold")
-theme_override_font_sizes/font_size = 18
-text = "▲ ACT 3: THE SUMMIT CITADEL — ยอดหอคอยและการกู้คืนคัมภีร์ Git โบราณ (ด่าน 21–40)"
-
-[node name="Act2ChamberBanner" type="Label" parent="LayoutVBox/MainChamberArea/ScrollChamber/TowerContent"]
-layout_mode = 0
-offset_left = 100.0
-offset_top = 1700.0
-offset_right = 1680.0
-offset_bottom = 1730.0
-theme_override_colors/font_color = Color(0.35, 0.82, 0.60, 1)
-theme_override_fonts/font = ExtResource("3_chakra_bold")
-theme_override_font_sizes/font_size = 18
-text = "▲ ACT 2: THE COLLAB CHAMBER — โถงคลังเวทกลางและ GitHub Flow (ด่าน 16–20)"
-
-[node name="Act1StairwayBanner" type="Label" parent="LayoutVBox/MainChamberArea/ScrollChamber/TowerContent"]
-layout_mode = 0
-offset_left = 100.0
-offset_top = 5250.0
-offset_right = 1680.0
-offset_bottom = 5280.0
-theme_override_colors/font_color = Color(0.38, 0.74, 0.98, 1)
-theme_override_fonts/font = ExtResource("3_chakra_bold")
-theme_override_font_sizes/font_size = 18
-text = "▼ ACT 1: THE SPIRAL STAIRWAY — บันไดวนไต่หอคอยแห่งการฝึกตน (ด่าน 01–15)"
-
 [node name="BlackCat" type="Control" parent="LayoutVBox/MainChamberArea/ScrollChamber/TowerContent"]
 unique_name_in_owner = true
 visible = false
@@ -741,3 +727,58 @@ text = "ใช้ W / S หรือเลื่อนลูกกลิ้ง
 เพื่อสำรวจหอคอย"
 horizontal_alignment = 1
 vertical_alignment = 1
+
+[node name="ActHeaderTab" type="PanelContainer" parent="."]
+unique_name_in_owner = true
+z_index = 25
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -300.0
+offset_top = 80.0
+offset_right = 300.0
+offset_bottom = 118.0
+grow_horizontal = 2
+mouse_filter = 2
+theme_override_styles/panel = SubResource("Style_act_header_tab")
+
+[node name="HBox" type="HBoxContainer" parent="ActHeaderTab"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 12
+alignment = 1
+
+[node name="ActBadge" type="Label" parent="ActHeaderTab/HBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.96, 0.78, 0.35, 1)
+theme_override_fonts/font = ExtResource("3_chakra_bold")
+theme_override_font_sizes/font_size = 15
+text = "ACT 1"
+vertical_alignment = 1
+
+[node name="TabDivider" type="ColorRect" parent="ActHeaderTab/HBox"]
+custom_minimum_size = Vector2(1, 16)
+layout_mode = 2
+size_flags_vertical = 4
+color = Color(0.48, 0.38, 0.22, 0.8)
+
+[node name="ActTitle" type="Label" parent="ActHeaderTab/HBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.96, 0.91, 0.82, 1)
+theme_override_fonts/font = ExtResource("3_chakra_bold")
+theme_override_font_sizes/font_size = 16
+text = "THE SPIRAL STAIRWAY"
+vertical_alignment = 1
+
+[node name="ActDesc" type="Label" parent="ActHeaderTab/HBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.76, 0.70, 0.60, 1)
+theme_override_fonts/font = ExtResource("4_chakra_reg")
+theme_override_font_sizes/font_size = 14
+text = "• บันไดวนไต่หอคอยแห่งการฝึกตน (ด่าน 01–15)"
+vertical_alignment = 1
+

@@ -87,6 +87,14 @@ var act_progress_label: Label
 var btn_focus_current: Button
 var btn_sound: Button
 
+# Act Header Tab Nodes
+var act_header_tab: PanelContainer
+var act_badge: Label
+var act_title: Label
+var act_desc: Label
+var _current_active_act: int = -1
+var _act_tab_tween: Tween = null
+
 # Bottom HUD Nodes
 var hud_no_badge: Label
 var hud_title: Label
@@ -245,6 +253,11 @@ func _bind_nodes() -> void:
 	btn_focus_current = get_node_or_null("%BtnFocusCurrent")
 	btn_sound = get_node_or_null("%BtnSound")
 
+	act_header_tab = get_node_or_null("%ActHeaderTab")
+	act_badge = get_node_or_null("%ActBadge")
+	act_title = get_node_or_null("%ActTitle")
+	act_desc = get_node_or_null("%ActDesc")
+
 	hud_no_badge = get_node_or_null("%HudLevelBadge")
 	if not hud_no_badge:
 		hud_no_badge = get_node_or_null("%HudNoBadge")
@@ -377,6 +390,64 @@ func _refresh_act_tabs(active_act: int) -> void:
 	if act_progress_label:
 		act_progress_label.text = "ACT %d · %d / %d LEVELS" % [active_act, curr_prog["cleared"], curr_prog["total"]]
 		act_progress_label.add_theme_color_override("font_color", NAV_COLOR_SECONDARY)
+
+	_update_act_header_tab(active_act, true)
+
+
+func _update_act_header_tab(act_num: int, animate: bool = true) -> void:
+	if not act_header_tab:
+		return
+
+	if act_num == _current_active_act:
+		return
+
+	_current_active_act = act_num
+
+	var badge_text := ""
+	var title_text := ""
+	var desc_text := ""
+
+	match act_num:
+		1:
+			badge_text = "ACT 1"
+			title_text = "THE SPIRAL STAIRWAY"
+			desc_text = "• บันไดวนไต่หอคอยแห่งการฝึกตน (ด่าน 01–15)"
+		2:
+			badge_text = "ACT 2"
+			title_text = "GITHUB FLOW"
+			desc_text = "• โถงคลังเวทกลางและระบบทีม (ด่าน 16–20)"
+		3:
+			badge_text = "ACT 3"
+			title_text = "THE SUMMIT CITADEL"
+			desc_text = "• ยอดหอคอยและการกู้คืนคัมภีร์ Git โบราณ (ด่าน 21–40)"
+
+	if act_badge:
+		act_badge.text = badge_text
+	if act_title:
+		act_title.text = title_text
+	if act_desc:
+		act_desc.text = desc_text
+
+	if _act_tab_tween and _act_tab_tween.is_valid():
+		_act_tab_tween.kill()
+
+	var target_top := 80.0
+	var target_bottom := target_top + 38.0
+	var start_top := 50.0
+	var start_bottom := start_top + 38.0
+
+	if animate:
+		act_header_tab.offset_top = start_top
+		act_header_tab.offset_bottom = start_bottom
+		act_header_tab.modulate.a = 0.0
+		_act_tab_tween = create_tween().set_parallel(true)
+		_act_tab_tween.tween_property(act_header_tab, "offset_top", target_top, 0.35).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+		_act_tab_tween.tween_property(act_header_tab, "offset_bottom", target_bottom, 0.35).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+		_act_tab_tween.tween_property(act_header_tab, "modulate:a", 1.0, 0.22).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	else:
+		act_header_tab.offset_top = target_top
+		act_header_tab.offset_bottom = target_bottom
+		act_header_tab.modulate.a = 1.0
 
 
 func _style_act_button(btn: Button, act_num: int, is_active: bool, prog: Dictionary) -> void:

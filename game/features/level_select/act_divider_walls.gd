@@ -76,13 +76,8 @@ func _draw_act2_to_act3_gateway(left_b: float, right_b: float) -> void:
 	# 2. ซุ้มประตูศิลาพร้อมเสาประตูคู่ยอดแหลม (Distinctive Stone Gateway Portal)
 	_draw_passage_opening(open_x, open_w, wall_y, true)
 
-	# 3. ฐานแผ่นศิลาจารึกแบนเนอร์ Act 3 (Stone Plaque Backing - อยู่เหนือแนวกำแพงอิฐ ไม่บังตัวอิฐ)
-	var plaque_rect := Rect2(90.0, 1110.0, 750.0, 28.0)
-	draw_rect(plaque_rect, Color(0.05, 0.06, 0.09, 0.94))
-	draw_rect(plaque_rect, Color(0.96, 0.62, 0.07, 0.55), false, 1.0)
 
-
-## 3. ซุ้มประตูกำแพงอิฐโกธิคใหญ่คั่นระหว่าง Act 1 และ Act 2 (Large Gothic Brick Arch at y = 1655)
+## 2. ซุ้มประตูกำแพงอิฐโกธิคใหญ่คั่นระหว่าง Act 1 และ Act 2 (Large Gothic Brick Arch at y = 1775)
 func _draw_act1_to_act2_arch(left_b: float, right_b: float) -> void:
 	var wall_y := 1775.0
 	var open_x := 880.0
@@ -94,24 +89,14 @@ func _draw_act1_to_act2_arch(left_b: float, right_b: float) -> void:
 	_draw_wall_segment(left_b, open_left, wall_y)
 	_draw_wall_segment(open_right, right_b, wall_y)
 
-	# 2. ซุ้มประตูกลางหอคอยใหญ่พร้อมลำแสงมนตรา
+	# 2. ซุ้มประตูกลางหอคอยใหญ่
 	_draw_passage_opening(open_x, open_w, wall_y, false)
 
-	# 3. ฐานแผ่นศิลาจารึกแบนเนอร์ Act 2 (Stone Plaque Backing - อยู่เหนือแนวกำแพงอิฐ ไม่บังตัวอิฐ)
-	var plaque_rect := Rect2(90.0, 1698.0, 730.0, 28.0)
-	draw_rect(plaque_rect, Color(0.05, 0.06, 0.09, 0.94))
-	draw_rect(plaque_rect, Color(0.35, 0.82, 0.60, 0.55), false, 1.0)
 
-
-## 4. แนวกำแพงศิลาฐานรากหอคอย Act 1 (Tower Base Foundation at y = 5085)
+## 3. แนวกำแพงศิลาฐานรากหอคอย Act 1 (Tower Base Foundation at y = 5205)
 func _draw_act1_base_foundation(left_b: float, right_b: float) -> void:
 	var wall_y := 5205.0
 	_draw_wall_segment(left_b, right_b, wall_y)
-
-	# ฐานแผ่นศิลาจารึกแบนเนอร์ Act 1 (Stone Plaque Backing - อยู่ใต้แนวกำแพงฐานราก ไม่บังตัวอิฐ)
-	var plaque_rect := Rect2(90.0, 5248.0, 710.0, 28.0)
-	draw_rect(plaque_rect, Color(0.05, 0.06, 0.09, 0.94))
-	draw_rect(plaque_rect, Color(0.38, 0.74, 0.98, 0.55), false, 1.0)
 
 
 ## วาดท่อนกำแพงอิฐศิลาพิกเซลอาร์ต (Running Bond Pixel Brick Segment)
