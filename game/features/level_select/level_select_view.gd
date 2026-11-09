@@ -8,51 +8,51 @@ extends Control
 ## Act 3: ยอดหอคอยแก้ปัญหา (21-40) - Discrete Engineering Deck 5 คอลัมน์ พร้อมเงาปรมาจารย์ Git
 
 const TOWER_STAGES: Array[Dictionary] = [
-			# ACT 1: Winding Tower Ascent (01-15) - ไต่หอคอยแบบเป็นธรรมชาติ มีซ้าย-กลาง-ขวา แต่ไม่ตรงบล็อกซ้ำกัน (Organic Meandering Path)
-	{ "id": 1, "act": 1, "no": "01", "title": "git --version + git config", "cmd": "git --version", "desc": "ตั้งค่านามผู้ใช้งาน user.name และ user.email", "x": 900.0, "y": 3560.0, "width": 260.0, "has_scripture": true },
-	{ "id": 2, "act": 1, "no": "02", "title": "git init", "cmd": "git init", "desc": "ร่ายอาคมสร้าง Repository ว่างเปล่าเพื่อเริ่มต้นคลังตำรา", "x": 720.0, "y": 3410.0, "width": 220.0, "has_scripture": false },
-	{ "id": 3, "act": 1, "no": "03", "title": "git status", "cmd": "git status", "desc": "สำรวจสถานะม้วนคาถาทั้งหมดในพื้นที่ทำงานว่ามีสิ่งใดเปลี่ยนแปลง", "x": 640.0, "y": 3250.0, "width": 220.0, "has_scripture": false },
-	{ "id": 4, "act": 1, "no": "04", "title": "git add", "cmd": "git add .", "desc": "จัดเตรียมม้วนคาถาเข้าสู่ Staging Area ก่อนประทับตรา", "x": 820.0, "y": 3100.0, "width": 220.0, "has_scripture": false },
-	{ "id": 5, "act": 1, "no": "05", "title": "git commit", "cmd": "git commit -m", "desc": "ประทับตราขี้ผึ้งบันทึกประวัติศาสตร์ลง Git Graph ถาวร", "x": 980.0, "y": 2940.0, "width": 240.0, "has_scripture": true },
-	{ "id": 6, "act": 1, "no": "06", "title": "git log", "cmd": "git log", "desc": "กางผืนแผนที่สำรวจประวัติศาสตร์การบันทึกย้อนหลังในอดีต", "x": 1180.0, "y": 2790.0, "width": 220.0, "has_scripture": false },
-	{ "id": 7, "act": 1, "no": "07", "title": "git diff", "cmd": "git diff", "desc": "ส่องดูความแตกต่างของอักขระคาถาเทียบกับบันทึกเดิม", "x": 1260.0, "y": 2630.0, "width": 220.0, "has_scripture": false },
-	{ "id": 8, "act": 1, "no": "08", "title": "git restore", "cmd": "git restore <file>", "desc": "ยกเลิกการแก้ไขไฟล์ใน Working Directory กลับสู่สภาพเดิม", "x": 1080.0, "y": 2480.0, "width": 220.0, "has_scripture": false },
-	{ "id": 9, "act": 1, "no": "09", "title": "git reset", "cmd": "git reset HEAD~1", "desc": "ถอยจุดตรวจเช็กพอยต์กลับสู่สถานะก่อนหน้า", "x": 920.0, "y": 2320.0, "width": 220.0, "has_scripture": false },
-	{ "id": 10, "act": 1, "no": "10", "title": "git branch", "cmd": "git branch <name>", "desc": "เปิดมิติกิ่งก้านใหม่เพื่อพัฒนาคาถาโดยไม่กระทบเส้นหลัก", "x": 700.0, "y": 2170.0, "width": 240.0, "has_scripture": true },
-	{ "id": 11, "act": 1, "no": "11", "title": "git switch", "cmd": "git switch <branch>", "desc": "ย้ายจิตวิญญาณสลับไปมาระหว่างกิ่งก้านคาถาอย่างปลอดภัย", "x": 650.0, "y": 2010.0, "width": 220.0, "has_scripture": false },
-	{ "id": 12, "act": 1, "no": "12", "title": "git merge", "cmd": "git merge <branch>", "desc": "หลอมรวมพลังคาถาจากกิ่งก้านเข้าสู่สายหลัก", "x": 850.0, "y": 1860.0, "width": 220.0, "has_scripture": false },
-	{ "id": 13, "act": 1, "no": "13", "title": "git clone + git remote", "cmd": "git clone", "desc": "คัดลอกคลังตำราจากมิติต้นทางและเชื่อมต่อสายสัมพันธ์", "x": 1060.0, "y": 1710.0, "width": 220.0, "has_scripture": false },
-	{ "id": 14, "act": 1, "no": "14", "title": "git pull", "cmd": "git pull origin main", "desc": "ดึงการอัปเดตบทคาถาใหม่ล่าสุดจากหอคอยส่วนกลาง", "x": 1220.0, "y": 1560.0, "width": 220.0, "has_scripture": false },
-	{ "id": 15, "act": 1, "no": "15", "title": "git push (สู่โถงทีม)", "cmd": "git push origin main", "desc": "ส่งบันทึกคาถาขึ้นสู่หอคอยส่วนกลางให้ทุกคนร่วมใช้ (สู่โถงทีม)", "x": 960.0, "y": 1380.0, "width": 320.0, "has_scripture": true },
+	# ACT 1: Winding Tower Ascent (01-15) - ไต่หอคอยแบบเป็นธรรมชาติ มีซ้าย-กลาง-ขวา ระยะห่าง ~225px สบายตา เห็น ~4 ด่านใน 1 จอ
+	{ "id": 1, "act": 1, "no": "01", "title": "git --version + git config", "cmd": "git --version", "desc": "ตั้งค่านามผู้ใช้งาน user.name และ user.email", "x": 960.0, "y": 4400.0, "width": 260.0, "has_scripture": true },
+	{ "id": 2, "act": 1, "no": "02", "title": "git init", "cmd": "git init", "desc": "ร่ายอาคมสร้าง Repository ว่างเปล่าเพื่อเริ่มต้นคลังตำรา", "x": 740.0, "y": 4175.0, "width": 220.0, "has_scripture": false },
+	{ "id": 3, "act": 1, "no": "03", "title": "git status", "cmd": "git status", "desc": "สำรวจสถานะม้วนคาถาทั้งหมดในพื้นที่ทำงานว่ามีสิ่งใดเปลี่ยนแปลง", "x": 650.0, "y": 3950.0, "width": 220.0, "has_scripture": false },
+	{ "id": 4, "act": 1, "no": "04", "title": "git add", "cmd": "git add .", "desc": "จัดเตรียมม้วนคาถาเข้าสู่ Staging Area ก่อนประทับตรา", "x": 840.0, "y": 3725.0, "width": 220.0, "has_scripture": false },
+	{ "id": 5, "act": 1, "no": "05", "title": "git commit", "cmd": "git commit -m", "desc": "ประทับตราขี้ผึ้งบันทึกประวัติศาสตร์ลง Git Graph ถาวร", "x": 1020.0, "y": 3500.0, "width": 240.0, "has_scripture": true },
+	{ "id": 6, "act": 1, "no": "06", "title": "git log", "cmd": "git log", "desc": "กางผืนแผนที่สำรวจประวัติศาสตร์การบันทึกย้อนหลังในอดีต", "x": 1200.0, "y": 3275.0, "width": 220.0, "has_scripture": false },
+	{ "id": 7, "act": 1, "no": "07", "title": "git diff", "cmd": "git diff", "desc": "ส่องดูความแตกต่างของอักขระคาถาเทียบกับบันทึกเดิม", "x": 1260.0, "y": 3050.0, "width": 220.0, "has_scripture": false },
+	{ "id": 8, "act": 1, "no": "08", "title": "git restore", "cmd": "git restore <file>", "desc": "ยกเลิกการแก้ไขไฟล์ใน Working Directory กลับสู่สภาพเดิม", "x": 1080.0, "y": 2825.0, "width": 220.0, "has_scripture": false },
+	{ "id": 9, "act": 1, "no": "09", "title": "git reset", "cmd": "git reset HEAD~1", "desc": "ถอยจุดตรวจเช็กพอยต์กลับสู่สถานะก่อนหน้า", "x": 900.0, "y": 2600.0, "width": 220.0, "has_scripture": false },
+	{ "id": 10, "act": 1, "no": "10", "title": "git branch", "cmd": "git branch <name>", "desc": "เปิดมิติกิ่งก้านใหม่เพื่อพัฒนาคาถาโดยไม่กระทบเส้นหลัก", "x": 700.0, "y": 2375.0, "width": 240.0, "has_scripture": true },
+	{ "id": 11, "act": 1, "no": "11", "title": "git switch", "cmd": "git switch <branch>", "desc": "ย้ายจิตวิญญาณสลับไปมาระหว่างกิ่งก้านคาถาอย่างปลอดภัย", "x": 650.0, "y": 2150.0, "width": 220.0, "has_scripture": false },
+	{ "id": 12, "act": 1, "no": "12", "title": "git merge", "cmd": "git merge <branch>", "desc": "หลอมรวมพลังคาถาจากกิ่งก้านเข้าสู่สายหลัก", "x": 860.0, "y": 1925.0, "width": 220.0, "has_scripture": false },
+	{ "id": 13, "act": 1, "no": "13", "title": "git clone + git remote", "cmd": "git clone", "desc": "คัดลอกคลังตำราจากมิติต้นทางและเชื่อมต่อสายสัมพันธ์", "x": 1080.0, "y": 1700.0, "width": 220.0, "has_scripture": false },
+	{ "id": 14, "act": 1, "no": "14", "title": "git pull", "cmd": "git pull origin main", "desc": "ดึงการอัปเดตบทคาถาใหม่ล่าสุดจากหอคอยส่วนกลาง", "x": 1220.0, "y": 1475.0, "width": 220.0, "has_scripture": false },
+	{ "id": 15, "act": 1, "no": "15", "title": "git push (สู่โถงทีม)", "cmd": "git push origin main", "desc": "ส่งบันทึกคาถาขึ้นสู่หอคอยส่วนกลางให้ทุกคนร่วมใช้ (สู่โถงทีม)", "x": 960.0, "y": 1250.0, "width": 320.0, "has_scripture": true },
 
-# ACT 2: Collab Chamber Loop (16-20) - โถงประจำชั้นทีม GitHub Flow
-	{ "id": 16, "act": 2, "no": "16", "title": "GitHub Flow (พบผู้พิทักษ์)", "cmd": "branch ➔ pr ➔ merge", "desc": "เรียนรู้วงจรการทำงานร่วมกันแบบสากลตั้งแต่แยกกิ่งจนถึงรวมงาน", "x": 960.0, "y": 660.0, "width": 240.0, "has_scripture": true },
-	{ "id": 17, "act": 2, "no": "17", "title": "Pull Request", "cmd": "Create PR", "desc": "ยื่นคำร้องขอรวมคาถาให้เพื่อนร่วมทีมช่วยตรวจทานความถูกต้อง", "x": 1220.0, "y": 780.0, "width": 220.0, "has_scripture": false },
-	{ "id": 18, "act": 2, "no": "18", "title": "Merge PR", "cmd": "Confirm Merge", "desc": "อนุมัติคำร้องและหลอมรวมโค้ดเข้าสู่สายหลักอย่างสมบูรณ์", "x": 1120.0, "y": 980.0, "width": 220.0, "has_scripture": false },
-	{ "id": 19, "act": 2, "no": "19", "title": "Update PR & git fetch", "cmd": "git fetch", "desc": "อัปเดตข้อมูลมิติต้นทางโดยไม่รบกวนไฟล์งานที่กำลังพิมพ์", "x": 800.0, "y": 980.0, "width": 220.0, "has_scripture": false },
-	{ "id": 20, "act": 2, "no": "20", "title": "Merge PR (Final Boss)", "cmd": "Squash & Merge", "desc": "รวมคอมมิตย่อยให้กลายเป็นบันทึกเดียวที่สะอาดเรียบร้อยก่อนขึ้นยอดหอคอย", "x": 700.0, "y": 780.0, "width": 240.0, "has_scripture": true },
+	# ACT 2: Collab Chamber Loop (16-20) - โถงประจำชั้นทีม GitHub Flow
+	{ "id": 16, "act": 2, "no": "16", "title": "GitHub Flow (พบผู้พิทักษ์)", "cmd": "branch ➔ pr ➔ merge", "desc": "เรียนรู้วงจรการทำงานร่วมกันแบบสากลตั้งแต่แยกกิ่งจนถึงรวมงาน", "x": 960.0, "y": 560.0, "width": 240.0, "has_scripture": true },
+	{ "id": 17, "act": 2, "no": "17", "title": "Pull Request", "cmd": "Create PR", "desc": "ยื่นคำร้องขอรวมคาถาให้เพื่อนร่วมทีมช่วยตรวจทานความถูกต้อง", "x": 1200.0, "y": 700.0, "width": 220.0, "has_scripture": false },
+	{ "id": 18, "act": 2, "no": "18", "title": "Merge PR", "cmd": "Confirm Merge", "desc": "อนุมัติคำร้องและหลอมรวมโค้ดเข้าสู่สายหลักอย่างสมบูรณ์", "x": 1120.0, "y": 920.0, "width": 220.0, "has_scripture": false },
+	{ "id": 19, "act": 2, "no": "19", "title": "Update PR & git fetch", "cmd": "git fetch", "desc": "อัปเดตข้อมูลมิติต้นทางโดยไม่รบกวนไฟล์งานที่กำลังพิมพ์", "x": 800.0, "y": 920.0, "width": 220.0, "has_scripture": false },
+	{ "id": 20, "act": 2, "no": "20", "title": "Merge PR (Final Boss)", "cmd": "Squash & Merge", "desc": "รวมคอมมิตย่อยให้กลายเป็นบันทึกเดียวที่สะอาดเรียบร้อยก่อนขึ้นยอดหอคอย", "x": 720.0, "y": 700.0, "width": 240.0, "has_scripture": true },
 
 	# ACT 3: Top Tower Deck (21-40) - Discrete Engineering Deck 5 คอลัมน์
-	{ "id": 21, "act": 3, "no": "21", "title": "ตรวจสถานะก่อนเริ่มงาน", "cmd": "git status", "desc": "ตรวจสถานะ working tree ให้เรียบร้อยก่อนเริ่มแก้ปัญหา", "x": 480.0, "y": 420.0, "width": 130.0, "has_scripture": false },
-	{ "id": 22, "act": 3, "no": "22", "title": "ตรวจสอบความแตกต่าง", "cmd": "git diff", "desc": "ส่องดูจุดเพี้ยนของโค้ดก่อนเริ่มแก้ไข", "x": 720.0, "y": 420.0, "width": 130.0, "has_scripture": false },
-	{ "id": 23, "act": 3, "no": "23", "title": "คืนไฟล์ที่แก้ผิด", "cmd": "git restore", "desc": "กู้คืนไฟล์โค้ดที่พังกลับสู่สภาพเดิม", "x": 960.0, "y": 420.0, "width": 130.0, "has_scripture": false },
-	{ "id": 24, "act": 3, "no": "24", "title": "นำไฟล์ลับออกจาก Stage", "cmd": "git restore --staged", "desc": "ปลดไฟล์ความลับออกจากสถานะเตรียมคอมมิต", "x": 1200.0, "y": 420.0, "width": 130.0, "has_scripture": false },
-	{ "id": 25, "act": 3, "no": "25", "title": "แก้ไข Commit ล่าสุด", "cmd": "git commit --amend", "desc": "ซ่อมแซมคอมมิตล่าสุดโดยไม่สร้างขยะในประวัติ", "x": 1440.0, "y": 420.0, "width": 130.0, "has_scripture": true },
-	{ "id": 26, "act": 3, "no": "26", "title": "ย้อน Commit เก็บงานไว้", "cmd": "git reset --soft", "desc": "ถอยประวัติแต่คงงานไว้ใน Staging Area", "x": 480.0, "y": 330.0, "width": 130.0, "has_scripture": false },
-	{ "id": 27, "act": 3, "no": "27", "title": "ลบ Commit ทิ้งถาวร", "cmd": "git reset --hard", "desc": "ล้างโค้ดเสียทิ้งไปอย่างเด็ดขาด", "x": 720.0, "y": 330.0, "width": 130.0, "has_scripture": false },
-	{ "id": 28, "act": 3, "no": "28", "title": "ย้ายงานออกจาก main", "cmd": "git switch -c", "desc": "ย้ายงานไปกิ่งฟีเจอร์ใหม่เพื่อปกป้องกิ่งหลัก", "x": 960.0, "y": 330.0, "width": 130.0, "has_scripture": false },
-	{ "id": 29, "act": 3, "no": "29", "title": "ค้นหา Commit ที่เกี่ยวข้อง", "cmd": "git log --grep", "desc": "สืบค้นหาบันทึกในอดีตตามคีย์เวิร์ดของปัญหา", "x": 1200.0, "y": 330.0, "width": 130.0, "has_scripture": false },
-	{ "id": 30, "act": 3, "no": "30", "title": "วิเคราะห์ Commit Graph", "cmd": "git log --graph", "desc": "กางแผนผังสายฟ้าดูความเชื่อมโยงของทุกกิ่ง", "x": 1440.0, "y": 330.0, "width": 130.0, "has_scripture": true },
-	{ "id": 31, "act": 3, "no": "31", "title": "ย้าย Commit ผิด Branch", "cmd": "git branch + reset", "desc": "ซ่อมแซมเส้นเวลา ย้ายคอมมิตไปกิ่งที่ถูกต้อง", "x": 480.0, "y": 240.0, "width": 130.0, "has_scripture": false },
-	{ "id": 32, "act": 3, "no": "32", "title": "รวม Feature Branch", "cmd": "git merge feature", "desc": "หลอมรวมฟีเจอร์เข้าสู่สายหลักอย่างเป็นระบบ", "x": 720.0, "y": 240.0, "width": 130.0, "has_scripture": false },
-	{ "id": 33, "act": 3, "no": "33", "title": "แก้ Merge Conflict", "cmd": "solve conflict", "desc": "เผชิญหน้าอสูร Conflict ตัดสินใจเลือกโค้ดที่ถูกต้อง", "x": 960.0, "y": 240.0, "width": 130.0, "has_scripture": false },
-	{ "id": 34, "act": 3, "no": "34", "title": "Clone โปรเจกต์ของทีม", "cmd": "git clone", "desc": "ดาวน์โหลดคลังตำราทีมและตรวจสอบ Remote", "x": 1200.0, "y": 240.0, "width": 130.0, "has_scripture": false },
-	{ "id": 35, "act": 3, "no": "35", "title": "แก้ URL ของ Remote", "cmd": "git remote set-url", "desc": "แก้ปัญหาต่อไม่ติดด้วยการเปลี่ยน URL เซิร์ฟเวอร์", "x": 1440.0, "y": 240.0, "width": 130.0, "has_scripture": true },
-	{ "id": 36, "act": 3, "no": "36", "title": "กู้คืน Remote origin", "cmd": "git remote add", "desc": "สร้างสายสัมพันธ์ใหม่หลังเผลอลบการเชื่อมต่อ", "x": 480.0, "y": 150.0, "width": 130.0, "has_scripture": false },
-	{ "id": 37, "act": 3, "no": "37", "title": "รับอัปเดตจาก Remote", "cmd": "git pull --rebase", "desc": "ดึงงานเพื่อนร่วมทีมมาผสานโดยประวัติเป็นเส้นตรง", "x": 720.0, "y": 150.0, "width": 130.0, "has_scripture": false },
-	{ "id": 38, "act": 3, "no": "38", "title": "ส่ง Feature ครั้งแรก", "cmd": "git push -u", "desc": "ตั้งค่า upstream tracking และส่งกิ่งงานขึ้นเซิร์ฟเวอร์", "x": 960.0, "y": 150.0, "width": 130.0, "has_scripture": false },
-	{ "id": 39, "act": 3, "no": "39", "title": "แก้ไขตาม Code Review", "cmd": "amend & push", "desc": "ปรับปรุงตามคำแนะนำของรุ่นพี่และส่งอัปเดต", "x": 1200.0, "y": 150.0, "width": 130.0, "has_scripture": false },
-	{ "id": 40, "act": 3, "no": "40", "title": "กู้คืนคัมภีร์และปรมาจารย์ Git (FINAL)", "cmd": "release ➔ final", "desc": "ภารกิจสูงสุด: ผสานคัมภีร์โบราณ ปลดปล่อยปรมาจารย์ Git ผู้สาบสูญสู่ยอดหอคอย", "x": 1440.0, "y": 150.0, "width": 150.0, "has_scripture": true },
+	{ "id": 21, "act": 3, "no": "21", "title": "ตรวจสถานะก่อนเริ่มงาน", "cmd": "git status", "desc": "ตรวจสถานะ working tree ให้เรียบร้อยก่อนเริ่มแก้ปัญหา", "x": 480.0, "y": 430.0, "width": 130.0, "has_scripture": false },
+	{ "id": 22, "act": 3, "no": "22", "title": "ตรวจสอบความแตกต่าง", "cmd": "git diff", "desc": "ส่องดูจุดเพี้ยนของโค้ดก่อนเริ่มแก้ไข", "x": 720.0, "y": 430.0, "width": 130.0, "has_scripture": false },
+	{ "id": 23, "act": 3, "no": "23", "title": "คืนไฟล์ที่แก้ผิด", "cmd": "git restore", "desc": "กู้คืนไฟล์โค้ดที่พังกลับสู่สภาพเดิม", "x": 960.0, "y": 430.0, "width": 130.0, "has_scripture": false },
+	{ "id": 24, "act": 3, "no": "24", "title": "นำไฟล์ลับออกจาก Stage", "cmd": "git restore --staged", "desc": "ปลดไฟล์ความลับออกจากสถานะเตรียมคอมมิต", "x": 1200.0, "y": 430.0, "width": 130.0, "has_scripture": false },
+	{ "id": 25, "act": 3, "no": "25", "title": "แก้ไข Commit ล่าสุด", "cmd": "git commit --amend", "desc": "ซ่อมแซมคอมมิตล่าสุดโดยไม่สร้างขยะในประวัติ", "x": 1440.0, "y": 430.0, "width": 130.0, "has_scripture": true },
+	{ "id": 26, "act": 3, "no": "26", "title": "ย้อน Commit เก็บงานไว้", "cmd": "git reset --soft", "desc": "ถอยประวัติแต่คงงานไว้ใน Staging Area", "x": 480.0, "y": 340.0, "width": 130.0, "has_scripture": false },
+	{ "id": 27, "act": 3, "no": "27", "title": "ลบ Commit ทิ้งถาวร", "cmd": "git reset --hard", "desc": "ล้างโค้ดเสียทิ้งไปอย่างเด็ดขาด", "x": 720.0, "y": 340.0, "width": 130.0, "has_scripture": false },
+	{ "id": 28, "act": 3, "no": "28", "title": "ย้ายงานออกจาก main", "cmd": "git switch -c", "desc": "ย้ายงานไปกิ่งฟีเจอร์ใหม่เพื่อปกป้องกิ่งหลัก", "x": 960.0, "y": 340.0, "width": 130.0, "has_scripture": false },
+	{ "id": 29, "act": 3, "no": "29", "title": "ค้นหา Commit ที่เกี่ยวข้อง", "cmd": "git log --grep", "desc": "สืบค้นหาบันทึกในอดีตตามคีย์เวิร์ดของปัญหา", "x": 1200.0, "y": 340.0, "width": 130.0, "has_scripture": false },
+	{ "id": 30, "act": 3, "no": "30", "title": "วิเคราะห์ Commit Graph", "cmd": "git log --graph", "desc": "กางแผนผังสายฟ้าดูความเชื่อมโยงของทุกกิ่ง", "x": 1440.0, "y": 340.0, "width": 130.0, "has_scripture": true },
+	{ "id": 31, "act": 3, "no": "31", "title": "ย้าย Commit ผิด Branch", "cmd": "git branch + reset", "desc": "ซ่อมแซมเส้นเวลา ย้ายคอมมิตไปกิ่งที่ถูกต้อง", "x": 480.0, "y": 250.0, "width": 130.0, "has_scripture": false },
+	{ "id": 32, "act": 3, "no": "32", "title": "รวม Feature Branch", "cmd": "git merge feature", "desc": "หลอมรวมฟีเจอร์เข้าสู่สายหลักอย่างเป็นระบบ", "x": 720.0, "y": 250.0, "width": 130.0, "has_scripture": false },
+	{ "id": 33, "act": 3, "no": "33", "title": "แก้ Merge Conflict", "cmd": "solve conflict", "desc": "เผชิญหน้าอสูร Conflict ตัดสินใจเลือกโค้ดที่ถูกต้อง", "x": 960.0, "y": 250.0, "width": 130.0, "has_scripture": false },
+	{ "id": 34, "act": 3, "no": "34", "title": "Clone โปรเจกต์ของทีม", "cmd": "git clone", "desc": "ดาวน์โหลดคลังตำราทีมและตรวจสอบ Remote", "x": 1200.0, "y": 250.0, "width": 130.0, "has_scripture": false },
+	{ "id": 35, "act": 3, "no": "35", "title": "แก้ URL ของ Remote", "cmd": "git remote set-url", "desc": "แก้ปัญหาต่อไม่ติดด้วยการเปลี่ยน URL เซิร์ฟเวอร์", "x": 1440.0, "y": 250.0, "width": 130.0, "has_scripture": true },
+	{ "id": 36, "act": 3, "no": "36", "title": "กู้คืน Remote origin", "cmd": "git remote add", "desc": "สร้างสายสัมพันธ์ใหม่หลังเผลอลบการเชื่อมต่อ", "x": 480.0, "y": 160.0, "width": 130.0, "has_scripture": false },
+	{ "id": 37, "act": 3, "no": "37", "title": "รับอัปเดตจาก Remote", "cmd": "git pull --rebase", "desc": "ดึงงานเพื่อนร่วมทีมมาผสานโดยประวัติเป็นเส้นตรง", "x": 720.0, "y": 160.0, "width": 130.0, "has_scripture": false },
+	{ "id": 38, "act": 3, "no": "38", "title": "ส่ง Feature ครั้งแรก", "cmd": "git push -u", "desc": "ตั้งค่า upstream tracking และส่งกิ่งงานขึ้นเซิร์ฟเวอร์", "x": 960.0, "y": 160.0, "width": 130.0, "has_scripture": false },
+	{ "id": 39, "act": 3, "no": "39", "title": "แก้ไขตาม Code Review", "cmd": "amend & push", "desc": "ปรับปรุงตามคำแนะนำของรุ่นพี่และส่งอัปเดต", "x": 1200.0, "y": 160.0, "width": 130.0, "has_scripture": false },
+	{ "id": 40, "act": 3, "no": "40", "title": "กู้คืนคัมภีร์และปรมาจารย์ Git (FINAL)", "cmd": "release ➔ final", "desc": "ภารกิจสูงสุด: ผสานคัมภีร์โบราณ ปลดปล่อยปรมาจารย์ Git ผู้สาบสูญสู่ยอดหอคอย", "x": 1440.0, "y": 160.0, "width": 150.0, "has_scripture": true },
 ]
 
 # UI Nodes
@@ -103,12 +103,21 @@ var font_chakra_bold: Font
 var font_chakra_reg: Font
 var font_ta_pixel: Font
 
+# Scale and Layout Constants
+const VEL_SCALE: float = 1.5
+const PLAT_HEIGHT: float = 80.0
+const VEL_Y_OFFSET: float = 119.0
+
 # State variables
 var _current_stage_idx: int = 0
+var _view_stage_idx: int = 0
+var _last_wheel_time_msec: int = 0
+var _wheel_accum: float = 0.0
 var _platform_nodes: Dictionary = {}
 var _is_jumping := false
 var _target_queue_idx: int = -1
 var _jump_tween: Tween = null
+var _scroll_tween: Tween = null
 var _is_muted := false
 var _idle_bob_timer := 0.0
 var _torch_flames: Array[ColorRect] = []
@@ -219,27 +228,27 @@ func _bind_nodes() -> void:
 
 
 
-func _process(delta: float) -> void:
-	# เอฟเฟกต์ไฟคบเพลิงกะพริบ
+func _process(_delta: float) -> void:
 	pass
-
-
 
 
 func _wire_navbar() -> void:
 	if brand_btn:
 		brand_btn.mouse_entered.connect(_on_brand_hover.bind(true))
 		brand_btn.mouse_exited.connect(_on_brand_hover.bind(false))
+		brand_btn.pressed.connect(_on_back_pressed)
 	if btn_back:
 		btn_back.pressed.connect(_on_back_pressed)
 	if btn_act1:
-		btn_act1.pressed.connect(func(): _scroll_to_y(3200, true); _highlight_act(1))
+		btn_act1.pressed.connect(func(): _scroll_to_stage_idx(0, true))
 	if btn_act2:
-		btn_act2.pressed.connect(func(): _scroll_to_y(700, true); _highlight_act(2))
+		btn_act2.pressed.connect(func(): _scroll_to_stage_idx(15, true))
 	if btn_act3:
-		btn_act3.pressed.connect(func(): _scroll_to_y(50, true); _highlight_act(3))
+		btn_act3.pressed.connect(func(): _scroll_to_stage_idx(20, true))
 	if btn_focus_current:
-		btn_focus_current.pressed.connect(func(): _jump_to_stage(_current_stage_idx, true))
+		btn_focus_current.pressed.connect(func():
+			_scroll_to_stage_idx(_current_stage_idx, true)
+		)
 	if btn_sound:
 		btn_sound.pressed.connect(_on_toggle_sound)
 	if btn_launch:
@@ -325,7 +334,7 @@ func _spawn_tower_platforms() -> void:
 		circle_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 		circle_rect.custom_minimum_size = Vector2(440.0, 440.0)
 		circle_rect.size = Vector2(440.0, 440.0)
-		circle_rect.position = Vector2(960.0 - 220.0, 820.0 - 220.0)
+		circle_rect.position = Vector2(960.0 - 220.0, 750.0 - 220.0)
 		circle_rect.modulate = Color(0.20, 0.55, 0.40, 0.35)
 		circle_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		tower_content.add_child(circle_rect)
@@ -337,10 +346,10 @@ func _spawn_tower_platforms() -> void:
 		var is_cleared := GameProgressManager.is_level_cleared(stg_id)
 		var is_unlocked := (stg_id == 1) or GameProgressManager.is_level_cleared(stg_id - 1)
 		var is_current := (i == _current_stage_idx)
-		var p_width: float = stg["width"]
+		var p_width: float = maxf(float(stg["width"]) * 1.35, 340.0)
 		var p_x: float = stg["x"]
 		var p_y: float = stg["y"]
-		var plat_height: float = 56.0
+		var plat_height: float = PLAT_HEIGHT
 
 		var plat := Control.new()
 		plat.name = "Platform_%02d" % stg_id
@@ -355,14 +364,14 @@ func _spawn_tower_platforms() -> void:
 
 		# สไตล์กรอบและพื้นหลังแท่นหิน (ไม่มีเส้นขอบขาว 100%)
 		var sb_norm := StyleBoxFlat.new()
-		sb_norm.corner_radius_top_left = 4
-		sb_norm.corner_radius_top_right = 4
-		sb_norm.corner_radius_bottom_left = 4
-		sb_norm.corner_radius_bottom_right = 4
-		sb_norm.border_width_left = 2
-		sb_norm.border_width_top = 2
-		sb_norm.border_width_right = 2
-		sb_norm.border_width_bottom = 3
+		sb_norm.corner_radius_top_left = 6
+		sb_norm.corner_radius_top_right = 6
+		sb_norm.corner_radius_bottom_left = 6
+		sb_norm.corner_radius_bottom_right = 6
+		sb_norm.border_width_left = 3
+		sb_norm.border_width_top = 3
+		sb_norm.border_width_right = 3
+		sb_norm.border_width_bottom = 5
 
 		var title_color: Color
 		var badge_bg: Color
@@ -373,8 +382,8 @@ func _spawn_tower_platforms() -> void:
 			# ด่านปัจจุบัน: หินสีน้ำตาลอุ่น ขอบทองอำพัน พร้อมแสงออร่าทองนวล
 			sb_norm.bg_color = Color(0.18, 0.13, 0.08, 0.96)
 			sb_norm.border_color = Color(0.96, 0.62, 0.07, 1.0)
-			sb_norm.shadow_color = Color(0.96, 0.62, 0.04, 0.38)
-			sb_norm.shadow_size = 6
+			sb_norm.shadow_color = Color(0.96, 0.62, 0.04, 0.42)
+			sb_norm.shadow_size = 8
 			title_color = Color(0.98, 0.88, 0.47, 1.0)
 			badge_bg = Color(0.28, 0.18, 0.08, 1.0)
 			badge_border = Color(0.96, 0.62, 0.07, 1.0)
@@ -384,7 +393,7 @@ func _spawn_tower_platforms() -> void:
 			sb_norm.bg_color = Color(0.08, 0.12, 0.18, 0.95)
 			sb_norm.border_color = Color(0.28, 0.38, 0.52, 1.0)
 			sb_norm.shadow_color = Color(0.0, 0.0, 0.0, 0.4)
-			sb_norm.shadow_size = 3
+			sb_norm.shadow_size = 4
 			title_color = Color(0.85, 0.90, 0.96, 1.0)
 			badge_bg = Color(0.12, 0.18, 0.26, 1.0)
 			badge_border = Color(0.32, 0.44, 0.60, 1.0)
@@ -414,8 +423,8 @@ func _spawn_tower_platforms() -> void:
 			sb_hover.border_color = Color(0.22, 0.28, 0.38, 1.0)
 
 		var sb_pressed := sb_norm.duplicate() as StyleBoxFlat
-		sb_pressed.border_width_top = 3
-		sb_pressed.border_width_bottom = 1
+		sb_pressed.border_width_top = 4
+		sb_pressed.border_width_bottom = 2
 
 		slab_btn.add_theme_stylebox_override("normal", sb_norm)
 		slab_btn.add_theme_stylebox_override("hover", sb_hover)
@@ -426,19 +435,19 @@ func _spawn_tower_platforms() -> void:
 		var inner_margin := MarginContainer.new()
 		inner_margin.set_anchors_preset(Control.PRESET_FULL_RECT)
 		inner_margin.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		inner_margin.add_theme_constant_override("margin_left", 8)
-		inner_margin.add_theme_constant_override("margin_right", 8)
-		inner_margin.add_theme_constant_override("margin_top", 4)
-		inner_margin.add_theme_constant_override("margin_bottom", 4)
+		inner_margin.add_theme_constant_override("margin_left", 12)
+		inner_margin.add_theme_constant_override("margin_right", 12)
+		inner_margin.add_theme_constant_override("margin_top", 6)
+		inner_margin.add_theme_constant_override("margin_bottom", 6)
 
 		var hbox := HBoxContainer.new()
 		hbox.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		hbox.add_theme_constant_override("separation", 8)
+		hbox.add_theme_constant_override("separation", 12)
 		hbox.set_anchors_preset(Control.PRESET_FULL_RECT)
 
 		# 3.1 ป้ายเหรียญศิลาแสดงเลขด่าน (ฝั่งซ้าย)
 		var num_badge := PanelContainer.new()
-		num_badge.custom_minimum_size = Vector2(36.0, 36.0)
+		num_badge.custom_minimum_size = Vector2(50.0, 50.0)
 		num_badge.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 		num_badge.mouse_filter = Control.MOUSE_FILTER_IGNORE
 
@@ -449,10 +458,10 @@ func _spawn_tower_platforms() -> void:
 		sb_badge.border_width_top = 1
 		sb_badge.border_width_right = 1
 		sb_badge.border_width_bottom = 2
-		sb_badge.corner_radius_top_left = 3
-		sb_badge.corner_radius_top_right = 3
-		sb_badge.corner_radius_bottom_left = 3
-		sb_badge.corner_radius_bottom_right = 3
+		sb_badge.corner_radius_top_left = 4
+		sb_badge.corner_radius_top_right = 4
+		sb_badge.corner_radius_bottom_left = 4
+		sb_badge.corner_radius_bottom_right = 4
 		num_badge.add_theme_stylebox_override("panel", sb_badge)
 
 		var num_lbl := Label.new()
@@ -463,10 +472,10 @@ func _spawn_tower_platforms() -> void:
 		num_lbl.add_theme_color_override("font_color", badge_num_color)
 		if font_bungee:
 			num_lbl.add_theme_font_override("font", font_bungee)
-			num_lbl.add_theme_font_size_override("font_size", 14)
+			num_lbl.add_theme_font_size_override("font_size", 20)
 		elif font_ta_pixel:
 			num_lbl.add_theme_font_override("font", font_ta_pixel)
-			num_lbl.add_theme_font_size_override("font_size", 12)
+			num_lbl.add_theme_font_size_override("font_size", 18)
 		num_badge.add_child(num_lbl)
 		hbox.add_child(num_badge)
 
@@ -476,7 +485,7 @@ func _spawn_tower_platforms() -> void:
 			info_vbox.mouse_filter = Control.MOUSE_FILTER_IGNORE
 			info_vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 			info_vbox.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-			info_vbox.add_theme_constant_override("separation", 2)
+			info_vbox.add_theme_constant_override("separation", 3)
 
 			var title_lbl := Label.new()
 			title_lbl.text = str(stg["title"])
@@ -484,7 +493,7 @@ func _spawn_tower_platforms() -> void:
 			title_lbl.add_theme_color_override("font_color", title_color)
 			if font_chakra_bold:
 				title_lbl.add_theme_font_override("font", font_chakra_bold)
-				title_lbl.add_theme_font_size_override("font_size", 12)
+				title_lbl.add_theme_font_size_override("font_size", 18)
 			info_vbox.add_child(title_lbl)
 
 			var cmd_lbl := Label.new()
@@ -496,7 +505,7 @@ func _spawn_tower_platforms() -> void:
 				cmd_lbl.add_theme_color_override("font_color", Color(0.35, 0.45, 0.55, 0.75))
 			if font_ta_pixel:
 				cmd_lbl.add_theme_font_override("font", font_ta_pixel)
-				cmd_lbl.add_theme_font_size_override("font_size", 10)
+				cmd_lbl.add_theme_font_size_override("font_size", 15)
 			info_vbox.add_child(cmd_lbl)
 
 			hbox.add_child(info_vbox)
@@ -507,7 +516,7 @@ func _spawn_tower_platforms() -> void:
 			lock_rect.texture = tex_lock
 			lock_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 			lock_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-			lock_rect.custom_minimum_size = Vector2(18.0, 22.0)
+			lock_rect.custom_minimum_size = Vector2(26.0, 30.0)
 			lock_rect.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 			lock_rect.modulate = Color(0.55, 0.62, 0.72, 0.85)
 			lock_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -521,7 +530,7 @@ func _spawn_tower_platforms() -> void:
 			star_icon.add_theme_constant_override("outline_size", 2)
 			if font_ta_pixel:
 				star_icon.add_theme_font_override("font", font_ta_pixel)
-			star_icon.add_theme_font_size_override("font_size", 16)
+			star_icon.add_theme_font_size_override("font_size", 22)
 			hbox.add_child(star_icon)
 		elif is_unlocked:
 			var star_icon := Label.new()
@@ -532,7 +541,7 @@ func _spawn_tower_platforms() -> void:
 			star_icon.add_theme_constant_override("outline_size", 2)
 			if font_ta_pixel:
 				star_icon.add_theme_font_override("font", font_ta_pixel)
-			star_icon.add_theme_font_size_override("font_size", 16)
+			star_icon.add_theme_font_size_override("font_size", 22)
 			hbox.add_child(star_icon)
 		inner_margin.add_child(hbox)
 		slab_btn.add_child(inner_margin)
@@ -635,7 +644,8 @@ func _setup_character_and_cat() -> void:
 		vel_anim.play("breathe")
 
 	var stg := TOWER_STAGES[_current_stage_idx]
-	vel_hero.position = Vector2(stg["x"] - 24.0, stg["y"] - 107.0)
+	vel_hero.scale = Vector2(VEL_SCALE, VEL_SCALE)
+	vel_hero.position = Vector2(stg["x"] - 24.0, stg["y"] - VEL_Y_OFFSET)
 
 
 func _on_platform_selected(idx: int) -> void:
@@ -684,8 +694,8 @@ func _step_towards_queued_target() -> void:
 			vel_anim.play("breathe")
 		var curr_stg := TOWER_STAGES[_current_stage_idx]
 		if vel_hero:
-			vel_hero.position = Vector2(curr_stg["x"] - 24.0, curr_stg["y"] - 107.0)
-			vel_hero.scale = Vector2.ONE
+			vel_hero.position = Vector2(curr_stg["x"] - 24.0, curr_stg["y"] - VEL_Y_OFFSET)
+			vel_hero.scale = Vector2(VEL_SCALE, VEL_SCALE)
 		return
 
 	var step_dir := 1 if _target_queue_idx > _current_stage_idx else -1
@@ -716,7 +726,7 @@ func _perform_jump_step(next_idx: int) -> void:
 	_update_hud_display(stg)
 	_highlight_act(int(stg["act"]))
 
-	var target_vel_pos := Vector2(stg["x"] - 24.0, stg["y"] - 107.0)
+	var target_vel_pos := Vector2(stg["x"] - 24.0, stg["y"] - VEL_Y_OFFSET)
 	var start_vel_pos := vel_hero.position if vel_hero else target_vel_pos
 	var is_moving_right := target_vel_pos.x >= start_vel_pos.x
 
@@ -740,11 +750,11 @@ func _perform_jump_step(next_idx: int) -> void:
 			vel_anim.play("walk")
 
 	_play_sfx(sfx_jump)
-	_scroll_to_y(int(stg["y"]) - 460, true)
+	_scroll_to_stage_idx(_current_stage_idx, true)
 
 	var has_more_steps := (_target_queue_idx != _current_stage_idx)
 	var jump_duration := 0.65 if is_between_15_and_16 else (0.32 if has_more_steps else 0.42)
-	var peak_height := 50.0 if is_between_15_and_16 else 90.0
+	var peak_height := 65.0 if is_between_15_and_16 else 105.0
 
 	if _jump_tween and _jump_tween.is_valid():
 		_jump_tween.kill()
@@ -783,13 +793,13 @@ func _jump_to_stage(target_idx: int, animate: bool = true) -> void:
 		_update_hud_display(stg)
 		_highlight_act(int(stg["act"]))
 
-		var target_vel_pos := Vector2(stg["x"] - 24.0, stg["y"] - 107.0)
+		var target_vel_pos := Vector2(stg["x"] - 24.0, stg["y"] - VEL_Y_OFFSET)
 		if vel_hero:
 			vel_hero.position = target_vel_pos
-			vel_hero.scale = Vector2.ONE
+			vel_hero.scale = Vector2(VEL_SCALE, VEL_SCALE)
 		if vel_anim:
 			vel_anim.play("breathe")
-		_scroll_to_y(int(stg["y"]) - 460, false)
+		_scroll_to_stage_idx(_current_stage_idx, false)
 		return
 
 	_try_navigate_stage(target_idx)
@@ -811,25 +821,25 @@ func _update_platform_highlight(idx: int, is_active: bool) -> void:
 	var is_unlocked := (stg_id == 1) or GameProgressManager.is_level_cleared(stg_id - 1)
 
 	var sb_norm := StyleBoxFlat.new()
-	sb_norm.corner_radius_top_left = 4
-	sb_norm.corner_radius_top_right = 4
-	sb_norm.corner_radius_bottom_left = 4
-	sb_norm.corner_radius_bottom_right = 4
-	sb_norm.border_width_left = 2
-	sb_norm.border_width_top = 2
-	sb_norm.border_width_right = 2
-	sb_norm.border_width_bottom = 3
+	sb_norm.corner_radius_top_left = 6
+	sb_norm.corner_radius_top_right = 6
+	sb_norm.corner_radius_bottom_left = 6
+	sb_norm.corner_radius_bottom_right = 6
+	sb_norm.border_width_left = 3
+	sb_norm.border_width_top = 3
+	sb_norm.border_width_right = 3
+	sb_norm.border_width_bottom = 5
 
 	if is_active:
 		sb_norm.bg_color = Color(0.18, 0.13, 0.08, 0.96)
 		sb_norm.border_color = Color(0.96, 0.62, 0.07, 1.0)
-		sb_norm.shadow_color = Color(0.96, 0.62, 0.04, 0.38)
-		sb_norm.shadow_size = 6
+		sb_norm.shadow_color = Color(0.96, 0.62, 0.04, 0.42)
+		sb_norm.shadow_size = 8
 	elif is_cleared:
 		sb_norm.bg_color = Color(0.08, 0.12, 0.18, 0.95)
 		sb_norm.border_color = Color(0.28, 0.38, 0.52, 1.0)
 		sb_norm.shadow_color = Color(0.0, 0.0, 0.0, 0.4)
-		sb_norm.shadow_size = 3
+		sb_norm.shadow_size = 4
 	elif is_unlocked:
 		sb_norm.bg_color = Color(0.13, 0.10, 0.07, 0.95)
 		sb_norm.border_color = Color(0.72, 0.48, 0.16, 1.0)
@@ -880,14 +890,47 @@ func _update_hud_display(stg: Dictionary) -> void:
 			btn_launch.text = "ยังไม่ปลดล็อก"
 
 
+func _scroll_to_stage_idx(stage_idx: int, animate: bool = true) -> void:
+	if not scroll_chamber or TOWER_STAGES.is_empty():
+		return
+	_view_stage_idx = clampi(stage_idx, 0, TOWER_STAGES.size() - 1)
+	var stg: Dictionary = TOWER_STAGES[_view_stage_idx]
+	_highlight_act(int(stg["act"]))
+	_update_hud_display(stg)
+
+	var target_y := int(stg["y"]) - 540
+	_scroll_to_y(target_y, animate)
+
+
+func _sync_view_stage_with_scroll() -> void:
+	if not scroll_chamber or TOWER_STAGES.is_empty():
+		return
+	var center_y := float(scroll_chamber.scroll_vertical + 540)
+	var closest_idx := 0
+	var min_dist := 999999.0
+	for i in range(TOWER_STAGES.size()):
+		var dist := absf(TOWER_STAGES[i]["y"] - center_y)
+		if dist < min_dist:
+			min_dist = dist
+			closest_idx = i
+	_view_stage_idx = closest_idx
+
+
 func _scroll_to_y(target_y: int, animate: bool = true) -> void:
 	if not scroll_chamber:
 		return
-	var clamped_y := clampi(target_y, 0, 3200)
+	var max_scroll := 3700
+	if tower_content and scroll_chamber.size.y > 0:
+		max_scroll = maxi(0, int(tower_content.custom_minimum_size.y - scroll_chamber.size.y))
+	var clamped_y := clampi(target_y, 0, max_scroll)
+
+	if _scroll_tween and _scroll_tween.is_valid():
+		_scroll_tween.kill()
+
 	if animate:
-		var tw := create_tween()
-		tw.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-		tw.tween_property(scroll_chamber, "scroll_vertical", clamped_y, 0.38)
+		_scroll_tween = create_tween()
+		_scroll_tween.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+		_scroll_tween.tween_property(scroll_chamber, "scroll_vertical", clamped_y, 0.22)
 	else:
 		scroll_chamber.scroll_vertical = clamped_y
 
@@ -1006,10 +1049,42 @@ func _play_sfx(player: AudioStreamPlayer) -> void:
 
 
 func _input(event: InputEvent) -> void:
-	if event is InputEventKey and event.pressed and not event.echo:
+	if event is InputEventMouseButton and event.pressed:
+		var now := Time.get_ticks_msec()
+		if event.button_index == MOUSE_BUTTON_WHEEL_UP:
+			get_viewport().set_input_as_handled()
+			if now - _last_wheel_time_msec > 300:
+				_wheel_accum = 0.0
+			var factor: float = event.factor if event.factor > 0.0 else 1.0
+			_wheel_accum += factor
+			if now - _last_wheel_time_msec >= 140 and _wheel_accum >= 0.8:
+				_last_wheel_time_msec = now
+				_wheel_accum = 0.0
+				if not _scroll_tween or not _scroll_tween.is_valid():
+					_sync_view_stage_with_scroll()
+				_scroll_to_stage_idx(_view_stage_idx + 1, true)
+		elif event.button_index == MOUSE_BUTTON_WHEEL_DOWN:
+			get_viewport().set_input_as_handled()
+			if now - _last_wheel_time_msec > 300:
+				_wheel_accum = 0.0
+			var factor: float = event.factor if event.factor > 0.0 else 1.0
+			_wheel_accum -= factor
+			if now - _last_wheel_time_msec >= 140 and _wheel_accum <= -0.8:
+				_last_wheel_time_msec = now
+				_wheel_accum = 0.0
+				if not _scroll_tween or not _scroll_tween.is_valid():
+					_sync_view_stage_with_scroll()
+				_scroll_to_stage_idx(_view_stage_idx - 1, true)
+	elif event is InputEventKey and event.pressed and not event.echo:
 		if event.keycode == KEY_ESCAPE:
 			get_viewport().set_input_as_handled()
 			_on_back_pressed()
+		elif event.keycode == KEY_PAGEUP:
+			get_viewport().set_input_as_handled()
+			_scroll_to_stage_idx(_view_stage_idx + 4, true)
+		elif event.keycode == KEY_PAGEDOWN:
+			get_viewport().set_input_as_handled()
+			_scroll_to_stage_idx(_view_stage_idx - 4, true)
 		elif event.keycode == KEY_UP or event.keycode == KEY_W or event.keycode == KEY_RIGHT or event.keycode == KEY_D:
 			get_viewport().set_input_as_handled()
 			var base_idx := _target_queue_idx if _is_jumping and _target_queue_idx != -1 else _current_stage_idx
@@ -1022,11 +1097,8 @@ func _input(event: InputEvent) -> void:
 			get_viewport().set_input_as_handled()
 			_on_launch_stage_pressed()
 		elif event.keycode == KEY_1:
-			_scroll_to_y(3200, true)
-			_highlight_act(1)
+			_scroll_to_stage_idx(0, true)
 		elif event.keycode == KEY_2:
-			_scroll_to_y(700, true)
-			_highlight_act(2)
+			_scroll_to_stage_idx(15, true)
 		elif event.keycode == KEY_3:
-			_scroll_to_y(50, true)
-			_highlight_act(3)
+			_scroll_to_stage_idx(20, true)

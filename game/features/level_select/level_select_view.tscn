@@ -12,24 +12,11 @@
 [ext_resource type="AudioStream" path="res://assets/audio/sfx_cat_meow.wav" id="10_sfx_meow"]
 [ext_resource type="Script" path="res://features/level_select/brick_wall_pillar.gd" id="11_brick_wall"]
 [ext_resource type="Texture2D" path="res://assets/art/hats/hat_witch_purple.png" id="12_hat_purple"]
+[ext_resource type="Script" path="res://features/level_select/twilight_sky_background.gd" id="13_sky"]
 
 [sub_resource type="StyleBoxEmpty" id="Style_brand_btn"]
 
-[sub_resource type="StyleBoxFlat" id="Style_hint_panel"]
-content_margin_left = 12.0
-content_margin_top = 6.0
-content_margin_right = 12.0
-content_margin_bottom = 6.0
-bg_color = Color(0.06, 0.08, 0.12, 0.72)
-border_width_left = 1
-border_width_top = 1
-border_width_right = 1
-border_width_bottom = 1
-border_color = Color(0.24, 0.30, 0.40, 0.45)
-corner_radius_top_left = 6
-corner_radius_top_right = 6
-corner_radius_bottom_left = 6
-corner_radius_bottom_right = 6
+[sub_resource type="StyleBoxEmpty" id="Style_hint_panel"]
 
 [sub_resource type="StyleBoxFlat" id="Style_navbar"]
 bg_color = Color(0.078, 0.063, 0.047, 0.98)
@@ -37,52 +24,52 @@ border_width_bottom = 2
 border_color = Color(0.278, 0.176, 0.102, 1)
 
 [sub_resource type="StyleBoxFlat" id="Style_tab_act"]
-content_margin_left = 12.0
-content_margin_top = 4.0
-content_margin_right = 12.0
-content_margin_bottom = 4.0
+content_margin_left = 18.0
+content_margin_top = 8.0
+content_margin_right = 18.0
+content_margin_bottom = 8.0
 bg_color = Color(0.098, 0.122, 0.173, 1)
 border_width_left = 1
 border_width_top = 1
 border_width_right = 1
 border_width_bottom = 2
 border_color = Color(0.200, 0.251, 0.341, 1)
-corner_radius_top_left = 2
-corner_radius_top_right = 2
-corner_radius_bottom_left = 2
-corner_radius_bottom_right = 2
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_left = 4
+corner_radius_bottom_right = 4
 
 [sub_resource type="StyleBoxFlat" id="Style_tab_act_hover"]
-content_margin_left = 12.0
-content_margin_top = 4.0
-content_margin_right = 12.0
-content_margin_bottom = 4.0
+content_margin_left = 18.0
+content_margin_top = 8.0
+content_margin_right = 18.0
+content_margin_bottom = 8.0
 bg_color = Color(0.137, 0.169, 0.239, 1)
 border_width_left = 1
 border_width_top = 1
 border_width_right = 1
 border_width_bottom = 2
 border_color = Color(0.282, 0.345, 0.471, 1)
-corner_radius_top_left = 2
-corner_radius_top_right = 2
-corner_radius_bottom_left = 2
-corner_radius_bottom_right = 2
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_left = 4
+corner_radius_bottom_right = 4
 
 [sub_resource type="StyleBoxFlat" id="Style_tab_act_pressed"]
-content_margin_left = 12.0
-content_margin_top = 5.0
-content_margin_right = 12.0
-content_margin_bottom = 3.0
+content_margin_left = 18.0
+content_margin_top = 9.0
+content_margin_right = 18.0
+content_margin_bottom = 7.0
 bg_color = Color(0.08, 0.10, 0.14, 1)
 border_width_left = 1
 border_width_top = 2
 border_width_right = 1
 border_width_bottom = 1
 border_color = Color(0.18, 0.22, 0.30, 1)
-corner_radius_top_left = 2
-corner_radius_top_right = 2
-corner_radius_bottom_left = 2
-corner_radius_bottom_right = 2
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_left = 4
+corner_radius_bottom_right = 4
 
 [sub_resource type="StyleBoxFlat" id="Style_pillar"]
 bg_color = Color(0.04, 0.05, 0.08, 1)
@@ -220,14 +207,15 @@ grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_script")
 
-[node name="GothicSkyBackground" type="ColorRect" parent="."]
+[node name="GothicSkyBackground" type="Control" parent="."]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-color = Color(0.025, 0.03, 0.055, 1)
+mouse_filter = 2
+script = ExtResource("13_sky")
 
 [node name="LayoutVBox" type="VBoxContainer" parent="."]
 layout_mode = 1
@@ -239,31 +227,31 @@ grow_vertical = 2
 theme_override_constants/separation = 0
 
 [node name="TopNavbar" type="PanelContainer" parent="LayoutVBox"]
-custom_minimum_size = Vector2(0, 48)
+custom_minimum_size = Vector2(0, 72)
 layout_mode = 2
 theme_override_styles/panel = SubResource("Style_navbar")
 
 [node name="NavMargin" type="MarginContainer" parent="LayoutVBox/TopNavbar"]
 layout_mode = 2
-theme_override_constants/margin_left = 24
-theme_override_constants/margin_top = 6
-theme_override_constants/margin_right = 24
-theme_override_constants/margin_bottom = 6
+theme_override_constants/margin_left = 32
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 32
+theme_override_constants/margin_bottom = 10
 
 [node name="NavHBox" type="HBoxContainer" parent="LayoutVBox/TopNavbar/NavMargin"]
 layout_mode = 2
-theme_override_constants/separation = 14
+theme_override_constants/separation = 20
 
 [node name="BrandHBox" type="HBoxContainer" parent="LayoutVBox/TopNavbar/NavMargin/NavHBox"]
 layout_mode = 2
-theme_override_constants/separation = 10
+theme_override_constants/separation = 16
 
 [node name="BrandBtn" type="Button" parent="LayoutVBox/TopNavbar/NavMargin/NavHBox/BrandHBox"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(148, 36)
+custom_minimum_size = Vector2(210, 48)
 layout_mode = 2
 focus_mode = 0
-mouse_default_cursor_shape = 0
+mouse_default_cursor_shape = 2
 theme_override_styles/focus = SubResource("Style_brand_btn")
 theme_override_styles/disabled = SubResource("Style_brand_btn")
 theme_override_styles/hover = SubResource("Style_brand_btn")
@@ -277,17 +265,17 @@ layout_mode = 1
 anchors_preset = 4
 anchor_top = 0.5
 anchor_bottom = 0.5
-offset_left = 12.0
-offset_top = -14.0
-offset_right = 146.0
-offset_bottom = 14.0
+offset_left = 16.0
+offset_top = -18.0
+offset_right = 205.0
+offset_bottom = 18.0
 grow_vertical = 2
 theme_override_colors/font_color = Color(0.961, 0.620, 0.043, 1)
 theme_override_colors/font_shadow_color = Color(0.290, 0.122, 0.020, 1)
 theme_override_constants/shadow_offset_x = 0
 theme_override_constants/shadow_offset_y = 2
 theme_override_fonts/font = ExtResource("2_bungee")
-theme_override_font_sizes/font_size = 20
+theme_override_font_sizes/font_size = 26
 text = "GIT DI WAA"
 vertical_alignment = 1
 
@@ -295,18 +283,18 @@ vertical_alignment = 1
 unique_name_in_owner = true
 texture_filter = 1
 layout_mode = 1
-offset_left = 3.0
-offset_top = -4.0
-offset_right = 29.0
-offset_bottom = 16.0
-pivot_offset = Vector2(13, 20)
+offset_left = 4.0
+offset_top = -7.0
+offset_right = 36.0
+offset_bottom = 19.0
+pivot_offset = Vector2(16, 26)
 mouse_filter = 2
 texture = ExtResource("12_hat_purple")
 expand_mode = 1
 stretch_mode = 5
 
 [node name="Divider" type="ColorRect" parent="LayoutVBox/TopNavbar/NavMargin/NavHBox/BrandHBox"]
-custom_minimum_size = Vector2(1, 18)
+custom_minimum_size = Vector2(2, 28)
 layout_mode = 2
 size_flags_vertical = 4
 color = Color(0.239, 0.153, 0.098, 1)
@@ -315,7 +303,7 @@ color = Color(0.239, 0.153, 0.098, 1)
 layout_mode = 2
 theme_override_colors/font_color = Color(0.604, 0.467, 0.341, 1)
 theme_override_fonts/font = ExtResource("5_ta_pixel")
-theme_override_font_sizes/font_size = 16
+theme_override_font_sizes/font_size = 20
 text = "TOWER ROADMAP"
 vertical_alignment = 1
 
@@ -325,17 +313,17 @@ size_flags_horizontal = 3
 
 [node name="ActTabsHBox" type="HBoxContainer" parent="LayoutVBox/TopNavbar/NavMargin/NavHBox"]
 layout_mode = 2
-theme_override_constants/separation = 8
+theme_override_constants/separation = 12
 
 [node name="BtnAct1" type="Button" parent="LayoutVBox/TopNavbar/NavMargin/NavHBox/ActTabsHBox"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(72, 32)
+custom_minimum_size = Vector2(100, 44)
 layout_mode = 2
 mouse_default_cursor_shape = 2
 theme_override_colors/font_color = Color(0.961, 0.620, 0.043, 1)
 theme_override_colors/font_hover_color = Color(0.973, 0.980, 0.988, 1)
 theme_override_fonts/font = ExtResource("5_ta_pixel")
-theme_override_font_sizes/font_size = 11
+theme_override_font_sizes/font_size = 16
 theme_override_styles/normal = SubResource("Style_tab_act")
 theme_override_styles/hover = SubResource("Style_tab_act_hover")
 theme_override_styles/pressed = SubResource("Style_tab_act_pressed")
@@ -343,13 +331,13 @@ text = "ACT 1"
 
 [node name="BtnAct2" type="Button" parent="LayoutVBox/TopNavbar/NavMargin/NavHBox/ActTabsHBox"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(72, 32)
+custom_minimum_size = Vector2(100, 44)
 layout_mode = 2
 mouse_default_cursor_shape = 2
 theme_override_colors/font_color = Color(0.580, 0.643, 0.722, 1)
 theme_override_colors/font_hover_color = Color(0.973, 0.980, 0.988, 1)
 theme_override_fonts/font = ExtResource("5_ta_pixel")
-theme_override_font_sizes/font_size = 11
+theme_override_font_sizes/font_size = 16
 theme_override_styles/normal = SubResource("Style_tab_act")
 theme_override_styles/hover = SubResource("Style_tab_act_hover")
 theme_override_styles/pressed = SubResource("Style_tab_act_pressed")
@@ -357,13 +345,13 @@ text = "ACT 2"
 
 [node name="BtnAct3" type="Button" parent="LayoutVBox/TopNavbar/NavMargin/NavHBox/ActTabsHBox"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(72, 32)
+custom_minimum_size = Vector2(100, 44)
 layout_mode = 2
 mouse_default_cursor_shape = 2
 theme_override_colors/font_color = Color(0.580, 0.643, 0.722, 1)
 theme_override_colors/font_hover_color = Color(0.973, 0.980, 0.988, 1)
 theme_override_fonts/font = ExtResource("5_ta_pixel")
-theme_override_font_sizes/font_size = 11
+theme_override_font_sizes/font_size = 16
 theme_override_styles/normal = SubResource("Style_tab_act")
 theme_override_styles/hover = SubResource("Style_tab_act_hover")
 theme_override_styles/pressed = SubResource("Style_tab_act_pressed")
@@ -371,14 +359,14 @@ text = "ACT 3"
 
 [node name="BtnFocusCurrent" type="Button" parent="LayoutVBox/TopNavbar/NavMargin/NavHBox/ActTabsHBox"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(92, 32)
+custom_minimum_size = Vector2(130, 44)
 layout_mode = 2
 tooltip_text = "เลื่อนกล้องไปตำแหน่งตัวละคร"
 mouse_default_cursor_shape = 2
 theme_override_colors/font_color = Color(0.961, 0.620, 0.043, 1)
 theme_override_colors/font_hover_color = Color(1, 0.88, 0.47, 1)
 theme_override_fonts/font = ExtResource("3_chakra_bold")
-theme_override_font_sizes/font_size = 12
+theme_override_font_sizes/font_size = 17
 theme_override_styles/normal = SubResource("Style_tab_act")
 theme_override_styles/hover = SubResource("Style_tab_act_hover")
 theme_override_styles/pressed = SubResource("Style_tab_act_pressed")
@@ -390,20 +378,36 @@ size_flags_horizontal = 3
 
 [node name="RightControls" type="HBoxContainer" parent="LayoutVBox/TopNavbar/NavMargin/NavHBox"]
 layout_mode = 2
-theme_override_constants/separation = 10
+theme_override_constants/separation = 14
 
 [node name="BtnSound" type="Button" parent="LayoutVBox/TopNavbar/NavMargin/NavHBox/RightControls"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(34, 32)
+custom_minimum_size = Vector2(46, 44)
 layout_mode = 2
 size_flags_vertical = 4
 tooltip_text = "เปิด/ปิดเสียง"
 mouse_default_cursor_shape = 2
-theme_override_font_sizes/font_size = 13
+theme_override_font_sizes/font_size = 18
 theme_override_styles/normal = SubResource("Style_tab_act")
 theme_override_styles/hover = SubResource("Style_tab_act_hover")
 theme_override_styles/pressed = SubResource("Style_tab_act_pressed")
 text = "🔊"
+
+[node name="BtnBack" type="Button" parent="LayoutVBox/TopNavbar/NavMargin/NavHBox/RightControls"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(118, 44)
+layout_mode = 2
+size_flags_vertical = 4
+tooltip_text = "กลับสู่หน้าเมนูหลัก (Esc)"
+mouse_default_cursor_shape = 2
+theme_override_colors/font_color = Color(0.85, 0.88, 0.95, 1)
+theme_override_colors/font_hover_color = Color(0.98, 0.88, 0.47, 1)
+theme_override_fonts/font = ExtResource("3_chakra_bold")
+theme_override_font_sizes/font_size = 16
+theme_override_styles/normal = SubResource("Style_tab_act")
+theme_override_styles/hover = SubResource("Style_tab_act_hover")
+theme_override_styles/pressed = SubResource("Style_tab_act_pressed")
+text = "‹ เมนูหลัก"
 
 [node name="MainChamberArea" type="HBoxContainer" parent="LayoutVBox"]
 layout_mode = 2
@@ -427,7 +431,7 @@ horizontal_scroll_mode = 0
 
 [node name="TowerContent" type="Control" parent="LayoutVBox/MainChamberArea/ScrollChamber"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(1100, 3680)
+custom_minimum_size = Vector2(1100, 4600)
 layout_mode = 2
 size_flags_horizontal = 3
 
@@ -444,9 +448,9 @@ mouse_filter = 2
 [node name="Act3CitadelBanner" type="Label" parent="LayoutVBox/MainChamberArea/ScrollChamber/TowerContent"]
 layout_mode = 0
 offset_left = 80.0
-offset_top = 40.0
+offset_top = 50.0
 offset_right = 1040.0
-offset_bottom = 72.0
+offset_bottom = 82.0
 theme_override_colors/font_color = Color(0.96, 0.62, 0.07, 1)
 theme_override_fonts/font = ExtResource("3_chakra_bold")
 theme_override_font_sizes/font_size = 20
@@ -455,9 +459,9 @@ text = "▲ ACT 3: THE SUMMIT CITADEL — ยอดหอคอยและก�
 [node name="Act2ChamberBanner" type="Label" parent="LayoutVBox/MainChamberArea/ScrollChamber/TowerContent"]
 layout_mode = 0
 offset_left = 80.0
-offset_top = 1180.0
+offset_top = 1050.0
 offset_right = 1040.0
-offset_bottom = 1212.0
+offset_bottom = 1082.0
 theme_override_colors/font_color = Color(0.35, 0.82, 0.60, 1)
 theme_override_fonts/font = ExtResource("3_chakra_bold")
 theme_override_font_sizes/font_size = 20
@@ -466,12 +470,12 @@ text = "▲ ACT 2: THE COLLAB CHAMBER — โถงคลังเวทกล�
 [node name="Act1StairwayBanner" type="Label" parent="LayoutVBox/MainChamberArea/ScrollChamber/TowerContent"]
 layout_mode = 0
 offset_left = 80.0
-offset_top = 3600.0
+offset_top = 4480.0
 offset_right = 1040.0
-offset_bottom = 3628.0
+offset_bottom = 4510.0
 theme_override_colors/font_color = Color(0.38, 0.74, 0.98, 1)
 theme_override_fonts/font = ExtResource("3_chakra_bold")
-theme_override_font_sizes/font_size = 18
+theme_override_font_sizes/font_size = 20
 text = "▼ ACT 1: THE SPIRAL STAIRWAY — บันไดวนไต่หอคอยแห่งการฝึกตน (ด่าน 01–15)"
 
 [node name="BlackCat" type="Control" parent="LayoutVBox/MainChamberArea/ScrollChamber/TowerContent"]
@@ -657,8 +661,8 @@ anchor_left = 1.0
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = -388.0
-offset_top = -138.0
+offset_left = -520.0
+offset_top = -140.0
 offset_right = -24.0
 offset_bottom = -106.0
 grow_horizontal = 0
@@ -669,8 +673,14 @@ theme_override_styles/panel = SubResource("Style_hint_panel")
 [node name="HintLabel" type="Label" parent="MapNavHint"]
 layout_mode = 2
 mouse_filter = 2
-theme_override_colors/font_color = Color(0.68, 0.74, 0.82, 0.85)
-theme_override_fonts/font = ExtResource("4_chakra_reg")
-theme_override_font_sizes/font_size = 12
-text = "ใช้ W / S หรือปุ่ม ↑ / ↓ เพื่อเคลื่อนที่ขึ้น–ลงและสำรวจหอคอย"
+theme_override_colors/font_color = Color(0.92, 0.95, 0.98, 0.95)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.8)
+theme_override_constants/shadow_offset_x = 1
+theme_override_constants/shadow_offset_y = 1
+theme_override_colors/font_outline_color = Color(0.04, 0.06, 0.1, 0.85)
+theme_override_constants/outline_size = 2
+theme_override_fonts/font = ExtResource("3_chakra_bold")
+theme_override_font_sizes/font_size = 14
+text = "ใช้ W / S หรือเลื่อนลูกกลิ้งเมาส์เพื่อสำรวจหอคอยทีละด่าน"
+horizontal_alignment = 2
 vertical_alignment = 1
