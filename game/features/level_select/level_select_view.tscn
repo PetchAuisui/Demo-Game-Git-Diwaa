@@ -504,9 +504,9 @@ mouse_filter = 2
 [node name="Act3CitadelBanner" type="Label" parent="LayoutVBox/MainChamberArea/ScrollChamber/TowerContent"]
 layout_mode = 0
 offset_left = 100.0
-offset_top = 1190.0
+offset_top = 1112.0
 offset_right = 1680.0
-offset_bottom = 1220.0
+offset_bottom = 1142.0
 theme_override_colors/font_color = Color(0.96, 0.62, 0.07, 1)
 theme_override_fonts/font = ExtResource("3_chakra_bold")
 theme_override_font_sizes/font_size = 18
@@ -515,9 +515,9 @@ text = "▲ ACT 3: THE SUMMIT CITADEL — ยอดหอคอยและก�
 [node name="Act2ChamberBanner" type="Label" parent="LayoutVBox/MainChamberArea/ScrollChamber/TowerContent"]
 layout_mode = 0
 offset_left = 100.0
-offset_top = 1765.0
+offset_top = 1700.0
 offset_right = 1680.0
-offset_bottom = 1795.0
+offset_bottom = 1730.0
 theme_override_colors/font_color = Color(0.35, 0.82, 0.60, 1)
 theme_override_fonts/font = ExtResource("3_chakra_bold")
 theme_override_font_sizes/font_size = 18
@@ -526,9 +526,9 @@ text = "▲ ACT 2: THE COLLAB CHAMBER — โถงคลังเวทกล�
 [node name="Act1StairwayBanner" type="Label" parent="LayoutVBox/MainChamberArea/ScrollChamber/TowerContent"]
 layout_mode = 0
 offset_left = 100.0
-offset_top = 5195.0
+offset_top = 5250.0
 offset_right = 1680.0
-offset_bottom = 5225.0
+offset_bottom = 5280.0
 theme_override_colors/font_color = Color(0.38, 0.74, 0.98, 1)
 theme_override_fonts/font = ExtResource("3_chakra_bold")
 theme_override_font_sizes/font_size = 18
