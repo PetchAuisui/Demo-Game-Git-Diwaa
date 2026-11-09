@@ -71,8 +71,8 @@ func _draw_act3_environmental_backdrop(left_b: float, right_b: float) -> void:
 	var win_border := Color(0.20, 0.23, 0.32, 0.40)
 
 	# เงาโครงหน้าต่างทรงโค้งยอดแหลมโกธิค (Gothic Lancet Windows) ในพื้นหลังลึกของ Act 3
-	var win_positions: Array[float] = [200.0, 510.0, 1110.0, 1420.0]
-	var win_y_tiers: Array[float] = [300.0, 550.0, 780.0]
+	var win_positions: Array[float] = [130.0, 430.0, 1330.0, 1630.0]
+	var win_y_tiers: Array[float] = [420.0, 660.0, 900.0]
 	for wy in win_y_tiers:
 		for wx in win_positions:
 			var ww := 72.0
@@ -90,18 +90,18 @@ func _draw_act3_environmental_backdrop(left_b: float, right_b: float) -> void:
 			draw_polyline(arch_pts, win_border, 1.0)
 
 	# คานรับน้ำหนักศิลาบนเสาขนาบข้าง (Side Corbels & Vault Ribs)
-	draw_line(Vector2(left_b, 300.0), Vector2(left_b + 40.0, 340.0), Color(0.24, 0.27, 0.34, 0.5), 2.0)
-	draw_line(Vector2(left_b, 580.0), Vector2(left_b + 40.0, 620.0), Color(0.24, 0.27, 0.34, 0.5), 2.0)
-	draw_line(Vector2(left_b, 820.0), Vector2(left_b + 40.0, 860.0), Color(0.24, 0.27, 0.34, 0.5), 2.0)
-	draw_line(Vector2(right_b, 300.0), Vector2(right_b - 40.0, 340.0), Color(0.24, 0.27, 0.34, 0.5), 2.0)
-	draw_line(Vector2(right_b, 580.0), Vector2(right_b - 40.0, 620.0), Color(0.24, 0.27, 0.34, 0.5), 2.0)
-	draw_line(Vector2(right_b, 820.0), Vector2(right_b - 40.0, 860.0), Color(0.24, 0.27, 0.34, 0.5), 2.0)
+	draw_line(Vector2(left_b, 420.0), Vector2(left_b + 40.0, 460.0), Color(0.24, 0.27, 0.34, 0.5), 2.0)
+	draw_line(Vector2(left_b, 700.0), Vector2(left_b + 40.0, 740.0), Color(0.24, 0.27, 0.34, 0.5), 2.0)
+	draw_line(Vector2(left_b, 940.0), Vector2(left_b + 40.0, 980.0), Color(0.24, 0.27, 0.34, 0.5), 2.0)
+	draw_line(Vector2(right_b, 420.0), Vector2(right_b - 40.0, 460.0), Color(0.24, 0.27, 0.34, 0.5), 2.0)
+	draw_line(Vector2(right_b, 700.0), Vector2(right_b - 40.0, 740.0), Color(0.24, 0.27, 0.34, 0.5), 2.0)
+	draw_line(Vector2(right_b, 940.0), Vector2(right_b - 40.0, 980.0), Color(0.24, 0.27, 0.34, 0.5), 2.0)
 
 
 ## 2. ประตูศิลาปราการโบราณคั่นระหว่าง Act 2 และ Act 3 (Distinctive Stone Gateway at y = 1080)
 func _draw_act2_to_act3_gateway(left_b: float, right_b: float) -> void:
-	var wall_y := 1080.0
-	var open_x := 510.0
+	var wall_y := 1200.0
+	var open_x := 460.0
 	var open_w := 240.0
 	var open_left := open_x - (open_w * 0.5)
 	var open_right := open_x + (open_w * 0.5)
@@ -121,8 +121,8 @@ func _draw_act2_to_act3_gateway(left_b: float, right_b: float) -> void:
 
 ## 3. ซุ้มประตูกำแพงอิฐโกธิคใหญ่คั่นระหว่าง Act 1 และ Act 2 (Large Gothic Brick Arch at y = 1655)
 func _draw_act1_to_act2_arch(left_b: float, right_b: float) -> void:
-	var wall_y := 1655.0
-	var open_x := 960.0
+	var wall_y := 1775.0
+	var open_x := 880.0
 	var open_w := 200.0
 	var open_left := open_x - (open_w * 0.5)
 	var open_right := open_x + (open_w * 0.5)
@@ -142,7 +142,7 @@ func _draw_act1_to_act2_arch(left_b: float, right_b: float) -> void:
 
 ## 4. แนวกำแพงศิลาฐานรากหอคอย Act 1 (Tower Base Foundation at y = 5085)
 func _draw_act1_base_foundation(left_b: float, right_b: float) -> void:
-	var wall_y := 5085.0
+	var wall_y := 5205.0
 	_draw_wall_segment(left_b, right_b, wall_y)
 
 	# ฐานแผ่นศิลาจารึกแบนเนอร์ Act 1
