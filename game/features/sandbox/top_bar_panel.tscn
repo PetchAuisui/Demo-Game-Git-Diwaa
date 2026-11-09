@@ -117,6 +117,7 @@ expand_mode = 1
 stretch_mode = 5
 
 [node name="Divider" type="ColorRect" parent="TopMargin/Header/BrandHBox"]
+unique_name_in_owner = true
 custom_minimum_size = Vector2(1, 18)
 layout_mode = 2
 size_flags_vertical = 4

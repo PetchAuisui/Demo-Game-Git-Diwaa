@@ -72,7 +72,7 @@ func _initialize_sandbox() -> void:
 	var step := GameProgressManager.get_current_gameplay_step()
 	var lvl := GameProgressManager.get_selected_level_number()
 	if step > 0:
-		_top_bar.set_mode_text("ด่านที่ %d (ขั้นที่ %d)" % [lvl, step])
+		_top_bar.set_mode_text("")
 		_top_bar.set_finish_button_text("เสร็จสิ้น (ไปต่อ) ➔")
 	else:
 		_top_bar.set_finish_button_text("กลับหน้าเลือกด่าน")

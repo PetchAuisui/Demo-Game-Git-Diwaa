@@ -13,6 +13,7 @@ var _brand_btn: Button
 var _brand_label: Label
 var _brand_hat: TextureRect
 var _mode_label: Label
+var _divider: ColorRect
 var _btn_finish: Button
 
 
@@ -21,14 +22,14 @@ func _ready() -> void:
 	_brand_label = get_node_or_null("%BrandLabel")
 	_brand_hat = get_node_or_null("%BrandHat")
 	_mode_label = get_node_or_null("%ModeLabel")
+	_divider = get_node_or_null("%Divider")
 	_btn_finish = get_node_or_null("%BtnFinish")
 
 	if _brand_label != null:
 		_brand_label.text = game_title
 	if _brand_hat != null:
 		_brand_hat.texture = GameProgressManager.get_current_hat_texture()
-	if _mode_label != null:
-		_mode_label.text = mode_text
+	set_mode_text(mode_text)
 
 	if _brand_btn != null:
 		_brand_btn.mouse_entered.connect(_on_brand_hover.bind(true))
@@ -53,8 +54,12 @@ func _on_brand_hover(is_hover: bool) -> void:
 
 func set_mode_text(new_mode_text: String) -> void:
 	mode_text = new_mode_text
+	var has_text := not new_mode_text.is_empty()
 	if _mode_label != null:
 		_mode_label.text = new_mode_text
+		_mode_label.visible = has_text
+	if _divider != null:
+		_divider.visible = has_text
 
 
 func set_finish_button_text(new_text: String) -> void:
