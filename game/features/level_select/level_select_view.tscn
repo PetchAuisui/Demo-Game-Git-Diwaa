@@ -11,6 +11,25 @@
 [ext_resource type="AudioStream" path="res://assets/audio/sfx_command.wav" id="9_sfx_jump"]
 [ext_resource type="AudioStream" path="res://assets/audio/sfx_cat_meow.wav" id="10_sfx_meow"]
 [ext_resource type="Script" path="res://features/level_select/brick_wall_pillar.gd" id="11_brick_wall"]
+[ext_resource type="Texture2D" path="res://assets/art/hats/hat_witch_purple.png" id="12_hat_purple"]
+
+[sub_resource type="StyleBoxEmpty" id="Style_brand_btn"]
+
+[sub_resource type="StyleBoxFlat" id="Style_hint_panel"]
+content_margin_left = 12.0
+content_margin_top = 6.0
+content_margin_right = 12.0
+content_margin_bottom = 6.0
+bg_color = Color(0.06, 0.08, 0.12, 0.72)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.24, 0.30, 0.40, 0.45)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_left = 6
+corner_radius_bottom_right = 6
 
 [sub_resource type="StyleBoxFlat" id="Style_navbar"]
 bg_color = Color(0.078, 0.063, 0.047, 0.98)
@@ -239,8 +258,30 @@ theme_override_constants/separation = 14
 layout_mode = 2
 theme_override_constants/separation = 10
 
-[node name="BrandTitle" type="Label" parent="LayoutVBox/TopNavbar/NavMargin/NavHBox/BrandHBox"]
+[node name="BrandBtn" type="Button" parent="LayoutVBox/TopNavbar/NavMargin/NavHBox/BrandHBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(148, 36)
 layout_mode = 2
+focus_mode = 0
+mouse_default_cursor_shape = 0
+theme_override_styles/focus = SubResource("Style_brand_btn")
+theme_override_styles/disabled = SubResource("Style_brand_btn")
+theme_override_styles/hover = SubResource("Style_brand_btn")
+theme_override_styles/pressed = SubResource("Style_brand_btn")
+theme_override_styles/normal = SubResource("Style_brand_btn")
+flat = true
+
+[node name="BrandTitle" type="Label" parent="LayoutVBox/TopNavbar/NavMargin/NavHBox/BrandHBox/BrandBtn"]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 4
+anchor_top = 0.5
+anchor_bottom = 0.5
+offset_left = 12.0
+offset_top = -14.0
+offset_right = 146.0
+offset_bottom = 14.0
+grow_vertical = 2
 theme_override_colors/font_color = Color(0.961, 0.620, 0.043, 1)
 theme_override_colors/font_shadow_color = Color(0.290, 0.122, 0.020, 1)
 theme_override_constants/shadow_offset_x = 0
@@ -249,6 +290,20 @@ theme_override_fonts/font = ExtResource("2_bungee")
 theme_override_font_sizes/font_size = 20
 text = "GIT DI WAA"
 vertical_alignment = 1
+
+[node name="BrandHat" type="TextureRect" parent="LayoutVBox/TopNavbar/NavMargin/NavHBox/BrandHBox/BrandBtn"]
+unique_name_in_owner = true
+texture_filter = 1
+layout_mode = 1
+offset_left = 3.0
+offset_top = -4.0
+offset_right = 29.0
+offset_bottom = 16.0
+pivot_offset = Vector2(13, 20)
+mouse_filter = 2
+texture = ExtResource("12_hat_purple")
+expand_mode = 1
+stretch_mode = 5
 
 [node name="Divider" type="ColorRect" parent="LayoutVBox/TopNavbar/NavMargin/NavHBox/BrandHBox"]
 custom_minimum_size = Vector2(1, 18)
@@ -594,3 +649,28 @@ volume_db = -2.0
 unique_name_in_owner = true
 stream = ExtResource("10_sfx_meow")
 volume_db = -1.0
+
+[node name="MapNavHint" type="PanelContainer" parent="."]
+layout_mode = 1
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -388.0
+offset_top = -138.0
+offset_right = -24.0
+offset_bottom = -106.0
+grow_horizontal = 0
+grow_vertical = 0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("Style_hint_panel")
+
+[node name="HintLabel" type="Label" parent="MapNavHint"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.68, 0.74, 0.82, 0.85)
+theme_override_fonts/font = ExtResource("4_chakra_reg")
+theme_override_font_sizes/font_size = 12
+text = "ใช้ W / S หรือปุ่ม ↑ / ↓ เพื่อเคลื่อนที่ขึ้น–ลงและสำรวจหอคอย"
+vertical_alignment = 1
