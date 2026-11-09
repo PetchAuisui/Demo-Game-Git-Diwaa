@@ -244,6 +244,35 @@ func restore_saved_session() -> String:
 	return RESTORE_NETWORK_FAILED
 
 
+## ชื่อโฟลเดอร์เซฟของผู้เล่นตอนนี้ ให้ระบบเซฟใช้แยกความคืบหน้าของแต่ละคน (เช่น user://saves/<slot>/)
+## บัญชี (ออนไลน์/ออฟไลน์) = "user_<id>" ใช้ id เพราะไม่เปลี่ยน (ชื่อที่แสดงเปลี่ยนได้ทุก 14 วัน)
+## guest = "guest" / ยังไม่มีผู้เล่น = ""
+## ข้อควรรู้: ไฟล์เซฟอยู่ในเครื่อง ผู้เล่นแก้เองได้ ห้ามใช้เป็นแหล่งคะแนนของ leaderboard
+func get_save_slot() -> String:
+	match state:
+		State.ONLINE, State.OFFLINE:
+			var user_id := get_user_id()
+			return "user_" + user_id if _is_safe_slot_id(user_id) else ""
+		State.GUEST:
+			return "guest"
+		_:
+			return ""
+
+
+## id ต้องเป็น GUID ตัวพิมพ์เล็กเท่านั้น (36 ตัว: 0-9 a-f -) เพราะจะถูกเอาไปต่อเป็นชื่อโฟลเดอร์
+## กันไม่ให้ id ที่ถูกแก้ในไฟล์ (เช่น "../..") พาไปเขียนไฟล์นอกโฟลเดอร์เซฟ
+func _is_safe_slot_id(value: String) -> bool:
+	if value.length() != 36:
+		return false
+	for i in range(value.length()):
+		var c := value.unicode_at(i)
+		var is_digit := c >= 0x30 and c <= 0x39  # 0-9
+		var is_hex_lower := c >= 0x61 and c <= 0x66  # a-f
+		if not (is_digit or is_hex_lower or c == 0x2D):  # -
+			return false
+	return true
+
+
 func _profile_value(key: String) -> String:
 	var profile: Variant = _session.get("profile")
 	if not (profile is Dictionary):
