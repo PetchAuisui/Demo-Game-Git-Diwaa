@@ -51,54 +51,17 @@ func _draw() -> void:
 	var left_bound := 80.0
 	var right_bound := 1680.0
 
-	# 1. สถาปัตยกรรมสิ่งแวดล้อมส่วนบนของหอคอย Act 3 (Subtle Environmental Architecture)
-	# บรรยากาศยอดหอคอยปราการแก้ปัญหา: หน้าต่างโกธิคเงาดำ ซุ้มโค้ง และแท่นบูชาปรมาจารย์
-	_draw_act3_environmental_backdrop(left_bound, right_bound)
-
-	# 2. จุดเปลี่ยนผ่าน Act 2 -> Act 3: ประตูศิลาปราการโบราณ (Distinctive Stone Gateway at y = 475)
+	# 1. จุดเปลี่ยนผ่าน Act 2 -> Act 3: ประตูศิลาปราการโบราณ (Distinctive Stone Gateway at y = 1200)
 	_draw_act2_to_act3_gateway(left_bound, right_bound)
 
-	# 3. จุดเปลี่ยนผ่าน Act 1 -> Act 2: ซุ้มประตูกำแพงอิฐโกธิคใหญ่ (Large Gothic Brick Arch at y = 1050)
+	# 2. จุดเปลี่ยนผ่าน Act 1 -> Act 2: ซุ้มประตูกำแพงอิฐโกธิคใหญ่ (Large Gothic Brick Arch at y = 1775)
 	_draw_act1_to_act2_arch(left_bound, right_bound)
 
-	# 4. ฐานรากหอคอย Act 1: แนวกำแพงศิลาฐานราก (Tower Foundation at y = 4480)
+	# 3. ฐานรากหอคอย Act 1: แนวกำแพงศิลาฐานราก (Tower Base Foundation at y = 5205)
 	_draw_act1_base_foundation(left_bound, right_bound)
 
 
-## 1. สิ่งแวดล้อมบรรยากาศหอคอยส่วนบนของ Act 3 (Git Troubleshooting Citadel)
-func _draw_act3_environmental_backdrop(left_b: float, right_b: float) -> void:
-	var win_color := Color(0.11, 0.13, 0.20, 0.30)
-	var win_border := Color(0.20, 0.23, 0.32, 0.40)
-
-	# เงาโครงหน้าต่างทรงโค้งยอดแหลมโกธิค (Gothic Lancet Windows) ในพื้นหลังลึกของ Act 3
-	var win_positions: Array[float] = [130.0, 430.0, 1330.0, 1630.0]
-	var win_y_tiers: Array[float] = [420.0, 660.0, 900.0]
-	for wy in win_y_tiers:
-		for wx in win_positions:
-			var ww := 72.0
-			var wh := 110.0
-			# ช่องหน้าต่างสี่เหลี่ยม
-			draw_rect(Rect2(wx, wy + 24.0, ww, wh - 24.0), win_color)
-			draw_rect(Rect2(wx, wy + 24.0, ww, wh - 24.0), win_border, false, 1.0)
-			# ยอดโค้งแหลม (Pointed Arch Top)
-			var arch_pts := PackedVector2Array([
-				Vector2(wx, wy + 24.0),
-				Vector2(wx + (ww * 0.5), wy),
-				Vector2(wx + ww, wy + 24.0),
-			])
-			draw_colored_polygon(arch_pts, win_color)
-			draw_polyline(arch_pts, win_border, 1.0)
-
-	# คานรับน้ำหนักศิลาบนเสาขนาบข้าง (Side Corbels & Vault Ribs)
-	draw_line(Vector2(left_b, 420.0), Vector2(left_b + 40.0, 460.0), Color(0.24, 0.27, 0.34, 0.5), 2.0)
-	draw_line(Vector2(left_b, 700.0), Vector2(left_b + 40.0, 740.0), Color(0.24, 0.27, 0.34, 0.5), 2.0)
-	draw_line(Vector2(left_b, 940.0), Vector2(left_b + 40.0, 980.0), Color(0.24, 0.27, 0.34, 0.5), 2.0)
-	draw_line(Vector2(right_b, 420.0), Vector2(right_b - 40.0, 460.0), Color(0.24, 0.27, 0.34, 0.5), 2.0)
-	draw_line(Vector2(right_b, 700.0), Vector2(right_b - 40.0, 740.0), Color(0.24, 0.27, 0.34, 0.5), 2.0)
-	draw_line(Vector2(right_b, 940.0), Vector2(right_b - 40.0, 980.0), Color(0.24, 0.27, 0.34, 0.5), 2.0)
-
-
-## 2. ประตูศิลาปราการโบราณคั่นระหว่าง Act 2 และ Act 3 (Distinctive Stone Gateway at y = 1080)
+## 1. ประตูศิลาปราการโบราณคั่นระหว่าง Act 2 และ Act 3 (Distinctive Stone Gateway at y = 1200)
 func _draw_act2_to_act3_gateway(left_b: float, right_b: float) -> void:
 	var wall_y := 1200.0
 	var open_x := 460.0
@@ -212,22 +175,17 @@ func _draw_wall_segment(x_start: float, x_end: float, wall_y: float) -> void:
 	draw_line(Vector2(x_start, wall_y + 17.5), Vector2(x_end, wall_y + 17.5), SHADOW_COLOR, 1.0)
 
 
-## วาดซุ้มประตูศิลาพร้อมลำแสงมนตรา (Passage Archway with Light Beam)
+## วาดซุ้มประตูศิลา (Passage Archway)
 func _draw_passage_opening(open_x: float, open_w: float, wall_y: float, is_distinctive_gateway: bool = false) -> void:
 	var x1 := open_x - (open_w * 0.5)
 	var x2 := open_x + (open_w * 0.5)
 	var wall_top := wall_y - 18.0
 
-	# 1. ลำแสงมนตราเรืองรอง
-	var beam_h := 110.0
-	draw_rect(Rect2(x1 + 10.0, wall_y - (beam_h * 0.5), open_w - 20.0, beam_h), PASSAGE_BEAM_COLOR)
-	draw_rect(Rect2(x1 + 30.0, wall_y - (beam_h * 0.35), open_w - 60.0, beam_h * 0.7), PASSAGE_GLOW_COLOR)
-
 	var p_color := GATEWAY_STONE if is_distinctive_gateway else POST_COLOR
 	var p_high := GATEWAY_HIGHLIGHT if is_distinctive_gateway else POST_HIGHLIGHT
 	var p_shdw := GATEWAY_SHADOW if is_distinctive_gateway else POST_SHADOW
 
-	# 2. เสาศิลาซุ้มประตูฝั่งซ้ายและขวา
+	# 1. เสาศิลาซุ้มประตูฝั่งซ้ายและขวา
 	_draw_arch_post(x1 - 16.0, wall_top - 10.0, 16.0, 56.0, p_color, p_high, p_shdw)
 	_draw_arch_post(x2, wall_top - 10.0, 16.0, 56.0, p_color, p_high, p_shdw)
 

@@ -126,8 +126,7 @@ const NAV_COLOR_SECONDARY := Color(0.604, 0.588, 0.667, 1.0)  # #9A96AA Secondar
 # State variables
 var _current_stage_idx: int = 0
 var _view_stage_idx: int = 0
-var _last_wheel_time_msec: int = 0
-var _wheel_accum: float = 0.0
+var _target_scroll_y: float = -1.0
 var _platform_nodes: Dictionary = {}
 var _is_jumping := false
 var _target_queue_idx: int = -1
@@ -1332,15 +1331,45 @@ func _sync_view_stage_with_scroll() -> void:
 			min_dist = dist
 			closest_idx = i
 	_view_stage_idx = closest_idx
+	if _view_stage_idx >= 0 and _view_stage_idx < TOWER_STAGES.size():
+		var current_act: int = int(TOWER_STAGES[_view_stage_idx]["act"])
+		_refresh_act_tabs(current_act)
+
+
+func _scroll_wheel_offset(delta_pixels: float) -> void:
+	if not scroll_chamber:
+		return
+	var max_scroll := 4450
+	if tower_content and scroll_chamber.size.y > 0:
+		max_scroll = maxi(0, int(tower_content.custom_minimum_size.y - scroll_chamber.size.y))
+
+	var current_base: float
+	if _scroll_tween and _scroll_tween.is_valid() and _target_scroll_y >= 0.0:
+		current_base = _target_scroll_y
+	else:
+		current_base = float(scroll_chamber.scroll_vertical)
+
+	_target_scroll_y = clampf(current_base + delta_pixels, 0.0, float(max_scroll))
+
+	if _scroll_tween and _scroll_tween.is_valid():
+		_scroll_tween.kill()
+
+	_scroll_tween = create_tween()
+	_scroll_tween.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	_scroll_tween.tween_property(scroll_chamber, "scroll_vertical", int(_target_scroll_y), 0.20)
+	_scroll_tween.finished.connect(func():
+		_sync_view_stage_with_scroll()
+	)
 
 
 func _scroll_to_y(target_y: int, animate: bool = true, duration: float = 0.48) -> void:
 	if not scroll_chamber:
 		return
-	var max_scroll := 3700
+	var max_scroll := 4450
 	if tower_content and scroll_chamber.size.y > 0:
 		max_scroll = maxi(0, int(tower_content.custom_minimum_size.y - scroll_chamber.size.y))
 	var clamped_y := clampi(target_y, 0, max_scroll)
+	_target_scroll_y = float(clamped_y)
 
 	if _scroll_tween and _scroll_tween.is_valid():
 		_scroll_tween.kill()
@@ -1349,8 +1378,12 @@ func _scroll_to_y(target_y: int, animate: bool = true, duration: float = 0.48) -
 		_scroll_tween = create_tween()
 		_scroll_tween.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
 		_scroll_tween.tween_property(scroll_chamber, "scroll_vertical", clamped_y, duration)
+		_scroll_tween.finished.connect(func():
+			_sync_view_stage_with_scroll()
+		)
 	else:
 		scroll_chamber.scroll_vertical = clamped_y
+		_sync_view_stage_with_scroll()
 
 
 func _on_draw_path() -> void:
@@ -1549,31 +1582,13 @@ func _navigate_directional(dir: Vector2) -> void:
 
 func _input(event: InputEvent) -> void:
 	if event is InputEventMouseButton and event.pressed:
-		var now := Time.get_ticks_msec()
+		var factor: float = event.factor if event.factor > 0.0 else 1.0
 		if event.button_index == MOUSE_BUTTON_WHEEL_UP:
 			get_viewport().set_input_as_handled()
-			if now - _last_wheel_time_msec > 300:
-				_wheel_accum = 0.0
-			var factor: float = event.factor if event.factor > 0.0 else 1.0
-			_wheel_accum += factor
-			if now - _last_wheel_time_msec >= 140 and _wheel_accum >= 0.8:
-				_last_wheel_time_msec = now
-				_wheel_accum = 0.0
-				if not _scroll_tween or not _scroll_tween.is_valid():
-					_sync_view_stage_with_scroll()
-				_scroll_to_stage_idx(_view_stage_idx + 1, true)
+			_scroll_wheel_offset(-240.0 * factor)
 		elif event.button_index == MOUSE_BUTTON_WHEEL_DOWN:
 			get_viewport().set_input_as_handled()
-			if now - _last_wheel_time_msec > 300:
-				_wheel_accum = 0.0
-			var factor: float = event.factor if event.factor > 0.0 else 1.0
-			_wheel_accum -= factor
-			if now - _last_wheel_time_msec >= 140 and _wheel_accum <= -0.8:
-				_last_wheel_time_msec = now
-				_wheel_accum = 0.0
-				if not _scroll_tween or not _scroll_tween.is_valid():
-					_sync_view_stage_with_scroll()
-				_scroll_to_stage_idx(_view_stage_idx - 1, true)
+			_scroll_wheel_offset(240.0 * factor)
 	elif event is InputEventKey and event.pressed:
 		var is_nav_key: bool = (
 			event.keycode == KEY_UP or event.keycode == KEY_W or
@@ -1587,10 +1602,10 @@ func _input(event: InputEvent) -> void:
 				_on_back_pressed()
 			elif event.keycode == KEY_PAGEUP:
 				get_viewport().set_input_as_handled()
-				_scroll_to_stage_idx(_view_stage_idx + 4, true)
+				_scroll_wheel_offset(-600.0)
 			elif event.keycode == KEY_PAGEDOWN:
 				get_viewport().set_input_as_handled()
-				_scroll_to_stage_idx(_view_stage_idx - 4, true)
+				_scroll_wheel_offset(600.0)
 			elif event.keycode == KEY_UP or event.keycode == KEY_W:
 				get_viewport().set_input_as_handled()
 				_navigate_directional(Vector2.UP)
