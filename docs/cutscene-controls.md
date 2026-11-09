@@ -101,7 +101,8 @@ flowchart TD
     Outside -->|"เล่นจบ / กดข้าม"| InsideTower["5. inside_tower_cutscene.tscn (พบมิวราในหอคอย)\n[บันทึก: ดูคัตซีนแล้ว = true]"]
     
     CheckProgress -->|"เคยดูแล้ว (true)"| LevelSelect["🗺️ level_select_view.tscn (หน้ารวมด่าน)"]
-    LevelSelect -->|"เลือกด่าน 1"| InsideTower
+    LevelSelect -->|"เลือกด่าน / เล่นอีกครั้ง"| LevelDialogue["level_dialogue_view.tscn (บทสนทนาประจำด่าน ไม่เล่นคัตซีนเดินเข้าซ้ำ)"]
+    LevelDialogue -->|"จบบทสนทนา"| ClearModal
     
     InsideTower -->|"จบบทสนทนา"| ClearModal["⭐ level_clear_modal.tscn (สรุปดาวหลังจบด่าน)"]
     ClearModal -->|"กลับไปหน้าเลือกด่าน / ด่านต่อไป"| LevelSelect
@@ -151,7 +152,7 @@ flowchart TD
 | **1** | `cut_scence_normal.tscn` | ✅ มี | ✅ มี | ข้ามหมู่บ้าน -> ท้องฟ้า -> `intro_cutscene.tscn` |
 | **2** | `intro_cutscene.tscn` | ✅ มี | ✅ มี | ข้ามแอนิเมชัน -> หน้ามนตรา -> `outside_cutscene.tscn` |
 | **3** | `outside_cutscene.tscn` | ✅ มี | ✅ มี | ข้ามพายุ -> เมือง -> ไตเติล -> `inside_tower_cutscene.tscn` |
-| **4** | `inside_tower_cutscene.tscn` | ✅ มี | ✅ มี | ข้ามบทสนทนามิวรา -> `sandbox_game_view.tscn` |
+| **4** | `inside_tower_cutscene.tscn` | ✅ มี | ✅ มี | ช่วงเดินเข้าห้องโถง -> เริ่มบทเรียนด่าน 1 ทันที, ช่วงบทเรียน -> `sandbox_game_view.tscn` (ขั้นที่ 1/2), ช่วงสรุปผล -> หน้าสรุปดาว |
 | **5** | `central_tower_cutscene.tscn` | ✅ มี | ✅ มี | ข้ามบทสนทนาผู้พิทักษ์ -> `sandbox_game_view.tscn` |
 | **6** | `ending_cutscene.tscn` | ✅ มี | ✅ มี | ข้ามฉากจบ -> กลับสู่เมนูหลัก `start_view.tscn` |
 
