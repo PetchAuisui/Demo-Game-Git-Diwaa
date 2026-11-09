@@ -131,8 +131,7 @@ var entrance_tween: Tween = null
 
 func _ready() -> void:
 	Engine.time_scale = 1.0
-	if next_scene_path != "" and ResourceLoader.exists(next_scene_path):
-		ResourceLoader.load_threaded_request(next_scene_path)
+	SceneLoader.request_preload(next_scene_path)
 	_init_scene_state()
 	_play_entrance_sequence()
 
@@ -477,16 +476,5 @@ func _skip_cutscene() -> void:
 
 func _switch_to_gameplay() -> void:
 	Engine.time_scale = 1.0
-	if next_scene_path != "" and ResourceLoader.exists(next_scene_path):
-		var packed: PackedScene = null
-		var load_status := ResourceLoader.load_threaded_get_status(next_scene_path)
-		if load_status == ResourceLoader.THREAD_LOAD_LOADED or load_status == ResourceLoader.THREAD_LOAD_IN_PROGRESS:
-			packed = ResourceLoader.load_threaded_get(next_scene_path) as PackedScene
-		if not packed:
-			packed = load(next_scene_path) as PackedScene
-		if packed:
-			get_tree().change_scene_to_packed(packed)
-		else:
-			get_tree().change_scene_to_file(next_scene_path)
-	else:
+	if not SceneLoader.change_scene(get_tree(), next_scene_path):
 		push_warning("[CentralTowerCutscene] next_scene_path not found: '%s'" % next_scene_path)
