@@ -20,7 +20,7 @@
 [sub_resource type="StyleBoxEmpty" id="Style_hint_panel"]
 
 [sub_resource type="StyleBoxFlat" id="Style_navbar"]
-bg_color = Color(0.078, 0.063, 0.047, 0.98)
+bg_color = Color(0.078, 0.063, 0.047, 1)
 border_width_bottom = 2
 border_color = Color(0.278, 0.176, 0.102, 1)
 
@@ -95,17 +95,17 @@ content_margin_left = 32.0
 content_margin_top = 10.0
 content_margin_right = 32.0
 content_margin_bottom = 10.0
-bg_color = Color(0.04, 0.045, 0.08, 0.98)
+bg_color = Color(0.078, 0.063, 0.047, 1)
 border_width_top = 2
-border_color = Color(0.52, 0.34, 0.15, 1)
+border_color = Color(0.278, 0.176, 0.102, 1)
 
 [sub_resource type="StyleBoxFlat" id="Style_badge_no"]
-bg_color = Color(0.08, 0.10, 0.16, 1)
-border_width_left = 2
-border_width_top = 2
-border_width_right = 2
-border_width_bottom = 2
-border_color = Color(0.52, 0.34, 0.15, 1)
+bg_color = Color(0.14, 0.11, 0.07, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.48, 0.38, 0.22, 1)
 corner_radius_top_left = 4
 corner_radius_top_right = 4
 corner_radius_bottom_left = 4
@@ -116,12 +116,12 @@ content_margin_left = 8.0
 content_margin_top = 2.0
 content_margin_right = 8.0
 content_margin_bottom = 2.0
-bg_color = Color(0.10, 0.12, 0.18, 1)
+bg_color = Color(0.18, 0.14, 0.08, 1)
 border_width_left = 1
 border_width_top = 1
 border_width_right = 1
 border_width_bottom = 1
-border_color = Color(0.16, 0.22, 0.32, 1)
+border_color = Color(0.48, 0.38, 0.22, 0.8)
 corner_radius_top_left = 3
 corner_radius_top_right = 3
 corner_radius_bottom_left = 3
@@ -132,12 +132,12 @@ content_margin_left = 10.0
 content_margin_top = 2.0
 content_margin_right = 10.0
 content_margin_bottom = 2.0
-bg_color = Color(0.04, 0.07, 0.12, 1)
+bg_color = Color(0.12, 0.09, 0.05, 1)
 border_width_left = 1
 border_width_top = 1
 border_width_right = 1
 border_width_bottom = 1
-border_color = Color(0.12, 0.18, 0.28, 1)
+border_color = Color(0.38, 0.30, 0.18, 1)
 corner_radius_top_left = 3
 corner_radius_top_right = 3
 corner_radius_bottom_left = 3
@@ -579,7 +579,7 @@ script = ExtResource("11_brick_wall")
 is_right_side = true
 
 [node name="BottomHUD" type="PanelContainer" parent="LayoutVBox"]
-custom_minimum_size = Vector2(0, 96)
+custom_minimum_size = Vector2(0, 72)
 layout_mode = 2
 theme_override_styles/panel = SubResource("Style_bottom_hud")
 
@@ -588,7 +588,7 @@ layout_mode = 2
 theme_override_constants/separation = 18
 
 [node name="BadgeBox" type="PanelContainer" parent="LayoutVBox/BottomHUD/HBox"]
-custom_minimum_size = Vector2(76, 60)
+custom_minimum_size = Vector2(64, 44)
 layout_mode = 2
 size_flags_vertical = 4
 theme_override_styles/panel = SubResource("Style_badge_no")
@@ -596,9 +596,9 @@ theme_override_styles/panel = SubResource("Style_badge_no")
 [node name="HudLevelBadge" type="Label" parent="LayoutVBox/BottomHUD/HBox/BadgeBox"]
 unique_name_in_owner = true
 layout_mode = 2
-theme_override_colors/font_color = Color(0.96, 0.62, 0.07, 1)
+theme_override_colors/font_color = Color(0.96, 0.78, 0.35, 1)
 theme_override_fonts/font = ExtResource("2_bungee")
-theme_override_font_sizes/font_size = 20
+theme_override_font_sizes/font_size = 18
 text = "LV 01"
 horizontal_alignment = 1
 vertical_alignment = 1
@@ -616,9 +616,9 @@ theme_override_constants/separation = 12
 [node name="HudTitle" type="Label" parent="LayoutVBox/BottomHUD/HBox/InfoVBox/TopRow"]
 unique_name_in_owner = true
 layout_mode = 2
-theme_override_colors/font_color = Color(0.96, 0.96, 0.98, 1)
+theme_override_colors/font_color = Color(0.96, 0.91, 0.82, 1)
 theme_override_fonts/font = ExtResource("3_chakra_bold")
-theme_override_font_sizes/font_size = 19
+theme_override_font_sizes/font_size = 18
 text = "ด่าน 01 — git --version + git config"
 vertical_alignment = 1
 
@@ -629,7 +629,7 @@ theme_override_styles/panel = SubResource("Style_act_tag")
 [node name="HudActTag" type="Label" parent="LayoutVBox/BottomHUD/HBox/InfoVBox/TopRow/ActTagPanel"]
 unique_name_in_owner = true
 layout_mode = 2
-theme_override_colors/font_color = Color(0.55, 0.68, 0.85, 1)
+theme_override_colors/font_color = Color(0.85, 0.75, 0.55, 1)
 theme_override_fonts/font = ExtResource("5_ta_pixel")
 theme_override_font_sizes/font_size = 11
 text = "ACT 1"
@@ -646,7 +646,7 @@ theme_override_styles/panel = SubResource("Style_cmd_chip")
 [node name="HudCmd" type="Label" parent="LayoutVBox/BottomHUD/HBox/InfoVBox/BottomRow/CmdChipPanel"]
 unique_name_in_owner = true
 layout_mode = 2
-theme_override_colors/font_color = Color(0.13, 0.83, 0.93, 1)
+theme_override_colors/font_color = Color(0.35, 0.82, 0.60, 1)
 theme_override_fonts/font = ExtResource("3_chakra_bold")
 theme_override_font_sizes/font_size = 14
 text = "git --version"
@@ -656,7 +656,7 @@ vertical_alignment = 1
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
-theme_override_colors/font_color = Color(0.65, 0.72, 0.82, 1)
+theme_override_colors/font_color = Color(0.76, 0.70, 0.60, 1)
 theme_override_fonts/font = ExtResource("4_chakra_reg")
 theme_override_font_sizes/font_size = 15
 text = "ตรวจสอบพลังและจารึกนามผู้ใช้ user.name และ user.email"
@@ -665,20 +665,20 @@ text_overrun_behavior = 3
 
 [node name="BtnLaunch" type="Button" parent="LayoutVBox/BottomHUD/HBox"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(200, 48)
+custom_minimum_size = Vector2(140, 44)
 layout_mode = 2
 size_flags_vertical = 4
 mouse_default_cursor_shape = 2
-theme_override_colors/font_color = Color(0.96, 0.88, 0.65, 1)
-theme_override_colors/font_hover_color = Color(1, 0.96, 0.82, 1)
-theme_override_colors/font_pressed_color = Color(0.84, 0.75, 0.52, 1)
-theme_override_colors/font_disabled_color = Color(0.42, 0.48, 0.56, 0.7)
+theme_override_colors/font_color = Color(0.961, 0.878, 0.741, 1)
+theme_override_colors/font_hover_color = Color(1, 0.94, 0.80, 1)
+theme_override_colors/font_pressed_color = Color(0.85, 0.75, 0.58, 1)
+theme_override_colors/font_disabled_color = Color(0.45, 0.40, 0.35, 0.7)
 theme_override_fonts/font = ExtResource("3_chakra_bold")
 theme_override_font_sizes/font_size = 16
-theme_override_styles/normal = SubResource("Style_btn_launch")
-theme_override_styles/hover = SubResource("Style_btn_launch_hover")
-theme_override_styles/pressed = SubResource("Style_btn_launch_pressed")
-theme_override_styles/disabled = SubResource("Style_btn_launch_disabled")
+theme_override_styles/normal = SubResource("Style_tab_act")
+theme_override_styles/hover = SubResource("Style_tab_act_hover")
+theme_override_styles/pressed = SubResource("Style_tab_act_pressed")
+theme_override_styles/disabled = SubResource("Style_tab_act")
 text = "เข้าสู่ด่าน"
 
 [node name="SfxClick" type="AudioStreamPlayer" parent="."]

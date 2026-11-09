@@ -32,34 +32,34 @@ const TOWER_STAGES: Array[Dictionary] = [
 	{ "id": 19, "act": 2, "no": "19", "title": "Update PR & git fetch", "cmd": "git fetch", "desc": "อัปเดตข้อมูลมิติต้นทางโดยไม่รบกวนไฟล์งานที่กำลังพิมพ์", "x": 720.0, "y": 1645.0, "width": 220.0, "has_scripture": false },
 	{ "id": 20, "act": 2, "no": "20", "title": "Merge PR (Final Boss)", "cmd": "Squash & Merge", "desc": "รวมคอมมิตย่อยให้กลายเป็นบันทึกเดียวที่สะอาดเรียบร้อยก่อนขึ้นยอดหอคอย", "x": 640.0, "y": 1425.0, "width": 240.0, "has_scripture": true },
 
-	# ACT 3: Top Tower Deck (21-40) - Discrete Engineering Deck 5 คอลัมน์ x 4 แถว สมมาตรกึ่งกลางหอคอย x=880 (ช่องว่าง 50px, ขอบเสา 155px เท่ากันสองฝั่ง)
-	# แถวที่ 1 (21-25)
+	# ACT 3: Top Tower Deck (21-40) - บันไดวนคดเคี้ยวสลับซ้ายขวา (Serpentine Winding Deck with Gothic Ladders)
+	# แถวที่ 1 (21-25) จากซ้ายไปขวา
 	{ "id": 21, "act": 3, "no": "21", "title": "ตรวจสถานะก่อนเริ่มงาน", "cmd": "git status", "desc": "ตรวจสถานะ working tree ให้เรียบร้อยก่อนเริ่มแก้ปัญหา", "x": 280.0, "y": 1040.0, "width": 250.0, "has_scripture": false },
 	{ "id": 22, "act": 3, "no": "22", "title": "ตรวจสอบความแตกต่าง", "cmd": "git diff", "desc": "ส่องดูจุดเพี้ยนของโค้ดก่อนเริ่มแก้ไข", "x": 580.0, "y": 1040.0, "width": 250.0, "has_scripture": false },
 	{ "id": 23, "act": 3, "no": "23", "title": "คืนไฟล์ที่แก้ผิด", "cmd": "git restore", "desc": "กู้คืนไฟล์โค้ดที่พังกลับสู่สภาพเดิม", "x": 880.0, "y": 1040.0, "width": 250.0, "has_scripture": false },
 	{ "id": 24, "act": 3, "no": "24", "title": "นำไฟล์ลับออกจาก Stage", "cmd": "git restore --staged", "desc": "ปลดไฟล์ความลับออกจากสถานะเตรียมคอมมิต", "x": 1180.0, "y": 1040.0, "width": 250.0, "has_scripture": false },
 	{ "id": 25, "act": 3, "no": "25", "title": "แก้ไข Commit ล่าสุด", "cmd": "git commit --amend", "desc": "ซ่อมแซมคอมมิตล่าสุดโดยไม่สร้างขยะในประวัติ", "x": 1480.0, "y": 1040.0, "width": 250.0, "has_scripture": true },
 
-	# แถวที่ 2 (26-30)
-	{ "id": 26, "act": 3, "no": "26", "title": "ย้อน Commit เก็บงานไว้", "cmd": "git reset --soft", "desc": "ถอยประวัติแต่คงงานไว้ใน Staging Area", "x": 280.0, "y": 800.0, "width": 250.0, "has_scripture": false },
-	{ "id": 27, "act": 3, "no": "27", "title": "ลบ Commit ทิ้งถาวร", "cmd": "git reset --hard", "desc": "ล้างโค้ดเสียทิ้งไปอย่างเด็ดขาด", "x": 580.0, "y": 800.0, "width": 250.0, "has_scripture": false },
+	# แถวที่ 2 (26-30) จากขวาไปซ้าย (26 อยู่ขวาสุดตรงกับ 25 มีบันไดเชื่อมขึ้นไป, 30 อยู่ซ้ายสุด)
+	{ "id": 26, "act": 3, "no": "26", "title": "ย้อน Commit เก็บงานไว้", "cmd": "git reset --soft", "desc": "ถอยประวัติแต่คงงานไว้ใน Staging Area", "x": 1480.0, "y": 800.0, "width": 250.0, "has_scripture": false },
+	{ "id": 27, "act": 3, "no": "27", "title": "ลบ Commit ทิ้งถาวร", "cmd": "git reset --hard", "desc": "ล้างโค้ดเสียทิ้งไปอย่างเด็ดขาด", "x": 1180.0, "y": 800.0, "width": 250.0, "has_scripture": false },
 	{ "id": 28, "act": 3, "no": "28", "title": "ย้ายงานออกจาก main", "cmd": "git switch -c", "desc": "ย้ายงานไปกิ่งฟีเจอร์ใหม่เพื่อปกป้องกิ่งหลัก", "x": 880.0, "y": 800.0, "width": 250.0, "has_scripture": false },
-	{ "id": 29, "act": 3, "no": "29", "title": "ค้นหา Commit ที่เกี่ยวข้อง", "cmd": "git log --grep", "desc": "สืบค้นหาบันทึกในอดีตตามคีย์เวิร์ดของปัญหา", "x": 1180.0, "y": 800.0, "width": 250.0, "has_scripture": false },
-	{ "id": 30, "act": 3, "no": "30", "title": "วิเคราะห์ Commit Graph", "cmd": "git log --graph", "desc": "กางแผนผังสายฟ้าดูความเชื่อมโยงของทุกกิ่ง", "x": 1480.0, "y": 800.0, "width": 250.0, "has_scripture": true },
+	{ "id": 29, "act": 3, "no": "29", "title": "ค้นหา Commit ที่เกี่ยวข้อง", "cmd": "git log --grep", "desc": "สืบค้นหาบันทึกในอดีตตามคีย์เวิร์ดของปัญหา", "x": 580.0, "y": 800.0, "width": 250.0, "has_scripture": false },
+	{ "id": 30, "act": 3, "no": "30", "title": "วิเคราะห์ Commit Graph", "cmd": "git log --graph", "desc": "กางแผนผังสายฟ้าดูความเชื่อมโยงของทุกกิ่ง", "x": 280.0, "y": 800.0, "width": 250.0, "has_scripture": true },
 
-	# แถวที่ 3 (31-35)
+	# แถวที่ 3 (31-35) จากซ้ายไปขวา (31 อยู่ซ้ายสุดตรงกับ 30 มีบันไดเชื่อมขึ้นไป, 35 อยู่ขวาสุด)
 	{ "id": 31, "act": 3, "no": "31", "title": "ย้าย Commit ผิด Branch", "cmd": "git branch + reset", "desc": "ซ่อมแซมเส้นเวลา ย้ายคอมมิตไปกิ่งที่ถูกต้อง", "x": 280.0, "y": 560.0, "width": 250.0, "has_scripture": false },
 	{ "id": 32, "act": 3, "no": "32", "title": "รวม Feature Branch", "cmd": "git merge feature", "desc": "หลอมรวมฟีเจอร์เข้าสู่สายหลักอย่างเป็นระบบ", "x": 580.0, "y": 560.0, "width": 250.0, "has_scripture": false },
 	{ "id": 33, "act": 3, "no": "33", "title": "แก้ Merge Conflict", "cmd": "solve conflict", "desc": "เผชิญหน้าอสูร Conflict ตัดสินใจเลือกโค้ดที่ถูกต้อง", "x": 880.0, "y": 560.0, "width": 250.0, "has_scripture": false },
 	{ "id": 34, "act": 3, "no": "34", "title": "Clone โปรเจกต์ของทีม", "cmd": "git clone", "desc": "ดาวน์โหลดคลังตำราทีมและตรวจสอบ Remote", "x": 1180.0, "y": 560.0, "width": 250.0, "has_scripture": false },
 	{ "id": 35, "act": 3, "no": "35", "title": "แก้ URL ของ Remote", "cmd": "git remote set-url", "desc": "แก้ปัญหาต่อไม่ติดด้วยการเปลี่ยน URL เซิร์ฟเวอร์", "x": 1480.0, "y": 560.0, "width": 250.0, "has_scripture": true },
 
-	# แถวที่ 4 (36-40) - ยอดหอคอย y=320 เว้นระยะท้องฟ้าด้านบนให้เวลกระโดดโดยศีรษะไม่พ้นขอบจอ
-	{ "id": 36, "act": 3, "no": "36", "title": "กู้คืน Remote origin", "cmd": "git remote add", "desc": "สร้างสายสัมพันธ์ใหม่หลังเผลอลบการเชื่อมต่อ", "x": 280.0, "y": 320.0, "width": 250.0, "has_scripture": false },
-	{ "id": 37, "act": 3, "no": "37", "title": "รับอัปเดตจาก Remote", "cmd": "git pull --rebase", "desc": "ดึงงานเพื่อนร่วมทีมมาผสานโดยประวัติเป็นเส้นตรง", "x": 580.0, "y": 320.0, "width": 250.0, "has_scripture": false },
+	# แถวที่ 4 (36-40) จากขวาไปซ้าย (36 อยู่ขวาสุดตรงกับ 35 มีบันไดเชื่อมขึ้นไป, 40 อยู่ซ้ายสุด)
+	{ "id": 36, "act": 3, "no": "36", "title": "กู้คืน Remote origin", "cmd": "git remote add", "desc": "สร้างสายสัมพันธ์ใหม่หลังเผลอลบการเชื่อมต่อ", "x": 1480.0, "y": 320.0, "width": 250.0, "has_scripture": false },
+	{ "id": 37, "act": 3, "no": "37", "title": "รับอัปเดตจาก Remote", "cmd": "git pull --rebase", "desc": "ดึงงานเพื่อนร่วมทีมมาผสานโดยประวัติเป็นเส้นตรง", "x": 1180.0, "y": 320.0, "width": 250.0, "has_scripture": false },
 	{ "id": 38, "act": 3, "no": "38", "title": "ส่ง Feature ครั้งแรก", "cmd": "git push -u", "desc": "ตั้งค่า upstream tracking และส่งกิ่งงานขึ้นเซิร์ฟเวอร์", "x": 880.0, "y": 320.0, "width": 250.0, "has_scripture": false },
-	{ "id": 39, "act": 3, "no": "39", "title": "แก้ไขตาม Code Review", "cmd": "amend & push", "desc": "ปรับปรุงตามคำแนะนำของรุ่นพี่และส่งอัปเดต", "x": 1180.0, "y": 320.0, "width": 250.0, "has_scripture": false },
-	{ "id": 40, "act": 3, "no": "40", "title": "กู้คืนคัมภีร์และปรมาจารย์ Git (FINAL)", "cmd": "release ➔ final", "desc": "ภารกิจสูงสุด: ผสานคัมภีร์โบราณ ปลดปล่อยปรมาจารย์ Git ผู้สาบสูญสู่ยอดหอคอย", "x": 1480.0, "y": 320.0, "width": 250.0, "has_scripture": true },
+	{ "id": 39, "act": 3, "no": "39", "title": "แก้ไขตาม Code Review", "cmd": "amend & push", "desc": "ปรับปรุงตามคำแนะนำของรุ่นพี่และส่งอัปเดต", "x": 580.0, "y": 320.0, "width": 250.0, "has_scripture": false },
+	{ "id": 40, "act": 3, "no": "40", "title": "กู้คืนคัมภีร์และปรมาจารย์ Git (FINAL)", "cmd": "release ➔ final", "desc": "ภารกิจสูงสุด: ผสานคัมภีร์โบราณ ปลดปล่อยปรมาจารย์ Git ผู้สาบสูญสู่ยอดหอคอย", "x": 280.0, "y": 320.0, "width": 250.0, "has_scripture": true },
 ]
 # UI Nodes
 var scroll_chamber: ScrollContainer
@@ -410,16 +410,16 @@ func _update_act_header_tab(act_num: int, animate: bool = true) -> void:
 	match act_num:
 		1:
 			badge_text = "ACT 1"
-			title_text = "THE SPIRAL STAIRWAY"
-			desc_text = "• บันไดวนไต่หอคอยแห่งการฝึกตน (ด่าน 01–15)"
+			title_text = "การใช้งาน Git เบื้องต้น"
+			desc_text = "15 ด่าน"
 		2:
 			badge_text = "ACT 2"
-			title_text = "GITHUB FLOW"
-			desc_text = "• โถงคลังเวทกลางและระบบทีม (ด่าน 16–20)"
+			title_text = "การทำงานเป็นทีม / หอสมุดคลังเวทกลาง"
+			desc_text = "5 ด่าน"
 		3:
 			badge_text = "ACT 3"
-			title_text = "THE SUMMIT CITADEL"
-			desc_text = "• ยอดหอคอยและการกู้คืนคัมภีร์ Git โบราณ (ด่าน 21–40)"
+			title_text = "การแก้ปัญหาในการใช้งาน Git / หอคอยแห่งการฝึกตน"
+			desc_text = "20 ด่าน"
 
 	if act_badge:
 		act_badge.text = badge_text
@@ -725,21 +725,25 @@ func _spawn_tower_platforms() -> void:
 
 			var title_lbl := Label.new()
 			title_lbl.name = "TitleLabel"
-			title_lbl.text = str(stg["title"])
+			if act_num == 3:
+				title_lbl.text = "ด่าน %s" % str(stg["no"])
+			else:
+				title_lbl.text = str(stg["title"])
 			title_lbl.clip_text = true
 			if font_chakra_bold:
 				title_lbl.add_theme_font_override("font", font_chakra_bold)
-				title_lbl.add_theme_font_size_override("font_size", title_font_sz)
+				title_lbl.add_theme_font_size_override("font_size", title_font_sz + (2 if act_num == 3 else 0))
 			info_vbox.add_child(title_lbl)
 
-			var cmd_lbl := Label.new()
-			cmd_lbl.name = "CmdLabel"
-			cmd_lbl.text = str(stg["cmd"])
-			cmd_lbl.clip_text = true
-			if font_ta_pixel:
-				cmd_lbl.add_theme_font_override("font", font_ta_pixel)
-				cmd_lbl.add_theme_font_size_override("font_size", cmd_font_sz)
-			info_vbox.add_child(cmd_lbl)
+			if act_num != 3:
+				var cmd_lbl := Label.new()
+				cmd_lbl.name = "CmdLabel"
+				cmd_lbl.text = str(stg["cmd"])
+				cmd_lbl.clip_text = true
+				if font_ta_pixel:
+					cmd_lbl.add_theme_font_override("font", font_ta_pixel)
+					cmd_lbl.add_theme_font_size_override("font_size", cmd_font_sz)
+				info_vbox.add_child(cmd_lbl)
 
 			hbox.add_child(info_vbox)
 
@@ -1518,31 +1522,62 @@ func _on_draw_path() -> void:
 	if stages.size() >= 21:
 		draw_segment.call(19, 20)
 
-	# วาดเส้นทาง Act 3: ยอดหอคอย 5 คอลัมน์ x 4 แถว (21 -> 40)
+	# วาดบันไดโกธิคสีเทาอ่อนฟ้าๆ 3 จุดเชื่อมระหว่างแถว Act 3 (Gothic Ladders)
 	if stages.size() >= 40:
-		# แถวที่ 1 (21-25)
-		for k in range(20, 24):
+		_draw_gothic_ladder(1480.0, 840.0, 1000.0) # บันไดฝั่งขวา (25 -> 26)
+		_draw_gothic_ladder(280.0, 600.0, 760.0)   # บันไดฝั่งซ้าย (30 -> 31)
+		_draw_gothic_ladder(1480.0, 360.0, 520.0)  # บันไดฝั่งขวา (35 -> 36)
+
+	# วาดเส้นทาง Act 3: ยอดหอคอยแบบบันไดวนคดเคี้ยวสลับซ้ายขวา (21 -> 40)
+	if stages.size() >= 40:
+		for k in range(20, 39):
 			draw_segment.call(k, k + 1)
-		# เชื่อมแถวที่ 1 ไป 2 (25 -> 26)
-		draw_segment.call(24, 25)
-		# แถวที่ 2 (26-30)
-		for k in range(25, 29):
-			draw_segment.call(k, k + 1)
-		# เชื่อมแถวที่ 2 ไป 3 (30 -> 31)
-		draw_segment.call(29, 30)
-		# แถวที่ 3 (31-35)
-		for k in range(30, 34):
-			draw_segment.call(k, k + 1)
-		# เชื่อมแถวที่ 3 ไป 4 (35 -> 36)
-		draw_segment.call(34, 35)
-		# แถวที่ 4 (36-40)
-		for k in range(35, 39):
-			draw_segment.call(k, k + 1)
+
+
+func _draw_gothic_ladder(cx: float, y_top: float, y_bottom: float) -> void:
+	if not path_renderer:
+		return
+	var half_w := 24.0
+	var rail_w := 5.0
+	var col_shadow := Color(0.12, 0.16, 0.24, 0.90)     # Dark slate outline
+	var col_main := Color(0.62, 0.72, 0.84, 0.95)       # Light slate-blue gray (เทาอ่อนฟ้าๆ)
+	var col_highlight := Color(0.85, 0.92, 1.0, 0.98)   # Crisp light sky highlight
+
+	var left_rail_x := cx - half_w
+	var right_rail_x := cx + half_w - rail_w
+	var ladder_h := y_bottom - y_top
+
+	# 1. เสาราวบันไดซ้าย-ขวา (Vertical Rails)
+	path_renderer.draw_rect(Rect2(left_rail_x - 1.0, y_top, rail_w + 2.0, ladder_h), col_shadow)
+	path_renderer.draw_rect(Rect2(right_rail_x - 1.0, y_top, rail_w + 2.0, ladder_h), col_shadow)
+	path_renderer.draw_rect(Rect2(left_rail_x, y_top, rail_w, ladder_h), col_main)
+	path_renderer.draw_rect(Rect2(right_rail_x, y_top, rail_w, ladder_h), col_main)
+	path_renderer.draw_line(Vector2(left_rail_x + 1.0, y_top), Vector2(left_rail_x + 1.0, y_bottom), col_highlight, 1.0)
+	path_renderer.draw_line(Vector2(right_rail_x + 1.0, y_top), Vector2(right_rail_x + 1.0, y_bottom), col_highlight, 1.0)
+
+	# 2. ขั้นบันไดแนวนอน (Horizontal Rungs) ห่างกันทุก 20px
+	var rung_h := 4.0
+	var curr_y := y_top + 16.0
+	var rung_end_y := y_bottom - 12.0
+	while curr_y <= rung_end_y:
+		var rx1 := left_rail_x + rail_w
+		var rx2 := right_rail_x
+		var rw := rx2 - rx1
+		path_renderer.draw_rect(Rect2(rx1, curr_y + 1.0, rw, rung_h), col_shadow)
+		path_renderer.draw_rect(Rect2(rx1, curr_y, rw, rung_h), col_main)
+		path_renderer.draw_line(Vector2(rx1, curr_y), Vector2(rx2, curr_y), col_highlight, 1.0)
+		curr_y += 20.0
 
 
 func _draw_curved_connection(p1: Vector2, p2: Vector2, color: Color, line_width: float = 2.5, dash_len: float = 4.0) -> void:
 	if not path_renderer:
 		return
+
+	# ถ้าเป็นเส้นตรงแนวตั้งตามบันได หรือแนวนอนระหว่างด่านในแถวเดียวกัน
+	if absf(p1.x - p2.x) < 2.0 or absf(p1.y - p2.y) < 2.0:
+		path_renderer.draw_line(p1, p2, color, line_width)
+		return
+
 	var steps := 16
 	var prev_pt := p1
 	var mid_y := (p1.y + p2.y) / 2.0

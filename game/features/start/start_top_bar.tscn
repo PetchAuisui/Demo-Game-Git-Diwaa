@@ -9,23 +9,25 @@
 [sub_resource type="StyleBoxEmpty" id="Style_brand_btn"]
 
 [sub_resource type="StyleBoxFlat" id="Style_topbar_bg"]
-bg_color = Color(0.078, 0.063, 0.047, 0.98)
+bg_color = Color(0.078, 0.063, 0.047, 1)
 border_width_bottom = 2
 border_color = Color(0.278, 0.176, 0.102, 1)
 
 [node name="StartTopBar" type="PanelContainer"]
-custom_minimum_size = Vector2(0, 72)
+custom_minimum_size = Vector2(0, 76)
 anchors_preset = 10
 anchor_right = 1.0
+offset_top = -4.0
 offset_bottom = 72.0
 grow_horizontal = 2
+z_index = 5
 theme_override_styles/panel = SubResource("Style_topbar_bg")
 script = ExtResource("1_script")
 
 [node name="Margin" type="MarginContainer" parent="."]
 layout_mode = 2
 theme_override_constants/margin_left = 32
-theme_override_constants/margin_top = 10
+theme_override_constants/margin_top = 14
 theme_override_constants/margin_right = 32
 theme_override_constants/margin_bottom = 10
 
