@@ -12,6 +12,8 @@ func _ready() -> void:
 
 	if brand_hat:
 		brand_hat.texture = GameProgressManager.get_current_hat_texture()
+		brand_hat.position.y = -4.0
+		brand_hat.rotation_degrees = 0.0
 
 	if brand_btn:
 		brand_btn.mouse_entered.connect(_on_brand_hover.bind(true))

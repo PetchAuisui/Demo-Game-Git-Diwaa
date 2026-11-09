@@ -29,6 +29,8 @@ func _ready() -> void:
 		_brand_label.text = game_title
 	if _brand_hat != null:
 		_brand_hat.texture = GameProgressManager.get_current_hat_texture()
+		_brand_hat.position.y = -4.0
+		_brand_hat.rotation_degrees = 0.0
 	set_mode_text(mode_text)
 
 	if _brand_btn != null:

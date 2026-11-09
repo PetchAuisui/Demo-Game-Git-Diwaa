@@ -208,6 +208,8 @@ func _bind_nodes() -> void:
 	brand_hat = get_node_or_null("%BrandHat")
 	if brand_hat:
 		brand_hat.texture = GameProgressManager.get_current_hat_texture()
+		brand_hat.position.y = -4.0
+		brand_hat.rotation_degrees = 0.0
 
 	btn_back = get_node_or_null("%BtnBack")
 	btn_act1 = get_node_or_null("%BtnAct1")
