@@ -26,10 +26,10 @@ border_color = Color(0.18, 0.16, 0.24, 0.9)
 [sub_resource type="StyleBoxEmpty" id="Style_empty"]
 
 [sub_resource type="StyleBoxFlat" id="Style_tab_act_active"]
-content_margin_left = 10.0
-content_margin_top = 6.0
-content_margin_right = 10.0
-content_margin_bottom = 4.0
+content_margin_left = 0.0
+content_margin_top = 0.0
+content_margin_right = 0.0
+content_margin_bottom = 2.0
 draw_center = false
 border_width_bottom = 2
 border_color = Color(0.722, 0.604, 0.404, 1)
@@ -329,7 +329,7 @@ theme_override_constants/separation = 16
 
 [node name="BtnAct1" type="Button" parent="LayoutVBox/TopNavbar/NavMargin/NavHBox/ActTabsHBox"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(80, 44)
+custom_minimum_size = Vector2(96, 44)
 layout_mode = 2
 focus_mode = 0
 mouse_default_cursor_shape = 2
@@ -346,7 +346,7 @@ text = "ACT 1"
 
 [node name="BtnAct2" type="Button" parent="LayoutVBox/TopNavbar/NavMargin/NavHBox/ActTabsHBox"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(80, 44)
+custom_minimum_size = Vector2(96, 44)
 layout_mode = 2
 focus_mode = 0
 mouse_default_cursor_shape = 2
@@ -363,7 +363,7 @@ text = "ACT 2"
 
 [node name="BtnAct3" type="Button" parent="LayoutVBox/TopNavbar/NavMargin/NavHBox/ActTabsHBox"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(80, 44)
+custom_minimum_size = Vector2(96, 44)
 layout_mode = 2
 focus_mode = 0
 mouse_default_cursor_shape = 2
@@ -380,6 +380,7 @@ text = "ACT 3"
 
 [node name="ActProgressPanel" type="PanelContainer" parent="LayoutVBox/TopNavbar/NavMargin/NavHBox/ActTabsHBox"]
 unique_name_in_owner = true
+custom_minimum_size = Vector2(200, 44)
 layout_mode = 2
 size_flags_vertical = 4
 theme_override_styles/panel = SubResource("Style_empty")
@@ -396,6 +397,7 @@ vertical_alignment = 1
 
 [node name="BtnFocusCurrent" type="Button" parent="LayoutVBox/TopNavbar/NavMargin/NavHBox/ActTabsHBox"]
 unique_name_in_owner = true
+custom_minimum_size = Vector2(116, 44)
 layout_mode = 2
 size_flags_vertical = 4
 tooltip_text = "ไปยังด่านล่าสุดที่ปลดล็อก"

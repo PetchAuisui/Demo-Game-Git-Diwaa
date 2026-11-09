@@ -76,6 +76,7 @@ var btn_back: Button
 var btn_act1: Button
 var btn_act2: Button
 var btn_act3: Button
+var act_progress_panel: PanelContainer
 var act_progress_label: Label
 var btn_focus_current: Button
 var btn_sound: Button
@@ -222,6 +223,7 @@ func _bind_nodes() -> void:
 	btn_act1 = get_node_or_null("%BtnAct1")
 	btn_act2 = get_node_or_null("%BtnAct2")
 	btn_act3 = get_node_or_null("%BtnAct3")
+	act_progress_panel = get_node_or_null("%ActProgressPanel")
 	act_progress_label = get_node_or_null("%ActProgressLabel")
 	btn_focus_current = get_node_or_null("%BtnFocusCurrent")
 	btn_sound = get_node_or_null("%BtnSound")
@@ -261,8 +263,11 @@ func _wire_navbar() -> void:
 		btn_act2.pressed.connect(func(): _on_act_button_pressed(2))
 	if btn_act3:
 		btn_act3.pressed.connect(func(): _on_act_button_pressed(3))
+	if act_progress_panel:
+		act_progress_panel.custom_minimum_size = Vector2(200, 44)
 	if btn_focus_current:
 		btn_focus_current.pressed.connect(_on_continue_pressed)
+		btn_focus_current.custom_minimum_size = Vector2(116, 44)
 		btn_focus_current.text = "ดำเนินต่อ →"
 		btn_focus_current.add_theme_color_override("font_color", NAV_COLOR_ACTIVE)
 		btn_focus_current.add_theme_color_override("font_hover_color", NAV_COLOR_PRIMARY)
@@ -361,6 +366,7 @@ func _style_act_button(btn: Button, act_num: int, is_active: bool, prog: Diction
 	if not btn:
 		return
 
+	btn.custom_minimum_size = Vector2(96, 44)
 	var text_base := "ACT %d" % act_num
 	if prog["is_completed"]:
 		btn.text = "%s ✓" % text_base
@@ -368,6 +374,10 @@ func _style_act_button(btn: Button, act_num: int, is_active: bool, prog: Diction
 		btn.text = text_base
 
 	var empty_sb := StyleBoxEmpty.new()
+	empty_sb.content_margin_left = 0.0
+	empty_sb.content_margin_right = 0.0
+	empty_sb.content_margin_top = 0.0
+	empty_sb.content_margin_bottom = 2.0
 
 	if is_active:
 		# Active Act: Antique gold text, subtle 2px bottom underline, flat transparent background
@@ -379,10 +389,10 @@ func _style_act_button(btn: Button, act_num: int, is_active: bool, prog: Diction
 		sb_active.border_width_right = 0
 		sb_active.border_width_bottom = 2
 		sb_active.border_color = NAV_COLOR_ACTIVE
-		sb_active.content_margin_left = 10.0
-		sb_active.content_margin_right = 10.0
-		sb_active.content_margin_top = 6.0
-		sb_active.content_margin_bottom = 4.0
+		sb_active.content_margin_left = 0.0
+		sb_active.content_margin_right = 0.0
+		sb_active.content_margin_top = 0.0
+		sb_active.content_margin_bottom = 2.0
 
 		btn.add_theme_color_override("font_color", NAV_COLOR_ACTIVE)
 		btn.add_theme_color_override("font_hover_color", NAV_COLOR_PRIMARY)
@@ -850,45 +860,50 @@ func _step_towards_queued_target() -> void:
 
 func _perform_jump_step(next_idx: int) -> void:
 	_is_jumping = true
-	var prev_idx := _current_stage_idx
-	_current_stage_idx = next_idx
+	var from_idx := _current_stage_idx
+	var to_idx := next_idx
 
-	_update_platform_highlight(prev_idx, false)
-	_update_platform_highlight(_current_stage_idx, true)
+	var from_stg_id: int = TOWER_STAGES[from_idx]["id"]
+	var to_stg_id: int = TOWER_STAGES[to_idx]["id"]
+	var is_between_15_and_16 := (from_stg_id == 15 and to_stg_id == 16) or (from_stg_id == 16 and to_stg_id == 15)
 
-	var stg := TOWER_STAGES[_current_stage_idx]
-	_update_hud_display(stg)
-	_highlight_act(int(stg["act"]))
-
-	var target_vel_pos := Vector2(stg["x"] - 24.0, stg["y"] - VEL_Y_OFFSET)
+	var target_stg: Dictionary = TOWER_STAGES[to_idx]
+	var target_vel_pos := Vector2(target_stg["x"] - 24.0, target_stg["y"] - VEL_Y_OFFSET)
 	var start_vel_pos := vel_hero.position if vel_hero else target_vel_pos
 	var is_moving_right := target_vel_pos.x >= start_vel_pos.x
-
-	var prev_stg_id: int = TOWER_STAGES[prev_idx]["id"]
-	var next_stg_id: int = TOWER_STAGES[next_idx]["id"]
-	var is_between_15_and_16 := (prev_stg_id == 15 and next_stg_id == 16) or (prev_stg_id == 16 and next_stg_id == 15)
 
 	# เล่นแอนิเมชันตามเงื่อนไข
 	if vel_anim:
 		if is_between_15_and_16:
 			vel_anim.flip_h = false
-			if next_stg_id == 15:
-				# ตอนระหว่าง 15-16 ลงมาจาก 16 สู่ 15 -> ให้ท่า hold ที่ยกแขน
+			if to_stg_id == 15:
+				# ตอนระหว่าง 15-16 ถอยลงมาจาก 16 สู่ 15 -> ให้ท่า hold ชูมือขึ้นตอนตกลงมา
 				vel_anim.play("hold")
 			else:
-				# ตอนระหว่าง 15-16 ขึ้นจาก 15 สู่ 16 -> ให้ท่าตัวยืนตรงปกติ
+				# ตอนระหว่าง 15-16 ไต่ขึ้นจาก 15 สู่ 16 -> ให้ท่าตัวยืนตรงปกติ
 				vel_anim.play("stand_straight")
 		else:
-			# เดิน/วิ่งต่อเนื่องทั่วไป
+			# เดิน/กระโดดทั่วไป
 			vel_anim.flip_h = not is_moving_right
 			vel_anim.play("walk")
 
 	_play_sfx(sfx_jump)
-	_scroll_to_stage_idx(_current_stage_idx, true)
 
-	var has_more_steps := (_target_queue_idx != _current_stage_idx)
-	var jump_duration := 0.72 if is_between_15_and_16 else (0.42 if has_more_steps else 0.50)
-	var peak_height := 65.0 if is_between_15_and_16 else 95.0
+	var has_more_steps := (_target_queue_idx != to_idx and _target_queue_idx != -1)
+	var jump_duration: float
+	var peak_height: float
+	var scroll_duration: float
+
+	if is_between_15_and_16:
+		jump_duration = 1.35
+		scroll_duration = 1.30
+		peak_height = 25.0 if to_stg_id == 15 else 45.0
+	else:
+		jump_duration = 0.42 if has_more_steps else 0.50
+		scroll_duration = 0.48
+		peak_height = 95.0
+
+	_scroll_to_stage_idx(to_idx, true, false, scroll_duration)
 
 	if _jump_tween and _jump_tween.is_valid():
 		_jump_tween.kill()
@@ -904,7 +919,19 @@ func _perform_jump_step(next_idx: int) -> void:
 	, 0.0, 1.0, jump_duration).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 
 	_jump_tween.finished.connect(func():
+		# ตัวละครลงสู่แท่นหินปลายทางเรียบร้อยแล้ว -> สลับการ์ดและอัปเดตสถานะเมื่อตัวละครไปถึง!
+		_update_platform_highlight(from_idx, false)
+		_current_stage_idx = to_idx
+		_update_platform_highlight(_current_stage_idx, true)
+
+		var landed_stg: Dictionary = TOWER_STAGES[_current_stage_idx]
+		_update_hud_display(landed_stg)
+		_highlight_act(int(landed_stg["act"]))
+		if path_renderer:
+			path_renderer.queue_redraw()
+
 		_play_sfx(sfx_click)
+
 		if _target_queue_idx != _current_stage_idx and _target_queue_idx != -1:
 			get_tree().create_timer(0.06).timeout.connect(_step_towards_queued_target)
 		else:
@@ -1127,17 +1154,18 @@ func _update_hud_display(stg: Dictionary) -> void:
 			btn_launch.text = "ยังไม่ปลดล็อก"
 
 
-func _scroll_to_stage_idx(stage_idx: int, animate: bool = true) -> void:
+func _scroll_to_stage_idx(stage_idx: int, animate: bool = true, update_hud: bool = false, duration: float = 0.48) -> void:
 	if not scroll_chamber or TOWER_STAGES.is_empty():
 		return
 	_view_stage_idx = clampi(stage_idx, 0, TOWER_STAGES.size() - 1)
 	var stg: Dictionary = TOWER_STAGES[_view_stage_idx]
-	_highlight_act(int(stg["act"]))
-	_update_hud_display(stg)
+	if update_hud:
+		_highlight_act(int(stg["act"]))
+		_update_hud_display(stg)
 
 	var center_offset := int(scroll_chamber.size.y * 0.5) if scroll_chamber and scroll_chamber.size.y > 0 else 540
 	var target_y := int(stg["y"]) - center_offset
-	_scroll_to_y(target_y, animate)
+	_scroll_to_y(target_y, animate, duration)
 
 
 func _sync_view_stage_with_scroll() -> void:
@@ -1155,7 +1183,7 @@ func _sync_view_stage_with_scroll() -> void:
 	_view_stage_idx = closest_idx
 
 
-func _scroll_to_y(target_y: int, animate: bool = true) -> void:
+func _scroll_to_y(target_y: int, animate: bool = true, duration: float = 0.48) -> void:
 	if not scroll_chamber:
 		return
 	var max_scroll := 3700
@@ -1169,7 +1197,7 @@ func _scroll_to_y(target_y: int, animate: bool = true) -> void:
 	if animate:
 		_scroll_tween = create_tween()
 		_scroll_tween.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
-		_scroll_tween.tween_property(scroll_chamber, "scroll_vertical", clamped_y, 0.48)
+		_scroll_tween.tween_property(scroll_chamber, "scroll_vertical", clamped_y, duration)
 	else:
 		scroll_chamber.scroll_vertical = clamped_y
 
