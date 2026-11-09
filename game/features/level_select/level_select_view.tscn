@@ -71,6 +71,22 @@ corner_radius_top_right = 4
 corner_radius_bottom_left = 4
 corner_radius_bottom_right = 4
 
+[sub_resource type="StyleBoxFlat" id="Style_act_chip"]
+content_margin_left = 14.0
+content_margin_top = 6.0
+content_margin_right = 14.0
+content_margin_bottom = 6.0
+bg_color = Color(0.065, 0.082, 0.125, 0.95)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 2
+border_color = Color(0.25, 0.34, 0.46, 0.9)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_left = 4
+corner_radius_bottom_right = 4
+
 [sub_resource type="StyleBoxFlat" id="Style_pillar"]
 bg_color = Color(0.04, 0.05, 0.08, 1)
 border_width_left = 2
@@ -357,20 +373,37 @@ theme_override_styles/hover = SubResource("Style_tab_act_hover")
 theme_override_styles/pressed = SubResource("Style_tab_act_pressed")
 text = "ACT 3"
 
+[node name="ActProgressPanel" type="PanelContainer" parent="LayoutVBox/TopNavbar/NavMargin/NavHBox/ActTabsHBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(180, 40)
+layout_mode = 2
+size_flags_vertical = 4
+theme_override_styles/panel = SubResource("Style_act_chip")
+
+[node name="ActProgressLabel" type="Label" parent="LayoutVBox/TopNavbar/NavMargin/NavHBox/ActTabsHBox/ActProgressPanel"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.96, 0.78, 0.35, 1)
+theme_override_fonts/font = ExtResource("3_chakra_bold")
+theme_override_font_sizes/font_size = 14
+text = "ACT 1 — 0 / 15 LEVELS"
+horizontal_alignment = 1
+vertical_alignment = 1
+
 [node name="BtnFocusCurrent" type="Button" parent="LayoutVBox/TopNavbar/NavMargin/NavHBox/ActTabsHBox"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(130, 44)
+custom_minimum_size = Vector2(144, 44)
 layout_mode = 2
-tooltip_text = "เลื่อนกล้องไปตำแหน่งตัวละคร"
+tooltip_text = "ไปยังด่านล่าสุดที่ปลดล็อก"
 mouse_default_cursor_shape = 2
 theme_override_colors/font_color = Color(0.961, 0.620, 0.043, 1)
 theme_override_colors/font_hover_color = Color(1, 0.88, 0.47, 1)
 theme_override_fonts/font = ExtResource("3_chakra_bold")
-theme_override_font_sizes/font_size = 17
+theme_override_font_sizes/font_size = 16
 theme_override_styles/normal = SubResource("Style_tab_act")
 theme_override_styles/hover = SubResource("Style_tab_act_hover")
 theme_override_styles/pressed = SubResource("Style_tab_act_pressed")
-text = "📍 ด่านฉัน"
+text = "ดำเนินต่อ ➔"
 
 [node name="SpacerRight" type="Control" parent="LayoutVBox/TopNavbar/NavMargin/NavHBox"]
 layout_mode = 2
@@ -681,7 +714,7 @@ theme_override_colors/font_outline_color = Color(0.04, 0.06, 0.1, 0.85)
 theme_override_constants/outline_size = 2
 theme_override_fonts/font = ExtResource("3_chakra_bold")
 theme_override_font_sizes/font_size = 14
-text = "ใช้ W / S หรือเลื่อนลูกกลิ้ง
+text = "ใช้ WASD หรือลูกศร
 เพื่อสำรวจหอคอย"
 horizontal_alignment = 1
 vertical_alignment = 1

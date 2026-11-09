@@ -76,6 +76,7 @@ var btn_back: Button
 var btn_act1: Button
 var btn_act2: Button
 var btn_act3: Button
+var act_progress_label: Label
 var btn_focus_current: Button
 var btn_sound: Button
 
@@ -122,6 +123,9 @@ var _is_muted := false
 var _idle_bob_timer := 0.0
 var _torch_flames: Array[ColorRect] = []
 var _torch_timer := 0.0
+var _path_glow_timer: float = 0.0
+var _glow_redraw_accum: float = 0.0
+var _view_act_num: int = 1
 
 
 func _ready() -> void:
@@ -209,6 +213,7 @@ func _bind_nodes() -> void:
 	btn_act1 = get_node_or_null("%BtnAct1")
 	btn_act2 = get_node_or_null("%BtnAct2")
 	btn_act3 = get_node_or_null("%BtnAct3")
+	act_progress_label = get_node_or_null("%ActProgressLabel")
 	btn_focus_current = get_node_or_null("%BtnFocusCurrent")
 	btn_sound = get_node_or_null("%BtnSound")
 
@@ -225,11 +230,13 @@ func _bind_nodes() -> void:
 		path_renderer.draw.connect(_on_draw_path)
 
 
-
-
-
-func _process(_delta: float) -> void:
-	pass
+func _process(delta: float) -> void:
+	_path_glow_timer += delta
+	_glow_redraw_accum += delta
+	if _glow_redraw_accum >= 0.05:
+		_glow_redraw_accum = 0.0
+		if path_renderer:
+			path_renderer.queue_redraw()
 
 
 func _wire_navbar() -> void:
@@ -240,15 +247,13 @@ func _wire_navbar() -> void:
 	if btn_back:
 		btn_back.pressed.connect(_on_back_pressed)
 	if btn_act1:
-		btn_act1.pressed.connect(func(): _scroll_to_stage_idx(0, true))
+		btn_act1.pressed.connect(func(): _on_act_button_pressed(1))
 	if btn_act2:
-		btn_act2.pressed.connect(func(): _scroll_to_stage_idx(15, true))
+		btn_act2.pressed.connect(func(): _on_act_button_pressed(2))
 	if btn_act3:
-		btn_act3.pressed.connect(func(): _scroll_to_stage_idx(20, true))
+		btn_act3.pressed.connect(func(): _on_act_button_pressed(3))
 	if btn_focus_current:
-		btn_focus_current.pressed.connect(func():
-			_scroll_to_stage_idx(_current_stage_idx, true)
-		)
+		btn_focus_current.pressed.connect(_on_continue_pressed)
 	if btn_sound:
 		btn_sound.pressed.connect(_on_toggle_sound)
 	if btn_launch:
@@ -283,15 +288,140 @@ func _on_toggle_sound() -> void:
 
 
 func _highlight_act(act_num: int) -> void:
-	var color_active := Color(0.961, 0.620, 0.043, 1.0)
-	var color_dim := Color(0.580, 0.643, 0.722, 1.0)
+	_refresh_act_tabs(act_num)
 
-	if btn_act1:
-		btn_act1.add_theme_color_override("font_color", color_active if act_num == 1 else color_dim)
-	if btn_act2:
-		btn_act2.add_theme_color_override("font_color", color_active if act_num == 2 else color_dim)
-	if btn_act3:
-		btn_act3.add_theme_color_override("font_color", color_active if act_num == 3 else color_dim)
+
+func _get_act_progress(act_num: int) -> Dictionary:
+	var total_levels := 0
+	var cleared_levels := 0
+	var is_act_unlocked := false
+	if act_num == 1:
+		total_levels = 15
+		is_act_unlocked = true
+		for id in range(1, 16):
+			if GameProgressManager.is_level_cleared(id):
+				cleared_levels += 1
+	elif act_num == 2:
+		total_levels = 5
+		is_act_unlocked = GameProgressManager.is_level_cleared(15) or _current_stage_idx >= 15
+		for id in range(16, 21):
+			if GameProgressManager.is_level_cleared(id):
+				cleared_levels += 1
+	elif act_num == 3:
+		total_levels = 20
+		is_act_unlocked = GameProgressManager.is_level_cleared(20) or _current_stage_idx >= 20
+		for id in range(21, 41):
+			if GameProgressManager.is_level_cleared(id):
+				cleared_levels += 1
+	var is_act_completed := (cleared_levels >= total_levels)
+	return {
+		"total": total_levels,
+		"cleared": cleared_levels,
+		"is_unlocked": is_act_unlocked,
+		"is_completed": is_act_completed
+	}
+
+
+func _refresh_act_tabs(active_act: int) -> void:
+	_view_act_num = active_act
+	var p1 := _get_act_progress(1)
+	var p2 := _get_act_progress(2)
+	var p3 := _get_act_progress(3)
+
+	_style_act_button(btn_act1, 1, active_act == 1, p1)
+	_style_act_button(btn_act2, 2, active_act == 2, p2)
+	_style_act_button(btn_act3, 3, active_act == 3, p3)
+
+	var curr_prog := p1 if active_act == 1 else (p2 if active_act == 2 else p3)
+	if act_progress_label:
+		act_progress_label.text = "ACT %d — %d / %d LEVELS" % [active_act, curr_prog["cleared"], curr_prog["total"]]
+		if curr_prog["is_completed"]:
+			act_progress_label.add_theme_color_override("font_color", Color(0.45, 0.88, 0.60, 1.0))
+		elif not curr_prog["is_unlocked"]:
+			act_progress_label.add_theme_color_override("font_color", Color(0.55, 0.60, 0.70, 0.85))
+		else:
+			act_progress_label.add_theme_color_override("font_color", Color(0.96, 0.78, 0.35, 1.0))
+
+
+func _style_act_button(btn: Button, act_num: int, is_active: bool, prog: Dictionary) -> void:
+	if not btn:
+		return
+	var text_base := "ACT %d" % act_num
+	if prog["is_completed"]:
+		btn.text = "%s ✓" % text_base
+	elif not prog["is_unlocked"]:
+		btn.text = "🔒 %s" % text_base
+	else:
+		btn.text = text_base
+
+	var sb: StyleBoxFlat
+	var existing_sb := btn.get_theme_stylebox("normal")
+	if existing_sb and existing_sb is StyleBoxFlat:
+		sb = existing_sb.duplicate() as StyleBoxFlat
+	else:
+		sb = StyleBoxFlat.new()
+		sb.corner_radius_top_left = 4
+		sb.corner_radius_top_right = 4
+		sb.corner_radius_bottom_left = 4
+		sb.corner_radius_bottom_right = 4
+		sb.border_width_left = 1
+		sb.border_width_top = 1
+		sb.border_width_right = 1
+
+	if is_active:
+		sb.bg_color = Color(0.18, 0.14, 0.08, 1.0)
+		sb.border_color = Color(0.96, 0.62, 0.07, 1.0)
+		sb.border_width_bottom = 3
+		btn.add_theme_color_override("font_color", Color(0.98, 0.88, 0.47, 1.0))
+	elif prog["is_completed"]:
+		sb.bg_color = Color(0.08, 0.14, 0.10, 1.0)
+		sb.border_color = Color(0.28, 0.52, 0.36, 1.0)
+		sb.border_width_bottom = 2
+		btn.add_theme_color_override("font_color", Color(0.45, 0.85, 0.60, 1.0))
+	elif not prog["is_unlocked"]:
+		sb.bg_color = Color(0.06, 0.07, 0.10, 0.8)
+		sb.border_color = Color(0.18, 0.22, 0.28, 0.6)
+		sb.border_width_bottom = 2
+		btn.add_theme_color_override("font_color", Color(0.40, 0.46, 0.55, 0.7))
+	else:
+		sb.bg_color = Color(0.10, 0.12, 0.17, 1.0)
+		sb.border_color = Color(0.25, 0.32, 0.44, 1.0)
+		sb.border_width_bottom = 2
+		btn.add_theme_color_override("font_color", Color(0.70, 0.78, 0.88, 1.0))
+
+	btn.add_theme_stylebox_override("normal", sb)
+
+
+func _on_act_button_pressed(act_num: int) -> void:
+	var prog := _get_act_progress(act_num)
+	if not prog["is_unlocked"]:
+		_play_sfx(sfx_click)
+		if hud_desc:
+			hud_desc.text = "🔒 ACT %d ยังถูกผนึก! ต้องผ่านบทก่อนหน้าเพื่อปลดล็อก" % act_num
+		return
+
+	_play_sfx(sfx_click)
+	var target_stage_idx := 0
+	if act_num == 1:
+		target_stage_idx = 0
+	elif act_num == 2:
+		target_stage_idx = 15
+	else:
+		target_stage_idx = 20
+
+	_scroll_to_stage_idx(target_stage_idx, true)
+	_refresh_act_tabs(act_num)
+
+
+func _on_continue_pressed() -> void:
+	_play_sfx(sfx_click)
+	var latest_unlocked_idx := 0
+	for i in range(TOWER_STAGES.size()):
+		var stg_id: int = TOWER_STAGES[i]["id"]
+		var is_unlocked := (stg_id == 1) or GameProgressManager.is_level_cleared(stg_id - 1)
+		if is_unlocked:
+			latest_unlocked_idx = i
+	_jump_to_stage(latest_unlocked_idx, true)
 
 
 func _init_game_progression() -> void:
@@ -315,6 +445,7 @@ func _init_game_progression() -> void:
 
 	_target_queue_idx = _current_stage_idx
 	_update_hud_display(TOWER_STAGES[_current_stage_idx])
+	_refresh_act_tabs(int(TOWER_STAGES[_current_stage_idx]["act"]))
 
 
 func _spawn_tower_platforms() -> void:
@@ -407,77 +538,9 @@ func _spawn_tower_platforms() -> void:
 		slab_btn.set_anchors_preset(Control.PRESET_FULL_RECT)
 		slab_btn.focus_mode = Control.FOCUS_NONE
 
-		# สไตล์กรอบและพื้นหลังแท่นหิน (ไม่มีเส้นขอบขาว 100%)
-		var sb_norm := StyleBoxFlat.new()
-		sb_norm.corner_radius_top_left = 6
-		sb_norm.corner_radius_top_right = 6
-		sb_norm.corner_radius_bottom_left = 6
-		sb_norm.corner_radius_bottom_right = 6
-		sb_norm.border_width_left = 3
-		sb_norm.border_width_top = 3
-		sb_norm.border_width_right = 3
-		sb_norm.border_width_bottom = 5
-
-		var title_color: Color
-		var badge_bg: Color
-		var badge_border: Color
-		var badge_num_color: Color
-
-		if is_current:
-			# ด่านปัจจุบัน: หินสีน้ำตาลอุ่น ขอบทองอำพัน พร้อมแสงออร่าทองนวล
-			sb_norm.bg_color = Color(0.18, 0.13, 0.08, 0.96)
-			sb_norm.border_color = Color(0.96, 0.62, 0.07, 1.0)
-			sb_norm.shadow_color = Color(0.96, 0.62, 0.04, 0.42)
-			sb_norm.shadow_size = 8
-			title_color = Color(0.98, 0.88, 0.47, 1.0)
-			badge_bg = Color(0.28, 0.18, 0.08, 1.0)
-			badge_border = Color(0.96, 0.62, 0.07, 1.0)
-			badge_num_color = Color(0.98, 0.88, 0.47, 1.0)
-		elif is_cleared:
-			# ด่านที่ผ่านแล้ว: หินสีน้ำเงินโกธิค ขอบเทาเหล็กกล้า
-			sb_norm.bg_color = Color(0.08, 0.12, 0.18, 0.95)
-			sb_norm.border_color = Color(0.28, 0.38, 0.52, 1.0)
-			sb_norm.shadow_color = Color(0.0, 0.0, 0.0, 0.4)
-			sb_norm.shadow_size = 4
-			title_color = Color(0.85, 0.90, 0.96, 1.0)
-			badge_bg = Color(0.12, 0.18, 0.26, 1.0)
-			badge_border = Color(0.32, 0.44, 0.60, 1.0)
-			badge_num_color = Color(0.82, 0.88, 0.96, 1.0)
-		elif is_unlocked:
-			# ด่านที่ปลดล็อกแล้ว: หินสีน้ำตาลทอง
-			sb_norm.bg_color = Color(0.13, 0.10, 0.07, 0.95)
-			sb_norm.border_color = Color(0.72, 0.48, 0.16, 1.0)
-			title_color = Color(0.94, 0.82, 0.50, 1.0)
-			badge_bg = Color(0.20, 0.14, 0.08, 1.0)
-			badge_border = Color(0.72, 0.48, 0.16, 1.0)
-			badge_num_color = Color(0.94, 0.82, 0.50, 1.0)
-		else:
-			# ด่านที่ล็อก: ศิลามืดมิด ขอบเหล็กมืด
-			sb_norm.bg_color = Color(0.06, 0.07, 0.10, 0.92)
-			sb_norm.border_color = Color(0.14, 0.17, 0.24, 0.85)
-			title_color = Color(0.40, 0.46, 0.56, 0.8)
-			badge_bg = Color(0.09, 0.11, 0.15, 1.0)
-			badge_border = Color(0.18, 0.22, 0.30, 0.8)
-			badge_num_color = Color(0.35, 0.42, 0.52, 0.8)
-
-		var sb_hover := sb_norm.duplicate() as StyleBoxFlat
-		sb_hover.bg_color = sb_norm.bg_color.lightened(0.15)
-		if is_unlocked:
-			sb_hover.border_color = Color(0.98, 0.88, 0.47, 1.0)
-		else:
-			sb_hover.border_color = Color(0.22, 0.28, 0.38, 1.0)
-
-		var sb_pressed := sb_norm.duplicate() as StyleBoxFlat
-		sb_pressed.border_width_top = 4
-		sb_pressed.border_width_bottom = 2
-
-		slab_btn.add_theme_stylebox_override("normal", sb_norm)
-		slab_btn.add_theme_stylebox_override("hover", sb_hover)
-		slab_btn.add_theme_stylebox_override("pressed", sb_pressed)
-		slab_btn.add_theme_stylebox_override("focus", sb_norm)
-
-		# 3. จัดวางองค์ประกอบภายในแท่นหิน (ข้างในรูปด่านแบบใหม่ ไม่ยืด ไม่เละ)
+		# 3. จัดวางองค์ประกอบภายในแท่นหิน
 		var inner_margin := MarginContainer.new()
+		inner_margin.name = "InnerMargin"
 		inner_margin.set_anchors_preset(Control.PRESET_FULL_RECT)
 		inner_margin.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		inner_margin.add_theme_constant_override("margin_left", margin_h)
@@ -486,35 +549,24 @@ func _spawn_tower_platforms() -> void:
 		inner_margin.add_theme_constant_override("margin_bottom", margin_v)
 
 		var hbox := HBoxContainer.new()
+		hbox.name = "PlatformHBox"
 		hbox.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		hbox.add_theme_constant_override("separation", content_sep)
 		hbox.set_anchors_preset(Control.PRESET_FULL_RECT)
 
 		# 3.1 ป้ายเหรียญศิลาแสดงเลขด่าน (ฝั่งซ้าย)
 		var num_badge := PanelContainer.new()
+		num_badge.name = "NumBadge"
 		num_badge.custom_minimum_size = Vector2(badge_dim, badge_dim)
 		num_badge.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 		num_badge.mouse_filter = Control.MOUSE_FILTER_IGNORE
 
-		var sb_badge := StyleBoxFlat.new()
-		sb_badge.bg_color = badge_bg
-		sb_badge.border_color = badge_border
-		sb_badge.border_width_left = 1
-		sb_badge.border_width_top = 1
-		sb_badge.border_width_right = 1
-		sb_badge.border_width_bottom = 2
-		sb_badge.corner_radius_top_left = 4
-		sb_badge.corner_radius_top_right = 4
-		sb_badge.corner_radius_bottom_left = 4
-		sb_badge.corner_radius_bottom_right = 4
-		num_badge.add_theme_stylebox_override("panel", sb_badge)
-
 		var num_lbl := Label.new()
+		num_lbl.name = "NumLabel"
 		num_lbl.text = str(stg["no"])
 		num_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		num_lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 		num_lbl.set_anchors_preset(Control.PRESET_FULL_RECT)
-		num_lbl.add_theme_color_override("font_color", badge_num_color)
 		if font_bungee:
 			num_lbl.add_theme_font_override("font", font_bungee)
 			num_lbl.add_theme_font_size_override("font_size", num_font_sz)
@@ -527,27 +579,25 @@ func _spawn_tower_platforms() -> void:
 		# 3.2 ชื่อด่านและชิปคำสั่ง Git (ตรงกลาง)
 		if p_width >= 180.0:
 			var info_vbox := VBoxContainer.new()
+			info_vbox.name = "InfoVBox"
 			info_vbox.mouse_filter = Control.MOUSE_FILTER_IGNORE
 			info_vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 			info_vbox.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 			info_vbox.add_theme_constant_override("separation", 2 if act_num == 3 else 3)
 
 			var title_lbl := Label.new()
+			title_lbl.name = "TitleLabel"
 			title_lbl.text = str(stg["title"])
 			title_lbl.clip_text = true
-			title_lbl.add_theme_color_override("font_color", title_color)
 			if font_chakra_bold:
 				title_lbl.add_theme_font_override("font", font_chakra_bold)
 				title_lbl.add_theme_font_size_override("font_size", title_font_sz)
 			info_vbox.add_child(title_lbl)
 
 			var cmd_lbl := Label.new()
+			cmd_lbl.name = "CmdLabel"
 			cmd_lbl.text = str(stg["cmd"])
 			cmd_lbl.clip_text = true
-			if is_unlocked:
-				cmd_lbl.add_theme_color_override("font_color", Color(0.13, 0.83, 0.93, 0.95))
-			else:
-				cmd_lbl.add_theme_color_override("font_color", Color(0.35, 0.45, 0.55, 0.75))
 			if font_ta_pixel:
 				cmd_lbl.add_theme_font_override("font", font_ta_pixel)
 				cmd_lbl.add_theme_font_size_override("font_size", cmd_font_sz)
@@ -558,20 +608,20 @@ func _spawn_tower_platforms() -> void:
 		# 3.3 ฝั่งขวา (ไอคอนล็อก หรือ ดาว)
 		if not is_unlocked and tex_lock:
 			var lock_rect := TextureRect.new()
+			lock_rect.name = "LockRect"
 			lock_rect.texture = tex_lock
 			lock_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 			lock_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 			var lock_size: float = 22.0 if act_num == 3 else 26.0
 			lock_rect.custom_minimum_size = Vector2(lock_size, lock_size * 1.15)
 			lock_rect.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-			lock_rect.modulate = Color(0.55, 0.62, 0.72, 0.85)
 			lock_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
 			hbox.add_child(lock_rect)
 		elif is_cleared:
 			var star_icon := Label.new()
+			star_icon.name = "StarIcon"
 			star_icon.text = "★★★"
 			star_icon.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-			star_icon.add_theme_color_override("font_color", Color(0.98, 0.82, 0.10, 1.0))
 			star_icon.add_theme_color_override("font_outline_color", Color(0.12, 0.08, 0.02, 0.9))
 			star_icon.add_theme_constant_override("outline_size", 2)
 			if font_ta_pixel:
@@ -580,9 +630,9 @@ func _spawn_tower_platforms() -> void:
 			hbox.add_child(star_icon)
 		elif is_unlocked:
 			var star_icon := Label.new()
+			star_icon.name = "StarIcon"
 			star_icon.text = "★★★"
 			star_icon.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-			star_icon.add_theme_color_override("font_color", Color(0.42, 0.48, 0.56, 0.85))
 			star_icon.add_theme_color_override("font_outline_color", Color(0.08, 0.10, 0.14, 0.9))
 			star_icon.add_theme_constant_override("outline_size", 2)
 			if font_ta_pixel:
@@ -591,7 +641,6 @@ func _spawn_tower_platforms() -> void:
 			hbox.add_child(star_icon)
 		inner_margin.add_child(hbox)
 		slab_btn.add_child(inner_margin)
-
 
 		var current_idx := i
 		# แสดงรายละเอียดด่านใน HUD เมื่อนำเมาส์มาวางค้างไว้ (Hover / Hold)
@@ -616,6 +665,9 @@ func _spawn_tower_platforms() -> void:
 		plat.add_child(slab_btn)
 		tower_content.add_child(plat)
 		_platform_nodes[stg_id] = plat
+
+		# ปรับแต่งสีและสไตล์ตามสถานะของด่าน
+		_apply_platform_style(plat, stg_id, is_current)
 
 
 	if path_renderer:
@@ -851,20 +903,87 @@ func _jump_to_stage(target_idx: int, animate: bool = true) -> void:
 	_try_navigate_stage(target_idx)
 
 
-func _update_platform_highlight(idx: int, is_active: bool) -> void:
-	if idx < 0 or idx >= TOWER_STAGES.size():
+func _get_stage_style_colors(stg_id: int, is_active: bool, is_cleared: bool, is_unlocked: bool) -> Dictionary:
+	if is_active:
+		# Current level: Glowing golden orange
+		return {
+			"bg_color": Color(0.18, 0.13, 0.08, 0.96),
+			"border_color": Color(0.96, 0.62, 0.07, 1.0),
+			"shadow_color": Color(0.96, 0.62, 0.04, 0.45),
+			"shadow_size": 8,
+			"hover_bg": Color(0.24, 0.18, 0.11, 0.98),
+			"hover_border": Color(1.00, 0.78, 0.22, 1.0),
+			"title_color": Color(0.98, 0.88, 0.47, 1.0),
+			"cmd_color": Color(0.13, 0.83, 0.93, 0.95),
+			"badge_bg": Color(0.28, 0.18, 0.08, 1.0),
+			"badge_border": Color(0.96, 0.62, 0.07, 1.0),
+			"badge_num_color": Color(0.98, 0.88, 0.47, 1.0),
+			"lock_modulate": Color(0.80, 0.86, 0.94, 0.98),
+			"star_color": Color(0.98, 0.82, 0.10, 1.0)
+		}
+	elif is_cleared:
+		# Completed levels: Muted emerald green
+		return {
+			"bg_color": Color(0.08, 0.15, 0.11, 0.95),
+			"border_color": Color(0.24, 0.50, 0.34, 1.0),
+			"shadow_color": Color(0.0, 0.0, 0.0, 0.40),
+			"shadow_size": 4,
+			"hover_bg": Color(0.12, 0.22, 0.16, 0.98),
+			"hover_border": Color(0.38, 0.70, 0.48, 1.0),
+			"title_color": Color(0.84, 0.94, 0.88, 1.0),
+			"cmd_color": Color(0.40, 0.82, 0.68, 0.90),
+			"badge_bg": Color(0.11, 0.20, 0.15, 1.0),
+			"badge_border": Color(0.28, 0.54, 0.38, 1.0),
+			"badge_num_color": Color(0.80, 0.92, 0.84, 1.0),
+			"lock_modulate": Color(0.80, 0.86, 0.94, 0.98),
+			"star_color": Color(0.98, 0.82, 0.10, 1.0)
+		}
+	elif is_unlocked:
+		# Available levels: Readable blue-gray
+		return {
+			"bg_color": Color(0.11, 0.14, 0.19, 0.96),
+			"border_color": Color(0.36, 0.48, 0.64, 1.0),
+			"shadow_color": Color(0.0, 0.0, 0.0, 0.35),
+			"shadow_size": 3,
+			"hover_bg": Color(0.16, 0.20, 0.27, 0.98),
+			"hover_border": Color(0.55, 0.70, 0.90, 1.0),
+			"title_color": Color(0.88, 0.93, 0.98, 1.0),
+			"cmd_color": Color(0.22, 0.76, 0.94, 0.95),
+			"badge_bg": Color(0.15, 0.20, 0.27, 1.0),
+			"badge_border": Color(0.42, 0.54, 0.72, 1.0),
+			"badge_num_color": Color(0.90, 0.95, 1.0, 1.0),
+			"lock_modulate": Color(0.80, 0.86, 0.94, 0.98),
+			"star_color": Color(0.48, 0.56, 0.66, 0.85)
+		}
+	else:
+		# Locked levels: Dark desaturated blue-gray, clearly readable, metallic padlock
+		return {
+			"bg_color": Color(0.09, 0.11, 0.15, 0.94),
+			"border_color": Color(0.22, 0.27, 0.36, 0.95),
+			"shadow_color": Color(0.0, 0.0, 0.0, 0.25),
+			"shadow_size": 2,
+			"hover_bg": Color(0.13, 0.16, 0.21, 0.96),
+			"hover_border": Color(0.32, 0.40, 0.52, 1.0),
+			"title_color": Color(0.68, 0.75, 0.84, 0.95),
+			"cmd_color": Color(0.44, 0.54, 0.66, 0.85),
+			"badge_bg": Color(0.12, 0.15, 0.20, 1.0),
+			"badge_border": Color(0.24, 0.30, 0.40, 0.90),
+			"badge_num_color": Color(0.58, 0.66, 0.76, 0.95),
+			"lock_modulate": Color(0.80, 0.86, 0.94, 0.98),
+			"star_color": Color(0.35, 0.42, 0.50, 0.50)
+		}
+
+
+func _apply_platform_style(plat: Control, stg_id: int, is_active: bool) -> void:
+	if not plat:
 		return
-	var stg: Dictionary = TOWER_STAGES[idx]
-	var stg_id: int = stg["id"]
-	if not _platform_nodes.has(stg_id):
-		return
-	var plat: Control = _platform_nodes[stg_id]
 	var slab_btn := plat.get_node_or_null("SlabBtn") as Button
 	if not slab_btn:
 		return
 
 	var is_cleared := GameProgressManager.is_level_cleared(stg_id)
 	var is_unlocked := (stg_id == 1) or GameProgressManager.is_level_cleared(stg_id - 1)
+	var colors := _get_stage_style_colors(stg_id, is_active, is_cleared, is_unlocked)
 
 	var sb_norm := StyleBoxFlat.new()
 	sb_norm.corner_radius_top_left = 6
@@ -875,33 +994,66 @@ func _update_platform_highlight(idx: int, is_active: bool) -> void:
 	sb_norm.border_width_top = 3
 	sb_norm.border_width_right = 3
 	sb_norm.border_width_bottom = 5
-
-	if is_active:
-		sb_norm.bg_color = Color(0.18, 0.13, 0.08, 0.96)
-		sb_norm.border_color = Color(0.96, 0.62, 0.07, 1.0)
-		sb_norm.shadow_color = Color(0.96, 0.62, 0.04, 0.42)
-		sb_norm.shadow_size = 8
-	elif is_cleared:
-		sb_norm.bg_color = Color(0.08, 0.12, 0.18, 0.95)
-		sb_norm.border_color = Color(0.28, 0.38, 0.52, 1.0)
-		sb_norm.shadow_color = Color(0.0, 0.0, 0.0, 0.4)
-		sb_norm.shadow_size = 4
-	elif is_unlocked:
-		sb_norm.bg_color = Color(0.13, 0.10, 0.07, 0.95)
-		sb_norm.border_color = Color(0.72, 0.48, 0.16, 1.0)
-	else:
-		sb_norm.bg_color = Color(0.06, 0.07, 0.10, 0.92)
-		sb_norm.border_color = Color(0.14, 0.17, 0.24, 0.85)
+	sb_norm.bg_color = colors["bg_color"]
+	sb_norm.border_color = colors["border_color"]
+	sb_norm.shadow_color = colors["shadow_color"]
+	sb_norm.shadow_size = colors["shadow_size"]
 
 	var sb_hover := sb_norm.duplicate() as StyleBoxFlat
-	sb_hover.bg_color = sb_norm.bg_color.lightened(0.15)
-	if is_unlocked:
-		sb_hover.border_color = Color(0.98, 0.88, 0.47, 1.0)
-	else:
-		sb_hover.border_color = Color(0.22, 0.28, 0.38, 1.0)
+	sb_hover.bg_color = colors["hover_bg"]
+	sb_hover.border_color = colors["hover_border"]
+
+	var sb_pressed := sb_norm.duplicate() as StyleBoxFlat
+	sb_pressed.border_width_top = 4
+	sb_pressed.border_width_bottom = 2
 
 	slab_btn.add_theme_stylebox_override("normal", sb_norm)
 	slab_btn.add_theme_stylebox_override("hover", sb_hover)
+	slab_btn.add_theme_stylebox_override("pressed", sb_pressed)
+	slab_btn.add_theme_stylebox_override("focus", sb_norm)
+
+	var num_badge := plat.find_child("NumBadge", true, false) as PanelContainer
+	if num_badge:
+		var sb_badge := StyleBoxFlat.new()
+		sb_badge.bg_color = colors["badge_bg"]
+		sb_badge.border_color = colors["badge_border"]
+		sb_badge.border_width_left = 1
+		sb_badge.border_width_top = 1
+		sb_badge.border_width_right = 1
+		sb_badge.border_width_bottom = 2
+		sb_badge.corner_radius_top_left = 4
+		sb_badge.corner_radius_top_right = 4
+		sb_badge.corner_radius_bottom_left = 4
+		sb_badge.corner_radius_bottom_right = 4
+		num_badge.add_theme_stylebox_override("panel", sb_badge)
+
+	var num_lbl := plat.find_child("NumLabel", true, false) as Label
+	if num_lbl:
+		num_lbl.add_theme_color_override("font_color", colors["badge_num_color"])
+
+	var title_lbl := plat.find_child("TitleLabel", true, false) as Label
+	if title_lbl:
+		title_lbl.add_theme_color_override("font_color", colors["title_color"])
+
+	var cmd_lbl := plat.find_child("CmdLabel", true, false) as Label
+	if cmd_lbl:
+		cmd_lbl.add_theme_color_override("font_color", colors["cmd_color"])
+
+	var lock_rect := plat.find_child("LockRect", true, false) as TextureRect
+	if lock_rect:
+		lock_rect.modulate = colors["lock_modulate"]
+
+	var star_icon := plat.find_child("StarIcon", true, false) as Label
+	if star_icon:
+		star_icon.add_theme_color_override("font_color", colors["star_color"])
+
+
+func _update_platform_highlight(idx: int, is_active: bool) -> void:
+	if idx < 0 or idx >= TOWER_STAGES.size():
+		return
+	var stg_id: int = TOWER_STAGES[idx]["id"]
+	if _platform_nodes.has(stg_id):
+		_apply_platform_style(_platform_nodes[stg_id], stg_id, is_active)
 
 
 func _update_hud_display(stg: Dictionary) -> void:
@@ -988,21 +1140,47 @@ func _on_draw_path() -> void:
 	if stages.is_empty():
 		return
 
+	var draw_segment = func(idx_a: int, idx_b: int):
+		if idx_a < 0 or idx_a >= stages.size() or idx_b < 0 or idx_b >= stages.size():
+			return
+		var s_a: Dictionary = stages[idx_a]
+		var s_b: Dictionary = stages[idx_b]
+		var id_b: int = int(s_b["id"])
+		var id_a: int = int(s_a["id"])
+
+		var is_cleared_b := GameProgressManager.is_level_cleared(id_b)
+		var is_unlocked_b := (id_b == 1) or GameProgressManager.is_level_cleared(id_b - 1)
+		var is_current_segment := (idx_b == _current_stage_idx) or (idx_a == _current_stage_idx and not is_cleared_b)
+
+		var p1 := Vector2(s_a["x"], s_a["y"])
+		var p2 := Vector2(s_b["x"], s_b["y"])
+
+		if is_cleared_b:
+			# 1. Completed Path: Muted emerald green with animated pulse glow
+			var pulse := 0.22 + 0.14 * sin(_path_glow_timer * 2.8)
+			var glow_col := Color(0.20, 0.75, 0.45, pulse)
+			var core_col := Color(0.35, 0.78, 0.50, 0.95)
+			_draw_curved_connection(p1, p2, glow_col, 5.0, 4.0)
+			_draw_curved_connection(p1, p2, core_col, 2.5, 4.0)
+		elif is_current_segment or is_unlocked_b:
+			# 2. Current Path: Warm golden orange connecting to current level
+			var pulse := 0.28 + 0.18 * sin(_path_glow_timer * 3.5)
+			var glow_col := Color(0.96, 0.62, 0.04, pulse)
+			var core_col := Color(0.96, 0.65, 0.15, 0.98)
+			_draw_curved_connection(p1, p2, glow_col, 5.5, 4.0)
+			_draw_curved_connection(p1, p2, core_col, 2.8, 4.0)
+		else:
+			# 3. Locked Path: Muted blue-gray, clearly visible but reduced brightness
+			var locked_col := Color(0.24, 0.30, 0.40, 0.70)
+			_draw_curved_connection(p1, p2, locked_col, 2.0, 4.0)
+
 	# วาดเส้นทาง Act 1: บันไดวน (1 -> 15)
 	for i in range(14):
-		var s1 := stages[i]
-		var s2 := stages[i + 1]
-		var is_cleared := GameProgressManager.is_level_cleared(int(s1["id"]))
-		var line_color := Color(0.42, 0.78, 0.52, 0.95) if is_cleared else Color(0.30, 0.35, 0.48, 0.65)
-		_draw_curved_connection(Vector2(s1["x"], s1["y"]), Vector2(s2["x"], s2["y"]), line_color)
+		draw_segment.call(i, i + 1)
 
 	# เชื่อม Act 1 -> Act 2 (15 -> 16)
 	if stages.size() >= 16:
-		var s15 := stages[14]
-		var s16 := stages[15]
-		var is_cleared := GameProgressManager.is_level_cleared(15)
-		var line_color := Color(0.42, 0.78, 0.52, 0.95) if is_cleared else Color(0.35, 0.42, 0.55, 0.7)
-		_draw_curved_connection(Vector2(s15["x"], s15["y"]), Vector2(s16["x"], s16["y"]), line_color)
+		draw_segment.call(14, 15)
 
 	# วาดเส้นทาง Act 2: ลูปห้องทีม (16 -> 17 -> 18 -> 19 -> 20 -> 16)
 	if stages.size() >= 20:
@@ -1010,25 +1188,38 @@ func _on_draw_path() -> void:
 		for k in range(act2_indices.size()):
 			var idx1: int = act2_indices[k]
 			var idx2: int = act2_indices[(k + 1) % act2_indices.size()]
-			var s_a := stages[idx1]
-			var s_b := stages[idx2]
-			var is_cleared := GameProgressManager.is_level_cleared(int(s_a["id"]))
-			var line_color := Color(0.42, 0.78, 0.52, 0.95) if is_cleared else Color(0.24, 0.38, 0.32, 0.7)
-			_draw_curved_connection(Vector2(s_a["x"], s_a["y"]), Vector2(s_b["x"], s_b["y"]), line_color)
+			draw_segment.call(idx1, idx2)
 
 	# เชื่อม Act 2 -> Act 3 (20 -> 21)
 	if stages.size() >= 21:
-		var s20 := stages[19]
-		var s21 := stages[20]
-		var is_cleared := GameProgressManager.is_level_cleared(20)
-		var line_color := Color(0.42, 0.78, 0.52, 0.95) if is_cleared else Color(0.38, 0.30, 0.48, 0.7)
-		_draw_curved_connection(Vector2(s20["x"], s20["y"]), Vector2(s21["x"], s21["y"]), line_color)
+		draw_segment.call(19, 20)
+
+	# วาดเส้นทาง Act 3: ยอดหอคอย 5 คอลัมน์ x 4 แถว (21 -> 40)
+	if stages.size() >= 40:
+		# แถวที่ 1 (21-25)
+		for k in range(20, 24):
+			draw_segment.call(k, k + 1)
+		# เชื่อมแถวที่ 1 ไป 2 (25 -> 26)
+		draw_segment.call(24, 25)
+		# แถวที่ 2 (26-30)
+		for k in range(25, 29):
+			draw_segment.call(k, k + 1)
+		# เชื่อมแถวที่ 2 ไป 3 (30 -> 31)
+		draw_segment.call(29, 30)
+		# แถวที่ 3 (31-35)
+		for k in range(30, 34):
+			draw_segment.call(k, k + 1)
+		# เชื่อมแถวที่ 3 ไป 4 (35 -> 36)
+		draw_segment.call(34, 35)
+		# แถวที่ 4 (36-40)
+		for k in range(35, 39):
+			draw_segment.call(k, k + 1)
 
 
-func _draw_curved_connection(p1: Vector2, p2: Vector2, color: Color) -> void:
+func _draw_curved_connection(p1: Vector2, p2: Vector2, color: Color, line_width: float = 2.5, dash_len: float = 4.0) -> void:
 	if not path_renderer:
 		return
-	var steps := 14
+	var steps := 16
 	var prev_pt := p1
 	var mid_y := (p1.y + p2.y) / 2.0
 
@@ -1042,6 +1233,8 @@ func _draw_curved_connection(p1: Vector2, p2: Vector2, color: Color) -> void:
 	elif p1.x < 750.0 and p2.x < 750.0:
 		c1_x = minf(p1.x, p2.x) - 30.0
 		c2_x = minf(p1.x, p2.x) - 30.0
+	elif absf(p1.y - p2.y) < 30.0:
+		mid_y = p1.y + 12.0
 
 	var c1 := Vector2(c1_x, mid_y)
 	var c2 := Vector2(c2_x, mid_y)
@@ -1049,7 +1242,7 @@ func _draw_curved_connection(p1: Vector2, p2: Vector2, color: Color) -> void:
 	for s in range(1, steps + 1):
 		var t := float(s) / float(steps)
 		var pt := _bezier_interpolate(p1, c1, c2, p2, t)
-		path_renderer.draw_dashed_line(prev_pt, pt, color, 2.5, 4.0)
+		path_renderer.draw_dashed_line(prev_pt, pt, color, line_width, dash_len)
 		prev_pt = pt
 
 
@@ -1094,6 +1287,103 @@ func _play_sfx(player: AudioStreamPlayer) -> void:
 		player.play()
 
 
+func _navigate_directional(dir: Vector2) -> void:
+	var base_idx := _target_queue_idx if _is_jumping and _target_queue_idx != -1 else _current_stage_idx
+	if base_idx < 0 or base_idx >= TOWER_STAGES.size():
+		return
+
+	var curr_stg: Dictionary = TOWER_STAGES[base_idx]
+	var act_num: int = int(curr_stg["act"])
+	var target_idx := -1
+
+	if act_num == 3: # Act 3: 5x4 Grid (indices 20 to 39)
+		if dir == Vector2.UP:
+			if base_idx + 5 < 40:
+				target_idx = base_idx + 5
+		elif dir == Vector2.DOWN:
+			if base_idx - 5 >= 20:
+				target_idx = base_idx - 5
+			else:
+				# Exit Act 3 down to Act 2 (Boss 20)
+				target_idx = 19
+		elif dir == Vector2.RIGHT:
+			if (base_idx - 20) % 5 < 4 and base_idx + 1 < 40:
+				target_idx = base_idx + 1
+		elif dir == Vector2.LEFT:
+			if (base_idx - 20) % 5 > 0 and base_idx - 1 >= 20:
+				target_idx = base_idx - 1
+
+	elif act_num == 2: # Act 2: Loop (indices 15 to 19 -> stages 16 to 20)
+		# 15: stg 16 (top 960, 560)
+		# 16: stg 17 (right 1200, 700)
+		# 17: stg 18 (bot-right 1120, 920)
+		# 18: stg 19 (bot-left 800, 920)
+		# 19: stg 20 (left 720, 700)
+		if dir == Vector2.UP:
+			if base_idx == 15:
+				target_idx = 20 if GameProgressManager.is_level_cleared(20) else 15
+			elif base_idx == 16:
+				target_idx = 15
+			elif base_idx == 17:
+				target_idx = 16
+			elif base_idx == 18:
+				target_idx = 19
+			elif base_idx == 19:
+				target_idx = 20 if GameProgressManager.is_level_cleared(20) else 15
+		elif dir == Vector2.DOWN:
+			if base_idx == 15:
+				target_idx = 14 # down to Act 1
+			elif base_idx == 16:
+				target_idx = 17
+			elif base_idx == 17:
+				target_idx = 18
+			elif base_idx == 18:
+				target_idx = 14 # down to Act 1
+			elif base_idx == 19:
+				target_idx = 18
+		elif dir == Vector2.RIGHT:
+			if base_idx == 15:
+				target_idx = 16
+			elif base_idx == 19:
+				target_idx = 15
+			elif base_idx == 18:
+				target_idx = 17
+			elif base_idx == 16:
+				target_idx = 17
+		elif dir == Vector2.LEFT:
+			if base_idx == 15:
+				target_idx = 19
+			elif base_idx == 16:
+				target_idx = 15
+			elif base_idx == 17:
+				target_idx = 18
+			elif base_idx == 19:
+				target_idx = 18
+
+	else: # Act 1: Winding Tower (indices 0 to 14 -> stages 1 to 15)
+		if dir == Vector2.UP:
+			target_idx = base_idx + 1
+		elif dir == Vector2.DOWN:
+			target_idx = base_idx - 1
+		elif dir == Vector2.RIGHT:
+			if base_idx + 1 < 15 and TOWER_STAGES[base_idx + 1]["x"] > curr_stg["x"]:
+				target_idx = base_idx + 1
+			elif base_idx - 1 >= 0 and TOWER_STAGES[base_idx - 1]["x"] > curr_stg["x"]:
+				target_idx = base_idx - 1
+			else:
+				target_idx = base_idx + 1
+		elif dir == Vector2.LEFT:
+			if base_idx + 1 < 15 and TOWER_STAGES[base_idx + 1]["x"] < curr_stg["x"]:
+				target_idx = base_idx + 1
+			elif base_idx - 1 >= 0 and TOWER_STAGES[base_idx - 1]["x"] < curr_stg["x"]:
+				target_idx = base_idx - 1
+			else:
+				target_idx = base_idx - 1
+
+	if target_idx >= 0 and target_idx < TOWER_STAGES.size() and target_idx != base_idx:
+		_try_navigate_stage(target_idx)
+
+
 func _input(event: InputEvent) -> void:
 	if event is InputEventMouseButton and event.pressed:
 		var now := Time.get_ticks_msec()
@@ -1131,20 +1421,27 @@ func _input(event: InputEvent) -> void:
 		elif event.keycode == KEY_PAGEDOWN:
 			get_viewport().set_input_as_handled()
 			_scroll_to_stage_idx(_view_stage_idx - 4, true)
-		elif event.keycode == KEY_UP or event.keycode == KEY_W or event.keycode == KEY_RIGHT or event.keycode == KEY_D:
+		elif event.keycode == KEY_UP or event.keycode == KEY_W:
 			get_viewport().set_input_as_handled()
-			var base_idx := _target_queue_idx if _is_jumping and _target_queue_idx != -1 else _current_stage_idx
-			_try_navigate_stage(base_idx + 1)
-		elif event.keycode == KEY_DOWN or event.keycode == KEY_S or event.keycode == KEY_LEFT or event.keycode == KEY_A:
+			_navigate_directional(Vector2.UP)
+		elif event.keycode == KEY_DOWN or event.keycode == KEY_S:
 			get_viewport().set_input_as_handled()
-			var base_idx := _target_queue_idx if _is_jumping and _target_queue_idx != -1 else _current_stage_idx
-			_try_navigate_stage(base_idx - 1)
+			_navigate_directional(Vector2.DOWN)
+		elif event.keycode == KEY_LEFT or event.keycode == KEY_A:
+			get_viewport().set_input_as_handled()
+			_navigate_directional(Vector2.LEFT)
+		elif event.keycode == KEY_RIGHT or event.keycode == KEY_D:
+			get_viewport().set_input_as_handled()
+			_navigate_directional(Vector2.RIGHT)
 		elif event.keycode == KEY_ENTER or event.keycode == KEY_SPACE:
 			get_viewport().set_input_as_handled()
 			_on_launch_stage_pressed()
 		elif event.keycode == KEY_1:
-			_scroll_to_stage_idx(0, true)
+			get_viewport().set_input_as_handled()
+			_on_act_button_pressed(1)
 		elif event.keycode == KEY_2:
-			_scroll_to_stage_idx(15, true)
+			get_viewport().set_input_as_handled()
+			_on_act_button_pressed(2)
 		elif event.keycode == KEY_3:
-			_scroll_to_stage_idx(20, true)
+			get_viewport().set_input_as_handled()
+			_on_act_button_pressed(3)
