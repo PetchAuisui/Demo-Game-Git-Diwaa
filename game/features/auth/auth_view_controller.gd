@@ -61,10 +61,10 @@ var _register_submit_btn: Button
 var _go_login_link: LinkButton
 
 # Connection (แถบแจ้งเตือนเมื่อติดต่อ server ไม่ได้ อยู่เหนือฟอร์ม เห็นได้ทั้งสองแท็บ)
-var _connection_panel: VBoxContainer
+var _connection_panel: HBoxContainer
 var _connection_label: Label
-var _retry_connection_btn: Button
-var _offline_play_btn: Button
+var _retry_connection_btn: LinkButton
+var _offline_play_btn: LinkButton
 
 # Guest (เล่นแบบไม่ล็อกอิน)
 var _go_guest_link: LinkButton
@@ -137,10 +137,10 @@ func _bind_nodes() -> void:
 	_register_submit_btn = get_node("%RegisterSubmitBtn") as Button
 	_go_login_link = get_node("%GoLoginLink") as LinkButton
 
-	_connection_panel = get_node("%ConnectionPanel") as VBoxContainer
+	_connection_panel = get_node("%ConnectionPanel") as HBoxContainer
 	_connection_label = get_node("%ConnectionLabel") as Label
-	_retry_connection_btn = get_node("%RetryConnectionBtn") as Button
-	_offline_play_btn = get_node("%OfflinePlayBtn") as Button
+	_retry_connection_btn = get_node("%RetryConnectionBtn") as LinkButton
+	_offline_play_btn = get_node("%OfflinePlayBtn") as LinkButton
 
 	_go_guest_link = get_node("%GoGuestLink") as LinkButton
 	_change_guest_name_link = get_node("%ChangeGuestNameLink") as LinkButton
@@ -207,6 +207,7 @@ func _show_login() -> void:
 	_guest_form.visible = false
 
 	_login_tab_btn.button_pressed = true
+	_place_connection_panel(_login_status)
 
 	_clear_passwords()
 	_reset_errors()
@@ -222,6 +223,7 @@ func _show_register() -> void:
 	_guest_form.visible = false
 
 	_register_tab_btn.button_pressed = true
+	_place_connection_panel(_register_status)
 
 	_clear_passwords()
 	_reset_errors()
@@ -384,7 +386,7 @@ func _apply_theme() -> void:
 	var btn_pressed := AuthThemeTokens.create_button_style(AuthThemeTokens.BUTTON_PRESSED_BG)
 	var btn_disabled := AuthThemeTokens.create_button_style(AuthThemeTokens.BUTTON_DISABLED_BG)
 
-	var submit_buttons: Array[Button] = [_login_submit_btn, _register_submit_btn, _retry_connection_btn, _offline_play_btn, _guest_start_btn, _age_confirm_btn]
+	var submit_buttons: Array[Button] = [_login_submit_btn, _register_submit_btn, _guest_start_btn, _age_confirm_btn]
 	for btn in submit_buttons:
 		btn.add_theme_stylebox_override("normal", btn_normal)
 		btn.add_theme_stylebox_override("hover", btn_hover)
@@ -417,6 +419,8 @@ func _apply_theme() -> void:
 	_go_guest_link.add_theme_color_override("font_color", AuthThemeTokens.LINK_TEXT)
 	_change_guest_name_link.add_theme_color_override("font_color", AuthThemeTokens.TEXT_MUTED)
 	_guest_back_link.add_theme_color_override("font_color", AuthThemeTokens.LINK_TEXT)
+	_retry_connection_btn.add_theme_color_override("font_color", AuthThemeTokens.LINK_TEXT)
+	_offline_play_btn.add_theme_color_override("font_color", AuthThemeTokens.LINK_TEXT)
 
 	var option_style := AuthThemeTokens.create_input_style(AuthThemeTokens.INPUT_BORDER)
 	var option_focus := AuthThemeTokens.create_input_style(AuthThemeTokens.INPUT_BORDER_FOCUS)
@@ -719,8 +723,26 @@ func _check_connection() -> void:
 	await _try_restore_session()
 
 
+## แถบ "เชื่อมต่อ server ไม่ได้" มีอันเดียว ย้ายไปอยู่ในฟอร์มที่เปิดอยู่ ตรงเหนือข้อความสถานะและปุ่มส่ง
+func _place_connection_panel(before: Control) -> void:
+	var form := before.get_parent()
+	if _connection_panel.get_parent() != form:
+		_connection_panel.reparent(form, false)
+	var target := before.get_index()
+	if _connection_panel.get_index() < target:
+		target -= 1
+	form.move_child(_connection_panel, target)
+
+
+## ข้อความสั้นบรรทัดเดียว (ไม่เอาข้อความจาก server มาแสดง)
+func _connection_message(result: AuthApiResult) -> String:
+	if result.code == AuthApiResult.RATE_LIMITED:
+		return "ลองบ่อยเกินไป รอประมาณ %d วินาที" % maxi(result.retry_after_sec, 1)
+	return "เชื่อมต่อ server ไม่ได้"
+
+
 func _show_connection_problem(result: AuthApiResult) -> void:
-	_connection_label.text = _message_for_failure(result)
+	_connection_label.text = _connection_message(result)
 	_connection_panel.visible = true
 
 	# ปุ่มเล่นออฟไลน์: ขึ้นเฉพาะตอน server ติดต่อไม่ได้จริง (เน็ตหลุด / server ล่ม)
@@ -730,7 +752,7 @@ func _show_connection_problem(result: AuthApiResult) -> void:
 	var saved_name := PlayerSession.get_saved_display_name() if server_unreachable else ""
 	_offline_play_btn.visible = not saved_name.is_empty()
 	if _offline_play_btn.visible:
-		_offline_play_btn.text = "เล่นแบบออฟไลน์ในชื่อ %s" % saved_name
+		_offline_play_btn.text = "เล่นด้วยบัญชี %s แบบออฟไลน์" % _short_name(saved_name)
 
 
 func _on_offline_play_pressed() -> void:
@@ -738,7 +760,7 @@ func _on_offline_play_pressed() -> void:
 		return
 	if not PlayerSession.start_offline():
 		_offline_play_btn.visible = false
-		_connection_label.text = "ไม่พบบัญชีที่จดจำไว้ในเครื่องนี้ กรุณาเชื่อมต่อ server แล้วเข้าสู่ระบบ"
+		_connection_label.text = "ไม่พบบัญชีที่จดจำไว้ในเครื่องนี้"
 		return
 	get_tree().change_scene_to_file(PlayerSession.START_SCENE)
 
@@ -782,12 +804,16 @@ func _refresh_guest_link() -> void:
 	var saved_name := GuestStore.load_name()
 	_change_guest_name_link.visible = not saved_name.is_empty()
 	if saved_name.is_empty():
-		_go_guest_link.text = "เล่นโดยไม่ต้องสมัคร"
+		_go_guest_link.text = "เล่นโดยไม่ล็อกอิน"
 		return
-	var shown := saved_name
-	if shown.length() > GUEST_NAME_PREVIEW_LEN:
-		shown = shown.left(GUEST_NAME_PREVIEW_LEN) + "…"
-	_go_guest_link.text = "เล่นต่อในชื่อ %s" % shown
+	_go_guest_link.text = "เล่นโดยไม่ล็อกอิน (ชื่อ: %s)" % _short_name(saved_name)
+
+
+## ตัดชื่อยาวๆ ให้สั้นลง (ต่อด้วย …) กันลิงก์ดันการ์ดจนกว้างเกิน
+func _short_name(display_name: String) -> String:
+	if display_name.length() <= GUEST_NAME_PREVIEW_LEN:
+		return display_name
+	return display_name.left(GUEST_NAME_PREVIEW_LEN) + "…"
 
 
 ## ถ้ามี session ที่จดจำไว้ ลองล็อกอินอัตโนมัติ (เรียกหลังเช็คแล้วว่าติดต่อ server ได้)
