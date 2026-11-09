@@ -10,7 +10,34 @@ static func get_data() -> Dictionary:
 		"level_id": 1,
 		"title": "ด่านที่ 1: ตรวจสอบพลังและประกาศนาม",
 		"commands": ["git --version", "git config"],
-		
+		"clear_keyword": "การตรวจสอบพลัง หมายถึง git --version",
+
+		# ======================================================================
+		# ขั้นเล่นจริงใน Sandbox (step 1 / step 2)
+		# - hints: ข้อความภารกิจที่แสดงใน Terminal เมื่อเข้า Sandbox
+		# - required: คำสั่งที่ต้องรันสำเร็จก่อนกด "เสร็จสิ้น" / พิมพ์ done
+		#   (match = ทุกคำในลิสต์ต้องปรากฏในคำสั่งที่รันสำเร็จ, label = ข้อความที่แสดงเมื่อยังขาด)
+		# ======================================================================
+		"gameplay_steps": {
+			1: {
+				"hints": [
+					"📜 ภารกิจขั้นที่ 1: ลองพิมพ์คำสั่ง 'git --version' เพื่อตรวจสอบพลัง",
+				],
+				"required": [
+					{"label": "git --version", "match": ["git", "--version"]},
+				],
+			},
+			2: {
+				"hints": [
+					"📜 ภารกิจขั้นที่ 2: ลองพิมพ์คำสั่ง 'git config --global user.name \"Vel\"' และ 'git config --global user.email \"vel@magic.world\"'",
+				],
+				"required": [
+					{"label": "git config --global user.name \"...\"", "match": ["git config", "user.name"]},
+					{"label": "git config --global user.email \"...\"", "match": ["git config", "user.email"]},
+				],
+			},
+		},
+
 		# ======================================================================
 		# 1. ขั้นสอน - ส่วนที่ 1: ตรวจสอบพลังเวท (git --version)
 		# ======================================================================
