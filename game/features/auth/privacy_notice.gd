@@ -4,7 +4,8 @@ extends Control
 ## 1. อ่านอย่างเดียว:  PrivacyNotice.open(get_tree())
 ## 2. ตอนสมัคร:      var notice := PrivacyNotice.open_for_sign_up(get_tree())
 ##                    var choice: Array = await notice.closed   # [กดยืนยันไหม, ยินยอมตารางอันดับไหม]
-##    ต้องเลื่อนอ่านจนสุดก่อนถึงจะติ๊กได้ และต้องติ๊กรับทราบก่อนถึงจะกดยืนยันได้
+##    ต้องเลื่อนอ่านจนสุดก่อนถึงจะติ๊กได้ และต้องติ๊ก "รับทราบ" กับ "อายุ 20 ปีขึ้นไป" ก่อนถึงจะกดยืนยันได้
+##    ช่องอายุ: ผู้เล่นยืนยันเอง เราไม่ตรวจหลักฐาน (ตัดสินใจทำแบบง่ายไว้ก่อน ดู docs/auth.md ถ้าต้องจริงจังเรื่องนี้)
 ##
 ## ใช้ Label ธรรมดา (ไม่ใช่ RichTextLabel) เพื่อไม่ให้ข้อความถูกตีความเป็นคำสั่งจัดรูปแบบ
 ## หมายเหตุ: ช่องแรกคือ "รับทราบ" (การแจ้งนโยบาย) ไม่ใช่ "ยินยอม" การยินยอมมีแค่เรื่องตารางอันดับ ซึ่งไม่บังคับ
@@ -28,6 +29,7 @@ var _closed := false
 
 var _scroll: ScrollContainer
 var _ack_check: CheckBox
+var _age_check: CheckBox
 var _leaderboard_check: CheckBox
 var _consent_box: VBoxContainer
 var _confirm_btn: Button
@@ -59,6 +61,7 @@ static func _spawn(tree: SceneTree, sign_up: bool) -> PrivacyNotice:
 func _ready() -> void:
 	_scroll = get_node("%Scroll") as ScrollContainer
 	_ack_check = get_node("%AckCheck") as CheckBox
+	_age_check = get_node("%AgeCheck") as CheckBox
 	_leaderboard_check = get_node("%LeaderboardCheck") as CheckBox
 	_consent_box = get_node("%ConsentBox") as VBoxContainer
 	_confirm_btn = get_node("%ConfirmBtn") as Button
@@ -83,8 +86,10 @@ func _ready() -> void:
 	if _sign_up_mode:
 		_confirm_btn.text = "ยืนยันและสมัคร"
 		_ack_check.disabled = true
+		_age_check.disabled = true
 		_leaderboard_check.disabled = true
 		_ack_check.toggled.connect(func(_on: bool) -> void: _update_confirm())
+		_age_check.toggled.connect(func(_on: bool) -> void: _update_confirm())
 		var bar := _scroll.get_v_scroll_bar()
 		bar.value_changed.connect(func(_value: float) -> void: _check_read_to_end())
 		bar.changed.connect(_check_read_to_end)
@@ -163,20 +168,21 @@ func _check_read_to_end() -> void:
 		return
 	_read_to_end = true
 	_ack_check.disabled = false
+	_age_check.disabled = false
 	_leaderboard_check.disabled = false
 	_update_confirm()
 
 
 func _update_confirm() -> void:
 	if _sign_up_mode:
-		_confirm_btn.disabled = not (_read_to_end and _ack_check.button_pressed)
+		_confirm_btn.disabled = not (_read_to_end and _ack_check.button_pressed and _age_check.button_pressed)
 
 
 func _finish(accepted: bool) -> void:
 	if _closed:
 		return
 	_closed = true
-	var confirmed := accepted and _sign_up_mode and _read_to_end and _ack_check.button_pressed
+	var confirmed := accepted and _sign_up_mode and _read_to_end and _ack_check.button_pressed and _age_check.button_pressed
 	var opt_in := confirmed and _leaderboard_check.button_pressed
 	closed.emit(confirmed, opt_in)
 	queue_free()

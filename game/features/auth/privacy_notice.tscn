@@ -125,6 +125,19 @@ theme_override_fonts/font = ExtResource("4_regular")
 theme_override_font_sizes/font_size = 18
 text = "ฉันได้อ่านและรับทราบนโยบายความเป็นส่วนตัว (จำเป็น)"
 
+[node name="AgeCheck" type="CheckBox" parent="CenterArea/Card/MarginContainer/CardVBox/ConsentBox" unique_id=362273655]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.172549, 0.141176, 0.113725, 1)
+theme_override_colors/font_focus_color = Color(0.172549, 0.141176, 0.113725, 1)
+theme_override_colors/font_pressed_color = Color(0.172549, 0.141176, 0.113725, 1)
+theme_override_colors/font_hover_color = Color(0.172549, 0.141176, 0.113725, 1)
+theme_override_colors/font_hover_pressed_color = Color(0.172549, 0.141176, 0.113725, 1)
+theme_override_colors/font_disabled_color = Color(0.478431, 0.431373, 0.376471, 0.6)
+theme_override_fonts/font = ExtResource("4_regular")
+theme_override_font_sizes/font_size = 18
+text = "ฉันมีอายุ 20 ปีขึ้นไป (จำเป็น)"
+
 [node name="LeaderboardRow" type="HBoxContainer" parent="CenterArea/Card/MarginContainer/CardVBox/ConsentBox" unique_id=1906711423]
 layout_mode = 2
 theme_override_constants/separation = 6

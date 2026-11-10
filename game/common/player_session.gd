@@ -21,6 +21,8 @@ const AUTH_SCENE := "res://features/auth/auth_view.tscn"
 # หน้า "บัญชีของฉัน" (ดูชื่อ / เปลี่ยนชื่อ / ออกจากระบบ) ทีมเปิดได้ด้วย change_scene_to_file(ACCOUNT_SCENE)
 # ตอนนี้ชี้ไปที่หน้าทดสอบ ทำหน้าจริงแล้วให้แก้ path นี้ (รายละเอียดอยู่หัวไฟล์ account_view_controller.gd)
 const ACCOUNT_SCENE := "res://features/auth/account_view.tscn"
+# ไฟล์ปีเกิดของระบบถามอายุแบบเก่า (เลิกใช้แล้ว) ลบทิ้งตอนเปิดเกม ไม่เก็บข้อมูลที่ไม่ใช้แล้วไว้ในเครื่องผู้เล่น
+const LEGACY_AGE_GATE_FILE := "user://age_gate.json"
 
 # ผลของการล็อกอินอัตโนมัติตอนเปิดเกม (restore_saved_session)
 const RESTORE_NONE := "none"  # ไม่มี session ที่จดจำไว้
@@ -43,6 +45,9 @@ var display_name_changes_available := -1
 func _ready() -> void:
 	_api = AuthApiClient.new()
 	add_child(_api)
+	# TODO: ลบ 2 บรรทัดนี้ (และ LEGACY_AGE_GATE_FILE) ได้เมื่อไม่มีใครใช้เวอร์ชันที่ถามปีเกิดแล้ว
+	if FileAccess.file_exists(LEGACY_AGE_GATE_FILE):
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(LEGACY_AGE_GATE_FILE))
 
 
 ## มีบัญชีจริงอยู่ไหม (ONLINE หรือ OFFLINE) guest ไม่นับ
@@ -79,9 +84,6 @@ func get_token() -> String:
 
 ## เริ่ม session จากคำตอบของ server ตอนล็อกอิน คืนค่า false ถ้าข้อมูลจาก server ผิดรูปแบบ
 func start_session(login_data: Dictionary, remember_me: bool) -> bool:
-	# ผู้เล่นอายุต่ำกว่าเกณฑ์ใช้บัญชีออนไลน์ไม่ได้ (เช็คซ้ำตรงนี้ด้วย เผื่อหน้าจอไหนลืมเช็ค)
-	if not AgeGate.is_online_allowed():
-		return false
 	var session := SessionStore.from_login_response(login_data)
 	if session.is_empty():
 		return false
@@ -217,7 +219,7 @@ func get_saved_display_name() -> String:
 ## ความปลอดภัย: ไม่โหลด token ขึ้นมาในโหมดนี้ (token ยังอยู่ในไฟล์ไว้ล็อกอินอัตโนมัติครั้งหน้า)
 ## และข้อมูลในไฟล์ผู้เล่นแก้เองได้ จึงห้ามให้โหมดนี้ปลดล็อกอะไรที่ server ต้องเป็นผู้ตัดสิน
 func start_offline() -> bool:
-	if state == State.ONLINE or not AgeGate.is_online_allowed():
+	if state == State.ONLINE:
 		return false
 	var saved := SessionStore.load_session()
 	if saved.is_empty():
@@ -249,8 +251,6 @@ func start_guest(raw_name: String) -> bool:
 ## ล็อกอินอัตโนมัติด้วย session ที่จดจำไว้ โดยขอ token ใบใหม่จาก server (token ใบเก่าจะใช้ไม่ได้อีก)
 ## คืนค่าเป็น RESTORE_* ตัวใดตัวหนึ่ง
 func restore_saved_session() -> String:
-	if not AgeGate.is_online_allowed():
-		return RESTORE_NONE
 	var saved := SessionStore.load_session()
 	if saved.is_empty():
 		return RESTORE_NONE
