@@ -175,7 +175,7 @@ theme_override_colors/font_hover_pressed_color = Color(0.172549, 0.141176, 0.113
 theme_override_colors/font_disabled_color = Color(0.478431, 0.431373, 0.376471, 0.6)
 theme_override_fonts/font = ExtResource("4_regular")
 theme_override_font_sizes/font_size = 18
-text = "แสดงชื่อที่แสดงของฉันบนตารางอันดับ"
+text = "ให้ชื่อในเกมของฉันขึ้นบนตารางอันดับ"
 
 [node name="LeaderboardStatus" type="Label" parent="CenterArea/Card/MarginContainer/CardVBox/LeaderboardSection" unique_id=1098773867]
 unique_name_in_owner = true
