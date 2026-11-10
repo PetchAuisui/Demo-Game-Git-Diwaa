@@ -2,6 +2,7 @@
 
 [ext_resource type="Script" path="res://features/start/dressing_room_view_controller.gd" id="1_controller"]
 [ext_resource type="FontFile" path="res://assets/fonts/Bungee-Regular.ttf" id="2_font_bungee"]
+[ext_resource type="PackedScene" path="res://features/auth/account_menu.tscn" id="90_account_menu"]
 [ext_resource type="FontFile" uid="uid://deedcfbkojx6k" path="res://assets/fonts/ChakraPetch-Bold.ttf" id="2_font_bold"]
 [ext_resource type="FontFile" uid="uid://b8g6ela360qq1" path="res://assets/fonts/Silkscreen-Bold.ttf" id="3_font_silkscreen"]
 [ext_resource type="FontFile" uid="uid://kdsopvxcj40" path="res://assets/fonts/VT323-Regular.ttf" id="4_font_vt323"]
@@ -276,6 +277,9 @@ vertical_alignment = 1
 [node name="Spacer" type="Control" parent="TopBar/TopHBox"]
 layout_mode = 2
 size_flags_horizontal = 3
+
+[node name="AccountMenu" parent="TopBar/TopHBox" instance=ExtResource("90_account_menu")]
+layout_mode = 2
 
 [node name="MainMargin" type="MarginContainer" parent="."]
 layout_mode = 1
