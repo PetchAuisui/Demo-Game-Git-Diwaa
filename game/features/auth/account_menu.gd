@@ -134,7 +134,7 @@ func _load_email() -> void:
 func _show_email() -> void:
 	_email_row.visible = not _email.is_empty()
 	var revealed := _reveal_btn.button_pressed
-	_email_label.text = _email if revealed else _mask_email(_email)
+	_email_label.text = _email if revealed else mask_email(_email)
 	_reveal_btn.tooltip_text = "ซ่อนอีเมล" if revealed else "แสดงอีเมล"
 	if _panel.visible:
 		_panel.reset_size()  # เนื้อหาเปลี่ยน (เช่น อีเมลเพิ่งมา) ให้กล่องพอดีกับเนื้อหาใหม่
@@ -142,7 +142,7 @@ func _show_email() -> void:
 
 ## p•••@g•••.com: เหลือแค่ตัวแรกของชื่อ ตัวแรกของโดเมน และนามสกุลท้ายสุด (.com / .th)
 ## ใช้ ••• เท่ากันทุกที่ ไม่บอกความยาว และปิดโดเมนด้วย เพราะโดเมนของบริษัท / โรงเรียนบอกได้ว่าผู้เล่นทำงานหรือเรียนที่ไหน
-static func _mask_email(email: String) -> String:
+static func mask_email(email: String) -> String:
 	var at := email.rfind("@")
 	if at <= 0:
 		return "•••"
@@ -176,9 +176,10 @@ func _input(event: InputEvent) -> void:
 			get_viewport().set_input_as_handled()
 
 
+## เปิดหน้าบัญชีแบบลอยทับหน้าปัจจุบัน ปิดแล้วกลับมาที่เดิม (ไม่โหลดหน้าใหม่ จึงไม่เสียความคืบหน้าในด่าน)
 func _on_manage_pressed() -> void:
 	_close()
-	get_tree().change_scene_to_file(PlayerSession.ACCOUNT_SCENE)
+	AccountViewController.open(_layer, confirm_sign_out)
 
 
 ## ออกจากระบบ (บัญชี) หรือออกจากโหมดไม่ล็อกอิน (guest) แล้วกลับหน้าเข้าสู่ระบบ

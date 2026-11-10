@@ -18,7 +18,7 @@ enum State { SIGNED_OUT, ONLINE, OFFLINE, GUEST }
 # หน้าที่พาไปหลังล็อกอินสำเร็จ (หน้าแรกของทีม)
 const START_SCENE := "res://features/start/start_view.tscn"
 const AUTH_SCENE := "res://features/auth/auth_view.tscn"
-# หน้า "บัญชีของฉัน" (ดูชื่อ / เปลี่ยนชื่อ / ออกจากระบบ) ทีมเปิดได้ด้วย change_scene_to_file(ACCOUNT_SCENE)
+# หน้า "บัญชีของฉัน" เปิดแบบลอยทับหน้าปัจจุบันด้วย AccountViewController.open(parent) (เมนูบัญชีเรียกให้แล้ว)
 # ตอนนี้ชี้ไปที่หน้าทดสอบ ทำหน้าจริงแล้วให้แก้ path นี้ (รายละเอียดอยู่หัวไฟล์ account_view_controller.gd)
 const ACCOUNT_SCENE := "res://features/auth/account_view.tscn"
 # ไฟล์ปีเกิดของระบบถามอายุแบบเก่า (เลิกใช้แล้ว) ลบทิ้งตอนเปิดเกม ไม่เก็บข้อมูลที่ไม่ใช้แล้วไว้ในเครื่องผู้เล่น

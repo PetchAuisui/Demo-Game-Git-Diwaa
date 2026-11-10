@@ -30,6 +30,11 @@ static func open(tree: SceneTree, title: String, message: String) -> MessagePopu
 	return _spawn(tree.current_scene, title, message, "ตกลง", "")
 
 
+## แจ้งข้อมูล (ปุ่ม "ตกลง") แต่วางใน parent ที่กำหนด เช่น ในหน้าต่างที่ลอยอยู่ ให้ขึ้นบนสุด
+static func open_info(parent: Node, title: String, message: String) -> MessagePopup:
+	return _spawn(parent, title, message, "ตกลง", "")
+
+
 ## parent: ที่จะวางหน้าต่าง (เช่น CanvasLayer ของเมนู เพื่อให้อยู่บนสุดของหน้า)
 static func open_confirm(parent: Node, title: String, message: String, confirm_text: String, cancel_text: String = "ยกเลิก") -> MessagePopup:
 	return _spawn(parent, title, message, confirm_text, cancel_text)

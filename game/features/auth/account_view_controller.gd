@@ -1,251 +1,351 @@
 class_name AccountViewController
 extends Control
-## หน้า "บัญชีของฉัน": ดูชื่อ เปลี่ยนชื่อที่แสดง (ออนไลน์เท่านั้น) และออกจากระบบ
+## หน้า "บัญชีของฉัน": ดูชื่อในเกม / อีเมล (ปิดบัง) / สถานะ, เปลี่ยนชื่อในเกม, ตั้งค่าตารางอันดับ, ออกจากระบบ
 ##
-## ⚠️ หน้านี้เป็น "หน้าทดสอบ" (prototype) ไม่ใช่หน้าจริงของเกม
-## ทำไว้ให้ทดสอบระบบบัญชีได้ครบทุกส่วน ก่อนที่ทีมจะทำหน้าจริง:
-##   - เปลี่ยนชื่อที่แสดง (สิทธิ์เริ่มต้น 2 ครั้ง ใช้หมดแล้วได้คืน 1 ครั้งทุก 14 วัน)
-##   - ให้ / ถอนความยินยอมแสดงชื่อบนตารางอันดับ
-##   - เปิดนโยบายความเป็นส่วนตัว และช่องทางติดต่อ
-##   - ออกจากระบบ
-## หน้าตายังไม่ได้ออกแบบให้เข้ากับเกม และยังไม่มีหน้าไหนของเกมพามาที่นี่
-## วิธีเปิดทดสอบ: ล็อกอินแบบติ๊ก "จดจำ" แล้วเปิด account_view.tscn กด F6 (หน้านี้จะล็อกอินอัตโนมัติให้)
+## เปิดได้ 2 แบบ
+## 1. หน้าต่างลอยทับหน้าปัจจุบัน (แบบที่เกมใช้ ผ่านปุ่ม "จัดการบัญชี" ในเมนูบัญชี):
+##      AccountViewController.open(parent, confirm_sign_out)
+##    ปิด (× / Esc) แล้วกลับหน้าเดิมทันที หน้าข้างหลังไม่ถูกโหลดใหม่ จึงไม่เสียความคืบหน้า (เช่น เปิดจากกลางด่าน)
+## 2. เปิดไฟล์ account_view.tscn ตรงๆ ด้วย F6 (ไว้ทดสอบ): ยังไม่มีผู้เล่นจะลองล็อกอินอัตโนมัติ ปิดแล้วไปหน้าเริ่ม
 ##
-## ถ้าจะทำหน้าจริง: ไม่ต้องคุยกับ server เอง ให้เรียกผ่าน PlayerSession (game/common/player_session.gd) อย่างเดียว
-##   ข้อมูลผู้เล่น        PlayerSession.get_display_name(), get_username(), state, is_online(), is_guest()
-##   สิทธิ์เปลี่ยนชื่อ     await PlayerSession.refresh_display_name_status()
-##                       แล้วอ่าน PlayerSession.display_name_changes_available (-1 = ยังไม่รู้)
-##                       และ PlayerSession.display_name_next_change_unix (เวลาที่ได้สิทธิ์คืน)
-##   เปลี่ยนชื่อ          var result := await PlayerSession.change_display_name(new_name)  แล้วเช็ค result.ok / result.code
-##   ตารางอันดับ          await PlayerSession.get_leaderboard_consent() / await PlayerSession.set_leaderboard_consent(granted)
-##   ออกจากระบบ          PlayerSession.sign_out() แล้ว change_scene_to_file(PlayerSession.AUTH_SCENE)
-##   นโยบาย              PrivacyNotice.open(get_tree())          (game/features/auth/privacy_notice.gd)
-##   อีเมลติดต่อ          PrivacyPolicy.CONTACT_EMAIL             (game/features/auth/privacy_policy.gd)
-##   ตรวจชื่อก่อนส่ง       AuthRules.validate_new_display_name(name) (game/features/auth/auth_rules.gd)
-##   ข้อความ error        ก๊อป _message_for_failure / _message_for_reason ในไฟล์นี้ไปใช้ได้
-##   ฟังการเปลี่ยนแปลง     PlayerSession.session_changed (ส่งออกเมื่อชื่อเปลี่ยน / ล็อกอิน / ออกจากระบบ)
-##   สีและสไตล์           AuthThemeTokens                         (game/features/auth/auth_theme_tokens.gd)
+## ⚠️ หน้าตายังเป็นแบบทดสอบ ทีมออกแบบใหม่ได้ ถ้าทำหน้าใหม่ ให้เรียกผ่าน PlayerSession อย่างเดียว (ห้ามคุยกับ server เอง)
+##   ข้อมูลผู้เล่น      PlayerSession.get_display_name(), state, is_online(), is_guest()
+##   อีเมล             await PlayerSession.fetch_email()  แล้วแสดงด้วย AccountMenu.mask_email(email)
+##   สิทธิ์เปลี่ยนชื่อ   await PlayerSession.refresh_display_name_status() แล้วอ่าน display_name_changes_available
+##   เปลี่ยนชื่อ        await PlayerSession.change_display_name(new_name) แล้วเช็ค result.ok / result.code
+##   ตารางอันดับ        await PlayerSession.get_leaderboard_consent() / set_leaderboard_consent(granted)
+##   ออกจากระบบ        PlayerSession.sign_out() แล้ว change_scene_to_file(PlayerSession.AUTH_SCENE)
 ##
-## กฎที่หน้าจริงต้องรักษาไว้ (เรื่องความปลอดภัยและ PDPA):
-##   - ซ่อนการเปลี่ยนชื่อและตารางอันดับเมื่อ PlayerSession.is_online() เป็น false (ออฟไลน์ / ไม่ล็อกอิน)
-##   - ช่องยินยอมต้องแสดงค่าจริงจาก server ถ้าโหลดไม่สำเร็จห้ามให้กด และถอนได้ง่ายเท่ากับให้ (กดครั้งเดียว)
-##   - ให้ผู้เล่นยืนยันก่อนเปลี่ยนชื่อทุกครั้ง เพราะสิทธิ์มีจำกัด
-##   - ห้ามเอาข้อความดิบจาก server ไปแสดงบนจอ และห้าม print token
-##
-## ทำหน้าจริงเสร็จแล้ว: ลบไฟล์นี้กับ account_view.tscn ได้เลย แล้วแก้ ACCOUNT_SCENE ใน player_session.gd ให้ชี้หน้าใหม่
-##
-## ข้อควรรู้: การเช็คในหน้านี้ (กติกาชื่อ, ยืนยันก่อนเปลี่ยน) มีไว้ช่วยผู้เล่นเท่านั้น
-## เรื่องชื่อซ้ำ ชื่อสงวน และสิทธิ์เปลี่ยนชื่อ server เป็นผู้ตัดสินเสมอ
+## กฎที่ต้องรักษาไว้ (ความปลอดภัย / PDPA):
+##   - ซ่อนการเปลี่ยนชื่อและตารางอันดับเมื่อไม่ออนไลน์
+##   - ช่องยินยอมแสดงค่าจริงจาก server ถ้าโหลดไม่สำเร็จห้ามให้กด และถอนได้ง่ายเท่ากับให้ (กดครั้งเดียว)
+##   - ยืนยันก่อนเปลี่ยนชื่อทุกครั้ง เพราะสิทธิ์มีจำกัด
+##   - ไม่แสดงชื่อผู้ใช้ และอีเมลปิดบังเป็นค่าเริ่มต้น (กันหลุดตอนสตรีม / แคปจอ)
+##   - ห้ามเอาข้อความดิบจาก server ไปแสดง และห้าม print token
+## การเช็คในหน้านี้มีไว้ช่วยผู้เล่น เรื่องชื่อซ้ำ ชื่อสงวน และสิทธิ์เปลี่ยนชื่อ server เป็นผู้ตัดสินเสมอ
 
+## ส่งครั้งเดียวตอนหน้าต่างปิด (แบบลอยทับเท่านั้น)
+signal closed
+
+const SCENE_PATH := "res://features/auth/account_view.tscn"
 const RENAME_COOLDOWN_DAYS := 14
 
-var _mode_label: Label
-var _display_name_value: Label
-var _username_value: Label
-var _rename_section: VBoxContainer
-var _rename_input: LineEdit
-var _rename_hint: Label
-var _rename_status: Label
-var _rename_btn: Button
-var _sign_out_btn: Button
-var _back_btn: Button
-var _leaderboard_section: VBoxContainer
-var _leaderboard_check: CheckBox
-var _leaderboard_status: Label
-var _privacy_link: LinkButton
-var _contact_label: Label
+var _as_overlay := false
+var _confirm_sign_out := false
+var _closed := false
+var _busy := false
 # โหลดสถานะการยินยอมจาก server สำเร็จแล้วหรือยัง (ยังไม่สำเร็จ = ห้ามให้กด เพราะไม่รู้ค่าจริง)
 var _leaderboard_loaded := false
+# อีเมลเก็บแค่ในตัวแปรของหน้านี้ ไม่บันทึกลงไฟล์ ปิดหน้าแล้วหายไปพร้อมกัน
+var _email := ""
 
-var _busy := false
-# กดเปลี่ยนชื่อครั้งแรก = ขอให้ยืนยัน, ครั้งที่สอง = ส่งจริง (เพราะเปลี่ยนแล้วต้องรอ 14 วัน)
-var _confirming := false
-var _rename_btn_text := ""
+var _backdrop: ColorRect
+var _card: PanelContainer
+var _close_btn: Button
+var _avatar: Label
+var _display_name_value: Label
+var _email_row: HBoxContainer
+var _email_label: Label
+var _reveal_btn: Button
+var _status_label: Label
+var _sep_top: HSeparator
+var _sep_middle: HSeparator
+var _rename_section: VBoxContainer
+var _rename_input: LineEdit
+var _rename_btn: Button
+var _rename_hint: Label
+var _rename_status: Label
+var _leaderboard_section: VBoxContainer
+var _leaderboard_check: CheckBox
+var _leaderboard_help: Button
+var _leaderboard_status: Label
+var _offline_note: Label
+var _sign_out_btn: Button
+var _privacy_link: LinkButton
+var _contact_label: Label
+
+
+## เปิดเป็นหน้าต่างลอยทับ: parent ควรเป็นชั้นบนสุดของหน้า (เช่น CanvasLayer ของเมนูบัญชี)
+## confirm_sign_out = true: กดออกจากระบบแล้วถามก่อน (ใช้กับหน้าที่ออกกลางทางแล้วเสียความคืบหน้า)
+static func open(parent: Node, confirm_sign_out: bool = false) -> AccountViewController:
+	var scene := load(SCENE_PATH) as PackedScene
+	if scene == null or parent == null:
+		push_error("AccountView: could not open the account view.")
+		return null
+	var view := scene.instantiate() as AccountViewController
+	view._as_overlay = true
+	view._confirm_sign_out = confirm_sign_out
+	parent.add_child(view)
+	return view
 
 
 func _ready() -> void:
 	_bind_nodes()
 	_wire_events()
 	_apply_theme()
-	_rename_btn_text = _rename_btn.text
+	_backdrop.color = Color(0, 0, 0, 0.6) if _as_overlay else AuthThemeTokens.BACKDROP
+	_rename_input.max_length = AuthRules.DISPLAY_NAME_MAX_LEN
+	_leaderboard_help.tooltip_text = PrivacyNotice.LEADERBOARD_HELP_TEXT
+	_contact_label.text = "แจ้งปัญหา หรือขอลบบัญชี: %s" % PrivacyPolicy.CONTACT_EMAIL
 	_refresh()
-	_ensure_player.call_deferred()
+	_rename_input.text = PlayerSession.get_display_name()
+	_update_save_button()
+	_leaderboard_check.disabled = true  # รอค่าจริงจาก server ก่อน
+	_close_btn.grab_focus()
+	_load_all.call_deferred()
 
 
 func _bind_nodes() -> void:
-	_mode_label = get_node("%ModeLabel") as Label
+	_backdrop = get_node("%Backdrop") as ColorRect
+	_card = get_node("%Card") as PanelContainer
+	_close_btn = get_node("%CloseBtn") as Button
+	_avatar = get_node("%Avatar") as Label
 	_display_name_value = get_node("%DisplayNameValue") as Label
-	_username_value = get_node("%UsernameValue") as Label
+	_email_row = get_node("%EmailRow") as HBoxContainer
+	_email_label = get_node("%EmailLabel") as Label
+	_reveal_btn = get_node("%RevealEmailBtn") as Button
+	_status_label = get_node("%StatusLabel") as Label
+	_sep_top = get_node("%SepTop") as HSeparator
+	_sep_middle = get_node("%SepMiddle") as HSeparator
 	_rename_section = get_node("%RenameSection") as VBoxContainer
 	_rename_input = get_node("%RenameInput") as LineEdit
+	_rename_btn = get_node("%RenameBtn") as Button
 	_rename_hint = get_node("%RenameHint") as Label
 	_rename_status = get_node("%RenameStatus") as Label
-	_rename_btn = get_node("%RenameBtn") as Button
-	_sign_out_btn = get_node("%SignOutBtn") as Button
-	_back_btn = get_node("%BackBtn") as Button
 	_leaderboard_section = get_node("%LeaderboardSection") as VBoxContainer
 	_leaderboard_check = get_node("%LeaderboardCheck") as CheckBox
+	_leaderboard_help = get_node("%LeaderboardHelp") as Button
 	_leaderboard_status = get_node("%LeaderboardStatus") as Label
+	_offline_note = get_node("%OfflineNote") as Label
+	_sign_out_btn = get_node("%SignOutBtn") as Button
 	_privacy_link = get_node("%PrivacyLink") as LinkButton
 	_contact_label = get_node("%ContactLabel") as Label
 
 
 func _wire_events() -> void:
-	_rename_btn.pressed.connect(_on_rename_pressed)
+	_close_btn.pressed.connect(_close)
+	_reveal_btn.toggled.connect(func(_on: bool) -> void: _show_email())
+	_rename_input.text_changed.connect(_on_rename_text_changed)
 	_rename_input.text_submitted.connect(func(_text: String) -> void: await _on_rename_pressed())
-	_rename_input.text_changed.connect(func(_text: String) -> void: _cancel_confirm())
-	_sign_out_btn.pressed.connect(_on_sign_out_pressed)
-	_back_btn.pressed.connect(_on_back_pressed)
+	_rename_btn.pressed.connect(_on_rename_pressed)
 	_leaderboard_check.toggled.connect(_on_leaderboard_toggled)
-	_privacy_link.pressed.connect(func() -> void: PrivacyNotice.open(get_tree()))
+	_leaderboard_help.pressed.connect(func() -> void:
+		MessagePopup.open_info(self, "ตารางอันดับ", PrivacyNotice.LEADERBOARD_HELP_TEXT)
+	)
+	_sign_out_btn.pressed.connect(_on_sign_out_pressed)
+	_privacy_link.pressed.connect(func() -> void: PrivacyNotice.open_in(self))
 	PlayerSession.session_changed.connect(_refresh)
 
 
-func _apply_theme() -> void:
-	_rename_input.add_theme_stylebox_override("normal", AuthThemeTokens.create_input_style(AuthThemeTokens.INPUT_BORDER))
-	_rename_input.add_theme_stylebox_override("focus", AuthThemeTokens.create_input_style(AuthThemeTokens.INPUT_BORDER_FOCUS))
-	_rename_input.add_theme_color_override("font_color", AuthThemeTokens.TEXT_PRIMARY)
-	_rename_input.add_theme_color_override("caret_color", AuthThemeTokens.TEXT_PRIMARY)
+# ---------------------------------------------------------------- เปิด / ปิด
 
-	var buttons: Array[Button] = [_rename_btn, _sign_out_btn, _back_btn]
-	for btn in buttons:
-		btn.add_theme_stylebox_override("normal", AuthThemeTokens.create_button_style(AuthThemeTokens.BUTTON_BG))
-		btn.add_theme_stylebox_override("hover", AuthThemeTokens.create_button_style(AuthThemeTokens.BUTTON_HOVER_BG))
-		btn.add_theme_stylebox_override("pressed", AuthThemeTokens.create_button_style(AuthThemeTokens.BUTTON_PRESSED_BG))
-		btn.add_theme_stylebox_override("disabled", AuthThemeTokens.create_button_style(AuthThemeTokens.BUTTON_DISABLED_BG))
-		btn.add_theme_color_override("font_color", AuthThemeTokens.BUTTON_TEXT)
-		btn.add_theme_color_override("font_hover_color", AuthThemeTokens.BUTTON_TEXT)
-		btn.add_theme_color_override("font_pressed_color", AuthThemeTokens.BUTTON_TEXT)
-		btn.add_theme_color_override("font_disabled_color", AuthThemeTokens.BUTTON_DISABLED_TEXT)
+## Esc = ปิด (หน้าต่างย่อยที่เปิดทับอยู่ เช่น ยืนยัน / นโยบาย จะรับ Esc ไปก่อน)
+func _unhandled_input(event: InputEvent) -> void:
+	if event.is_action_pressed("ui_cancel"):
+		get_viewport().set_input_as_handled()
+		_close()
 
 
-## เปิดหน้านี้ตรงๆ (เช่น กด F6) ตอนยังไม่มีผู้เล่น: ลองล็อกอินอัตโนมัติ ไม่ได้ก็กลับหน้าเข้าสู่ระบบ
-func _ensure_player() -> void:
-	if PlayerSession.has_player():
-		await _load_display_name_status()
-		await _load_leaderboard_consent()
+func _close() -> void:
+	if _closed:
 		return
+	_closed = true
+	if not _as_overlay:
+		get_tree().change_scene_to_file(PlayerSession.START_SCENE)
+		return
+	closed.emit()
+	queue_free()
+
+
+func _exit_tree() -> void:
+	if _as_overlay and not _closed:
+		_closed = true
+		closed.emit()
+
+
+## โหลดข้อมูลจาก server ทีละอย่าง (ส่งคำขอได้ทีละครั้ง) ปิดหน้าไประหว่างรอก็หยุดทันที
+func _load_all() -> void:
+	if not PlayerSession.has_player():
+		if _as_overlay:
+			_close()  # ไม่มีผู้เล่นแล้ว (เช่น ออกจากระบบไปแล้ว) ไม่มีอะไรให้แสดง
+			return
+		if not await _restore_for_standalone():
+			return
+		_refresh()
+		_rename_input.text = PlayerSession.get_display_name()
+		_update_save_button()
+	if not PlayerSession.is_online():
+		return
+	await _load_display_name_status()
+	if not is_inside_tree():
+		return
+	await _load_leaderboard_consent()
+	if not is_inside_tree():
+		return
+	await _load_email()
+
+
+## เปิดด้วย F6 ตอนยังไม่มีผู้เล่น: ลองล็อกอินอัตโนมัติด้วย session ที่จดจำไว้
+func _restore_for_standalone() -> bool:
 	if not PlayerSession.has_saved_session():
 		get_tree().change_scene_to_file(PlayerSession.AUTH_SCENE)
-		return
+		return false
 	_set_busy(true)
 	var outcome := await PlayerSession.restore_saved_session()
+	if not is_inside_tree():
+		return false
 	_set_busy(false)
 	if outcome != PlayerSession.RESTORE_OK:
 		get_tree().change_scene_to_file(PlayerSession.AUTH_SCENE)
-		return
-	_refresh()
-	await _load_display_name_status()
-	await _load_leaderboard_consent()
+		return false
+	return true
 
 
+# ---------------------------------------------------------------- ข้อมูลผู้เล่น
+
+## อัปเดตทุกอย่างตามสถานะตอนนี้ (เรียกตอนเปิด และทุกครั้งที่ชื่อ / สถานะการล็อกอินเปลี่ยน)
+## ไม่แตะช่องกรอกชื่อ เพราะผู้เล่นอาจกำลังพิมพ์อยู่
 func _refresh() -> void:
-	_display_name_value.text = PlayerSession.get_display_name()
+	var display_name := PlayerSession.get_display_name()
+	_display_name_value.text = display_name
+	_avatar.text = display_name.left(1).to_upper() if not display_name.is_empty() else "?"
 
-	var username := PlayerSession.get_username()
-	_username_value.visible = not username.is_empty()
-	_username_value.text = "ชื่อผู้ใช้: %s (ใช้เข้าสู่ระบบเท่านั้น ไม่แสดงให้ผู้อื่นเห็น)" % username
-
+	var online := PlayerSession.is_online()
 	match PlayerSession.state:
 		PlayerSession.State.ONLINE:
-			_mode_label.text = "ออนไลน์"
+			_set_status("ออนไลน์", AuthThemeTokens.SUCCESS_TEXT)
 		PlayerSession.State.OFFLINE:
-			_mode_label.text = "ออฟไลน์: เปลี่ยนชื่อและใช้ตารางอันดับไม่ได้จนกว่าจะเชื่อมต่อ server"
+			_set_status("ออฟไลน์", AuthThemeTokens.TEXT_MUTED)
 		PlayerSession.State.GUEST:
-			_mode_label.text = "เล่นแบบไม่ล็อกอิน: ชื่อนี้อยู่ในเครื่องนี้เท่านั้น"
+			_set_status("เล่นแบบไม่ล็อกอิน", AuthThemeTokens.TEXT_MUTED)
 		_:
-			_mode_label.text = ""
+			_set_status("", AuthThemeTokens.TEXT_MUTED)
 
-	_rename_section.visible = PlayerSession.is_online()
-	_leaderboard_section.visible = PlayerSession.is_online()
-	_contact_label.text = "แจ้งปัญหา หรือขอลบบัญชี: %s" % PrivacyPolicy.CONTACT_EMAIL
+	_rename_section.visible = online
+	_sep_middle.visible = online
+	_leaderboard_section.visible = online
+	_offline_note.visible = not online
+	if PlayerSession.is_guest():
+		_offline_note.text = "ชื่อนี้อยู่ในเครื่องนี้เท่านั้น เปลี่ยนชื่อในเกมและตั้งค่าตารางอันดับได้เมื่อเล่นด้วยบัญชี"
+	else:
+		_offline_note.text = "เปลี่ยนชื่อในเกมและตั้งค่าตารางอันดับได้เมื่อเชื่อมต่อ server"
+
+	if not online:
+		_email = ""
+	_show_email()
 	_sign_out_btn.text = "ออกจากโหมดไม่ล็อกอิน" if PlayerSession.is_guest() else "ออกจากระบบ"
 	_update_rename_hint()
+	_update_save_button()
 
+
+func _set_status(text: String, color: Color) -> void:
+	_status_label.text = text
+	_status_label.visible = not text.is_empty()
+	_status_label.add_theme_color_override("font_color", color)
+
+
+func _load_email() -> void:
+	var owner_id := PlayerSession.get_user_id()
+	var email := await PlayerSession.fetch_email()
+	# ระหว่างรอ ปิดหน้า / ออกจากระบบ / เปลี่ยนบัญชีไปแล้ว: ทิ้งคำตอบนี้
+	if not is_inside_tree() or not PlayerSession.is_online() or PlayerSession.get_user_id() != owner_id:
+		return
+	_email = email
+	_show_email()
+
+
+## อีเมลปิดบังเป็นค่าเริ่มต้น กดรูปตาเพื่อดูเต็ม (รูปแบบเดียวกับเมนูบัญชี)
+func _show_email() -> void:
+	_email_row.visible = not _email.is_empty()
+	var revealed := _reveal_btn.button_pressed
+	_email_label.text = _email if revealed else AccountMenu.mask_email(_email)
+	_reveal_btn.tooltip_text = "ซ่อนอีเมล" if revealed else "แสดงอีเมล"
+
+
+# ---------------------------------------------------------------- เปลี่ยนชื่อในเกม
 
 func _update_rename_hint() -> void:
 	var changes := PlayerSession.display_name_changes_available
 	var next_change := PlayerSession.display_name_next_change_unix
 	if changes > 0:
-		_rename_hint.text = "เปลี่ยนได้อีก %d ครั้ง ใช้หมดแล้วได้คืน 1 ครั้งทุก %d วัน" % [changes, RENAME_COOLDOWN_DAYS]
-	elif next_change > int(Time.get_unix_time_from_system()):
+		_rename_hint.text = "เปลี่ยนได้อีก %d ครั้ง (ใช้หมดแล้วได้คืน 1 ครั้งทุก %d วัน)" % [changes, RENAME_COOLDOWN_DAYS]
+	elif changes == 0 and next_change > int(Time.get_unix_time_from_system()):
 		_rename_hint.text = "ใช้สิทธิ์เปลี่ยนชื่อหมดแล้ว เปลี่ยนได้อีกครั้ง: %s" % _format_local_datetime(next_change)
 	else:
-		_rename_hint.text = "ใช้สิทธิ์หมดแล้วได้คืน 1 ครั้งทุก %d วัน ชื่อเก่าจะว่างให้คนอื่นใช้ได้ทันที" % RENAME_COOLDOWN_DAYS
+		_rename_hint.text = "เปลี่ยนชื่อได้จำนวนจำกัด ใช้หมดแล้วได้คืน 1 ครั้งทุก %d วัน" % RENAME_COOLDOWN_DAYS
+
+
+func _on_rename_text_changed(_text: String) -> void:
+	_rename_status.visible = false
+	_update_save_button(true)
+
+
+## ปุ่มบันทึกกดได้เฉพาะเมื่อ: พิมพ์ชื่อใหม่ที่ต่างจากเดิม ถูกกติกา และยังมีสิทธิ์เหลือ
+## show_reason: บอกเหตุผลใต้ช่องทันทีถ้าชื่อที่พิมพ์ใช้ไม่ได้ (ไม่ต้องรอกดก่อนถึงรู้)
+func _update_save_button(show_reason: bool = false) -> void:
+	var new_name := _rename_input.text.strip_edges()
+	var changed := new_name != PlayerSession.get_display_name()
+	var reason := AuthRules.validate_new_display_name(new_name) if changed else ""
+	var no_credit := PlayerSession.display_name_changes_available == 0
+	_rename_btn.disabled = _busy or not changed or not reason.is_empty() or no_credit
+	if show_reason and not reason.is_empty():
+		_show_rename_status(_message_for_reason(reason), AuthThemeTokens.ERROR_TEXT)
 
 
 func _on_rename_pressed() -> void:
-	if _busy:
+	if _busy or _rename_btn.disabled:
 		return
-	_rename_status.visible = false
-
 	var new_name := _rename_input.text.strip_edges()
-	var reason := AuthRules.validate_new_display_name(new_name)
-	if not reason.is_empty():
-		_cancel_confirm()
-		_show_rename_status(_message_for_reason(reason), AuthThemeTokens.ERROR_TEXT)
+	var warning := "เปลี่ยนชื่อในเกมเป็น \"%s\"" % new_name
+	var changes := PlayerSession.display_name_changes_available
+	if changes == 1:
+		warning += "\nนี่เป็นสิทธิ์สุดท้าย หลังจากนี้ต้องรอ %d วัน" % RENAME_COOLDOWN_DAYS
+	elif changes > 1:
+		warning += "\n(จะเหลือสิทธิ์อีก %d ครั้ง)" % (changes - 1)
+
+	var popup := MessagePopup.open_confirm(self, "เปลี่ยนชื่อในเกม?", warning, "เปลี่ยนชื่อ")
+	if popup == null:
 		return
-	if new_name == PlayerSession.get_display_name():
-		_cancel_confirm()
-		_show_rename_status("นี่คือชื่อปัจจุบันของคุณอยู่แล้ว", AuthThemeTokens.ERROR_TEXT)
+	var confirmed: bool = await popup.closed
+	if not confirmed or not is_inside_tree():
 		return
 
-	if not _confirming:
-		_confirming = true
-		_rename_btn.text = "กดอีกครั้งเพื่อยืนยัน"
-		var warning := "เปลี่ยนเป็น \"%s\" ใช่ไหม" % new_name
-		var changes := PlayerSession.display_name_changes_available
-		if changes == 1:
-			warning += " นี่เป็นสิทธิ์สุดท้าย หลังจากนี้ต้องรอ %d วัน" % RENAME_COOLDOWN_DAYS
-		elif changes > 1:
-			warning += " (จะเหลือสิทธิ์อีก %d ครั้ง)" % (changes - 1)
-		_show_rename_status(warning, AuthThemeTokens.TEXT_PRIMARY)
-		return
-
-	_confirming = false
 	_set_busy(true)
 	var result := await PlayerSession.change_display_name(new_name)
+	if not is_inside_tree():
+		return
 	_set_busy(false)
-
 	if result.ok:
-		_rename_input.text = ""
+		_rename_input.text = PlayerSession.get_display_name()
 		_refresh()
 		_show_rename_status("เปลี่ยนชื่อเรียบร้อย", AuthThemeTokens.SUCCESS_TEXT)
 		return
 	_update_rename_hint()
+	_update_save_button()
 	_show_rename_status(_message_for_failure(result), AuthThemeTokens.ERROR_TEXT)
 
 
-func _cancel_confirm() -> void:
-	_confirming = false
-	if not _busy:
-		_rename_btn.text = _rename_btn_text
-
-
-## ออกจากระบบ: ลบข้อมูลในเครื่องทันที (แจ้ง server เบื้องหลัง) แล้วกลับหน้าเข้าสู่ระบบ
-func _on_sign_out_pressed() -> void:
-	if _busy:
-		return
-	PlayerSession.sign_out()
-	get_tree().change_scene_to_file(PlayerSession.AUTH_SCENE)
-
-
-## โหลดสิทธิ์เปลี่ยนชื่อที่เหลือจาก server (ออนไลน์เท่านั้น) มาแสดงก่อนผู้เล่นกดเปลี่ยน
+## โหลดสิทธิ์เปลี่ยนชื่อที่เหลือจาก server มาแสดงก่อนผู้เล่นกดเปลี่ยน
 func _load_display_name_status() -> void:
-	if not PlayerSession.is_online():
-		return
 	_set_busy(true)
 	await PlayerSession.refresh_display_name_status()
 	if not is_inside_tree():
 		return
 	_set_busy(false)
 	_update_rename_hint()
+	_update_save_button()
 
 
-## โหลดสถานะการยินยอมจาก server (ออนไลน์เท่านั้น) แสดงตามค่าจริงบน server เสมอ
+func _show_rename_status(text: String, color: Color) -> void:
+	_rename_status.text = text
+	_rename_status.add_theme_color_override("font_color", color)
+	_rename_status.visible = true
+
+
+# ---------------------------------------------------------------- ตารางอันดับ
+
+## โหลดสถานะการยินยอมจาก server แสดงตามค่าจริงบน server เสมอ
 func _load_leaderboard_consent() -> void:
-	if not PlayerSession.is_online():
-		return
 	_set_busy(true)
 	var result := await PlayerSession.get_leaderboard_consent()
 	if not is_inside_tree():
@@ -281,6 +381,127 @@ func _on_leaderboard_toggled(pressed: bool) -> void:
 	_set_busy(false)
 
 
+func _show_leaderboard_status(text: String, color: Color) -> void:
+	_leaderboard_status.text = text
+	_leaderboard_status.add_theme_color_override("font_color", color)
+	_leaderboard_status.visible = true
+
+
+# ---------------------------------------------------------------- ออกจากระบบ
+
+## ออกจากระบบ (บัญชี) หรือออกจากโหมดไม่ล็อกอิน (guest) แล้วกลับหน้าเข้าสู่ระบบ
+func _on_sign_out_pressed() -> void:
+	if _busy:
+		return
+	if _confirm_sign_out:
+		var action := _sign_out_btn.text
+		var popup := MessagePopup.open_confirm(self, "%sตอนนี้?" % action, "ความคืบหน้าที่ยังไม่บันทึกจะหาย", action)
+		if popup == null:
+			return
+		var confirmed: bool = await popup.closed
+		if not confirmed or not is_inside_tree():
+			return
+	_closed = true
+	PlayerSession.sign_out()
+	get_tree().change_scene_to_file(PlayerSession.AUTH_SCENE)
+
+
+# ---------------------------------------------------------------- ทั่วไป
+
+## ระหว่างรอ server: ล็อกเฉพาะสิ่งที่ส่งคำขอ ปุ่มปิด / นโยบาย / รูปตา ยังกดได้
+func _set_busy(busy: bool) -> void:
+	_busy = busy
+	_rename_input.editable = not busy
+	_sign_out_btn.disabled = busy
+	_leaderboard_check.disabled = busy or not _leaderboard_loaded
+	_rename_btn.text = "กำลังบันทึก..." if busy else "บันทึก"
+	_update_save_button()
+
+
+func _apply_theme() -> void:
+	var card := StyleBoxFlat.new()
+	card.bg_color = AuthThemeTokens.CARD_BG
+	card.border_color = AuthThemeTokens.CARD_BORDER
+	card.set_border_width_all(3)
+	card.set_corner_radius_all(10)
+	card.shadow_color = Color(0, 0, 0, 0.4)
+	card.shadow_size = 16
+	_card.add_theme_stylebox_override("panel", card)
+
+	var line := StyleBoxLine.new()
+	line.color = AuthThemeTokens.CARD_BORDER
+	line.thickness = 1
+	for sep: HSeparator in find_children("*", "HSeparator", true, false):
+		sep.add_theme_stylebox_override("separator", line)
+
+	for label: Label in find_children("*", "Label", true, false):
+		label.add_theme_color_override("font_color", AuthThemeTokens.TEXT_PRIMARY)
+	for muted: Label in [_rename_hint, _contact_label, _offline_note]:
+		muted.add_theme_color_override("font_color", AuthThemeTokens.TEXT_MUTED)
+	_email_label.add_theme_color_override("font_color", AuthThemeTokens.TEXT_MUTED)
+
+	var circle := StyleBoxFlat.new()
+	circle.bg_color = AuthThemeTokens.INPUT_BG
+	circle.border_color = AuthThemeTokens.CARD_BORDER
+	circle.set_border_width_all(2)
+	circle.set_corner_radius_all(999)
+	_avatar.add_theme_stylebox_override("normal", circle)
+
+	_rename_input.add_theme_stylebox_override("normal", AuthThemeTokens.create_input_style(AuthThemeTokens.INPUT_BORDER))
+	_rename_input.add_theme_stylebox_override("focus", AuthThemeTokens.create_input_style(AuthThemeTokens.INPUT_BORDER_FOCUS))
+	_rename_input.add_theme_stylebox_override("read_only", AuthThemeTokens.create_input_style(AuthThemeTokens.INPUT_BORDER))
+	_rename_input.add_theme_color_override("font_color", AuthThemeTokens.TEXT_PRIMARY)
+	_rename_input.add_theme_color_override("font_uneditable_color", AuthThemeTokens.TEXT_MUTED)
+	_rename_input.add_theme_color_override("font_placeholder_color", AuthThemeTokens.TEXT_MUTED)
+	_rename_input.add_theme_color_override("caret_color", AuthThemeTokens.TEXT_PRIMARY)
+
+	# ปุ่มหลัก (บันทึก) สีทอง / ปุ่มรอง (ออกจากระบบ) สีอ่อน แยกจากกันชัดเจน
+	_style_button(_rename_btn, AuthThemeTokens.BUTTON_BG, AuthThemeTokens.BUTTON_HOVER_BG, AuthThemeTokens.BUTTON_PRESSED_BG)
+	_style_button(_sign_out_btn, AuthThemeTokens.INPUT_BG, Color.WHITE, AuthThemeTokens.CARD_BORDER)
+
+	for color_name in ["font_color", "font_hover_color", "font_pressed_color", "font_focus_color"]:
+		_close_btn.add_theme_color_override(color_name, AuthThemeTokens.TEXT_PRIMARY)
+		_leaderboard_check.add_theme_color_override(color_name, AuthThemeTokens.TEXT_PRIMARY)
+	for icon_btn: Button in [_reveal_btn, _leaderboard_help]:
+		for icon_color in ["icon_normal_color", "icon_hover_color", "icon_pressed_color", "icon_hover_pressed_color", "icon_focus_color"]:
+			icon_btn.add_theme_color_override(icon_color, AuthThemeTokens.TEXT_MUTED)
+	_privacy_link.add_theme_color_override("font_color", AuthThemeTokens.LINK_TEXT)
+	_privacy_link.focus_mode = Control.FOCUS_ALL
+
+
+static func _style_button(btn: Button, normal: Color, hover: Color, pressed_bg: Color) -> void:
+	btn.add_theme_stylebox_override("normal", AuthThemeTokens.create_button_style(normal))
+	btn.add_theme_stylebox_override("hover", AuthThemeTokens.create_button_style(hover))
+	btn.add_theme_stylebox_override("pressed", AuthThemeTokens.create_button_style(pressed_bg))
+	btn.add_theme_stylebox_override("disabled", AuthThemeTokens.create_button_style(AuthThemeTokens.BUTTON_DISABLED_BG))
+	for color_name in ["font_color", "font_hover_color", "font_pressed_color", "font_focus_color"]:
+		btn.add_theme_color_override(color_name, AuthThemeTokens.BUTTON_TEXT)
+	btn.add_theme_color_override("font_disabled_color", AuthThemeTokens.BUTTON_DISABLED_TEXT)
+
+
+# ---------------------------------------------------------------- ข้อความ (เขียนเองทั้งหมด ไม่เอาข้อความดิบจาก server)
+
+func _message_for_failure(result: AuthApiResult) -> String:
+	match result.code:
+		AuthApiResult.DISPLAY_NAME_CHANGE_COOLDOWN:
+			var next_change := int(Time.get_unix_time_from_system()) + result.retry_after_sec
+			return "ยังเปลี่ยนชื่อไม่ได้ เปลี่ยนได้อีกครั้ง: %s" % _format_local_datetime(next_change)
+		AuthApiResult.IDENTIFIER_TAKEN:
+			return _message_for_reason(AuthRules.TAKEN)
+		AuthApiResult.VALIDATION_FAILED:
+			if not result.field_errors.is_empty():
+				return _message_for_reason(result.field_errors[0].get("reason", ""))
+			return "ชื่อในเกมไม่ถูกต้อง"
+		AuthApiResult.RATE_LIMITED:
+			return "ลองหลายครั้งเกินไป กรุณารอประมาณ %d วินาทีแล้วลองใหม่" % maxi(result.retry_after_sec, 1)
+		AuthApiResult.NETWORK_UNAVAILABLE:
+			return "เชื่อมต่อ server ไม่ได้ กรุณาลองใหม่"
+		AuthApiResult.INVALID_CREDENTIALS:
+			return "การเข้าสู่ระบบหมดอายุแล้ว กรุณาออกจากระบบแล้วเข้าสู่ระบบใหม่"
+		_:
+			return "เกิดข้อผิดพลาดที่ server กรุณาลองใหม่ภายหลัง"
+
+
 func _consent_failure_message(result: AuthApiResult) -> String:
 	match result.code:
 		AuthApiResult.VALIDATION_FAILED:
@@ -295,70 +516,20 @@ func _consent_failure_message(result: AuthApiResult) -> String:
 			return "บันทึกไม่สำเร็จ กรุณาลองใหม่ภายหลัง"
 
 
-func _show_leaderboard_status(text: String, color: Color) -> void:
-	_leaderboard_status.text = text
-	_leaderboard_status.add_theme_color_override("font_color", color)
-	_leaderboard_status.visible = true
-
-
-func _on_back_pressed() -> void:
-	if _busy:
-		return
-	get_tree().change_scene_to_file(PlayerSession.START_SCENE)
-
-
-func _set_busy(busy: bool) -> void:
-	_busy = busy
-	_rename_btn.disabled = busy
-	_sign_out_btn.disabled = busy
-	_back_btn.disabled = busy
-	_rename_input.editable = not busy
-	_rename_btn.text = "กำลังดำเนินการ..." if busy else _rename_btn_text
-	_leaderboard_check.disabled = busy or not _leaderboard_loaded
-
-
-func _show_rename_status(text: String, color: Color) -> void:
-	_rename_status.text = text
-	_rename_status.add_theme_color_override("font_color", color)
-	_rename_status.visible = true
-
-
-## ข้อความทั้งหมดเขียนเองที่นี่ ไม่เอาข้อความดิบจาก server ไปแสดง
-func _message_for_failure(result: AuthApiResult) -> String:
-	match result.code:
-		AuthApiResult.DISPLAY_NAME_CHANGE_COOLDOWN:
-			var next_change := int(Time.get_unix_time_from_system()) + result.retry_after_sec
-			return "ยังเปลี่ยนชื่อไม่ได้ เปลี่ยนได้อีกครั้ง: %s" % _format_local_datetime(next_change)
-		AuthApiResult.IDENTIFIER_TAKEN:
-			return _message_for_reason(AuthRules.TAKEN)
-		AuthApiResult.VALIDATION_FAILED:
-			if not result.field_errors.is_empty():
-				return _message_for_reason(result.field_errors[0].get("reason", ""))
-			return "ชื่อที่แสดงไม่ถูกต้อง"
-		AuthApiResult.RATE_LIMITED:
-			return "ลองหลายครั้งเกินไป กรุณารอประมาณ %d วินาทีแล้วลองใหม่" % maxi(result.retry_after_sec, 1)
-		AuthApiResult.NETWORK_UNAVAILABLE:
-			return "เชื่อมต่อ server ไม่ได้ กรุณาลองใหม่"
-		AuthApiResult.INVALID_CREDENTIALS:
-			return "การเข้าสู่ระบบหมดอายุแล้ว กรุณาออกจากระบบแล้วเข้าสู่ระบบใหม่"
-		_:
-			return "เกิดข้อผิดพลาดที่ server กรุณาลองใหม่ภายหลัง"
-
-
 func _message_for_reason(reason: String) -> String:
 	match reason:
 		AuthRules.REQUIRED:
-			return "กรุณากรอกชื่อที่แสดง"
+			return "กรุณากรอกชื่อในเกม"
 		AuthRules.TOO_LONG:
-			return "ชื่อที่แสดงยาวได้ไม่เกิน %d ตัวอักษร" % AuthRules.DISPLAY_NAME_MAX_LEN
+			return "ชื่อในเกมยาวได้ไม่เกิน %d ตัวอักษร" % AuthRules.DISPLAY_NAME_MAX_LEN
 		AuthRules.INVALID_CHARACTERS:
-			return "ชื่อที่แสดงมีตัวอักษรที่ใช้ไม่ได้"
+			return "ชื่อในเกมมีตัวอักษรที่ใช้ไม่ได้"
 		AuthRules.TAKEN:
-			return "ชื่อที่แสดงนี้มีผู้ใช้แล้ว กรุณาเลือกชื่ออื่น"
+			return "ชื่อในเกมนี้มีผู้ใช้แล้ว กรุณาเลือกชื่ออื่น"
 		AuthRules.RESERVED:
 			return "ชื่อรูปแบบ player-ตัวเลข สงวนไว้ให้ระบบ กรุณาใช้ชื่ออื่น"
 		_:
-			return "ชื่อที่แสดงไม่ถูกต้อง"
+			return "ชื่อในเกมไม่ถูกต้อง"
 
 
 ## แสดงเวลาตามเขตเวลาของเครื่อง รูปแบบ วัน/เดือน/ปี ชั่วโมง:นาที

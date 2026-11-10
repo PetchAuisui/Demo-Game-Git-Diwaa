@@ -47,6 +47,17 @@ static func open_for_sign_up(tree: SceneTree) -> PrivacyNotice:
 	return _spawn(tree, true)
 
 
+## แบบอ่านอย่างเดียว วางใน parent ที่กำหนด (เช่น ในหน้าต่างที่ลอยอยู่ ให้นโยบายขึ้นบนสุด)
+static func open_in(parent: Node) -> PrivacyNotice:
+	var scene := load(SCENE_PATH) as PackedScene
+	if scene == null or parent == null:
+		push_error("PrivacyNotice: could not open the privacy notice.")
+		return null
+	var notice := scene.instantiate() as PrivacyNotice
+	parent.add_child(notice)
+	return notice
+
+
 static func _spawn(tree: SceneTree, sign_up: bool) -> PrivacyNotice:
 	var scene := load(SCENE_PATH) as PackedScene
 	if scene == null or tree.current_scene == null:
