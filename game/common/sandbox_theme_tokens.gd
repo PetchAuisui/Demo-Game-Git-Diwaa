@@ -77,7 +77,17 @@ static func create_button_style() -> StyleBoxFlat:
 	return style
 
 
-static func create_terminal_font() -> SystemFont:
-	var font := SystemFont.new()
-	font.font_names = PackedStringArray(["Menlo", "Consolas", "DejaVu Sans Mono"])
-	return font
+static func create_terminal_font() -> Font:
+	var cmd_font := load("res://assets/fonts/VT323-Regular.ttf") as Font
+	var thai_fallback := load("res://assets/fonts/ChakraPetch-Regular.ttf") as Font
+	if cmd_font != null:
+		var fv := FontVariation.new()
+		fv.base_font = cmd_font
+		if thai_fallback != null:
+			fv.fallbacks = [thai_fallback]
+		return fv
+	if thai_fallback != null:
+		return thai_fallback
+	var sys := SystemFont.new()
+	sys.font_names = PackedStringArray(["Menlo", "Consolas", "DejaVu Sans Mono"])
+	return sys
