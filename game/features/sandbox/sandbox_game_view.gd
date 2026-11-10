@@ -6,6 +6,17 @@ extends Control
 const CENTRAL_TOWER_CUTSCENE_PATH := "res://features/cutscene/central_tower_cutscene.tscn"
 const ENDING_CUTSCENE_PATH := "res://features/cutscene/ending_cutscene.tscn"
 
+const BG_SHEET_COLS := 11
+const BG_SHEET_ROWS := 12
+const BG_FRAME_COUNT := 132
+const BG_FPS := 12.0
+const BG_FRAME_SIZE := Vector2(480.0, 270.0)
+
+var _tower_hall: TextureRect
+var _bg_atlas: AtlasTexture
+var _bg_anim_timer := 0.0
+var _bg_frame_index := 0
+
 var _top_bar: TopBarPanel
 var _files_panel: FilesPanel
 var _git_graph_panel: GitGraphPanel
@@ -18,15 +29,50 @@ var _is_initialized := false
 
 func _ready() -> void:
 	_bind_nodes()
+	_setup_animated_background()
 	_wire_events()
 	_initialize_sandbox()
 
 
+func _process(delta: float) -> void:
+	if _bg_atlas == null:
+		return
+	var frame_duration := 1.0 / BG_FPS
+	_bg_anim_timer += delta
+	if _bg_anim_timer >= frame_duration:
+		var steps := int(_bg_anim_timer / frame_duration)
+		_bg_anim_timer = fmod(_bg_anim_timer, frame_duration)
+		_bg_frame_index = (_bg_frame_index + steps) % BG_FRAME_COUNT
+		_apply_background_frame(_bg_frame_index)
+
+
 func _bind_nodes() -> void:
+	_tower_hall = get_node_or_null("TowerHall") as TextureRect
 	_top_bar = get_node("%TopBar")
 	_files_panel = get_node("%FilesPanel")
 	_git_graph_panel = get_node("%GitGraphPanel")
 	_terminal_panel = get_node("%TerminalPanel")
+
+
+func _setup_animated_background() -> void:
+	if _tower_hall == null or not (_tower_hall.texture is AtlasTexture):
+		return
+	_bg_atlas = (_tower_hall.texture as AtlasTexture).duplicate() as AtlasTexture
+	_tower_hall.texture = _bg_atlas
+	_apply_background_frame(0)
+
+
+func _apply_background_frame(frame_idx: int) -> void:
+	if _bg_atlas == null:
+		return
+	var col := frame_idx % BG_SHEET_COLS
+	var row := floori(float(frame_idx) / float(BG_SHEET_COLS))
+	if row >= BG_SHEET_ROWS:
+		return
+	_bg_atlas.region = Rect2(
+		Vector2(float(col) * BG_FRAME_SIZE.x, float(row) * BG_FRAME_SIZE.y),
+		BG_FRAME_SIZE
+	)
 
 
 func _wire_events() -> void:
