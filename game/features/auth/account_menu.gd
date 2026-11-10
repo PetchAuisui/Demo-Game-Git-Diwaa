@@ -179,7 +179,7 @@ func _input(event: InputEvent) -> void:
 ## เปิดหน้าบัญชีแบบลอยทับหน้าปัจจุบัน ปิดแล้วกลับมาที่เดิม (ไม่โหลดหน้าใหม่ จึงไม่เสียความคืบหน้าในด่าน)
 func _on_manage_pressed() -> void:
 	_close()
-	AccountViewController.open(_layer, confirm_sign_out)
+	AccountViewController.open(_layer)
 
 
 ## ออกจากระบบ (บัญชี) หรือออกจากโหมดไม่ล็อกอิน (guest) แล้วกลับหน้าเข้าสู่ระบบ

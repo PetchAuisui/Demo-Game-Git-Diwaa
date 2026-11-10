@@ -247,15 +247,6 @@ autowrap_mode = 3
 [node name="SepBottom" type="HSeparator" parent="CenterArea/Card/Margin/VBox" unique_id=925440581]
 layout_mode = 2
 
-[node name="SignOutBtn" type="Button" parent="CenterArea/Card/Margin/VBox" unique_id=207723068]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 48)
-layout_mode = 2
-mouse_default_cursor_shape = 2
-theme_override_fonts/font = ExtResource("2_bold")
-theme_override_font_sizes/font_size = 18
-text = "ออกจากระบบ"
-
 [node name="Footer" type="VBoxContainer" parent="CenterArea/Card/Margin/VBox" unique_id=287737658]
 layout_mode = 2
 theme_override_constants/separation = 2

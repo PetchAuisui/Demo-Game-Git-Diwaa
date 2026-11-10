@@ -1,10 +1,11 @@
 class_name AccountViewController
 extends Control
-## หน้า "บัญชีของฉัน": ดูชื่อในเกม / อีเมล (ปิดบัง) / สถานะ, เปลี่ยนชื่อในเกม, ตั้งค่าตารางอันดับ, ออกจากระบบ
+## หน้า "บัญชีของฉัน": ดูชื่อในเกม / อีเมล (ปิดบัง) / สถานะ, เปลี่ยนชื่อในเกม, ตั้งค่าตารางอันดับ
+## (ไม่มีปุ่มออกจากระบบในหน้านี้ เพราะเปิดได้จากเมนูบัญชีเท่านั้น ซึ่งมีปุ่มออกจากระบบอยู่แล้ว)
 ##
 ## เปิดได้ 2 แบบ
 ## 1. หน้าต่างลอยทับหน้าปัจจุบัน (แบบที่เกมใช้ ผ่านปุ่ม "จัดการบัญชี" ในเมนูบัญชี):
-##      AccountViewController.open(parent, confirm_sign_out)
+##      AccountViewController.open(parent)
 ##    ปิด (× / Esc) แล้วกลับหน้าเดิมทันที หน้าข้างหลังไม่ถูกโหลดใหม่ จึงไม่เสียความคืบหน้า (เช่น เปิดจากกลางด่าน)
 ## 2. เปิดไฟล์ account_view.tscn ตรงๆ ด้วย F6 (ไว้ทดสอบ): ยังไม่มีผู้เล่นจะลองล็อกอินอัตโนมัติ ปิดแล้วไปหน้าเริ่ม
 ##
@@ -14,7 +15,7 @@ extends Control
 ##   สิทธิ์เปลี่ยนชื่อ   await PlayerSession.refresh_display_name_status() แล้วอ่าน display_name_changes_available
 ##   เปลี่ยนชื่อ        await PlayerSession.change_display_name(new_name) แล้วเช็ค result.ok / result.code
 ##   ตารางอันดับ        await PlayerSession.get_leaderboard_consent() / set_leaderboard_consent(granted)
-##   ออกจากระบบ        PlayerSession.sign_out() แล้ว change_scene_to_file(PlayerSession.AUTH_SCENE)
+##   ออกจากระบบ        อยู่ในเมนูบัญชี (account_menu.gd)
 ##
 ## กฎที่ต้องรักษาไว้ (ความปลอดภัย / PDPA):
 ##   - ซ่อนการเปลี่ยนชื่อและตารางอันดับเมื่อไม่ออนไลน์
@@ -31,7 +32,6 @@ const SCENE_PATH := "res://features/auth/account_view.tscn"
 const RENAME_COOLDOWN_DAYS := 14
 
 var _as_overlay := false
-var _confirm_sign_out := false
 var _closed := false
 var _busy := false
 # โหลดสถานะการยินยอมจาก server สำเร็จแล้วหรือยัง (ยังไม่สำเร็จ = ห้ามให้กด เพราะไม่รู้ค่าจริง)
@@ -60,21 +60,18 @@ var _leaderboard_check: CheckBox
 var _leaderboard_help: Button
 var _leaderboard_status: Label
 var _offline_note: Label
-var _sign_out_btn: Button
 var _privacy_link: LinkButton
 var _contact_label: Label
 
 
 ## เปิดเป็นหน้าต่างลอยทับ: parent ควรเป็นชั้นบนสุดของหน้า (เช่น CanvasLayer ของเมนูบัญชี)
-## confirm_sign_out = true: กดออกจากระบบแล้วถามก่อน (ใช้กับหน้าที่ออกกลางทางแล้วเสียความคืบหน้า)
-static func open(parent: Node, confirm_sign_out: bool = false) -> AccountViewController:
+static func open(parent: Node) -> AccountViewController:
 	var scene := load(SCENE_PATH) as PackedScene
 	if scene == null or parent == null:
 		push_error("AccountView: could not open the account view.")
 		return null
 	var view := scene.instantiate() as AccountViewController
 	view._as_overlay = true
-	view._confirm_sign_out = confirm_sign_out
 	parent.add_child(view)
 	return view
 
@@ -117,7 +114,6 @@ func _bind_nodes() -> void:
 	_leaderboard_help = get_node("%LeaderboardHelp") as Button
 	_leaderboard_status = get_node("%LeaderboardStatus") as Label
 	_offline_note = get_node("%OfflineNote") as Label
-	_sign_out_btn = get_node("%SignOutBtn") as Button
 	_privacy_link = get_node("%PrivacyLink") as LinkButton
 	_contact_label = get_node("%ContactLabel") as Label
 
@@ -132,7 +128,6 @@ func _wire_events() -> void:
 	_leaderboard_help.pressed.connect(func() -> void:
 		MessagePopup.open_info(self, "ตารางอันดับ", PrivacyNotice.LEADERBOARD_HELP_TEXT)
 	)
-	_sign_out_btn.pressed.connect(_on_sign_out_pressed)
 	_privacy_link.pressed.connect(func() -> void: PrivacyNotice.open_in(self))
 	PlayerSession.session_changed.connect(_refresh)
 
@@ -233,7 +228,6 @@ func _refresh() -> void:
 	if not online:
 		_email = ""
 	_show_email()
-	_sign_out_btn.text = "ออกจากโหมดไม่ล็อกอิน" if PlayerSession.is_guest() else "ออกจากระบบ"
 	_update_rename_hint()
 	_update_save_button()
 
@@ -387,32 +381,12 @@ func _show_leaderboard_status(text: String, color: Color) -> void:
 	_leaderboard_status.visible = true
 
 
-# ---------------------------------------------------------------- ออกจากระบบ
-
-## ออกจากระบบ (บัญชี) หรือออกจากโหมดไม่ล็อกอิน (guest) แล้วกลับหน้าเข้าสู่ระบบ
-func _on_sign_out_pressed() -> void:
-	if _busy:
-		return
-	if _confirm_sign_out:
-		var action := _sign_out_btn.text
-		var popup := MessagePopup.open_confirm(self, "%sตอนนี้?" % action, "ความคืบหน้าที่ยังไม่บันทึกจะหาย", action)
-		if popup == null:
-			return
-		var confirmed: bool = await popup.closed
-		if not confirmed or not is_inside_tree():
-			return
-	_closed = true
-	PlayerSession.sign_out()
-	get_tree().change_scene_to_file(PlayerSession.AUTH_SCENE)
-
-
 # ---------------------------------------------------------------- ทั่วไป
 
 ## ระหว่างรอ server: ล็อกเฉพาะสิ่งที่ส่งคำขอ ปุ่มปิด / นโยบาย / รูปตา ยังกดได้
 func _set_busy(busy: bool) -> void:
 	_busy = busy
 	_rename_input.editable = not busy
-	_sign_out_btn.disabled = busy
 	_leaderboard_check.disabled = busy or not _leaderboard_loaded
 	_rename_btn.text = "กำลังบันทึก..." if busy else "บันทึก"
 	_update_save_button()
@@ -455,9 +429,7 @@ func _apply_theme() -> void:
 	_rename_input.add_theme_color_override("font_placeholder_color", AuthThemeTokens.TEXT_MUTED)
 	_rename_input.add_theme_color_override("caret_color", AuthThemeTokens.TEXT_PRIMARY)
 
-	# ปุ่มหลัก (บันทึก) สีทอง / ปุ่มรอง (ออกจากระบบ) สีอ่อน แยกจากกันชัดเจน
 	_style_button(_rename_btn, AuthThemeTokens.BUTTON_BG, AuthThemeTokens.BUTTON_HOVER_BG, AuthThemeTokens.BUTTON_PRESSED_BG)
-	_style_button(_sign_out_btn, AuthThemeTokens.INPUT_BG, Color.WHITE, AuthThemeTokens.CARD_BORDER)
 
 	for color_name in ["font_color", "font_hover_color", "font_pressed_color", "font_focus_color"]:
 		_close_btn.add_theme_color_override(color_name, AuthThemeTokens.TEXT_PRIMARY)
