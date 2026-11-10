@@ -46,6 +46,26 @@ public static partial class AccountInputValidator
         return errors;
     }
 
+    public static IReadOnlyList<FieldError> ValidateRegisterCheck(RegisterCheckRequest request)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+
+        // กติกาเดียวกับตอนสมัคร (ValidateRegister) เฉพาะสองช่องนี้
+        var errors = new List<FieldError>(2);
+
+        if (ValidateUsername(request.Username) is { } usernameError)
+        {
+            errors.Add(usernameError);
+        }
+
+        if (ValidateEmail(request.Email) is { } emailError)
+        {
+            errors.Add(emailError);
+        }
+
+        return errors;
+    }
+
     public static IReadOnlyList<FieldError> ValidateLogin(LoginRequest request)
     {
         ArgumentNullException.ThrowIfNull(request);

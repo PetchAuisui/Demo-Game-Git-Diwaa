@@ -38,6 +38,27 @@ public static class AccountEndpoints
             return Results.Json(apiError, statusCode: statusCode);
         }).RequireRateLimiting("auth");
 
+        // ตรวจก่อนสมัคร (เกมเรียกก่อนเปิดหน้านโยบาย) 204 = ใช้ได้ / 409 = มีคนใช้แล้ว (ไม่บอกว่าช่องไหน) / 400 = รูปแบบผิด
+        // ใช้ POST ไม่ใช่ GET เพื่อไม่ให้อีเมลไปอยู่ใน URL และ access log
+        group.MapPost("/register/check", async (RegisterCheckRequest? request, AccountService accountService, CancellationToken ct) =>
+        {
+            if (request is null)
+            {
+                return Results.Json(new ApiError(AuthErrorCode.ValidationFailed, []), statusCode: StatusCodes.Status400BadRequest);
+            }
+
+            var result = await accountService.CheckRegistrationAsync(request, ct);
+            if (result.Succeeded)
+            {
+                return Results.NoContent();
+            }
+
+            int statusCode = result.Error == AuthErrorCode.IdentifierTaken
+                ? StatusCodes.Status409Conflict
+                : StatusCodes.Status400BadRequest;
+            return Results.Json(new ApiError(result.Error ?? AuthErrorCode.Unknown, result.FieldErrors), statusCode: statusCode);
+        }).RequireRateLimiting("auth");
+
         group.MapPost("/login", async (LoginRequest? request, AccountService accountService, HttpResponse response, CancellationToken ct) =>
         {
             response.Headers.CacheControl = "no-store";

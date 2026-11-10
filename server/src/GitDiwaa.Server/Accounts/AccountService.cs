@@ -108,6 +108,34 @@ public sealed class AccountService
         };
     }
 
+    /// <summary>
+    /// ตรวจก่อนสมัครว่าใช้ชื่อผู้ใช้และอีเมลนี้ได้ไหม ไม่สร้างบัญชีและไม่บันทึกอะไร
+    /// ความปลอดภัย:
+    /// 1. ถ้ามีคนใช้แล้ว ตอบแค่ IdentifierTaken ไม่บอกว่าช่องไหน (เหมือนตอนสมัครจริง) ไม่ให้ใช้ไล่เช็คได้ง่ายว่าอีเมลไหนมีบัญชี
+    ///    และ endpoint นี้ถูกจำกัดจำนวนครั้งรวมกับ register / login
+    /// 2. ผลนี้ไม่ใช่การจอง ตอนสมัครจริง (RegisterAsync) ตรวจซ้ำเสมอ เพราะคนอื่นอาจสมัครตัดหน้าไประหว่างนั้น
+    /// </summary>
+    public async Task<AccountResult<bool>> CheckRegistrationAsync(RegisterCheckRequest request, CancellationToken ct = default)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+
+        var validationErrors = AccountInputValidator.ValidateRegisterCheck(request);
+        if (validationErrors.Count > 0)
+        {
+            return AccountResult<bool>.Failure(AuthErrorCode.ValidationFailed, validationErrors);
+        }
+
+        // ค้นทั้งสองอย่างทุกครั้ง (ไม่หยุดที่อันแรก) เวลาที่ใช้ตอบจะได้ไม่บอกใบ้ว่าช่องไหนซ้ำ
+        var byUsername = await _userRepository.FindByUsernameAsync(AccountNormalizer.NormalizeUsername(request.Username), ct);
+        var byEmail = await _userRepository.FindByEmailAsync(AccountNormalizer.NormalizeEmail(request.Email), ct);
+        if (byUsername is not null || byEmail is not null)
+        {
+            return AccountResult<bool>.Failure(AuthErrorCode.IdentifierTaken);
+        }
+
+        return AccountResult<bool>.Success(true);
+    }
+
     public async Task<AccountResult<LoginSession>> LoginAsync(LoginRequest request, CancellationToken ct = default)
     {
         ArgumentNullException.ThrowIfNull(request);
