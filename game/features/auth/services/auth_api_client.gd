@@ -37,13 +37,15 @@ func health() -> AuthApiResult:
 func register(username: String, display_name: String, email: String, password: String, policy_version: String = "", leaderboard_opt_in: bool = false) -> AuthApiResult:
 	var body := {
 		"username": username,
-		"displayName": display_name,
 		"email": email,
 		"password": password,
 		"leaderboardOptIn": leaderboard_opt_in,
 	}
 	if not policy_version.is_empty():
 		body["policyVersion"] = policy_version
+	# ไม่ส่งชื่อที่แสดง = ให้ server ตั้งให้ (player-<เลข>)
+	if not display_name.is_empty():
+		body["displayName"] = display_name
 	return await _send(HTTPClient.METHOD_POST, AuthConfig.API_PREFIX + "/register", body, "", AuthConfig.REQUEST_TIMEOUT_SEC)
 
 
@@ -62,6 +64,12 @@ func refresh(token: String) -> AuthApiResult:
 
 func logout(token: String) -> AuthApiResult:
 	return await _send(HTTPClient.METHOD_POST, AuthConfig.API_PREFIX + "/logout", null, token, AuthConfig.REQUEST_TIMEOUT_SEC)
+
+
+func get_display_name_status(token: String) -> AuthApiResult:
+	if token.is_empty():
+		return AuthApiResult.failure(0, AuthApiResult.INVALID_CREDENTIALS)
+	return await _send(HTTPClient.METHOD_GET, AuthConfig.API_PREFIX + "/me/display-name", null, token, AuthConfig.REQUEST_TIMEOUT_SEC)
 
 
 func change_display_name(token: String, display_name: String) -> AuthApiResult:

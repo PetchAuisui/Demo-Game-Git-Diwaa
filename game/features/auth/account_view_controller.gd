@@ -1,10 +1,41 @@
 class_name AccountViewController
 extends Control
 ## หน้า "บัญชีของฉัน": ดูชื่อ เปลี่ยนชื่อที่แสดง (ออนไลน์เท่านั้น) และออกจากระบบ
-## ทีมเปิดหน้านี้ได้ด้วย get_tree().change_scene_to_file(PlayerSession.ACCOUNT_SCENE)
+##
+## ⚠️ หน้านี้เป็น "หน้าทดสอบ" (prototype) ไม่ใช่หน้าจริงของเกม
+## ทำไว้ให้ทดสอบระบบบัญชีได้ครบทุกส่วน ก่อนที่ทีมจะทำหน้าจริง:
+##   - เปลี่ยนชื่อที่แสดง (สิทธิ์เริ่มต้น 2 ครั้ง ใช้หมดแล้วได้คืน 1 ครั้งทุก 14 วัน)
+##   - ให้ / ถอนความยินยอมแสดงชื่อบนตารางอันดับ
+##   - เปิดนโยบายความเป็นส่วนตัว และช่องทางติดต่อ
+##   - ออกจากระบบ
+## หน้าตายังไม่ได้ออกแบบให้เข้ากับเกม และยังไม่มีหน้าไหนของเกมพามาที่นี่
+## วิธีเปิดทดสอบ: ล็อกอินแบบติ๊ก "จดจำ" แล้วเปิด account_view.tscn กด F6 (หน้านี้จะล็อกอินอัตโนมัติให้)
+##
+## ถ้าจะทำหน้าจริง: ไม่ต้องคุยกับ server เอง ให้เรียกผ่าน PlayerSession (game/common/player_session.gd) อย่างเดียว
+##   ข้อมูลผู้เล่น        PlayerSession.get_display_name(), get_username(), state, is_online(), is_guest()
+##   สิทธิ์เปลี่ยนชื่อ     await PlayerSession.refresh_display_name_status()
+##                       แล้วอ่าน PlayerSession.display_name_changes_available (-1 = ยังไม่รู้)
+##                       และ PlayerSession.display_name_next_change_unix (เวลาที่ได้สิทธิ์คืน)
+##   เปลี่ยนชื่อ          var result := await PlayerSession.change_display_name(new_name)  แล้วเช็ค result.ok / result.code
+##   ตารางอันดับ          await PlayerSession.get_leaderboard_consent() / await PlayerSession.set_leaderboard_consent(granted)
+##   ออกจากระบบ          PlayerSession.sign_out() แล้ว change_scene_to_file(PlayerSession.AUTH_SCENE)
+##   นโยบาย              PrivacyNotice.open(get_tree())          (game/features/auth/privacy_notice.gd)
+##   อีเมลติดต่อ          PrivacyPolicy.CONTACT_EMAIL             (game/features/auth/privacy_policy.gd)
+##   ตรวจชื่อก่อนส่ง       AuthRules.validate_new_display_name(name) (game/features/auth/auth_rules.gd)
+##   ข้อความ error        ก๊อป _message_for_failure / _message_for_reason ในไฟล์นี้ไปใช้ได้
+##   ฟังการเปลี่ยนแปลง     PlayerSession.session_changed (ส่งออกเมื่อชื่อเปลี่ยน / ล็อกอิน / ออกจากระบบ)
+##   สีและสไตล์           AuthThemeTokens                         (game/features/auth/auth_theme_tokens.gd)
+##
+## กฎที่หน้าจริงต้องรักษาไว้ (เรื่องความปลอดภัยและ PDPA):
+##   - ซ่อนการเปลี่ยนชื่อและตารางอันดับเมื่อ PlayerSession.is_online() เป็น false (ออฟไลน์ / ไม่ล็อกอิน)
+##   - ช่องยินยอมต้องแสดงค่าจริงจาก server ถ้าโหลดไม่สำเร็จห้ามให้กด และถอนได้ง่ายเท่ากับให้ (กดครั้งเดียว)
+##   - ให้ผู้เล่นยืนยันก่อนเปลี่ยนชื่อทุกครั้ง เพราะสิทธิ์มีจำกัด
+##   - ห้ามเอาข้อความดิบจาก server ไปแสดงบนจอ และห้าม print token
+##
+## ทำหน้าจริงเสร็จแล้ว: ลบไฟล์นี้กับ account_view.tscn ได้เลย แล้วแก้ ACCOUNT_SCENE ใน player_session.gd ให้ชี้หน้าใหม่
 ##
 ## ข้อควรรู้: การเช็คในหน้านี้ (กติกาชื่อ, ยืนยันก่อนเปลี่ยน) มีไว้ช่วยผู้เล่นเท่านั้น
-## เรื่องชื่อซ้ำและกฎ 14 วัน server เป็นผู้ตัดสินเสมอ
+## เรื่องชื่อซ้ำ ชื่อสงวน และสิทธิ์เปลี่ยนชื่อ server เป็นผู้ตัดสินเสมอ
 
 const RENAME_COOLDOWN_DAYS := 14
 
@@ -91,6 +122,7 @@ func _apply_theme() -> void:
 ## เปิดหน้านี้ตรงๆ (เช่น กด F6) ตอนยังไม่มีผู้เล่น: ลองล็อกอินอัตโนมัติ ไม่ได้ก็กลับหน้าเข้าสู่ระบบ
 func _ensure_player() -> void:
 	if PlayerSession.has_player():
+		await _load_display_name_status()
 		await _load_leaderboard_consent()
 		return
 	if not PlayerSession.has_saved_session():
@@ -103,6 +135,7 @@ func _ensure_player() -> void:
 		get_tree().change_scene_to_file(PlayerSession.AUTH_SCENE)
 		return
 	_refresh()
+	await _load_display_name_status()
 	await _load_leaderboard_consent()
 
 
@@ -131,11 +164,14 @@ func _refresh() -> void:
 
 
 func _update_rename_hint() -> void:
+	var changes := PlayerSession.display_name_changes_available
 	var next_change := PlayerSession.display_name_next_change_unix
-	if next_change > int(Time.get_unix_time_from_system()):
-		_rename_hint.text = "เปลี่ยนชื่อได้อีกครั้ง: %s" % _format_local_datetime(next_change)
+	if changes > 0:
+		_rename_hint.text = "เปลี่ยนได้อีก %d ครั้ง ใช้หมดแล้วได้คืน 1 ครั้งทุก %d วัน" % [changes, RENAME_COOLDOWN_DAYS]
+	elif next_change > int(Time.get_unix_time_from_system()):
+		_rename_hint.text = "ใช้สิทธิ์เปลี่ยนชื่อหมดแล้ว เปลี่ยนได้อีกครั้ง: %s" % _format_local_datetime(next_change)
 	else:
-		_rename_hint.text = "เปลี่ยนได้ 1 ครั้งทุก %d วัน ชื่อเก่าจะว่างให้คนอื่นใช้ได้ทันที" % RENAME_COOLDOWN_DAYS
+		_rename_hint.text = "ใช้สิทธิ์หมดแล้วได้คืน 1 ครั้งทุก %d วัน ชื่อเก่าจะว่างให้คนอื่นใช้ได้ทันที" % RENAME_COOLDOWN_DAYS
 
 
 func _on_rename_pressed() -> void:
@@ -144,7 +180,7 @@ func _on_rename_pressed() -> void:
 	_rename_status.visible = false
 
 	var new_name := _rename_input.text.strip_edges()
-	var reason := AuthRules.validate_display_name(new_name)
+	var reason := AuthRules.validate_new_display_name(new_name)
 	if not reason.is_empty():
 		_cancel_confirm()
 		_show_rename_status(_message_for_reason(reason), AuthThemeTokens.ERROR_TEXT)
@@ -157,10 +193,13 @@ func _on_rename_pressed() -> void:
 	if not _confirming:
 		_confirming = true
 		_rename_btn.text = "กดอีกครั้งเพื่อยืนยัน"
-		_show_rename_status(
-			"เปลี่ยนเป็น \"%s\" แล้วจะเปลี่ยนอีกไม่ได้ %d วัน" % [new_name, RENAME_COOLDOWN_DAYS],
-			AuthThemeTokens.TEXT_PRIMARY
-		)
+		var warning := "เปลี่ยนเป็น \"%s\" ใช่ไหม" % new_name
+		var changes := PlayerSession.display_name_changes_available
+		if changes == 1:
+			warning += " นี่เป็นสิทธิ์สุดท้าย หลังจากนี้ต้องรอ %d วัน" % RENAME_COOLDOWN_DAYS
+		elif changes > 1:
+			warning += " (จะเหลือสิทธิ์อีก %d ครั้ง)" % (changes - 1)
+		_show_rename_status(warning, AuthThemeTokens.TEXT_PRIMARY)
 		return
 
 	_confirming = false
@@ -189,6 +228,18 @@ func _on_sign_out_pressed() -> void:
 		return
 	PlayerSession.sign_out()
 	get_tree().change_scene_to_file(PlayerSession.AUTH_SCENE)
+
+
+## โหลดสิทธิ์เปลี่ยนชื่อที่เหลือจาก server (ออนไลน์เท่านั้น) มาแสดงก่อนผู้เล่นกดเปลี่ยน
+func _load_display_name_status() -> void:
+	if not PlayerSession.is_online():
+		return
+	_set_busy(true)
+	await PlayerSession.refresh_display_name_status()
+	if not is_inside_tree():
+		return
+	_set_busy(false)
+	_update_rename_hint()
 
 
 ## โหลดสถานะการยินยอมจาก server (ออนไลน์เท่านั้น) แสดงตามค่าจริงบน server เสมอ
@@ -304,6 +355,8 @@ func _message_for_reason(reason: String) -> String:
 			return "ชื่อที่แสดงมีตัวอักษรที่ใช้ไม่ได้"
 		AuthRules.TAKEN:
 			return "ชื่อที่แสดงนี้มีผู้ใช้แล้ว กรุณาเลือกชื่ออื่น"
+		AuthRules.RESERVED:
+			return "ชื่อรูปแบบ player-ตัวเลข สงวนไว้ให้ระบบ กรุณาใช้ชื่ออื่น"
 		_:
 			return "ชื่อที่แสดงไม่ถูกต้อง"
 

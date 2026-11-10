@@ -45,8 +45,6 @@ var _login_submit_btn: Button
 var _go_register_link: LinkButton
 
 # Register Controls
-var _display_name_input: LineEdit
-var _display_name_error: Label
 var _username_input: LineEdit
 var _username_error: Label
 var _email_input: LineEdit
@@ -122,8 +120,6 @@ func _bind_nodes() -> void:
 	_login_submit_btn = get_node("%LoginSubmitBtn") as Button
 	_go_register_link = get_node("%GoRegisterLink") as LinkButton
 
-	_display_name_input = get_node("%DisplayNameInput") as LineEdit
-	_display_name_error = get_node("%DisplayNameError") as Label
 	_username_input = get_node("%UsernameInput") as LineEdit
 	_username_error = get_node("%UsernameError") as Label
 	_email_input = get_node("%EmailInput") as LineEdit
@@ -228,7 +224,7 @@ func _show_register() -> void:
 	_clear_passwords()
 	_reset_errors()
 
-	_display_name_input.grab_focus()
+	_username_input.grab_focus()
 
 
 ## หน้าเล่นแบบไม่ล็อกอิน: เติมชื่อที่เคยใช้ไว้ให้
@@ -344,8 +340,6 @@ func _reset_errors() -> void:
 	_login_status.visible = false
 	_login_status.text = ""
 
-	_display_name_error.visible = false
-	_display_name_error.text = ""
 	_username_error.visible = false
 	_username_error.text = ""
 	_email_error.visible = false
@@ -367,7 +361,6 @@ func _apply_theme() -> void:
 	var inputs: Array[LineEdit] = [
 		_identifier_input,
 		_login_password_input,
-		_display_name_input,
 		_username_input,
 		_email_input,
 		_register_password_input,
@@ -470,7 +463,6 @@ func _on_register_submit() -> void:
 		return
 	_reset_errors()
 
-	var dn_reason := AuthRules.validate_display_name(_display_name_input.text)
 	var un_reason := AuthRules.validate_username(_username_input.text)
 	var em_reason := AuthRules.validate_email(_email_input.text)
 	var pw_reason := AuthRules.validate_register_password(_register_password_input.text)
@@ -482,12 +474,6 @@ func _on_register_submit() -> void:
 		cp_reason = AuthRules.MISMATCH
 
 	var first_invalid: LineEdit = null
-
-	if not dn_reason.is_empty():
-		_display_name_error.text = _message_for(AuthRules.FIELD_DISPLAY_NAME, dn_reason)
-		_display_name_error.visible = true
-		if first_invalid == null:
-			first_invalid = _display_name_input
 
 	if not un_reason.is_empty():
 		_username_error.text = _message_for(AuthRules.FIELD_USERNAME, un_reason)
@@ -518,7 +504,6 @@ func _on_register_submit() -> void:
 		return
 
 	var un_val := _username_input.text.strip_edges()
-	var dn_val := _display_name_input.text.strip_edges()
 	var em_val := _email_input.text.strip_edges()
 	var pw_val := _register_password_input.text
 
@@ -534,7 +519,7 @@ func _on_register_submit() -> void:
 		return  # ยกเลิก: ข้อมูลในฟอร์มยังอยู่ แก้แล้วกดสมัครใหม่ได้
 
 	_clear_passwords()
-	await _submit_register(un_val, dn_val, em_val, pw_val, choice[1])
+	await _submit_register(un_val, em_val, pw_val, choice[1])
 
 
 func _message_for(field: String, reason: String) -> String:
@@ -573,6 +558,8 @@ func _message_for(field: String, reason: String) -> String:
 			if field == AuthRules.FIELD_EMAIL:
 				return "รูปแบบอีเมลไม่ถูกต้อง"
 			return "รูปแบบ%sไม่ถูกต้อง" % label
+		AuthRules.RESERVED:
+			return "ชื่อรูปแบบ player-ตัวเลข สงวนไว้ให้ระบบ กรุณาใช้ชื่ออื่น"
 		AuthRules.TAKEN:
 			if field == AuthRules.FIELD_DISPLAY_NAME:
 				return "ชื่อที่แสดงนี้มีผู้ใช้แล้ว กรุณาเลือกชื่ออื่น"
@@ -613,11 +600,11 @@ func _submit_login(identifier: String, password: String, remember_me: bool) -> v
 			_show_status(_login_status, _message_for_failure(result), false)
 
 
-func _submit_register(username: String, display_name: String, email: String, password: String, leaderboard_opt_in: bool) -> void:
+func _submit_register(username: String, email: String, password: String, leaderboard_opt_in: bool) -> void:
 	_set_busy(true)
 	# ส่งเวอร์ชันนโยบายที่ผู้เล่นเห็น และการยินยอมแสดงชื่อบนตารางอันดับ (ค่าเริ่มต้น = ไม่ยินยอม)
 	var result := await _api.register(
-		username, display_name, email, password,
+		username, "", email, password,  # ชื่อที่แสดงเว้นว่าง: server ตั้งให้เป็น player-<เลข>
 		PrivacyPolicy.VERSION, leaderboard_opt_in
 	)
 	_set_busy(false)
@@ -627,13 +614,16 @@ func _submit_register(username: String, display_name: String, email: String, pas
 		_clear_register_form()
 		_show_login()
 		_identifier_input.text = username
-		_show_status(_login_status, "สมัครสมาชิกสำเร็จ กรุณาเข้าสู่ระบบ", true)
-		_login_password_input.grab_focus()
+		# แจ้งผลด้วยหน้าต่าง ปิดแล้วพร้อมกรอกรหัสผ่านต่อ (ไม่บอกชื่อในเกม ผู้เล่นเห็นเองหลังเข้าสู่ระบบ)
+		var popup := MessagePopup.open(get_tree(), "สมัครสมาชิกสำเร็จ", "เข้าสู่ระบบด้วยชื่อผู้ใช้และรหัสผ่านที่เพิ่งตั้งได้เลย")
+		if popup != null:
+			await popup.closed
+		if is_inside_tree():
+			_login_password_input.grab_focus()
 		return
 
 	if result.code == AuthApiResult.IDENTIFIER_TAKEN or result.code == AuthApiResult.VALIDATION_FAILED:
 		var shown := _apply_field_errors(result.field_errors, {
-			AuthRules.FIELD_DISPLAY_NAME: _display_name_error,
 			AuthRules.FIELD_USERNAME: _username_error,
 			AuthRules.FIELD_EMAIL: _email_error,
 			AuthRules.FIELD_PASSWORD: _register_password_error,
@@ -771,7 +761,7 @@ func _on_guest_start() -> void:
 		return
 	_guest_name_error.visible = false
 	var display_name := _guest_name_input.text.strip_edges()
-	var reason := AuthRules.validate_display_name(display_name)
+	var reason := AuthRules.validate_new_display_name(display_name)
 	if not reason.is_empty():
 		_guest_name_error.text = _message_for(AuthRules.FIELD_DISPLAY_NAME, reason)
 		_guest_name_error.visible = true
@@ -848,6 +838,5 @@ func _on_login_succeeded(session: Dictionary, remember_me: bool) -> void:
 
 
 func _clear_register_form() -> void:
-	_display_name_input.text = ""
 	_username_input.text = ""
 	_email_input.text = ""

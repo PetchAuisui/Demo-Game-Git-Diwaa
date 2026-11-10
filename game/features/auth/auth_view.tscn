@@ -380,35 +380,6 @@ text = "สร้างบัญชีเพื่อบันทึกการ
 horizontal_alignment = 1
 autowrap_mode = 2
 
-[node name="DisplayNameLabel" type="Label" parent="CenterArea/Card/MarginContainer/CardVBox/RegisterForm" unique_id=846422119]
-layout_mode = 2
-theme_override_colors/font_color = Color(0.172549, 0.141176, 0.113725, 1)
-theme_override_fonts/font = ExtResource("3_semibold")
-theme_override_font_sizes/font_size = 20
-text = "ชื่อที่แสดง (Display Name)"
-
-[node name="DisplayNameInput" type="LineEdit" parent="CenterArea/Card/MarginContainer/CardVBox/RegisterForm" unique_id=1311044850]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 52)
-layout_mode = 2
-theme_override_fonts/font = ExtResource("4_regular")
-theme_override_font_sizes/font_size = 20
-max_length = 50
-
-[node name="DisplayNameHint" type="Label" parent="CenterArea/Card/MarginContainer/CardVBox/RegisterForm" unique_id=1682029370]
-layout_mode = 2
-theme_override_colors/font_color = Color(0.478431, 0.431373, 0.376471, 1)
-theme_override_fonts/font = ExtResource("4_regular")
-text = "ชื่อนี้จะแสดงในตารางอันดับ"
-
-[node name="DisplayNameError" type="Label" parent="CenterArea/Card/MarginContainer/CardVBox/RegisterForm" unique_id=1798367947]
-unique_name_in_owner = true
-visible = false
-layout_mode = 2
-theme_override_colors/font_color = Color(0.658824, 0.156863, 0.156863, 1)
-theme_override_fonts/font = ExtResource("4_regular")
-theme_override_font_sizes/font_size = 16
-
 [node name="UsernameLabel" type="Label" parent="CenterArea/Card/MarginContainer/CardVBox/RegisterForm" unique_id=1903506840]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.172549, 0.141176, 0.113725, 1)

@@ -33,6 +33,10 @@ const INVALID_CHARACTERS := "InvalidCharacters"
 const INVALID_FORMAT := "InvalidFormat"
 const MISMATCH := "Mismatch"  # client-only: confirm password
 const TAKEN := "Taken"  # server-only: display name already used by someone else
+const RESERVED := "Reserved"  # player-<ตัวเลข> สงวนไว้ให้ระบบตั้งให้ผู้เล่นใหม่
+
+# ตรงกับ AccountRules.GeneratedDisplayNamePrefix ใน server
+const GENERATED_DISPLAY_NAME_PREFIX := "player-"
 
 static var _username_regex: RegEx
 
@@ -118,6 +122,28 @@ static func validate_email(raw: String) -> String:
 		return INVALID_FORMAT
 
 	return ""
+
+
+## ชื่อรูปแบบ player-<ตัวเลข> สงวนไว้ให้ระบบ (ตรงกับ AccountRules.IsReservedDisplayName ใน server)
+## เช็คแบบง่ายในเกม (ไม่สนตัวพิมพ์เล็กใหญ่) server เช็คละเอียดกว่าอีกชั้น เช่น ตัวอักษรเต็มความกว้าง
+static func is_reserved_display_name(raw: String) -> bool:
+	var lowered := raw.strip_edges().to_lower()
+	var prefix_len := GENERATED_DISPLAY_NAME_PREFIX.length()
+	if not lowered.begins_with(GENERATED_DISPLAY_NAME_PREFIX) or lowered.length() == prefix_len:
+		return false
+	for i in range(prefix_len, lowered.length()):
+		var c := lowered.unicode_at(i)
+		if c < 0x30 or c > 0x39:  # ไม่ใช่ 0-9
+			return false
+	return true
+
+
+## ใช้ตอนผู้เล่นตั้งชื่อเอง (เปลี่ยนชื่อ / ชื่อ guest): กติกาเดียวกับชื่อที่แสดง และห้ามใช้ชื่อสงวน
+static func validate_new_display_name(raw: String) -> String:
+	var reason := validate_display_name(raw)
+	if not reason.is_empty():
+		return reason
+	return RESERVED if is_reserved_display_name(raw) else ""
 
 
 static func validate_display_name(raw: String) -> String:
