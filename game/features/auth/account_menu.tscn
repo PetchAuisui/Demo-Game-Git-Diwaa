@@ -1,0 +1,96 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://features/auth/account_menu.gd" id="1_script"]
+[ext_resource type="FontFile" uid="uid://deedcfbkojx6k" path="res://assets/fonts/ChakraPetch-Bold.ttf" id="2_bold"]
+[ext_resource type="FontFile" uid="uid://c82lda4ldw0ve" path="res://assets/fonts/ChakraPetch-Regular.ttf" id="4_regular"]
+
+[node name="AccountMenu" type="Button" unique_id=1931598207]
+custom_minimum_size = Vector2(48, 48)
+size_flags_vertical = 4
+tooltip_text = "บัญชีของฉัน"
+mouse_default_cursor_shape = 2
+theme_override_fonts/font = ExtResource("2_bold")
+theme_override_font_sizes/font_size = 22
+text = "?"
+script = ExtResource("1_script")
+
+[node name="Layer" type="CanvasLayer" parent="." unique_id=1230558175]
+layer = 10
+
+[node name="Panel" type="PanelContainer" parent="Layer" unique_id=791709855]
+unique_name_in_owner = true
+visible = false
+custom_minimum_size = Vector2(340, 0)
+offset_right = 340.0
+
+[node name="Margin" type="MarginContainer" parent="Layer/Panel" unique_id=1191840840]
+layout_mode = 2
+theme_override_constants/margin_left = 16
+theme_override_constants/margin_top = 16
+theme_override_constants/margin_right = 16
+theme_override_constants/margin_bottom = 16
+
+[node name="VBox" type="VBoxContainer" parent="Layer/Panel/Margin" unique_id=736226933]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="Header" type="HBoxContainer" parent="Layer/Panel/Margin/VBox" unique_id=1144154750]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="Avatar" type="Label" parent="Layer/Panel/Margin/VBox/Header" unique_id=1597131542]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(56, 56)
+layout_mode = 2
+theme_override_fonts/font = ExtResource("2_bold")
+theme_override_font_sizes/font_size = 26
+text = "?"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Names" type="VBoxContainer" parent="Layer/Panel/Margin/VBox/Header" unique_id=771175670]
+layout_mode = 2
+size_flags_horizontal = 3
+alignment = 1
+
+[node name="NameLabel" type="Label" parent="Layer/Panel/Margin/VBox/Header/Names" unique_id=792779701]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(1, 0)
+layout_mode = 2
+theme_override_fonts/font = ExtResource("2_bold")
+theme_override_font_sizes/font_size = 22
+text_overrun_behavior = 3
+
+[node name="SubLabel" type="Label" parent="Layer/Panel/Margin/VBox/Header/Names" unique_id=867490150]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(1, 0)
+layout_mode = 2
+theme_override_fonts/font = ExtResource("4_regular")
+theme_override_font_sizes/font_size = 16
+text_overrun_behavior = 3
+
+[node name="ManageBtn" type="Button" parent="Layer/Panel/Margin/VBox" unique_id=1842645491]
+unique_name_in_owner = true
+layout_mode = 2
+mouse_default_cursor_shape = 2
+theme_override_fonts/font = ExtResource("2_bold")
+theme_override_font_sizes/font_size = 18
+text = "จัดการบัญชี"
+
+[node name="SignOutBtn" type="Button" parent="Layer/Panel/Margin/VBox" unique_id=1551971726]
+unique_name_in_owner = true
+layout_mode = 2
+mouse_default_cursor_shape = 2
+theme_override_fonts/font = ExtResource("2_bold")
+theme_override_font_sizes/font_size = 18
+text = "ออกจากระบบ"
+
+[node name="GuestHint" type="Label" parent="Layer/Panel/Margin/VBox" unique_id=1579914661]
+unique_name_in_owner = true
+visible = false
+custom_minimum_size = Vector2(1, 0)
+layout_mode = 2
+theme_override_fonts/font = ExtResource("4_regular")
+theme_override_font_sizes/font_size = 15
+text = "ความคืบหน้าที่เล่นแบบไม่ล็อกอินยังอยู่ในเครื่องนี้ กลับมาเล่นต่อได้จากหน้าเข้าสู่ระบบ"
+autowrap_mode = 3
