@@ -1,11 +1,42 @@
-[gd_scene load_steps=3 format=3]
+[gd_scene load_steps=8 format=3]
 
 [ext_resource type="Script" path="res://features/sandbox/top_bar_panel.gd" id="1_script"]
+[ext_resource type="FontFile" uid="uid://caa27axnonbav" path="res://assets/fonts/Bungee-Regular.ttf" id="2_font_bungee"]
+[ext_resource type="FontFile" uid="uid://deedcfbkojx6k" path="res://assets/fonts/ChakraPetch-Bold.ttf" id="3_font_bold"]
+
+[sub_resource type="FontVariation" id="FontVariation_bold"]
+base_font = ExtResource("3_font_bold")
+spacing_top = 4
+spacing_bottom = 2
 
 [sub_resource type="StyleBoxFlat" id="Style_topbar"]
 bg_color = Color(0.18, 0.13, 0.08, 0.96)
 border_width_bottom = 5
 border_color = Color(0.91, 0.69, 0.27, 1)
+
+[sub_resource type="StyleBoxFlat" id="Style_btn_finish"]
+bg_color = Color(0.18, 0.52, 0.22, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.35, 0.75, 0.40, 1)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_left = 8
+corner_radius_bottom_right = 8
+
+[sub_resource type="StyleBoxFlat" id="Style_btn_finish_hover"]
+bg_color = Color(0.24, 0.65, 0.28, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.50, 0.90, 0.55, 1)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_left = 8
+corner_radius_bottom_right = 8
 
 [node name="TopBarPanel" type="PanelContainer"]
 anchors_preset = 10
@@ -30,7 +61,8 @@ theme_override_constants/separation = 19
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_colors/font_color = Color(1, 0.96, 0.83, 1)
-theme_override_font_sizes/font_size = 30
+theme_override_fonts/font = ExtResource("2_font_bungee")
+theme_override_font_sizes/font_size = 28
 text = "GIT DIWAA"
 vertical_alignment = 1
 
@@ -38,7 +70,8 @@ vertical_alignment = 1
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_colors/font_color = Color(0.7, 1, 0.67, 1)
-theme_override_font_sizes/font_size = 21
+theme_override_fonts/font = SubResource("FontVariation_bold")
+theme_override_font_sizes/font_size = 20
 text = "SANDBOX"
 horizontal_alignment = 1
 vertical_alignment = 1
@@ -46,3 +79,19 @@ vertical_alignment = 1
 [node name="Spacer" type="Control" parent="TopMargin/Header"]
 layout_mode = 2
 size_flags_horizontal = 3
+
+[node name="BtnFinish" type="Button" parent="TopMargin/Header"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(180, 42)
+layout_mode = 2
+size_flags_vertical = 4
+focus_mode = 0
+mouse_default_cursor_shape = 2
+theme_override_colors/font_color = Color(0.96, 0.96, 0.96, 1)
+theme_override_colors/font_hover_color = Color(1, 1, 1, 1)
+theme_override_fonts/font = SubResource("FontVariation_bold")
+theme_override_font_sizes/font_size = 18
+theme_override_styles/normal = SubResource("Style_btn_finish")
+theme_override_styles/hover = SubResource("Style_btn_finish_hover")
+theme_override_styles/pressed = SubResource("Style_btn_finish_hover")
+text = "เสร็จสิ้น (ไปต่อ) ➔"

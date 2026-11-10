@@ -30,7 +30,6 @@ extends Node2D
 @onready var speaker_label: Label = $MagicStoryUI/DialogueBox/Margin/VBox/SpeakerLabel
 @onready var dialogue_label: Label = $MagicStoryUI/DialogueBox/Margin/VBox/DialogueLabel
 @onready var continue_arrow: TextureRect = $MagicStoryUI/DialogueBox/ArrowOverlay/ArrowWrapper/ContinueArrow
-@onready var skip_button: Button = $MagicStoryUI/SkipButton
 
 
 # ลำดับท่าทางวนลูป (Sequence Loops)
@@ -132,6 +131,7 @@ var entrance_tween: Tween = null
 
 func _ready() -> void:
 	Engine.time_scale = 1.0
+	SceneLoader.request_preload(next_scene_path)
 	_init_scene_state()
 	_play_entrance_sequence()
 
@@ -153,8 +153,9 @@ func _input(event: InputEvent) -> void:
 		elif event is InputEventKey and event.pressed and not event.echo and (event.keycode == KEY_SPACE or event.keycode == KEY_ENTER):
 			wants_advance = true
 		elif event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
-			# ตรวจสอบว่าไม่ได้กดโดนปุ่ม Skip
-			if not skip_button.get_global_rect().has_point(event.position):
+			# ป้องกันการคลิกโดนปุ่มควบคุม (FF / Skip) ถูกกลืนเป็นการกดอ่านต่อ
+			var hovered := get_viewport().gui_get_hovered_control()
+			if not (hovered is BaseButton):
 				wants_advance = true
 				
 		if wants_advance:
@@ -196,9 +197,8 @@ func _init_scene_state() -> void:
 	# ระบบควบคุม Cutscene: ปุ่มเร่งความเร็ว (FF 2.5x) และปุ่มข้าม (Skip / Esc)
 	var skip_ctrl = preload("res://features/cutscene/skip_cutscene_button.gd").new()
 	skip_ctrl.next_scene_path = next_scene_path
+	skip_ctrl.custom_skip_action = _skip_cutscene
 	add_child(skip_ctrl)
-	if skip_button:
-		skip_button.visible = false
 	
 	# หน้าจอมืดไว้สำหรับเฟดเข้า
 	fade_overlay.visible = true
@@ -312,9 +312,9 @@ func _show_current_dialogue() -> void:
 	
 	speaker_label.text = data["speaker"]
 	if data["speaker"] == "ผู้พิทักษ์":
-		speaker_label.add_theme_color_override("font_color", Color(0.941, 0.824, 0.451, 1.0)) # สีทองอบอุ่น
+		speaker_label.add_theme_color_override("font_color", Color(0.92, 0.80, 0.44, 1.0)) # สีทองอบอุ่น
 	else:
-		speaker_label.add_theme_color_override("font_color", Color(0.48, 0.78, 1.0, 1.0)) # สีฟ้าอ่อนสดใส (เวล / ผู้เล่น)
+		speaker_label.add_theme_color_override("font_color", Color(0.45, 0.75, 0.95, 1.0)) # สีฟ้าอ่อนสดใส (เวล / ผู้เล่น)
 	dialogue_label.text = data["text"]
 	dialogue_label.visible_ratio = 0.0
 	
@@ -448,15 +448,18 @@ func _finish_cutscene() -> void:
 	_hide_exclamation()
 	
 	# ซ่อนกล่องข้อความ
-	var tw_box = create_tween()
-	tw_box.tween_property(dialogue_box, "modulate:a", 0.0, 0.2)
+	if is_instance_valid(dialogue_box):
+		var tw_box = create_tween()
+		tw_box.tween_property(dialogue_box, "modulate:a", 0.0, 0.2)
 	
 	# เฟดจอดำ และเปลี่ยนซีน
-	var tw_fade_out = create_tween()
-	tw_fade_out.tween_property(fade_overlay, "color:a", 1.0, 0.6)
-	tw_fade_out.tween_callback(func():
+	if is_instance_valid(fade_overlay):
+		fade_overlay.visible = true
+		var tw_fade_out = create_tween()
+		tw_fade_out.tween_property(fade_overlay, "color:a", 1.0, 0.4)
+		tw_fade_out.tween_callback(_switch_to_gameplay)
+	else:
 		_switch_to_gameplay()
-	)
 
 func _skip_cutscene() -> void:
 	if is_transitioning:
@@ -467,11 +470,11 @@ func _skip_cutscene() -> void:
 	_hide_continue_arrow()
 	_hide_question_mark()
 	_hide_exclamation()
+	if is_instance_valid(dialogue_box):
+		dialogue_box.visible = false
 	_switch_to_gameplay()
 
 func _switch_to_gameplay() -> void:
 	Engine.time_scale = 1.0
-	if next_scene_path != "" and ResourceLoader.exists(next_scene_path):
-		get_tree().change_scene_to_file(next_scene_path)
-	else:
+	if not SceneLoader.change_scene(get_tree(), next_scene_path):
 		push_warning("[CentralTowerCutscene] next_scene_path not found: '%s'" % next_scene_path)

@@ -1,5 +1,6 @@
 class_name StartViewController
 extends Control
+
 ## Controller for the Start Screen View.
 ## Orchestrates start screen navigation, audio effects, live terminal simulation,
 ## real-time system clock, and transition to Sandbox gameplay.
@@ -33,6 +34,8 @@ func _ready() -> void:
 	_update_clock()
 	_load_preview_animation()
 	_start_career_btn.grab_focus()
+
+	SceneLoader.request_preload("res://features/sandbox/sandbox_game_view.tscn")
 
 
 func _bind_nodes() -> void:
@@ -110,19 +113,28 @@ func _on_button_focus_entered() -> void:
 func _on_start_career_pressed() -> void:
 	_play_sfx(_sfx_click)
 	_append_terminal_text("> Executing START NEW CAREER...")
-	_append_terminal_text("> Initializing Magic Tower apprentice session...")
 
-	# Delay slightly for audio feedback before switching scene
-	get_tree().create_timer(0.35).timeout.connect(func() -> void:
-		get_tree().change_scene_to_file("res://features/cutscene/cut_scence_normal.tscn"))
+	if GameProgressManager.has_seen_intro_cutscene():
+		_append_terminal_text("> Opening Level Select screen...")
+		get_tree().create_timer(0.35).timeout.connect(func() -> void:
+			get_tree().change_scene_to_file("res://features/level_select/level_select_view.tscn"))
+	else:
+		_append_terminal_text("> Initializing Magic Tower apprentice session...")
+		get_tree().create_timer(0.35).timeout.connect(func() -> void:
+			get_tree().change_scene_to_file("res://features/cutscene/cut_scence_normal.tscn"))
 
 
 func _on_resume_work_pressed() -> void:
 	_play_sfx(_sfx_click)
 	_append_terminal_text("> Resuming active repository session...")
 
-	get_tree().create_timer(0.35).timeout.connect(func() -> void:
-		get_tree().change_scene_to_file("res://features/sandbox/sandbox_game_view.tscn"))
+	get_tree().create_timer(0.2).timeout.connect(func() -> void:
+		_transition_to_scene("res://features/sandbox/sandbox_game_view.tscn"))
+
+
+func _transition_to_scene(target_path: String) -> void:
+	if not SceneLoader.change_scene(get_tree(), target_path):
+		push_warning("[StartView] Scene not found: '%s'" % target_path)
 
 
 func _on_dressing_room_pressed() -> void:
@@ -164,6 +176,26 @@ func _on_terminal_command_submitted(input: String) -> void:
 
 	if lower == "dressing" or lower == "dress" or lower == "wardrobe":
 		_on_dressing_room_pressed()
+		return
+
+	if lower == "level" or lower == "levels" or lower == "select":
+		get_tree().change_scene_to_file("res://features/level_select/level_select_view.tscn")
+		return
+
+	if lower == "clear 1" or lower == "complete 1":
+		if OS.is_debug_build():
+			GameProgressManager.set_level_cleared(1, true)
+			_append_terminal_text("> [DEBUG] Level 1 marked as CLEARED! Card in Level Select will turn GREEN.")
+		else:
+			_append_terminal_text("Command only available in debug builds.")
+		return
+
+	if lower == "reset" or lower == "reset progress":
+		if OS.is_debug_build():
+			GameProgressManager.reset_progress()
+			_append_terminal_text("> [DEBUG] Game progress reset! All cards in Level Select are now GREY.")
+		else:
+			_append_terminal_text("Command only available in debug builds.")
 		return
 
 	if lower == "git init":

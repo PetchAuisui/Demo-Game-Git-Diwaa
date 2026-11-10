@@ -5,9 +5,11 @@
 [ext_resource type="PackedScene" path="res://features/start/start_top_bar.tscn" id="3_topbar"]
 [ext_resource type="Texture2D" uid="uid://2tl18p12rp5x" path="res://assets/art/start_screen/start_logo.png" id="4_logo"]
 [ext_resource type="Texture2D" uid="uid://e7maulpi344" path="res://assets/art/start_screen/start_scene_preview.png" id="5_preview"]
-[ext_resource type="FontFile" uid="uid://deedcfbkojx6k" path="res://assets/fonts/ChakraPetch-Bold.ttf" id="6_font_chakra_bold"]
-[ext_resource type="FontFile" uid="uid://b8g6ela360qq1" path="res://assets/fonts/Silkscreen-Bold.ttf" id="7_font_silkscreen"]
-[ext_resource type="FontFile" uid="uid://kdsopvxcj40" path="res://assets/fonts/VT323-Regular.ttf" id="8_font_vt323"]
+[ext_resource type="FontFile" path="res://assets/fonts/Bungee-Regular.ttf" id="6_font_bungee"]
+[ext_resource type="FontFile" uid="uid://csurxmw2vmws4" path="res://assets/fonts/TA-8-bit.ttf" id="7_font_ta8bit"]
+[ext_resource type="FontFile" uid="uid://deedcfbkojx6k" path="res://assets/fonts/ChakraPetch-Bold.ttf" id="8_font_chakra_bold"]
+[ext_resource type="FontFile" path="res://assets/fonts/ChakraPetch-Regular.ttf" id="9_font_chakra_reg"]
+[ext_resource type="FontFile" uid="uid://kdsopvxcj40" path="res://assets/fonts/VT323-Regular.ttf" id="10_font_vt323"]
 [ext_resource type="AudioStream" uid="uid://cvlamp5b4er6q" path="res://assets/audio/sfx_click.wav" id="10_sfx_click"]
 [ext_resource type="AudioStream" uid="uid://okd1lm33qdyj" path="res://assets/audio/sfx_command.wav" id="11_sfx_cmd"]
 
@@ -168,8 +170,8 @@ layout_mode = 2
 [node name="TitleText" type="Label" parent="WindowAnchor/WindowFrame/WindowVBox/TitleBar/TitleRow" unique_id=1244900797]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.72, 0.62, 0.5, 1)
-theme_override_fonts/font = ExtResource("7_font_silkscreen")
-theme_override_font_sizes/font_size = 15
+theme_override_fonts/font = ExtResource("7_font_ta8bit")
+theme_override_font_sizes/font_size = 16
 text = "▣  EXEC: START_SCREEN.EXE"
 vertical_alignment = 1
 
@@ -180,8 +182,8 @@ size_flags_horizontal = 3
 [node name="WindowControls" type="Label" parent="WindowAnchor/WindowFrame/WindowVBox/TitleBar/TitleRow" unique_id=123032340]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.85, 0.55, 0.35, 1)
-theme_override_fonts/font = ExtResource("7_font_silkscreen")
-theme_override_font_sizes/font_size = 15
+theme_override_fonts/font = ExtResource("7_font_ta8bit")
+theme_override_font_sizes/font_size = 16
 text = "□  □  ▪"
 vertical_alignment = 1
 
@@ -226,8 +228,8 @@ focus_neighbor_bottom = NodePath("../ResumeWorkBtn")
 theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_colors/font_pressed_color = Color(1, 0.9, 0.85, 1)
 theme_override_colors/font_hover_color = Color(1, 1, 1, 1)
-theme_override_fonts/font = ExtResource("6_font_chakra_bold")
-theme_override_font_sizes/font_size = 22
+theme_override_fonts/font = ExtResource("6_font_bungee")
+theme_override_font_sizes/font_size = 18
 theme_override_styles/normal = SubResource("Style_btn_start_normal")
 theme_override_styles/pressed = SubResource("Style_btn_start_pressed")
 theme_override_styles/hover = SubResource("Style_btn_start_hover")
@@ -242,8 +244,8 @@ focus_neighbor_bottom = NodePath("../DressingRoomBtn")
 theme_override_colors/font_color = Color(0.18, 0.12, 0.08, 1)
 theme_override_colors/font_pressed_color = Color(0.18, 0.12, 0.08, 1)
 theme_override_colors/font_hover_color = Color(0.18, 0.12, 0.08, 1)
-theme_override_fonts/font = ExtResource("6_font_chakra_bold")
-theme_override_font_sizes/font_size = 20
+theme_override_fonts/font = ExtResource("6_font_bungee")
+theme_override_font_sizes/font_size = 17
 theme_override_styles/normal = SubResource("Style_btn_resume_normal")
 theme_override_styles/pressed = SubResource("Style_btn_resume_pressed")
 theme_override_styles/hover = SubResource("Style_btn_resume_hover")
@@ -258,8 +260,8 @@ focus_neighbor_bottom = NodePath("../TutorialBtn")
 theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_colors/font_pressed_color = Color(0.9, 0.85, 1, 1)
 theme_override_colors/font_hover_color = Color(1, 1, 1, 1)
-theme_override_fonts/font = ExtResource("6_font_chakra_bold")
-theme_override_font_sizes/font_size = 20
+theme_override_fonts/font = ExtResource("6_font_bungee")
+theme_override_font_sizes/font_size = 17
 theme_override_styles/normal = SubResource("Style_btn_dressing_normal")
 theme_override_styles/pressed = SubResource("Style_btn_dressing_pressed")
 theme_override_styles/hover = SubResource("Style_btn_dressing_hover")
@@ -268,7 +270,7 @@ text = "DRESSING ROOM ✨"
 [node name="DottedSeparator" type="Label" parent="WindowAnchor/WindowFrame/WindowVBox/WindowContent/LeftMenuPanel/Margin/VBox" unique_id=1344059474]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.722, 0.604, 0.38, 1)
-theme_override_fonts/font = ExtResource("7_font_silkscreen")
+theme_override_fonts/font = ExtResource("7_font_ta8bit")
 theme_override_font_sizes/font_size = 12
 text = "--------------------------------------"
 horizontal_alignment = 1
@@ -280,8 +282,8 @@ focus_neighbor_top = NodePath("../DressingRoomBtn")
 theme_override_colors/font_color = Color(0.33, 0.24, 0.15, 1)
 theme_override_colors/font_pressed_color = Color(0.514, 0.133, 0.027, 1)
 theme_override_colors/font_hover_color = Color(0.871, 0.306, 0.137, 1)
-theme_override_fonts/font = ExtResource("7_font_silkscreen")
-theme_override_font_sizes/font_size = 15
+theme_override_fonts/font = ExtResource("7_font_ta8bit")
+theme_override_font_sizes/font_size = 16
 text = "🗎  TUTORIAL & DOCUMENTATION"
 flat = true
 
@@ -296,15 +298,15 @@ theme_override_constants/separation = 6
 [node name="EnterHint" type="Label" parent="WindowAnchor/WindowFrame/WindowVBox/WindowContent/LeftMenuPanel/Margin/VBox/NavHintsContainer" unique_id=727265122]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.35, 0.25, 0.15, 1)
-theme_override_fonts/font = ExtResource("7_font_silkscreen")
-theme_override_font_sizes/font_size = 14
+theme_override_fonts/font = ExtResource("7_font_ta8bit")
+theme_override_font_sizes/font_size = 15
 text = "[ENTER]  NAVIGATE"
 
 [node name="SelectHint" type="Label" parent="WindowAnchor/WindowFrame/WindowVBox/WindowContent/LeftMenuPanel/Margin/VBox/NavHintsContainer" unique_id=600367546]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.35, 0.25, 0.15, 1)
-theme_override_fonts/font = ExtResource("7_font_silkscreen")
-theme_override_font_sizes/font_size = 14
+theme_override_fonts/font = ExtResource("7_font_ta8bit")
+theme_override_font_sizes/font_size = 15
 text = "[↑ ↓]   SELECT"
 
 [node name="RightIllustrationPanel" type="VBoxContainer" parent="WindowAnchor/WindowFrame/WindowVBox/WindowContent" unique_id=817027629]
@@ -359,8 +361,8 @@ layout_mode = 2
 [node name="TerminalTag" type="Label" parent="WindowAnchor/WindowFrame/WindowVBox/WindowContent/RightIllustrationPanel/TerminalPanel/Margin/VBox/HeaderRow" unique_id=602585112]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.26, 0.57, 0.45, 1)
-theme_override_fonts/font = ExtResource("8_font_vt323")
-theme_override_font_sizes/font_size = 22
+theme_override_fonts/font = ExtResource("7_font_ta8bit")
+theme_override_font_sizes/font_size = 18
 text = "Terminal"
 
 [node name="Spacer" type="Control" parent="WindowAnchor/WindowFrame/WindowVBox/WindowContent/RightIllustrationPanel/TerminalPanel/Margin/VBox/HeaderRow" unique_id=1766867512]
@@ -371,8 +373,8 @@ size_flags_horizontal = 3
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_colors/font_color = Color(0.69, 0.55, 0.34, 1)
-theme_override_fonts/font = ExtResource("8_font_vt323")
-theme_override_font_sizes/font_size = 22
+theme_override_fonts/font = ExtResource("7_font_ta8bit")
+theme_override_font_sizes/font_size = 18
 text = "MT: 15:07:27"
 
 [node name="OutputLog" type="RichTextLabel" parent="WindowAnchor/WindowFrame/WindowVBox/WindowContent/RightIllustrationPanel/TerminalPanel/Margin/VBox" unique_id=1969638442]
@@ -380,7 +382,7 @@ unique_name_in_owner = true
 layout_mode = 2
 size_flags_vertical = 3
 theme_override_colors/default_color = Color(0.31, 0.98, 0.46, 1)
-theme_override_fonts/normal_font = ExtResource("8_font_vt323")
+theme_override_fonts/normal_font = ExtResource("10_font_vt323")
 theme_override_font_sizes/normal_font_size = 26
 bbcode_enabled = true
 text = "> git init
@@ -396,7 +398,7 @@ theme_override_constants/separation = 6
 [node name="PromptChevron" type="Label" parent="WindowAnchor/WindowFrame/WindowVBox/WindowContent/RightIllustrationPanel/TerminalPanel/Margin/VBox/PromptRow" unique_id=2029329152]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.31, 0.98, 0.46, 1)
-theme_override_fonts/font = ExtResource("8_font_vt323")
+theme_override_fonts/font = ExtResource("10_font_vt323")
 theme_override_font_sizes/font_size = 26
 text = ">"
 
@@ -405,7 +407,7 @@ unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_colors/font_color = Color(0.31, 0.98, 0.46, 1)
-theme_override_fonts/font = ExtResource("8_font_vt323")
+theme_override_fonts/font = ExtResource("10_font_vt323")
 theme_override_font_sizes/font_size = 26
 theme_override_styles/normal = SubResource("Style_terminal_input")
 theme_override_styles/focus = SubResource("Style_terminal_input")
@@ -416,7 +418,7 @@ caret_blink = true
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_colors/font_color = Color(0.31, 0.98, 0.46, 1)
-theme_override_fonts/font = ExtResource("8_font_vt323")
+theme_override_fonts/font = ExtResource("10_font_vt323")
 theme_override_font_sizes/font_size = 26
 text = "█"
 
@@ -439,15 +441,15 @@ theme_override_constants/separation = 12
 [node name="StatusDot" type="Label" parent="BottomStatusBar/HBox" unique_id=1429992171]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.2, 0.9, 0.3, 1)
-theme_override_fonts/font = ExtResource("8_font_vt323")
-theme_override_font_sizes/font_size = 18
+theme_override_fonts/font = ExtResource("7_font_ta8bit")
+theme_override_font_sizes/font_size = 16
 text = "●"
 
 [node name="StatusText" type="Label" parent="BottomStatusBar/HBox" unique_id=1644794727]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.55, 0.42, 0.31, 1)
-theme_override_fonts/font = ExtResource("8_font_vt323")
-theme_override_font_sizes/font_size = 20
+theme_override_fonts/font = ExtResource("7_font_ta8bit")
+theme_override_font_sizes/font_size = 16
 text = "CONNECTED TO DEVLAB_STUDIO SERVER"
 
 [node name="Spacer" type="Control" parent="BottomStatusBar/HBox" unique_id=192118492]
@@ -457,8 +459,8 @@ size_flags_horizontal = 3
 [node name="BuildText" type="Label" parent="BottomStatusBar/HBox" unique_id=1697552535]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.55, 0.42, 0.31, 1)
-theme_override_fonts/font = ExtResource("8_font_vt323")
-theme_override_font_sizes/font_size = 20
+theme_override_fonts/font = ExtResource("7_font_ta8bit")
+theme_override_font_sizes/font_size = 16
 text = "BUILD 2026.07.86"
 
 [node name="BgmAudio" type="AudioStreamPlayer" parent="." unique_id=1072916560]

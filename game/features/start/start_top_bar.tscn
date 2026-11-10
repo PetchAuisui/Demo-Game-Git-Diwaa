@@ -1,5 +1,6 @@
 [gd_scene load_steps=4 format=3]
 
+[ext_resource type="FontFile" path="res://assets/fonts/Bungee-Regular.ttf" id="1_font_bungee"]
 [ext_resource type="FontFile" path="res://assets/fonts/ChakraPetch-Bold.ttf" id="1_font_bold"]
 [ext_resource type="PackedScene" path="res://features/auth/account_menu.tscn" id="2_account_menu"]
 
@@ -33,9 +34,9 @@ theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_colors/font_shadow_color = Color(0.18, 0.22, 0.32, 1)
 theme_override_constants/shadow_offset_x = 2
 theme_override_constants/shadow_offset_y = 2
-theme_override_fonts/font = ExtResource("1_font_bold")
-theme_override_font_sizes/font_size = 38
-text = "GIT Diwaa"
+theme_override_fonts/font = ExtResource("1_font_bungee")
+theme_override_font_sizes/font_size = 32
+text = "GIT DI WAA"
 vertical_alignment = 1
 
 [node name="Spacer" type="Control" parent="Margin/HBox"]

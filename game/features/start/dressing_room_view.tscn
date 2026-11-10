@@ -1,6 +1,7 @@
 [gd_scene format=3 uid="uid://b7qm4kvl1dr01"]
 
 [ext_resource type="Script" path="res://features/start/dressing_room_view_controller.gd" id="1_controller"]
+[ext_resource type="FontFile" path="res://assets/fonts/Bungee-Regular.ttf" id="2_font_bungee"]
 [ext_resource type="FontFile" uid="uid://deedcfbkojx6k" path="res://assets/fonts/ChakraPetch-Bold.ttf" id="2_font_bold"]
 [ext_resource type="FontFile" uid="uid://b8g6ela360qq1" path="res://assets/fonts/Silkscreen-Bold.ttf" id="3_font_silkscreen"]
 [ext_resource type="FontFile" uid="uid://kdsopvxcj40" path="res://assets/fonts/VT323-Regular.ttf" id="4_font_vt323"]
@@ -267,9 +268,9 @@ theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_colors/font_shadow_color = Color(0.18, 0.22, 0.32, 1)
 theme_override_constants/shadow_offset_x = 2
 theme_override_constants/shadow_offset_y = 2
-theme_override_fonts/font = ExtResource("2_font_bold")
-theme_override_font_sizes/font_size = 36
-text = "GIT Diwaa"
+theme_override_fonts/font = ExtResource("2_font_bungee")
+theme_override_font_sizes/font_size = 32
+text = "GIT DI WAA"
 vertical_alignment = 1
 
 [node name="Spacer" type="Control" parent="TopBar/TopHBox"]

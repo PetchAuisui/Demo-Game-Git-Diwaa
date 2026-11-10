@@ -13,7 +13,10 @@ func _ready() -> void:
 	focus_mode = Control.FOCUS_NONE
 	mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	custom_minimum_size = Vector2(0, 34)
-	add_theme_font_size_override("font_size", 17)
+	var font_semibold = load("res://assets/fonts/ChakraPetch-SemiBold.ttf")
+	if font_semibold:
+		add_theme_font_override("font", font_semibold)
+	add_theme_font_size_override("font_size", 16)
 	add_theme_constant_override("icon_max_width", 20)
 	add_theme_constant_override("h_separation", 8)
 

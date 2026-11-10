@@ -1,7 +1,19 @@
-[gd_scene load_steps=6 format=3]
+[gd_scene load_steps=10 format=3]
 
 [ext_resource type="Script" path="res://features/sandbox/terminal_panel.gd" id="1_script"]
 [ext_resource type="Theme" path="res://features/sandbox/file_dialog_theme.tres" id="2_dialog_theme"]
+[ext_resource type="FontFile" uid="uid://deedcfbkojx6k" path="res://assets/fonts/ChakraPetch-Bold.ttf" id="3_font_bold"]
+[ext_resource type="FontFile" uid="uid://c82lda4ldw0ve" path="res://assets/fonts/ChakraPetch-Regular.ttf" id="4_font_reg"]
+
+[sub_resource type="FontVariation" id="FontVariation_term_bold"]
+base_font = ExtResource("3_font_bold")
+spacing_top = 4
+spacing_bottom = 2
+
+[sub_resource type="FontVariation" id="FontVariation_term_reg"]
+base_font = ExtResource("4_font_reg")
+spacing_top = 4
+spacing_bottom = 2
 
 [sub_resource type="StyleBoxFlat" id="Style_terminal"]
 bg_color = Color(0.008, 0.011, 0.019, 0.97)
@@ -65,14 +77,15 @@ theme_override_constants/separation = 11
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_colors/font_color = Color(1, 0.79, 0.35, 1)
-theme_override_fonts/font = SubResource("Font_terminal")
-theme_override_font_sizes/font_size = 21
+theme_override_fonts/font = SubResource("FontVariation_term_bold")
+theme_override_font_sizes/font_size = 20
 text = "●  ●  ●    TERMINAL — learner@diwaa:~/checkpoint-01"
 
 [node name="HintLabel" type="Label" parent="TerminalMargin/TerminalLayout"]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_colors/font_color = Color(0.68, 0.73, 0.85, 1)
+theme_override_fonts/font = SubResource("FontVariation_term_reg")
 theme_override_font_sizes/font_size = 15
 text = "Enter รันคำสั่ง • ↑ ↓ ประวัติ • clear ล้างหน้าจอ • Git sandbox"
 autowrap_mode = 2
@@ -81,12 +94,13 @@ autowrap_mode = 2
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_vertical = 3
+focus_mode = 0
+mouse_filter = 1
 theme_override_colors/default_color = Color(0.87, 0.9, 0.95, 1)
 theme_override_fonts/normal_font = SubResource("Font_terminal")
 theme_override_font_sizes/normal_font_size = 20
 bbcode_enabled = true
 scroll_following = true
-selection_enabled = true
 
 [node name="CommandRow" type="HBoxContainer" parent="TerminalMargin/TerminalLayout"]
 layout_mode = 2
@@ -120,6 +134,7 @@ unique_name_in_owner = true
 custom_minimum_size = Vector2(121, 42)
 layout_mode = 2
 theme_override_colors/font_color = Color(0.97, 0.93, 0.82, 1)
+theme_override_fonts/font = SubResource("FontVariation_term_bold")
 theme_override_font_sizes/font_size = 18
 theme_override_styles/normal = SubResource("Style_button")
 text = "Enter ↵"
