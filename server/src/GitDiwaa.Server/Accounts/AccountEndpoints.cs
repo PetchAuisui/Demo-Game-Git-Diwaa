@@ -116,6 +116,26 @@ public static class AccountEndpoints
             return Results.Json(apiError, statusCode: StatusCodes.Status401Unauthorized);
         }).AddEndpointFilter<RequireSessionFilter>();
 
+        // อีเมลของเจ้าของ token เท่านั้น (เมนูบัญชีในเกมแสดงแบบปิดบัง) ผู้ใช้มาจาก session จึงขอของคนอื่นไม่ได้
+        // ไม่ให้แคช และจำกัดจำนวนครั้งเหมือน login: ถ้า token หลุด คนที่ได้ token ไปจะดึงข้อมูลได้ช้าลง
+        group.MapGet("/me/email", async (
+            HttpContext httpContext,
+            AccountService accountService,
+            CancellationToken ct) =>
+        {
+            httpContext.Response.Headers.CacheControl = "no-store";
+
+            var session = (AuthenticatedSession)httpContext.Items[RequireSessionFilter.SessionItemKey]!;
+            var result = await accountService.GetEmailAsync(session.Profile.Id, ct);
+            if (result.Succeeded && result.Value is not null)
+            {
+                return Results.Json(result.Value, statusCode: StatusCodes.Status200OK);
+            }
+
+            var apiError = new ApiError(result.Error ?? AuthErrorCode.Unknown, result.FieldErrors);
+            return Results.Json(apiError, statusCode: StatusCodes.Status401Unauthorized);
+        }).AddEndpointFilter<RequireSessionFilter>().RequireRateLimiting("auth");
+
         // เปลี่ยนชื่อที่แสดง: ต้อง login (token ใน Authorization header) และใช้ rate limit แบบเดียวกับ login
         // ผู้ใช้ที่จะถูกเปลี่ยนชื่อมาจาก session เท่านั้น เปลี่ยนชื่อของคนอื่นไม่ได้
         group.MapPatch("/me/display-name", async (

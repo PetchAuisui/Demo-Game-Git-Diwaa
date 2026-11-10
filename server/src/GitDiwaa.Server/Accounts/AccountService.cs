@@ -414,6 +414,20 @@ public sealed class AccountService
         return AccountResult<ChangeDisplayNameResponse>.Success(ToChangeResponse(user, _timeProvider.GetUtcNow()));
     }
 
+    /// <summary>
+    /// อีเมลของผู้ใช้คนนี้ (userId มาจาก session เท่านั้น ขอของคนอื่นไม่ได้)
+    /// </summary>
+    public async Task<AccountResult<MyEmailResponse>> GetEmailAsync(Guid userId, CancellationToken ct = default)
+    {
+        var user = await _userRepository.FindByIdAsync(userId, ct);
+        if (user is null || user.Status != UserStatus.Active)
+        {
+            return AccountResult<MyEmailResponse>.Failure(AuthErrorCode.InvalidCredentials);
+        }
+
+        return AccountResult<MyEmailResponse>.Success(new MyEmailResponse(user.Email));
+    }
+
     private ChangeDisplayNameResponse ToChangeResponse(UserRecord user, DateTimeOffset now)
     {
         TimeSpan cooldown = _options.DisplayNameChangeCooldown;
