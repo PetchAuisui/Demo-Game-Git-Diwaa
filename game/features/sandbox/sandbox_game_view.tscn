@@ -1,12 +1,38 @@
 [gd_scene format=3]
 
-[ext_resource type="Script" path="res://features/sandbox/sandbox_game_view.gd" id="1_script"]
-[ext_resource type="Texture2D" uid="uid://4ah0urajpkpe" path="res://assets/cutscene/backgrounds/inside-tower-Sheet.png" id="2_background"]
+[ext_resource type="Script" uid="uid://cd6q3hpbh7gii" path="res://features/sandbox/sandbox_game_view.gd" id="1_script"]
+[ext_resource type="Texture2D" uid="uid://dl5tboxtoj7v1" path="res://assets/cutscene/backgrounds/inside-tower-loop-Sheet.png" id="2_background"]
 [ext_resource type="PackedScene" path="res://features/sandbox/top_bar_panel.tscn" id="3_topbar"]
 [ext_resource type="PackedScene" path="res://features/sandbox/files_panel.tscn" id="4_files"]
 [ext_resource type="PackedScene" path="res://features/sandbox/git_graph_panel.tscn" id="5_graph"]
 [ext_resource type="PackedScene" path="res://features/sandbox/terminal_panel.tscn" id="6_terminal"]
-[ext_resource type="Shader" path="res://features/sandbox/sandbox_side_blur.gdshader" id="7_side_blur"]
+[ext_resource type="Shader" uid="uid://dsakd0n57dtv7" path="res://features/sandbox/sandbox_side_blur.gdshader" id="7_side_blur"]
+[ext_resource type="Texture2D" uid="uid://di2t2ymk1v7vy" path="res://assets/cutscene/backgrounds/cloud1.png" id="8_cloud"]
+[ext_resource type="Shader" uid="uid://bs6f2587plgrs" path="res://features/sandbox/sandbox_cloud_scroll.gdshader" id="9_cloud_scroll"]
+[ext_resource type="Shader" uid="uid://b31eepd6k30wl" path="res://features/sandbox/sandbox_tower_windows.gdshader" id="10_tower_windows"]
+
+[sub_resource type="Gradient" id="Gradient_sky"]
+offsets = PackedFloat32Array(0, 0.437, 0.4407, 0.4444, 0.4481, 0.5519, 0.5556, 0.563, 1)
+colors = PackedColorArray(0.133333, 0.137255, 0.356863, 1, 0.133333, 0.137255, 0.356863, 1, 0.196078, 0.223529, 0.431373, 1, 0.196078, 0.223529, 0.431373, 1, 0.203922, 0.141176, 0.384314, 1, 0.203922, 0.141176, 0.384314, 1, 0.231373, 0.141176, 0.388235, 1, 0.286275, 0.145098, 0.396078, 1, 0.286275, 0.145098, 0.396078, 1)
+
+[sub_resource type="GradientTexture2D" id="GradientTexture2D_sky"]
+gradient = SubResource("Gradient_sky")
+width = 480
+height = 270
+fill_from = Vector2(0, 0)
+fill_to = Vector2(0, 1)
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_cloud_scroll"]
+shader = ExtResource("9_cloud_scroll")
+shader_parameter/scroll_speed = 0.025
+shader_parameter/time_offset = 0.0
+shader_parameter/tex_pixel_size = Vector2(480, 270)
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_tower_windows"]
+shader = ExtResource("10_tower_windows")
+shader_parameter/sheet_grid = Vector2(11, 12)
+shader_parameter/min_blue = 0.33
+shader_parameter/min_blue_green_diff = 0.095
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_tower_hall"]
 atlas = ExtResource("2_background")
@@ -30,7 +56,7 @@ grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_script")
 
-[node name="TowerHall" type="TextureRect" parent="."]
+[node name="SkyBackdrop" type="TextureRect" parent="."]
 texture_filter = 1
 layout_mode = 1
 anchors_preset = 15
@@ -38,6 +64,35 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+mouse_filter = 2
+texture = SubResource("GradientTexture2D_sky")
+expand_mode = 1
+stretch_mode = 6
+
+[node name="CloudBackdrop" type="TextureRect" parent="."]
+texture_filter = 1
+material = SubResource("ShaderMaterial_cloud_scroll")
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+texture = ExtResource("8_cloud")
+expand_mode = 1
+stretch_mode = 6
+
+[node name="TowerHall" type="TextureRect" parent="."]
+texture_filter = 1
+material = SubResource("ShaderMaterial_tower_windows")
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
 texture = SubResource("AtlasTexture_tower_hall")
 expand_mode = 1
 stretch_mode = 6

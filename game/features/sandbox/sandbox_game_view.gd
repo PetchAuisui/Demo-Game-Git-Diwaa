@@ -5,6 +5,9 @@ extends Control
 
 const CENTRAL_TOWER_CUTSCENE_PATH := "res://features/cutscene/central_tower_cutscene.tscn"
 const ENDING_CUTSCENE_PATH := "res://features/cutscene/ending_cutscene.tscn"
+const ACT2_START_LEVEL := 16
+const ACT1_LOOP_SHEET_PATH := "res://assets/cutscene/backgrounds/inside-tower-loop-Sheet.png"
+const ACT2_CENTRAL_SHEET_PATH := "res://assets/cutscene/backgrounds/central-tower-Sheet.png"
 
 const BG_SHEET_COLS := 11
 const BG_SHEET_ROWS := 12
@@ -12,7 +15,10 @@ const BG_FRAME_COUNT := 132
 const BG_FPS := 12.0
 const BG_FRAME_SIZE := Vector2(480.0, 270.0)
 
+var _sky_backdrop: TextureRect
+var _cloud_backdrop: TextureRect
 var _tower_hall: TextureRect
+var _tower_window_material: Material
 var _bg_atlas: AtlasTexture
 var _bg_anim_timer := 0.0
 var _bg_frame_index := 0
@@ -47,6 +53,8 @@ func _process(delta: float) -> void:
 
 
 func _bind_nodes() -> void:
+	_sky_backdrop = get_node_or_null("SkyBackdrop") as TextureRect
+	_cloud_backdrop = get_node_or_null("CloudBackdrop") as TextureRect
 	_tower_hall = get_node_or_null("TowerHall") as TextureRect
 	_top_bar = get_node("%TopBar")
 	_files_panel = get_node("%FilesPanel")
@@ -57,8 +65,29 @@ func _bind_nodes() -> void:
 func _setup_animated_background() -> void:
 	if _tower_hall == null or not (_tower_hall.texture is AtlasTexture):
 		return
+	_tower_window_material = _tower_hall.material
 	_bg_atlas = (_tower_hall.texture as AtlasTexture).duplicate() as AtlasTexture
 	_tower_hall.texture = _bg_atlas
+	configure_background_for_level(GameProgressManager.get_selected_level_number())
+
+
+func configure_background_for_level(level_num: int) -> void:
+	if _bg_atlas == null or _tower_hall == null:
+		return
+	var is_act2 := level_num >= ACT2_START_LEVEL
+	var target_path := ACT2_CENTRAL_SHEET_PATH if is_act2 else ACT1_LOOP_SHEET_PATH
+	if _bg_atlas.atlas == null or _bg_atlas.atlas.resource_path != target_path:
+		if ResourceLoader.exists(target_path):
+			var sheet := load(target_path) as Texture2D
+			if sheet != null:
+				_bg_atlas.atlas = sheet
+	if _sky_backdrop != null:
+		_sky_backdrop.visible = not is_act2
+	if _cloud_backdrop != null:
+		_cloud_backdrop.visible = not is_act2
+	_tower_hall.material = null if is_act2 else _tower_window_material
+	_bg_anim_timer = 0.0
+	_bg_frame_index = 0
 	_apply_background_frame(0)
 
 
@@ -404,6 +433,8 @@ func _refresh_state() -> void:
 
 ## Transitions to the Central Tower cutscene (Act 2: GitHub Flow / Level 16)
 func play_central_tower_cutscene() -> void:
+	if GameProgressManager.get_selected_level_number() < ACT2_START_LEVEL:
+		GameProgressManager.set_selected_level_number(ACT2_START_LEVEL)
 	_terminal_panel.append_info("กำลังเปลี่ยนฉากไปยังหอคอยเวทกลาง (Central Tower)...")
 	_change_scene_to_cutscene(CENTRAL_TOWER_CUTSCENE_PATH)
 
