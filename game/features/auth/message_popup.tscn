@@ -78,10 +78,25 @@ theme_override_font_sizes/font_size = 20
 horizontal_alignment = 1
 autowrap_mode = 2
 
-[node name="OkBtn" type="Button" parent="CenterArea/Card/MarginContainer/CardVBox" unique_id=1645470949]
+[node name="ButtonRow" type="HBoxContainer" parent="CenterArea/Card/MarginContainer/CardVBox" unique_id=1388227578]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="CancelBtn" type="Button" parent="CenterArea/Card/MarginContainer/CardVBox/ButtonRow" unique_id=1319619068]
+unique_name_in_owner = true
+visible = false
+custom_minimum_size = Vector2(0, 52)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_fonts/font = ExtResource("2_bold")
+theme_override_font_sizes/font_size = 20
+text = "ยกเลิก"
+
+[node name="OkBtn" type="Button" parent="CenterArea/Card/MarginContainer/CardVBox/ButtonRow" unique_id=1645470949]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 52)
 layout_mode = 2
+size_flags_horizontal = 3
 theme_override_fonts/font = ExtResource("2_bold")
 theme_override_font_sizes/font_size = 20
 text = "ตกลง"

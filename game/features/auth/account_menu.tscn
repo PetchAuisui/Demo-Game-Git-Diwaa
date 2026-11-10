@@ -116,7 +116,7 @@ text = "ออกจากระบบ"
 [node name="GuestHint" type="Label" parent="Layer/Panel/Margin/VBox" unique_id=1579914661]
 unique_name_in_owner = true
 visible = false
-custom_minimum_size = Vector2(1, 0)
+custom_minimum_size = Vector2(308, 0)
 layout_mode = 2
 theme_override_fonts/font = ExtResource("4_regular")
 theme_override_font_sizes/font_size = 15

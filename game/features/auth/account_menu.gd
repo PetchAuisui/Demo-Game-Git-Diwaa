@@ -10,10 +10,14 @@ extends Button
 ## 2. ชื่อที่มาจาก server แสดงด้วย Label ธรรมดาเท่านั้น ไม่ตีความเป็นคำสั่งจัดรูปแบบ
 ## 3. ปุ่มนี้แค่พาไปหน้าอื่น ไม่ได้ตัดสินสิทธิ์อะไร (server ตรวจ token เองทุกครั้ง)
 
+## หน้าที่ออกกลางทางแล้วอาจเสียความคืบหน้า (เช่น หน้าเล่นด่าน) ตั้งเป็น true: กดออกจากระบบแล้วถามยืนยันก่อน
+@export var confirm_sign_out := false
+
 # ระยะห่างระหว่างปุ่มกับเมนู และระยะห่างจากขอบจอ (pixel)
 const PANEL_GAP := 8.0
 const SCREEN_MARGIN := 8.0
 
+var _layer: CanvasLayer
 var _panel: PanelContainer
 var _avatar: Label
 var _name_label: Label
@@ -32,6 +36,7 @@ var _email_loading := false
 
 
 func _ready() -> void:
+	_layer = get_node("Layer") as CanvasLayer
 	_panel = get_node("%Panel") as PanelContainer
 	_avatar = get_node("%Avatar") as Label
 	_name_label = get_node("%NameLabel") as Label
@@ -131,14 +136,22 @@ func _show_email() -> void:
 	var revealed := _reveal_btn.button_pressed
 	_email_label.text = _email if revealed else _mask_email(_email)
 	_reveal_btn.tooltip_text = "ซ่อนอีเมล" if revealed else "แสดงอีเมล"
+	if _panel.visible:
+		_panel.reset_size()  # เนื้อหาเปลี่ยน (เช่น อีเมลเพิ่งมา) ให้กล่องพอดีกับเนื้อหาใหม่
 
 
-## p•••@gmail.com: เหลือตัวแรกกับโดเมน และใช้ ••• เท่ากันทุกอีเมล ไม่บอกว่าชื่อยาวกี่ตัว
+## p•••@g•••.com: เหลือแค่ตัวแรกของชื่อ ตัวแรกของโดเมน และนามสกุลท้ายสุด (.com / .th)
+## ใช้ ••• เท่ากันทุกที่ ไม่บอกความยาว และปิดโดเมนด้วย เพราะโดเมนของบริษัท / โรงเรียนบอกได้ว่าผู้เล่นทำงานหรือเรียนที่ไหน
 static func _mask_email(email: String) -> String:
 	var at := email.rfind("@")
 	if at <= 0:
 		return "•••"
-	return email.left(1) + "•••" + email.substr(at)
+	var domain := email.substr(at + 1)
+	var last_dot := domain.rfind(".")
+	var masked_domain := "•••"
+	if last_dot > 0:
+		masked_domain = domain.left(1) + "•••" + domain.substr(last_dot)
+	return email.left(1) + "•••@" + masked_domain
 
 
 func _close() -> void:
@@ -172,6 +185,17 @@ func _on_manage_pressed() -> void:
 ## guest: ไม่ลบอะไร ความคืบหน้าและชื่อยังอยู่ในเครื่อง / บัญชี: ลบการจดจำในเครื่องและแจ้ง server (ดู PlayerSession.sign_out)
 func _on_sign_out_pressed() -> void:
 	_close()
+	if confirm_sign_out:
+		var action := _sign_out_btn.text
+		# วางหน้าต่างใน CanvasLayer ของเมนู ให้อยู่บนสุดเสมอ ไม่ว่าหน้านั้นจะมีชั้นอะไรซ้อนอยู่
+		var popup := MessagePopup.open_confirm(_layer, "%sตอนนี้?" % action, "ความคืบหน้าที่ยังไม่บันทึกจะหาย", action)
+		if popup == null:
+			return
+		var confirmed: bool = await popup.closed
+		if not confirmed or not is_inside_tree():
+			if is_inside_tree():
+				grab_focus()
+			return
 	PlayerSession.sign_out()
 	get_tree().change_scene_to_file(PlayerSession.AUTH_SCENE)
 
