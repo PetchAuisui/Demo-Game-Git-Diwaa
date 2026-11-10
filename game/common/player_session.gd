@@ -166,6 +166,20 @@ func _apply_display_name_status(data: Dictionary) -> void:
 	display_name_next_change_unix = SessionStore.parse_utc_unix(data.get("nextChangeAllowedAt"))
 
 
+## อีเมลของบัญชีที่ล็อกอินอยู่ ขอจาก server ทุกครั้ง ไม่เก็บไว้ในไฟล์หรือใน session (คืน "" ถ้าไม่ออนไลน์ / ขอไม่สำเร็จ)
+## ใช้แสดงให้เจ้าของดูเท่านั้น (เมนูบัญชีปิดบังไว้ก่อน) ห้าม print หรือส่งต่อไปที่อื่น
+func fetch_email() -> String:
+	if state != State.ONLINE:
+		return ""
+	var result := await _api.get_my_email(get_token())
+	if not result.ok:
+		return ""
+	var email: Variant = result.data.get("email")
+	if not (email is String) or (email as String).length() > 254 or not (email as String).contains("@"):
+		return ""
+	return email
+
+
 ## เปลี่ยนชื่อที่แสดง (ออนไลน์เท่านั้น) server เป็นผู้ตัดสินเรื่องชื่อซ้ำและกฎ 14 วัน
 ## สำเร็จ: อัปเดตชื่อในเครื่อง (และในไฟล์ถ้าจดจำไว้) แล้วส่ง session_changed
 func change_display_name(new_name: String) -> AuthApiResult:

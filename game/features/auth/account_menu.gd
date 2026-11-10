@@ -5,7 +5,8 @@ extends Button
 ## เปิดเมนูแล้ว: กดที่อื่นหรือกด Esc = ปิด
 ##
 ## ความปลอดภัย:
-## 1. ไม่แสดงอีเมล เกมไม่ได้รับอีเมลจาก server (ตั้งใจไว้ กันอีเมลหลุดตอนสตรีม / แคปจอ / ใช้เครื่องร่วมกัน)
+## 1. อีเมล: ขอจาก server ตอนเปิดเมนูครั้งแรก (ออนไลน์เท่านั้น) เก็บแค่ในตัวแปร ไม่บันทึกลงไฟล์
+##    แสดงแบบปิดบังเสมอ (ไม่บอกความยาว) กดรูปตาถึงเห็นเต็ม และปิดเมนูแล้วกลับไปปิดบังเอง กันหลุดตอนสตรีม / แคปจอ
 ## 2. ชื่อที่มาจาก server แสดงด้วย Label ธรรมดาเท่านั้น ไม่ตีความเป็นคำสั่งจัดรูปแบบ
 ## 3. ปุ่มนี้แค่พาไปหน้าอื่น ไม่ได้ตัดสินสิทธิ์อะไร (server ตรวจ token เองทุกครั้ง)
 
@@ -20,6 +21,14 @@ var _sub_label: Label
 var _manage_btn: Button
 var _sign_out_btn: Button
 var _guest_hint: Label
+var _email_row: HBoxContainer
+var _email_label: Label
+var _reveal_btn: Button
+
+# อีเมลของบัญชีไหน (user id) ถ้าเปลี่ยนบัญชีหรือออกจากระบบ ลืมทิ้งทันที
+var _email := ""
+var _email_owner := ""
+var _email_loading := false
 
 
 func _ready() -> void:
@@ -30,11 +39,15 @@ func _ready() -> void:
 	_manage_btn = get_node("%ManageBtn") as Button
 	_sign_out_btn = get_node("%SignOutBtn") as Button
 	_guest_hint = get_node("%GuestHint") as Label
+	_email_row = get_node("%EmailRow") as HBoxContainer
+	_email_label = get_node("%EmailLabel") as Label
+	_reveal_btn = get_node("%RevealEmailBtn") as Button
 	_apply_theme()
 
 	pressed.connect(_toggle)
 	_manage_btn.pressed.connect(_on_manage_pressed)
 	_sign_out_btn.pressed.connect(_on_sign_out_pressed)
+	_reveal_btn.toggled.connect(func(_on: bool) -> void: _show_email())
 	PlayerSession.session_changed.connect(_refresh)
 	_refresh()
 
@@ -53,18 +66,24 @@ func _refresh() -> void:
 	_name_label.text = display_name
 
 	var guest := PlayerSession.is_guest()
+	# ไม่แสดงชื่อผู้ใช้: เป็นครึ่งหนึ่งของข้อมูลเข้าสู่ระบบ ไม่ควรโผล่ตอนสตรีม / แคปจอ (ตัวตนดูจากชื่อในเกม + อีเมลแบบปิดบังแทน)
 	match PlayerSession.state:
 		PlayerSession.State.GUEST:
 			_sub_label.text = "เล่นแบบไม่ล็อกอิน"
 		PlayerSession.State.OFFLINE:
-			_sub_label.text = "@%s · ออฟไลน์" % PlayerSession.get_username()
+			_sub_label.text = "ออฟไลน์"
 		_:
-			_sub_label.text = "@%s" % PlayerSession.get_username()
+			_sub_label.text = ""
+	_sub_label.visible = not _sub_label.text.is_empty()
 
 	# หน้าจัดการบัญชีต้องคุยกับ server จึงใช้ได้เฉพาะตอนออนไลน์
 	_manage_btn.visible = PlayerSession.state == PlayerSession.State.ONLINE
 	_sign_out_btn.text = "ออกจากโหมดไม่ล็อกอิน" if guest else "ออกจากระบบ"
 	_guest_hint.visible = guest
+
+	if PlayerSession.state != PlayerSession.State.ONLINE or _email_owner != PlayerSession.get_user_id():
+		_email = ""
+	_show_email()
 
 
 func _toggle() -> void:
@@ -87,10 +106,46 @@ func _open() -> void:
 		_manage_btn.grab_focus()
 	else:
 		_sign_out_btn.grab_focus()
+	if _email.is_empty() and PlayerSession.state == PlayerSession.State.ONLINE:
+		_load_email()
+
+
+func _load_email() -> void:
+	if _email_loading:
+		return
+	_email_loading = true
+	var owner_id := PlayerSession.get_user_id()
+	var email := await PlayerSession.fetch_email()
+	_email_loading = false
+	# ระหว่างรอ ออกจากระบบหรือเปลี่ยนบัญชีไปแล้ว: ทิ้งคำตอบนี้
+	if not is_inside_tree() or PlayerSession.state != PlayerSession.State.ONLINE or PlayerSession.get_user_id() != owner_id:
+		return
+	_email = email
+	_email_owner = owner_id
+	_show_email()
+
+
+## แสดงอีเมล: ปิดบังเป็นค่าเริ่มต้น กดรูปตาเพื่อดูเต็ม (ไม่มีอีเมล = ซ่อนทั้งแถว)
+func _show_email() -> void:
+	_email_row.visible = not _email.is_empty()
+	var revealed := _reveal_btn.button_pressed
+	_email_label.text = _email if revealed else _mask_email(_email)
+	_reveal_btn.tooltip_text = "ซ่อนอีเมล" if revealed else "แสดงอีเมล"
+
+
+## p•••@gmail.com: เหลือตัวแรกกับโดเมน และใช้ ••• เท่ากันทุกอีเมล ไม่บอกว่าชื่อยาวกี่ตัว
+static func _mask_email(email: String) -> String:
+	var at := email.rfind("@")
+	if at <= 0:
+		return "•••"
+	return email.left(1) + "•••" + email.substr(at)
 
 
 func _close() -> void:
 	_panel.visible = false
+	# ปิดเมนูแล้วกลับไปปิดบังอีเมลเสมอ
+	_reveal_btn.set_pressed_no_signal(false)
+	_show_email()
 
 
 ## เมนูเปิดอยู่: กด Esc หรือกดนอกเมนู = ปิดเมนู (และไม่ให้คลิกนั้นไปกดปุ่มข้างหลังโดยไม่ตั้งใจ)
@@ -152,6 +207,9 @@ func _apply_theme() -> void:
 	_name_label.add_theme_color_override("font_color", AuthThemeTokens.TEXT_PRIMARY)
 	_sub_label.add_theme_color_override("font_color", AuthThemeTokens.TEXT_MUTED)
 	_guest_hint.add_theme_color_override("font_color", AuthThemeTokens.TEXT_MUTED)
+	_email_label.add_theme_color_override("font_color", AuthThemeTokens.TEXT_MUTED)
+	for icon_color in ["icon_normal_color", "icon_hover_color", "icon_pressed_color", "icon_hover_pressed_color", "icon_focus_color"]:
+		_reveal_btn.add_theme_color_override(icon_color, AuthThemeTokens.TEXT_MUTED)
 
 	# ปุ่มหลัก (จัดการบัญชี) สีทอง / ปุ่มรอง (ออกจากระบบ) สีอ่อน
 	_style_button(_manage_btn, AuthThemeTokens.BUTTON_BG, AuthThemeTokens.BUTTON_HOVER_BG, AuthThemeTokens.BUTTON_PRESSED_BG)

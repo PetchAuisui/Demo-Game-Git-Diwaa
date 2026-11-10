@@ -82,6 +82,13 @@ func get_display_name_status(token: String) -> AuthApiResult:
 	return await _send(HTTPClient.METHOD_GET, AuthConfig.API_PREFIX + "/me/display-name", null, token, AuthConfig.REQUEST_TIMEOUT_SEC)
 
 
+## อีเมลของเจ้าของ token (ต้องล็อกอิน) ใช้แสดงในเมนูบัญชีเท่านั้น
+func get_my_email(token: String) -> AuthApiResult:
+	if token.is_empty():
+		return AuthApiResult.failure(0, AuthApiResult.INVALID_CREDENTIALS)
+	return await _send(HTTPClient.METHOD_GET, AuthConfig.API_PREFIX + "/me/email", null, token, AuthConfig.REQUEST_TIMEOUT_SEC)
+
+
 func change_display_name(token: String, display_name: String) -> AuthApiResult:
 	if token.is_empty():
 		return AuthApiResult.failure(0, AuthApiResult.INVALID_CREDENTIALS)
