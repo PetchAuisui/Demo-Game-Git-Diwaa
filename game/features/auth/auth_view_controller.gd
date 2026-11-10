@@ -5,7 +5,8 @@ extends Control
 ## and sending login / register requests to the account server.
 
 ## ส่งออกเมื่อล็อกอินสำเร็จ: session คือคำตอบของ server {"profile": {...}, "token": String, "expiresAt": String}
-## (ใน 4.4 PlayerSession จะมารับ signal นี้ไปเก็บ session แล้วพาเข้าเกม)
+## สคริปต์นี้ติดอยู่ที่ root (AuthView) ใครอยากรู้ว่าล็อกอินสำเร็จ ต่อ signal นี้จาก root ได้เลย
+## (ปกติไม่ต้องต่อ: _on_login_succeeded ส่งต่อให้ PlayerSession แล้วพาเข้าหน้าเริ่มให้เอง หรือฟัง PlayerSession.session_changed แทน)
 signal login_succeeded(session: Dictionary, remember_me: bool)
 
 const EYE_ICON := preload("res://assets/icons/eye.svg")
