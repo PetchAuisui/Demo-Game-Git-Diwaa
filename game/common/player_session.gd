@@ -29,6 +29,7 @@ const RESTORE_NONE := "none"  # ไม่มี session ที่จดจำไ
 const RESTORE_OK := "restored"  # ล็อกอินอัตโนมัติสำเร็จ
 const RESTORE_NEED_LOGIN := "need_login"  # session หมดอายุหรือถูกยกเลิก ต้องล็อกอินใหม่
 const RESTORE_NETWORK_FAILED := "network_failed"  # ติดต่อ server ไม่ได้ (session ในเครื่องยังเก็บไว้ ใช้กับโหมดออฟไลน์)
+const RESTORE_RATE_LIMITED := "rate_limited"  # ลองบ่อยเกินไป ต้องรอ (วินาทีที่ต้องรออยู่ใน last_retry_after_sec) session ในเครื่องยังเก็บไว้
 
 var state: State = State.SIGNED_OUT
 var _session: Dictionary = {}
@@ -36,6 +37,8 @@ var _remembered := false
 var _api: AuthApiClient
 ## username ล่าสุดที่เคยล็อกอินในเครื่องนี้ ใช้เติมช่องให้ตอนต้องล็อกอินใหม่ (ไม่ใช่ความลับในเครื่องตัวเอง)
 var last_username := ""
+## วินาทีที่ต้องรอ เมื่อ restore_saved_session() คืนค่า RESTORE_RATE_LIMITED
+var last_retry_after_sec := 0
 ## เวลา (unix) ที่เปลี่ยนชื่อที่แสดงได้อีกครั้ง 0 = ยังไม่รู้ ใช้แค่บอกผู้เล่น server เป็นผู้ตัดสินจริง
 var display_name_next_change_unix := 0
 ## ตอนนี้เปลี่ยนชื่อได้อีกกี่ครั้ง (-1 = ยังไม่รู้) ใช้แค่บอกผู้เล่น server เป็นผู้ตัดสินจริง
@@ -287,7 +290,12 @@ func restore_saved_session() -> String:
 		SessionStore.clear()
 		return RESTORE_NEED_LOGIN
 
-	# เน็ตหลุด / server ล่ม / ถูกจำกัดจำนวนครั้ง: เก็บ session ในเครื่องไว้ก่อน ยังไม่ลบ
+	if result.code == AuthApiResult.RATE_LIMITED:
+		# server ยังอยู่ แค่ต้องรอ: เก็บ session ในเครื่องไว้ ครบเวลาแล้วลองใหม่ได้
+		last_retry_after_sec = result.retry_after_sec
+		return RESTORE_RATE_LIMITED
+
+	# เน็ตหลุด / server ล่ม: เก็บ session ในเครื่องไว้ก่อน ยังไม่ลบ
 	return RESTORE_NETWORK_FAILED
 
 

@@ -83,6 +83,9 @@ var _leaderboard_choice := false
 # --- Server ---
 var _api: AuthApiClient
 var _busy := false
+# นับถอยหลังหลังโดนจำกัดจำนวนครั้ง (เวลาตาม Time.get_ticks_msec หน่วย ms / 0 = ไม่ได้นับ)
+var _cooldown_until_msec := 0
+var _cooldown_timer: Timer
 var _login_submit_text := ""
 var _register_submit_text := ""
 
@@ -90,6 +93,10 @@ var _register_submit_text := ""
 func _ready() -> void:
 	_api = AuthApiClient.new()
 	add_child(_api)
+	_cooldown_timer = Timer.new()
+	_cooldown_timer.wait_time = 1.0
+	_cooldown_timer.timeout.connect(_on_cooldown_tick)
+	add_child(_cooldown_timer)
 	_bind_nodes()
 	_login_submit_text = _login_submit_btn.text
 	_register_submit_text = _register_submit_btn.text
@@ -173,6 +180,20 @@ func _wire_events() -> void:
 
 	_register_submit_btn.pressed.connect(_on_register_submit)
 	_confirm_password_input.text_submitted.connect(func(_text: String) -> void: await _on_register_submit())
+
+	# กด Enter ในช่องที่ยังไม่ใช่ช่องสุดท้าย = ไปช่องถัดไป (ช่องสุดท้ายกด Enter = ส่งฟอร์ม)
+	_identifier_input.text_submitted.connect(func(_text: String) -> void: _login_password_input.grab_focus())
+	_username_input.text_submitted.connect(func(_text: String) -> void: _email_input.grab_focus())
+	_email_input.text_submitted.connect(func(_text: String) -> void: _register_password_input.grab_focus())
+	_register_password_input.text_submitted.connect(func(_text: String) -> void: _confirm_password_input.grab_focus())
+
+	# ให้กด Tab ไปถึงลิงก์ได้ทุกอัน (แล้วกด Enter / Space เพื่อกดลิงก์) คนที่ใช้แต่คีย์บอร์ดจะได้ไปได้ทุกทาง
+	var links: Array[LinkButton] = [
+		_go_register_link, _go_login_link, _retry_connection_btn, _offline_play_btn,
+		_go_guest_link, _change_guest_name_link, _guest_back_link,
+	]
+	for link in links:
+		link.focus_mode = Control.FOCUS_ALL
 
 
 func _on_login_tab_pressed() -> void:
@@ -358,7 +379,7 @@ func _apply_theme() -> void:
 
 
 func _on_login_submit() -> void:
-	if _busy:
+	if _busy or _cooldown_left_sec() > 0:
 		return
 	_reset_errors()
 
@@ -392,7 +413,7 @@ func _on_login_submit() -> void:
 
 
 func _on_register_submit() -> void:
-	if _busy or _consent_open:
+	if _busy or _consent_open or _cooldown_left_sec() > 0:
 		return
 	_reset_errors()
 
@@ -468,6 +489,7 @@ func _check_registration(username: String, email: String) -> bool:
 	_set_busy(true)
 	var result := await _api.check_registration(username, email)
 	_set_busy(false)
+	_note_rate_limit(result)
 	# ระหว่างรอ ผู้เล่นสลับไปหน้าอื่นแล้ว: ไม่เปิดหน้านโยบายขึ้นมาทับหน้าที่เขาเลือก
 	if not _register_form.visible:
 		return false
@@ -539,6 +561,7 @@ func _submit_login(identifier: String, password: String, remember_me: bool) -> v
 	_set_busy(true)
 	var result := await _api.login(identifier, password, remember_me)
 	_set_busy(false)
+	_note_rate_limit(result)
 
 	if result.ok:
 		_show_status(_login_status, "เข้าสู่ระบบสำเร็จ", true)
@@ -570,6 +593,7 @@ func _submit_register(username: String, email: String, password: String, leaderb
 		PrivacyPolicy.VERSION, leaderboard_opt_in
 	)
 	_set_busy(false)
+	_note_rate_limit(result)
 
 	if result.ok:
 		# สมัครสำเร็จ: ล้างฟอร์มสมัคร (กันคนใช้เครื่องต่อเห็นข้อมูล) แล้วพาไปหน้า login พร้อมเติม username ให้
@@ -613,7 +637,7 @@ func _apply_field_errors(errors: Array[Dictionary], targets: Dictionary) -> bool
 func _message_for_failure(result: AuthApiResult) -> String:
 	match result.code:
 		AuthApiResult.RATE_LIMITED:
-			return "ลองหลายครั้งเกินไป กรุณารอประมาณ %d วินาทีแล้วลองใหม่" % maxi(result.retry_after_sec, 1)
+			return "ลองหลายครั้งเกินไป กรุณารอจนปุ่มกดได้อีกครั้งแล้วลองใหม่"
 		AuthApiResult.NETWORK_UNAVAILABLE:
 			return "เชื่อมต่อ server ไม่ได้ กรุณาตรวจสอบอินเทอร์เน็ตแล้วลองใหม่"
 		AuthApiResult.IDENTIFIER_TAKEN:
@@ -630,28 +654,59 @@ func _show_status(label: Label, text: String, success: bool) -> void:
 	label.visible = true
 
 
-## ระหว่างรอ server: ปิดปุ่มทั้งหมด กันกดซ้ำ และกันสลับฟอร์มกลางทาง
 ## ระหว่างรอ server: ล็อกเฉพาะปุ่มที่ส่งคำขอไป server (ส่งได้ทีละคำขอ) ที่เหลือกดได้ตามปกติ
 ## เช่น server ไม่ตอบ ผู้เล่นยังสลับแท็บ หรือกด "เล่นโดยไม่ล็อกอิน" ได้ทันที ไม่ต้องรอจนหมดเวลา
 ## ถ้าผู้เล่นออกจากหน้านี้ไประหว่างรอ คำตอบที่มาทีหลังจะถูกทิ้ง (หน้านี้ถูกลบไปพร้อม AuthApiClient ของมัน)
 func _set_busy(busy: bool) -> void:
 	_busy = busy
-	var buttons: Array[BaseButton] = [
-		_login_submit_btn,
-		_register_submit_btn,
-		_retry_connection_btn,
-	]
+	_refresh_request_buttons()
+	if busy:
+		_login_submit_btn.text = "กำลังเข้าสู่ระบบ..."
+		_register_submit_btn.text = "กำลังสมัครสมาชิก..."
+
+
+## ปุ่มที่ส่งคำขอไป server: กดไม่ได้ระหว่างรอคำตอบ และระหว่างนับถอยหลังหลังโดนจำกัดจำนวนครั้ง
+func _refresh_request_buttons() -> void:
+	var wait_sec := _cooldown_left_sec()
+	var buttons: Array[BaseButton] = [_login_submit_btn, _register_submit_btn, _retry_connection_btn]
 	for btn in buttons:
-		btn.disabled = busy
-	_login_submit_btn.text = "กำลังเข้าสู่ระบบ..." if busy else _login_submit_text
-	_register_submit_btn.text = "กำลังสมัครสมาชิก..." if busy else _register_submit_text
+		btn.disabled = _busy or wait_sec > 0
+	if _busy:
+		return  # ข้อความบนปุ่มระหว่างรอ ตั้งใน _set_busy / _check_connection
+	if wait_sec > 0:
+		var wait_text := "ลองใหม่ได้ใน %d วินาที" % wait_sec
+		_login_submit_btn.text = wait_text
+		_register_submit_btn.text = wait_text
+	else:
+		_login_submit_btn.text = _login_submit_text
+		_register_submit_btn.text = _register_submit_text
+
+
+## โดนจำกัดจำนวนครั้ง (429): นับถอยหลังตามเวลาที่ server บอก (Retry-After) ระหว่างนั้นกดส่งคำขอไม่ได้
+## กันผู้เล่นกดซ้ำจนโดนนับเพิ่ม (ตัวตัดสินจริงยังเป็น server เสมอ)
+func _note_rate_limit(result: AuthApiResult) -> void:
+	if result.code != AuthApiResult.RATE_LIMITED:
+		return
+	_cooldown_until_msec = Time.get_ticks_msec() + maxi(result.retry_after_sec, 1) * 1000
+	_cooldown_timer.start()
+	_refresh_request_buttons()
+
+
+func _cooldown_left_sec() -> int:
+	return maxi(0, ceili((_cooldown_until_msec - Time.get_ticks_msec()) / 1000.0))
+
+
+func _on_cooldown_tick() -> void:
+	if _cooldown_left_sec() == 0:
+		_cooldown_timer.stop()
+	_refresh_request_buttons()
 
 
 ## เช็คว่าติดต่อ server ได้ไหม (ตอนเปิดหน้านี้ และตอนกด "ลองเชื่อมต่อใหม่")
 ## ติดต่อได้ → ลองล็อกอินอัตโนมัติต่อ / ติดต่อไม่ได้ → ขึ้นแถบแจ้งเตือนพร้อมปุ่มลองใหม่
 ## ผลของการเช็คนี้ใช้แค่ตัดสินว่าจะแสดงอะไรบนจอ ไม่ได้ใช้ตัดสินสิทธิ์ใดๆ
 func _check_connection() -> void:
-	if _busy:
+	if _busy or _cooldown_left_sec() > 0:
 		return
 	if PlayerSession.has_player():
 		get_tree().change_scene_to_file(PlayerSession.START_SCENE)
@@ -661,6 +716,7 @@ func _check_connection() -> void:
 	_login_submit_btn.text = "กำลังเชื่อมต่อ server..."
 	var result := await _api.health()
 	_set_busy(false)
+	_note_rate_limit(result)
 
 	if not result.ok:
 		_show_connection_problem(result)
@@ -683,7 +739,7 @@ func _place_connection_panel(before: Control) -> void:
 ## ข้อความสั้นบรรทัดเดียว (ไม่เอาข้อความจาก server มาแสดง)
 func _connection_message(result: AuthApiResult) -> String:
 	if result.code == AuthApiResult.RATE_LIMITED:
-		return "ลองบ่อยเกินไป รอประมาณ %d วินาที" % maxi(result.retry_after_sec, 1)
+		return "ลองบ่อยเกินไป รอสักครู่แล้วลองใหม่"
 	return "เชื่อมต่อ server ไม่ได้"
 
 
@@ -777,6 +833,12 @@ func _try_restore_session() -> void:
 	elif outcome == PlayerSession.RESTORE_NETWORK_FAILED:
 		# server หลุดไประหว่างเช็คกับต่ออายุ: ขึ้นแถบแจ้งเตือนเดียวกัน กดลองใหม่ได้
 		_show_connection_problem(AuthApiResult.failure(0, AuthApiResult.NETWORK_UNAVAILABLE))
+	elif outcome == PlayerSession.RESTORE_RATE_LIMITED:
+		# server ยังอยู่ แค่ลองบ่อยเกินไป: บอกตามจริง (ไม่ใช่ "เชื่อมต่อไม่ได้") และนับถอยหลังบนปุ่ม
+		var limited := AuthApiResult.failure(429, AuthApiResult.RATE_LIMITED)
+		limited.retry_after_sec = maxi(PlayerSession.last_retry_after_sec, 1)
+		_note_rate_limit(limited)
+		_show_connection_problem(limited)
 
 
 ## ล็อกอินสำเร็จ: ส่งต่อให้ PlayerSession เก็บ session แล้วพาเข้าหน้าแรกของเกม
