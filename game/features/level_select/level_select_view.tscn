@@ -23,6 +23,19 @@ variation_embolden = 0.5
 
 [sub_resource type="StyleBoxEmpty" id="Style_hint_panel"]
 
+[sub_resource type="StyleBoxFlat" id="Style_keycap"]
+content_margin_left = 4.0
+content_margin_top = 1.0
+content_margin_right = 4.0
+content_margin_bottom = 1.0
+bg_color = Color(0.08, 0.09, 0.13, 0.78)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 2
+border_color = Color(0.92, 0.94, 0.98, 0.92)
+anti_aliasing = false
+
 [sub_resource type="StyleBoxFlat" id="Style_navbar"]
 bg_color = Color(0.078, 0.063, 0.047, 1)
 border_width_bottom = 2
@@ -710,29 +723,219 @@ anchor_left = 1.0
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = -360.0
-offset_top = -158.0
-offset_right = -120.0
-offset_bottom = -110.0
+offset_left = -340.0
+offset_top = -178.0
+offset_right = -92.0
+offset_bottom = -84.0
 grow_horizontal = 0
 grow_vertical = 0
 mouse_filter = 2
 theme_override_styles/panel = SubResource("Style_hint_panel")
 
-[node name="HintLabel" type="Label" parent="MapNavHint"]
+[node name="HintGrid" type="GridContainer" parent="MapNavHint"]
 layout_mode = 2
 mouse_filter = 2
-theme_override_colors/font_color = Color(0.92, 0.95, 0.98, 0.95)
+theme_override_constants/h_separation = 10
+theme_override_constants/v_separation = 5
+columns = 2
+
+[node name="KeysRow1" type="HBoxContainer" parent="MapNavHint/HintGrid"]
+layout_mode = 2
+size_flags_horizontal = 3
+mouse_filter = 2
+theme_override_constants/separation = 5
+alignment = 2
+
+[node name="KeyW" type="Control" parent="MapNavHint/HintGrid/KeysRow1"]
+custom_minimum_size = Vector2(28, 28)
+layout_mode = 2
+mouse_filter = 2
+
+[node name="Cap" type="PanelContainer" parent="MapNavHint/HintGrid/KeysRow1/KeyW"]
+layout_mode = 0
+offset_right = 28.0
+offset_bottom = 28.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("Style_keycap")
+
+[node name="Label" type="Label" parent="MapNavHint/HintGrid/KeysRow1/KeyW/Cap"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.96, 0.97, 1, 0.98)
+theme_override_fonts/font = ExtResource("3_chakra_bold")
+theme_override_font_sizes/font_size = 14
+text = "W"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="KeyUp" type="Control" parent="MapNavHint/HintGrid/KeysRow1"]
+custom_minimum_size = Vector2(28, 28)
+layout_mode = 2
+mouse_filter = 2
+
+[node name="Cap" type="PanelContainer" parent="MapNavHint/HintGrid/KeysRow1/KeyUp"]
+layout_mode = 0
+offset_right = 28.0
+offset_bottom = 28.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("Style_keycap")
+
+[node name="Label" type="Label" parent="MapNavHint/HintGrid/KeysRow1/KeyUp/Cap"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.96, 0.97, 1, 0.98)
+theme_override_fonts/font = ExtResource("2_bungee")
+theme_override_font_sizes/font_size = 14
+text = "↑"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="DescRow1" type="Label" parent="MapNavHint/HintGrid"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.92, 0.95, 0.98, 0.92)
 theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.8)
+theme_override_colors/font_outline_color = Color(0.04, 0.06, 0.1, 0.85)
 theme_override_constants/shadow_offset_x = 1
 theme_override_constants/shadow_offset_y = 1
-theme_override_colors/font_outline_color = Color(0.04, 0.06, 0.1, 0.85)
 theme_override_constants/outline_size = 2
 theme_override_fonts/font = ExtResource("3_chakra_bold")
 theme_override_font_sizes/font_size = 14
-text = "ใช้ W / S หรือเลื่อนลูกกลิ้ง
-เพื่อสำรวจหอคอย"
+text = "เพื่อไปด่านถัดไป"
+vertical_alignment = 1
+
+[node name="KeysRow2" type="HBoxContainer" parent="MapNavHint/HintGrid"]
+layout_mode = 2
+size_flags_horizontal = 3
+mouse_filter = 2
+theme_override_constants/separation = 5
+alignment = 2
+
+[node name="KeyS" type="Control" parent="MapNavHint/HintGrid/KeysRow2"]
+custom_minimum_size = Vector2(28, 28)
+layout_mode = 2
+mouse_filter = 2
+
+[node name="Cap" type="PanelContainer" parent="MapNavHint/HintGrid/KeysRow2/KeyS"]
+layout_mode = 0
+offset_right = 28.0
+offset_bottom = 28.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("Style_keycap")
+
+[node name="Label" type="Label" parent="MapNavHint/HintGrid/KeysRow2/KeyS/Cap"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.96, 0.97, 1, 0.98)
+theme_override_fonts/font = ExtResource("3_chakra_bold")
+theme_override_font_sizes/font_size = 14
+text = "S"
 horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="KeyDown" type="Control" parent="MapNavHint/HintGrid/KeysRow2"]
+custom_minimum_size = Vector2(28, 28)
+layout_mode = 2
+mouse_filter = 2
+
+[node name="Cap" type="PanelContainer" parent="MapNavHint/HintGrid/KeysRow2/KeyDown"]
+layout_mode = 0
+offset_right = 28.0
+offset_bottom = 28.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("Style_keycap")
+
+[node name="Label" type="Label" parent="MapNavHint/HintGrid/KeysRow2/KeyDown/Cap"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.96, 0.97, 1, 0.98)
+theme_override_fonts/font = ExtResource("2_bungee")
+theme_override_font_sizes/font_size = 14
+text = "↓"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="DescRow2" type="Label" parent="MapNavHint/HintGrid"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.92, 0.95, 0.98, 0.92)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.8)
+theme_override_colors/font_outline_color = Color(0.04, 0.06, 0.1, 0.85)
+theme_override_constants/shadow_offset_x = 1
+theme_override_constants/shadow_offset_y = 1
+theme_override_constants/outline_size = 2
+theme_override_fonts/font = ExtResource("3_chakra_bold")
+theme_override_font_sizes/font_size = 14
+text = "เพื่อไปด่านก่อนหน้า"
+vertical_alignment = 1
+
+[node name="KeysRow3" type="HBoxContainer" parent="MapNavHint/HintGrid"]
+layout_mode = 2
+size_flags_horizontal = 3
+mouse_filter = 2
+theme_override_constants/separation = 5
+alignment = 2
+
+[node name="ScrollPrefix" type="Label" parent="MapNavHint/HintGrid/KeysRow3"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.92, 0.95, 0.98, 0.92)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.8)
+theme_override_colors/font_outline_color = Color(0.04, 0.06, 0.1, 0.85)
+theme_override_constants/shadow_offset_x = 1
+theme_override_constants/shadow_offset_y = 1
+theme_override_constants/outline_size = 2
+theme_override_fonts/font = ExtResource("3_chakra_bold")
+theme_override_font_sizes/font_size = 14
+text = "เลื่อน"
+vertical_alignment = 1
+
+[node name="KeyScrollUp" type="Control" parent="MapNavHint/HintGrid/KeysRow3"]
+custom_minimum_size = Vector2(38, 28)
+layout_mode = 2
+mouse_filter = 2
+
+[node name="Cap" type="PanelContainer" parent="MapNavHint/HintGrid/KeysRow3/KeyScrollUp"]
+layout_mode = 0
+offset_right = 38.0
+offset_bottom = 28.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("Style_keycap")
+
+[node name="Label" type="Label" parent="MapNavHint/HintGrid/KeysRow3/KeyScrollUp/Cap"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.96, 0.97, 1, 0.98)
+theme_override_fonts/font = ExtResource("3_chakra_bold")
+theme_override_font_sizes/font_size = 14
+text = "ขึ้น"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="KeyScrollDown" type="Control" parent="MapNavHint/HintGrid/KeysRow3"]
+custom_minimum_size = Vector2(38, 28)
+layout_mode = 2
+mouse_filter = 2
+
+[node name="Cap" type="PanelContainer" parent="MapNavHint/HintGrid/KeysRow3/KeyScrollDown"]
+layout_mode = 0
+offset_right = 38.0
+offset_bottom = 28.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("Style_keycap")
+
+[node name="Label" type="Label" parent="MapNavHint/HintGrid/KeysRow3/KeyScrollDown/Cap"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.96, 0.97, 1, 0.98)
+theme_override_fonts/font = ExtResource("3_chakra_bold")
+theme_override_font_sizes/font_size = 14
+text = "ลง"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="DescRow3" type="Label" parent="MapNavHint/HintGrid"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.92, 0.95, 0.98, 0.92)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.8)
+theme_override_colors/font_outline_color = Color(0.04, 0.06, 0.1, 0.85)
+theme_override_constants/shadow_offset_x = 1
+theme_override_constants/shadow_offset_y = 1
+theme_override_constants/outline_size = 2
+theme_override_fonts/font = ExtResource("3_chakra_bold")
+theme_override_font_sizes/font_size = 14
+text = "เพื่อสำรวจหอคอย"
 vertical_alignment = 1
 
 [node name="ActHeaderTab" type="PanelContainer" parent="."]

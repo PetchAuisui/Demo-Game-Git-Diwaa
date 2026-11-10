@@ -149,10 +149,22 @@ var _path_glow_timer: float = 0.0
 var _glow_redraw_accum: float = 0.0
 var _view_act_num: int = 1
 
+const NAV_HINT_KEY_TRAVEL_Y: float = 2.0
+const NAV_HINT_MIN_PRESS_TIME: float = 0.08
+const NAV_HINT_SCROLL_HOLD_TIME: float = 0.14
+const NAV_HINT_SPRING_SPEED: float = 16.0
+const NAV_HINT_TEXT_NORMAL := Color(0.96, 0.97, 1.0, 0.98)
+const NAV_HINT_TEXT_PRESSED := Color(1.0, 1.0, 1.0, 1.0)
+
+var _nav_hint_keys: Dictionary = {}
+var _keycap_style_normal: StyleBox = null
+var _keycap_style_pressed: StyleBox = null
+
 
 func _ready() -> void:
 	_load_resources()
 	_bind_nodes()
+	_setup_nav_hint_keys()
 	_wire_navbar()
 	_init_game_progression()
 	_spawn_tower_platforms()
@@ -274,6 +286,125 @@ func _process(delta: float) -> void:
 		_glow_redraw_accum = 0.0
 		if path_renderer:
 			path_renderer.queue_redraw()
+	_update_nav_hint_keys(delta)
+
+
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_WM_WINDOW_FOCUS_OUT or what == NOTIFICATION_APPLICATION_FOCUS_OUT:
+		_release_all_nav_hint_keys()
+
+
+func _setup_nav_hint_keys() -> void:
+	var hint_grid := get_node_or_null("MapNavHint/HintGrid")
+	if hint_grid == null:
+		return
+
+	var key_paths := {
+		&"w": "KeysRow1/KeyW",
+		&"up": "KeysRow1/KeyUp",
+		&"s": "KeysRow2/KeyS",
+		&"down": "KeysRow2/KeyDown",
+		&"scroll_up": "KeysRow3/KeyScrollUp",
+		&"scroll_down": "KeysRow3/KeyScrollDown",
+	}
+
+	_nav_hint_keys.clear()
+	_keycap_style_normal = null
+	_keycap_style_pressed = null
+
+	for key_id: StringName in key_paths.keys():
+		var slot := hint_grid.get_node_or_null(key_paths[key_id]) as Control
+		if slot == null:
+			continue
+		var cap := slot.get_node_or_null("Cap") as PanelContainer
+		if cap == null:
+			continue
+		var lbl := cap.get_node_or_null("Label") as Label
+
+		if _keycap_style_normal == null:
+			var base_sb := cap.get_theme_stylebox("panel") as StyleBoxFlat
+			if base_sb != null:
+				_keycap_style_normal = base_sb
+				var pressed_sb := base_sb.duplicate() as StyleBoxFlat
+				pressed_sb.bg_color = Color(0.22, 0.27, 0.38, 0.92)
+				pressed_sb.border_color = Color(1.0, 1.0, 1.0, 1.0)
+				pressed_sb.border_width_bottom = 1
+				_keycap_style_pressed = pressed_sb
+
+		_nav_hint_keys[key_id] = {
+			"slot": slot,
+			"cap": cap,
+			"label": lbl,
+			"held": false,
+			"min_timer": 0.0,
+			"pulse_timer": 0.0,
+			"t": 0.0,
+		}
+
+
+func _set_nav_hint_key_down(key_id: StringName, pressed: bool) -> void:
+	if not _nav_hint_keys.has(key_id):
+		return
+	var entry: Dictionary = _nav_hint_keys[key_id]
+	if pressed:
+		entry["held"] = true
+		entry["min_timer"] = NAV_HINT_MIN_PRESS_TIME
+		entry["t"] = 1.0
+		_apply_nav_hint_key_visual(entry)
+	else:
+		entry["held"] = false
+
+
+func _pulse_nav_hint_scroll(key_id: StringName) -> void:
+	if not _nav_hint_keys.has(key_id):
+		return
+	var entry: Dictionary = _nav_hint_keys[key_id]
+	entry["pulse_timer"] = NAV_HINT_SCROLL_HOLD_TIME
+	entry["t"] = 1.0
+	_apply_nav_hint_key_visual(entry)
+
+
+func _release_all_nav_hint_keys() -> void:
+	for entry: Dictionary in _nav_hint_keys.values():
+		entry["held"] = false
+		entry["min_timer"] = 0.0
+		entry["pulse_timer"] = 0.0
+
+
+func _update_nav_hint_keys(delta: float) -> void:
+	for entry: Dictionary in _nav_hint_keys.values():
+		if float(entry["min_timer"]) > 0.0:
+			entry["min_timer"] = maxf(0.0, float(entry["min_timer"]) - delta)
+		if float(entry["pulse_timer"]) > 0.0:
+			entry["pulse_timer"] = maxf(0.0, float(entry["pulse_timer"]) - delta)
+
+		var target_down: bool = bool(entry["held"]) or float(entry["min_timer"]) > 0.0 or float(entry["pulse_timer"]) > 0.0
+		var prev_t: float = float(entry["t"])
+		var next_t: float = 1.0 if target_down else move_toward(prev_t, 0.0, delta * NAV_HINT_SPRING_SPEED)
+		if not is_equal_approx(next_t, prev_t):
+			entry["t"] = next_t
+			_apply_nav_hint_key_visual(entry)
+
+
+func _apply_nav_hint_key_visual(entry: Dictionary) -> void:
+	var slot := entry["slot"] as Control
+	var cap := entry["cap"] as PanelContainer
+	var lbl := entry["label"] as Label
+	if slot == null or cap == null:
+		return
+
+	var t: float = float(entry["t"])
+	var drop_px := float(roundi(NAV_HINT_KEY_TRAVEL_Y * t))
+	var base_w := slot.custom_minimum_size.x
+	var base_h := slot.custom_minimum_size.y
+	cap.position = Vector2(0.0, drop_px)
+	cap.size = Vector2(base_w, maxf(base_h - drop_px, 1.0))
+
+	var is_down := drop_px > 0.0
+	if _keycap_style_pressed != null and _keycap_style_normal != null:
+		cap.add_theme_stylebox_override("panel", _keycap_style_pressed if is_down else _keycap_style_normal)
+	if lbl != null:
+		lbl.add_theme_color_override("font_color", NAV_HINT_TEXT_PRESSED if is_down else NAV_HINT_TEXT_NORMAL)
 
 
 func _wire_navbar() -> void:
@@ -1691,52 +1822,69 @@ func _input(event: InputEvent) -> void:
 	if event is InputEventMouseButton and event.pressed:
 		var factor: float = event.factor if event.factor > 0.0 else 1.0
 		if event.button_index == MOUSE_BUTTON_WHEEL_UP:
+			_pulse_nav_hint_scroll(&"scroll_up")
 			get_viewport().set_input_as_handled()
 			_scroll_wheel_offset(-240.0 * factor)
 		elif event.button_index == MOUSE_BUTTON_WHEEL_DOWN:
+			_pulse_nav_hint_scroll(&"scroll_down")
 			get_viewport().set_input_as_handled()
 			_scroll_wheel_offset(240.0 * factor)
-	elif event is InputEventKey and event.pressed:
-		var is_nav_key: bool = (
-			event.keycode == KEY_UP or event.keycode == KEY_W or
-			event.keycode == KEY_DOWN or event.keycode == KEY_S
-		)
-		if not event.echo or is_nav_key:
-			if event.keycode == KEY_ESCAPE:
-				get_viewport().set_input_as_handled()
-				_on_back_pressed()
-			elif event.keycode == KEY_PAGEUP:
-				get_viewport().set_input_as_handled()
-				_scroll_to_y(0, true)
-			elif event.keycode == KEY_PAGEDOWN:
-				get_viewport().set_input_as_handled()
-				var bottom_y := 4450
-				if tower_content and scroll_chamber and scroll_chamber.size.y > 0:
-					bottom_y = maxi(0, int(tower_content.custom_minimum_size.y - scroll_chamber.size.y))
-				elif tower_content:
-					bottom_y = int(tower_content.custom_minimum_size.y)
-				_scroll_to_y(bottom_y, true)
-			elif event.keycode == KEY_UP or event.keycode == KEY_W:
-				get_viewport().set_input_as_handled()
-				_navigate_directional(Vector2.UP)
-			elif event.keycode == KEY_DOWN or event.keycode == KEY_S:
-				get_viewport().set_input_as_handled()
-				_navigate_directional(Vector2.DOWN)
-			elif event.keycode == KEY_LEFT or event.keycode == KEY_RIGHT:
-				get_viewport().set_input_as_handled()
-			elif event.keycode == KEY_ENTER or event.keycode == KEY_SPACE:
-				if not event.echo:
+	elif event is InputEventKey:
+		var key_ev := event as InputEventKey
+		if key_ev.keycode == KEY_W:
+			if not key_ev.echo:
+				_set_nav_hint_key_down(&"w", key_ev.pressed)
+		elif key_ev.keycode == KEY_UP:
+			if not key_ev.echo:
+				_set_nav_hint_key_down(&"up", key_ev.pressed)
+		elif key_ev.keycode == KEY_S:
+			if not key_ev.echo:
+				_set_nav_hint_key_down(&"s", key_ev.pressed)
+		elif key_ev.keycode == KEY_DOWN:
+			if not key_ev.echo:
+				_set_nav_hint_key_down(&"down", key_ev.pressed)
+
+		if key_ev.pressed:
+			var is_nav_key: bool = (
+				key_ev.keycode == KEY_UP or key_ev.keycode == KEY_W or
+				key_ev.keycode == KEY_DOWN or key_ev.keycode == KEY_S
+			)
+			if not key_ev.echo or is_nav_key:
+				if key_ev.keycode == KEY_ESCAPE:
 					get_viewport().set_input_as_handled()
-					_on_launch_stage_pressed()
-			elif event.keycode == KEY_1:
-				if not event.echo:
+					_on_back_pressed()
+				elif key_ev.keycode == KEY_PAGEUP:
 					get_viewport().set_input_as_handled()
-					_on_act_button_pressed(1)
-			elif event.keycode == KEY_2:
-				if not event.echo:
+					_scroll_to_y(0, true)
+				elif key_ev.keycode == KEY_PAGEDOWN:
 					get_viewport().set_input_as_handled()
-					_on_act_button_pressed(2)
-			elif event.keycode == KEY_3:
-				if not event.echo:
+					var bottom_y := 4450
+					if tower_content and scroll_chamber and scroll_chamber.size.y > 0:
+						bottom_y = maxi(0, int(tower_content.custom_minimum_size.y - scroll_chamber.size.y))
+					elif tower_content:
+						bottom_y = int(tower_content.custom_minimum_size.y)
+					_scroll_to_y(bottom_y, true)
+				elif key_ev.keycode == KEY_UP or key_ev.keycode == KEY_W:
 					get_viewport().set_input_as_handled()
-					_on_act_button_pressed(3)
+					_navigate_directional(Vector2.UP)
+				elif key_ev.keycode == KEY_DOWN or key_ev.keycode == KEY_S:
+					get_viewport().set_input_as_handled()
+					_navigate_directional(Vector2.DOWN)
+				elif key_ev.keycode == KEY_LEFT or key_ev.keycode == KEY_RIGHT:
+					get_viewport().set_input_as_handled()
+				elif key_ev.keycode == KEY_ENTER or key_ev.keycode == KEY_SPACE:
+					if not key_ev.echo:
+						get_viewport().set_input_as_handled()
+						_on_launch_stage_pressed()
+				elif key_ev.keycode == KEY_1:
+					if not key_ev.echo:
+						get_viewport().set_input_as_handled()
+						_on_act_button_pressed(1)
+				elif key_ev.keycode == KEY_2:
+					if not key_ev.echo:
+						get_viewport().set_input_as_handled()
+						_on_act_button_pressed(2)
+				elif key_ev.keycode == KEY_3:
+					if not key_ev.echo:
+						get_viewport().set_input_as_handled()
+						_on_act_button_pressed(3)
