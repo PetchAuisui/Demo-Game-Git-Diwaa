@@ -298,7 +298,8 @@ func _wire_navbar() -> void:
 	if btn_focus_current:
 		btn_focus_current.pressed.connect(_on_continue_pressed)
 		btn_focus_current.custom_minimum_size = Vector2(116, 44)
-		btn_focus_current.text = "ดำเนินต่อ →"
+		btn_focus_current.text = "เล่นต่อ →"
+		btn_focus_current.alignment = HORIZONTAL_ALIGNMENT_CENTER
 		btn_focus_current.add_theme_color_override("font_color", NAV_COLOR_ACTIVE)
 		btn_focus_current.add_theme_color_override("font_hover_color", NAV_COLOR_PRIMARY)
 		btn_focus_current.add_theme_color_override("font_pressed_color", NAV_COLOR_SECONDARY)
@@ -410,15 +411,15 @@ func _update_act_header_tab(act_num: int, animate: bool = true) -> void:
 	match act_num:
 		1:
 			badge_text = "ACT 1"
-			title_text = "การใช้งาน Git เบื้องต้น"
+			title_text = "การใช้งาน Git เบื้องต้น / หอคอยแห่งการฝึกตน"
 			desc_text = "15 ด่าน"
 		2:
 			badge_text = "ACT 2"
-			title_text = "การทำงานเป็นทีม / หอสมุดคลังเวทกลาง"
+			title_text = "การทำงานเป็นทีม Git Flow / หอสมุดคลังเวทกลาง"
 			desc_text = "5 ด่าน"
 		3:
 			badge_text = "ACT 3"
-			title_text = "การแก้ปัญหาในการใช้งาน Git / หอคอยแห่งการฝึกตน"
+			title_text = "การแก้ปัญหาในการใช้งาน Git"
 			desc_text = "20 ด่าน"
 
 	if act_badge:
@@ -851,7 +852,7 @@ func _setup_character_and_cat() -> void:
 
 		var tex_walk := load("res://assets/cutscene/characters/vel/vel_walk_right-Sheet.png") as Texture2D
 		if tex_walk:
-			for f in range(6):
+			for f in range(2):
 				var atlas := AtlasTexture.new()
 				atlas.atlas = tex_walk
 				atlas.region = Rect2(f * 48, 0, 48, 83)
@@ -863,6 +864,13 @@ func _setup_character_and_cat() -> void:
 		var tex_hold := load("res://assets/cutscene/characters/vel/vel_hold.png") as Texture2D
 		if tex_hold:
 			frames.add_frame("hold", tex_hold, 1.0)
+
+		frames.add_animation("back")
+		frames.set_animation_loop("back", true)
+		frames.set_animation_speed("back", 5.0)
+		var tex_back := load("res://assets/cutscene/characters/vel/vel_back.png") as Texture2D
+		if tex_back:
+			frames.add_frame("back", tex_back, 1.0)
 
 		frames.add_animation("stand_straight")
 		frames.set_animation_loop("stand_straight", true)
@@ -932,18 +940,20 @@ func _perform_direct_leap(to_idx: int) -> void:
 	var target_vel_pos := Vector2(target_stg["x"] - 24.0, target_stg["y"] - VEL_Y_OFFSET)
 	var start_vel_pos := vel_hero.position if vel_hero else Vector2(from_stg["x"] - 24.0, from_stg["y"] - VEL_Y_OFFSET)
 
+	var from_act: int = int(from_stg["act"])
 	var dx := target_vel_pos.x - start_vel_pos.x
 	var dy := target_vel_pos.y - start_vel_pos.y
 	var is_moving_right := dx >= 0.0
 
 	# เลือกแอนิเมชันให้เหมาะสมกับการพุ่งทะยาน/ดิ่งลง
 	if vel_anim:
-		vel_anim.flip_h = not is_moving_right
-		if dy > 300.0:
-			# ตกลงมาจากหอคอยชั้นบนลงมาชั้นล่างระยะไกล (เช่น 40 ลงมา 1): ทำท่า hold ชูมือขึ้นตอนตกลงมา
+		if dy > 300.0 or (from_act == 3 and dy > 200.0):
+			# ตกลงมาจากหอคอยชั้นบนหรือลงบันได Act 3: ทำท่า hold ชูมือขึ้นตอนตกลงมา
+			vel_anim.flip_h = false
 			vel_anim.play("hold")
 		else:
 			# กระโดดพุ่งไปข้างหน้าหรือทะยานขึ้นหอคอย
+			vel_anim.flip_h = not is_moving_right
 			vel_anim.play("walk")
 
 	_play_sfx(sfx_jump)
@@ -1079,12 +1089,17 @@ func _perform_jump_step(next_idx: int) -> void:
 
 	var from_stg_id: int = TOWER_STAGES[from_idx]["id"]
 	var to_stg_id: int = TOWER_STAGES[to_idx]["id"]
+	var from_act: int = int(TOWER_STAGES[from_idx]["act"])
+	var to_act: int = int(TOWER_STAGES[to_idx]["act"])
 	var is_between_15_and_16 := (from_stg_id == 15 and to_stg_id == 16) or (from_stg_id == 16 and to_stg_id == 15)
 
 	var target_stg: Dictionary = TOWER_STAGES[to_idx]
 	var target_vel_pos := Vector2(target_stg["x"] - 24.0, target_stg["y"] - VEL_Y_OFFSET)
 	var start_vel_pos := vel_hero.position if vel_hero else target_vel_pos
 	var is_moving_right := target_vel_pos.x >= start_vel_pos.x
+	var is_act3_ladder := (from_act == 3 and to_act == 3 and absf(target_vel_pos.x - start_vel_pos.x) < 2.0)
+	var is_act3_ladder_up := is_act3_ladder and to_stg_id > from_stg_id
+	var is_act3_ladder_down := is_act3_ladder and to_stg_id < from_stg_id
 
 	# เล่นแอนิเมชันตามเงื่อนไข
 	if vel_anim:
@@ -1096,6 +1111,14 @@ func _perform_jump_step(next_idx: int) -> void:
 			else:
 				# ตอนระหว่าง 15-16 ไต่ขึ้นจาก 15 สู่ 16 -> ให้ท่าตัวยืนตรงปกติ
 				vel_anim.play("stand_straight")
+		elif is_act3_ladder_up:
+			# ตอนปีนขึ้นบันไดใน Act 3 -> ใช้ท่าหันหลัง (vel_back)
+			vel_anim.flip_h = false
+			vel_anim.play("back")
+		elif is_act3_ladder_down:
+			# ตอนกระโดดลงจากบันไดใน Act 3 -> ใช้ท่า hold ชูมือขึ้นตอนตกลงมา
+			vel_anim.flip_h = false
+			vel_anim.play("hold")
 		else:
 			# เดิน/กระโดดทั่วไป
 			vel_anim.flip_h = not is_moving_right
@@ -1112,6 +1135,10 @@ func _perform_jump_step(next_idx: int) -> void:
 		jump_duration = 1.35
 		scroll_duration = 1.30
 		peak_height = 25.0 if to_stg_id == 15 else 45.0
+	elif is_act3_ladder:
+		jump_duration = 0.50 if has_more_steps else 0.58
+		scroll_duration = 0.52
+		peak_height = 25.0 if is_act3_ladder_down else 20.0
 	else:
 		jump_duration = 0.42 if has_more_steps else 0.50
 		scroll_duration = 0.48
@@ -1518,19 +1545,17 @@ func _on_draw_path() -> void:
 			var idx2: int = act2_indices[(k + 1) % act2_indices.size()]
 			draw_segment.call(idx1, idx2)
 
-	# เชื่อม Act 2 -> Act 3 (20 -> 21)
-	if stages.size() >= 21:
-		draw_segment.call(19, 20)
-
 	# วาดบันไดโกธิคสีเทาอ่อนฟ้าๆ 3 จุดเชื่อมระหว่างแถว Act 3 (Gothic Ladders)
 	if stages.size() >= 40:
 		_draw_gothic_ladder(1480.0, 840.0, 1000.0) # บันไดฝั่งขวา (25 -> 26)
 		_draw_gothic_ladder(280.0, 600.0, 760.0)   # บันไดฝั่งซ้าย (30 -> 31)
 		_draw_gothic_ladder(1480.0, 360.0, 520.0)  # บันไดฝั่งขวา (35 -> 36)
 
-	# วาดเส้นทาง Act 3: ยอดหอคอยแบบบันไดวนคดเคี้ยวสลับซ้ายขวา (21 -> 40)
+	# วาดเส้นทาง Act 3: ยอดหอคอยแบบบันไดวนคดเคี้ยวสลับซ้ายขวา (21 -> 40) โดยข้ามช่วงที่เป็นบันไดแนวตั้ง (25->26, 30->31, 35->36)
 	if stages.size() >= 40:
 		for k in range(20, 39):
+			if absf(stages[k]["x"] - stages[k + 1]["x"]) < 2.0:
+				continue
 			draw_segment.call(k, k + 1)
 
 
@@ -1656,31 +1681,13 @@ func _navigate_directional(dir: Vector2) -> void:
 	if base_idx < 0 or base_idx >= TOWER_STAGES.size():
 		return
 
-	var curr_stg: Dictionary = TOWER_STAGES[base_idx]
 	var target_idx := -1
-
 	if dir == Vector2.UP:
 		# ลูกศรขึ้น หรือ W: ก้าวขึ้นหอคอยไปด่านถัดไปทีละ 1 ด่านเสมอ
 		target_idx = base_idx + 1
 	elif dir == Vector2.DOWN:
 		# ลูกศรลง หรือ S: ถอยลงหอคอยไปด่านก่อนหน้าทีละ 1 ด่านเสมอ (ไม่ข้ามด่าน)
 		target_idx = base_idx - 1
-	elif dir == Vector2.RIGHT:
-		# ลูกศรขวา หรือ D: ก้าวไปข้างหน้าตามเส้นทางหรือแท่นทางขวา
-		if base_idx + 1 < TOWER_STAGES.size() and TOWER_STAGES[base_idx + 1]["x"] > curr_stg["x"]:
-			target_idx = base_idx + 1
-		elif base_idx - 1 >= 0 and TOWER_STAGES[base_idx - 1]["x"] > curr_stg["x"]:
-			target_idx = base_idx - 1
-		else:
-			target_idx = base_idx + 1
-	elif dir == Vector2.LEFT:
-		# ลูกศรซ้าย หรือ A: ถอยหลังตามเส้นทางหรือแท่นทางซ้าย
-		if base_idx - 1 >= 0 and TOWER_STAGES[base_idx - 1]["x"] < curr_stg["x"]:
-			target_idx = base_idx - 1
-		elif base_idx + 1 < TOWER_STAGES.size() and TOWER_STAGES[base_idx + 1]["x"] < curr_stg["x"]:
-			target_idx = base_idx + 1
-		else:
-			target_idx = base_idx - 1
 
 	if target_idx >= 0 and target_idx < TOWER_STAGES.size() and target_idx != base_idx:
 		_try_navigate_stage(target_idx)
@@ -1698,9 +1705,7 @@ func _input(event: InputEvent) -> void:
 	elif event is InputEventKey and event.pressed:
 		var is_nav_key: bool = (
 			event.keycode == KEY_UP or event.keycode == KEY_W or
-			event.keycode == KEY_DOWN or event.keycode == KEY_S or
-			event.keycode == KEY_LEFT or event.keycode == KEY_A or
-			event.keycode == KEY_RIGHT or event.keycode == KEY_D
+			event.keycode == KEY_DOWN or event.keycode == KEY_S
 		)
 		if not event.echo or is_nav_key:
 			if event.keycode == KEY_ESCAPE:
@@ -1708,22 +1713,23 @@ func _input(event: InputEvent) -> void:
 				_on_back_pressed()
 			elif event.keycode == KEY_PAGEUP:
 				get_viewport().set_input_as_handled()
-				_scroll_wheel_offset(-600.0)
+				_scroll_to_y(0, true)
 			elif event.keycode == KEY_PAGEDOWN:
 				get_viewport().set_input_as_handled()
-				_scroll_wheel_offset(600.0)
+				var bottom_y := 4450
+				if tower_content and scroll_chamber and scroll_chamber.size.y > 0:
+					bottom_y = maxi(0, int(tower_content.custom_minimum_size.y - scroll_chamber.size.y))
+				elif tower_content:
+					bottom_y = int(tower_content.custom_minimum_size.y)
+				_scroll_to_y(bottom_y, true)
 			elif event.keycode == KEY_UP or event.keycode == KEY_W:
 				get_viewport().set_input_as_handled()
 				_navigate_directional(Vector2.UP)
 			elif event.keycode == KEY_DOWN or event.keycode == KEY_S:
 				get_viewport().set_input_as_handled()
 				_navigate_directional(Vector2.DOWN)
-			elif event.keycode == KEY_LEFT or event.keycode == KEY_A:
+			elif event.keycode == KEY_LEFT or event.keycode == KEY_RIGHT:
 				get_viewport().set_input_as_handled()
-				_navigate_directional(Vector2.LEFT)
-			elif event.keycode == KEY_RIGHT or event.keycode == KEY_D:
-				get_viewport().set_input_as_handled()
-				_navigate_directional(Vector2.RIGHT)
 			elif event.keycode == KEY_ENTER or event.keycode == KEY_SPACE:
 				if not event.echo:
 					get_viewport().set_input_as_handled()

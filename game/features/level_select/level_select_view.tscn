@@ -15,6 +15,10 @@
 [ext_resource type="Script" path="res://features/level_select/twilight_sky_background.gd" id="13_sky"]
 [ext_resource type="Script" path="res://features/level_select/act_divider_walls.gd" id="14_act_dividers"]
 
+[sub_resource type="FontVariation" id="Font_ta_pixel_bold"]
+base_font = ExtResource("5_ta_pixel")
+variation_embolden = 0.5
+
 [sub_resource type="StyleBoxEmpty" id="Style_brand_btn"]
 
 [sub_resource type="StyleBoxEmpty" id="Style_hint_panel"]
@@ -274,11 +278,15 @@ theme_override_constants/margin_bottom = 10
 layout_mode = 2
 theme_override_constants/separation = 20
 
-[node name="BrandHBox" type="HBoxContainer" parent="LayoutVBox/TopNavbar/NavMargin/NavHBox"]
+[node name="LeftSlot" type="HBoxContainer" parent="LayoutVBox/TopNavbar/NavMargin/NavHBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="BrandHBox" type="HBoxContainer" parent="LayoutVBox/TopNavbar/NavMargin/NavHBox/LeftSlot"]
 layout_mode = 2
 theme_override_constants/separation = 16
 
-[node name="BrandBtn" type="Button" parent="LayoutVBox/TopNavbar/NavMargin/NavHBox/BrandHBox"]
+[node name="BrandBtn" type="Button" parent="LayoutVBox/TopNavbar/NavMargin/NavHBox/LeftSlot/BrandHBox"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(174, 48)
 layout_mode = 2
@@ -291,7 +299,7 @@ theme_override_styles/pressed = SubResource("Style_brand_btn")
 theme_override_styles/normal = SubResource("Style_brand_btn")
 flat = true
 
-[node name="BrandTitle" type="Label" parent="LayoutVBox/TopNavbar/NavMargin/NavHBox/BrandHBox/BrandBtn"]
+[node name="BrandTitle" type="Label" parent="LayoutVBox/TopNavbar/NavMargin/NavHBox/LeftSlot/BrandHBox/BrandBtn"]
 unique_name_in_owner = true
 layout_mode = 1
 anchors_preset = 4
@@ -311,7 +319,7 @@ theme_override_font_sizes/font_size = 26
 text = "GIT DI WAA"
 vertical_alignment = 1
 
-[node name="BrandHat" type="TextureRect" parent="LayoutVBox/TopNavbar/NavMargin/NavHBox/BrandHBox/BrandBtn"]
+[node name="BrandHat" type="TextureRect" parent="LayoutVBox/TopNavbar/NavMargin/NavHBox/LeftSlot/BrandHBox/BrandBtn"]
 unique_name_in_owner = true
 texture_filter = 1
 layout_mode = 1
@@ -325,13 +333,13 @@ texture = ExtResource("12_hat_purple")
 expand_mode = 1
 stretch_mode = 5
 
-[node name="Divider" type="ColorRect" parent="LayoutVBox/TopNavbar/NavMargin/NavHBox/BrandHBox"]
+[node name="Divider" type="ColorRect" parent="LayoutVBox/TopNavbar/NavMargin/NavHBox/LeftSlot/BrandHBox"]
 custom_minimum_size = Vector2(2, 28)
 layout_mode = 2
 size_flags_vertical = 4
 color = Color(0.239, 0.153, 0.098, 1)
 
-[node name="RoadmapTag" type="Label" parent="LayoutVBox/TopNavbar/NavMargin/NavHBox/BrandHBox"]
+[node name="RoadmapTag" type="Label" parent="LayoutVBox/TopNavbar/NavMargin/NavHBox/LeftSlot/BrandHBox"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.604, 0.467, 0.341, 1)
 theme_override_fonts/font = ExtResource("5_ta_pixel")
@@ -339,13 +347,10 @@ theme_override_font_sizes/font_size = 20
 text = "TOWER ROADMAP"
 vertical_alignment = 1
 
-[node name="SpacerLeft" type="Control" parent="LayoutVBox/TopNavbar/NavMargin/NavHBox"]
-layout_mode = 2
-size_flags_horizontal = 3
-
 [node name="ActTabsHBox" type="HBoxContainer" parent="LayoutVBox/TopNavbar/NavMargin/NavHBox"]
 layout_mode = 2
 theme_override_constants/separation = 16
+alignment = 1
 
 [node name="BtnAct1" type="Button" parent="LayoutVBox/TopNavbar/NavMargin/NavHBox/ActTabsHBox"]
 unique_name_in_owner = true
@@ -355,7 +360,7 @@ focus_mode = 0
 mouse_default_cursor_shape = 2
 theme_override_colors/font_color = Color(0.722, 0.604, 0.404, 1)
 theme_override_colors/font_hover_color = Color(0.894, 0.875, 0.835, 1)
-theme_override_fonts/font = ExtResource("5_ta_pixel")
+theme_override_fonts/font = SubResource("Font_ta_pixel_bold")
 theme_override_font_sizes/font_size = 16
 theme_override_styles/normal = SubResource("Style_tab_act_active")
 theme_override_styles/hover = SubResource("Style_tab_act_active")
@@ -372,7 +377,7 @@ focus_mode = 0
 mouse_default_cursor_shape = 2
 theme_override_colors/font_color = Color(0.604, 0.588, 0.667, 1)
 theme_override_colors/font_hover_color = Color(0.894, 0.875, 0.835, 1)
-theme_override_fonts/font = ExtResource("5_ta_pixel")
+theme_override_fonts/font = SubResource("Font_ta_pixel_bold")
 theme_override_font_sizes/font_size = 16
 theme_override_styles/normal = SubResource("Style_empty")
 theme_override_styles/hover = SubResource("Style_empty")
@@ -389,7 +394,7 @@ focus_mode = 0
 mouse_default_cursor_shape = 2
 theme_override_colors/font_color = Color(0.467, 0.459, 0.553, 1)
 theme_override_colors/font_hover_color = Color(0.467, 0.459, 0.553, 1)
-theme_override_fonts/font = ExtResource("5_ta_pixel")
+theme_override_fonts/font = SubResource("Font_ta_pixel_bold")
 theme_override_font_sizes/font_size = 16
 theme_override_styles/normal = SubResource("Style_empty")
 theme_override_styles/hover = SubResource("Style_empty")
@@ -409,8 +414,8 @@ theme_override_styles/panel = SubResource("Style_empty")
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_colors/font_color = Color(0.604, 0.588, 0.667, 1)
-theme_override_fonts/font = ExtResource("3_chakra_bold")
-theme_override_font_sizes/font_size = 13
+theme_override_fonts/font = SubResource("Font_ta_pixel_bold")
+theme_override_font_sizes/font_size = 16
 text = "ACT 1 · 0 / 15 LEVELS"
 horizontal_alignment = 1
 vertical_alignment = 1
@@ -434,17 +439,19 @@ theme_override_styles/hover = SubResource("Style_empty")
 theme_override_styles/pressed = SubResource("Style_empty")
 theme_override_styles/focus = SubResource("Style_empty")
 flat = true
-text = "ดำเนินต่อ →"
+text = "เล่นต่อ →"
+alignment = 1
 
-[node name="SpacerRight" type="Control" parent="LayoutVBox/TopNavbar/NavMargin/NavHBox"]
+[node name="RightSlot" type="HBoxContainer" parent="LayoutVBox/TopNavbar/NavMargin/NavHBox"]
 layout_mode = 2
 size_flags_horizontal = 3
+alignment = 2
 
-[node name="RightControls" type="HBoxContainer" parent="LayoutVBox/TopNavbar/NavMargin/NavHBox"]
+[node name="RightControls" type="HBoxContainer" parent="LayoutVBox/TopNavbar/NavMargin/NavHBox/RightSlot"]
 layout_mode = 2
 theme_override_constants/separation = 14
 
-[node name="BtnSound" type="Button" parent="LayoutVBox/TopNavbar/NavMargin/NavHBox/RightControls"]
+[node name="BtnSound" type="Button" parent="LayoutVBox/TopNavbar/NavMargin/NavHBox/RightSlot/RightControls"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(46, 44)
 layout_mode = 2
@@ -457,7 +464,7 @@ theme_override_styles/hover = SubResource("Style_tab_act_hover")
 theme_override_styles/pressed = SubResource("Style_tab_act_pressed")
 text = "🔊"
 
-[node name="BtnBack" type="Button" parent="LayoutVBox/TopNavbar/NavMargin/NavHBox/RightControls"]
+[node name="BtnBack" type="Button" parent="LayoutVBox/TopNavbar/NavMargin/NavHBox/RightSlot/RightControls"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(118, 44)
 layout_mode = 2
@@ -770,7 +777,7 @@ layout_mode = 2
 theme_override_colors/font_color = Color(0.96, 0.91, 0.82, 1)
 theme_override_fonts/font = ExtResource("3_chakra_bold")
 theme_override_font_sizes/font_size = 16
-text = "THE SPIRAL STAIRWAY"
+text = "การใช้งาน Git เบื้องต้น / หอคอยแห่งการฝึกตน"
 vertical_alignment = 1
 
 [node name="ActDesc" type="Label" parent="ActHeaderTab/HBox"]
@@ -779,6 +786,6 @@ layout_mode = 2
 theme_override_colors/font_color = Color(0.76, 0.70, 0.60, 1)
 theme_override_fonts/font = ExtResource("4_chakra_reg")
 theme_override_font_sizes/font_size = 14
-text = "• บันไดวนไต่หอคอยแห่งการฝึกตน (ด่าน 01–15)"
+text = "15 ด่าน"
 vertical_alignment = 1
 
