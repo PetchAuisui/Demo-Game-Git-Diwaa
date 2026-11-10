@@ -236,10 +236,22 @@ internal static class Program
 
         runner.Run("ValidateRegister_DisplayName_Cases", static () =>
         {
-            AssertFieldError(
-                AccountInputValidator.ValidateRegister(Valid with { DisplayName = "   " }),
-                AccountFields.DisplayName,
-                FieldErrorReason.Required);
+            // ไม่ใส่ชื่อที่แสดงได้ (server ตั้งให้)
+            AssertValid(AccountInputValidator.ValidateRegister(Valid with { DisplayName = "   " }));
+            AssertValid(AccountInputValidator.ValidateRegister(Valid with { DisplayName = null }));
+
+            // ชื่อรูปแบบที่ระบบสงวนไว้
+            foreach (var reserved in new[] { "player-12", "PLAYER-7", "Ｐｌａｙｅｒ-５", " player-1 " })
+            {
+                AssertFieldError(
+                    AccountInputValidator.ValidateRegister(Valid with { DisplayName = reserved }),
+                    AccountFields.DisplayName,
+                    FieldErrorReason.Reserved);
+            }
+
+            AssertValid(AccountInputValidator.ValidateRegister(Valid with { DisplayName = "player" }));
+            AssertValid(AccountInputValidator.ValidateRegister(Valid with { DisplayName = "player-" }));
+            AssertValid(AccountInputValidator.ValidateRegister(Valid with { DisplayName = "player-one" }));
 
             AssertFieldError(
                 AccountInputValidator.ValidateRegister(Valid with { DisplayName = new string('ก', 51) }),
@@ -287,12 +299,12 @@ internal static class Program
             AssertValid(AccountInputValidator.ValidateRegister(Valid with { Password = " abc12345 " }));
         });
 
-        runner.Run("ValidateRegister_AllEmpty_ReturnsFourRequiredErrors", static () =>
+        runner.Run("ValidateRegister_AllEmpty_ReturnsThreeRequiredErrors", static () =>
         {
+            // ชื่อที่แสดงไม่บังคับแล้ว (server ตั้งให้) จึงเหลือ 3 ช่องที่บังคับ
             var errors = AccountInputValidator.ValidateRegister(new RegisterRequest("", "", "", ""));
-            Assert.Equal(4, errors.Count);
+            Assert.Equal(3, errors.Count);
             AssertFieldError(errors, AccountFields.Username, FieldErrorReason.Required);
-            AssertFieldError(errors, AccountFields.DisplayName, FieldErrorReason.Required);
             AssertFieldError(errors, AccountFields.Email, FieldErrorReason.Required);
             AssertFieldError(errors, AccountFields.Password, FieldErrorReason.Required);
         });

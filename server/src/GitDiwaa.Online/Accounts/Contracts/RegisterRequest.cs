@@ -4,7 +4,7 @@ namespace GitDiwaa.Online.Accounts.Contracts;
 
 public sealed record RegisterRequest(
     string Username,
-    string DisplayName,
+    string? DisplayName,
     string Email,
     string Password,
     string? PolicyVersion = null,

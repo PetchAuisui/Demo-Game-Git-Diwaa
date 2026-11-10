@@ -1,3 +1,4 @@
+using System.Globalization;
 using GitDiwaa.Online.Accounts;
 using GitDiwaa.Online.Accounts.Contracts;
 using GitDiwaa.Server.Persistence;
@@ -15,6 +16,9 @@ public sealed class AccountService
     private readonly TimeProvider _timeProvider;
     private readonly AccountOptions _options;
     private readonly IConsentRepository _consentRepository;
+
+    // ลองออกชื่อ player-<เลข> ได้กี่ครั้งถ้าบังเอิญชน (ปกติไม่ชน เพราะผู้เล่นตั้งชื่อรูปแบบนี้เองไม่ได้)
+    private const int MaxGeneratedNameAttempts = 5;
 
     public AccountService(
         IUserRepository userRepository,
@@ -48,30 +52,45 @@ public sealed class AccountService
         string normalizedUsername = AccountNormalizer.NormalizeUsername(request.Username);
         string trimmedEmail = request.Email.Trim();
         string normalizedEmail = AccountNormalizer.NormalizeEmail(request.Email);
-        string trimmedDisplayName = request.DisplayName.Trim();
-        string displayNameKey = AccountNormalizer.NormalizeDisplayNameKey(request.DisplayName);
+        bool generateDisplayName = string.IsNullOrWhiteSpace(request.DisplayName);
 
         string passwordHash = _passwordHasher.Hash(request.Password);
         DateTimeOffset now = _timeProvider.GetUtcNow();
 
-        var user = new UserRecord(
-            Id: Guid.NewGuid(),
-            Username: normalizedUsername,
-            Email: trimmedEmail,
-            EmailNormalized: normalizedEmail,
-            DisplayName: trimmedDisplayName,
-            DisplayNameKey: displayNameKey,
-            PasswordHash: passwordHash,
-            EmailVerifiedAt: null,
-            FailedLoginCount: 0,
-            LockoutUntil: null,
-            Status: UserStatus.Active,
-            CreatedAt: now,
-            UpdatedAt: now,
-            LastLoginAt: null,
-            LeaderboardOptIn: request.LeaderboardOptIn);
+        UserRecord user;
+        UserAddResult addResult;
+        int attempt = 0;
+        do
+        {
+            // ไม่ได้ตั้งชื่อ: ใช้ player-<เลขลำดับ> ถ้าบังเอิญชน (เช่น ข้อมูลเก่า) ข้ามไปเลขถัดไป
+            string displayName = generateDisplayName
+                ? AccountRules.GeneratedDisplayNamePrefix +
+                  (await _userRepository.NextPlayerNumberAsync(ct)).ToString(CultureInfo.InvariantCulture)
+                : request.DisplayName!.Trim();
 
-        var addResult = await _userRepository.TryAddAsync(user, ct);
+            user = new UserRecord(
+                Id: Guid.NewGuid(),
+                Username: normalizedUsername,
+                Email: trimmedEmail,
+                EmailNormalized: normalizedEmail,
+                DisplayName: displayName,
+                DisplayNameKey: AccountNormalizer.NormalizeDisplayNameKey(displayName),
+                PasswordHash: passwordHash,
+                EmailVerifiedAt: null,
+                FailedLoginCount: 0,
+                LockoutUntil: null,
+                Status: UserStatus.Active,
+                CreatedAt: now,
+                UpdatedAt: now,
+                LastLoginAt: null,
+                LeaderboardOptIn: request.LeaderboardOptIn,
+                DisplayNameChangeCredits: AccountRules.InitialDisplayNameChanges);
+
+            addResult = await _userRepository.TryAddAsync(user, ct);
+            attempt++;
+        }
+        while (generateDisplayName && addResult == UserAddResult.DisplayNameTaken && attempt < MaxGeneratedNameAttempts);
+
         if (addResult == UserAddResult.Added)
         {
             // บันทึกการตัดสินใจตอนสมัครเสมอ ทั้งยินยอมและไม่ยินยอม
@@ -351,18 +370,30 @@ public sealed class AccountService
         };
     }
 
-    private ChangeDisplayNameResponse ToChangeResponse(UserRecord user, DateTimeOffset now)
+    /// <summary>
+    /// สถานะชื่อที่แสดงตอนนี้ (ชื่อ, เปลี่ยนได้อีกกี่ครั้ง, เปลี่ยนได้อีกเมื่อไหร่) สำหรับหน้าบัญชี
+    /// </summary>
+    public async Task<AccountResult<ChangeDisplayNameResponse>> GetDisplayNameStatusAsync(
+        Guid userId,
+        CancellationToken ct = default)
     {
-        DateTimeOffset nextChangeAllowedAt = user.DisplayNameChangedAt is { } lastChange
-            ? lastChange.Add(_options.DisplayNameChangeCooldown)
-            : now;
-        if (nextChangeAllowedAt < now)
+        var user = await _userRepository.FindByIdAsync(userId, ct);
+        if (user is null || user.Status != UserStatus.Active)
         {
-            nextChangeAllowedAt = now;
+            return AccountResult<ChangeDisplayNameResponse>.Failure(AuthErrorCode.InvalidCredentials);
         }
 
+        return AccountResult<ChangeDisplayNameResponse>.Success(ToChangeResponse(user, _timeProvider.GetUtcNow()));
+    }
+
+    private ChangeDisplayNameResponse ToChangeResponse(UserRecord user, DateTimeOffset now)
+    {
+        TimeSpan cooldown = _options.DisplayNameChangeCooldown;
         var profile = new PlayerProfile(user.Id, user.Username, user.DisplayName);
-        return new ChangeDisplayNameResponse(profile, nextChangeAllowedAt);
+        return new ChangeDisplayNameResponse(
+            profile,
+            user.NextDisplayNameChangeAt(now, cooldown),
+            user.AvailableDisplayNameChanges(now, cooldown));
     }
 
     public async Task<AccountResult<LeaderboardConsentResponse>> GetLeaderboardConsentAsync(

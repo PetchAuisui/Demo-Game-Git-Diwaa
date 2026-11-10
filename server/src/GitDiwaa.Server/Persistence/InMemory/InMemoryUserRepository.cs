@@ -7,6 +7,10 @@ public sealed class InMemoryUserRepository : IUserRepository
     private readonly Dictionary<string, UserRecord> _usersByUsername = new(StringComparer.Ordinal);
     private readonly Dictionary<string, UserRecord> _usersByEmail = new(StringComparer.Ordinal);
     private readonly Dictionary<string, UserRecord> _usersByDisplayName = new(StringComparer.Ordinal);
+    private long _lastPlayerNumber = GitDiwaa.Online.Accounts.AccountRules.FirstGeneratedPlayerNumber - 1;
+
+    public Task<long> NextPlayerNumberAsync(CancellationToken ct = default) =>
+        Task.FromResult(Interlocked.Increment(ref _lastPlayerNumber));
 
     public Task<UserRecord?> FindByIdAsync(Guid id, CancellationToken ct = default)
     {
@@ -91,6 +95,7 @@ public sealed class InMemoryUserRepository : IUserRepository
                 DisplayName = existing.DisplayName,
                 DisplayNameKey = existing.DisplayNameKey,
                 DisplayNameChangedAt = existing.DisplayNameChangedAt,
+                DisplayNameChangeCredits = existing.DisplayNameChangeCredits,
                 LeaderboardOptIn = existing.LeaderboardOptIn
             };
 
@@ -140,7 +145,8 @@ public sealed class InMemoryUserRepository : IUserRepository
                 return Task.FromResult(new DisplayNameChangeOutcome(DisplayNameChangeResult.UserNotFound, null));
             }
 
-            if (existing.DisplayNameChangedAt is { } lastChange && lastChange.Add(cooldown) > now)
+            int available = existing.AvailableDisplayNameChanges(now, cooldown);
+            if (available <= 0)
             {
                 return Task.FromResult(new DisplayNameChangeOutcome(DisplayNameChangeResult.CooldownActive, existing));
             }
@@ -156,6 +162,7 @@ public sealed class InMemoryUserRepository : IUserRepository
                 DisplayName = displayName,
                 DisplayNameKey = displayNameKey,
                 DisplayNameChangedAt = now,
+                DisplayNameChangeCredits = available - 1,
                 UpdatedAt = now
             };
 

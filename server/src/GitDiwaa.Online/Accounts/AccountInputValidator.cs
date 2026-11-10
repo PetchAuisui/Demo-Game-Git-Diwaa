@@ -20,7 +20,9 @@ public static partial class AccountInputValidator
             errors.Add(usernameError);
         }
 
-        if (ValidateDisplayName(request.DisplayName) is { } displayNameError)
+        // ไม่ใส่ชื่อที่แสดงตอนสมัครได้: server จะตั้งให้เป็น player-<เลขลำดับ>
+        if (!string.IsNullOrWhiteSpace(request.DisplayName) &&
+            ValidateDisplayName(request.DisplayName) is { } displayNameError)
         {
             errors.Add(displayNameError);
         }
@@ -224,6 +226,11 @@ public static partial class AccountInputValidator
             {
                 return new FieldError(AccountFields.DisplayName, FieldErrorReason.InvalidCharacters);
             }
+        }
+
+        if (AccountRules.IsReservedDisplayName(trimmed))
+        {
+            return new FieldError(AccountFields.DisplayName, FieldErrorReason.Reserved);
         }
 
         return null;

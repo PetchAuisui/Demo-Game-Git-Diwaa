@@ -76,6 +76,25 @@ public static class AccountEndpoints
             return Results.Json(session.Profile, statusCode: StatusCodes.Status200OK);
         }).AddEndpointFilter<RequireSessionFilter>();
 
+        // สถานะชื่อที่แสดง (เปลี่ยนได้อีกกี่ครั้ง / เมื่อไหร่) ให้หน้าบัญชีแสดงก่อนผู้เล่นกดเปลี่ยน
+        group.MapGet("/me/display-name", async (
+            HttpContext httpContext,
+            AccountService accountService,
+            CancellationToken ct) =>
+        {
+            httpContext.Response.Headers.CacheControl = "no-store";
+
+            var session = (AuthenticatedSession)httpContext.Items[RequireSessionFilter.SessionItemKey]!;
+            var result = await accountService.GetDisplayNameStatusAsync(session.Profile.Id, ct);
+            if (result.Succeeded && result.Value is not null)
+            {
+                return Results.Json(result.Value, statusCode: StatusCodes.Status200OK);
+            }
+
+            var apiError = new ApiError(result.Error ?? AuthErrorCode.Unknown, result.FieldErrors);
+            return Results.Json(apiError, statusCode: StatusCodes.Status401Unauthorized);
+        }).AddEndpointFilter<RequireSessionFilter>();
+
         // เปลี่ยนชื่อที่แสดง: ต้อง login (token ใน Authorization header) และใช้ rate limit แบบเดียวกับ login
         // ผู้ใช้ที่จะถูกเปลี่ยนชื่อมาจาก session เท่านั้น เปลี่ยนชื่อของคนอื่นไม่ได้
         group.MapPatch("/me/display-name", async (

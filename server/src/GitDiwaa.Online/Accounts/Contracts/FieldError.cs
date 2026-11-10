@@ -8,7 +8,8 @@ public enum FieldErrorReason
     TooLong,
     InvalidCharacters,
     InvalidFormat,
-    Taken
+    Taken,
+    Reserved
 }
 
 public sealed record FieldError(

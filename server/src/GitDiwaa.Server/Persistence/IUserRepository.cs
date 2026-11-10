@@ -9,6 +9,11 @@ public interface IUserRepository
     Task UpdateAsync(UserRecord user, CancellationToken ct = default);
 
     /// <summary>
+    /// เลขลำดับถัดไปสำหรับตั้งชื่อ player-&lt;เลข&gt; ให้ผู้เล่นที่ไม่ได้ตั้งชื่อตอนสมัคร (เพิ่มทีละ 1 ไม่ซ้ำ)
+    /// </summary>
+    Task<long> NextPlayerNumberAsync(CancellationToken ct = default);
+
+    /// <summary>
     /// เปลี่ยนชื่อที่แสดงแบบ atomic: เช็คระยะเวลา เช็คชื่อซ้ำ ปล่อยชื่อเก่า และจองชื่อใหม่ในขั้นตอนเดียว
     /// ยิงคำขอพร้อมกันหลายครั้งก็เปลี่ยนได้แค่ครั้งเดียว และชื่อเดียวกันมีเจ้าของได้คนเดียว
     /// </summary>

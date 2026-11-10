@@ -1,8 +1,9 @@
 namespace GitDiwaa.Online.Accounts.Contracts;
 
 /// <summary>
-/// ผลการเปลี่ยนชื่อที่แสดง: โปรไฟล์ล่าสุด และเวลาที่จะเปลี่ยนชื่อได้อีกครั้ง (UTC)
+/// สถานะชื่อที่แสดง: โปรไฟล์ล่าสุด, เวลาที่เปลี่ยนชื่อได้อีกครั้ง (UTC) และจำนวนครั้งที่เปลี่ยนได้ตอนนี้
 /// </summary>
 public sealed record ChangeDisplayNameResponse(
     PlayerProfile Profile,
-    DateTimeOffset NextChangeAllowedAt);
+    DateTimeOffset NextChangeAllowedAt,
+    int ChangesAvailable);

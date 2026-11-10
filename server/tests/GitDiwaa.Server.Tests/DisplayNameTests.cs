@@ -1,5 +1,6 @@
 using System.Net;
 using System.Net.Http.Json;
+using GitDiwaa.Online.Accounts;
 using GitDiwaa.Online.Accounts.Contracts;
 using GitDiwaa.Server.Accounts;
 
@@ -21,7 +22,9 @@ internal static class DisplayNameTests
             var rename = await ctx.Service.ChangeDisplayNameAsync(hero.Value!.Id, new ChangeDisplayNameRequest(" New Name "));
             Assert.True(rename.Succeeded);
             Assert.Equal("New Name", rename.Value?.Profile.DisplayName);
-            Assert.Equal(AccountTestContext.StartTime.Add(Cooldown), rename.Value?.NextChangeAllowedAt);
+            // ยังเหลือสิทธิ์อีก 1 ครั้ง จึงเปลี่ยนได้ทันที
+            Assert.Equal(1, rename.Value?.ChangesAvailable);
+            Assert.Equal(AccountTestContext.StartTime, rename.Value?.NextChangeAllowedAt);
 
             var stored = await ctx.Users.FindByIdAsync(hero.Value.Id);
             Assert.Equal("New Name", stored?.DisplayName);
@@ -46,22 +49,77 @@ internal static class DisplayNameTests
             Assert.Equal("Hero", stored?.DisplayName);
         });
 
-        await runner.RunAsync("Rename_Twice_BlockedUntilCooldownEnds", async static () =>
+        await runner.RunAsync("Rename_TwoFreeChanges_ThenBlockedUntilCooldownEnds", async static () =>
         {
             var ctx = AccountTestContext.Create();
             var hero = await ctx.Service.RegisterAsync(new RegisterRequest("hero01", "Hero", "hero@example.com", "S3cret-Pass!"));
             Guid id = hero.Value!.Id;
 
             Assert.True((await ctx.Service.ChangeDisplayNameAsync(id, new ChangeDisplayNameRequest("Second"))).Succeeded);
+            var lastFree = await ctx.Service.ChangeDisplayNameAsync(id, new ChangeDisplayNameRequest("Second B"));
+            Assert.True(lastFree.Succeeded);
+            Assert.Equal(0, lastFree.Value?.ChangesAvailable);
+            Assert.Equal(AccountTestContext.StartTime.Add(Cooldown), lastFree.Value?.NextChangeAllowedAt);
 
             ctx.Time.Advance(Cooldown - TimeSpan.FromSeconds(1));
             var tooSoon = await ctx.Service.ChangeDisplayNameAsync(id, new ChangeDisplayNameRequest("Third"));
             Assert.Equal(AuthErrorCode.DisplayNameChangeCooldown, tooSoon.Error);
             Assert.Equal(AccountTestContext.StartTime.Add(Cooldown), tooSoon.Value?.NextChangeAllowedAt);
-            Assert.Equal("Second", (await ctx.Users.FindByIdAsync(id))?.DisplayName);
+            Assert.Equal("Second B", (await ctx.Users.FindByIdAsync(id))?.DisplayName);
 
             ctx.Time.Advance(TimeSpan.FromSeconds(1));
             Assert.True((await ctx.Service.ChangeDisplayNameAsync(id, new ChangeDisplayNameRequest("Third"))).Succeeded);
+
+            // ได้คืนทีละ 1 เท่านั้น: เปลี่ยนต่อทันทีไม่ได้
+            var again = await ctx.Service.ChangeDisplayNameAsync(id, new ChangeDisplayNameRequest("Fourth"));
+            Assert.Equal(AuthErrorCode.DisplayNameChangeCooldown, again.Error);
+        });
+
+        await runner.RunAsync("Rename_UnusedCreditIsKept", async static () =>
+        {
+            var ctx = AccountTestContext.Create();
+            var hero = await ctx.Service.RegisterAsync(new RegisterRequest("hero01", "Hero", "hero@example.com", "S3cret-Pass!"));
+            Guid id = hero.Value!.Id;
+
+            Assert.True((await ctx.Service.ChangeDisplayNameAsync(id, new ChangeDisplayNameRequest("Second"))).Succeeded);
+            ctx.Time.Advance(TimeSpan.FromDays(100));
+            var status = await ctx.Service.GetDisplayNameStatusAsync(id);
+            Assert.Equal(1, status.Value?.ChangesAvailable);
+        });
+
+        await runner.RunAsync("Register_WithoutDisplayName_GetsSequentialPlayerNames", async static () =>
+        {
+            var ctx = AccountTestContext.Create();
+            var first = await ctx.Service.RegisterAsync(new RegisterRequest("hero01", null, "hero1@example.com", "S3cret-Pass!"));
+            var second = await ctx.Service.RegisterAsync(new RegisterRequest("hero02", "  ", "hero2@example.com", "S3cret-Pass!"));
+            Assert.Equal("player-10001", first.Value?.DisplayName);
+            Assert.Equal("player-10002", second.Value?.DisplayName);
+
+            var status = await ctx.Service.GetDisplayNameStatusAsync(first.Value!.Id);
+            Assert.Equal(AccountRules.InitialDisplayNameChanges, status.Value?.ChangesAvailable);
+            Assert.Equal(AccountTestContext.StartTime, status.Value?.NextChangeAllowedAt);
+        });
+
+        await runner.RunAsync("Register_ReservedDisplayName_Rejected", async static () =>
+        {
+            var ctx = AccountTestContext.Create();
+            var reg = await ctx.Service.RegisterAsync(new RegisterRequest("hero01", "Player-99", "hero@example.com", "S3cret-Pass!"));
+            Assert.Equal(AuthErrorCode.ValidationFailed, reg.Error);
+            Assert.Equal(FieldErrorReason.Reserved, reg.FieldErrors[0].Reason);
+        });
+
+        await runner.RunAsync("Rename_ToReservedName_Rejected", async static () =>
+        {
+            var ctx = AccountTestContext.Create();
+            var hero = await ctx.Service.RegisterAsync(new RegisterRequest("hero01", null, "hero@example.com", "S3cret-Pass!"));
+            var rename = await ctx.Service.ChangeDisplayNameAsync(hero.Value!.Id, new ChangeDisplayNameRequest("player-2"));
+            Assert.Equal(AuthErrorCode.ValidationFailed, rename.Error);
+            Assert.Equal(FieldErrorReason.Reserved, rename.FieldErrors[0].Reason);
+
+            // ชื่อเดิมยังอยู่ และสิทธิ์ไม่ถูกใช้
+            var status = await ctx.Service.GetDisplayNameStatusAsync(hero.Value.Id);
+            Assert.Equal("player-10001", status.Value?.Profile.DisplayName);
+            Assert.Equal(2, status.Value?.ChangesAvailable);
         });
 
         await runner.RunAsync("Rename_SameName_DoesNotStartCooldown", async static () =>
@@ -123,7 +181,7 @@ internal static class DisplayNameTests
             }
 
             var results = await Task.WhenAll(tasks);
-            Assert.Equal(1, results.Count(r => r.Succeeded));
+            Assert.Equal(AccountRules.InitialDisplayNameChanges, results.Count(r => r.Succeeded));
         });
 
         await runner.RunAsync("Rename_TwoUsersSameNewName_OnlyOneWins", async static () =>
@@ -170,9 +228,18 @@ internal static class DisplayNameTests
             Assert.Contains(await me.Content.ReadAsStringAsync(), "Grand Mage");
 
             var second = await SendRenameAsync(host, token, "Other Mage");
-            Assert.Equal(HttpStatusCode.Conflict, second.StatusCode);
-            Assert.Contains(await second.Content.ReadAsStringAsync(), "DisplayNameChangeCooldown");
-            Assert.True(second.Headers.RetryAfter?.Delta is { } wait && wait > TimeSpan.FromDays(13),
+            Assert.Equal(HttpStatusCode.OK, second.StatusCode);
+
+            using var statusReq = new HttpRequestMessage(HttpMethod.Get, "/api/v1/accounts/me/display-name");
+            statusReq.Headers.Add("Authorization", $"Bearer {token}");
+            var status = await host.Client.SendAsync(statusReq);
+            Assert.Equal(HttpStatusCode.OK, status.StatusCode);
+            Assert.Contains(await status.Content.ReadAsStringAsync(), "\"changesAvailable\":0");
+
+            var third = await SendRenameAsync(host, token, "Third Mage");
+            Assert.Equal(HttpStatusCode.Conflict, third.StatusCode);
+            Assert.Contains(await third.Content.ReadAsStringAsync(), "DisplayNameChangeCooldown");
+            Assert.True(third.Headers.RetryAfter?.Delta is { } wait && wait > TimeSpan.FromDays(13),
                 "Expected Retry-After close to 14 days.");
         });
 
