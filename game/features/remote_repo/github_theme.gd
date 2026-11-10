@@ -201,6 +201,9 @@ static func create() -> Theme:
 	# คำแนะนำเมื่อชี้ (tooltip)
 	theme.set_stylebox("panel", "TooltipPanel", box(SURFACE_RAISED, BORDER, 6, 1, 8, 4))
 	theme.set_color("font_color", "TooltipLabel", FG)
+	var tooltip_font := load("res://assets/fonts/ChakraPetch-SemiBold.ttf") as Font
+	if tooltip_font != null:
+		theme.set_font("font", "TooltipLabel", tooltip_font)
 	theme.set_font_size("font_size", "TooltipLabel", s(14))
 
 	# แถบเลื่อนบางๆ

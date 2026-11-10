@@ -30,6 +30,8 @@ const PIXEL_SCALE := 2.5
 const TOUCHY_HOTSPOT := Vector2(8, 5)
 const GRABBY_HOTSPOT := Vector2(20, 20)
 
+const TOOLTIP_FONT_PATH := "res://assets/fonts/ChakraPetch-SemiBold.ttf"
+
 const TOUCHY_CLICK_SEQUENCE: Array[int] = [1, 2, 3, 0] # กดแล้วเล่นเฟรม 2 -> 3 -> 4 -> กลับ 1
 const TOUCHY_FRAME_DURATION := 0.055
 const GRABBY_FRAME_DURATION := 0.075
@@ -84,6 +86,7 @@ var _applied_frame := -1
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
+	_setup_tooltip_theme()
 	_setup_custom_cursors()
 	_setup_input_watcher()
 	_setup_scrollbar_hooks()
@@ -143,6 +146,32 @@ func _process(delta: float) -> void:
 		return
 
 	_apply_primary_cursor("touchy", 0)
+
+
+func _setup_tooltip_theme() -> void:
+	var default_theme := ThemeDB.get_default_theme()
+	if default_theme == null:
+		return
+	if ResourceLoader.exists(TOOLTIP_FONT_PATH):
+		var font := load(TOOLTIP_FONT_PATH) as Font
+		if font != null:
+			default_theme.set_font("font", "TooltipLabel", font)
+	default_theme.set_font_size("font_size", "TooltipLabel", 15)
+	default_theme.set_color("font_color", "TooltipLabel", Color(0.96, 0.91, 0.82, 1.0))
+
+	var panel_style := StyleBoxFlat.new()
+	panel_style.bg_color = Color(0.08, 0.065, 0.05, 0.96)
+	panel_style.border_color = Color(0.58, 0.44, 0.22, 0.95)
+	panel_style.set_border_width_all(1)
+	panel_style.set_corner_radius_all(5)
+	panel_style.content_margin_left = 10.0
+	panel_style.content_margin_right = 10.0
+	panel_style.content_margin_top = 5.0
+	panel_style.content_margin_bottom = 5.0
+	panel_style.shadow_color = Color(0.0, 0.0, 0.0, 0.45)
+	panel_style.shadow_size = 4
+	panel_style.shadow_offset = Vector2(0, 2)
+	default_theme.set_stylebox("panel", "TooltipPanel", panel_style)
 
 
 func _setup_custom_cursors() -> void:

@@ -14,6 +14,7 @@
 [ext_resource type="Texture2D" path="res://assets/art/hats/hat_witch_purple.png" id="12_hat_purple"]
 [ext_resource type="Script" path="res://features/level_select/twilight_sky_background.gd" id="13_sky"]
 [ext_resource type="Script" path="res://features/level_select/act_divider_walls.gd" id="14_act_dividers"]
+[ext_resource type="FontFile" path="res://assets/fonts/ChakraPetch-SemiBold.ttf" id="15_chakra_semi"]
 
 [sub_resource type="FontVariation" id="Font_ta_pixel_bold"]
 base_font = ExtResource("5_ta_pixel")
@@ -247,6 +248,31 @@ shadow_color = Color(0, 0, 0, 0.35)
 shadow_size = 4
 shadow_offset = Vector2(0, 2)
 
+[sub_resource type="StyleBoxFlat" id="Style_tooltip_panel"]
+content_margin_left = 10.0
+content_margin_top = 5.0
+content_margin_right = 10.0
+content_margin_bottom = 5.0
+bg_color = Color(0.08, 0.065, 0.05, 0.96)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.58, 0.44, 0.22, 0.95)
+corner_radius_top_left = 5
+corner_radius_top_right = 5
+corner_radius_bottom_left = 5
+corner_radius_bottom_right = 5
+shadow_color = Color(0, 0, 0, 0.45)
+shadow_size = 4
+shadow_offset = Vector2(0, 2)
+
+[sub_resource type="Theme" id="Theme_level_select"]
+TooltipLabel/colors/font_color = Color(0.96, 0.91, 0.82, 1)
+TooltipLabel/font_sizes/font_size = 15
+TooltipLabel/fonts/font = ExtResource("15_chakra_semi")
+TooltipPanel/styles/panel = SubResource("Style_tooltip_panel")
+
 [node name="LevelSelectView" type="Control"]
 layout_mode = 3
 anchors_preset = 15
@@ -254,6 +280,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+theme = SubResource("Theme_level_select")
 script = ExtResource("1_script")
 
 [node name="GothicSkyBackground" type="Control" parent="."]
