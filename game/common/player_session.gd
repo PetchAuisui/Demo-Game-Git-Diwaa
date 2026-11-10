@@ -267,13 +267,18 @@ func restore_saved_session() -> String:
 		if fresh.is_empty():
 			SessionStore.clear()
 			return RESTORE_NEED_LOGIN
-		_session = fresh
-		_remembered = true
-		state = State.ONLINE
+		# server เปลี่ยน token ให้แล้ว ใบเก่าใช้ไม่ได้อีก ต้องเก็บใบใหม่เสมอ (แม้ผู้เล่นจะเลือกเล่นแบบอื่นไประหว่างรอ)
 		if not SessionStore.save(fresh):
 			# บันทึก token ใบใหม่ไม่ได้: ลบไฟล์ทิ้ง ห้ามปล่อย token ใบเก่าค้างไว้
 			# เพราะถ้าครั้งหน้าเอาใบเก่าไปใช้ server จะเข้าใจว่าถูกขโมย แล้วตัด session ทั้งหมดของบัญชีนี้
 			SessionStore.clear()
+		# ระหว่างรอ ผู้เล่นเลือกเล่นแบบอื่นไปแล้ว (เช่น เล่นโดยไม่ล็อกอิน): ไม่เปลี่ยนสถานะทับการเลือกนั้น
+		# ครั้งหน้าที่เปิดเกมจะล็อกอินอัตโนมัติด้วย token ใบใหม่ที่เก็บไว้ได้ตามปกติ
+		if state != State.SIGNED_OUT:
+			return RESTORE_NONE
+		_session = fresh
+		_remembered = true
+		state = State.ONLINE
 		session_changed.emit()
 		return RESTORE_OK
 

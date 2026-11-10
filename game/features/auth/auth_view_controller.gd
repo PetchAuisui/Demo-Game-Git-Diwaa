@@ -468,6 +468,9 @@ func _check_registration(username: String, email: String) -> bool:
 	_set_busy(true)
 	var result := await _api.check_registration(username, email)
 	_set_busy(false)
+	# ระหว่างรอ ผู้เล่นสลับไปหน้าอื่นแล้ว: ไม่เปิดหน้านโยบายขึ้นมาทับหน้าที่เขาเลือก
+	if not _register_form.visible:
+		return false
 	if result.ok:
 		return true
 	if result.code == AuthApiResult.VALIDATION_FAILED:
@@ -628,21 +631,15 @@ func _show_status(label: Label, text: String, success: bool) -> void:
 
 
 ## ระหว่างรอ server: ปิดปุ่มทั้งหมด กันกดซ้ำ และกันสลับฟอร์มกลางทาง
+## ระหว่างรอ server: ล็อกเฉพาะปุ่มที่ส่งคำขอไป server (ส่งได้ทีละคำขอ) ที่เหลือกดได้ตามปกติ
+## เช่น server ไม่ตอบ ผู้เล่นยังสลับแท็บ หรือกด "เล่นโดยไม่ล็อกอิน" ได้ทันที ไม่ต้องรอจนหมดเวลา
+## ถ้าผู้เล่นออกจากหน้านี้ไประหว่างรอ คำตอบที่มาทีหลังจะถูกทิ้ง (หน้านี้ถูกลบไปพร้อม AuthApiClient ของมัน)
 func _set_busy(busy: bool) -> void:
 	_busy = busy
 	var buttons: Array[BaseButton] = [
 		_login_submit_btn,
 		_register_submit_btn,
-		_login_tab_btn,
-		_register_tab_btn,
-		_go_register_link,
-		_go_login_link,
 		_retry_connection_btn,
-		_offline_play_btn,
-		_go_guest_link,
-		_change_guest_name_link,
-		_guest_start_btn,
-		_guest_back_link,
 	]
 	for btn in buttons:
 		btn.disabled = busy
@@ -705,8 +702,6 @@ func _show_connection_problem(result: AuthApiResult) -> void:
 
 
 func _on_offline_play_pressed() -> void:
-	if _busy:
-		return
 	if not PlayerSession.start_offline():
 		_offline_play_btn.visible = false
 		_connection_label.text = "ไม่พบบัญชีที่จดจำไว้ในเครื่องนี้"
@@ -716,8 +711,6 @@ func _on_offline_play_pressed() -> void:
 
 ## เริ่มเล่นแบบไม่ล็อกอิน: ตรวจชื่อด้วยกติกาเดียวกับชื่อที่แสดง แล้วบันทึกไว้ในเครื่อง
 func _on_guest_start() -> void:
-	if _busy:
-		return
 	_guest_name_error.visible = false
 	var display_name := _guest_name_input.text.strip_edges()
 	var reason := AuthRules.validate_new_display_name(display_name)
@@ -739,8 +732,6 @@ func _on_guest_start() -> void:
 ## กดลิงก์ guest ในหน้าเข้าสู่ระบบ: ถ้าเคยตั้งชื่อไว้แล้ว เข้าเกมในชื่อนั้นเลย ไม่ต้องกรอกซ้ำ
 ## ยังไม่เคยตั้งชื่อ (หรือไฟล์ชื่อเสีย) → ไปหน้าตั้งชื่อ
 func _on_go_guest_pressed() -> void:
-	if _busy:
-		return
 	var saved_name := GuestStore.load_name()
 	if saved_name.is_empty() or not PlayerSession.start_guest(saved_name):
 		_show_guest()
