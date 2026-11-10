@@ -54,10 +54,10 @@ func _draw() -> void:
 	# 1. จุดเปลี่ยนผ่าน Act 2 -> Act 3: ประตูศิลาปราการโบราณ (Distinctive Stone Gateway at y = 1200)
 	_draw_act2_to_act3_gateway(left_bound, right_bound)
 
-	# 2. จุดเปลี่ยนผ่าน Act 1 -> Act 2: ซุ้มประตูกำแพงอิฐโกธิคใหญ่ (Large Gothic Brick Arch at y = 1775)
+	# 2. จุดเปลี่ยนผ่าน Act 1 -> Act 2: ซุ้มประตูกำแพงอิฐโกธิคใหญ่ (Large Gothic Brick Arch at y = 1995)
 	_draw_act1_to_act2_arch(left_bound, right_bound)
 
-	# 3. ฐานรากหอคอย Act 1: แนวกำแพงศิลาฐานราก (Tower Base Foundation at y = 5205)
+	# 3. ฐานรากหอคอย Act 1: แนวกำแพงศิลาฐานราก (Tower Base Foundation at y = 5425)
 	_draw_act1_base_foundation(left_bound, right_bound)
 
 
@@ -77,9 +77,9 @@ func _draw_act2_to_act3_gateway(left_b: float, right_b: float) -> void:
 	_draw_passage_opening(open_x, open_w, wall_y, true)
 
 
-## 2. ซุ้มประตูกำแพงอิฐโกธิคใหญ่คั่นระหว่าง Act 1 และ Act 2 (Large Gothic Brick Arch at y = 1775)
+## 2. ซุ้มประตูกำแพงอิฐโกธิคใหญ่คั่นระหว่าง Act 1 และ Act 2 (Large Gothic Brick Arch at y = 1995)
 func _draw_act1_to_act2_arch(left_b: float, right_b: float) -> void:
-	var wall_y := 1775.0
+	var wall_y := 1995.0
 	var open_x := 880.0
 	var open_w := 200.0
 	var open_left := open_x - (open_w * 0.5)
@@ -93,9 +93,9 @@ func _draw_act1_to_act2_arch(left_b: float, right_b: float) -> void:
 	_draw_passage_opening(open_x, open_w, wall_y, false)
 
 
-## 3. แนวกำแพงศิลาฐานรากหอคอย Act 1 (Tower Base Foundation at y = 5205)
+## 3. แนวกำแพงศิลาฐานรากหอคอย Act 1 (Tower Base Foundation at y = 5425)
 func _draw_act1_base_foundation(left_b: float, right_b: float) -> void:
-	var wall_y := 5205.0
+	var wall_y := 5425.0
 	_draw_wall_segment(left_b, right_b, wall_y)
 
 

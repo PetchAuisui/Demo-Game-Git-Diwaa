@@ -9,28 +9,28 @@ extends Control
 
 const TOWER_STAGES: Array[Dictionary] = [
 	# ACT 1: Winding Tower Ascent (01-15) - ไต่หอคอยแบบเป็นธรรมชาติ กึ่งกลางสมมาตรหอคอย x=880 (Screen x=960)
-	{ "id": 1, "act": 1, "no": "01", "title": "git --version + git config", "cmd": "git --version", "desc": "ตั้งค่านามผู้ใช้งาน user.name และ user.email", "x": 880.0, "y": 5125.0, "width": 260.0, "has_scripture": true },
-	{ "id": 2, "act": 1, "no": "02", "title": "git init", "cmd": "git init", "desc": "ร่ายอาคมสร้าง Repository ว่างเปล่าเพื่อเริ่มต้นคลังตำรา", "x": 660.0, "y": 4900.0, "width": 220.0, "has_scripture": false },
-	{ "id": 3, "act": 1, "no": "03", "title": "git status", "cmd": "git status", "desc": "สำรวจสถานะม้วนคาถาทั้งหมดในพื้นที่ทำงานว่ามีสิ่งใดเปลี่ยนแปลง", "x": 570.0, "y": 4675.0, "width": 220.0, "has_scripture": false },
-	{ "id": 4, "act": 1, "no": "04", "title": "git add", "cmd": "git add .", "desc": "จัดเตรียมม้วนคาถาเข้าสู่ Staging Area ก่อนประทับตรา", "x": 760.0, "y": 4450.0, "width": 220.0, "has_scripture": false },
-	{ "id": 5, "act": 1, "no": "05", "title": "git commit", "cmd": "git commit -m", "desc": "ประทับตราขี้ผึ้งบันทึกประวัติศาสตร์ลง Git Graph ถาวร", "x": 940.0, "y": 4225.0, "width": 240.0, "has_scripture": true },
-	{ "id": 6, "act": 1, "no": "06", "title": "git log", "cmd": "git log", "desc": "กางผืนแผนที่สำรวจประวัติศาสตร์การบันทึกย้อนหลังในอดีต", "x": 1120.0, "y": 4000.0, "width": 220.0, "has_scripture": false },
-	{ "id": 7, "act": 1, "no": "07", "title": "git diff", "cmd": "git diff", "desc": "ส่องดูความแตกต่างของอักขระคาถาเทียบกับบันทึกเดิม", "x": 1180.0, "y": 3775.0, "width": 220.0, "has_scripture": false },
-	{ "id": 8, "act": 1, "no": "08", "title": "git restore", "cmd": "git restore <file>", "desc": "ยกเลิกการแก้ไขไฟล์ใน Working Directory กลับสู่สภาพเดิม", "x": 1000.0, "y": 3550.0, "width": 220.0, "has_scripture": false },
-	{ "id": 9, "act": 1, "no": "09", "title": "git reset", "cmd": "git reset HEAD~1", "desc": "ถอยจุดตรวจเช็กพอยต์กลับสู่สถานะก่อนหน้า", "x": 820.0, "y": 3325.0, "width": 220.0, "has_scripture": false },
-	{ "id": 10, "act": 1, "no": "10", "title": "git branch", "cmd": "git branch <name>", "desc": "เปิดมิติกิ่งก้านใหม่เพื่อพัฒนาคาถาโดยไม่กระทบเส้นหลัก", "x": 620.0, "y": 3100.0, "width": 240.0, "has_scripture": true },
-	{ "id": 11, "act": 1, "no": "11", "title": "git switch", "cmd": "git switch <branch>", "desc": "ย้ายจิตวิญญาณสลับไปมาระหว่างกิ่งก้านคาถาอย่างปลอดภัย", "x": 570.0, "y": 2875.0, "width": 220.0, "has_scripture": false },
-	{ "id": 12, "act": 1, "no": "12", "title": "git merge", "cmd": "git merge <branch>", "desc": "หลอมรวมพลังคาถาจากกิ่งก้านเข้าสู่สายหลัก", "x": 780.0, "y": 2650.0, "width": 220.0, "has_scripture": false },
-	{ "id": 13, "act": 1, "no": "13", "title": "git clone + git remote", "cmd": "git clone", "desc": "คัดลอกคลังตำราจากมิติต้นทางและเชื่อมต่อสายสัมพันธ์", "x": 1000.0, "y": 2425.0, "width": 220.0, "has_scripture": false },
-	{ "id": 14, "act": 1, "no": "14", "title": "git pull", "cmd": "git pull origin main", "desc": "ดึงการอัปเดตบทคาถาใหม่ล่าสุดจากหอคอยส่วนกลาง", "x": 1140.0, "y": 2200.0, "width": 220.0, "has_scripture": false },
-	{ "id": 15, "act": 1, "no": "15", "title": "git push (สู่โถงทีม)", "cmd": "git push origin main", "desc": "ส่งบันทึกคาถาขึ้นสู่หอคอยส่วนกลางให้ทุกคนร่วมใช้ (สู่โถงทีม)", "x": 880.0, "y": 1975.0, "width": 320.0, "has_scripture": true },
+	{ "id": 1, "act": 1, "no": "01", "title": "git --version + git config", "cmd": "git --version", "desc": "ตั้งค่านามผู้ใช้งาน user.name และ user.email", "x": 880.0, "y": 5345.0, "width": 260.0, "has_scripture": true },
+	{ "id": 2, "act": 1, "no": "02", "title": "git init", "cmd": "git init", "desc": "ร่ายอาคมสร้าง Repository ว่างเปล่าเพื่อเริ่มต้นคลังตำรา", "x": 660.0, "y": 5120.0, "width": 220.0, "has_scripture": false },
+	{ "id": 3, "act": 1, "no": "03", "title": "git status", "cmd": "git status", "desc": "สำรวจสถานะม้วนคาถาทั้งหมดในพื้นที่ทำงานว่ามีสิ่งใดเปลี่ยนแปลง", "x": 570.0, "y": 4895.0, "width": 220.0, "has_scripture": false },
+	{ "id": 4, "act": 1, "no": "04", "title": "git add", "cmd": "git add .", "desc": "จัดเตรียมม้วนคาถาเข้าสู่ Staging Area ก่อนประทับตรา", "x": 760.0, "y": 4670.0, "width": 220.0, "has_scripture": false },
+	{ "id": 5, "act": 1, "no": "05", "title": "git commit", "cmd": "git commit -m", "desc": "ประทับตราขี้ผึ้งบันทึกประวัติศาสตร์ลง Git Graph ถาวร", "x": 940.0, "y": 4445.0, "width": 240.0, "has_scripture": true },
+	{ "id": 6, "act": 1, "no": "06", "title": "git log", "cmd": "git log", "desc": "กางผืนแผนที่สำรวจประวัติศาสตร์การบันทึกย้อนหลังในอดีต", "x": 1120.0, "y": 4220.0, "width": 220.0, "has_scripture": false },
+	{ "id": 7, "act": 1, "no": "07", "title": "git diff", "cmd": "git diff", "desc": "ส่องดูความแตกต่างของอักขระคาถาเทียบกับบันทึกเดิม", "x": 1180.0, "y": 3995.0, "width": 220.0, "has_scripture": false },
+	{ "id": 8, "act": 1, "no": "08", "title": "git restore", "cmd": "git restore <file>", "desc": "ยกเลิกการแก้ไขไฟล์ใน Working Directory กลับสู่สภาพเดิม", "x": 1000.0, "y": 3770.0, "width": 220.0, "has_scripture": false },
+	{ "id": 9, "act": 1, "no": "09", "title": "git reset", "cmd": "git reset HEAD~1", "desc": "ถอยจุดตรวจเช็กพอยต์กลับสู่สถานะก่อนหน้า", "x": 820.0, "y": 3545.0, "width": 220.0, "has_scripture": false },
+	{ "id": 10, "act": 1, "no": "10", "title": "git branch", "cmd": "git branch <name>", "desc": "เปิดมิติกิ่งก้านใหม่เพื่อพัฒนาคาถาโดยไม่กระทบเส้นหลัก", "x": 620.0, "y": 3320.0, "width": 240.0, "has_scripture": true },
+	{ "id": 11, "act": 1, "no": "11", "title": "git switch", "cmd": "git switch <branch>", "desc": "ย้ายจิตวิญญาณสลับไปมาระหว่างกิ่งก้านคาถาอย่างปลอดภัย", "x": 570.0, "y": 3095.0, "width": 220.0, "has_scripture": false },
+	{ "id": 12, "act": 1, "no": "12", "title": "git merge", "cmd": "git merge <branch>", "desc": "หลอมรวมพลังคาถาจากกิ่งก้านเข้าสู่สายหลัก", "x": 780.0, "y": 2870.0, "width": 220.0, "has_scripture": false },
+	{ "id": 13, "act": 1, "no": "13", "title": "git clone + git remote", "cmd": "git clone", "desc": "คัดลอกคลังตำราจากมิติต้นทางและเชื่อมต่อสายสัมพันธ์", "x": 1000.0, "y": 2645.0, "width": 220.0, "has_scripture": false },
+	{ "id": 14, "act": 1, "no": "14", "title": "git pull", "cmd": "git pull origin main", "desc": "ดึงการอัปเดตบทคาถาใหม่ล่าสุดจากหอคอยส่วนกลาง", "x": 1140.0, "y": 2420.0, "width": 220.0, "has_scripture": false },
+	{ "id": 15, "act": 1, "no": "15", "title": "git push (สู่โถงทีม)", "cmd": "git push origin main", "desc": "ส่งบันทึกคาถาขึ้นสู่หอคอยส่วนกลางให้ทุกคนร่วมใช้ (สู่โถงทีม)", "x": 880.0, "y": 2195.0, "width": 320.0, "has_scripture": true },
 
-	# ACT 2: Collab Chamber Loop (16-20) - โถงประจำชั้นทีม GitHub Flow กึ่งกลาง x=880
-	{ "id": 16, "act": 2, "no": "16", "title": "GitHub Flow (พบผู้พิทักษ์)", "cmd": "branch ➔ pr ➔ merge", "desc": "เรียนรู้วงจรการทำงานร่วมกันแบบสากลตั้งแต่แยกกิ่งจนถึงรวมงาน", "x": 880.0, "y": 1285.0, "width": 240.0, "has_scripture": true },
-	{ "id": 17, "act": 2, "no": "17", "title": "Pull Request", "cmd": "Create PR", "desc": "ยื่นคำร้องขอรวมคาถาให้เพื่อนร่วมทีมช่วยตรวจทานความถูกต้อง", "x": 1120.0, "y": 1425.0, "width": 220.0, "has_scripture": false },
-	{ "id": 18, "act": 2, "no": "18", "title": "Merge PR", "cmd": "Confirm Merge", "desc": "อนุมัติคำร้องและหลอมรวมโค้ดเข้าสู่สายหลักอย่างสมบูรณ์", "x": 1040.0, "y": 1645.0, "width": 220.0, "has_scripture": false },
-	{ "id": 19, "act": 2, "no": "19", "title": "Update PR & git fetch", "cmd": "git fetch", "desc": "อัปเดตข้อมูลมิติต้นทางโดยไม่รบกวนไฟล์งานที่กำลังพิมพ์", "x": 720.0, "y": 1645.0, "width": 220.0, "has_scripture": false },
-	{ "id": 20, "act": 2, "no": "20", "title": "Merge PR (Final Boss)", "cmd": "Squash & Merge", "desc": "รวมคอมมิตย่อยให้กลายเป็นบันทึกเดียวที่สะอาดเรียบร้อยก่อนขึ้นยอดหอคอย", "x": 640.0, "y": 1425.0, "width": 240.0, "has_scripture": true },
+	# ACT 2: Collab Chamber Loop (16-20) - โถงประจำชั้นทีม GitHub Flow ขยายระยะห่างสมมาตรกึ่งกลาง x=880
+	{ "id": 16, "act": 2, "no": "16", "title": "GitHub Flow (พบผู้พิทักษ์)", "cmd": "branch ➔ pr ➔ merge", "desc": "เรียนรู้วงจรการทำงานร่วมกันแบบสากลตั้งแต่แยกกิ่งจนถึงรวมงาน", "x": 880.0, "y": 1445.0, "width": 240.0, "has_scripture": true },
+	{ "id": 17, "act": 2, "no": "17", "title": "Pull Request", "cmd": "Create PR", "desc": "ยื่นคำร้องขอรวมคาถาให้เพื่อนร่วมทีมช่วยตรวจทานความถูกต้อง", "x": 1260.0, "y": 1625.0, "width": 220.0, "has_scripture": false },
+	{ "id": 18, "act": 2, "no": "18", "title": "Merge PR", "cmd": "Confirm Merge", "desc": "อนุมัติคำร้องและหลอมรวมโค้ดเข้าสู่สายหลักอย่างสมบูรณ์", "x": 1160.0, "y": 1835.0, "width": 220.0, "has_scripture": false },
+	{ "id": 19, "act": 2, "no": "19", "title": "Update PR & git fetch", "cmd": "git fetch", "desc": "อัปเดตข้อมูลมิติต้นทางโดยไม่รบกวนไฟล์งานที่กำลังพิมพ์", "x": 600.0, "y": 1835.0, "width": 220.0, "has_scripture": false },
+	{ "id": 20, "act": 2, "no": "20", "title": "Merge PR (Final Boss)", "cmd": "Squash & Merge", "desc": "รวมคอมมิตย่อยให้กลายเป็นบันทึกเดียวที่สะอาดเรียบร้อยก่อนขึ้นยอดหอคอย", "x": 500.0, "y": 1625.0, "width": 240.0, "has_scripture": true },
 
 	# ACT 3: Top Tower Deck (21-40) - บันไดวนคดเคี้ยวสลับซ้ายขวา (Serpentine Winding Deck with Gothic Ladders)
 	# แถวที่ 1 (21-25) จากซ้ายไปขวา
@@ -111,7 +111,6 @@ var tex_vel_jump: Texture2D
 var tex_cat: Texture2D
 var tex_guardian: Texture2D
 var tex_khampri: Texture2D
-var tex_magic_circle: Texture2D
 
 # Fonts
 var font_bungee: Font
@@ -218,9 +217,6 @@ func _load_resources() -> void:
 
 	if ResourceLoader.exists("res://assets/cutscene/props/khampri/Khampri.png"):
 		tex_khampri = load("res://assets/cutscene/props/khampri/Khampri.png")
-
-	if ResourceLoader.exists("res://assets/art/dressing_room/magic_reticle.png"):
-		tex_magic_circle = load("res://assets/art/dressing_room/magic_reticle.png")
 
 
 func _bind_nodes() -> void:
@@ -542,7 +538,7 @@ func _on_act_button_pressed(act_num: int) -> void:
 		target_y = int(TOWER_STAGES[0]["y"]) - center_offset
 		_view_stage_idx = 0
 	elif act_num == 2:
-		target_y = 1475 - center_offset
+		target_y = 1595 - center_offset
 		_view_stage_idx = 15
 	else:
 		target_y = 0
@@ -592,24 +588,10 @@ func _spawn_tower_platforms() -> void:
 		return
 
 	for child in tower_content.get_children():
-		if child.name.begins_with("Platform_") or child.name == "MasterSilhouette" or child.name == "CollabMagicCircle":
+		if child.name.begins_with("Platform_") or child.name == "MasterSilhouette":
 			child.queue_free()
 
-	# 1. วงแหวนเวทมนตร์โถง Act 2 (GitHub Flow Collab Chamber)
-	if tex_magic_circle:
-		var circle_rect := TextureRect.new()
-		circle_rect.name = "CollabMagicCircle"
-		circle_rect.texture = tex_magic_circle
-		circle_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-		circle_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-		circle_rect.custom_minimum_size = Vector2(440.0, 440.0)
-		circle_rect.size = Vector2(440.0, 440.0)
-		circle_rect.position = Vector2(880.0 - 220.0, 1475.0 - 220.0)
-		circle_rect.modulate = Color(0.20, 0.55, 0.40, 0.35)
-		circle_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		tower_content.add_child(circle_rect)
-
-	# 2. สร้างแท่นศิลาบันไดวนแบบกว้างตามการจัดวางดั้งเดิม (Wide Gothic Stone Slabs)
+	# 1. สร้างแท่นศิลาบันไดวนแบบกว้างตามการจัดวางดั้งเดิม (Wide Gothic Stone Slabs)
 	for i in range(TOWER_STAGES.size()):
 		var stg := TOWER_STAGES[i]
 		var stg_id: int = stg["id"]
@@ -1092,6 +1074,7 @@ func _perform_jump_step(next_idx: int) -> void:
 	var from_act: int = int(TOWER_STAGES[from_idx]["act"])
 	var to_act: int = int(TOWER_STAGES[to_idx]["act"])
 	var is_between_15_and_16 := (from_stg_id == 15 and to_stg_id == 16) or (from_stg_id == 16 and to_stg_id == 15)
+	var is_between_20_and_21 := (from_stg_id == 20 and to_stg_id == 21) or (from_stg_id == 21 and to_stg_id == 20)
 
 	var target_stg: Dictionary = TOWER_STAGES[to_idx]
 	var target_vel_pos := Vector2(target_stg["x"] - 24.0, target_stg["y"] - VEL_Y_OFFSET)
@@ -1135,6 +1118,10 @@ func _perform_jump_step(next_idx: int) -> void:
 		jump_duration = 1.35
 		scroll_duration = 1.30
 		peak_height = 25.0 if to_stg_id == 15 else 45.0
+	elif is_between_20_and_21:
+		jump_duration = 0.95
+		scroll_duration = 0.90
+		peak_height = 60.0
 	elif is_act3_ladder:
 		jump_duration = 0.50 if has_more_steps else 0.58
 		scroll_duration = 0.52
@@ -1150,10 +1137,17 @@ func _perform_jump_step(next_idx: int) -> void:
 		_jump_tween.kill()
 
 	_jump_tween = create_tween()
+	var gateway_ctrl_x: float = TOWER_STAGES[19]["x"] - 24.0
 	_jump_tween.tween_method(func(t: float):
 		if not vel_hero:
 			return
-		var curr_x := lerpf(start_vel_pos.x, target_vel_pos.x, t)
+		var curr_x: float
+		if is_between_20_and_21:
+			# โค้งผ่านกลางช่องซุ้มประตู Act 2->3 (open_x = 460) ทั้งขาขึ้น (20->21) และขาลง (21->20)
+			var u := 1.0 - t
+			curr_x = (u * u) * start_vel_pos.x + (2.0 * u * t) * gateway_ctrl_x + (t * t) * target_vel_pos.x
+		else:
+			curr_x = lerpf(start_vel_pos.x, target_vel_pos.x, t)
 		var base_y := lerpf(start_vel_pos.y, target_vel_pos.y, t)
 		var arc_y := 4.0 * peak_height * t * (1.0 - t)
 		vel_hero.position = Vector2(curr_x, base_y - arc_y)
