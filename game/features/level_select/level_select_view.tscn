@@ -598,7 +598,7 @@ layout_mode = 0
 offset_left = 936.0
 offset_top = 3453.0
 offset_right = 984.0
-offset_bottom = 3523.0
+offset_bottom = 3536.0
 mouse_filter = 2
 
 [node name="VelSprite" type="TextureRect" parent="LayoutVBox/MainChamberArea/ScrollChamber/TowerContent/VelHero"]

@@ -68,6 +68,7 @@ var path_renderer: Control
 var vel_hero: Control
 var vel_sprite: TextureRect
 var vel_anim: AnimatedSprite2D
+var vel_click_area: Control
 var black_cat: Control
 var cat_sprite: TextureRect
 var sfx_click: AudioStreamPlayer
@@ -108,6 +109,7 @@ var tex_pedestal: Texture2D
 var tex_lock: Texture2D
 var tex_vel_idle: Texture2D
 var tex_vel_jump: Texture2D
+var tex_vel_angry: Texture2D
 var tex_cat: Texture2D
 var tex_guardian: Texture2D
 var tex_khampri: Texture2D
@@ -122,6 +124,10 @@ var font_ta_pixel: Font
 const VEL_SCALE: float = 1.5
 const PLAT_HEIGHT: float = 80.0
 const VEL_Y_OFFSET: float = 119.0
+const VEL_ANIM_BASE_POS := Vector2(24.0, 41.5)
+const VEL_HITBOX_POS := Vector2(4.0, 17.0)
+const VEL_HITBOX_SIZE := Vector2(41.0, 64.0)
+const VEL_ANGRY_DURATION: float = 0.70
 
 # Gothic Minimal Navbar Palette
 const NAV_COLOR_ACTIVE := Color(0.722, 0.604, 0.404, 1.0)     # #B89A67 Antique gold
@@ -138,8 +144,10 @@ var _platform_nodes: Dictionary = {}
 var _is_jumping := false
 var _target_queue_idx: int = -1
 var _landing_seq_id: int = 0
+var _angry_seq_id: int = 0
 var _buffered_dir: Vector2 = Vector2.ZERO
 var _jump_tween: Tween = null
+var _angry_tween: Tween = null
 var _scroll_tween: Tween = null
 var _is_muted := false
 var _idle_bob_timer := 0.0
@@ -220,6 +228,9 @@ func _load_resources() -> void:
 
 	if ResourceLoader.exists("res://assets/cutscene/characters/vel/vel_shockpng.png"):
 		tex_vel_jump = load("res://assets/cutscene/characters/vel/vel_shockpng.png")
+
+	if ResourceLoader.exists("res://assets/cutscene/characters/vel/vel_angry.png"):
+		tex_vel_angry = load("res://assets/cutscene/characters/vel/vel_angry.png")
 
 	if ResourceLoader.exists("res://assets/art/dressing_room/cat_companion_black.png"):
 		tex_cat = load("res://assets/art/dressing_room/cat_companion_black.png")
@@ -926,6 +937,9 @@ func _spawn_tower_platforms() -> void:
 		_apply_platform_style(plat, stg_id, is_current)
 
 
+	if vel_hero and vel_hero.get_parent() == tower_content:
+		vel_hero.move_to_front()
+
 	if path_renderer:
 		path_renderer.queue_redraw()
 
@@ -940,7 +954,9 @@ func _setup_character_and_cat() -> void:
 		black_cat.visible = false
 
 	vel_hero.z_index = 25
+	vel_hero.size = Vector2(48.0, 83.0)
 	vel_hero.pivot_offset = Vector2(24.0, 83.0)
+	vel_hero.mouse_filter = Control.MOUSE_FILTER_IGNORE
 
 	# สร้างแอนิเมชันสำหรับเวล (5.0 FPS, Frame Durations [2.0, 1.0, 2.0, 1.0, 2.0, 1.0] ตามสเปก)
 	if not vel_anim:
@@ -992,21 +1008,95 @@ func _setup_character_and_cat() -> void:
 		if tex_straight:
 			frames.add_frame("stand_straight", tex_straight, 1.0)
 
+		frames.add_animation("angry")
+		frames.set_animation_loop("angry", false)
+		frames.set_animation_speed("angry", 5.0)
+		var tex_angry := tex_vel_angry
+		if not tex_angry and ResourceLoader.exists("res://assets/cutscene/characters/vel/vel_angry.png"):
+			tex_angry = load("res://assets/cutscene/characters/vel/vel_angry.png") as Texture2D
+		if tex_angry:
+			frames.add_frame("angry", tex_angry, 1.0)
+
 		vel_anim = AnimatedSprite2D.new()
 		vel_anim.name = "VelAnim"
 		vel_anim.sprite_frames = frames
 		vel_anim.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-		vel_anim.position = Vector2(24.0, 41.5)
+		vel_anim.position = VEL_ANIM_BASE_POS
 		if vel_sprite:
 			vel_sprite.visible = false
 		vel_hero.add_child(vel_anim)
 
+	if not vel_click_area:
+		vel_click_area = Control.new()
+		vel_click_area.name = "VelClickArea"
+		vel_click_area.position = VEL_HITBOX_POS
+		vel_click_area.size = VEL_HITBOX_SIZE
+		vel_click_area.mouse_filter = Control.MOUSE_FILTER_STOP
+		vel_click_area.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+		vel_click_area.gui_input.connect(_on_vel_click_area_gui_input)
+		vel_hero.add_child(vel_click_area)
+
+	vel_hero.move_to_front()
+
 	if vel_anim:
+		vel_anim.position = VEL_ANIM_BASE_POS
 		vel_anim.play("breathe")
 
 	var stg := TOWER_STAGES[_current_stage_idx]
 	vel_hero.scale = Vector2(VEL_SCALE, VEL_SCALE)
 	vel_hero.position = Vector2(stg["x"] - 24.0, stg["y"] - VEL_Y_OFFSET)
+
+
+func _on_vel_click_area_gui_input(event: InputEvent) -> void:
+	if event is InputEventMouseButton:
+		var mb := event as InputEventMouseButton
+		if mb.button_index == MOUSE_BUTTON_LEFT and mb.pressed:
+			if vel_click_area:
+				vel_click_area.accept_event()
+			if _is_jumping:
+				return
+			_trigger_vel_angry()
+
+
+func _trigger_vel_angry() -> void:
+	if not vel_anim or not vel_anim.sprite_frames or not vel_anim.sprite_frames.has_animation("angry"):
+		return
+
+	_angry_seq_id += 1
+	_landing_seq_id += 1
+	var my_seq := _angry_seq_id
+
+	if _angry_tween and _angry_tween.is_valid():
+		_angry_tween.kill()
+
+	vel_anim.position = VEL_ANIM_BASE_POS
+	vel_anim.flip_h = false
+	vel_anim.play("angry")
+	_play_sfx(sfx_click)
+
+	_angry_tween = create_tween()
+	_angry_tween.tween_interval(VEL_ANGRY_DURATION)
+
+	_angry_tween.finished.connect(func():
+		if _angry_seq_id != my_seq:
+			return
+		_angry_tween = null
+		if is_instance_valid(vel_anim):
+			vel_anim.position = VEL_ANIM_BASE_POS
+			if not _is_jumping and vel_anim.sprite_frames and vel_anim.sprite_frames.has_animation("breathe"):
+				vel_anim.play("breathe")
+	)
+
+
+func _stop_vel_angry(reset_to_breathe: bool = true) -> void:
+	_angry_seq_id += 1
+	if _angry_tween and _angry_tween.is_valid():
+		_angry_tween.kill()
+	_angry_tween = null
+	if vel_anim:
+		vel_anim.position = VEL_ANIM_BASE_POS
+		if reset_to_breathe and not _is_jumping and vel_anim.sprite_frames and vel_anim.sprite_frames.has_animation("breathe"):
+			vel_anim.play("breathe")
 
 
 func _on_platform_selected(idx: int) -> void:
@@ -1043,6 +1133,7 @@ func _perform_direct_leap(to_idx: int) -> void:
 	if _jump_tween and _jump_tween.is_valid():
 		_jump_tween.kill()
 
+	_stop_vel_angry(false)
 	_is_jumping = true
 	_target_queue_idx = to_idx
 	_buffered_dir = Vector2.ZERO
@@ -1195,6 +1286,7 @@ func _step_towards_queued_target() -> void:
 
 
 func _perform_jump_step(next_idx: int) -> void:
+	_stop_vel_angry(false)
 	_is_jumping = true
 	_landing_seq_id += 1
 	var from_idx := _current_stage_idx
@@ -1317,6 +1409,7 @@ func _jump_to_stage(target_idx: int, animate: bool = true) -> void:
 		return
 
 	if not animate:
+		_stop_vel_angry(false)
 		if _jump_tween and _jump_tween.is_valid():
 			_jump_tween.kill()
 		_is_jumping = false
@@ -1776,6 +1869,7 @@ func _on_launch_stage_pressed() -> void:
 	if not is_unlocked:
 		return
 
+	_stop_vel_angry(false)
 	_play_sfx(sfx_click)
 	GameProgressManager.set_selected_level_number(stg_id)
 
