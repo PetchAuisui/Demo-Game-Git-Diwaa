@@ -1,8 +1,9 @@
-[gd_scene load_steps=8 format=3]
+[gd_scene load_steps=9 format=3]
 
 [ext_resource type="Script" path="res://features/sandbox/top_bar_panel.gd" id="1_script"]
 [ext_resource type="FontFile" uid="uid://caa27axnonbav" path="res://assets/fonts/Bungee-Regular.ttf" id="2_font_bungee"]
 [ext_resource type="FontFile" uid="uid://deedcfbkojx6k" path="res://assets/fonts/ChakraPetch-Bold.ttf" id="3_font_bold"]
+[ext_resource type="PackedScene" path="res://features/auth/account_menu.tscn" id="4_account_menu"]
 
 [sub_resource type="FontVariation" id="FontVariation_bold"]
 base_font = ExtResource("3_font_bold")
@@ -95,3 +96,7 @@ theme_override_styles/normal = SubResource("Style_btn_finish")
 theme_override_styles/hover = SubResource("Style_btn_finish_hover")
 theme_override_styles/pressed = SubResource("Style_btn_finish_hover")
 text = "เสร็จสิ้น (ไปต่อ) ➔"
+
+[node name="AccountMenu" parent="TopMargin/Header" instance=ExtResource("4_account_menu")]
+layout_mode = 2
+confirm_sign_out = true
