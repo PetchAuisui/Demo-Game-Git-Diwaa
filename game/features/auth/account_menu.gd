@@ -19,7 +19,7 @@ const SCREEN_MARGIN := 8.0
 
 var _layer: CanvasLayer
 var _panel: PanelContainer
-var _avatar: Label
+var _trigger_avatar: PlayerAvatar
 var _name_label: Label
 var _sub_label: Label
 var _manage_btn: Button
@@ -38,7 +38,7 @@ var _email_loading := false
 func _ready() -> void:
 	_layer = get_node("Layer") as CanvasLayer
 	_panel = get_node("%Panel") as PanelContainer
-	_avatar = get_node("%Avatar") as Label
+	_trigger_avatar = get_node("TriggerAvatar") as PlayerAvatar
 	_name_label = get_node("%NameLabel") as Label
 	_sub_label = get_node("%SubLabel") as Label
 	_manage_btn = get_node("%ManageBtn") as Button
@@ -50,6 +50,9 @@ func _ready() -> void:
 	_apply_theme()
 
 	pressed.connect(_toggle)
+	# รูปโปรไฟล์อยู่บนปุ่ม: ชี้แล้วให้รูปสว่างขึ้นเล็กน้อย บอกว่ากดได้
+	mouse_entered.connect(func() -> void: _trigger_avatar.modulate = Color(1.08, 1.08, 1.08))
+	mouse_exited.connect(func() -> void: _trigger_avatar.modulate = Color.WHITE)
 	_manage_btn.pressed.connect(_on_manage_pressed)
 	_sign_out_btn.pressed.connect(_on_sign_out_pressed)
 	_reveal_btn.toggled.connect(func(_on: bool) -> void: _show_email())
@@ -64,11 +67,8 @@ func _refresh() -> void:
 		_close()
 		return
 
-	var display_name := PlayerSession.get_display_name()
-	var initial := display_name.left(1).to_upper() if not display_name.is_empty() else "?"
-	text = initial
-	_avatar.text = initial
-	_name_label.text = display_name
+	# วงกลมรูปโปรไฟล์ (บนปุ่มและในหัวเมนู) อัปเดตตัวเองจาก PlayerSession (player_avatar.gd)
+	_name_label.text = PlayerSession.get_display_name()
 
 	var guest := PlayerSession.is_guest()
 	# ไม่แสดงชื่อผู้ใช้: เป็นครึ่งหนึ่งของข้อมูลเข้าสู่ระบบ ไม่ควรโผล่ตอนสตรีม / แคปจอ (ตัวตนดูจากชื่อในเกม + อีเมลแบบปิดบังแทน)
@@ -202,22 +202,17 @@ func _on_sign_out_pressed() -> void:
 
 
 func _apply_theme() -> void:
-	# ปุ่มวงกลมตัวอักษรแรกของชื่อ
-	var circle := _circle_style(AuthThemeTokens.INPUT_BG)
-	var circle_hover := _circle_style(Color.WHITE)
+	# ตัวปุ่มไม่วาดพื้นเอง (รูปโปรไฟล์วาดแทน) วาดแค่วงแหวนตอนโฟกัสจากคีย์บอร์ด
+	var empty := StyleBoxEmpty.new()
 	var focus_ring := StyleBoxFlat.new()
 	focus_ring.draw_center = false
 	focus_ring.border_color = AuthThemeTokens.INPUT_BORDER_FOCUS
 	focus_ring.set_border_width_all(3)
 	focus_ring.set_corner_radius_all(999)
-	add_theme_stylebox_override("normal", circle)
-	add_theme_stylebox_override("pressed", circle)
-	add_theme_stylebox_override("hover", circle_hover)
+	add_theme_stylebox_override("normal", empty)
+	add_theme_stylebox_override("pressed", empty)
+	add_theme_stylebox_override("hover", empty)
 	add_theme_stylebox_override("focus", focus_ring)
-	for color_name in ["font_color", "font_hover_color", "font_pressed_color", "font_focus_color"]:
-		add_theme_color_override(color_name, AuthThemeTokens.TEXT_PRIMARY)
-	_avatar.add_theme_stylebox_override("normal", circle)
-	_avatar.add_theme_color_override("font_color", AuthThemeTokens.TEXT_PRIMARY)
 
 	# กล่องเมนู
 	var panel := StyleBoxFlat.new()
@@ -239,15 +234,6 @@ func _apply_theme() -> void:
 	# ปุ่มหลัก (จัดการบัญชี) สีทอง / ปุ่มรอง (ออกจากระบบ) สีอ่อน
 	_style_button(_manage_btn, AuthThemeTokens.BUTTON_BG, AuthThemeTokens.BUTTON_HOVER_BG, AuthThemeTokens.BUTTON_PRESSED_BG)
 	_style_button(_sign_out_btn, AuthThemeTokens.INPUT_BG, Color.WHITE, AuthThemeTokens.CARD_BORDER)
-
-
-static func _circle_style(bg: Color) -> StyleBoxFlat:
-	var style := StyleBoxFlat.new()
-	style.bg_color = bg
-	style.border_color = AuthThemeTokens.CARD_BORDER
-	style.set_border_width_all(2)
-	style.set_corner_radius_all(999)
-	return style
 
 
 static func _style_button(btn: Button, normal: Color, hover: Color, pressed_bg: Color) -> void:

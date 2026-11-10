@@ -42,7 +42,6 @@ var _email := ""
 var _backdrop: ColorRect
 var _card: PanelContainer
 var _close_btn: Button
-var _avatar: Label
 var _display_name_value: Label
 var _email_row: HBoxContainer
 var _email_label: Label
@@ -96,7 +95,6 @@ func _bind_nodes() -> void:
 	_backdrop = get_node("%Backdrop") as ColorRect
 	_card = get_node("%Card") as PanelContainer
 	_close_btn = get_node("%CloseBtn") as Button
-	_avatar = get_node("%Avatar") as Label
 	_display_name_value = get_node("%DisplayNameValue") as Label
 	_email_row = get_node("%EmailRow") as HBoxContainer
 	_email_label = get_node("%EmailLabel") as Label
@@ -203,7 +201,6 @@ func _restore_for_standalone() -> bool:
 func _refresh() -> void:
 	var display_name := PlayerSession.get_display_name()
 	_display_name_value.text = display_name
-	_avatar.text = display_name.left(1).to_upper() if not display_name.is_empty() else "?"
 
 	var online := PlayerSession.is_online()
 	match PlayerSession.state:
@@ -413,13 +410,6 @@ func _apply_theme() -> void:
 	for muted: Label in [_rename_hint, _contact_label, _offline_note]:
 		muted.add_theme_color_override("font_color", AuthThemeTokens.TEXT_MUTED)
 	_email_label.add_theme_color_override("font_color", AuthThemeTokens.TEXT_MUTED)
-
-	var circle := StyleBoxFlat.new()
-	circle.bg_color = AuthThemeTokens.INPUT_BG
-	circle.border_color = AuthThemeTokens.CARD_BORDER
-	circle.set_border_width_all(2)
-	circle.set_corner_radius_all(999)
-	_avatar.add_theme_stylebox_override("normal", circle)
 
 	_rename_input.add_theme_stylebox_override("normal", AuthThemeTokens.create_input_style(AuthThemeTokens.INPUT_BORDER))
 	_rename_input.add_theme_stylebox_override("focus", AuthThemeTokens.create_input_style(AuthThemeTokens.INPUT_BORDER_FOCUS))

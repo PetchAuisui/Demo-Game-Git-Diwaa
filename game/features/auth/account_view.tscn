@@ -6,6 +6,7 @@
 [ext_resource type="FontFile" uid="uid://c82lda4ldw0ve" path="res://assets/fonts/ChakraPetch-Regular.ttf" id="4_regular"]
 [ext_resource type="Texture2D" uid="uid://dutgqecfjaxku" path="res://assets/icons/eye.svg" id="5_eye"]
 [ext_resource type="Texture2D" path="res://assets/icons/help_circle.svg" id="6_help"]
+[ext_resource type="PackedScene" path="res://features/auth/player_avatar.tscn" id="7_avatar"]
 
 [node name="AccountView" type="Control" unique_id=303417611]
 layout_mode = 3
@@ -76,16 +77,12 @@ text = "×"
 layout_mode = 2
 theme_override_constants/separation = 16
 
-[node name="Avatar" type="Label" parent="CenterArea/Card/Margin/VBox/Header" unique_id=208059439]
+[node name="Avatar" parent="CenterArea/Card/Margin/VBox/Header" unique_id=208059439 instance=ExtResource("7_avatar")]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(72, 72)
 layout_mode = 2
 size_flags_vertical = 4
-theme_override_fonts/font = ExtResource("2_bold")
-theme_override_font_sizes/font_size = 34
-text = "?"
-horizontal_alignment = 1
-vertical_alignment = 1
+diameter = 72.0
+font_size = 34
 
 [node name="HeaderInfo" type="VBoxContainer" parent="CenterArea/Card/Margin/VBox/Header" unique_id=615100054]
 layout_mode = 2
