@@ -49,6 +49,16 @@ func register(username: String, display_name: String, email: String, password: S
 	return await _send(HTTPClient.METHOD_POST, AuthConfig.API_PREFIX + "/register", body, "", AuthConfig.REQUEST_TIMEOUT_SEC)
 
 
+## ตรวจก่อนสมัครว่าใช้ชื่อผู้ใช้และอีเมลนี้ได้ไหม (server ไม่สร้างบัญชี ไม่บันทึกอะไร)
+## ok = ใช้ได้ / IDENTIFIER_TAKEN = มีคนใช้แล้ว (server ไม่บอกว่าช่องไหน ตั้งใจไว้กันการไล่เช็คอีเมล)
+func check_registration(username: String, email: String) -> AuthApiResult:
+	var body := {
+		"username": username,
+		"email": email,
+	}
+	return await _send(HTTPClient.METHOD_POST, AuthConfig.API_PREFIX + "/register/check", body, "", AuthConfig.REQUEST_TIMEOUT_SEC)
+
+
 func login(identifier: String, password: String, remember_me: bool) -> AuthApiResult:
 	var body := {
 		"identifier": identifier,

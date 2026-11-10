@@ -75,6 +75,10 @@ var _guest_back_link: LinkButton
 
 # หน้าต่างนโยบายตอนสมัครเปิดอยู่ไหม (กันกดสมัครซ้ำจนเปิดซ้อน)
 var _consent_open := false
+# รับทราบนโยบายแล้วในรอบสมัครนี้ไหม และเลือกเรื่องตารางอันดับไว้ว่าอะไร
+# (สมัครไม่ผ่าน แก้ข้อมูลแล้วกดใหม่ ไม่ต้องอ่านนโยบายซ้ำ) ล้างเมื่อสมัครสำเร็จใน _clear_register_form
+var _policy_acknowledged := false
+var _leaderboard_choice := false
 
 # --- Server ---
 var _api: AuthApiClient
@@ -436,19 +440,45 @@ func _on_register_submit() -> void:
 	var em_val := _email_input.text.strip_edges()
 	var pw_val := _register_password_input.text
 
-	# ก่อนส่งจริง: เปิดนโยบายให้อ่านจนจบ ติ๊กรับทราบ และเลือกเรื่องตารางอันดับ
-	_consent_open = true
-	var notice := PrivacyNotice.open_for_sign_up(get_tree())
-	if notice == null:
-		_consent_open = false
-		return
-	var choice: Array = await notice.closed
-	_consent_open = false
-	if not choice[0]:
-		return  # ยกเลิก: ข้อมูลในฟอร์มยังอยู่ แก้แล้วกดสมัครใหม่ได้
+	if not _policy_acknowledged:
+		# ถาม server ก่อนว่าชื่อผู้ใช้/อีเมลใช้ได้ไหม จะได้ไม่ต้องอ่านนโยบายจนจบแล้วค่อยรู้ว่าซ้ำ
+		if not await _check_registration(un_val, em_val):
+			return
 
-	_clear_passwords()
-	await _submit_register(un_val, em_val, pw_val, choice[1])
+		# เปิดนโยบายให้อ่านจนจบ ติ๊กรับทราบ + ยืนยันอายุ และเลือกเรื่องตารางอันดับ
+		_consent_open = true
+		var notice := PrivacyNotice.open_for_sign_up(get_tree())
+		if notice == null:
+			_consent_open = false
+			return
+		var choice: Array = await notice.closed
+		_consent_open = false
+		if not choice[0]:
+			return  # ยกเลิก: ข้อมูลในฟอร์มยังอยู่ แก้แล้วกดสมัครใหม่ได้
+		_policy_acknowledged = true
+		_leaderboard_choice = choice[1]
+
+	# ไม่ล้างรหัสผ่านตรงนี้: ถ้าสมัครไม่ผ่านจะได้ไม่ต้องพิมพ์ใหม่ (สมัครสำเร็จ / สลับหน้า ล้างให้เองใน _show_login)
+	await _submit_register(un_val, em_val, pw_val, _leaderboard_choice)
+
+
+## ตรวจกับ server ก่อนเปิดหน้านโยบาย คืนค่า true ถ้าไปต่อได้
+## ผลนี้ไม่ใช่การจองชื่อ ตอนสมัครจริง server ตรวจซ้ำอีกครั้งเสมอ
+func _check_registration(username: String, email: String) -> bool:
+	_set_busy(true)
+	var result := await _api.check_registration(username, email)
+	_set_busy(false)
+	if result.ok:
+		return true
+	if result.code == AuthApiResult.VALIDATION_FAILED:
+		var shown := _apply_field_errors(result.field_errors, {
+			AuthRules.FIELD_USERNAME: _username_error,
+			AuthRules.FIELD_EMAIL: _email_error,
+		})
+		if shown:
+			return false
+	_show_status(_register_status, _message_for_failure(result), false)
+	return false
 
 
 func _message_for(field: String, reason: String) -> String:
@@ -769,3 +799,5 @@ func _on_login_succeeded(session: Dictionary, remember_me: bool) -> void:
 func _clear_register_form() -> void:
 	_username_input.text = ""
 	_email_input.text = ""
+	_policy_acknowledged = false
+	_leaderboard_choice = false
