@@ -165,21 +165,22 @@ func _on_cat_clicked() -> void:
 	if _sfx_meow != null and _sfx_meow.stream != null:
 		_sfx_meow.play()
 
-	# Cute hop animation: tween offsets (relative to anchors) so the cat always lands back on the pedestal
+	# Cute hop animation: shift both offsets (relative to anchors) together so the cat keeps its size
+	# and always lands back on the pedestal
 	const HOP_HEIGHT := 14.0
 	var tween := create_tween()
-	tween.tween_property(_cat_sprite, "offset_top", _cat_ground_top - HOP_HEIGHT, 0.12) \
+	tween.tween_method(_set_cat_lift, 0.0, HOP_HEIGHT, 0.12) \
 			.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-	tween.parallel().tween_property(_cat_sprite, "offset_bottom", _cat_ground_bottom - HOP_HEIGHT, 0.12) \
-			.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-	tween.tween_property(_cat_sprite, "offset_top", _cat_ground_top, 0.14) \
-			.set_trans(Tween.TRANS_BOUNCE).set_ease(Tween.EASE_OUT)
-	tween.parallel().tween_property(_cat_sprite, "offset_bottom", _cat_ground_bottom, 0.14) \
+	tween.tween_method(_set_cat_lift, HOP_HEIGHT, 0.0, 0.14) \
 			.set_trans(Tween.TRANS_BOUNCE).set_ease(Tween.EASE_OUT)
 	tween.tween_callback(func() -> void:
-		_cat_sprite.offset_top = _cat_ground_top
-		_cat_sprite.offset_bottom = _cat_ground_bottom
+		_set_cat_lift(0.0)
 		_is_cat_hopping = false)
+
+
+func _set_cat_lift(lift: float) -> void:
+	_cat_sprite.offset_top = _cat_ground_top - lift
+	_cat_sprite.offset_bottom = _cat_ground_bottom - lift
 
 
 func _input(event: InputEvent) -> void:
