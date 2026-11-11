@@ -3,15 +3,29 @@
 [ext_resource type="Script" path="res://features/start/start_view_controller.gd" id="1_controller"]
 [ext_resource type="Texture2D" uid="uid://c6py6ntqpys64" path="res://assets/art/start_screen/start_bg.png" id="2_bg"]
 [ext_resource type="PackedScene" path="res://features/start/start_top_bar.tscn" id="3_topbar"]
-[ext_resource type="Texture2D" uid="uid://2tl18p12rp5x" path="res://assets/art/start_screen/start_logo.png" id="4_logo"]
+[ext_resource type="Texture2D" path="res://assets/logo/logo_orange.png" id="4_logo"]
 [ext_resource type="Texture2D" uid="uid://e7maulpi344" path="res://assets/art/start_screen/start_scene_preview.png" id="5_preview"]
 [ext_resource type="FontFile" path="res://assets/fonts/Bungee-Regular.ttf" id="6_font_bungee"]
 [ext_resource type="FontFile" uid="uid://csurxmw2vmws4" path="res://assets/fonts/TA-8-bit.ttf" id="7_font_ta8bit"]
 [ext_resource type="FontFile" uid="uid://deedcfbkojx6k" path="res://assets/fonts/ChakraPetch-Bold.ttf" id="8_font_chakra_bold"]
-[ext_resource type="FontFile" path="res://assets/fonts/ChakraPetch-Regular.ttf" id="9_font_chakra_reg"]
-[ext_resource type="FontFile" uid="uid://kdsopvxcj40" path="res://assets/fonts/VT323-Regular.ttf" id="10_font_vt323"]
+[ext_resource type="FontFile" uid="uid://c82lda4ldw0ve" path="res://assets/fonts/ChakraPetch-Regular.ttf" id="9_font_chakra_reg"]
 [ext_resource type="AudioStream" uid="uid://cvlamp5b4er6q" path="res://assets/audio/sfx_click.wav" id="10_sfx_click"]
 [ext_resource type="AudioStream" uid="uid://okd1lm33qdyj" path="res://assets/audio/sfx_command.wav" id="11_sfx_cmd"]
+[sub_resource type="Gradient" id="Gradient_magic_speck"]
+offsets = PackedFloat32Array(0, 0.4, 0.8, 1)
+colors = PackedColorArray(1, 1, 1, 1, 0.95, 0.9, 1, 0.85, 0.7, 0.65, 1, 0.35, 0, 0, 0, 0)
+
+[sub_resource type="GradientTexture2D" id="GradientTexture2D_magic_speck"]
+gradient = SubResource("Gradient_magic_speck")
+width = 16
+height = 16
+fill = 1
+fill_from = Vector2(0.5, 0.5)
+fill_to = Vector2(1, 0.5)
+
+[sub_resource type="Gradient" id="Gradient_particle_fade"]
+offsets = PackedFloat32Array(0, 0.15, 0.8, 1)
+colors = PackedColorArray(0.980392, 0.976471, 0.964706, 0, 0.980392, 0.976471, 0.964706, 0.85, 0.980392, 0.95, 0.88, 0.75, 0.980392, 0.976471, 0.964706, 0)
 
 [sub_resource type="StyleBoxFlat" id="Style_window_frame"]
 bg_color = Color(0.141, 0.082, 0.043, 1)
@@ -90,6 +104,17 @@ bg_color = Color(0.043, 0.051, 0.035, 1)
 
 [sub_resource type="StyleBoxEmpty" id="Style_terminal_input"]
 
+[sub_resource type="FontVariation" id="FontVariation_term_thai"]
+base_font = ExtResource("9_font_chakra_reg")
+variation_embolden = 0.2
+spacing_top = 4
+spacing_bottom = 2
+
+[sub_resource type="FontVariation" id="FontVariation_term_cmd"]
+base_font = ExtResource("7_font_ta8bit")
+variation_embolden = 0.25
+fallbacks = [SubResource("FontVariation_term_thai")]
+
 [sub_resource type="StyleBoxFlat" id="Style_bottom_bar"]
 content_margin_left = 36.0
 content_margin_top = 6.0
@@ -106,27 +131,38 @@ grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_controller")
 
-[node name="Background" type="TextureRect" parent="." unique_id=1596843002]
-texture_filter = 1
+[node name="Background" type="ColorRect" parent="." unique_id=1596843002]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
+offset_left = -10.0
+offset_top = -10.0
+offset_right = 10.0
+offset_bottom = 10.0
 grow_horizontal = 2
 grow_vertical = 2
-texture = ExtResource("2_bg")
-expand_mode = 1
-stretch_mode = 6
+color = Color(0.02, 0.02, 0.03, 1)
 
-[node name="Atmosphere" type="ColorRect" parent="." unique_id=653970451]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-mouse_filter = 2
-color = Color(0.03, 0.02, 0.06, 0.08)
+[node name="MagicParticles" type="CPUParticles2D" parent="." unique_id=1835182050]
+position = Vector2(960, 540)
+amount = 65
+texture = SubResource("GradientTexture2D_magic_speck")
+lifetime = 6.0
+preprocess = 3.0
+emission_shape = 3
+emission_rect_extents = Vector2(960, 540)
+direction = Vector2(0.15, -1)
+spread = 35.0
+gravity = Vector2(0, -12)
+initial_velocity_min = 12.0
+initial_velocity_max = 35.0
+angular_velocity_min = -30.0
+angular_velocity_max = 30.0
+scale_amount_min = 0.35
+scale_amount_max = 0.9
+color = Color(0.980392, 0.976471, 0.964706, 0.85)
+color_ramp = SubResource("Gradient_particle_fade")
 
 [node name="TopBar" parent="." unique_id=1990034810 instance=ExtResource("3_topbar")]
 unique_name_in_owner = true
@@ -225,6 +261,7 @@ unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 62)
 layout_mode = 2
 focus_neighbor_bottom = NodePath("../ResumeWorkBtn")
+mouse_default_cursor_shape = 2
 theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_colors/font_pressed_color = Color(1, 0.9, 0.85, 1)
 theme_override_colors/font_hover_color = Color(1, 1, 1, 1)
@@ -241,6 +278,7 @@ custom_minimum_size = Vector2(0, 56)
 layout_mode = 2
 focus_neighbor_top = NodePath("../StartCareerBtn")
 focus_neighbor_bottom = NodePath("../DressingRoomBtn")
+mouse_default_cursor_shape = 2
 theme_override_colors/font_color = Color(0.18, 0.12, 0.08, 1)
 theme_override_colors/font_pressed_color = Color(0.18, 0.12, 0.08, 1)
 theme_override_colors/font_hover_color = Color(0.18, 0.12, 0.08, 1)
@@ -257,6 +295,7 @@ custom_minimum_size = Vector2(0, 56)
 layout_mode = 2
 focus_neighbor_top = NodePath("../ResumeWorkBtn")
 focus_neighbor_bottom = NodePath("../TutorialBtn")
+mouse_default_cursor_shape = 2
 theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_colors/font_pressed_color = Color(0.9, 0.85, 1, 1)
 theme_override_colors/font_hover_color = Color(1, 1, 1, 1)
@@ -279,6 +318,7 @@ horizontal_alignment = 1
 unique_name_in_owner = true
 layout_mode = 2
 focus_neighbor_top = NodePath("../DressingRoomBtn")
+mouse_default_cursor_shape = 2
 theme_override_colors/font_color = Color(0.33, 0.24, 0.15, 1)
 theme_override_colors/font_pressed_color = Color(0.514, 0.133, 0.027, 1)
 theme_override_colors/font_hover_color = Color(0.871, 0.306, 0.137, 1)
@@ -382,8 +422,8 @@ unique_name_in_owner = true
 layout_mode = 2
 size_flags_vertical = 3
 theme_override_colors/default_color = Color(0.31, 0.98, 0.46, 1)
-theme_override_fonts/normal_font = ExtResource("10_font_vt323")
-theme_override_font_sizes/normal_font_size = 26
+theme_override_fonts/normal_font = SubResource("FontVariation_term_cmd")
+theme_override_font_sizes/normal_font_size = 24
 bbcode_enabled = true
 text = "> git init
 > git status
@@ -398,8 +438,8 @@ theme_override_constants/separation = 6
 [node name="PromptChevron" type="Label" parent="WindowAnchor/WindowFrame/WindowVBox/WindowContent/RightIllustrationPanel/TerminalPanel/Margin/VBox/PromptRow" unique_id=2029329152]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.31, 0.98, 0.46, 1)
-theme_override_fonts/font = ExtResource("10_font_vt323")
-theme_override_font_sizes/font_size = 26
+theme_override_fonts/font = SubResource("FontVariation_term_cmd")
+theme_override_font_sizes/font_size = 24
 text = ">"
 
 [node name="CommandInput" type="LineEdit" parent="WindowAnchor/WindowFrame/WindowVBox/WindowContent/RightIllustrationPanel/TerminalPanel/Margin/VBox/PromptRow" unique_id=1972139635]
@@ -407,8 +447,8 @@ unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_colors/font_color = Color(0.31, 0.98, 0.46, 1)
-theme_override_fonts/font = ExtResource("10_font_vt323")
-theme_override_font_sizes/font_size = 26
+theme_override_fonts/font = SubResource("FontVariation_term_cmd")
+theme_override_font_sizes/font_size = 24
 theme_override_styles/normal = SubResource("Style_terminal_input")
 theme_override_styles/focus = SubResource("Style_terminal_input")
 placeholder_text = "type git command... (e.g. git status)"
@@ -418,8 +458,8 @@ caret_blink = true
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_colors/font_color = Color(0.31, 0.98, 0.46, 1)
-theme_override_fonts/font = ExtResource("10_font_vt323")
-theme_override_font_sizes/font_size = 26
+theme_override_fonts/font = SubResource("FontVariation_term_cmd")
+theme_override_font_sizes/font_size = 24
 text = "█"
 
 [node name="BottomStatusBar" type="PanelContainer" parent="." unique_id=1554528865]

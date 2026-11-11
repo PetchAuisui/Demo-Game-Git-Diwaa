@@ -16,6 +16,7 @@ const TAB_INACTIVE_BORDER := Color(0.180, 0.137, 0.333, 1.0) # #2E2355
 const TAB_ACTIVE_TEXT := Color(1.0, 1.0, 1.0, 1.0)
 const TAB_INACTIVE_TEXT := Color(0.65, 0.60, 0.80, 1.0)
 
+var _brand_btn: BrandButton
 var _back_btn: Button
 var _rotate_left_btn: Button
 var _rotate_right_btn: Button
@@ -74,6 +75,7 @@ func _ready() -> void:
 
 
 func _bind_nodes() -> void:
+	_brand_btn = get_node_or_null("%BrandBtn") as BrandButton
 	_back_btn = get_node("%BackBtn")
 	_rotate_left_btn = get_node("%RotateLeftBtn")
 	_rotate_right_btn = get_node("%RotateRightBtn")
@@ -129,6 +131,8 @@ static func _tab_style(fill: Color, border: Color, border_width: int) -> StyleBo
 
 
 func _wire_events() -> void:
+	if _brand_btn != null:
+		_brand_btn.pressed.connect(_on_back_pressed)
 	_back_btn.pressed.connect(_on_back_pressed)
 	_rotate_left_btn.pressed.connect(_on_rotate_left)
 	_rotate_right_btn.pressed.connect(_on_rotate_right)

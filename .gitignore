@@ -6,4 +6,7 @@ Library/
 .DS_Store
 git-workspaces/
 TestResults/
+[Bb]in/
+[Oo]bj/
+
 

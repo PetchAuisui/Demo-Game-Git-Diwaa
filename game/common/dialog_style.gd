@@ -21,11 +21,14 @@ static func apply(dialog: ConfirmationDialog, accent: Color, glyph: String, head
 
 	var ok := dialog.get_ok_button()
 	ok.theme_type_variation = "CreateAction"
+	ok.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	ok.add_theme_stylebox_override("normal", _fill(accent))
 	ok.add_theme_stylebox_override("hover", _fill(accent.lightened(0.2)))
 	ok.add_theme_stylebox_override("pressed", _fill(accent))
 	ok.custom_minimum_size = Vector2(140, 46)
-	dialog.get_cancel_button().custom_minimum_size = Vector2(112, 46)
+	var cancel := dialog.get_cancel_button()
+	cancel.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	cancel.custom_minimum_size = Vector2(112, 46)
 
 	var margin := MarginContainer.new()
 	margin.name = "Content"
