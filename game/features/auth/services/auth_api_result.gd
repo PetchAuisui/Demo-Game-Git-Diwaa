@@ -21,6 +21,13 @@ var code := ""
 var field_errors: Array[Dictionary] = []
 var data: Dictionary = {}
 var retry_after_sec := 0
+## true = the request failed but may have reached the server (timed out, connection dropped,
+## no response, a 5xx answer, or a 2xx answer that could not be read), so the server may already
+## have acted on it. false = it certainly did not arrive (could not resolve / connect / finish TLS,
+## could not even start), or the server gave a definite answer (4xx, 429).
+## Only refresh cares: a refresh that may have arrived may have rotated the token already.
+## Does not change `code`; callers that ignore this flag behave exactly as before.
+var maybe_delivered := false
 
 
 static func success(p_status: int, p_data: Dictionary) -> AuthApiResult:

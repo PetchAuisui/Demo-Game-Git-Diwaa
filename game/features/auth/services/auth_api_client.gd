@@ -167,9 +167,20 @@ func _send(method: HTTPClient.Method, path: String, body: Variant, token: String
 
 func _parse_response(result: int, status: int, headers: PackedStringArray, raw: PackedByteArray) -> AuthApiResult:
 	if result == HTTPRequest.RESULT_BODY_SIZE_LIMIT_EXCEEDED:
-		return AuthApiResult.failure(status, AuthApiResult.SERVER_ERROR)
+		# server ตอบมาแล้ว (คำขอไปถึง) แต่คำตอบใหญ่เกินจนอ่านไม่ได้
+		var oversized := AuthApiResult.failure(status, AuthApiResult.SERVER_ERROR)
+		oversized.maybe_delivered = status < 400 or status >= 500
+		return oversized
 	if result != HTTPRequest.RESULT_SUCCESS:
-		return AuthApiResult.failure(0, AuthApiResult.NETWORK_UNAVAILABLE)
+		var unreachable := AuthApiResult.failure(0, AuthApiResult.NETWORK_UNAVAILABLE)
+		# ไปไม่ถึง server แน่ๆ มีแค่ 3 แบบนี้ (หาชื่อไม่เจอ / ต่อไม่ติด / TLS ไม่ผ่าน) นอกนั้นคำขออาจไปถึงแล้วแต่คำตอบหาย
+		# เช่น หมดเวลารอ การเชื่อมต่อหลุดกลางทาง ไม่มีคำตอบ
+		unreachable.maybe_delivered = result not in [
+			HTTPRequest.RESULT_CANT_RESOLVE,
+			HTTPRequest.RESULT_CANT_CONNECT,
+			HTTPRequest.RESULT_TLS_HANDSHAKE_ERROR,
+		]
+		return unreachable
 
 	var parsed: Variant = null
 	if not raw.is_empty():
@@ -182,7 +193,10 @@ func _parse_response(result: int, status: int, headers: PackedStringArray, raw: 
 			return AuthApiResult.success(status, {})
 		if parsed is Dictionary:
 			return AuthApiResult.success(status, parsed)
-		return AuthApiResult.failure(status, AuthApiResult.SERVER_ERROR)
+		# server ตอบว่าสำเร็จ (ทำไปแล้ว) แต่อ่านคำตอบไม่ได้
+		var unreadable := AuthApiResult.failure(status, AuthApiResult.SERVER_ERROR)
+		unreadable.maybe_delivered = true
+		return unreadable
 
 	if status == 429:
 		var limited := AuthApiResult.failure(status, AuthApiResult.RATE_LIMITED)
@@ -198,7 +212,10 @@ func _parse_response(result: int, status: int, headers: PackedStringArray, raw: 
 				failed.retry_after_sec = _read_retry_after(headers, MAX_COOLDOWN_RETRY_AFTER_SEC)
 			return failed
 
-	return AuthApiResult.failure(status, AuthApiResult.SERVER_ERROR)
+	var server_error := AuthApiResult.failure(status, AuthApiResult.SERVER_ERROR)
+	# 5xx: server ได้รับคำขอแล้วและอาจทำไปบางส่วนก่อนล้ม (4xx ที่อ่านไม่ออก = ถูกปฏิเสธ ไม่ได้ทำ)
+	server_error.maybe_delivered = status >= 500
+	return server_error
 
 
 func _read_field_errors(value: Variant) -> Array[Dictionary]:
