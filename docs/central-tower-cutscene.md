@@ -17,7 +17,7 @@ flowchart LR
 
 * **เมื่อเข้าสู่ฉาก:** จอค่อยๆ สว่างขึ้น เวลเดินเข้ามาจากทางซ้ายหยุดยืนประจันหน้ากับผู้พิทักษ์ที่ยืนรออยู่ทางขวา
 * **การพูดคุย:** กล่องข้อความสไตล์ Retro Fantasy ปรากฏขึ้น ตัวอักษรค่อยๆ พิมพ์ทีละตัว (Typewriter Effect)
-* **การควบคุม:** ผู้เล่นคลิกหน้าจอ หรือกด Space / Enter เพื่ออ่านบทสนทนาประโยคถัดไป
+* **การควบคุม:** ผู้เล่นคลิกซ้ายที่ไหนก็ได้บนหน้าจอ *(นอกปุ่ม UI)*, คลิกปุ่ม `▶`, หรือกด `Space` / `Enter` / `Numpad Enter` / `Right Arrow (→)` เพื่อเร่งข้อความให้เต็มหรืออ่านประโยคถัดไป และกด `Left Arrow (←)` / `Backspace` / คลิกปุ่ม `◀` เพื่อย้อนกลับบทสนทนาก่อนหน้า (รวมถึงกด `Shift` ค้าง หรือคลิกปุ่ม `FF` มุมขวาบนเพื่อเร่งความเร็ว `2.5x`)
 * **การข้ามฉาก:** สามารถกดปุ่ม **"ข้าม"** บนหน้าจอ หรือกดปุ่ม `Esc` บนคีย์บอร์ดได้ตลอดเวลา เพื่อตัดเข้าสู่เกมเพลย์ทันที (สร้างโดย `skip_cutscene_button.gd` ที่มุมขวาบน พร้อมปุ่มเร่งความเร็ว)
 * **เมื่อจบคัตซีน:** หน้าจอจะค่อยๆ เฟดมืดลง พร้อมปรับระดับเสียง BGM ลงอย่างนุ่มนวล แล้วเปลี่ยน Scene ไปยังด่านเกมเพลย์ที่ระบุใน `@export var next_scene_path`
 
@@ -57,13 +57,14 @@ CentralTowerCutscene (Node2D) [Script: central_tower_cutscene.gd]
 │       └── DropShadow (Sprite2D) [drop_shadow.png, Scale (0.65, 0.45), Position: (0, 38.5)]
 └── MagicStoryUI (CanvasLayer: Layer 10)
     ├── DialogueBox (PanelContainer) [StyleBoxTexture: text dialog.png (Hand-drawn pixel frame 9-slice, Margin 24px, Region: Rect2(43, 191, 2086, 332), Filter: Linear, Modulate: Color(0.78, 0.74, 0.82) ลดความสว่างเส้นม่วงลงไม่ให้แย่งสายตา), Offset: L:-580, R:580, T:-216, B:-36]
-    │   ├── Margin (MarginContainer) [Margin: L:36, T:24, R:48, B:16]
+    │   ├── Margin (MarginContainer) [Margin: L:36, T:24, R:48 (ปรับเป็น R:96 เมื่อสร้างปุ่ม ◀ ▶), B:16]
     │   │   └── VBox (VBoxContainer) [Separation: 12]
     │   │       ├── SpeakerLabel (Label) [ชื่อผู้พูด ChakraPetch-Bold ขนาด 26 px (FontVariation: spacing_top = 6, bottom = 2) สีทองอบอุ่น #EBCB70 / สีฟ้าอ่อน #73BFF2, ไม่มี Outline]
     │   │       └── DialogueLabel (Label) [ข้อความคำพูด ChakraPetch-Regular ขนาด 23 px (FontVariation: spacing_top = 8, bottom = 4) สีขาวนวล #E0E3EB, Line Spacing 10px, ไม่มี Outline]
     │   └── ArrowOverlay (Control) [Overlay ป้องกันกระทบข้อความ]
-    │       └── ArrowWrapper (Control) [Anchors: Bottom-Right (offset: -48, -34, -22, -16)]
-    │           └── ContinueArrow (TextureRect) [arrow.png ลอยเด้งดึ๋ง แสดงเฉพาะเมื่อพิมพ์ข้อความเสร็จสิ้น]
+    │       ├── ArrowWrapper (Control) [ซ่อนเมื่อเปิดใช้ NavArrowsContainer]
+    │       │   └── ContinueArrow (TextureRect)
+    │       └── NavArrowsContainer (HBoxContainer) [สร้างแบบไดนามิกที่มุมขวาล่าง: ปุ่มลูกศร ◀ ย้อนกลับ / ▶ ไปต่อ จาก arrow.png]
     └── FadeOverlay (ColorRect) [ม่านจอดำสำหรับเฟดเข้า-ออก]
 ```
 
@@ -89,7 +90,7 @@ CentralTowerCutscene (Node2D) [Script: central_tower_cutscene.gd]
    - ใช้ภาพกรอบที่ผู้ใช้วาดเองแท้จริง (`text dialog.png`) ผ่าน `StyleBoxTexture` (Region: `Rect2(43, 191, 2086, 332)`) โดยกำหนด 9-slice Margins แบบสมมาตร `24 px` ทุกด้าน เปิด `texture_filter = Linear` และปรับ `modulate_color = Color(0.78, 0.74, 0.82)` เพื่อลดความสว่างของเส้นม่วงลงเล็กน้อย ไม่ให้เด่นแย่งสายตาจากบทสนทนา
    - การจัดแนว: ชื่อผู้พูดและบทสนทนาชิดซ้ายแนวเดียวกัน ห่างขอบซ้าย 36 px, เว้นชื่อจากขอบบน 24 px, เว้นระหว่างชื่อกับบทพูด 12 px
    - Typography Hierarchy: ชื่อผู้พูดใช้ฟอนต์ **ChakraPetch-Bold.ttf** ขนาด **26 px** (ผ่าน `FontVariation`: `spacing_top = 6`, `spacing_bottom = 2`, ไม่มี Outline) โดยแยกสีตามบทบาท: ผู้พิทักษ์ใช้สีทองอบอุ่น `#EBCB70` (`Color(0.92, 0.80, 0.44, 1.0)`) และเวล/ผู้เล่นใช้สีฟ้าอ่อนสดใส `#73BFF2` (`Color(0.45, 0.75, 0.95, 1.0)`), ส่วนบทพูดใช้ฟอนต์ **ChakraPetch-Regular.ttf** ขนาด **23 px** (`spacing_top = 8`, `spacing_bottom = 4`) สีขาวนวล `#E0E3EB` (`Color(0.88, 0.89, 0.92, 1.0)`) ไม่มี Outline เว้นระยะบรรทัด 10 px (ดู [คู่มือฟอนต์](fonts.md)) คงบทสนทนาแบบเดิม 16 บท พร้อมใช้ Non-breaking Space สำหรับคำเฉพาะอย่าง "Git Flow" / "GitHub Flow" เพื่อไม่ให้ถูกตัดแยกคนละบรรทัด
-   - ลูกศรไปต่อ (Continue Arrow): จัดวางที่มุมขวาล่าง (`ArrowOverlay`) ซ่อนระหว่างข้อความกำลังพิมพ์ และจะแสดงขึ้นพร้อมอนิเมชันลอยเบาๆ ทันทีที่ข้อความขึ้นครบ 100%
+   - ปุ่มลูกศรควบคุมบทสนทนา (`◀ ▶`): สร้างแบบไดนามิกที่มุมขวาล่าง (`ArrowOverlay/NavArrowsContainer`) แทนลูกศรเดี่ยวเดิม พร้อมเพิ่ม `margin_right` ของกล่องเป็น `96 px` โดยปุ่ม `▶` ใช้เร่งข้อความ/ไปต่อ และปุ่ม `◀` ใช้ย้อนกลับบทสนทนาก่อนหน้าพร้อมแสดงข้อความเต็มทันที (ปิดใช้งานและลดความโปร่งใสเป็น 25% เมื่ออยู่ที่ประโยคแรก)
    - ผลลัพธ์: ระดับขอบบนของกล่องข้อความอยู่ที่ `y = 864` วางทับเฉพาะส่วนรองเท้า (ประมาณ 40 px) โดยมองเห็นลำตัว เสื้อผ้า และใบหน้าของตัวละครครบถ้วนชัดเจนในระดับสายตา
 
 4. **การเดินเข้าฉากจากนอกจอ (Walk-in Entrance):**
