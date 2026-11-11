@@ -22,6 +22,36 @@ public sealed class PasswordHasher
 
     public string DummyHash => LazyDummyHash.Value;
 
+    // PBKDF2 600,000 รอบกิน CPU หลายร้อย ms ต่อครั้ง: จำกัดจำนวนที่คำนวณพร้อมกันไว้เท่าจำนวน core
+    // คำขอที่เกินจะรอคิวแบบไม่กิน thread (await) ทั้งห้องสมัครพร้อมกันจึงไม่แย่ง thread ของ /health และ /me จนตอบไม่ทัน
+    private static readonly SemaphoreSlim HashSlots = new(Math.Max(1, Environment.ProcessorCount));
+
+    public async Task<string> HashAsync(string password, CancellationToken ct = default)
+    {
+        await HashSlots.WaitAsync(ct);
+        try
+        {
+            return await Task.Run(() => Hash(password), ct);
+        }
+        finally
+        {
+            HashSlots.Release();
+        }
+    }
+
+    public async Task<bool> VerifyAsync(string? password, string? storedHash, CancellationToken ct = default)
+    {
+        await HashSlots.WaitAsync(ct);
+        try
+        {
+            return await Task.Run(() => Verify(password, storedHash), ct);
+        }
+        finally
+        {
+            HashSlots.Release();
+        }
+    }
+
     public string Hash(string password)
     {
         ArgumentNullException.ThrowIfNull(password);
