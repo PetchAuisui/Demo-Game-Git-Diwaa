@@ -1,6 +1,8 @@
 class_name AuthApiClient
 extends Node
 ## Talks to the account server over HTTP, one request at a time.
+## A request made while another is running waits in a queue (it is never dropped),
+## so a sign-out sent during another request still reaches the server and revokes the token.
 ##
 ## SECURITY NOTICE:
 ## 1. Never print request bodies, response bodies, headers or tokens, not even while debugging.
@@ -16,8 +18,15 @@ const MAX_RETRY_AFTER_SEC := 3600
 # Display-name cooldown is 14 days on the server; accept a little more, never unbounded.
 const MAX_COOLDOWN_RETRY_AFTER_SEC := 15 * 24 * 60 * 60
 
+# คำขอที่รอคิวได้มากสุด (กันโค้ดที่วนส่งผิดพลาดจนคิวยาวไม่สิ้นสุด)
+const MAX_WAITING := 8
+
+## ส่งออกทุกครั้งที่คำขอหนึ่งจบ ให้คำขอที่รอคิวอยู่ได้ไปต่อ
+signal _request_finished
+
 var _http: HTTPRequest
 var _busy := false
+var _waiting := 0
 
 
 func _ready() -> void:
@@ -114,9 +123,17 @@ func me(token: String) -> AuthApiResult:
 
 
 func _send(method: HTTPClient.Method, path: String, body: Variant, token: String, timeout_sec: float) -> AuthApiResult:
+	# HTTPRequest ส่งได้ทีละคำขอ: ถ้ามีคำขออื่นค้างอยู่ ให้รอคิวแทนการล้ม
+	# (เดิมล้มทันที เช่น ออกจากระบบตอนมีคำขอค้าง /logout หายไปเงียบๆ token เลยยังใช้ได้บน server)
+	# หมายเหตุ: ตั้งแต่ออกจากลูปนี้จนถึง _busy = true ด้านล่างห้ามมี await ไม่งั้นคำขอที่รอจะแซงกันได้
 	if _busy:
-		push_warning("AuthApiClient: another request is still running.")
-		return AuthApiResult.failure(0, AuthApiResult.SERVER_ERROR)
+		if _waiting >= MAX_WAITING:
+			push_warning("AuthApiClient: too many requests waiting.")
+			return AuthApiResult.failure(0, AuthApiResult.SERVER_ERROR)
+		_waiting += 1
+		while _busy:
+			await _request_finished
+		_waiting -= 1
 
 	var base := AuthConfig.base_url()
 	if base.is_empty():
@@ -139,10 +156,12 @@ func _send(method: HTTPClient.Method, path: String, body: Variant, token: String
 	var request_error := _http.request(base + path, headers, method, payload)
 	if request_error != OK:
 		_busy = false
+		_request_finished.emit()
 		return AuthApiResult.failure(0, AuthApiResult.NETWORK_UNAVAILABLE)
 
 	var response: Array = await _http.request_completed
 	_busy = false
+	_request_finished.emit()
 	return _parse_response(response[0], response[1], response[2], response[3])
 
 
