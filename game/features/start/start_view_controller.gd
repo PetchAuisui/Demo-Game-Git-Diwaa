@@ -220,7 +220,7 @@ func _on_terminal_command_submitted(input: String) -> void:
 func _append_terminal_text(text: String) -> void:
 	if text.is_empty():
 		return
-	if not _output_log.get_parsed_text().is_empty():
+	if _output_log.get_total_character_count() > 0:
 		_output_log.add_text("\n")
 	SandboxThemeTokens.append_terminal_styled_text(_output_log, text, _thai_log_font, THAI_LOG_FONT_SIZE)
 
