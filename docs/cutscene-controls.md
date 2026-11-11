@@ -100,17 +100,20 @@ flowchart TD
     Intro -->|"เล่นจบ / กดข้าม"| Outside["4. outside_cutscene.tscn (วิกฤตนอกหอคอย)"]
     Outside -->|"เล่นจบ / กดข้าม"| InsideTower["5. inside_tower_cutscene.tscn (พบมิวราในหอคอย)\n[บันทึก: ดูคัตซีนแล้ว = true]"]
     
-    CheckProgress -->|"เคยดูแล้ว (true)"| LevelSelect["🗺️ level_select_view.tscn (หน้ารวมด่าน)"]
-    LevelSelect -->|"เลือกด่าน / เล่นอีกครั้ง"| LevelDialogue["level_dialogue_view.tscn (บทสนทนาประจำด่าน ไม่เล่นคัตซีนเดินเข้าซ้ำ)"]
+    CheckProgress -->|"เคยดูแล้ว (true)"| LevelSelect["🗺️ level_select_view.tscn (แผนที่หอคอย 40 ด่าน / Act 1-3)"]
+    LevelSelect -->|"ด่านที่มีบทสนทนา (เช่น ด่าน 1)"| LevelDialogue["level_dialogue_view.tscn (บทสนทนาประจำด่าน ไม่เล่นคัตซีนเดินเข้าซ้ำ)"]
+    LevelSelect -->|"ด่านที่ 16"| CentralTower["7. central_tower_cutscene.tscn (พบผู้พิทักษ์หอคอยกลาง)"]
+    LevelSelect -->|"ด่านอื่นที่ยังไม่มีบทสนทนา"| Sandbox
     LevelDialogue -->|"จบบทสนทนา (Outro)"| LevelClearScene
+    LevelDialogue -.->|"เข้าเล่นภารกิจ (Step 1/2)"| Sandbox
     
     InsideTower -->|"จบบทสนทนา (Outro)"| LevelClearScene["🚶 level_clear_scene.tscn (คัตซีนเดินขึ้นบันไดผ่านด่าน)"]
     LevelClearScene -->|"วินาทีที่ 3.0 ของ walk-stair"| ClearModal["⭐ level_clear_modal.tscn (สรุปดาวหลังจบด่าน)"]
     ClearModal -->|"กลับไปหน้าเลือกด่าน / ด่านต่อไป"| LevelSelect
     
-    InsideTower -.->|"โหมดฝึกฝน Sandbox"| Sandbox["6. sandbox_game_view.tscn (ด่านฝึกสอน Git 1-15)"]
-    Sandbox -.->|"ด่านที่ 16 / คำสั่ง cutscene central"| CentralTower["7. central_tower_cutscene.tscn (พบผู้พิทักษ์หอคอยกลาง)"]
-    CentralTower -.->|"เล่นด่านต่อ"| Sandbox
+    InsideTower -.->|"เข้าเล่นภารกิจ Step 1/2"| Sandbox["6. sandbox_game_view.tscn (ด่านฝึกสอน Git 1-40)"]
+    Sandbox -.->|"คำสั่ง cutscene central / level 16"| CentralTower
+    CentralTower -.->|"จบคัตซีน / กดข้าม"| Sandbox
     
     Sandbox -.->|"เคลียร์ครบทุกด่าน / คำสั่ง cutscene ending"| Ending["8. ending_cutscene.tscn (ฉากจบ & เครดิตทีมพัฒนา)"]
     Ending -->|"คลิกกลับสู่เมนูหลัก"| Start

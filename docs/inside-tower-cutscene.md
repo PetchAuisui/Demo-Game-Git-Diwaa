@@ -218,10 +218,9 @@ flowchart TD
 ## 5. หน้าต่างสรุปผลผ่านด่านและหน้ารวมด่าน (Level Clear & Level Select)
 
 > [!IMPORTANT]
-> **สถานะการพัฒนาของหน้าเลือกด่านและหน้าสรุปดาว (Mockup & Flow Integration Only):**
-> * **หน้าเลือกรวมด่าน (`level_select_view.tscn`) และหน้าแสดงดาวสรุปผล (`level_clear_modal.tscn`) ในปัจจุบันจัดทำขึ้นเป็น "โครงสร้างจำลอง (Mockup UI)" เท่านั้น** เพื่อให้ตัวเกมดูครบถ้วนและเห็นภาพรวมโฟลว์การทำงาน แต่ยังไม่ได้เปิดใช้งานระบบคำนวณคะแนน/ดาวจริง โดยทำขึ้นและเชื่อมต่อไว้ก่อนเฉยๆ เพื่อจุดประสงค์ดังนี้:
->   1. **หน้าเลือกรวมด่าน:** ทำไว้เพื่อให้สามารถคลิกสลับหน้าจอไป-มาระหว่างด่านและเมนูหลักได้ง่าย ไม่ต้องเปิดปิดเกมใหม่
->   2. **หน้าแสดงดาวสรุปผล:** ทำขึ้นมาเพื่อตรวจสอบการทำงานและโฟลว์หลังจบด่านของเกมเฉยๆ เผื่อมีเพื่อนหรือทีมงานมาตรวจงานแล้วจะได้ทราบว่าระบบคิดคะแนน/บันทึกดาวยังไม่ได้เปิดใช้งานจริง
+> **สถานะการพัฒนาของหน้าเลือกด่านและหน้าสรุปดาว:**
+> * **หน้าเลือกรวมด่าน ([`level_select_view.tscn`](../game/features/level_select/level_select_view.tscn)):** พัฒนาเป็นระบบ **Tower Ascension Roadmap (40 ด่าน, Act 1–3)** พร้อมการปลดล็อกตามลำดับผ่าน `GameProgressManager` และนำทางเข้าสู่คัตซีน / บทสนทนา / [`sandbox_game_view.tscn`](../game/features/sandbox/sandbox_game_view.tscn) ตามข้อมูลจริงของแต่ละด่าน
+> * **หน้าแสดงดาวสรุปผล ([`level_clear_modal.tscn`](../game/features/dialogue/level_clear_modal.tscn)):** ในปัจจุบันยังเป็น **โครงสร้างจำลอง (Mockup UI)** เพื่อให้เห็นโฟลว์หลังจบด่าน (ดึงชื่อด่าน/คำสั่ง/คีย์เวิร์ดจาก `LevelDataLoader` แล้ว แต่ตารางคะแนนและดาวยังเป็นค่าตายตัว ไม่ได้เปิดระบบคำนวณคะแนน/บันทึกดาวจริง)
 
 ### 5.1 หน้าต่างสรุปผลผ่านด่าน (Success Modal - `level_clear_modal.tscn`)
 * ถูกฝังอยู่ภายในฉากเดินขึ้นบันได [`level_clear_scene.tscn`](../game/features/cutscene/level_clear_scene.tscn) โดยจะแสดงขึ้นพร้อมเอฟเฟกต์ซูมเด้งที่วินาทีที่ 3.0 ของแอนิเมชัน `"walk-stair"` หลังจากจบบทสนทนาสรุปผลด่านที่ 1 (ประโยค "มิวรา: …นั้นสิ") หรือกดข้ามในช่วง Outro (และเปิดเป็น Overlay โดยตรงใน `level_dialogue_view.gd` เป็น Fallback หากไม่มีฉากบันได)
@@ -236,16 +235,20 @@ flowchart TD
   3. **ด่านต่อไป (Next Level):** สลับไปยังหน้าเลือกรวมด่าน
 
 ### 5.2 หน้าต่างเลือกรวมด่าน (Level Select Screen - `level_select_view.tscn`)
-* หน้าต่าง `Level` สไตล์หน้าต่างระบบ มีปุ่มย่อ ขยาย และปุ่มปิด `✕` (กดปิดจะกลับสู่หน้าหลัก `start_view.tscn`)
-* หัวข้อภายใน: `"Select Level"` พร้อมเส้นคั่นแนวนอน
-* แสดงการ์ดด่าน 15 ด่านในรูปแบบ Grid (3 แถว × 5 คอลัมน์) ตามสถานะความสำเร็จของผู้เล่น:
-  * **การ์ดสีเขียว (เฉพาะด่านที่เล่นสำเร็จแล้วเท่านั้น):** เมื่อผู้เล่นเล่นผ่านด่านนั้นสำเร็จ ระบบจะบันทึกสถานะลงใน `user://game_progress.cfg` และการ์ดจะเปลี่ยนเป็นสีเขียวสดใส แสดงชื่อด่าน คีย์เวิร์ดคำสั่ง และดาวทอง ⭐⭐⭐ สามารถคลิกเพื่อเล่นซ้ำได้
-  * **การ์ดสีเทา (ด่านที่ยังเล่นไม่ผ่าน):**
-    * *ด่านที่พร้อมให้เข้าเล่น (เช่น ด่านที่ 1 ในปัจจุบันที่ยังเล่นไม่ผ่าน):* แสดงเป็นการ์ดสีเทาพร้อมชื่อด่านและคำสั่ง สามารถคลิกเพื่อเข้าเล่นด่านได้ตามปกติ
-    * *ด่านที่ยังไม่เปิด / ยังไม่มีไฟล์ (ด่านที่ 2–15):* แสดงเป็นการ์ดสีเทาเปล่า ปิดการคลิก เพื่อคงโครงสร้างหน้าต่าง 15 ด่านตาม Mockup
-  * **Dynamic Level Detection:** ตรวจจับไฟล์ `level_%02d.gd` อัตโนมัติผ่าน `LevelDataLoader.has_level()` เมื่อมีการสร้างด่านใหม่ในอนาคต จะสามารถเข้าเล่นได้ทันที และจะเปลี่ยนเป็นสีเขียวเมื่อเล่นผ่านสำเร็จ
-  * **การปลดล็อกตามลำดับ:** ด่านที่ N เล่นได้เมื่อมีไฟล์ข้อมูล และผ่านด่านที่ N−1 แล้ว (หรือเคยผ่านด่านนั้นเอง) ด่านที่ไม่มีไฟล์ข้อมูลกดเล่นไม่ได้แม้จะเคยบันทึกว่าผ่านแล้ว
-  * **ปลายทางเมื่อกดการ์ด:** เปิด `level_dialogue_view.tscn` โดยตรง (ไม่ผ่าน `inside_tower_cutscene.tscn`) คัตซีนเดินเข้าห้องโถงและบทนำพบมิวราจึงเล่นเฉพาะครั้งแรกในโฟลว์เปิดตัวเกมเท่านั้น
+* แผนที่ไต่หอคอยเวทมนตร์ **Tower Ascension Roadmap (40 ด่าน, แบ่ง 3 Acts)**:
+  * **Act 1 (ด่าน 1–15):** บันไดวนไต่หอคอย — การใช้งาน Git เบื้องต้น
+  * **Act 2 (ด่าน 16–20):** โถงประจำชั้นทีม — การทำงานร่วมกันและ GitHub Flow (ด่าน 16 เปิดเข้าสู่ `central_tower_cutscene.tscn`)
+  * **Act 3 (ด่าน 21–40):** ยอดหอคอยแก้ปัญหา Git — บันไดวนคดเคี้ยวและภารกิจแก้ปัญหา
+* มี Top Navbar (`BrandBtn` / `‹ เมนูหลัก` กลับ `start_view.tscn`, แท็บ `ACT 1–3`, ตัวนับ `ACT N · cleared / total LEVELS`, ปุ่ม `เล่นต่อ →`, ปุ่มเสียง) และ Bottom HUD แสดงรายละเอียดด่านพร้อมปุ่ม `เข้าสู่ด่าน` / `ทบทวนด่าน` (รองรับทั้งคลิกเมาส์, `W`/`S`/`↑`/`↓` เลื่อนด่าน, `Space`/`Enter` เข้าด่าน, `1`–`3` ข้าม Act, และ `Esc` กลับเมนูหลัก)
+* **สถานะแท่นศิลาตามความคืบหน้า (`user://game_progress.cfg`):**
+  * **ด่านปัจจุบัน (ส้มทอง):** แท่นที่ตัวละครเวลยืนอยู่ (เปิดฉากมายืนที่ด่านล่าสุดที่ผ่าน หรือด่าน 1 หากยังไม่เคยผ่าน)
+  * **ด่านที่ผ่านแล้ว (เขียวมรกต):** บันทึกสถานะผ่านด่านใน `GameProgressManager` พร้อมดาว `★★★`
+  * **ด่านที่ปลดล็อกแล้ว (น้ำเงินเทา):** ด่านถัดไปที่พร้อมเข้าเล่น
+  * **ด่านที่ยังถูกผนึก (เทาเข้ม + ไอคอนแม่กุญแจ):** ต้องผ่านด่านก่อนหน้า (`N−1`) ตามลำดับจึงจะปลดล็อก
+* **ปลายทางเมื่อกดเข้าเล่นด่าน (`_on_launch_stage_pressed()`):**
+  * **ด่านที่ 16:** เปิด [`central_tower_cutscene.tscn`](../game/features/cutscene/central_tower_cutscene.tscn)
+  * **ด่านที่มีไฟล์ข้อมูล `level_%02d.gd` (`LevelDataLoader.has_level()`):** เปิด `level_dialogue_view.tscn` โดยตรง (ไม่ผ่าน `inside_tower_cutscene.tscn` ซ้ำ — คัตซีนเดินเข้าห้องโถงและบทนำพบมิวราเล่นเฉพาะครั้งแรกในโฟลว์เปิดตัวเกมเท่านั้น)
+  * **ด่านที่ยังไม่มีไฟล์บทสนทนา (เช่น ด่าน 2–15 และ 17–40):** เปิดเข้าเล่น [`sandbox_game_view.tscn`](../game/features/sandbox/sandbox_game_view.tscn) โดยตรง
 
 ---
 
@@ -260,8 +263,10 @@ flowchart TD
     CheckSeen -->|"ไม่เคย (เข้าเล่นครั้งแรก / false)"| Cutscene["🎬 บังคับดูฉากคัตซีนเปิดตัว\n(cut_scence_normal.tscn)"]
     Cutscene --> PlayInside["🏛️ เดินทางเข้าห้องโถงหอคอย\n(inside_tower_cutscene.tscn)\n-> บันทึก has_seen_intro_cutscene = true"]
     
-    CheckSeen -->|"เคยดูแล้ว (true)"| LevelSelect["🗺️ ข้ามคัตซีนเปิดหน้าเลือกรวมด่าน\n(level_select_view.tscn)"]
-    LevelSelect -->|"เลือกด่าน"| PlayLevel["💬 บทสนทนาประจำด่าน\n(level_dialogue_view.tscn)\nไม่เล่นคัตซีนเดินเข้าซ้ำ"]
+    CheckSeen -->|"เคยดูแล้ว (true)"| LevelSelect["🗺️ ข้ามคัตซีนเปิดแผนที่หอคอย 40 ด่าน\n(level_select_view.tscn)"]
+    LevelSelect -->|"ด่านที่มีบทสนทนา (เช่น ด่าน 1)"| PlayLevel["💬 บทสนทนาประจำด่าน\n(level_dialogue_view.tscn)\nไม่เล่นคัตซีนเดินเข้าซ้ำ"]
+    LevelSelect -->|"ด่านที่ 16"| PlayCentral["🏛️ หอคอยเวทกลาง\n(central_tower_cutscene.tscn)"]
+    LevelSelect -->|"ด่านอื่นที่ยังไม่มีบทสนทนา"| PlaySandbox["🎮 SandboxGameView\n(sandbox_game_view.tscn)"]
 ```
 
 ### 6.2 ตัวจัดการสถานะ (`game/common/game_progress_manager.gd`)
@@ -282,17 +287,16 @@ flowchart TD
   * พิมพ์ `reset` หรือ `reset progress`: รีเซ็ตสถานะกลับเป็นผู้เล่นใหม่ สำหรับทดสอบฉากคัตซีนเปิดตัวซ้ำ
   * พิมพ์ `level`: สลับไปหน้าต่างเลือกรวมด่านโดยตรง
 
-### 6.4 การยกเลิกตัวแปร static ข้าม Scene และปรับใช้ In-Scene Modal Presentation
+### 6.4 การยกเลิกตัวแปร static ข้าม Scene, การเข้าเล่น SandboxGameView และ Fallback
 * **ยกเลิกการใช้ `static var` ข้ามซีนทั้งหมด:**
   * นำ `static var start_phase` ออกจาก `level_dialogue_view.gd`
   * นำ `static var current_step` และ `static var return_scene_path` ออกจาก `gameplay_placeholder_view.gd`
-  * ตัดการ `load()` ข้ามสคริปต์เพื่อเซ็ตค่า static ซึ่งทำให้เกิด Circular Coupling
-* **ปรับสถาปัตยกรรมของ `gameplay_placeholder_view.tscn` เป็น In-Scene Modal Presentation:**
-  * เมื่อถึงขั้นตอน `open_gameplay` (ขั้นที่ 1 หรือ 2) หรือกดปุ่มข้าม ตัววิวจะ Instantiate หน้าจำลองขึ้นมาเป็น Modal Overlay ภายในเลเยอร์ `MagicStoryUI` ทันที
-  * ส่งค่าขั้นตอนผ่านตัวแปรของออบเจกต์โดยตรง (`placeholder.current_step = step`) ตามหลัก Dependency Injection
-  * สื่อสารกลับมายังบทสนทนาเมื่อกดปุ่ม "เสร็จสิ้น" ผ่านสัญญาณ `step_finished(step)` แล้วเรียก `queue_free()` ปิดหน้าต่างลง
-  * **ผลลัพธ์:** บทสนทนาเล่นต่อเนื่องในซีนเดิมทันที 100% ไม่ต้องสลับฉากไป-มา ไม่เกิดจอดำ และไม่มีตัวแปร static ค้างในหน่วยความจำ
-  * **ระบบสำรอง (Fallback):** มีฟังก์ชัน `GameProgressManager.consume_pending_dialogue_phase()` รองรับกรณีเปิดรันซีนเดี่ยวแยกอิสระ (F6 Standalone Debug) อย่างปลอดภัย
+  * ตัดการ `load()` ข้ามสคริปต์เพื่อเซ็ตค่า static ซึ่งทำให้เกิด Circular Coupling และใช้ `GameProgressManager` (`set_current_gameplay_step()`, `set_gameplay_return_scene()`, `consume_pending_dialogue_phase()`) เป็นตัวกลางแทน
+* **โฟลว์หลักในปัจจุบัน (สลับเข้าสู่ `sandbox_game_view.tscn` จริง):**
+  * เมื่อถึงขั้นตอน `open_gameplay` (ขั้นที่ 1 หรือ 2) หรือกดปุ่มข้ามในช่วงบทเรียน ระบบจะบันทึก `step` และฉากปลายทางกลับลง `GameProgressManager` แล้วเปลี่ยนฉากไปยัง [`sandbox_game_view.tscn`](../game/features/sandbox/sandbox_game_view.tscn) ผ่าน `SceneLoader.change_scene()` ทันที
+  * เมื่อผู้เล่นรันคำสั่งครบตามเงื่อนไขและกด "เสร็จสิ้น (ไปต่อ)" / พิมพ์ `done` ใน Sandbox ระบบจะตั้ง `set_pending_dialogue_phase(next_phase)` และสลับกลับมายังซีนบทสนทนาเพื่อเล่นช่วงถัดไปต่อทันที
+* **ระบบสำรอง In-Scene Modal (`gameplay_placeholder_view.tscn` Fallback):**
+  * หากโหลด `sandbox_game_view.tscn` ไม่สำเร็จ ตัววิวจะยังคง Instantiate `gameplay_placeholder_view.tscn` ขึ้นมาเป็น Modal Overlay ภายในเลเยอร์ `MagicStoryUI` พร้อมส่งค่าผ่านตัวแปรอินสแตนซ์โดยตรง (`placeholder.current_step = step`) และรอสัญญาณ `step_finished(step)` แทนได้อย่างปลอดภัย
 
 ### 6.5 การ Transition เข้าสู่ SandboxGameView แบบ Background Threaded Loading
 * **ปัญหาเดิม:** เมื่อผู้เล่นเลือกช้อยส์ "ฉันจะลองดู" หรือกดข้าม ระบบจะโหลด `sandbox_game_view.tscn` ซึ่งเป็นซีนขนาดใหญ่จากดิสก์ (ใช้เวลาโหลด ~586 ms) ทำให้การสลับฉากหยุดชะงัก เกิดอาการค้างหน้าเดิมหรือค้างที่จอดำ

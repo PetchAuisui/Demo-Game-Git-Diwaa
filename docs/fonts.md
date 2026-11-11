@@ -26,7 +26,7 @@
 * `outside_cutscene.tscn` (ฉากหน้าหอคอยก่อนเริ่มด่าน 1)
 * `level_clear_modal.tscn` (หน้าต่างสรุปผลผ่านด่าน)
 * `gameplay_placeholder_view.tscn` (หน้าจำลองเล่นเกมผ่านขั้น)
-* `level_select_view.gd` (หน้าต่างเลือกด่าน 1 ถึง 15)
+* `level_select_view.tscn` / `level_select_view.gd` (แผนที่เลือกด่าน Tower Roadmap 1 ถึง 40)
 
 ### 2.1 ข้อมูลจำเพาะในกล่องข้อความ (Dialogue Box Specifications)
 
@@ -115,11 +115,16 @@
 
 | ส่วนประกอบ | โหนด / โค้ด | ฟอนต์ / FontVariation | ขนาด | สีตัวอักษร | Outline | หมายเหตุ |
 |---|---|---|:---:|---|:---:|---|
-| **หัวข้อแถบหน้าต่าง** | `TitleLabel` | `Bungee-Regular.ttf` | **18 px** | ขาวนวล `#F5F5F5` | ไม่มี | `Level` บน TitleBar สไตล์เรโทรอาร์เคด |
-| **หัวข้อหลัก** | `SelectLevelLabel` | `Bungee-Regular.ttf` | **30 px** | ดำเข้ม `#1F1F1F` | ไม่มี | `Select Level` สไตล์ Display หนาโดดเด่น คุมธีมเดียวกับชื่อเกม |
-| **ชื่อการ์ดแต่ละด่าน** | `lbl_title` | `ChakraPetch-Bold.ttf`<br>(`FontVariation` spacing_top=4, bottom=2) | **22 px** | เขียวเข้ม `#0A380D` (ผ่านแล้ว)<br>เทาเข้ม `#383840` (ยังไม่ผ่าน) | ไม่มี | "ด่านที่ 1" ถึง "ด่านที่ 15" เด่นชัด สระไม่ตกขอบ |
-| **ชื่อคำสั่งประจำด่าน** | `lbl_cmd` | `ChakraPetch-Regular.ttf`<br>(`FontVariation` spacing_top=4, bottom=2) | **16 px** | เขียว `#0F4214` (ผ่านแล้ว)<br>เทา `#52525C` (ยังไม่ผ่าน) | ไม่มี | เช่น `git version` จัดกึ่งกลางใต้หัวข้อด่าน |
-| **ดาวผ่านด่าน** | `lbl_stars` | System Fallback Font | **18 px** | ทอง `#FACF19` | ไม่มี | `★ ★ ★` แสดงเฉพาะด่านที่ผ่านแล้ว |
+| **ป้ายชื่อแผนที่บน Navbar** | `RoadmapTag` | `TA-8-bit.ttf` | **20 px** | น้ำตาลอ่อน `#9A7757` | ไม่มี | `"TOWER ROADMAP"` ข้างปุ่มโลโก้ |
+| **แท็บ Act และตัวนับด่าน** | `BtnAct1`..`3`<br>`ActProgressLabel` | `TA-8-bit.ttf`<br>(SubResource: `Font_ta_pixel_bold`, `variation_embolden = 0.5`) | **16 px** | ทองแอนทีค `#B89A67` (Active)<br>เขียวหม่น `#829A91` (ผ่านแล้ว)<br>เทาลาเวนเดอร์ `#9A96AA` / `#77758D` | ไม่มี | `"ACT 1"`, `"ACT 2"`, `"ACT 3"`, `"ACT N · X / Y LEVELS"` |
+| **ปุ่มนำทางบน Navbar** | `BtnFocusCurrent` (`เล่นต่อ →`)<br>`BtnBack` (`‹ เมนูหลัก`) | `ChakraPetch-Bold.ttf` | **15 px** (`BtnFocusCurrent`)<br>**16 px** (`BtnBack`) | ทองแอนทีค `#B89A67` / ครีมอุ่น `#F5E0BD` | ไม่มี | ปุ่มลัดไปด่านล่าสุดและกลับเมนูหลัก |
+| **แถบหัวข้อ Act ลอยกลางจอ** | `ActBadge` / `ActTitle`<br>`ActDesc` | `ChakraPetch-Bold.ttf` (`ActBadge`, `ActTitle`)<br>`ChakraPetch-Regular.ttf` (`ActDesc`) | **15 px** (`ActBadge`)<br>**16 px** (`ActTitle`)<br>**14 px** (`ActDesc`) | ทอง `#F5C759` / ครีม `#F5E8D1` / เทาทอง `#C2B399` | ไม่มี | เช่น `"ACT 1 \| การใช้งาน Git เบื้องต้น / หอคอยแห่งการฝึกตน \| 15 ด่าน"` |
+| **เลขด่านบนแท่นศิลา** | `NumLabel` (ใน `Platform_XX/NumBadge`) | `Bungee-Regular.ttf`<br>(สำรอง: `TA-8-bit.ttf` ลด 2 px) | **20 px** (Act 1)<br>**19 px** (Act 2)<br>**18 px** (Act 3) | ทองสว่าง `#FAE078` (Active)<br>เขียวอ่อน `#CCEBD6` (ผ่าน)<br>ฟ้า/เทา (ปลดล็อก/ล็อก) | ไม่มี | เลข `"01"` ถึง `"40"` บนป้ายเหรียญศิลาซ้ายมือ |
+| **ชื่อด่านบนแท่นศิลา** | `TitleLabel` (ใน `Platform_XX/InfoVBox`) | `ChakraPetch-Bold.ttf`<br>(`FontVariation`: `spacing_top=4`, `spacing_bottom=2`) | **18 px** (Act 1 & Act 3)<br>**17 px** (Act 2) | ตามสถานะแท่นด่าน (ทอง / เขียว / ฟ้า / เทา) | ไม่มี | Act 1–2 แสดงชื่อด่าน, Act 3 แสดง `"ด่าน XX"` |
+| **คำสั่งย่อบนแท่นศิลา** | `CmdLabel` (ใน `Platform_XX/InfoVBox`) | `TA-8-bit.ttf` | **15 px** (Act 1)<br>**14 px** (Act 2) | ฟ้าไซอัน / เขียวมิ้นต์ / เทาฟ้า | ไม่มี | เฉพาะ Act 1–2 (Act 3 ไม่แสดง `CmdLabel` บนแท่น) |
+| **ดาวบนแท่นศิลา** | `StarIcon` (ใน `Platform_XX`) | `TA-8-bit.ttf` | **22 px** (Act 1)<br>**20 px** (Act 2)<br>**18 px** (Act 3) | ทอง `#FAD119` (ผ่านแล้ว)<br>น้ำเงินเทา `#7A8FA8` (ยังไม่ผ่าน) | ดำโปร่ง 2px | `"★★★"` (แสดงเฉพาะด่านที่ปลดล็อกแล้ว; ด่านล็อกใช้ไอคอน `LockRect`) |
+| **แถบสถานะด้านล่าง (Bottom HUD)** | `HudLevelBadge` (`Bungee-Regular` **18 px**)<br>`HudTitle` (`ChakraPetch-Bold` **18 px**)<br>`HudActTag` (`TA-8-bit` **11 px**)<br>`HudCmd` (`ChakraPetch-Bold` **14 px**)<br>`HudDesc` (`ChakraPetch-Regular` **15 px**)<br>`BtnLaunch` (`ChakraPetch-Bold` **16 px**) | ผสมตามบทบาทองค์ประกอบ (`Bungee`, `ChakraPetch`, `TA-8-bit`) | **11–18 px** | ทอง `#F5C759` / ครีม `#F5E8D1` / เขียว `#59D199` | ไม่มี | แสดงรายละเอียดด่านที่เลือก/โฮเวอร์ และปุ่มเข้าสู่ด่าน |
+| **คำแนะนำคีย์ลัดแผนที่ & Tooltip** | `MapNavHint` (`KeyUp`/`KeyDown` `Bungee-Regular`, อื่นๆ `ChakraPetch-Bold`)<br>`TooltipLabel` (`Theme`: `ChakraPetch-SemiBold`) | `Bungee-Regular.ttf` / `ChakraPetch-Bold.ttf`<br>`ChakraPetch-SemiBold.ttf` | **14 px** (`MapNavHint`)<br>**15 px** (`TooltipLabel`) | ขาวอมฟ้า `#F5F7FF` / ครีม `#F5E8D1` | 2px (`MapNavHint Desc`) | ปุ่ม `[W] [↑]`, `[S] [↓]`, `[ขึ้น] [ลง]` มุมขวาล่าง |
 
 #### 2.6.4 หน้าจอเกมเพลย์ Sandbox (`sandbox_game_view.tscn`)
 
