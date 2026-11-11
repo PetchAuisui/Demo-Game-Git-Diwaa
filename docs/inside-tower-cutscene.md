@@ -44,7 +44,7 @@ flowchart TD
 | **ตัวละครฝั่งขวา (มิวรา)** | `res://assets/cutscene/characters/mewla/` | • `mewla_idle-Sheet.png` (ยืนฟัง/กระดิกหู)<br>• `mewla_talk-Sheet.png` (ท่าพูด)<br>• `mewla_success-Sheet.png` (ท่าพร้อมลุย) |
 | **กรอบข้อความ** | `res://assets/cutscene/frame dialog text/text dialog.png` | กรอบข้อความ 9-slice StyleBoxTexture ขอบมนโทนม่วงเข้มตัดลาเวนเดอร์ (ใช้แสดงทั้งบทพูดและตัวเลือก) |
 | **ลูกศรไปต่อ** | `res://assets/cutscene/frame dialog text/arrow.png` | ไอคอนลูกศรพิกเซล ลอยเด้งดึ๋งเมื่อพิมพ์ข้อความเสร็จ |
-| **ฟอนต์ข้อความ** | `res://assets/fonts/TA-8-bit.ttf` | ฟอนต์พิกเซล 8-bit (บทพูด 26 px สีขาว, ชื่อผู้พูด 30 px สีทอง/ฟ้า, ช้อยส์ 22 px) |
+| **ฟอนต์ข้อความ** | `res://assets/fonts/ChakraPetch-Bold.ttf`<br>`res://assets/fonts/ChakraPetch-Regular.ttf`<br>`res://assets/fonts/TA-8-bit.ttf` | • ชื่อผู้พูด: `ChakraPetch-Bold` 26 px (สีทอง `#EBCB70` / ฟ้า `#73BFF2`)<br>• บทพูด: `ChakraPetch-Regular` 23 px (สีขาวนวล `#E0E3EB`), ช้อยส์ 22 px<br>• ไอคอนอีโมต (`?` 20 px, `!` 28 px): `TA-8-bit` (ดูมาตรฐานรวมใน [คู่มือฟอนต์](fonts.md)) |
 | **เสียงประกอบ** | `res://assets/audio/` | • `sfx_cat_meow.wav` (เสียงแมวมิวรา)<br>• `sfx_dialogue_next.wav` (เสียงเปลี่ยนข้อความ)<br>• `bgm_tower_loop.wav` (ดนตรีบรรยากาศหอคอย) |
 
 ---
