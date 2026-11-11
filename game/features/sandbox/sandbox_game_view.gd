@@ -542,7 +542,7 @@ func _show_cutscene_help() -> void:
 
 
 func _show_help() -> void:
-	_terminal_panel.append_info("""คำสั่ง Git: git --version, config, init, status, add, commit, log, diff,
+	_terminal_panel.append_info("""คำสั่ง Git: git --version (หรือ git version), config, init, status, add, commit, log, diff,
             restore, reset, branch, switch, merge, clone, remote, pull, push
 
 คำสั่ง UI / ทดสอบ: write <path> <content>, cat <path>, delete <path>, files,
