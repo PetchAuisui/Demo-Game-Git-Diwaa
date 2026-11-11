@@ -207,7 +207,7 @@ func _refresh() -> void:
 		PlayerSession.State.ONLINE:
 			_set_status("ออนไลน์", AuthThemeTokens.SUCCESS_TEXT)
 		PlayerSession.State.OFFLINE:
-			_set_status("ออฟไลน์", AuthThemeTokens.TEXT_MUTED)
+			_set_status("ต้องเข้าสู่ระบบใหม่" if PlayerSession.session_expired else "ออฟไลน์", AuthThemeTokens.TEXT_MUTED)
 		PlayerSession.State.GUEST:
 			_set_status("เล่นแบบไม่ล็อกอิน", AuthThemeTokens.TEXT_MUTED)
 		_:
@@ -219,6 +219,8 @@ func _refresh() -> void:
 	_offline_note.visible = not online
 	if PlayerSession.is_guest():
 		_offline_note.text = "ชื่อนี้อยู่ในเครื่องนี้เท่านั้น เปลี่ยนชื่อในเกมและตั้งค่าตารางอันดับได้เมื่อเล่นด้วยบัญชี"
+	elif PlayerSession.session_expired:
+		_offline_note.text = "การเข้าสู่ระบบหมดอายุแล้ว ออกจากระบบแล้วเข้าสู่ระบบใหม่เพื่อเปลี่ยนชื่อในเกมและตั้งค่าตารางอันดับ"
 	else:
 		_offline_note.text = "เปลี่ยนชื่อในเกมและตั้งค่าตารางอันดับได้เมื่อเชื่อมต่อ server"
 

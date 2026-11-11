@@ -29,6 +29,9 @@ const RESTORE_NONE := "none"  # ไม่มี session ที่จดจำไ
 const RESTORE_OK := "restored"  # ล็อกอินอัตโนมัติสำเร็จ
 const RESTORE_NEED_LOGIN := "need_login"  # session หมดอายุหรือถูกยกเลิก ต้องล็อกอินใหม่
 const RESTORE_NETWORK_FAILED := "network_failed"  # ติดต่อ server ไม่ได้ (session ในเครื่องยังเก็บไว้ ใช้กับโหมดออฟไลน์)
+# ต่ออายุ token ล่วงหน้าเมื่อเหลืออายุไม่เกินนี้ (วินาที) ทำตอนจะส่งคำขอที่ใช้ token (ดู _refresh_if_expiring)
+const REFRESH_MARGIN_SEC := 30 * 60
+
 const RESTORE_RATE_LIMITED := "rate_limited"  # ลองบ่อยเกินไป ต้องรอ (วินาทีที่ต้องรออยู่ใน last_retry_after_sec) session ในเครื่องยังเก็บไว้
 
 var state: State = State.SIGNED_OUT
@@ -43,6 +46,12 @@ var last_retry_after_sec := 0
 var display_name_next_change_unix := 0
 ## ตอนนี้เปลี่ยนชื่อได้อีกกี่ครั้ง (-1 = ยังไม่รู้) ใช้แค่บอกผู้เล่น server เป็นผู้ตัดสินจริง
 var display_name_changes_available := -1
+## true = ระหว่างเล่น server ไม่รับ token แล้ว (หมดอายุ / ถูกยกเลิก) สถานะจะเป็น OFFLINE: เล่นต่อได้ แต่ต้องออกจากระบบ
+## แล้วเข้าสู่ระบบใหม่ถึงจะใช้ฟีเจอร์ออนไลน์ได้ หน้าจอใช้ค่านี้เลือกข้อความ (ต่างจากออฟไลน์เพราะเน็ตหลุด)
+var session_expired := false
+
+var _refreshing := false
+signal _refresh_finished
 
 # อีเมลที่จำไว้ในหน่วยความจำ (ดู fetch_email) ห้าม print ห้ามบันทึกลงไฟล์
 var _email_cache := ""
@@ -97,6 +106,7 @@ func start_session(login_data: Dictionary, remember_me: bool) -> bool:
 	if session.is_empty():
 		return false
 	_forget_email()  # ล็อกอินใหม่: ห้ามใช้อีเมลที่จำไว้ของบัญชีก่อนหน้า
+	session_expired = false
 	_session = session
 	_remembered = remember_me
 	display_name_next_change_unix = 0
@@ -121,6 +131,7 @@ func sign_out() -> void:
 		session_changed.emit()
 		return
 	var token := get_token()
+	session_expired = false
 	_forget_email()
 	_session = {}
 	_remembered = false
@@ -138,19 +149,100 @@ func _logout_on_server(token: String) -> void:
 	await _api.logout(token)
 
 
+# ---------------------------------------------------------------- คำขอที่ใช้ token
+
+## ส่งคำขอที่ใช้ token (ทุกฟังก์ชันออนไลน์ด้านล่างเรียกผ่านตัวนี้) request รับ token แล้วคืน AuthApiResult
+## 1. ก่อนส่ง: ถ้า token ใกล้หมดอายุ ต่ออายุก่อน ผู้เล่นที่เปิดเกมค้างไว้นานจะไม่หลุดกลางทาง
+## 2. หลังส่ง: ถ้า server ไม่รับ token แล้ว เปลี่ยนเป็นออฟไลน์และบอกทุกหน้า (session_changed)
+##    เดิมสถานะค้างเป็น ONLINE ทั้งที่ทุกฟีเจอร์ออนไลน์ล้มจนกว่าจะปิดเกมแล้วเปิดใหม่
+func _send_with_token(request: Callable) -> AuthApiResult:
+	if state != State.ONLINE:
+		return AuthApiResult.failure(0, AuthApiResult.NETWORK_UNAVAILABLE)
+	await _refresh_if_expiring()
+	if state != State.ONLINE:
+		return AuthApiResult.failure(0, AuthApiResult.INVALID_CREDENTIALS)
+	var owner_id := get_user_id()
+	var result: AuthApiResult = await request.call(get_token())
+	# ระหว่างรอ ออกจากระบบ / เปลี่ยนบัญชีไปแล้ว: คำตอบนี้ไม่เกี่ยวกับ session ปัจจุบัน
+	if result.code == AuthApiResult.INVALID_CREDENTIALS and state == State.ONLINE and get_user_id() == owner_id:
+		_end_online_session()
+	return result
+
+
+## ต่ออายุ token ถ้าเหลืออายุไม่เกิน REFRESH_MARGIN_SEC (server เปลี่ยน token ใบใหม่ให้ ใบเก่าใช้ไม่ได้อีก)
+## ไม่ต่ออายุเมื่อเจอ 401 เฉยๆ: token ที่ถูกยกเลิกแล้วเอาไปต่ออายุ server จะถือว่าถูกขโมยและตัดทุก session ของบัญชี
+func _refresh_if_expiring() -> void:
+	if _refreshing:
+		await _refresh_finished  # มีคำขออื่นกำลังต่ออายุอยู่ รอผลเดียวกัน ห้ามต่อซ้อน (ใบเก่าใช้ได้ครั้งเดียว)
+		return
+	var expires: Variant = _session.get("expires_unix")
+	if not (expires is int):
+		return
+	var seconds_left := int(expires) - int(Time.get_unix_time_from_system())
+	if seconds_left > REFRESH_MARGIN_SEC:
+		return
+	if seconds_left <= 0:
+		_end_online_session()  # หมดอายุไปแล้ว server ไม่ต่อให้ ต้องเข้าสู่ระบบใหม่
+		return
+
+	_refreshing = true
+	var owner_id := get_user_id()
+	var result := await _api.refresh(get_token())
+	_refreshing = false
+	var fresh := SessionStore.from_login_response(result.data) if result.ok else {}
+	if state != State.ONLINE or get_user_id() != owner_id:
+		# ระหว่างรอ ออกจากระบบไปแล้ว: token ใบใหม่ไม่มีใครใช้ แจ้ง server ให้ยกเลิกด้วย
+		if not fresh.is_empty():
+			_logout_on_server.call_deferred(fresh["token"])
+	elif result.ok:
+		var fresh_profile: Dictionary = fresh.get("profile", {})
+		if fresh.is_empty() or fresh_profile.get("id") != owner_id:
+			_end_online_session()
+		else:
+			_session = fresh
+			if _remembered and not SessionStore.save(fresh):
+				# บันทึกใบใหม่ไม่ได้: ลบไฟล์ทิ้ง ห้ามปล่อยใบเก่าค้างไว้ (เหตุผลเดียวกับ restore_saved_session)
+				SessionStore.clear()
+	elif result.code == AuthApiResult.INVALID_CREDENTIALS:
+		_end_online_session()
+	# เน็ตหลุด / ถูกจำกัดจำนวนครั้ง: ใช้ token ใบเดิมไปก่อน (ยังไม่หมดอายุ) คำขอครั้งหน้าจะลองต่ออายุใหม่
+	_refresh_finished.emit()
+
+
+## server ไม่รับ token แล้ว: ทิ้ง token ทั้งในหน่วยความจำและในไฟล์ แล้วเล่นต่อแบบออฟไลน์ในบัญชีเดิม
+## (ความคืบหน้ายังอยู่กับบัญชีเดิม) ไม่เก็บ token ที่ใช้ไม่ได้ไว้: ครั้งหน้าที่เปิดเกมจะได้ถามล็อกอินใหม่ตรงๆ
+## ไม่ใช่เอาใบที่ถูกยกเลิกไปต่ออายุจน server ตัดทุก session
+func _end_online_session() -> void:
+	if state != State.ONLINE:
+		return
+	var profile: Dictionary = (_session.get("profile", {}) as Dictionary).duplicate()
+	last_username = profile.get("username", "")
+	_forget_email()
+	_session = {"profile": profile}
+	_remembered = false
+	SessionStore.clear()
+	display_name_next_change_unix = 0
+	display_name_changes_available = -1
+	session_expired = true
+	state = State.OFFLINE
+	session_changed.emit()
+
+
 ## ดูว่าตอนนี้ยินยอมให้แสดงชื่อบนตารางอันดับไหม (ออนไลน์เท่านั้น)
 ## สำเร็จ: result.data["leaderboardOptIn"] เป็น bool (ตรวจชนิดอีกครั้งก่อนใช้)
 func get_leaderboard_consent() -> AuthApiResult:
 	if state != State.ONLINE:
 		return AuthApiResult.failure(0, AuthApiResult.NETWORK_UNAVAILABLE)
-	return await _api.get_leaderboard_consent(get_token())
+	return await _send_with_token(func(token: String) -> AuthApiResult:
+		return await _api.get_leaderboard_consent(token))
 
 
 ## ให้หรือถอนความยินยอมแสดงชื่อบนตารางอันดับ ส่งเวอร์ชันนโยบายที่เกมนี้แสดงไปด้วย
 func set_leaderboard_consent(granted: bool) -> AuthApiResult:
 	if state != State.ONLINE:
 		return AuthApiResult.failure(0, AuthApiResult.NETWORK_UNAVAILABLE)
-	return await _api.set_leaderboard_consent(get_token(), granted, PrivacyPolicy.VERSION)
+	return await _send_with_token(func(token: String) -> AuthApiResult:
+		return await _api.set_leaderboard_consent(token, granted, PrivacyPolicy.VERSION))
 
 
 ## ถาม server ว่าตอนนี้เปลี่ยนชื่อได้อีกกี่ครั้ง / เมื่อไหร่ (ออนไลน์เท่านั้น) ผลเก็บไว้ที่
@@ -158,7 +250,8 @@ func set_leaderboard_consent(granted: bool) -> AuthApiResult:
 func refresh_display_name_status() -> AuthApiResult:
 	if state != State.ONLINE:
 		return AuthApiResult.failure(0, AuthApiResult.NETWORK_UNAVAILABLE)
-	var result := await _api.get_display_name_status(get_token())
+	var result := await _send_with_token(func(token: String) -> AuthApiResult:
+		return await _api.get_display_name_status(token))
 	if result.ok:
 		_apply_display_name_status(result.data)
 	return result
@@ -190,7 +283,8 @@ func fetch_email() -> String:
 		return _email_cache
 
 	_email_fetching = true
-	var result := await _api.get_my_email(get_token())
+	var result := await _send_with_token(func(token: String) -> AuthApiResult:
+		return await _api.get_my_email(token))
 	_email_fetching = false
 	var email: Variant = result.data.get("email") if result.ok else null
 	# ระหว่างรอ ออกจากระบบ / เปลี่ยนบัญชีไปแล้ว: ไม่จำ และไม่คืนอีเมลของบัญชีเก่า
@@ -218,7 +312,9 @@ func _forget_email() -> void:
 func change_display_name(new_name: String) -> AuthApiResult:
 	if state != State.ONLINE:
 		return AuthApiResult.failure(0, AuthApiResult.NETWORK_UNAVAILABLE)
-	var result := await _api.change_display_name(get_token(), new_name.strip_edges())
+	var trimmed_name := new_name.strip_edges()
+	var result := await _send_with_token(func(token: String) -> AuthApiResult:
+		return await _api.change_display_name(token, trimmed_name))
 
 	if result.code == AuthApiResult.DISPLAY_NAME_CHANGE_COOLDOWN:
 		display_name_next_change_unix = int(Time.get_unix_time_from_system()) + result.retry_after_sec
@@ -277,6 +373,7 @@ func start_offline() -> bool:
 	var saved_profile: Dictionary = saved["profile"]
 	_session = {"profile": saved_profile.duplicate()}
 	_remembered = true
+	session_expired = false
 	last_username = saved_profile["username"]
 	state = State.OFFLINE
 	session_changed.emit()
@@ -293,6 +390,7 @@ func start_guest(raw_name: String) -> bool:
 		return false
 	_session = {"profile": {"id": "", "username": "", "display_name": display_name}}
 	_remembered = false
+	session_expired = false
 	state = State.GUEST
 	session_changed.emit()
 	return true
@@ -328,6 +426,7 @@ func restore_saved_session() -> String:
 			return RESTORE_NONE
 		_session = fresh
 		_remembered = true
+		session_expired = false
 		state = State.ONLINE
 		session_changed.emit()
 		return RESTORE_OK
@@ -343,6 +442,8 @@ func restore_saved_session() -> String:
 		return RESTORE_RATE_LIMITED
 
 	# เน็ตหลุด / server ล่ม: เก็บ session ในเครื่องไว้ก่อน ยังไม่ลบ
+	# ถ้าคำขอไปถึง server แล้วแต่คำตอบหาย token ในไฟล์จะเป็นใบเก่า: server ผ่อนผันให้ต่ออายุซ้ำด้วยใบเก่าได้ 60 วินาที
+	# (กด "ลองใหม่" ทัน = เข้าได้ตามปกติ) เลยจากนั้นใบเก่าจะถูกมองว่าถูกขโมย ต้องล็อกอินใหม่ทุกเครื่อง
 	return RESTORE_NETWORK_FAILED
 
 

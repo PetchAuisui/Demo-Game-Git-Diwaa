@@ -76,7 +76,8 @@ func _refresh() -> void:
 		PlayerSession.State.GUEST:
 			_sub_label.text = "เล่นแบบไม่ล็อกอิน"
 		PlayerSession.State.OFFLINE:
-			_sub_label.text = "ออฟไลน์"
+			# หมดอายุระหว่างเล่น: บอกให้ชัดว่าต้องทำอะไร (ออกจากระบบด้วยปุ่มข้างล่าง แล้วเข้าสู่ระบบใหม่)
+			_sub_label.text = "ต้องเข้าสู่ระบบใหม่" if PlayerSession.session_expired else "ออฟไลน์"
 		_:
 			_sub_label.text = ""
 	_sub_label.visible = not _sub_label.text.is_empty()
