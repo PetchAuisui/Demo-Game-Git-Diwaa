@@ -250,8 +250,7 @@ func _process(_delta: float) -> void:
 		return
 	
 	var is_btn_active: bool = (skip_ctrl != null and skip_ctrl.is_fast_forward)
-	var wants_hold: bool = Input.is_key_pressed(KEY_SHIFT) or \
-		(not is_dialogue_active and (Input.is_key_pressed(KEY_SPACE) or Input.is_key_pressed(KEY_ENTER)))
+	var wants_hold: bool = Input.is_key_pressed(KEY_SHIFT)
 	
 	var active: bool = is_btn_active or wants_hold
 	if active != is_fast_forwarding:
