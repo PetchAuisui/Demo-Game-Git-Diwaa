@@ -139,7 +139,12 @@ func _process(delta: float) -> void:
 	_grabby_loop_timer = 0.0
 	_grabby_frame_idx = 0
 
-	if _is_hovering_scrollbar() or _dragging_scrollbar != null:
+	if _dragging_scrollbar != null:
+		_apply_uniform_cursor("grabby", 0)
+		return
+
+	var hovered := _get_hovered_control()
+	if _is_hovering_scrollbar(hovered):
 		_apply_uniform_cursor("grabby", 0)
 		return
 
@@ -150,12 +155,12 @@ func _process(delta: float) -> void:
 			_touchy_step += 1
 			if _touchy_step >= TOUCHY_CLICK_SEQUENCE.size():
 				_touchy_click_active = false
-				_apply_idle_cursors()
+				_apply_idle_cursors(hovered)
 			else:
 				_apply_uniform_cursor("touchy", TOUCHY_CLICK_SEQUENCE[_touchy_step])
 		return
 
-	_apply_idle_cursors()
+	_apply_idle_cursors(hovered)
 
 
 func _setup_tooltip_theme() -> void:
@@ -216,7 +221,7 @@ func _setup_custom_cursors() -> void:
 	if _grabby_frames.size() >= 1:
 		Input.set_custom_mouse_cursor(_grabby_frames[0], Input.CURSOR_DRAG, GRABBY_HOTSPOT)
 
-	_apply_idle_cursors()
+	_apply_idle_cursors(_get_hovered_control())
 
 
 func _load_scaled_pixel_cursor(path: String, crop_rect: Rect2i, scale_factor: float) -> Image:
@@ -259,9 +264,9 @@ func _apply_uniform_cursor(mode: String, frame_idx: int) -> void:
 	_apply_cursors(mode, frame_idx, mode, frame_idx)
 
 
-func _apply_idle_cursors() -> void:
+func _apply_idle_cursors(hovered: Control) -> void:
 	# ปกติใช้ Buffy2 เป็นเมาส์หลัก และเปลี่ยนเป็น Touchy1 เมื่อชี้ปุ่มที่กดได้ (ไม่รวมปุ่มที่ disabled)
-	if _is_hovering_disabled_button():
+	if _is_hovering_disabled_button(hovered):
 		_apply_uniform_cursor("buffy", 0)
 	else:
 		_apply_cursors("buffy", 0, "touchy", 0)
@@ -368,8 +373,8 @@ func _get_hovered_control() -> Control:
 	return vp.gui_get_hovered_control()
 
 
-func _is_hovering_disabled_button() -> bool:
-	var curr := _get_hovered_control()
+func _is_hovering_disabled_button(hovered: Control) -> bool:
+	var curr := hovered
 	while curr != null:
 		if curr is BaseButton:
 			return (curr as BaseButton).disabled
@@ -380,8 +385,7 @@ func _is_hovering_disabled_button() -> bool:
 	return false
 
 
-func _is_hovering_scrollbar() -> bool:
-	var hovered := _get_hovered_control()
+func _is_hovering_scrollbar(hovered: Control) -> bool:
 	return hovered is ScrollBar and hovered.visible
 
 
@@ -413,7 +417,7 @@ func _on_raw_input(event: InputEvent) -> void:
 
 		if mb.button_index == MOUSE_BUTTON_LEFT or mb.button_index == MOUSE_BUTTON_RIGHT:
 			if mb.pressed:
-				if _is_hovering_scrollbar() or _dragging_scrollbar != null:
+				if _dragging_scrollbar != null or _is_hovering_scrollbar(_get_hovered_control()):
 					return
 				_scroll_anim_timer = 0.0
 				_touchy_click_active = true

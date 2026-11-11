@@ -179,16 +179,20 @@ func _leave_to_level_select() -> void:
 	if _is_leaving:
 		return
 	_is_leaving = true
-	Engine.time_scale = 1.0
-	GameProgressManager.set_current_gameplay_step(0)
-	GameProgressManager.consume_pending_dialogue_phase()
-	GameProgressManager.set_gameplay_return_scene(DEFAULT_RETURN_SCENE_PATH)
-	if ResourceLoader.exists(LEVEL_SELECT_PATH):
-		if not SceneLoader.change_scene(get_tree(), LEVEL_SELECT_PATH):
-			_is_leaving = false
+	var tree := get_tree() if is_inside_tree() else null
+	if SceneLoader.change_scene(tree, LEVEL_SELECT_PATH):
+		Engine.time_scale = 1.0
+		GameProgressManager.set_current_gameplay_step(0)
+		GameProgressManager.consume_pending_dialogue_phase()
+		GameProgressManager.set_gameplay_return_scene(DEFAULT_RETURN_SCENE_PATH)
+	elif not ResourceLoader.exists(LEVEL_SELECT_PATH):
+		_is_leaving = false
+		if _change_scene_to_cutscene(CENTRAL_TOWER_CUTSCENE_PATH):
+			GameProgressManager.set_current_gameplay_step(0)
+			GameProgressManager.consume_pending_dialogue_phase()
+			GameProgressManager.set_gameplay_return_scene(DEFAULT_RETURN_SCENE_PATH)
 	else:
 		_is_leaving = false
-		_change_scene_to_cutscene(CENTRAL_TOWER_CUTSCENE_PATH)
 
 
 ## Injects or creates the sandbox service. Allows OOP dependency injection.
@@ -224,9 +228,10 @@ func _initialize_sandbox() -> void:
 	var step := GameProgressManager.get_current_gameplay_step()
 	var lvl := GameProgressManager.get_selected_level_number()
 	if step > 0:
-		_top_bar.set_mode_text("")
+		_top_bar.set_mode_text("ด่านที่ %d (ขั้นที่ %d)" % [lvl, step])
 		_top_bar.set_finish_button_text("เสร็จสิ้น (ไปต่อ) ➔")
 	else:
+		_top_bar.set_mode_text("SANDBOX")
 		_top_bar.set_finish_button_text("กลับหน้าเลือกด่าน")
 
 	if _sandbox_service.info != null:
@@ -295,7 +300,13 @@ func _on_command_submitted(command: String) -> void:
 		return
 
 	# Cutscene & Level transition commands (Dev/Testing flow to Cutscenes)
-	if lower == "cutscene central" or lower == "cutscene-central" or lower == "level 16" or lower == "level-16":
+	if lower == "cutscene central" or lower == "cutscene-central":
+		play_central_tower_cutscene()
+		return
+
+	if lower == "level 16" or lower == "level-16":
+		if GameProgressManager.get_selected_level_number() < ACT2_START_LEVEL:
+			GameProgressManager.set_selected_level_number(ACT2_START_LEVEL)
 		play_central_tower_cutscene()
 		return
 
@@ -513,8 +524,6 @@ func _refresh_state() -> void:
 
 ## Transitions to the Central Tower cutscene (Act 2: GitHub Flow / Level 16)
 func play_central_tower_cutscene() -> void:
-	if GameProgressManager.get_selected_level_number() < ACT2_START_LEVEL:
-		GameProgressManager.set_selected_level_number(ACT2_START_LEVEL)
 	_terminal_panel.append_info("กำลังเปลี่ยนฉากไปยังหอคอยเวทกลาง (Central Tower)...")
 	_change_scene_to_cutscene(CENTRAL_TOWER_CUTSCENE_PATH)
 
@@ -525,13 +534,15 @@ func play_ending_cutscene() -> void:
 	_change_scene_to_cutscene(ENDING_CUTSCENE_PATH)
 
 
-func _change_scene_to_cutscene(scene_path: String) -> void:
-	if ResourceLoader.exists(scene_path):
-		Engine.time_scale = 1.0
-		get_tree().change_scene_to_file(scene_path)
-	else:
-		_terminal_panel.append_error("ไม่พบไฟล์ฉาก: %s" % scene_path)
-		push_error("[SandboxGameView] Cutscene scene not found: %s" % scene_path)
+func _change_scene_to_cutscene(scene_path: String) -> bool:
+	var tree := get_tree() if is_inside_tree() else null
+	if ResourceLoader.exists(scene_path) and tree != null:
+		if tree.change_scene_to_file(scene_path) == OK:
+			Engine.time_scale = 1.0
+			return true
+	_terminal_panel.append_error("ไม่พบไฟล์ฉาก: %s" % scene_path)
+	push_error("[SandboxGameView] Cutscene scene not found: %s" % scene_path)
+	return false
 
 
 func _show_cutscene_help() -> void:
@@ -560,13 +571,13 @@ func _on_finish_gameplay_pressed() -> void:
 		# จบขั้น 1 -> ไป phase 1 (part 2 intro)
 		# จบขั้น 2 -> ไป phase 2 (outro)
 		var next_phase := 1 if current_step == 1 else 2
-		GameProgressManager.set_pending_dialogue_phase(next_phase)
-		GameProgressManager.set_current_gameplay_step(0)
 		var return_scene := GameProgressManager.get_gameplay_return_scene()
 		if return_scene.is_empty():
 			return_scene = DEFAULT_RETURN_SCENE_PATH
-		_terminal_panel.append_info("กำลังกลับสู่เนื้อเรื่อง...")
-		_change_scene_to_cutscene(return_scene)
+		if _change_scene_to_cutscene(return_scene):
+			_terminal_panel.append_info("กำลังกลับสู่เนื้อเรื่อง...")
+			GameProgressManager.set_pending_dialogue_phase(next_phase)
+			GameProgressManager.set_current_gameplay_step(0)
 	else:
 		_leave_to_level_select()
 

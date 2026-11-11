@@ -15,9 +15,9 @@ static func request_preload(path: String) -> void:
 	ResourceLoader.load_threaded_request(path)
 
 
-## คืนค่า false ถ้าไม่พบไฟล์ฉาก
+## คืนค่า false ถ้าไม่พบไฟล์ฉากหรือเปลี่ยนฉากไม่สำเร็จ
 static func change_scene(tree: SceneTree, path: String) -> bool:
-	if path.is_empty() or not ResourceLoader.exists(path):
+	if tree == null or path.is_empty() or not ResourceLoader.exists(path):
 		return false
 	var packed: PackedScene = null
 	var status := ResourceLoader.load_threaded_get_status(path)
@@ -26,7 +26,5 @@ static func change_scene(tree: SceneTree, path: String) -> bool:
 	if packed == null:
 		packed = load(path) as PackedScene
 	if packed:
-		tree.change_scene_to_packed(packed)
-	else:
-		tree.change_scene_to_file(path)
-	return true
+		return tree.change_scene_to_packed(packed) == OK
+	return tree.change_scene_to_file(path) == OK

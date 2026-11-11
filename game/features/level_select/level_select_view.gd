@@ -71,6 +71,8 @@ const TOWER_STAGES: Array[Dictionary] = [
 var scroll_chamber: ScrollContainer
 var tower_content: Control
 var path_renderer: Control
+var _cleared_glow_layer: Control
+var _active_glow_layer: Control
 var vel_hero: Control
 var vel_sprite: TextureRect
 var vel_anim: AnimatedSprite2D
@@ -140,12 +142,17 @@ const NAV_COLOR_LOCKED := Color(0.467, 0.459, 0.553, 1.0)     # #77758D Muted la
 const NAV_COLOR_PRIMARY := Color(0.894, 0.875, 0.835, 1.0)    # #E4DFD5 Primary text
 const NAV_COLOR_SECONDARY := Color(0.604, 0.588, 0.667, 1.0)  # #9A96AA Secondary text
 
+const PATH_PASS_CORE := 0
+const PATH_PASS_CLEARED_GLOW := 1
+const PATH_PASS_ACTIVE_GLOW := 2
+
 # State variables
 var _current_stage_idx: int = 0
 var _view_stage_idx: int = 0
 var _target_scroll_y: float = -1.0
 var _platform_nodes: Dictionary = {}
 var _is_jumping := false
+var _is_leaving := false
 var _target_queue_idx: int = -1
 var _jump_seq_id: int = 0
 var _landing_seq_id: int = 0
@@ -161,8 +168,10 @@ var _idle_bob_timer := 0.0
 var _torch_flames: Array[ColorRect] = []
 var _torch_timer := 0.0
 var _path_glow_timer: float = 0.0
-var _glow_redraw_accum: float = 0.0
 var _view_act_num: int = 1
+var _act_tab_empty_sb: StyleBoxEmpty = null
+var _act_tab_active_sb: StyleBoxFlat = null
+var _last_act_tabs_state: Array = []
 
 const NAV_HINT_KEY_TRAVEL_Y: float = 2.0
 const NAV_HINT_MIN_PRESS_TIME: float = 0.08
@@ -293,15 +302,29 @@ func _bind_nodes() -> void:
 
 	if path_renderer:
 		path_renderer.draw.connect(_on_draw_path)
+		_cleared_glow_layer = _create_path_glow_layer("ClearedGlowLayer", _on_draw_cleared_glow)
+		_cleared_glow_layer.modulate.a = 0.22
+		_active_glow_layer = _create_path_glow_layer("ActiveGlowLayer", _on_draw_active_glow)
+		_active_glow_layer.modulate.a = 0.28
+
+
+func _create_path_glow_layer(layer_name: String, draw_cb: Callable) -> Control:
+	var layer := Control.new()
+	layer.name = layer_name
+	layer.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	layer.show_behind_parent = true
+	layer.set_anchors_preset(Control.PRESET_FULL_RECT)
+	layer.draw.connect(draw_cb)
+	path_renderer.add_child(layer)
+	return layer
 
 
 func _process(delta: float) -> void:
 	_path_glow_timer += delta
-	_glow_redraw_accum += delta
-	if _glow_redraw_accum >= 0.05:
-		_glow_redraw_accum = 0.0
-		if path_renderer:
-			path_renderer.queue_redraw()
+	if is_instance_valid(_cleared_glow_layer):
+		_cleared_glow_layer.modulate.a = 0.22 + 0.14 * sin(_path_glow_timer * 2.8)
+	if is_instance_valid(_active_glow_layer):
+		_active_glow_layer.modulate.a = 0.28 + 0.18 * sin(_path_glow_timer * 3.5)
 	_update_nav_hint_keys(delta)
 
 
@@ -438,6 +461,8 @@ func _wire_navbar() -> void:
 		btn_act3.pressed.connect(func(): _on_act_button_pressed(3))
 	if act_progress_panel:
 		act_progress_panel.custom_minimum_size = Vector2(200, 44)
+	if act_progress_label:
+		act_progress_label.add_theme_color_override("font_color", NAV_COLOR_SECONDARY)
 	if btn_focus_current:
 		btn_focus_current.pressed.connect(_on_continue_pressed)
 		btn_focus_current.custom_minimum_size = Vector2(116, 44)
@@ -460,8 +485,13 @@ func _wire_navbar() -> void:
 
 
 func _on_back_pressed() -> void:
+	if _is_leaving:
+		return
+	_is_leaving = true
 	_play_sfx(sfx_click)
-	if not SceneLoader.change_scene(get_tree(), START_SCENE):
+	var tree := get_tree() if is_inside_tree() else null
+	if not SceneLoader.change_scene(tree, START_SCENE):
+		_is_leaving = false
 		push_warning("[LevelSelectView] Start scene not found: '%s'" % START_SCENE)
 
 
@@ -509,11 +539,44 @@ func _get_act_progress(act_num: int) -> Dictionary:
 	}
 
 
+func _ensure_act_tab_styleboxes() -> void:
+	if _act_tab_empty_sb == null:
+		_act_tab_empty_sb = StyleBoxEmpty.new()
+		_act_tab_empty_sb.content_margin_left = 0.0
+		_act_tab_empty_sb.content_margin_right = 0.0
+		_act_tab_empty_sb.content_margin_top = 0.0
+		_act_tab_empty_sb.content_margin_bottom = 2.0
+
+	if _act_tab_active_sb == null:
+		_act_tab_active_sb = StyleBoxFlat.new()
+		_act_tab_active_sb.bg_color = Color(0, 0, 0, 0)
+		_act_tab_active_sb.draw_center = false
+		_act_tab_active_sb.border_width_left = 0
+		_act_tab_active_sb.border_width_top = 0
+		_act_tab_active_sb.border_width_right = 0
+		_act_tab_active_sb.border_width_bottom = 2
+		_act_tab_active_sb.border_color = NAV_COLOR_ACTIVE
+		_act_tab_active_sb.content_margin_left = 0.0
+		_act_tab_active_sb.content_margin_right = 0.0
+		_act_tab_active_sb.content_margin_top = 0.0
+		_act_tab_active_sb.content_margin_bottom = 2.0
+
+
 func _refresh_act_tabs(active_act: int) -> void:
 	_view_act_num = active_act
 	var p1 := _get_act_progress(1)
 	var p2 := _get_act_progress(2)
 	var p3 := _get_act_progress(3)
+
+	var next_state := [
+		active_act,
+		p1["cleared"], p1["is_unlocked"],
+		p2["cleared"], p2["is_unlocked"],
+		p3["cleared"], p3["is_unlocked"],
+	]
+	if next_state == _last_act_tabs_state:
+		return
+	_last_act_tabs_state = next_state
 
 	_style_act_button(btn_act1, 1, active_act == 1, p1)
 	_style_act_button(btn_act2, 2, active_act == 2, p2)
@@ -522,7 +585,6 @@ func _refresh_act_tabs(active_act: int) -> void:
 	var curr_prog := p1 if active_act == 1 else (p2 if active_act == 2 else p3)
 	if act_progress_label:
 		act_progress_label.text = "ACT %d · %d / %d LEVELS" % [active_act, curr_prog["cleared"], curr_prog["total"]]
-		act_progress_label.add_theme_color_override("font_color", NAV_COLOR_SECONDARY)
 
 	_update_act_header_tab(active_act, true)
 
@@ -587,6 +649,8 @@ func _style_act_button(btn: Button, act_num: int, is_active: bool, prog: Diction
 	if not btn:
 		return
 
+	_ensure_act_tab_styleboxes()
+
 	btn.custom_minimum_size = Vector2(96, 44)
 	var text_base := "ACT %d" % act_num
 	if prog["is_completed"]:
@@ -594,35 +658,16 @@ func _style_act_button(btn: Button, act_num: int, is_active: bool, prog: Diction
 	else:
 		btn.text = text_base
 
-	var empty_sb := StyleBoxEmpty.new()
-	empty_sb.content_margin_left = 0.0
-	empty_sb.content_margin_right = 0.0
-	empty_sb.content_margin_top = 0.0
-	empty_sb.content_margin_bottom = 2.0
-
 	if is_active:
 		# Active Act: Antique gold text, subtle 2px bottom underline, flat transparent background
-		var sb_active := StyleBoxFlat.new()
-		sb_active.bg_color = Color(0, 0, 0, 0)
-		sb_active.draw_center = false
-		sb_active.border_width_left = 0
-		sb_active.border_width_top = 0
-		sb_active.border_width_right = 0
-		sb_active.border_width_bottom = 2
-		sb_active.border_color = NAV_COLOR_ACTIVE
-		sb_active.content_margin_left = 0.0
-		sb_active.content_margin_right = 0.0
-		sb_active.content_margin_top = 0.0
-		sb_active.content_margin_bottom = 2.0
-
 		btn.add_theme_color_override("font_color", NAV_COLOR_ACTIVE)
 		btn.add_theme_color_override("font_hover_color", NAV_COLOR_PRIMARY)
 		btn.add_theme_color_override("font_pressed_color", NAV_COLOR_ACTIVE)
 		btn.add_theme_color_override("font_focus_color", NAV_COLOR_ACTIVE)
-		btn.add_theme_stylebox_override("normal", sb_active)
-		btn.add_theme_stylebox_override("hover", sb_active)
-		btn.add_theme_stylebox_override("pressed", sb_active)
-		btn.add_theme_stylebox_override("focus", sb_active)
+		btn.add_theme_stylebox_override("normal", _act_tab_active_sb)
+		btn.add_theme_stylebox_override("hover", _act_tab_active_sb)
+		btn.add_theme_stylebox_override("pressed", _act_tab_active_sb)
+		btn.add_theme_stylebox_override("focus", _act_tab_active_sb)
 		btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	elif prog["is_completed"]:
 		# Completed Act: Muted sage green text, subtle checkmark, flat tab
@@ -630,10 +675,10 @@ func _style_act_button(btn: Button, act_num: int, is_active: bool, prog: Diction
 		btn.add_theme_color_override("font_hover_color", NAV_COLOR_PRIMARY)
 		btn.add_theme_color_override("font_pressed_color", NAV_COLOR_COMPLETED)
 		btn.add_theme_color_override("font_focus_color", NAV_COLOR_COMPLETED)
-		btn.add_theme_stylebox_override("normal", empty_sb)
-		btn.add_theme_stylebox_override("hover", empty_sb)
-		btn.add_theme_stylebox_override("pressed", empty_sb)
-		btn.add_theme_stylebox_override("focus", empty_sb)
+		btn.add_theme_stylebox_override("normal", _act_tab_empty_sb)
+		btn.add_theme_stylebox_override("hover", _act_tab_empty_sb)
+		btn.add_theme_stylebox_override("pressed", _act_tab_empty_sb)
+		btn.add_theme_stylebox_override("focus", _act_tab_empty_sb)
 		btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	elif not prog["is_unlocked"]:
 		# Locked Act: Muted lavender-gray text, reduced visual emphasis
@@ -641,10 +686,10 @@ func _style_act_button(btn: Button, act_num: int, is_active: bool, prog: Diction
 		btn.add_theme_color_override("font_hover_color", NAV_COLOR_LOCKED)
 		btn.add_theme_color_override("font_pressed_color", NAV_COLOR_LOCKED)
 		btn.add_theme_color_override("font_focus_color", NAV_COLOR_LOCKED)
-		btn.add_theme_stylebox_override("normal", empty_sb)
-		btn.add_theme_stylebox_override("hover", empty_sb)
-		btn.add_theme_stylebox_override("pressed", empty_sb)
-		btn.add_theme_stylebox_override("focus", empty_sb)
+		btn.add_theme_stylebox_override("normal", _act_tab_empty_sb)
+		btn.add_theme_stylebox_override("hover", _act_tab_empty_sb)
+		btn.add_theme_stylebox_override("pressed", _act_tab_empty_sb)
+		btn.add_theme_stylebox_override("focus", _act_tab_empty_sb)
 		btn.mouse_default_cursor_shape = Control.CURSOR_ARROW
 	else:
 		# Unlocked, Inactive Act: Secondary muted text, clean flat tab
@@ -652,14 +697,16 @@ func _style_act_button(btn: Button, act_num: int, is_active: bool, prog: Diction
 		btn.add_theme_color_override("font_hover_color", NAV_COLOR_PRIMARY)
 		btn.add_theme_color_override("font_pressed_color", NAV_COLOR_SECONDARY)
 		btn.add_theme_color_override("font_focus_color", NAV_COLOR_SECONDARY)
-		btn.add_theme_stylebox_override("normal", empty_sb)
-		btn.add_theme_stylebox_override("hover", empty_sb)
-		btn.add_theme_stylebox_override("pressed", empty_sb)
-		btn.add_theme_stylebox_override("focus", empty_sb)
+		btn.add_theme_stylebox_override("normal", _act_tab_empty_sb)
+		btn.add_theme_stylebox_override("hover", _act_tab_empty_sb)
+		btn.add_theme_stylebox_override("pressed", _act_tab_empty_sb)
+		btn.add_theme_stylebox_override("focus", _act_tab_empty_sb)
 		btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 
 
 func _on_act_button_pressed(act_num: int) -> void:
+	if _is_leaving:
+		return
 	var prog := _get_act_progress(act_num)
 	if not prog["is_unlocked"]:
 		_play_sfx(sfx_click)
@@ -684,6 +731,8 @@ func _on_act_button_pressed(act_num: int) -> void:
 
 
 func _on_continue_pressed() -> void:
+	if _is_leaving:
+		return
 	_play_sfx(sfx_click)
 	var latest_unlocked_idx := 0
 	for i in range(TOWER_STAGES.size()):
@@ -933,8 +982,7 @@ func _spawn_tower_platforms() -> void:
 	if vel_hero and vel_hero.get_parent() == tower_content:
 		vel_hero.move_to_front()
 
-	if path_renderer:
-		path_renderer.queue_redraw()
+	_redraw_paths()
 
 
 
@@ -1093,6 +1141,8 @@ func _stop_vel_angry(reset_to_breathe: bool = true) -> void:
 
 
 func _on_platform_selected(idx: int) -> void:
+	if _is_leaving:
+		return
 	if idx < 0 or idx >= TOWER_STAGES.size():
 		return
 	if idx == _current_stage_idx and not _is_jumping:
@@ -1210,8 +1260,7 @@ func _perform_direct_leap(to_idx: int) -> void:
 		var landed_stg: Dictionary = TOWER_STAGES[_current_stage_idx]
 		_update_hud_display(landed_stg)
 		_highlight_act(int(landed_stg["act"]))
-		if path_renderer:
-			path_renderer.queue_redraw()
+		_redraw_paths()
 
 		_play_sfx(sfx_click)
 
@@ -1425,8 +1474,7 @@ func _perform_jump_step(next_idx: int) -> void:
 		var landed_stg: Dictionary = TOWER_STAGES[_current_stage_idx]
 		_update_hud_display(landed_stg)
 		_highlight_act(int(landed_stg["act"]))
-		if path_renderer:
-			path_renderer.queue_redraw()
+		_redraw_paths()
 
 		_play_sfx(sfx_click)
 
@@ -1472,6 +1520,7 @@ func _jump_to_stage(target_idx: int, animate: bool = true) -> void:
 		var stg := TOWER_STAGES[_current_stage_idx]
 		_update_hud_display(stg)
 		_highlight_act(int(stg["act"]))
+		_redraw_paths()
 
 		var target_vel_pos := Vector2(stg["x"] - 24.0, stg["y"] - VEL_Y_OFFSET)
 		if vel_hero:
@@ -1763,8 +1812,32 @@ func _scroll_to_y(target_y: int, animate: bool = true, duration: float = 0.48) -
 		_sync_view_stage_with_scroll()
 
 
+func _redraw_paths() -> void:
+	if is_instance_valid(path_renderer):
+		path_renderer.queue_redraw()
+	if is_instance_valid(_cleared_glow_layer):
+		_cleared_glow_layer.queue_redraw()
+	if is_instance_valid(_active_glow_layer):
+		_active_glow_layer.queue_redraw()
+
+
 func _on_draw_path() -> void:
-	if not path_renderer:
+	if is_instance_valid(path_renderer):
+		_draw_path_pass(path_renderer, PATH_PASS_CORE)
+
+
+func _on_draw_cleared_glow() -> void:
+	if is_instance_valid(_cleared_glow_layer):
+		_draw_path_pass(_cleared_glow_layer, PATH_PASS_CLEARED_GLOW)
+
+
+func _on_draw_active_glow() -> void:
+	if is_instance_valid(_active_glow_layer):
+		_draw_path_pass(_active_glow_layer, PATH_PASS_ACTIVE_GLOW)
+
+
+func _draw_path_pass(target: CanvasItem, pass_mode: int) -> void:
+	if not is_instance_valid(target):
 		return
 	var stages: Array[Dictionary] = TOWER_STAGES
 	if stages.is_empty():
@@ -1776,7 +1849,6 @@ func _on_draw_path() -> void:
 		var s_a: Dictionary = stages[idx_a]
 		var s_b: Dictionary = stages[idx_b]
 		var id_b: int = int(s_b["id"])
-		var id_a: int = int(s_a["id"])
 
 		var is_cleared_b := GameProgressManager.is_level_cleared(id_b)
 		var is_unlocked_b := (id_b == 1) or GameProgressManager.is_level_cleared(id_b - 1)
@@ -1786,23 +1858,20 @@ func _on_draw_path() -> void:
 		var p2 := Vector2(s_b["x"], s_b["y"])
 
 		if is_cleared_b:
-			# 1. Completed Path: Muted emerald green with animated pulse glow
-			var pulse := 0.22 + 0.14 * sin(_path_glow_timer * 2.8)
-			var glow_col := Color(0.20, 0.75, 0.45, pulse)
-			var core_col := Color(0.35, 0.78, 0.50, 0.95)
-			_draw_curved_connection(p1, p2, glow_col, 5.0, 4.0)
-			_draw_curved_connection(p1, p2, core_col, 2.5, 4.0)
+			# 1. Completed Path: Muted emerald green (glow alpha modulated in _process)
+			if pass_mode == PATH_PASS_CLEARED_GLOW:
+				_draw_curved_connection(p1, p2, Color(0.20, 0.75, 0.45, 1.0), 5.0, 4.0, target)
+			elif pass_mode == PATH_PASS_CORE:
+				_draw_curved_connection(p1, p2, Color(0.35, 0.78, 0.50, 0.95), 2.5, 4.0, target)
 		elif is_current_segment or is_unlocked_b:
-			# 2. Current Path: Warm golden orange connecting to current level
-			var pulse := 0.28 + 0.18 * sin(_path_glow_timer * 3.5)
-			var glow_col := Color(0.96, 0.62, 0.04, pulse)
-			var core_col := Color(0.96, 0.65, 0.15, 0.98)
-			_draw_curved_connection(p1, p2, glow_col, 5.5, 4.0)
-			_draw_curved_connection(p1, p2, core_col, 2.8, 4.0)
-		else:
+			# 2. Current Path: Warm golden orange (glow alpha modulated in _process)
+			if pass_mode == PATH_PASS_ACTIVE_GLOW:
+				_draw_curved_connection(p1, p2, Color(0.96, 0.62, 0.04, 1.0), 5.5, 4.0, target)
+			elif pass_mode == PATH_PASS_CORE:
+				_draw_curved_connection(p1, p2, Color(0.96, 0.65, 0.15, 0.98), 2.8, 4.0, target)
+		elif pass_mode == PATH_PASS_CORE:
 			# 3. Locked Path: Muted blue-gray, clearly visible but reduced brightness
-			var locked_col := Color(0.24, 0.30, 0.40, 0.70)
-			_draw_curved_connection(p1, p2, locked_col, 2.0, 4.0)
+			_draw_curved_connection(p1, p2, Color(0.24, 0.30, 0.40, 0.70), 2.0, 4.0, target)
 
 	# วาดเส้นทาง Act 1: บันไดวน (1 -> 15)
 	for i in range(14):
@@ -1821,10 +1890,10 @@ func _on_draw_path() -> void:
 			draw_segment.call(idx1, idx2)
 
 	# วาดบันไดโกธิคสีเทาอ่อนฟ้าๆ 3 จุดเชื่อมระหว่างแถว Act 3 (Gothic Ladders)
-	if stages.size() >= 40:
-		_draw_gothic_ladder(1480.0, 840.0, 1000.0) # บันไดฝั่งขวา (25 -> 26)
-		_draw_gothic_ladder(280.0, 600.0, 760.0)   # บันไดฝั่งซ้าย (30 -> 31)
-		_draw_gothic_ladder(1480.0, 360.0, 520.0)  # บันไดฝั่งขวา (35 -> 36)
+	if pass_mode == PATH_PASS_CORE and stages.size() >= 40:
+		_draw_gothic_ladder(1480.0, 840.0, 1000.0, target) # บันไดฝั่งขวา (25 -> 26)
+		_draw_gothic_ladder(280.0, 600.0, 760.0, target)   # บันไดฝั่งซ้าย (30 -> 31)
+		_draw_gothic_ladder(1480.0, 360.0, 520.0, target)  # บันไดฝั่งขวา (35 -> 36)
 
 	# วาดเส้นทาง Act 3: ยอดหอคอยแบบบันไดวนคดเคี้ยวสลับซ้ายขวา (21 -> 40) โดยข้ามช่วงที่เป็นบันไดแนวตั้ง (25->26, 30->31, 35->36)
 	if stages.size() >= 40:
@@ -1834,8 +1903,9 @@ func _on_draw_path() -> void:
 			draw_segment.call(k, k + 1)
 
 
-func _draw_gothic_ladder(cx: float, y_top: float, y_bottom: float) -> void:
-	if not path_renderer:
+func _draw_gothic_ladder(cx: float, y_top: float, y_bottom: float, canvas: CanvasItem = null) -> void:
+	var target: CanvasItem = canvas if canvas != null else path_renderer
+	if not is_instance_valid(target):
 		return
 	var half_w := 24.0
 	var rail_w := 5.0
@@ -1848,12 +1918,12 @@ func _draw_gothic_ladder(cx: float, y_top: float, y_bottom: float) -> void:
 	var ladder_h := y_bottom - y_top
 
 	# 1. เสาราวบันไดซ้าย-ขวา (Vertical Rails)
-	path_renderer.draw_rect(Rect2(left_rail_x - 1.0, y_top, rail_w + 2.0, ladder_h), col_shadow)
-	path_renderer.draw_rect(Rect2(right_rail_x - 1.0, y_top, rail_w + 2.0, ladder_h), col_shadow)
-	path_renderer.draw_rect(Rect2(left_rail_x, y_top, rail_w, ladder_h), col_main)
-	path_renderer.draw_rect(Rect2(right_rail_x, y_top, rail_w, ladder_h), col_main)
-	path_renderer.draw_line(Vector2(left_rail_x + 1.0, y_top), Vector2(left_rail_x + 1.0, y_bottom), col_highlight, 1.0)
-	path_renderer.draw_line(Vector2(right_rail_x + 1.0, y_top), Vector2(right_rail_x + 1.0, y_bottom), col_highlight, 1.0)
+	target.draw_rect(Rect2(left_rail_x - 1.0, y_top, rail_w + 2.0, ladder_h), col_shadow)
+	target.draw_rect(Rect2(right_rail_x - 1.0, y_top, rail_w + 2.0, ladder_h), col_shadow)
+	target.draw_rect(Rect2(left_rail_x, y_top, rail_w, ladder_h), col_main)
+	target.draw_rect(Rect2(right_rail_x, y_top, rail_w, ladder_h), col_main)
+	target.draw_line(Vector2(left_rail_x + 1.0, y_top), Vector2(left_rail_x + 1.0, y_bottom), col_highlight, 1.0)
+	target.draw_line(Vector2(right_rail_x + 1.0, y_top), Vector2(right_rail_x + 1.0, y_bottom), col_highlight, 1.0)
 
 	# 2. ขั้นบันไดแนวนอน (Horizontal Rungs) ห่างกันทุก 20px
 	var rung_h := 4.0
@@ -1863,19 +1933,20 @@ func _draw_gothic_ladder(cx: float, y_top: float, y_bottom: float) -> void:
 		var rx1 := left_rail_x + rail_w
 		var rx2 := right_rail_x
 		var rw := rx2 - rx1
-		path_renderer.draw_rect(Rect2(rx1, curr_y + 1.0, rw, rung_h), col_shadow)
-		path_renderer.draw_rect(Rect2(rx1, curr_y, rw, rung_h), col_main)
-		path_renderer.draw_line(Vector2(rx1, curr_y), Vector2(rx2, curr_y), col_highlight, 1.0)
+		target.draw_rect(Rect2(rx1, curr_y + 1.0, rw, rung_h), col_shadow)
+		target.draw_rect(Rect2(rx1, curr_y, rw, rung_h), col_main)
+		target.draw_line(Vector2(rx1, curr_y), Vector2(rx2, curr_y), col_highlight, 1.0)
 		curr_y += 20.0
 
 
-func _draw_curved_connection(p1: Vector2, p2: Vector2, color: Color, line_width: float = 2.5, dash_len: float = 4.0) -> void:
-	if not path_renderer:
+func _draw_curved_connection(p1: Vector2, p2: Vector2, color: Color, line_width: float = 2.5, _dash_len: float = 4.0, canvas: CanvasItem = null) -> void:
+	var target: CanvasItem = canvas if canvas != null else path_renderer
+	if not is_instance_valid(target):
 		return
 
 	# ถ้าเป็นเส้นตรงแนวตั้งตามบันได หรือแนวนอนระหว่างด่านในแถวเดียวกัน
 	if absf(p1.x - p2.x) < 2.0 or absf(p1.y - p2.y) < 2.0:
-		path_renderer.draw_line(p1, p2, color, line_width)
+		target.draw_line(p1, p2, color, line_width)
 		return
 
 	var steps := 16
@@ -1901,7 +1972,7 @@ func _draw_curved_connection(p1: Vector2, p2: Vector2, color: Color, line_width:
 	for s in range(1, steps + 1):
 		var t := float(s) / float(steps)
 		var pt := _bezier_interpolate(p1, c1, c2, p2, t)
-		path_renderer.draw_line(prev_pt, pt, color, line_width)
+		target.draw_line(prev_pt, pt, color, line_width)
 		prev_pt = pt
 
 
@@ -1920,7 +1991,7 @@ func _bezier_interpolate(p0: Vector2, p1: Vector2, p2: Vector2, p3: Vector2, t: 
 
 
 func _on_launch_stage_pressed() -> void:
-	if _is_jumping:
+	if _is_leaving or _is_jumping:
 		return
 
 	var stg := TOWER_STAGES[_current_stage_idx]
@@ -1929,8 +2000,10 @@ func _on_launch_stage_pressed() -> void:
 	if not is_unlocked:
 		return
 
+	_is_leaving = true
 	_stop_vel_angry(false)
 	_play_sfx(sfx_click)
+	var prev_selected := GameProgressManager.get_selected_level_number()
 	GameProgressManager.set_selected_level_number(stg_id)
 
 	var target_scene: String
@@ -1941,12 +2014,15 @@ func _on_launch_stage_pressed() -> void:
 	else:
 		target_scene = SANDBOX_SCENE
 
-	if not SceneLoader.change_scene(get_tree(), target_scene):
+	var tree := get_tree() if is_inside_tree() else null
+	if not SceneLoader.change_scene(tree, target_scene):
+		_is_leaving = false
+		GameProgressManager.set_selected_level_number(prev_selected)
 		push_warning("[LevelSelectView] Target scene not found: '%s'" % target_scene)
 
 
 func _play_sfx(player: AudioStreamPlayer) -> void:
-	if player and not _is_muted:
+	if player and player.is_inside_tree() and not _is_muted:
 		player.play()
 
 
