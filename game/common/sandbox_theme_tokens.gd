@@ -78,11 +78,12 @@ static func create_button_style() -> StyleBoxFlat:
 
 
 static func create_terminal_font() -> Font:
-	var cmd_font := load("res://assets/fonts/VT323-Regular.ttf") as Font
-	var thai_fallback := load("res://assets/fonts/ChakraPetch-Regular.ttf") as Font
+	var cmd_font := load("res://assets/fonts/TA-8-bit.ttf") as Font
+	var thai_fallback := create_terminal_thai_font()
 	if cmd_font != null:
 		var fv := FontVariation.new()
 		fv.base_font = cmd_font
+		fv.variation_embolden = 0.25
 		if thai_fallback != null:
 			fv.fallbacks = [thai_fallback]
 		return fv
@@ -91,3 +92,93 @@ static func create_terminal_font() -> Font:
 	var sys := SystemFont.new()
 	sys.font_names = PackedStringArray(["Menlo", "Consolas", "DejaVu Sans Mono"])
 	return sys
+
+
+static func create_terminal_thai_font() -> Font:
+	var chakra := load("res://assets/fonts/ChakraPetch-Regular.ttf") as Font
+	if chakra == null:
+		return null
+	var fv := FontVariation.new()
+	fv.base_font = chakra
+	fv.variation_embolden = 0.2
+	fv.spacing_top = 4
+	fv.spacing_bottom = 2
+	return fv
+
+
+static func append_terminal_styled_text(
+	rich_label: RichTextLabel,
+	text: String,
+	thai_font: Font,
+	thai_font_size: int = 22
+) -> void:
+	if rich_label == null or text.is_empty():
+		return
+	if thai_font == null or _is_pure_ascii(text):
+		rich_label.add_text(text)
+		return
+	var lines := text.split("\n", true)
+	for i in lines.size():
+		if i > 0:
+			rich_label.add_text("\n")
+		if not lines[i].is_empty():
+			_append_terminal_styled_line(rich_label, lines[i], thai_font, thai_font_size)
+
+
+static func _append_terminal_styled_line(
+	rich_label: RichTextLabel,
+	line: String,
+	thai_font: Font,
+	thai_font_size: int
+) -> void:
+	var n := line.length()
+	var thai_mask := PackedByteArray()
+	thai_mask.resize(n)
+	for i in n:
+		thai_mask[i] = 1 if line.unicode_at(i) > 0x7F else 0
+
+	# Attach sentence punctuation/spaces surrounding Thai text so Thai phrases keep consistent ChakraPetch sizing.
+	for i in n:
+		if thai_mask[i] != 0:
+			continue
+		var cp := line.unicode_at(i)
+		if cp == 0x28: # '(' before Thai
+			var next_idx := i + 1
+			while next_idx < n and line.unicode_at(next_idx) == 0x20:
+				next_idx += 1
+			if next_idx < n and line.unicode_at(next_idx) > 0x7F:
+				thai_mask[i] = 1
+		elif _is_neutral_punct(cp):
+			var has_thai_before := i > 0 and thai_mask[i - 1] == 1
+			var look := i + 1
+			while look < n and _is_neutral_punct(line.unicode_at(look)):
+				look += 1
+			var has_thai_after := look < n and line.unicode_at(look) > 0x7F
+			if (has_thai_before and (look == n or has_thai_after)) or (cp == 0x20 and (has_thai_before or has_thai_after)):
+				thai_mask[i] = 1
+
+	var start := 0
+	while start < n:
+		var use_thai := thai_mask[start] == 1
+		var end := start + 1
+		while end < n and (thai_mask[end] == 1) == use_thai:
+			end += 1
+		var chunk := line.substr(start, end - start)
+		if use_thai:
+			rich_label.push_font(thai_font, thai_font_size)
+			rich_label.add_text(chunk)
+			rich_label.pop()
+		else:
+			rich_label.add_text(chunk)
+		start = end
+
+
+static func _is_pure_ascii(text: String) -> bool:
+	for i in text.length():
+		if text.unicode_at(i) > 0x7F:
+			return false
+	return true
+
+
+static func _is_neutral_punct(cp: int) -> bool:
+	return cp == 0x20 or cp == 0x2E or cp == 0x2C or cp == 0x3A or cp == 0x3B or cp == 0x29 or cp == 0x21 or cp == 0x3F

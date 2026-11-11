@@ -6,6 +6,7 @@ extends Control
 ## real-time system clock, and transition to Sandbox gameplay.
 
 const PREVIEW_FPS := 6.67
+const THAI_LOG_FONT_SIZE := 22
 
 var _start_career_btn: Button
 var _resume_work_btn: Button
@@ -20,6 +21,7 @@ var _sfx_click: AudioStreamPlayer
 var _sfx_command: AudioStreamPlayer
 var _scene_preview_rect: TextureRect
 var _preview_frames: Array[Texture2D] = []
+var _thai_log_font: Font
 
 var _cursor_blink_timer := 0.0
 var _clock_update_timer := 0.0
@@ -29,6 +31,7 @@ var _cursor_visible := true
 
 
 func _ready() -> void:
+	_thai_log_font = SandboxThemeTokens.create_terminal_thai_font()
 	_bind_nodes()
 	_wire_events()
 	_update_clock()
@@ -162,7 +165,7 @@ func _on_terminal_command_submitted(input: String) -> void:
 
 	var lower := cmd.to_lower()
 	if lower == "clear" or lower == "cls":
-		_output_log.text = ""
+		_output_log.clear()
 		return
 
 	if lower == "start" or lower == "play" or lower == "run":
@@ -210,10 +213,11 @@ func _on_terminal_command_submitted(input: String) -> void:
 
 
 func _append_terminal_text(text: String) -> void:
-	if _output_log.text.is_empty():
-		_output_log.text = text
-	else:
-		_output_log.text += "\n" + text
+	if text.is_empty():
+		return
+	if not _output_log.get_parsed_text().is_empty():
+		_output_log.add_text("\n")
+	SandboxThemeTokens.append_terminal_styled_text(_output_log, text, _thai_log_font, THAI_LOG_FONT_SIZE)
 
 
 func _play_sfx(player: AudioStreamPlayer) -> void:

@@ -8,8 +8,7 @@
 [ext_resource type="FontFile" path="res://assets/fonts/Bungee-Regular.ttf" id="6_font_bungee"]
 [ext_resource type="FontFile" uid="uid://csurxmw2vmws4" path="res://assets/fonts/TA-8-bit.ttf" id="7_font_ta8bit"]
 [ext_resource type="FontFile" uid="uid://deedcfbkojx6k" path="res://assets/fonts/ChakraPetch-Bold.ttf" id="8_font_chakra_bold"]
-[ext_resource type="FontFile" path="res://assets/fonts/ChakraPetch-Regular.ttf" id="9_font_chakra_reg"]
-[ext_resource type="FontFile" uid="uid://kdsopvxcj40" path="res://assets/fonts/VT323-Regular.ttf" id="10_font_vt323"]
+[ext_resource type="FontFile" uid="uid://c82lda4ldw0ve" path="res://assets/fonts/ChakraPetch-Regular.ttf" id="9_font_chakra_reg"]
 [ext_resource type="AudioStream" uid="uid://cvlamp5b4er6q" path="res://assets/audio/sfx_click.wav" id="10_sfx_click"]
 [ext_resource type="AudioStream" uid="uid://okd1lm33qdyj" path="res://assets/audio/sfx_command.wav" id="11_sfx_cmd"]
 [sub_resource type="Gradient" id="Gradient_magic_speck"]
@@ -104,6 +103,17 @@ border_color = Color(0.29, 0.078, 0.549, 1)
 bg_color = Color(0.043, 0.051, 0.035, 1)
 
 [sub_resource type="StyleBoxEmpty" id="Style_terminal_input"]
+
+[sub_resource type="FontVariation" id="FontVariation_term_thai"]
+base_font = ExtResource("9_font_chakra_reg")
+variation_embolden = 0.2
+spacing_top = 4
+spacing_bottom = 2
+
+[sub_resource type="FontVariation" id="FontVariation_term_cmd"]
+base_font = ExtResource("7_font_ta8bit")
+variation_embolden = 0.25
+fallbacks = [SubResource("FontVariation_term_thai")]
 
 [sub_resource type="StyleBoxFlat" id="Style_bottom_bar"]
 content_margin_left = 36.0
@@ -412,8 +422,8 @@ unique_name_in_owner = true
 layout_mode = 2
 size_flags_vertical = 3
 theme_override_colors/default_color = Color(0.31, 0.98, 0.46, 1)
-theme_override_fonts/normal_font = ExtResource("10_font_vt323")
-theme_override_font_sizes/normal_font_size = 26
+theme_override_fonts/normal_font = SubResource("FontVariation_term_cmd")
+theme_override_font_sizes/normal_font_size = 24
 bbcode_enabled = true
 text = "> git init
 > git status
@@ -428,8 +438,8 @@ theme_override_constants/separation = 6
 [node name="PromptChevron" type="Label" parent="WindowAnchor/WindowFrame/WindowVBox/WindowContent/RightIllustrationPanel/TerminalPanel/Margin/VBox/PromptRow" unique_id=2029329152]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.31, 0.98, 0.46, 1)
-theme_override_fonts/font = ExtResource("10_font_vt323")
-theme_override_font_sizes/font_size = 26
+theme_override_fonts/font = SubResource("FontVariation_term_cmd")
+theme_override_font_sizes/font_size = 24
 text = ">"
 
 [node name="CommandInput" type="LineEdit" parent="WindowAnchor/WindowFrame/WindowVBox/WindowContent/RightIllustrationPanel/TerminalPanel/Margin/VBox/PromptRow" unique_id=1972139635]
@@ -437,8 +447,8 @@ unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_colors/font_color = Color(0.31, 0.98, 0.46, 1)
-theme_override_fonts/font = ExtResource("10_font_vt323")
-theme_override_font_sizes/font_size = 26
+theme_override_fonts/font = SubResource("FontVariation_term_cmd")
+theme_override_font_sizes/font_size = 24
 theme_override_styles/normal = SubResource("Style_terminal_input")
 theme_override_styles/focus = SubResource("Style_terminal_input")
 placeholder_text = "type git command... (e.g. git status)"
@@ -448,8 +458,8 @@ caret_blink = true
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_colors/font_color = Color(0.31, 0.98, 0.46, 1)
-theme_override_fonts/font = ExtResource("10_font_vt323")
-theme_override_font_sizes/font_size = 26
+theme_override_fonts/font = SubResource("FontVariation_term_cmd")
+theme_override_font_sizes/font_size = 24
 text = "█"
 
 [node name="BottomStatusBar" type="PanelContainer" parent="." unique_id=1554528865]

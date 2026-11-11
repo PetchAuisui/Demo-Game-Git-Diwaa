@@ -6,7 +6,7 @@ extends PanelContainer
 signal command_submitted(command: String)
 
 const THAI_LOG_FONT_PATH := "res://assets/fonts/ChakraPetch-Regular.ttf"
-const THAI_LOG_FONT_SIZE := 20
+const THAI_LOG_FONT_SIZE := 22
 
 @export var window_title: String = "●  ●  ●    TERMINAL — learner@diwaa:~/checkpoint-01"
 @export var prompt_prefix: String = "learner@diwaa:~ $"
@@ -27,7 +27,9 @@ var _is_executing := false
 
 
 func _ready() -> void:
-	_thai_log_font = load(THAI_LOG_FONT_PATH) as Font
+	_thai_log_font = SandboxThemeTokens.create_terminal_thai_font()
+	if _thai_log_font == null:
+		_thai_log_font = load(THAI_LOG_FONT_PATH) as Font
 	_title_label = get_node("%TitleLabel")
 	_hint_label = get_node("%HintLabel")
 	_output_log = get_node("%OutputLog")
@@ -146,69 +148,7 @@ func append_info(info: String) -> void:
 
 
 func _append_styled_text(text: String) -> void:
-	if _thai_log_font == null or _is_pure_ascii(text):
-		_output_log.add_text(text)
-		return
-	var lines := text.split("\n", true)
-	for i in lines.size():
-		if i > 0:
-			_output_log.add_text("\n")
-		if not lines[i].is_empty():
-			_append_styled_line(lines[i])
-
-
-func _append_styled_line(line: String) -> void:
-	var n := line.length()
-	var thai_mask := PackedByteArray()
-	thai_mask.resize(n)
-	for i in n:
-		thai_mask[i] = 1 if line.unicode_at(i) > 0x7F else 0
-
-	# Attach sentence punctuation/spaces surrounding Thai text so Thai phrases keep consistent ChakraPetch sizing.
-	for i in n:
-		if thai_mask[i] != 0:
-			continue
-		var cp := line.unicode_at(i)
-		if cp == 0x28: # '(' before Thai
-			var next_idx := i + 1
-			while next_idx < n and line.unicode_at(next_idx) == 0x20:
-				next_idx += 1
-			if next_idx < n and line.unicode_at(next_idx) > 0x7F:
-				thai_mask[i] = 1
-		elif _is_neutral_punct(cp):
-			var has_thai_before := i > 0 and thai_mask[i - 1] == 1
-			var look := i + 1
-			while look < n and _is_neutral_punct(line.unicode_at(look)):
-				look += 1
-			var has_thai_after := look < n and line.unicode_at(look) > 0x7F
-			if (has_thai_before and (look == n or has_thai_after)) or (cp == 0x20 and (has_thai_before or has_thai_after)):
-				thai_mask[i] = 1
-
-	var start := 0
-	while start < n:
-		var use_thai := thai_mask[start] == 1
-		var end := start + 1
-		while end < n and (thai_mask[end] == 1) == use_thai:
-			end += 1
-		var chunk := line.substr(start, end - start)
-		if use_thai:
-			_output_log.push_font(_thai_log_font, THAI_LOG_FONT_SIZE)
-			_output_log.add_text(chunk)
-			_output_log.pop()
-		else:
-			_output_log.add_text(chunk)
-		start = end
-
-
-static func _is_pure_ascii(text: String) -> bool:
-	for i in text.length():
-		if text.unicode_at(i) > 0x7F:
-			return false
-	return true
-
-
-static func _is_neutral_punct(cp: int) -> bool:
-	return cp == 0x20 or cp == 0x2E or cp == 0x2C or cp == 0x3A or cp == 0x3B or cp == 0x29 or cp == 0x21 or cp == 0x3F
+	SandboxThemeTokens.append_terminal_styled_text(_output_log, text, _thai_log_font, THAI_LOG_FONT_SIZE)
 
 
 func clear_output() -> void:
