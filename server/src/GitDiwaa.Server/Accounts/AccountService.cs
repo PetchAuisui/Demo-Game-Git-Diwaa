@@ -49,6 +49,12 @@ public sealed class AccountService
             return AccountResult<PlayerProfile>.Failure(AuthErrorCode.ValidationFailed, validationErrors);
         }
 
+        if (_options.RejectWeakPasswords &&
+            AccountInputValidator.ValidatePasswordStrength(request.Password, request.Username, request.Email) is { } weakPassword)
+        {
+            return AccountResult<PlayerProfile>.Failure(AuthErrorCode.ValidationFailed, [weakPassword]);
+        }
+
         string normalizedUsername = AccountNormalizer.NormalizeUsername(request.Username);
         string trimmedEmail = request.Email.Trim();
         string normalizedEmail = AccountNormalizer.NormalizeEmail(request.Email);

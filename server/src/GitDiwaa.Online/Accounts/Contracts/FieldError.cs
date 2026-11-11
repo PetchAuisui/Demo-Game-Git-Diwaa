@@ -9,7 +9,9 @@ public enum FieldErrorReason
     InvalidCharacters,
     InvalidFormat,
     Taken,
-    Reserved
+    Reserved,
+    // รหัสผ่านเดาง่ายเกินไป (อยู่ในรายการยอดนิยม / ตัวเดียวซ้ำ / ช่องว่างล้วน / เหมือนชื่อผู้ใช้หรืออีเมล)
+    TooCommon
 }
 
 public sealed record FieldError(

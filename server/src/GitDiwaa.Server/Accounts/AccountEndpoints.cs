@@ -95,7 +95,7 @@ public static class AccountEndpoints
         {
             var session = (AuthenticatedSession)httpContext.Items[RequireSessionFilter.SessionItemKey]!;
             return Results.Json(session.Profile, statusCode: StatusCodes.Status200OK);
-        }).AddEndpointFilter<RequireSessionFilter>();
+        }).AddEndpointFilter<RequireSessionFilter>().RequireRateLimiting("account");
 
         // สถานะชื่อที่แสดง (เปลี่ยนได้อีกกี่ครั้ง / เมื่อไหร่) ให้หน้าบัญชีแสดงก่อนผู้เล่นกดเปลี่ยน
         group.MapGet("/me/display-name", async (
@@ -114,7 +114,7 @@ public static class AccountEndpoints
 
             var apiError = new ApiError(result.Error ?? AuthErrorCode.Unknown, result.FieldErrors);
             return Results.Json(apiError, statusCode: StatusCodes.Status401Unauthorized);
-        }).AddEndpointFilter<RequireSessionFilter>();
+        }).AddEndpointFilter<RequireSessionFilter>().RequireRateLimiting("account");
 
         // อีเมลของเจ้าของ token เท่านั้น (เมนูบัญชีในเกมแสดงแบบปิดบัง) ผู้ใช้มาจาก session จึงขอของคนอื่นไม่ได้
         // ไม่ให้แคช และจำกัดจำนวนครั้งเหมือน login: ถ้า token หลุด คนที่ได้ token ไปจะดึงข้อมูลได้ช้าลง
@@ -134,7 +134,7 @@ public static class AccountEndpoints
 
             var apiError = new ApiError(result.Error ?? AuthErrorCode.Unknown, result.FieldErrors);
             return Results.Json(apiError, statusCode: StatusCodes.Status401Unauthorized);
-        }).AddEndpointFilter<RequireSessionFilter>().RequireRateLimiting("auth");
+        }).AddEndpointFilter<RequireSessionFilter>().RequireRateLimiting("account");
 
         // เปลี่ยนชื่อที่แสดง: ต้อง login (token ใน Authorization header) และใช้ rate limit แบบเดียวกับ login
         // ผู้ใช้ที่จะถูกเปลี่ยนชื่อมาจาก session เท่านั้น เปลี่ยนชื่อของคนอื่นไม่ได้
@@ -179,7 +179,7 @@ public static class AccountEndpoints
 
             var apiError = new ApiError(result.Error ?? AuthErrorCode.Unknown, result.FieldErrors);
             return Results.Json(apiError, statusCode: statusCode);
-        }).AddEndpointFilter<RequireSessionFilter>().RequireRateLimiting("auth");
+        }).AddEndpointFilter<RequireSessionFilter>().RequireRateLimiting("account");
 
         // ความยินยอมแสดงชื่อบนตารางอันดับ: ดูได้ และให้ / ถอนได้ตลอดเวลา (ต้อง login)
         group.MapGet("/me/leaderboard-consent", async (
@@ -198,7 +198,7 @@ public static class AccountEndpoints
 
             var apiError = new ApiError(result.Error ?? AuthErrorCode.Unknown, result.FieldErrors);
             return Results.Json(apiError, statusCode: StatusCodes.Status401Unauthorized);
-        }).AddEndpointFilter<RequireSessionFilter>();
+        }).AddEndpointFilter<RequireSessionFilter>().RequireRateLimiting("account");
 
         group.MapPut("/me/leaderboard-consent", async (
             LeaderboardConsentRequest? request,
@@ -230,7 +230,7 @@ public static class AccountEndpoints
 
             var apiError = new ApiError(result.Error ?? AuthErrorCode.Unknown, result.FieldErrors);
             return Results.Json(apiError, statusCode: statusCode);
-        }).AddEndpointFilter<RequireSessionFilter>().RequireRateLimiting("auth");
+        }).AddEndpointFilter<RequireSessionFilter>().RequireRateLimiting("account");
 
         group.MapPost("/refresh", async (HttpRequest request, HttpResponse response, AccountService accountService, CancellationToken ct) =>
         {

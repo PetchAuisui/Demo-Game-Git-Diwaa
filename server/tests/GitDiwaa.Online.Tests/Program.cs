@@ -299,6 +299,23 @@ internal static class Program
             AssertValid(AccountInputValidator.ValidateRegister(Valid with { Password = " abc12345 " }));
         });
 
+        runner.Run("ValidatePasswordStrength_Cases", static () =>
+        {
+            static FieldErrorReason? Reason(string password, string username = "mage01", string email = "mage@example.com") =>
+                AccountInputValidator.ValidatePasswordStrength(password, username, email)?.Reason;
+
+            Assert.Equal<FieldErrorReason?>(FieldErrorReason.TooCommon, Reason("12345678"));
+            Assert.Equal<FieldErrorReason?>(FieldErrorReason.TooCommon, Reason("PassWord123"));
+            Assert.Equal<FieldErrorReason?>(FieldErrorReason.TooCommon, Reason("  password  "));
+            Assert.Equal<FieldErrorReason?>(FieldErrorReason.TooCommon, Reason("        "));
+            Assert.Equal<FieldErrorReason?>(FieldErrorReason.TooCommon, Reason("zzzzzzzzzz"));
+            Assert.Equal<FieldErrorReason?>(FieldErrorReason.TooCommon, Reason("MAGE0123", username: "mage0123"));
+            Assert.Equal<FieldErrorReason?>(FieldErrorReason.TooCommon, Reason("someone1", email: "someone1@example.com"));
+            Assert.Equal<FieldErrorReason?>(FieldErrorReason.TooCommon, Reason("someone1@example.com", email: "someone1@example.com"));
+            Assert.Equal<FieldErrorReason?>(null, Reason("S3cret-Pass!"));
+            Assert.Equal<FieldErrorReason?>(null, Reason("correct horse battery"));
+        });
+
         runner.Run("ValidateRegister_AllEmpty_ReturnsThreeRequiredErrors", static () =>
         {
             // ชื่อที่แสดงไม่บังคับแล้ว (server ตั้งให้) จึงเหลือ 3 ช่องที่บังคับ

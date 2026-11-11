@@ -16,6 +16,7 @@ internal static class Program
         await ConsentTests.RunAsync(runner);
         await RegisterCheckTests.RunAsync(runner);
         await MyEmailTests.RunAsync(runner);
+        await PasswordAndQuotaTests.RunAsync(runner);
 
         return runner.Complete();
     }

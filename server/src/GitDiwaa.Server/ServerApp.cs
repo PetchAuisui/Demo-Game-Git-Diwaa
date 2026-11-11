@@ -52,13 +52,23 @@ public static class ServerApp
         builder.Services.AddSingleton<PasswordHasher>();
         builder.Services.AddSingleton<SessionTokenService>();
         builder.Services.AddSingleton(TimeProvider.System);
-        builder.Services.AddSingleton(new AccountOptions());
+        // กันรหัสผ่านอ่อน: เปิดเป็นค่าเริ่มต้น ปิดเองเฉพาะตอนพัฒนา (Development) ให้ทีมใช้รหัสง่ายๆ ทดสอบในเครื่องได้
+        // ตั้งเองได้ด้วย Accounts:RejectWeakPasswords (true / false) ใน appsettings หรือ command line
+        bool rejectWeakPasswords = builder.Configuration.GetValue<bool?>("Accounts:RejectWeakPasswords")
+            ?? !builder.Environment.IsDevelopment();
+        builder.Services.AddSingleton(new AccountOptions { RejectWeakPasswords = rejectWeakPasswords });
         builder.Services.AddSingleton<AccountService>();
         builder.Services.AddSingleton<RequireSessionFilter>();
 
         // Rate limiting configurations
-        int authPermitLimit = builder.Configuration.GetValue("RateLimit:AuthPermitLimit", 10);
-        int globalPermitLimit = builder.Configuration.GetValue("RateLimit:GlobalPermitLimit", 120);
+        // ค่าเริ่มต้นคิดเผื่อห้องเรียน / แล็บที่ทุกคนออกเน็ต IP เดียวกัน (ประมาณ 40 คน) ทุกค่าตั้งใหม่ได้ใน appsettings / command line
+        //   AuthPermitLimit    endpoint ที่ไม่ต้องล็อกอิน (สมัคร / ตรวจซ้ำ / ล็อกอิน / ต่ออายุ) ต่อ IP ต่อนาที
+        //                      วันที่ทั้งห้องสมัครพร้อมกัน ตั้งชั่วคราวราว 3 เท่าของจำนวนคน (เช่น 40 คน = 120-150)
+        //   AccountPermitLimit endpoint ที่ต้องล็อกอิน (/me/*) ต่อ session ต่อนาที (คนในเน็ตเดียวกันไม่แย่งกัน)
+        //   GlobalPermitLimit  ทุกคำขอรวมกันต่อ IP ต่อนาที (เพดานสุดท้าย กันการสุ่ม token มายิง)
+        int authPermitLimit = builder.Configuration.GetValue("RateLimit:AuthPermitLimit", 60);
+        int accountPermitLimit = builder.Configuration.GetValue("RateLimit:AccountPermitLimit", 60);
+        int globalPermitLimit = builder.Configuration.GetValue("RateLimit:GlobalPermitLimit", 300);
 
         builder.Services.AddRateLimiter(rateLimiterOptions =>
         {
@@ -84,7 +94,7 @@ public static class ServerApp
                     });
             });
 
-            // Dedicated policy for sensitive endpoints (register, login, refresh)
+            // endpoint ที่ไม่ต้องล็อกอิน (register, register/check, login, refresh): นับต่อ IP
             rateLimiterOptions.AddPolicy("auth", httpContext =>
             {
                 string ip = httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
@@ -93,6 +103,26 @@ public static class ServerApp
                     factory: _ => new FixedWindowRateLimiterOptions
                     {
                         PermitLimit = authPermitLimit,
+                        Window = TimeSpan.FromMinutes(1),
+                        QueueLimit = 0
+                    });
+            });
+
+            // endpoint ที่ต้องล็อกอิน (/me/*): นับต่อ session แทนต่อ IP ผู้เล่นหลายคนในเน็ตเดียวกันจึงไม่แย่งโควตากัน
+            // กุญแจเป็น hash ของ token (ไม่เก็บ token จริงไว้ในตัวนับ) ไม่มี token / token รูปแบบผิด = นับรวมต่อ IP
+            // คนที่สุ่ม token รูปแบบถูกมายิงจะได้ตัวนับแยก แต่ยังติดเพดานรวมต่อ IP (GlobalLimiter) ด้านบน
+            rateLimiterOptions.AddPolicy("account", httpContext =>
+            {
+                var tokenService = httpContext.RequestServices.GetRequiredService<SessionTokenService>();
+                string key = RequireSessionFilter.TryReadBearerToken(httpContext.Request, out string token) &&
+                             tokenService.TryHashToken(token, out string tokenHash)
+                    ? "session:" + tokenHash
+                    : "ip:" + (httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown");
+                return RateLimitPartition.GetFixedWindowLimiter(
+                    partitionKey: key,
+                    factory: _ => new FixedWindowRateLimiterOptions
+                    {
+                        PermitLimit = accountPermitLimit,
                         Window = TimeSpan.FromMinutes(1),
                         QueueLimit = 0
                     });

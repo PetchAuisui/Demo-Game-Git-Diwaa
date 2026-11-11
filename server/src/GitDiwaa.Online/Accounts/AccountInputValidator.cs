@@ -66,6 +66,37 @@ public static partial class AccountInputValidator
         return errors;
     }
 
+    /// <summary>
+    /// ตรวจว่ารหัสผ่านเดาง่ายเกินไปไหม (แยกจาก ValidateRegister เพราะเปิด / ปิดได้ตามค่าตั้ง server)
+    /// ใช้หลัง ValidateRegister ผ่านแล้วเท่านั้น (รหัสยาวพอและไม่ว่าง) คืน null = ใช้ได้
+    /// </summary>
+    public static FieldError? ValidatePasswordStrength(string password, string? username, string? email)
+    {
+        ArgumentNullException.ThrowIfNull(password);
+
+        string trimmed = password.Trim();
+        bool allSameCharacter = password.Length > 0 && password.All(c => c == password[0]);
+        bool sameAsUsername = !string.IsNullOrWhiteSpace(username) &&
+            string.Equals(trimmed, username.Trim(), StringComparison.OrdinalIgnoreCase);
+        bool sameAsEmail = !string.IsNullOrWhiteSpace(email) &&
+            (string.Equals(trimmed, email.Trim(), StringComparison.OrdinalIgnoreCase) ||
+             string.Equals(trimmed, EmailLocalPart(email), StringComparison.OrdinalIgnoreCase));
+
+        if (trimmed.Length == 0 || allSameCharacter || sameAsUsername || sameAsEmail || CommonPasswords.Contains(trimmed))
+        {
+            return new FieldError(AccountFields.Password, FieldErrorReason.TooCommon);
+        }
+
+        return null;
+    }
+
+    private static string EmailLocalPart(string email)
+    {
+        string trimmed = email.Trim();
+        int at = trimmed.LastIndexOf('@');
+        return at > 0 ? trimmed[..at] : trimmed;
+    }
+
     public static IReadOnlyList<FieldError> ValidateLogin(LoginRequest request)
     {
         ArgumentNullException.ThrowIfNull(request);
