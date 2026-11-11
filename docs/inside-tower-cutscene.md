@@ -39,8 +39,8 @@ flowchart TD
 | หมวดหมู่ | ไฟล์ Asset | รายละเอียด |
 |---|---|---|
 | **ฉากหลังหลัก** | `res://assets/cutscene/backgrounds/inside-tower-Sheet.png` | ห้องโถงชั้น 1 หอคอยเวท (1920×1080) |
-| **ฉากหลังบันได** | `res://assets/cutscene/backgrounds/central-tower-Sheet.png` | โถงบันไดหินกลางหอคอย สำหรับคัตซีนเดินขึ้นบันได |
-| **ตัวละครฝั่งซ้าย (เวล)** | `res://assets/cutscene/characters/vel/` | • `vel_walk_right-Sheet.png` (เดินเข้า/เดินผ่านมิวรา)<br>• `vel_breathe_blink-Sheet.png` (ท่ายืนฟัง)<br>• `vel_shockpng.png` (ท่าตกใจ)<br>• `vel_back.png` (ท่ายืนหันหลังเดินขึ้นบันได) |
+| **ฉากหลังบันได (`level_clear_scene`)** | `res://assets/cutscene/backgrounds/stairs.png` | ฉากบันไดสำหรับคัตซีนเดินขึ้นบันไดหลังผ่านด่าน (`level_clear_scene.tscn`) |
+| **ตัวละครฝั่งซ้าย (เวล)** | `res://assets/cutscene/characters/vel/` | • `vel_walk_right-Sheet.png` (เดินเข้าห้องโถง/เดินขึ้นบันไดใน `level_clear_scene`)<br>• `vel_walk-Sheet.png` (`walk-idle` ใน `level_clear_scene`)<br>• `vel_breathe_blink-Sheet.png` (ท่ายืนฟัง)<br>• `vel_shockpng.png` (ท่าตกใจ) |
 | **ตัวละครฝั่งขวา (มิวรา)** | `res://assets/cutscene/characters/mewla/` | • `mewla_idle-Sheet.png` (ยืนฟัง/กระดิกหู)<br>• `mewla_talk-Sheet.png` (ท่าพูด)<br>• `mewla_success-Sheet.png` (ท่าพร้อมลุย) |
 | **กรอบข้อความ** | `res://assets/cutscene/frame dialog text/text dialog.png` | กรอบข้อความ 9-slice StyleBoxTexture ขอบมนโทนม่วงเข้มตัดลาเวนเดอร์ (ใช้แสดงทั้งบทพูดและตัวเลือก) |
 | **ลูกศรไปต่อ** | `res://assets/cutscene/frame dialog text/arrow.png` | ไอคอนลูกศรพิกเซล ลอยเด้งดึ๋งเมื่อพิมพ์ข้อความเสร็จ |
@@ -211,7 +211,7 @@ flowchart TD
 
 > [!NOTE]
 > **การจบด่านที่ 1:**
-> ตามข้อกำหนดของผู้ใช้ ฉากเดินขึ้นบันไดหินกลางหอคอยยังไม่ได้จัดทำ ในเวอร์ชันนี้ตัวเกมจะจบที่บทสนทนาสรุปผลระหว่างเวลกับมิวรา จากนั้นเปิดหน้าต่างสรุปผล Success Modal ขึ้นมาโดยอัตโนมัติ
+> เมื่อบทสนทนาสรุปผล (Outro) จบลง หรือผู้เล่นกดข้ามในช่วง Outro ระบบจะบันทึกสถานะผ่านด่าน เฟดจอดำ 0.35 วินาที แล้วเปลี่ยนฉากไปยังคัตซีนเดินขึ้นบันได [`level_clear_scene.tscn`](../game/features/cutscene/level_clear_scene.tscn) ซึ่งเล่นแอนิเมชัน `"walk-stair"` ความยาว 3.5 วินาที และเปิดหน้าต่างสรุปผล `LevelClearModal` ขึ้นมาซ้อนทับที่วินาทีที่ 3.0 (คงการเปิด `level_clear_modal.tscn` ในซีนเดิมไว้เป็น Fallback หากไม่พบไฟล์คัตซีนบันได)
 
 ---
 
@@ -224,7 +224,7 @@ flowchart TD
 >   2. **หน้าแสดงดาวสรุปผล:** ทำขึ้นมาเพื่อตรวจสอบการทำงานและโฟลว์หลังจบด่านของเกมเฉยๆ เผื่อมีเพื่อนหรือทีมงานมาตรวจงานแล้วจะได้ทราบว่าระบบคิดคะแนน/บันทึกดาวยังไม่ได้เปิดใช้งานจริง
 
 ### 5.1 หน้าต่างสรุปผลผ่านด่าน (Success Modal - `level_clear_modal.tscn`)
-* แสดงเมื่อจบบทสนทนาด่านที่ 1 (ประโยค "มิวรา: …นั้นสิ") หรือเมื่อกดข้ามในช่วง Outro
+* ถูกฝังอยู่ภายในฉากเดินขึ้นบันได [`level_clear_scene.tscn`](../game/features/cutscene/level_clear_scene.tscn) โดยจะแสดงขึ้นพร้อมเอฟเฟกต์ซูมเด้งที่วินาทีที่ 3.0 ของแอนิเมชัน `"walk-stair"` หลังจากจบบทสนทนาสรุปผลด่านที่ 1 (ประโยค "มิวรา: …นั้นสิ") หรือกดข้ามในช่วง Outro (และเปิดเป็น Overlay โดยตรงใน `level_dialogue_view.gd` เป็น Fallback หากไม่มีฉากบันได)
 * **โครงสร้าง UI:**
   * หัวข้อ: `"ด่านที่ N : <คำสั่ง>"` ตามด่านที่เพิ่งเล่น (ดึงจาก `commands[0]` ในไฟล์ข้อมูลด่านผ่าน `LevelDataLoader`) พร้อมผลดาว ⭐ ⭐ ★
   * ตารางคะแนนจำลอง (คะแนนรอบนี้, สถิติสูงสุดเดิม, คะแนนสะสม, รางวัลที่ได้รับ) — ยังเป็นค่าตายตัว

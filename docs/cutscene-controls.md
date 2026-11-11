@@ -102,9 +102,10 @@ flowchart TD
     
     CheckProgress -->|"เคยดูแล้ว (true)"| LevelSelect["🗺️ level_select_view.tscn (หน้ารวมด่าน)"]
     LevelSelect -->|"เลือกด่าน / เล่นอีกครั้ง"| LevelDialogue["level_dialogue_view.tscn (บทสนทนาประจำด่าน ไม่เล่นคัตซีนเดินเข้าซ้ำ)"]
-    LevelDialogue -->|"จบบทสนทนา"| ClearModal
+    LevelDialogue -->|"จบบทสนทนา (Outro)"| LevelClearScene
     
-    InsideTower -->|"จบบทสนทนา"| ClearModal["⭐ level_clear_modal.tscn (สรุปดาวหลังจบด่าน)"]
+    InsideTower -->|"จบบทสนทนา (Outro)"| LevelClearScene["🚶 level_clear_scene.tscn (คัตซีนเดินขึ้นบันไดผ่านด่าน)"]
+    LevelClearScene -->|"วินาทีที่ 3.0 ของ walk-stair"| ClearModal["⭐ level_clear_modal.tscn (สรุปดาวหลังจบด่าน)"]
     ClearModal -->|"กลับไปหน้าเลือกด่าน / ด่านต่อไป"| LevelSelect
     
     InsideTower -.->|"โหมดฝึกฝน Sandbox"| Sandbox["6. sandbox_game_view.tscn (ด่านฝึกสอน Git 1-15)"]
