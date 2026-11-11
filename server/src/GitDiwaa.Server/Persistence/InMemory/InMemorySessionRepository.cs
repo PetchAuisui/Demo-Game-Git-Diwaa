@@ -131,6 +131,24 @@ public sealed class InMemorySessionRepository : ISessionRepository
         }
     }
 
+    public Task<bool> TryReplaceSuccessorAsync(Guid sessionId, Guid expectedSuccessorId, Guid newSuccessorId, CancellationToken ct = default)
+    {
+        lock (_lock)
+        {
+            if (!_sessionsById.TryGetValue(sessionId, out var session) ||
+                session.RotatedAt is null ||
+                session.ReplacedBySessionId != expectedSuccessorId)
+            {
+                return Task.FromResult(false);
+            }
+
+            var repointedSession = session with { ReplacedBySessionId = newSuccessorId };
+            _sessionsById[sessionId] = repointedSession;
+            _sessionsByTokenHash[session.TokenHash] = repointedSession;
+            return Task.FromResult(true);
+        }
+    }
+
     public Task TouchAsync(Guid sessionId, DateTimeOffset lastUsedAt, CancellationToken ct = default)
     {
         lock (_lock)

@@ -19,6 +19,10 @@ public sealed class AccountService
     // ลองออกชื่อ player-<เลข> ได้กี่ครั้งถ้าบังเอิญชน (ปกติไม่ชน เพราะผู้เล่นตั้งชื่อรูปแบบนี้เองไม่ได้)
     private const int MaxGeneratedNameAttempts = 5;
 
+    // ย้ายตัวชี้ตอนผ่อนผันแพ้คำขออื่นได้กี่รอบ (แพ้ 1 รอบ = มีคำขออื่นสำเร็จไป 1 คำขอ จึงจบแน่นอน)
+    // เกินนี้แปลว่ามีคำขอ refresh ใบเดียวกันพร้อมกันมากผิดปกติ ถือว่าไม่ผ่าน
+    private const int MaxRotationGraceAttempts = 32;
+
     public AccountService(
         IUserRepository userRepository,
         ISessionRepository sessionRepository,
@@ -195,7 +199,6 @@ public sealed class AccountService
             ? await _passwordHasher.HashAsync(request.Password, ct)
             : null;
         await _userRepository.RecordSuccessfulLoginAsync(user.Id, client, upgradedPasswordHash, now, ct);
-        var successfulUser = user;
 
         TimeSpan sessionLifetime = request.RememberMe
             ? _options.PersistentSessionLifetime
@@ -206,7 +209,7 @@ public sealed class AccountService
 
         var sessionRecord = new SessionRecord(
             Id: Guid.NewGuid(),
-            UserId: successfulUser.Id,
+            UserId: user.Id,
             TokenHash: issuedToken.TokenHash,
             IsPersistent: request.RememberMe,
             CreatedAt: now,
@@ -216,7 +219,7 @@ public sealed class AccountService
 
         await _sessionRepository.AddAsync(sessionRecord, ct);
 
-        var profile = new PlayerProfile(successfulUser.Id, successfulUser.Username, successfulUser.DisplayName);
+        var profile = new PlayerProfile(user.Id, user.Username, user.DisplayName);
         var loginSession = new LoginSession(profile, issuedToken.Token, expiresAt);
 
         return AccountResult<LoginSession>.Success(loginSession);
@@ -315,17 +318,16 @@ public sealed class AccountService
         // เพิ่ม session ใหม่ก่อน แล้วค่อยหมุนใบเก่า: คำขอที่เข้ามาพร้อมกันจะหา session ที่มาแทนเจอเสมอตอนตรวจช่วงผ่อนผัน
         await _sessionRepository.AddAsync(newSessionRecord, ct);
 
-        if (!alreadyRotated &&
-            !await _sessionRepository.TryRotateAsync(session.Id, newSessionRecord.Id, now, ct))
+        // ทางปกติ: หมุนใบเก่า (atomic: ชนะได้คำขอเดียว)
+        // ไม่ชนะ = ใบเก่าถูกหมุนไปแล้ว (ก่อนหน้านี้ หรือโดยคำขอที่เข้ามาพร้อมกัน) หรือถูกยกเลิกไประหว่างนี้:
+        // ให้ผ่านได้เฉพาะเมื่อยังอยู่ในช่วงผ่อนผัน โดยย้ายตัวชี้ของใบเก่ามาที่ session ใหม่นี้
+        bool rotatedNow = !alreadyRotated &&
+                          await _sessionRepository.TryRotateAsync(session.Id, newSessionRecord.Id, now, ct);
+        if (!rotatedNow && !await TryGrantRotationGraceAsync(session.Id, newSessionRecord.Id, now, ct))
         {
-            // แพ้คำขออื่นที่หมุนใบเดียวกันไปก่อน (atomic: ชนะได้คำขอเดียว) หรือถูกยกเลิกไประหว่างนี้
-            var latest = await _sessionRepository.FindByIdAsync(session.Id, ct);
-            if (latest is null || !await IsWithinRotationGraceAsync(latest, now, ct))
-            {
-                await _sessionRepository.RevokeAllForUserAsync(session.UserId, now, ct);
-                return AccountResult<LoginSession>.Failure(AuthErrorCode.InvalidCredentials);
-            }
-            // อยู่ในช่วงผ่อนผัน (เช่น เกม 2 หน้าต่าง refresh พร้อมกัน): ใช้ session ใหม่ที่เพิ่มไว้แล้วได้เลย
+            // ตัดทุก session ของบัญชี (รวม session ใหม่ที่เพิ่งเพิ่มไว้ด้านบน)
+            await _sessionRepository.RevokeAllForUserAsync(session.UserId, now, ct);
+            return AccountResult<LoginSession>.Failure(AuthErrorCode.InvalidCredentials);
         }
 
         var profile = new PlayerProfile(user.Id, user.Username, user.DisplayName);
@@ -339,7 +341,12 @@ public sealed class AccountService
     /// 1. ถูกยกเลิกเพราะ refresh (ไม่ใช่ logout / ถูกตัดทั้งบัญชี)
     /// 2. เพิ่งถูกหมุนไม่เกิน RefreshReuseGracePeriod
     /// 3. session ที่มาแทนยังใช้ได้อยู่: ถ้าผู้เล่น logout ไปแล้ว หรือบัญชีถูกตัดทุก session ใบเก่าต้องใช้ไม่ได้ทันที
+    /// 4. session ที่มาแทนยังไม่เคยถูกใช้เลย: ยังไม่ถูกใช้ = คำตอบ refresh อาจหายกลางทางจริง
+    ///    ถูกใช้แล้ว = เจ้าของได้ใบใหม่ไปแล้ว คนที่เอาใบเก่ามาใช้คือคนที่ขโมยไป
+    ///    (ValidateSessionAsync อัปเดต LastUsedAt ทุกครั้งที่ใบใหม่ถูกใช้เรียก endpoint)
     /// กรณีปกติที่เข้าช่วงนี้: คำตอบ refresh หายกลางทางแล้วเกมลองใหม่ / เปิดเกม 2 หน้าต่างที่ใช้ไฟล์จดจำเดียวกัน
+    /// ช่องที่ยังเหลือ: คนที่ขโมยใบเก่าแล้วยิงก่อนที่ใบใหม่ล่าสุดจะถูกใช้ครั้งแรก ยังได้ session โดยไม่ถูกจับ
+    /// ปิดไม่ได้ตราบที่มีช่วงผ่อนผัน (ตั้ง RefreshReuseGracePeriod เป็นศูนย์ = ไม่ผ่อนผันเลย)
     /// </summary>
     private async Task<bool> IsWithinRotationGraceAsync(SessionRecord session, DateTimeOffset now, CancellationToken ct)
     {
@@ -352,7 +359,37 @@ public sealed class AccountService
         }
 
         var successor = await _sessionRepository.FindByIdAsync(replacedBy, ct);
-        return successor is not null && successor.RevokedAt is null;
+        return successor is not null
+            && successor.RevokedAt is null
+            && successor.LastUsedAt <= successor.CreatedAt;
+    }
+
+    /// <summary>
+    /// ผ่อนผันให้ใบเก่าที่ถูกหมุนไปแล้ว: ถ้ายังอยู่ในช่วงผ่อนผัน ย้ายตัวชี้ "session ที่มาแทน" ของใบเก่ามาที่ session ใหม่
+    /// ทำให้เงื่อนไข "ใบที่มาแทนยังไม่ถูกใช้" ตามใบล่าสุดเสมอ: พอผู้เล่นใช้ใบที่ได้จากการผ่อนผัน ใบเก่าจะต่ออายุไม่ได้อีก
+    /// (ถ้าไม่ย้าย ใบเก่าจะชี้ใบแรกที่คำตอบหายและไม่มีใครถือ ซึ่งไม่มีวันถูกใช้ ใบเก่าจึงต่ออายุได้เรื่อยๆ จนครบช่วงผ่อนผัน)
+    /// ไม่ยกเลิกใบที่เคยมาแทน เพราะอาจมีคนถืออยู่จริง (เกมอีกหน้าต่างหนึ่ง)
+    /// การย้ายเป็นแบบ atomic: ถ้าคำขออื่นย้ายไปก่อน จะอ่านใหม่แล้วตรวจเงื่อนไขกับใบล่าสุดอีกครั้ง
+    /// </summary>
+    private async Task<bool> TryGrantRotationGraceAsync(Guid sessionId, Guid newSessionId, DateTimeOffset now, CancellationToken ct)
+    {
+        for (int attempt = 0; attempt < MaxRotationGraceAttempts; attempt++)
+        {
+            var latest = await _sessionRepository.FindByIdAsync(sessionId, ct);
+            if (latest is null ||
+                latest.ReplacedBySessionId is not { } currentSuccessor ||
+                !await IsWithinRotationGraceAsync(latest, now, ct))
+            {
+                return false;
+            }
+
+            if (await _sessionRepository.TryReplaceSuccessorAsync(sessionId, currentSuccessor, newSessionId, ct))
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /// <summary>

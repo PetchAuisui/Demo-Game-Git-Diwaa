@@ -270,6 +270,9 @@ public static class AccountEndpoints
             }
 
             return Results.NoContent();
-        }).RequireRateLimiting("account");  // นับต่อ session เหมือน /me/* (การออกจากระบบของคนหนึ่งไม่กินโควตาล็อกอินของคนอื่นในเน็ตเดียวกัน)
+        // เดิม /logout มีแค่เพดานรวมต่อ IP (ไม่เคยกินโควตาล็อกอินของใคร) เพิ่มโควตาเฉพาะตามรีวิว
+        // เลือก policy "account" (ต่อ session) ไม่ใช่ "auth" (ต่อ IP): ถ้าใช้ "auth" การออกจากระบบจะเริ่มกินโควตาล็อกอิน / สมัคร
+        // ของคนอื่นในเน็ตเดียวกัน ส่วน "account" นับแยกตาม token คนที่ไม่มี token ใบนั้นใช้โควตานี้ไม่ได้
+        }).RequireRateLimiting("account");
     }
 }
