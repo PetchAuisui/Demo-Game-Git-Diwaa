@@ -114,7 +114,7 @@ static func append_terminal_styled_text(
 ) -> void:
 	if rich_label == null or text.is_empty():
 		return
-	if thai_font == null or _is_pure_ascii(text):
+	if thai_font == null or not _has_thai(text):
 		rich_label.add_text(text)
 		return
 	var lines := text.split("\n", true)
@@ -135,7 +135,7 @@ static func _append_terminal_styled_line(
 	var thai_mask := PackedByteArray()
 	thai_mask.resize(n)
 	for i in n:
-		thai_mask[i] = 1 if line.unicode_at(i) > 0x7F else 0
+		thai_mask[i] = 1 if _is_thai(line.unicode_at(i)) else 0
 
 	# Attach sentence punctuation/spaces surrounding Thai text so Thai phrases keep consistent ChakraPetch sizing.
 	for i in n:
@@ -146,14 +146,14 @@ static func _append_terminal_styled_line(
 			var next_idx := i + 1
 			while next_idx < n and line.unicode_at(next_idx) == 0x20:
 				next_idx += 1
-			if next_idx < n and line.unicode_at(next_idx) > 0x7F:
+			if next_idx < n and _is_thai(line.unicode_at(next_idx)):
 				thai_mask[i] = 1
 		elif _is_neutral_punct(cp):
 			var has_thai_before := i > 0 and thai_mask[i - 1] == 1
 			var look := i + 1
 			while look < n and _is_neutral_punct(line.unicode_at(look)):
 				look += 1
-			var has_thai_after := look < n and line.unicode_at(look) > 0x7F
+			var has_thai_after := look < n and _is_thai(line.unicode_at(look))
 			if (has_thai_before and (look == n or has_thai_after)) or (cp == 0x20 and (has_thai_before or has_thai_after)):
 				thai_mask[i] = 1
 
@@ -173,11 +173,15 @@ static func _append_terminal_styled_line(
 		start = end
 
 
-static func _is_pure_ascii(text: String) -> bool:
+static func _is_thai(cp: int) -> bool:
+	return cp >= 0x0E00 and cp <= 0x0E7F
+
+
+static func _has_thai(text: String) -> bool:
 	for i in text.length():
-		if text.unicode_at(i) > 0x7F:
-			return false
-	return true
+		if _is_thai(text.unicode_at(i)):
+			return true
+	return false
 
 
 static func _is_neutral_punct(cp: int) -> bool:
