@@ -40,7 +40,9 @@ var _facing_index := 0
 var _active_category := 0
 
 # Animation & Transition Guards
-var _cat_initial_y := 0.0
+# offset_top/offset_bottom ของแมวตอนยืนบนแท่น (อิง anchor ของ StageControl จึงไม่เพี้ยนเมื่อ layout/ขนาดจอเปลี่ยน)
+var _cat_ground_top := 0.0
+var _cat_ground_bottom := 0.0
 var _is_cat_hopping := false
 var _is_leaving := false
 
@@ -57,8 +59,10 @@ func _ready() -> void:
 	_update_character_facing()
 	_update_category_filter(0)
 
-	# Store ground reference position for cat hop animation
-	_cat_initial_y = _cat_sprite.position.y
+	# Store ground reference offsets for cat hop animation.
+	# ห้ามเก็บ position.y ตรงนี้ เพราะ container ยังจัด layout ไม่เสร็จใน _ready() และ position จะเปลี่ยนเมื่อขนาดจอเปลี่ยน
+	_cat_ground_top = _cat_sprite.offset_top
+	_cat_ground_bottom = _cat_sprite.offset_bottom
 
 	# Awaiting items from shop - keep companion cat standing nicely beside Vel
 	_cat_sprite.visible = true
@@ -161,15 +165,22 @@ func _on_cat_clicked() -> void:
 	if _sfx_meow != null and _sfx_meow.stream != null:
 		_sfx_meow.play()
 
-	# Cute hop animation anchored to initial Y ground
+	# Cute hop animation: shift both offsets (relative to anchors) together so the cat keeps its size
+	# and always lands back on the pedestal
+	const HOP_HEIGHT := 14.0
 	var tween := create_tween()
-	tween.tween_property(_cat_sprite, "position:y", _cat_initial_y - 14.0, 0.12) \
+	tween.tween_method(_set_cat_lift, 0.0, HOP_HEIGHT, 0.12) \
 			.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-	tween.tween_property(_cat_sprite, "position:y", _cat_initial_y, 0.14) \
+	tween.tween_method(_set_cat_lift, HOP_HEIGHT, 0.0, 0.14) \
 			.set_trans(Tween.TRANS_BOUNCE).set_ease(Tween.EASE_OUT)
 	tween.tween_callback(func() -> void:
-		_cat_sprite.position = Vector2(_cat_sprite.position.x, _cat_initial_y)
+		_set_cat_lift(0.0)
 		_is_cat_hopping = false)
+
+
+func _set_cat_lift(lift: float) -> void:
+	_cat_sprite.offset_top = _cat_ground_top - lift
+	_cat_sprite.offset_bottom = _cat_ground_bottom - lift
 
 
 func _input(event: InputEvent) -> void:
