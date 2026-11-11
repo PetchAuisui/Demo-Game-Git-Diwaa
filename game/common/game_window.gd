@@ -8,6 +8,7 @@ const BASE_HEIGHT := 1080
 const MIN_WIDTH := 960
 const MIN_HEIGHT := 540
 
+const BUFFY_PATH := "res://assets/icons/cursor_pixel/Buffy_Cursors2.png"
 const TOUCHY_PATHS: Array[String] = [
 	"res://assets/icons/cursor_pixel/Touchy_Cursors1.png",
 	"res://assets/icons/cursor_pixel/Touchy_Cursors2.png",
@@ -22,11 +23,14 @@ const GRABBY_PATHS: Array[String] = [
 ]
 
 # ขยาย 2.5x แบบ NEAREST เพื่อให้ pixel-art คมชัดขนาดกำลังดีบนจอ 1080p และจัดวางตรงจุดสัมผัสจริง
+const BUFFY_CROP := Rect2i(5, 9, 20, 15)
+const BUFFY_BASE_HOTSPOT := Vector2(3, 2)
 const TOUCHY_CROP := Rect2i(5, 9, 20, 15)
 const TOUCHY_BASE_HOTSPOT := Vector2(3, 2)
 const GRABBY_CROP := Rect2i(6, 6, 19, 18)
 const GRABBY_BASE_HOTSPOT := Vector2(8, 8)
 const PIXEL_SCALE := 2.5
+const BUFFY_HOTSPOT := Vector2(8, 5)
 const TOUCHY_HOTSPOT := Vector2(8, 5)
 const GRABBY_HOTSPOT := Vector2(20, 20)
 
@@ -66,10 +70,13 @@ class _CursorInputWatcher extends Node:
 			_owner_window._on_raw_input(event)
 
 
+var _buffy_image: Image = null
 var _touchy_frames: Array[Image] = []
 var _grabby_frames: Array[Image] = []
 var _secondary_cursor_images: Array[Image] = []
+var _tracked_windows: Array[Window] = []
 var _watcher: _CursorInputWatcher
+var _last_raw_event: InputEvent = null
 
 var _touchy_click_active := false
 var _touchy_step := 0
@@ -80,8 +87,8 @@ var _grabby_loop_timer := 0.0
 var _grabby_frame_idx := 0
 var _dragging_scrollbar: ScrollBar = null
 
-var _applied_mode := ""
-var _applied_frame := -1
+var _applied_arrow_key := ""
+var _applied_hand_key := ""
 
 
 func _ready() -> void:
@@ -89,7 +96,7 @@ func _ready() -> void:
 	_setup_tooltip_theme()
 	_setup_custom_cursors()
 	_setup_input_watcher()
-	_setup_scrollbar_hooks()
+	_setup_tree_hooks()
 
 	var window := get_window()
 	window.min_size = Vector2i(MIN_WIDTH, MIN_HEIGHT)
@@ -105,9 +112,12 @@ func _exit_tree() -> void:
 	Input.set_custom_mouse_cursor(null, Input.CURSOR_DRAG)
 	for spec: Dictionary in SECONDARY_CURSOR_SPECS:
 		Input.set_custom_mouse_cursor(null, spec["shape"])
+	_buffy_image = null
 	_touchy_frames.clear()
 	_grabby_frames.clear()
 	_secondary_cursor_images.clear()
+	_tracked_windows.clear()
+	_last_raw_event = null
 	_dragging_scrollbar = null
 	_watcher = null
 
@@ -123,14 +133,14 @@ func _process(delta: float) -> void:
 		if _grabby_loop_timer >= GRABBY_FRAME_DURATION:
 			_grabby_loop_timer = fmod(_grabby_loop_timer, GRABBY_FRAME_DURATION)
 			_grabby_frame_idx = (_grabby_frame_idx + 1) % 4
-		_apply_primary_cursor("grabby", _grabby_frame_idx)
+		_apply_uniform_cursor("grabby", _grabby_frame_idx)
 		return
 
 	_grabby_loop_timer = 0.0
 	_grabby_frame_idx = 0
 
 	if _is_hovering_scrollbar() or _dragging_scrollbar != null:
-		_apply_primary_cursor("grabby", 0)
+		_apply_uniform_cursor("grabby", 0)
 		return
 
 	if _touchy_click_active:
@@ -140,12 +150,12 @@ func _process(delta: float) -> void:
 			_touchy_step += 1
 			if _touchy_step >= TOUCHY_CLICK_SEQUENCE.size():
 				_touchy_click_active = false
-				_apply_primary_cursor("touchy", 0)
+				_apply_idle_cursors()
 			else:
-				_apply_primary_cursor("touchy", TOUCHY_CLICK_SEQUENCE[_touchy_step])
+				_apply_uniform_cursor("touchy", TOUCHY_CLICK_SEQUENCE[_touchy_step])
 		return
 
-	_apply_primary_cursor("touchy", 0)
+	_apply_idle_cursors()
 
 
 func _setup_tooltip_theme() -> void:
@@ -175,6 +185,8 @@ func _setup_tooltip_theme() -> void:
 
 
 func _setup_custom_cursors() -> void:
+	_buffy_image = _load_scaled_pixel_cursor(BUFFY_PATH, BUFFY_CROP, PIXEL_SCALE)
+
 	_touchy_frames.clear()
 	for p: String in TOUCHY_PATHS:
 		var img := _load_scaled_pixel_cursor(p, TOUCHY_CROP, PIXEL_SCALE)
@@ -204,7 +216,7 @@ func _setup_custom_cursors() -> void:
 	if _grabby_frames.size() >= 1:
 		Input.set_custom_mouse_cursor(_grabby_frames[0], Input.CURSOR_DRAG, GRABBY_HOTSPOT)
 
-	_apply_primary_cursor("touchy", 0)
+	_apply_idle_cursors()
 
 
 func _load_scaled_pixel_cursor(path: String, crop_rect: Rect2i, scale_factor: float) -> Image:
@@ -221,26 +233,38 @@ func _load_scaled_pixel_cursor(path: String, crop_rect: Rect2i, scale_factor: fl
 	return region
 
 
-func _apply_primary_cursor(mode: String, frame_idx: int) -> void:
-	if mode == _applied_mode and frame_idx == _applied_frame:
-		return
-
-	var img: Image = null
-	var hotspot := Vector2.ZERO
+func _resolve_cursor(mode: String, frame_idx: int) -> Dictionary:
+	if mode == "buffy" and _buffy_image != null:
+		return {"key": "buffy:0", "image": _buffy_image, "hotspot": BUFFY_HOTSPOT}
 	if mode == "grabby" and frame_idx >= 0 and frame_idx < _grabby_frames.size():
-		img = _grabby_frames[frame_idx]
-		hotspot = GRABBY_HOTSPOT
-	elif mode == "touchy" and frame_idx >= 0 and frame_idx < _touchy_frames.size():
-		img = _touchy_frames[frame_idx]
-		hotspot = TOUCHY_HOTSPOT
+		return {"key": "grabby:%d" % frame_idx, "image": _grabby_frames[frame_idx], "hotspot": GRABBY_HOTSPOT}
+	if mode == "touchy" and frame_idx >= 0 and frame_idx < _touchy_frames.size():
+		return {"key": "touchy:%d" % frame_idx, "image": _touchy_frames[frame_idx], "hotspot": TOUCHY_HOTSPOT}
+	return {}
 
-	if img == null:
-		return
 
-	_applied_mode = mode
-	_applied_frame = frame_idx
-	Input.set_custom_mouse_cursor(img, Input.CURSOR_ARROW, hotspot)
-	Input.set_custom_mouse_cursor(img, Input.CURSOR_POINTING_HAND, hotspot)
+func _apply_cursors(arrow_mode: String, arrow_frame: int, hand_mode: String, hand_frame: int) -> void:
+	var arrow_spec := _resolve_cursor(arrow_mode, arrow_frame)
+	if not arrow_spec.is_empty() and arrow_spec["key"] != _applied_arrow_key:
+		_applied_arrow_key = arrow_spec["key"]
+		Input.set_custom_mouse_cursor(arrow_spec["image"], Input.CURSOR_ARROW, arrow_spec["hotspot"])
+
+	var hand_spec := _resolve_cursor(hand_mode, hand_frame)
+	if not hand_spec.is_empty() and hand_spec["key"] != _applied_hand_key:
+		_applied_hand_key = hand_spec["key"]
+		Input.set_custom_mouse_cursor(hand_spec["image"], Input.CURSOR_POINTING_HAND, hand_spec["hotspot"])
+
+
+func _apply_uniform_cursor(mode: String, frame_idx: int) -> void:
+	_apply_cursors(mode, frame_idx, mode, frame_idx)
+
+
+func _apply_idle_cursors() -> void:
+	# ปกติใช้ Buffy2 เป็นเมาส์หลัก และเปลี่ยนเป็น Touchy1 เมื่อชี้ปุ่มที่กดได้ (ไม่รวมปุ่มที่ disabled)
+	if _is_hovering_disabled_button():
+		_apply_uniform_cursor("buffy", 0)
+	else:
+		_apply_cursors("buffy", 0, "touchy", 0)
 
 
 func _setup_input_watcher() -> void:
@@ -263,23 +287,40 @@ func _keep_watcher_last() -> void:
 		root_vp.move_child(_watcher, -1)
 
 
-func _setup_scrollbar_hooks() -> void:
+func _setup_tree_hooks() -> void:
 	var tree := get_tree()
 	if not tree.node_added.is_connected(_on_tree_node_added):
 		tree.node_added.connect(_on_tree_node_added)
-	_hook_scrollbars_recursive(tree.root)
+	_hook_nodes_recursive(tree.root)
 
 
-func _hook_scrollbars_recursive(node: Node) -> void:
-	if node is ScrollBar:
-		_hook_scrollbar(node as ScrollBar)
+func _hook_nodes_recursive(node: Node) -> void:
+	_on_tree_node_added(node)
 	for child: Node in node.get_children(true):
-		_hook_scrollbars_recursive(child)
+		_hook_nodes_recursive(child)
 
 
 func _on_tree_node_added(node: Node) -> void:
 	if node is ScrollBar:
 		_hook_scrollbar(node as ScrollBar)
+	elif node is Window and node != get_tree().root:
+		_hook_window(node as Window)
+	if node is AcceptDialog:
+		_hook_dialog(node as AcceptDialog)
+
+
+func _hook_window(win: Window) -> void:
+	if not _tracked_windows.has(win):
+		_tracked_windows.append(win)
+	if not win.has_meta(&"_gw_win_hooked"):
+		win.set_meta(&"_gw_win_hooked", true)
+		win.window_input.connect(_on_raw_input)
+
+
+func _hook_dialog(dialog: AcceptDialog) -> void:
+	for btn: Button in [dialog.get_ok_button(), dialog.get_cancel_button()]:
+		if btn != null and is_instance_valid(btn) and btn.mouse_default_cursor_shape == Control.CURSOR_ARROW:
+			btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 
 
 func _hook_scrollbar(sb: ScrollBar) -> void:
@@ -300,17 +341,48 @@ func _on_scrollbar_gui_input(event: InputEvent, sb: ScrollBar) -> void:
 			_dragging_scrollbar = sb
 			_touchy_click_active = false
 			if _scroll_anim_timer <= 0.0:
-				_apply_primary_cursor("grabby", 0)
+				_apply_uniform_cursor("grabby", 0)
 		elif _dragging_scrollbar == sb:
 			_dragging_scrollbar = null
 
 
-func _is_hovering_scrollbar() -> bool:
+func _get_hovered_control() -> Control:
+	var write_idx := 0
+	var hovered_in_subwindow: Control = null
+	for i in _tracked_windows.size():
+		var win := _tracked_windows[i]
+		if win != null and is_instance_valid(win) and win.is_inside_tree():
+			_tracked_windows[write_idx] = win
+			write_idx += 1
+			if win.visible:
+				var ctrl := win.gui_get_hovered_control()
+				if ctrl != null and is_instance_valid(ctrl):
+					hovered_in_subwindow = ctrl
+	_tracked_windows.resize(write_idx)
+	if hovered_in_subwindow != null:
+		return hovered_in_subwindow
+
 	var vp := get_viewport()
 	if vp == null:
-		return false
-	var hovered := vp.gui_get_hovered_control()
-	return hovered is ScrollBar and (hovered as Control).visible
+		return null
+	return vp.gui_get_hovered_control()
+
+
+func _is_hovering_disabled_button() -> bool:
+	var curr := _get_hovered_control()
+	while curr != null:
+		if curr is BaseButton:
+			return (curr as BaseButton).disabled
+		if curr.mouse_filter == Control.MOUSE_FILTER_STOP:
+			break
+		var parent := curr.get_parent()
+		curr = parent as Control if parent is Control else null
+	return false
+
+
+func _is_hovering_scrollbar() -> bool:
+	var hovered := _get_hovered_control()
+	return hovered is ScrollBar and hovered.visible
 
 
 func _trigger_scroll_anim() -> void:
@@ -318,16 +390,20 @@ func _trigger_scroll_anim() -> void:
 	var was_active := _scroll_anim_timer > 0.0
 	_scroll_anim_timer = SCROLL_HOLD_DURATION
 	if not was_active:
-		if _applied_mode == "grabby" and _applied_frame == 0:
+		if _applied_arrow_key == "grabby:0":
 			_grabby_loop_timer = GRABBY_FRAME_DURATION * 0.85
 			_grabby_frame_idx = 0
 		else:
 			_grabby_loop_timer = 0.0
 			_grabby_frame_idx = 0
-			_apply_primary_cursor("grabby", 0)
+			_apply_uniform_cursor("grabby", 0)
 
 
 func _on_raw_input(event: InputEvent) -> void:
+	if event == _last_raw_event:
+		return
+	_last_raw_event = event
+
 	if event is InputEventMouseButton:
 		var mb := event as InputEventMouseButton
 		if mb.button_index == MOUSE_BUTTON_WHEEL_UP or mb.button_index == MOUSE_BUTTON_WHEEL_DOWN:
@@ -343,7 +419,7 @@ func _on_raw_input(event: InputEvent) -> void:
 				_touchy_click_active = true
 				_touchy_step = 0
 				_touchy_timer = 0.0
-				_apply_primary_cursor("touchy", TOUCHY_CLICK_SEQUENCE[0])
+				_apply_uniform_cursor("touchy", TOUCHY_CLICK_SEQUENCE[0])
 			elif mb.button_index == MOUSE_BUTTON_LEFT:
 				_dragging_scrollbar = null
 	elif event is InputEventMouseMotion and _dragging_scrollbar != null:
