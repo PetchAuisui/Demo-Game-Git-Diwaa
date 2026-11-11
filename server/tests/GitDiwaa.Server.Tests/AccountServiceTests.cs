@@ -336,12 +336,12 @@ internal static class AccountServiceTests
             Assert.Equal("mage01", validateNew.Value?.Profile.Username);
         });
 
-        await runner.RunAsync("Refresh_ReuseOfRotatedToken_RevokesAllSessions", async static () =>
+        await runner.RunAsync("Refresh_ReuseOfRotatedToken_RevokesItsTokenFamilyOnly", async static () =>
         {
             var ctx = AccountTestContext.Create();
             await ctx.Service.RegisterAsync(new RegisterRequest("mage01", "Mage", "mage@example.com", "S3cret-Pass!"));
 
-            // Device A and Device B logins
+            // Device A and Device B logins (two separate token families)
             var loginA = await ctx.Service.LoginAsync(new LoginRequest("mage01", "S3cret-Pass!", false));
             var loginB = await ctx.Service.LoginAsync(new LoginRequest("mage01", "S3cret-Pass!", false));
             string tokenA = loginA.Value!.Token;
@@ -355,19 +355,19 @@ internal static class AccountServiceTests
             // เลยช่วงผ่อนผันหลังหมุน token ไปแล้ว (ค่าเริ่มต้น 60 วินาที)
             ctx.Time.Advance(TimeSpan.FromSeconds(61));
 
-            // Reusing old tokenA triggers security breach response -> Revoke all sessions
+            // Reusing old tokenA triggers the breach response -> revoke device A's whole token family
             var reuseAttempt = await ctx.Service.RefreshAsync(tokenA);
             Assert.False(reuseAttempt.Succeeded);
             Assert.Equal(AuthErrorCode.InvalidCredentials, reuseAttempt.Error);
 
-            // Both tokenA2 and tokenB must now be completely revoked
+            // tokenA2 (same family) must now be revoked
             var validateA2 = await ctx.Service.ValidateSessionAsync(tokenA2);
             Assert.False(validateA2.Succeeded);
             Assert.Equal(AuthErrorCode.InvalidCredentials, validateA2.Error);
 
+            // Device B logged in separately: not affected
             var validateB = await ctx.Service.ValidateSessionAsync(tokenB);
-            Assert.False(validateB.Succeeded);
-            Assert.Equal(AuthErrorCode.InvalidCredentials, validateB.Error);
+            Assert.True(validateB.Succeeded, "A separate login (another device) must survive.");
         });
 
         await runner.RunAsync("Refresh_KeepsPersistence", async static () =>

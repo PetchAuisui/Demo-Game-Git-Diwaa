@@ -218,7 +218,8 @@ public sealed class AccountService
             CreatedAt: now,
             ExpiresAt: expiresAt,
             LastUsedAt: now,
-            RevokedAt: null);
+            RevokedAt: null,
+            FamilyId: Guid.NewGuid());  // ล็อกอินใหม่ = เริ่มสาย token ใหม่
 
         await _sessionRepository.AddAsync(sessionRecord, ct);
 
@@ -282,11 +283,12 @@ public sealed class AccountService
         }
 
         // token ใบนี้ถูกยกเลิกไปแล้ว: ถ้าเพิ่งถูกหมุนและยังอยู่ในช่วงผ่อนผัน ถือเป็นการลองใหม่ตามปกติ
-        // นอกนั้นถือว่า token ถูกขโมย ตัดทุก session ของบัญชี
+        // นอกนั้นถือว่า token ถูกขโมย ตัดทั้งสายของเครื่องนั้น (ทุกใบที่ refresh ต่อกันมาจากการล็อกอินครั้งเดียวกัน)
+        // ไม่ตัดการล็อกอินจากเครื่องอื่น: คำตอบ refresh หายครั้งเดียวจะไม่ทำให้ผู้เล่นหลุดทุกเครื่อง
         bool alreadyRotated = session.RevokedAt is not null;
         if (alreadyRotated && await FindGraceSuccessorAsync(session.Id, now, ct) is null)
         {
-            await _sessionRepository.RevokeAllForUserAsync(session.UserId, now, ct);
+            await RevokeTokenFamilyAsync(session, now, ct);
             return AccountResult<LoginSession>.Failure(AuthErrorCode.InvalidCredentials);
         }
 
@@ -316,7 +318,8 @@ public sealed class AccountService
             CreatedAt: now,
             ExpiresAt: newExpiresAt,
             LastUsedAt: now,
-            RevokedAt: null);
+            RevokedAt: null,
+            FamilyId: session.FamilyId);  // ต่ออายุ = อยู่สายเดิม
 
         // เพิ่ม session ใหม่ก่อน แล้วค่อยหมุนใบเก่า: คำขอที่เข้ามาพร้อมกันจะหา session ที่มาแทนเจอเสมอตอนตรวจช่วงผ่อนผัน
         await _sessionRepository.AddAsync(newSessionRecord, ct);
@@ -328,8 +331,8 @@ public sealed class AccountService
                           await _sessionRepository.TryRotateAsync(session.Id, newSessionRecord.Id, now, ct);
         if (!rotatedNow && !await TryGrantRotationGraceAsync(session.Id, newSessionRecord.Id, now, ct))
         {
-            // ตัดทุก session ของบัญชี (รวม session ใหม่ที่เพิ่งเพิ่มไว้ด้านบน)
-            await _sessionRepository.RevokeAllForUserAsync(session.UserId, now, ct);
+            // ตัดทั้งสายของเครื่องนั้น (รวม session ใหม่ที่เพิ่งเพิ่มไว้ด้านบน ซึ่งอยู่สายเดียวกัน)
+            await RevokeTokenFamilyAsync(session, now, ct);
             return AccountResult<LoginSession>.Failure(AuthErrorCode.InvalidCredentials);
         }
 
@@ -340,10 +343,18 @@ public sealed class AccountService
     }
 
     /// <summary>
+    /// ใบเก่าถูกใช้ซ้ำ: ตัดทั้งสายของเครื่องนั้น (session ที่ไม่มีสาย = ข้อมูลก่อนมีสาย ใช้วิธีเดิม ตัดทุก session ของผู้ใช้)
+    /// </summary>
+    private Task RevokeTokenFamilyAsync(SessionRecord session, DateTimeOffset now, CancellationToken ct) =>
+        session.FamilyId == Guid.Empty
+            ? _sessionRepository.RevokeAllForUserAsync(session.UserId, now, ct)
+            : _sessionRepository.RevokeFamilyAsync(session.FamilyId, now, ct);
+
+    /// <summary>
     /// token ใบเก่าที่ถูกหมุนไปแล้ว ยังอยู่ในช่วงผ่อนผันไหม ต้องครบทุกข้อ:
-    /// 1. ถูกยกเลิกเพราะ refresh (ไม่ใช่ logout / ถูกตัดทั้งบัญชี)
+    /// 1. ถูกยกเลิกเพราะ refresh (ไม่ใช่ logout / ถูกตัดทั้งสาย)
     /// 2. เพิ่งถูกหมุนไม่เกิน RefreshReuseGracePeriod
-    /// 3. session ที่มาแทนยังใช้ได้อยู่: ถ้าผู้เล่น logout ไปแล้ว หรือบัญชีถูกตัดทุก session ใบเก่าต้องใช้ไม่ได้ทันที
+    /// 3. session ที่มาแทนยังใช้ได้อยู่: ถ้าผู้เล่น logout ไปแล้ว หรือสายถูกตัดไปแล้ว ใบเก่าต้องใช้ไม่ได้ทันที
     /// 4. session ที่มาแทนยังไม่เคยถูกใช้เลย: ยังไม่ถูกใช้ = คำตอบ refresh อาจหายกลางทางจริง
     ///    ถูกใช้แล้ว = เจ้าของได้ใบใหม่ไปแล้ว คนที่เอาใบเก่ามาใช้คือคนที่ขโมยไป
     ///    (ValidateSessionAsync อัปเดต LastUsedAt ทุกครั้งที่ใบใหม่ถูกใช้เรียก endpoint)
@@ -376,7 +387,7 @@ public sealed class AccountService
     /// ผล: ใบเก่า 1 ใบ มี session ที่งอกจากการผ่อนผันใช้ได้พร้อมกันแค่ใบเดียวเสมอ ยิงใบเก่าซ้ำกี่ครั้งก็ไม่ได้ session เพิ่ม
     /// และพอผู้เล่นใช้ใบที่ได้ ใบเก่าจะต่ออายุไม่ได้อีก
     /// ถ้าคำขออื่นย้ายตัวชี้ไปก่อน จะอ่านใหม่แล้วตรวจเงื่อนไขกับใบล่าสุดอีกครั้ง
-    /// ถ้าใบที่มาแทนถูกใช้ไประหว่างนี้ = ไม่ผ่อนผัน (ผู้เรียกจะตัดทุก session)
+    /// ถ้าใบที่มาแทนถูกใช้ไประหว่างนี้ = ไม่ผ่อนผัน (ผู้เรียกจะตัดทั้งสายของเครื่องนั้น)
     /// </summary>
     private async Task<bool> TryGrantRotationGraceAsync(Guid sessionId, Guid newSessionId, DateTimeOffset now, CancellationToken ct)
     {

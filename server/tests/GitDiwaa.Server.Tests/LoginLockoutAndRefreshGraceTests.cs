@@ -189,7 +189,7 @@ internal static class LoginLockoutAndRefreshGraceTests
             Assert.True((await ctx.Service.ValidateSessionAsync(issued[^1])).Succeeded);
         });
 
-        await runner.RunAsync("Refresh_ReuseAfterNewTokenWasUsed_HasNoGrace_RevokesAll", async static () =>
+        await runner.RunAsync("Refresh_ReuseAfterNewTokenWasUsed_HasNoGrace_RevokesFamily", async static () =>
         {
             var ctx = await CreateWithUserAsync();
             string tokenA = (await ctx.Service.LoginAsync(new LoginRequest("mage01", Password, true))).Value!.Token;
@@ -201,13 +201,14 @@ internal static class LoginLockoutAndRefreshGraceTests
             ctx.Time.Advance(TimeSpan.FromSeconds(1));
             Assert.True((await ctx.Service.ValidateSessionAsync(tokenA2)).Succeeded);
 
-            // ใบเก่าโผล่มาอีกทั้งที่ยังอยู่ใน 60 วินาที: คนที่ถือใบเก่าไม่ใช่เจ้าของแล้ว ต้องไม่ได้ session และตัดทุก session
+            // ใบเก่าโผล่มาอีกทั้งที่ยังอยู่ใน 60 วินาที: คนที่ถือใบเก่าไม่ใช่เจ้าของแล้ว ต้องไม่ได้ session และตัดทั้งสายของเครื่องนั้น
             ctx.Time.Advance(TimeSpan.FromSeconds(10));
             var reuse = await ctx.Service.RefreshAsync(tokenA);
             Assert.False(reuse.Succeeded, "The old token must not refresh once its replacement has been used.");
             Assert.Equal(AuthErrorCode.InvalidCredentials, reuse.Error);
             Assert.False((await ctx.Service.ValidateSessionAsync(tokenA2)).Succeeded);
-            Assert.False((await ctx.Service.ValidateSessionAsync(tokenB)).Succeeded);
+            // เครื่องอื่น (ล็อกอินแยก = คนละสาย) ไม่ถูกตัด
+            Assert.True((await ctx.Service.ValidateSessionAsync(tokenB)).Succeeded);
         });
 
         await runner.RunAsync("Refresh_GraceRetry_ThenNewTokenUsed_OldTokenStopsWorking", async static () =>
@@ -246,7 +247,45 @@ internal static class LoginLockoutAndRefreshGraceTests
             Assert.False((await ctx.Service.ValidateSessionAsync(tokenA3)).Succeeded);
         });
 
-        await runner.RunAsync("Refresh_ReuseAfterLogout_HasNoGrace_RevokesAll", async static () =>
+        await runner.RunAsync("Refresh_ReuseAfterGrace_RevokesOnlyThatTokenFamily", async static () =>
+        {
+            var ctx = await CreateWithUserAsync();
+            // ล็อกอิน 2 ครั้ง = 2 สาย (เช่น 2 เครื่อง) แต่ละสาย refresh ต่อกันไป
+            string tokenA = (await ctx.Service.LoginAsync(new LoginRequest("mage01", Password, true))).Value!.Token;
+            string tokenB = (await ctx.Service.LoginAsync(new LoginRequest("mage01", Password, true))).Value!.Token;
+            string tokenA2 = (await ctx.Service.RefreshAsync(tokenA)).Value!.Token;
+            string tokenA3 = (await ctx.Service.RefreshAsync(tokenA2)).Value!.Token;
+            string tokenB2 = (await ctx.Service.RefreshAsync(tokenB)).Value!.Token;
+
+            // ทุกใบในสายเดียวกันมี FamilyId เดียวกัน และต่างจากอีกสาย
+            Assert.True(ctx.TokenService.TryHashToken(tokenA, out string hashA));
+            Assert.True(ctx.TokenService.TryHashToken(tokenA3, out string hashA3));
+            Assert.True(ctx.TokenService.TryHashToken(tokenB2, out string hashB2));
+            Guid familyA = (await ctx.Sessions.FindByTokenHashAsync(hashA))!.FamilyId;
+            Guid familyB = (await ctx.Sessions.FindByTokenHashAsync(hashB2))!.FamilyId;
+            Assert.False(familyA == Guid.Empty);
+            Assert.Equal(familyA, (await ctx.Sessions.FindByTokenHashAsync(hashA3))!.FamilyId);
+            Assert.False(familyA == familyB);
+
+            // สาย A: ใบเก่าสุดถูกใช้ซ้ำหลังพ้นช่วงผ่อนผัน
+            ctx.Time.Advance(TimeSpan.FromSeconds(61));
+            var reuse = await ctx.Service.RefreshAsync(tokenA);
+            Assert.False(reuse.Succeeded);
+
+            // สาย A ใช้ไม่ได้ทั้งสาย (รวมใบล่าสุดที่ยังไม่เคยถูกยกเลิก) และต่ออายุไม่ได้อีก
+            Assert.False((await ctx.Service.ValidateSessionAsync(tokenA2)).Succeeded);
+            Assert.False((await ctx.Service.ValidateSessionAsync(tokenA3)).Succeeded);
+            Assert.False((await ctx.Service.RefreshAsync(tokenA3)).Succeeded);
+
+            // สาย B ใช้ได้ตามปกติ และยังต่ออายุได้
+            Assert.True((await ctx.Service.ValidateSessionAsync(tokenB2)).Succeeded);
+            Assert.True((await ctx.Service.RefreshAsync(tokenB2)).Succeeded);
+
+            // ไม่มีสาย (Guid.Empty) = ไม่ทำอะไร ไม่จับ session ที่ไม่มีสายมารวมกัน
+            await ctx.Sessions.RevokeFamilyAsync(Guid.Empty, ctx.Time.GetUtcNow());
+        });
+
+        await runner.RunAsync("Refresh_ReuseAfterLogout_HasNoGrace_RevokesFamily", async static () =>
         {
             var ctx = await CreateWithUserAsync();
             string tokenA = (await ctx.Service.LoginAsync(new LoginRequest("mage01", Password, false))).Value!.Token;
@@ -258,7 +297,9 @@ internal static class LoginLockoutAndRefreshGraceTests
             // ผู้เล่นออกจากระบบไปแล้ว: ใบเก่าต้องใช้ไม่ได้ทันที แม้ยังอยู่ใน 60 วินาที
             var reuse = await ctx.Service.RefreshAsync(tokenA);
             Assert.False(reuse.Succeeded);
-            Assert.False((await ctx.Service.ValidateSessionAsync(tokenB)).Succeeded);
+            Assert.False((await ctx.Service.ValidateSessionAsync(tokenA2)).Succeeded);
+            // เครื่องอื่น (ล็อกอินแยก = คนละสาย) ไม่ถูกตัด
+            Assert.True((await ctx.Service.ValidateSessionAsync(tokenB)).Succeeded);
         });
 
         await runner.RunAsync("Logout_WithRotatedToken_RevokesItsReplacement", async static () =>
@@ -291,7 +332,7 @@ internal static class LoginLockoutAndRefreshGraceTests
             Assert.False(reuse.Succeeded);
         });
 
-        await runner.RunAsync("Refresh_GraceDisabled_ReuseRevokesAllImmediately", async static () =>
+        await runner.RunAsync("Refresh_GraceDisabled_ReuseRevokesFamilyImmediately", async static () =>
         {
             var ctx = await CreateWithUserAsync(new AccountOptions { RefreshReuseGracePeriod = TimeSpan.Zero });
             string tokenA = (await ctx.Service.LoginAsync(new LoginRequest("mage01", Password, false))).Value!.Token;

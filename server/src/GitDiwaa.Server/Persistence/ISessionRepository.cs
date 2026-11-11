@@ -6,7 +6,17 @@ public interface ISessionRepository
     Task<SessionRecord?> FindByTokenHashAsync(string tokenHash, CancellationToken ct = default);
     Task<SessionRecord?> FindByIdAsync(Guid sessionId, CancellationToken ct = default);
     Task UpdateAsync(SessionRecord session, CancellationToken ct = default);
+    /// <summary>
+    /// ยกเลิกทุก session ของผู้ใช้ ทุกเครื่อง (เก็บไว้ใช้ตอนเปลี่ยนรหัสผ่าน / ปิดบัญชี ตอนนี้ refresh ใช้ RevokeFamilyAsync แทน)
+    /// </summary>
     Task RevokeAllForUserAsync(Guid userId, DateTimeOffset revokedAt, CancellationToken ct = default);
+
+    /// <summary>
+    /// ยกเลิกทุก session ใน "สาย token" เดียวกัน (การล็อกอินครั้งเดียวกัน และทุกใบที่ refresh ต่อกันมา)
+    /// ใช้เมื่อพบว่าใบเก่าในสายถูกใช้ซ้ำ: ตัดเฉพาะเครื่องนั้น ไม่กระทบการล็อกอินจากเครื่องอื่น
+    /// familyId เป็น Guid.Empty = ไม่ทำอะไร (ไม่จับ session ที่ไม่มีสายมารวมกัน)
+    /// </summary>
+    Task RevokeFamilyAsync(Guid familyId, DateTimeOffset revokedAt, CancellationToken ct = default);
     Task<bool> TryRevokeAsync(Guid sessionId, DateTimeOffset revokedAt, CancellationToken ct = default);
 
     /// <summary>

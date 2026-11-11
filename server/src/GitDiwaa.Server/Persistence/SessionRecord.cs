@@ -12,4 +12,8 @@ public sealed record SessionRecord(
     // ตั้งเมื่อ session นี้ถูกแทนด้วย token ใบใหม่ตอน refresh (ไม่ตั้งเมื่อถูกยกเลิกด้วย logout / ถูกตัดทั้งบัญชี)
     // ใช้ตัดสินช่วงผ่อนผัน: token ใบเก่าที่เพิ่งถูกหมุน เอามา refresh ซ้ำได้ช่วงสั้นๆ (ดู AccountService.RefreshAsync)
     DateTimeOffset? RotatedAt = null,
-    Guid? ReplacedBySessionId = null);
+    Guid? ReplacedBySessionId = null,
+    // "สาย token": ล็อกอิน 1 ครั้ง = สายใหม่ 1 สาย (1 เครื่อง / 1 การล็อกอิน) ทุกใบที่ได้จากการ refresh ต่อกันมาอยู่สายเดียวกัน
+    // ใช้ตัดเฉพาะสายที่มีปัญหา (ใบเก่าถูกใช้ซ้ำ) โดยไม่กระทบการล็อกอินจากเครื่องอื่นของบัญชีเดียวกัน
+    // Guid.Empty = ข้อมูลที่สร้างก่อนมีสาย (ไม่มีในระบบจริงตอนนี้) จะไม่ถูกจับรวมเป็นสายเดียวกัน
+    Guid FamilyId = default);

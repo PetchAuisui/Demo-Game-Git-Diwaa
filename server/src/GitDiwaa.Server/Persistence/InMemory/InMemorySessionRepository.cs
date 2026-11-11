@@ -89,6 +89,29 @@ public sealed class InMemorySessionRepository : ISessionRepository
         }
     }
 
+    public Task RevokeFamilyAsync(Guid familyId, DateTimeOffset revokedAt, CancellationToken ct = default)
+    {
+        if (familyId == Guid.Empty)
+        {
+            return Task.CompletedTask;
+        }
+
+        lock (_lock)
+        {
+            foreach (var (id, session) in _sessionsById.ToList())
+            {
+                if (session.FamilyId == familyId && session.RevokedAt is null)
+                {
+                    var revokedSession = session with { RevokedAt = revokedAt };
+                    _sessionsById[id] = revokedSession;
+                    _sessionsByTokenHash[session.TokenHash] = revokedSession;
+                }
+            }
+
+            return Task.CompletedTask;
+        }
+    }
+
     public Task<bool> TryRevokeAsync(Guid sessionId, DateTimeOffset revokedAt, CancellationToken ct = default)
     {
         lock (_lock)
