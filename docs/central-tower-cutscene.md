@@ -151,7 +151,7 @@ get_tree().change_scene_to_file("res://features/cutscene/central_tower_cutscene.
 
 ### การ Transition เข้าสู่ Sandbox แบบ Background Threaded Loading:
 * **ปัญหา:** การสลับฉากไปยัง `sandbox_game_view.tscn` จะมีช่วงเวลาที่ Godot โหลดเอนจิน Git จำลองและทรัพยากรขนาดใหญ่ ซึ่งทำให้เอนจินชะงักเกิดอาการค้าง
-* **โซลูชัน:** ใน `_ready()` ระบบจะเรียก `ResourceLoader.load_threaded_request(next_scene_path)` เพื่อแอบโหลดซีนไว้ใน Background Thread ล่วงหน้าระหว่างที่ผู้เล่นอ่านบทสนทนา เมื่อถึงเวลาเปลี่ยนฉากหรือกดข้าม จะใช้ `get_tree().change_scene_to_packed()` เพื่อสลับฉากได้ทันทีใน 0 ms ไร้อาการจอดำค้าง 100%
+* **โซลูชัน:** ใน `_ready()` ระบบจะเรียก `SceneLoader.request_preload(next_scene_path)` เพื่อแอบโหลดซีนไว้ใน Background Thread ล่วงหน้าระหว่างที่ผู้เล่นอ่านบทสนทนา เมื่อถึงเวลาเปลี่ยนฉากหรือกดข้าม จะเรียก `SceneLoader.change_scene(get_tree(), next_scene_path)` (ซึ่งดึงซีนที่โหลดล่วงหน้าไว้มาใช้ผ่าน `change_scene_to_packed()`) เพื่อสลับฉากได้ทันทีใน 0 ms ไร้อาการจอดำค้าง 100%
 
 ### วิธีเพิ่มหรือแก้ไขบทสนทนา:
 เปิดไฟล์ [`game/features/cutscene/central_tower_cutscene.gd`](../game/features/cutscene/central_tower_cutscene.gd) และแก้ไขในอาร์เรย์ `DIALOGUES`:
