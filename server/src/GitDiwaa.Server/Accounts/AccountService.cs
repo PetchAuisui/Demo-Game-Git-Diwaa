@@ -23,6 +23,9 @@ public sealed class AccountService
     // เกินนี้แปลว่ามีคำขอ refresh ใบเดียวกันพร้อมกันมากผิดปกติ ถือว่าไม่ผ่าน
     private const int MaxRotationGraceAttempts = 32;
 
+    // logout ด้วย token ที่ถูกหมุนไปแล้ว: ไล่ยกเลิกใบที่มาแทนตามสายได้ไม่เกินกี่ขั้น (กันสายยาวผิดปกติ / วนกลับมาที่เดิม)
+    private const int MaxLogoutChainSteps = 32;
+
     public AccountService(
         IUserRepository userRepository,
         ISessionRepository sessionRepository,
@@ -281,7 +284,7 @@ public sealed class AccountService
         // token ใบนี้ถูกยกเลิกไปแล้ว: ถ้าเพิ่งถูกหมุนและยังอยู่ในช่วงผ่อนผัน ถือเป็นการลองใหม่ตามปกติ
         // นอกนั้นถือว่า token ถูกขโมย ตัดทุก session ของบัญชี
         bool alreadyRotated = session.RevokedAt is not null;
-        if (alreadyRotated && !await IsWithinRotationGraceAsync(session, now, ct))
+        if (alreadyRotated && await FindGraceSuccessorAsync(session.Id, now, ct) is null)
         {
             await _sessionRepository.RevokeAllForUserAsync(session.UserId, now, ct);
             return AccountResult<LoginSession>.Failure(AuthErrorCode.InvalidCredentials);
@@ -344,9 +347,12 @@ public sealed class AccountService
     /// 4. session ที่มาแทนยังไม่เคยถูกใช้เลย: ยังไม่ถูกใช้ = คำตอบ refresh อาจหายกลางทางจริง
     ///    ถูกใช้แล้ว = เจ้าของได้ใบใหม่ไปแล้ว คนที่เอาใบเก่ามาใช้คือคนที่ขโมยไป
     ///    (ValidateSessionAsync อัปเดต LastUsedAt ทุกครั้งที่ใบใหม่ถูกใช้เรียก endpoint)
-    /// กรณีปกติที่เข้าช่วงนี้: คำตอบ refresh หายกลางทางแล้วเกมลองใหม่ / เปิดเกม 2 หน้าต่างที่ใช้ไฟล์จดจำเดียวกัน
-    /// ช่องที่ยังเหลือ: คนที่ขโมยใบเก่าแล้วยิงก่อนที่ใบใหม่ล่าสุดจะถูกใช้ครั้งแรก ยังได้ session โดยไม่ถูกจับ
-    /// ปิดไม่ได้ตราบที่มีช่วงผ่อนผัน (ตั้ง RefreshReuseGracePeriod เป็นศูนย์ = ไม่ผ่อนผันเลย)
+    /// มีไว้กรณีเดียว: คำตอบ refresh หายกลางทางแล้วเกมลองใหม่
+    /// (เปิดเกม 2 หน้าต่างไม่ได้อาศัยช่วงนี้: เกมอ่าน token ใบใหม่จากไฟล์จดจำก่อนจะ refresh เอง)
+    /// ช่องที่ยังเหลือ:
+    /// - คนที่ขโมยใบเก่าแล้วยิงก่อนที่ใบใหม่จะถูกใช้ครั้งแรก ยังได้ session โดยไม่ถูกจับ (แต่ใบของเจ้าของจะถูกยกเลิก
+    ///   เจ้าของจึงหลุดและรู้ตัว) ปิดไม่ได้ตราบที่มีช่วงผ่อนผัน (ตั้ง RefreshReuseGracePeriod เป็นศูนย์ = ไม่ผ่อนผันเลย)
+    /// - เกม 2 หน้าต่าง refresh ใบเดียวกันพร้อมกันพอดี: ได้คำตอบสำเร็จทั้งคู่ แต่ใช้ได้แค่ใบล่าสุด อีกหน้าต่างจะหลุด
     /// </summary>
     private async Task<bool> IsWithinRotationGraceAsync(SessionRecord session, DateTimeOffset now, CancellationToken ct)
     {
@@ -366,30 +372,59 @@ public sealed class AccountService
 
     /// <summary>
     /// ผ่อนผันให้ใบเก่าที่ถูกหมุนไปแล้ว: ถ้ายังอยู่ในช่วงผ่อนผัน ย้ายตัวชี้ "session ที่มาแทน" ของใบเก่ามาที่ session ใหม่
-    /// ทำให้เงื่อนไข "ใบที่มาแทนยังไม่ถูกใช้" ตามใบล่าสุดเสมอ: พอผู้เล่นใช้ใบที่ได้จากการผ่อนผัน ใบเก่าจะต่ออายุไม่ได้อีก
-    /// (ถ้าไม่ย้าย ใบเก่าจะชี้ใบแรกที่คำตอบหายและไม่มีใครถือ ซึ่งไม่มีวันถูกใช้ ใบเก่าจึงต่ออายุได้เรื่อยๆ จนครบช่วงผ่อนผัน)
-    /// ไม่ยกเลิกใบที่เคยมาแทน เพราะอาจมีคนถืออยู่จริง (เกมอีกหน้าต่างหนึ่ง)
-    /// การย้ายเป็นแบบ atomic: ถ้าคำขออื่นย้ายไปก่อน จะอ่านใหม่แล้วตรวจเงื่อนไขกับใบล่าสุดอีกครั้ง
+    /// และยกเลิกใบที่มาแทนก่อนหน้า (ที่ยังไม่เคยถูกใช้) ในขั้นตอน atomic เดียวกัน
+    /// ผล: ใบเก่า 1 ใบ มี session ที่งอกจากการผ่อนผันใช้ได้พร้อมกันแค่ใบเดียวเสมอ ยิงใบเก่าซ้ำกี่ครั้งก็ไม่ได้ session เพิ่ม
+    /// และพอผู้เล่นใช้ใบที่ได้ ใบเก่าจะต่ออายุไม่ได้อีก
+    /// ถ้าคำขออื่นย้ายตัวชี้ไปก่อน จะอ่านใหม่แล้วตรวจเงื่อนไขกับใบล่าสุดอีกครั้ง
+    /// ถ้าใบที่มาแทนถูกใช้ไประหว่างนี้ = ไม่ผ่อนผัน (ผู้เรียกจะตัดทุก session)
     /// </summary>
     private async Task<bool> TryGrantRotationGraceAsync(Guid sessionId, Guid newSessionId, DateTimeOffset now, CancellationToken ct)
     {
         for (int attempt = 0; attempt < MaxRotationGraceAttempts; attempt++)
         {
-            var latest = await _sessionRepository.FindByIdAsync(sessionId, ct);
-            if (latest is null ||
-                latest.ReplacedBySessionId is not { } currentSuccessor ||
-                !await IsWithinRotationGraceAsync(latest, now, ct))
+            if (await FindGraceSuccessorAsync(sessionId, now, ct) is not { } currentSuccessor)
             {
                 return false;
             }
 
-            if (await _sessionRepository.TryReplaceSuccessorAsync(sessionId, currentSuccessor, newSessionId, ct))
+            if (await _sessionRepository.TryReplaceSuccessorAsync(sessionId, currentSuccessor, newSessionId, now, ct))
             {
                 return true;
             }
+            // ไม่สำเร็จ: คำขออื่นย้ายตัวชี้ไปก่อน (วนตรวจกับใบล่าสุดอีกรอบ) หรือใบที่มาแทนถูกใช้ไปแล้ว (รอบหน้าจะได้ null)
         }
 
         return false;
+    }
+
+    /// <summary>
+    /// ใบเก่ายังอยู่ในช่วงผ่อนผันไหม โดยตรวจกับ session ที่มาแทน "ใบล่าสุด" คืน id ของใบนั้น หรือ null ถ้าไม่ผ่อนผัน
+    /// อ่านใบเก่าใหม่ทุกครั้ง และถ้าตรวจไม่ผ่านเพราะคำขออื่นเพิ่งย้ายตัวชี้ไประหว่างที่ตรวจ (ใบที่ตรวจอยู่เลยถูกยกเลิก)
+    /// จะตรวจซ้ำกับใบใหม่ ไม่ตัดสินจากข้อมูลที่อ่านไว้ก่อนหน้า ไม่อย่างนั้นการลองใหม่ที่ซ้อนกันจะถูกมองว่าขโมย
+    /// </summary>
+    private async Task<Guid?> FindGraceSuccessorAsync(Guid sessionId, DateTimeOffset now, CancellationToken ct)
+    {
+        for (int attempt = 0; attempt < MaxRotationGraceAttempts; attempt++)
+        {
+            var latest = await _sessionRepository.FindByIdAsync(sessionId, ct);
+            if (latest?.ReplacedBySessionId is not { } successorId)
+            {
+                return null;
+            }
+
+            if (await IsWithinRotationGraceAsync(latest, now, ct))
+            {
+                return successorId;
+            }
+
+            var recheck = await _sessionRepository.FindByIdAsync(sessionId, ct);
+            if (recheck?.ReplacedBySessionId == successorId)
+            {
+                return null;  // ตัวชี้ไม่ได้เปลี่ยน: ไม่ผ่านจริง
+            }
+        }
+
+        return null;
     }
 
     /// <summary>
@@ -565,5 +600,20 @@ public sealed class AccountService
         }
 
         await _sessionRepository.TryRevokeAsync(session.Id, now, ct);
+
+        // token ใบนี้เคยถูกหมุนไปแล้ว (เช่น เกมถือใบเก่าเพราะคำตอบ refresh หาย): ผู้เล่นตั้งใจออกจากระบบ
+        // จึงยกเลิกใบที่มาแทนตามสายไปจนถึงใบล่าสุดด้วย ไม่ทิ้ง session ที่ยังใช้ได้ค้างไว้บน server
+        Guid? nextId = session.ReplacedBySessionId;
+        for (int step = 0; nextId is { } successorId && step < MaxLogoutChainSteps; step++)
+        {
+            var successor = await _sessionRepository.FindByIdAsync(successorId, ct);
+            if (successor is null || successor.UserId != session.UserId)
+            {
+                break;
+            }
+
+            await _sessionRepository.TryRevokeAsync(successor.Id, now, ct);
+            nextId = successor.ReplacedBySessionId;
+        }
     }
 }

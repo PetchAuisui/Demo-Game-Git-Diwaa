@@ -131,7 +131,7 @@ public sealed class InMemorySessionRepository : ISessionRepository
         }
     }
 
-    public Task<bool> TryReplaceSuccessorAsync(Guid sessionId, Guid expectedSuccessorId, Guid newSuccessorId, CancellationToken ct = default)
+    public Task<bool> TryReplaceSuccessorAsync(Guid sessionId, Guid expectedSuccessorId, Guid newSuccessorId, DateTimeOffset now, CancellationToken ct = default)
     {
         lock (_lock)
         {
@@ -141,6 +141,18 @@ public sealed class InMemorySessionRepository : ISessionRepository
             {
                 return Task.FromResult(false);
             }
+
+            // ใบที่มาแทนก่อนหน้า: ต้องยังใช้ได้และยังไม่เคยถูกใช้ ถึงจะยกเลิกแล้วออกใบใหม่แทนได้
+            if (!_sessionsById.TryGetValue(expectedSuccessorId, out var previous) ||
+                previous.RevokedAt is not null ||
+                previous.LastUsedAt > previous.CreatedAt)
+            {
+                return Task.FromResult(false);
+            }
+
+            var revokedPrevious = previous with { RevokedAt = now };
+            _sessionsById[previous.Id] = revokedPrevious;
+            _sessionsByTokenHash[previous.TokenHash] = revokedPrevious;
 
             var repointedSession = session with { ReplacedBySessionId = newSuccessorId };
             _sessionsById[sessionId] = repointedSession;

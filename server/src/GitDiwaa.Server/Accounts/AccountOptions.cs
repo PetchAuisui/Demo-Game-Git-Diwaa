@@ -11,8 +11,9 @@ public sealed class AccountOptions
     public int MaxFailedLoginAttemptsPerAccount { get; set; } = 20;
     public TimeSpan LockoutDuration { get; set; } = TimeSpan.FromMinutes(15);
 
-    // ช่วงผ่อนผันหลังหมุน token: token ใบเก่าที่เพิ่งถูกแทน เอามา refresh ซ้ำได้ภายในเวลานี้โดยไม่ถือว่าถูกขโมย
-    // (คำตอบ refresh หายกลางทางแล้วเกมลองใหม่ / เปิดเกม 2 หน้าต่างที่ใช้ไฟล์จดจำเดียวกัน)
+    // ช่วงผ่อนผันหลังหมุน token: มีไว้กรณีเดียวคือคำตอบ refresh หายกลางทางแล้วเกมลองใหม่
+    // token ใบเก่าที่เพิ่งถูกแทน เอามา refresh ซ้ำได้ภายในเวลานี้ ถ้าใบใหม่ที่มาแทนยังไม่เคยถูกใช้ (ดู AccountService.RefreshAsync)
+    // (เปิดเกม 2 หน้าต่างไม่ได้อาศัยช่วงนี้: เกมอ่าน token ใบใหม่จากไฟล์จดจำก่อนจะ refresh เอง)
     // เลยช่วงนี้ไปแล้วยังใช้ใบเก่า = ถือว่าถูกขโมย ตัดทุก session ของบัญชี  ตั้งเป็น TimeSpan.Zero = ไม่ผ่อนผันเลย
     public TimeSpan RefreshReuseGracePeriod { get; set; } = TimeSpan.FromSeconds(60);
 

@@ -92,6 +92,28 @@ internal static class LoginLockoutAndRefreshGraceTests
             Assert.True(correct.Succeeded);
         });
 
+        await runner.RunAsync("Login_AccountFailures_ExpireAfterLockoutWindow", async static () =>
+        {
+            var ctx = await CreateWithUserAsync();
+
+            // ผิด 5 ครั้งจาก IP เดียว วนทุก 16 นาที 5 รอบ = 25 ครั้ง: แต่ละรอบห่างกันเกินช่วงพัก ตัวนับรวมของบัญชีต้องเริ่มใหม่
+            for (int round = 0; round < 5; round++)
+            {
+                for (int i = 0; i < 5; i++)
+                {
+                    await ctx.Service.LoginAsync(new LoginRequest("mage01", "WrongPassword!", false), "203.0.113.9");
+                }
+                ctx.Time.Advance(TimeSpan.FromMinutes(16));
+            }
+
+            var stored = await ctx.Users.FindByUsernameAsync("mage01");
+            Assert.True(stored!.LockoutUntil is null, "Old failures must not add up to an account-wide lockout.");
+            Assert.True(stored.FailedLoginCount < 20);
+
+            var owner = await ctx.Service.LoginAsync(new LoginRequest("mage01", Password, false), "198.51.100.7");
+            Assert.True(owner.Succeeded);
+        });
+
         // ---------------------------------------------------------------- ช่วงผ่อนผันหลังหมุน token
 
         await runner.RunAsync("Refresh_ReuseWithinGrace_Succeeds_AndKeepsOtherSessions", async static () =>
@@ -109,7 +131,9 @@ internal static class LoginLockoutAndRefreshGraceTests
             Assert.False(string.Equals(retry.Value!.Token, tokenA2, StringComparison.Ordinal));
 
             Assert.True((await ctx.Service.ValidateSessionAsync(retry.Value.Token)).Succeeded);
-            Assert.True((await ctx.Service.ValidateSessionAsync(tokenA2)).Succeeded);
+            // ใบที่คำตอบหาย (ไม่มีใครถือ) ถูกยกเลิกไปพร้อมกับการออกใบใหม่: ใบเก่า 1 ใบ มีใบที่ใช้ได้ใบเดียวเสมอ
+            Assert.False((await ctx.Service.ValidateSessionAsync(tokenA2)).Succeeded);
+            // session ของอุปกรณ์อื่นไม่ถูกแตะ
             Assert.True((await ctx.Service.ValidateSessionAsync(tokenB)).Succeeded);
             // ใบเก่ายังใช้เรียก endpoint อื่นไม่ได้ (ผ่อนผันให้เฉพาะการ refresh)
             Assert.False((await ctx.Service.ValidateSessionAsync(tokenA)).Succeeded);
@@ -120,7 +144,8 @@ internal static class LoginLockoutAndRefreshGraceTests
             var ctx = await CreateWithUserAsync();
             string token = (await ctx.Service.LoginAsync(new LoginRequest("mage01", Password, false))).Value!.Token;
 
-            // เกม 2 หน้าต่าง (หรือมากกว่า) refresh ใบเดียวกันพร้อมกัน: ต้องไม่มีใครโดนตัดทุก session
+            // refresh ใบเดียวกันพร้อมกันหลายคำขอ (เช่น ลองใหม่ซ้อนกัน): ไม่มีคำขอไหนถูกมองว่าขโมย
+            // แต่ session ที่ใช้ได้ต้องเหลือใบเดียว (ใบล่าสุด) ไม่ใช่ 20 ใบ
             var tasks = new Task<AccountResult<LoginSession>>[20];
             for (int i = 0; i < tasks.Length; i++)
             {
@@ -130,10 +155,38 @@ internal static class LoginLockoutAndRefreshGraceTests
 
             Assert.True(results.All(r => r.Succeeded), $"Expected every refresh to succeed, got {results.Count(r => r.Succeeded)}.");
             Assert.Equal(20, results.Select(r => r.Value!.Token).Distinct(StringComparer.Ordinal).Count());
+
+            int usable = 0;
             foreach (var result in results)
             {
-                Assert.True((await ctx.Service.ValidateSessionAsync(result.Value!.Token)).Succeeded);
+                if ((await ctx.Service.ValidateSessionAsync(result.Value!.Token)).Succeeded)
+                {
+                    usable++;
+                }
             }
+            Assert.Equal(1, usable, $"Exactly one session may stay usable after parallel refreshes, got {usable}.");
+        });
+
+        await runner.RunAsync("Refresh_RepeatedGraceRetries_OnlyNewestTokenWorks", async static () =>
+        {
+            var ctx = await CreateWithUserAsync();
+            string tokenA = (await ctx.Service.LoginAsync(new LoginRequest("mage01", Password, true))).Value!.Token;
+
+            var issued = new List<string> { (await ctx.Service.RefreshAsync(tokenA)).Value!.Token };
+            // ยิงใบเก่าวน 5 ครั้งในช่วงผ่อนผัน: ได้ใบใหม่ทุกครั้ง แต่ใบก่อนหน้าถูกยกเลิกทุกครั้ง ไม่สะสม session
+            for (int i = 0; i < 5; i++)
+            {
+                ctx.Time.Advance(TimeSpan.FromSeconds(5));
+                var retry = await ctx.Service.RefreshAsync(tokenA);
+                Assert.True(retry.Succeeded);
+                issued.Add(retry.Value!.Token);
+            }
+
+            for (int i = 0; i < issued.Count - 1; i++)
+            {
+                Assert.False((await ctx.Service.ValidateSessionAsync(issued[i])).Succeeded, $"Token #{i} must be revoked.");
+            }
+            Assert.True((await ctx.Service.ValidateSessionAsync(issued[^1])).Succeeded);
         });
 
         await runner.RunAsync("Refresh_ReuseAfterNewTokenWasUsed_HasNoGrace_RevokesAll", async static () =>
@@ -162,14 +215,14 @@ internal static class LoginLockoutAndRefreshGraceTests
             var ctx = await CreateWithUserAsync();
             string tokenA = (await ctx.Service.LoginAsync(new LoginRequest("mage01", Password, true))).Value!.Token;
 
-            // คำตอบแรกหายกลางทาง (ไม่มีใครถือ tokenA2) เกมลองใหม่และได้ tokenA3
+            // คำตอบแรกหายกลางทาง (ไม่มีใครถือ tokenA2) เกมลองใหม่และได้ tokenA3 ส่วน tokenA2 ถูกยกเลิก
             string tokenA2 = (await ctx.Service.RefreshAsync(tokenA)).Value!.Token;
             ctx.Time.Advance(TimeSpan.FromSeconds(10));
             var retry = await ctx.Service.RefreshAsync(tokenA);
             Assert.True(retry.Succeeded);
             string tokenA3 = retry.Value!.Token;
 
-            // ใบเก่าต้องชี้มาที่ใบล่าสุด (tokenA3) แล้ว และใบแรกที่มาแทน (tokenA2) ต้องไม่ถูกยกเลิก
+            // ใบเก่าต้องชี้มาที่ใบล่าสุด (tokenA3) แล้ว และใบแรกที่มาแทน (tokenA2) ต้องถูกยกเลิกในขั้นตอนเดียวกัน
             Assert.True(ctx.TokenService.TryHashToken(tokenA, out string hashA));
             Assert.True(ctx.TokenService.TryHashToken(tokenA2, out string hashA2));
             Assert.True(ctx.TokenService.TryHashToken(tokenA3, out string hashA3));
@@ -177,15 +230,16 @@ internal static class LoginLockoutAndRefreshGraceTests
             var sessionA2 = await ctx.Sessions.FindByTokenHashAsync(hashA2);
             var sessionA3 = await ctx.Sessions.FindByTokenHashAsync(hashA3);
             Assert.Equal(sessionA3!.Id, sessionA!.ReplacedBySessionId);
-            Assert.Equal(null, sessionA2!.RevokedAt);
+            Assert.True(sessionA2!.RevokedAt is not null, "The replaced, never-used token must be revoked.");
+            Assert.False((await ctx.Service.ValidateSessionAsync(tokenA2)).Succeeded);
             // ย้ายตัวชี้แบบ atomic: อ้างใบเดิมที่ไม่ได้ชี้อยู่แล้ว ต้องไม่เปลี่ยนอะไร
-            Assert.False(await ctx.Sessions.TryReplaceSuccessorAsync(sessionA.Id, sessionA2.Id, Guid.NewGuid()));
+            Assert.False(await ctx.Sessions.TryReplaceSuccessorAsync(sessionA.Id, sessionA2.Id, Guid.NewGuid(), ctx.Time.GetUtcNow()));
 
             // เจ้าของใช้ใบที่ได้จากการลองใหม่
             ctx.Time.Advance(TimeSpan.FromSeconds(1));
             Assert.True((await ctx.Service.ValidateSessionAsync(tokenA3)).Succeeded);
 
-            // ใบเก่ามาอีกรอบ (ยังไม่ถึง 60 วินาที): ต้องล้ม ทั้งที่ tokenA2 ไม่เคยถูกใช้เลย
+            // ใบเก่ามาอีกรอบ (ยังไม่ถึง 60 วินาที): ต้องล้ม เพราะใบล่าสุดที่มาแทนถูกใช้ไปแล้ว
             ctx.Time.Advance(TimeSpan.FromSeconds(10));
             var reuse = await ctx.Service.RefreshAsync(tokenA);
             Assert.False(reuse.Succeeded, "After the retried token is used, the old token must stop refreshing.");
@@ -205,6 +259,25 @@ internal static class LoginLockoutAndRefreshGraceTests
             var reuse = await ctx.Service.RefreshAsync(tokenA);
             Assert.False(reuse.Succeeded);
             Assert.False((await ctx.Service.ValidateSessionAsync(tokenB)).Succeeded);
+        });
+
+        await runner.RunAsync("Logout_WithRotatedToken_RevokesItsReplacement", async static () =>
+        {
+            var ctx = await CreateWithUserAsync();
+            string tokenA = (await ctx.Service.LoginAsync(new LoginRequest("mage01", Password, true))).Value!.Token;
+            string tokenOther = (await ctx.Service.LoginAsync(new LoginRequest("mage01", Password, false))).Value!.Token;
+
+            // A -> B -> C แล้วเกมที่ยังถือ A (คำตอบหาย) กดออกจากระบบ
+            string tokenB = (await ctx.Service.RefreshAsync(tokenA)).Value!.Token;
+            string tokenC = (await ctx.Service.RefreshAsync(tokenB)).Value!.Token;
+            Assert.True((await ctx.Service.ValidateSessionAsync(tokenC)).Succeeded);
+
+            await ctx.Service.LogoutAsync(tokenA);
+
+            // ทั้งสายต้องใช้ไม่ได้ ไม่เหลือ session ค้างบน server ส่วนอุปกรณ์อื่นไม่ถูกแตะ
+            Assert.False((await ctx.Service.ValidateSessionAsync(tokenB)).Succeeded);
+            Assert.False((await ctx.Service.ValidateSessionAsync(tokenC)).Succeeded);
+            Assert.True((await ctx.Service.ValidateSessionAsync(tokenOther)).Succeeded);
         });
 
         await runner.RunAsync("Refresh_ReuseOfLoggedOutToken_HasNoGrace", async static () =>

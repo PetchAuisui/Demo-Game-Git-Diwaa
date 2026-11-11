@@ -16,11 +16,14 @@ public interface ISessionRepository
     Task<bool> TryRotateAsync(Guid sessionId, Guid replacedBySessionId, DateTimeOffset rotatedAt, CancellationToken ct = default);
 
     /// <summary>
-    /// ย้ายตัวชี้ "session ที่มาแทน" ของ session ที่ถูกหมุนไปแล้ว ไปยังใบใหม่ล่าสุด (ใช้ตอนผ่อนผันให้ใบเก่าต่ออายุซ้ำ)
-    /// atomic แบบ compare-and-swap: เปลี่ยนเฉพาะเมื่อยังชี้ expectedSuccessorId อยู่ ถ้ามีคำขออื่นย้ายไปก่อนจะคืน false
-    /// (ฐานข้อมูลจริงใช้ UPDATE ... SET replaced_by = @new WHERE id = @id AND replaced_by = @expected)
-    /// ไม่ยกเลิกใบที่เคยมาแทน: ใบนั้นอาจมีคนถืออยู่จริง เช่น เกมอีกหน้าต่างหนึ่ง
+    /// ผ่อนผันให้ใบเก่าที่ถูกหมุนไปแล้ว: ย้ายตัวชี้ "session ที่มาแทน" ไปยังใบใหม่ และยกเลิกใบที่มาแทนก่อนหน้า ในขั้นตอนเดียว (atomic)
+    /// ทำเฉพาะเมื่อครบทุกข้อ ไม่ครบคืน false และไม่เปลี่ยนอะไรเลย:
+    /// 1. ใบเก่ายังชี้ expectedSuccessorId อยู่ (compare-and-swap: มีคำขออื่นย้ายไปก่อน = false)
+    /// 2. ใบที่มาแทนก่อนหน้ายังไม่ถูกยกเลิก และยังไม่เคยถูกใช้ (LastUsedAt &lt;= CreatedAt)
+    ///    ถูกใช้ไปแล้วระหว่างนี้ = มีคนถือใบนั้นจริง ห้ามผ่อนผันให้ใบเก่าอีก
+    /// ผล: ใบเก่า 1 ใบ มี session ที่งอกจากการผ่อนผันใช้ได้พร้อมกันแค่ใบเดียวเสมอ (ใบล่าสุด)
+    /// (ฐานข้อมูลจริง: ทำ 2 UPDATE ใน transaction เดียว โดยมีเงื่อนไขข้างบนอยู่ใน WHERE)
     /// </summary>
-    Task<bool> TryReplaceSuccessorAsync(Guid sessionId, Guid expectedSuccessorId, Guid newSuccessorId, CancellationToken ct = default);
+    Task<bool> TryReplaceSuccessorAsync(Guid sessionId, Guid expectedSuccessorId, Guid newSuccessorId, DateTimeOffset now, CancellationToken ct = default);
     Task TouchAsync(Guid sessionId, DateTimeOffset lastUsedAt, CancellationToken ct = default);
 }
