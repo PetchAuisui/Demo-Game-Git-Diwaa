@@ -434,7 +434,7 @@ func _input(event: InputEvent) -> void:
 		return
 
 	var is_f11: bool = (event.keycode == KEY_F11)
-	var is_alt_enter: bool = (event.keycode == KEY_ENTER and event.alt_pressed)
+	var is_alt_enter: bool = ((event.keycode == KEY_ENTER or event.keycode == KEY_KP_ENTER) and event.alt_pressed)
 	if not (is_f11 or is_alt_enter):
 		return
 

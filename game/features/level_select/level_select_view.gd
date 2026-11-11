@@ -1976,7 +1976,7 @@ func _input(event: InputEvent) -> void:
 					_navigate_directional(Vector2.DOWN)
 				elif key_ev.keycode == KEY_LEFT or key_ev.keycode == KEY_RIGHT:
 					get_viewport().set_input_as_handled()
-				elif key_ev.keycode == KEY_ENTER or key_ev.keycode == KEY_SPACE:
+				elif (key_ev.keycode == KEY_ENTER or key_ev.keycode == KEY_KP_ENTER or key_ev.keycode == KEY_SPACE) and not key_ev.alt_pressed:
 					if not key_ev.echo:
 						get_viewport().set_input_as_handled()
 						_on_launch_stage_pressed()
