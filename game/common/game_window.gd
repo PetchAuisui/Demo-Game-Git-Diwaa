@@ -120,6 +120,7 @@ func _exit_tree() -> void:
 	_last_raw_event = null
 	_dragging_scrollbar = null
 	_watcher = null
+	SceneLoader.flush_preloads()
 
 
 func _process(delta: float) -> void:
@@ -323,7 +324,10 @@ func _hook_window(win: Window) -> void:
 
 
 func _hook_dialog(dialog: AcceptDialog) -> void:
-	for btn: Button in [dialog.get_ok_button(), dialog.get_cancel_button()]:
+	var buttons: Array[Button] = [dialog.get_ok_button()]
+	if dialog is ConfirmationDialog:
+		buttons.append((dialog as ConfirmationDialog).get_cancel_button())
+	for btn: Button in buttons:
 		if btn != null and is_instance_valid(btn) and btn.mouse_default_cursor_shape == Control.CURSOR_ARROW:
 			btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 

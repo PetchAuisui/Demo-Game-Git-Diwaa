@@ -11,6 +11,8 @@ const SAVE_PATH := "user://game_progress.cfg"
 const SECTION_PROGRESS := "progress"
 const KEY_INTRO_SEEN := "has_seen_intro_cutscene"
 const SECTION_LEVELS := "levels_cleared"
+const TOTAL_LEVELS := 40
+const DEFAULT_GAMEPLAY_RETURN_SCENE := "res://features/cutscene/inside_tower_cutscene.tscn"
 
 ## ตัวแปรส่งผ่านสถานะระหว่าง Scene ชั่วคราว (Transient Session State)
 ## ใช้แทนการประกาศ static var ไว้บน UI View Script โดยตรง
@@ -18,7 +20,7 @@ const SECTION_LEVELS := "levels_cleared"
 static var _pending_dialogue_phase: int = 0
 static var _selected_level_number: int = 1
 static var _current_gameplay_step: int = 0
-static var _gameplay_return_scene: String = "res://features/cutscene/inside_tower_cutscene.tscn"
+static var _gameplay_return_scene: String = DEFAULT_GAMEPLAY_RETURN_SCENE
 
 ## การสุ่มสีหมวกเวทมนตร์ 3 สี (ม่วง, ฟ้า, เขียว) เมื่อเริ่มเข้าเกมใหม่ อัตราดรอปเท่ากัน 1/3 (Equal Drop Rate)
 enum HatColor {
@@ -127,7 +129,11 @@ static func set_level_cleared(level_num: int, cleared: bool = true) -> void:
 static func reset_progress() -> void:
 	var cfg := ConfigFile.new()
 	cfg.set_value(SECTION_PROGRESS, KEY_INTRO_SEEN, false)
-	for i in range(1, 16):
+	for i in range(1, TOTAL_LEVELS + 1):
 		cfg.set_value(SECTION_LEVELS, "level_%d" % i, false)
 	cfg.save(SAVE_PATH)
 	_cached_cfg = cfg
+	_pending_dialogue_phase = 0
+	_selected_level_number = 1
+	_current_gameplay_step = 0
+	_gameplay_return_scene = DEFAULT_GAMEPLAY_RETURN_SCENE

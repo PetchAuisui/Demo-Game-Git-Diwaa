@@ -301,6 +301,7 @@ grow_vertical = 2
 theme_override_constants/separation = 0
 
 [node name="TopNavbar" type="PanelContainer" parent="LayoutVBox"]
+z_index = 30
 custom_minimum_size = Vector2(0, 72)
 layout_mode = 2
 theme_override_styles/panel = SubResource("Style_navbar")

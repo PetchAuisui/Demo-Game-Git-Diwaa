@@ -28,6 +28,7 @@ var _clock_update_timer := 0.0
 var _preview_anim_timer := 0.0
 var _preview_frame_index := 0
 var _cursor_visible := true
+var _is_leaving := false
 
 
 func _ready() -> void:
@@ -114,44 +115,81 @@ func _on_button_focus_entered() -> void:
 
 
 func _on_start_career_pressed() -> void:
+	if _is_leaving:
+		return
+	_is_leaving = true
 	_play_sfx(_sfx_click)
 	_append_terminal_text("> Executing START NEW CAREER...")
 
 	if GameProgressManager.has_seen_intro_cutscene():
 		_append_terminal_text("> Opening Tower Ascension Roadmap...")
 		get_tree().create_timer(0.35).timeout.connect(func() -> void:
+			if not is_inside_tree():
+				return
 			_transition_to_scene("res://features/level_select/level_select_view.tscn"))
 	else:
 		_append_terminal_text("> Initializing Magic Tower apprentice session...")
 		get_tree().create_timer(0.35).timeout.connect(func() -> void:
-			_transition_to_scene("res://features/cutscene/cut_scence_normal.tscn"))
+			if not is_inside_tree():
+				return
+			var prev_selected := GameProgressManager.get_selected_level_number()
+			GameProgressManager.set_selected_level_number(1)
+			if not _transition_to_scene("res://features/cutscene/cut_scence_normal.tscn"):
+				GameProgressManager.set_selected_level_number(prev_selected))
 
 
 func _on_resume_work_pressed() -> void:
+	if _is_leaving:
+		return
+	_is_leaving = true
 	_play_sfx(_sfx_click)
 	_append_terminal_text("> Resuming active repository session...")
 
 	get_tree().create_timer(0.2).timeout.connect(func() -> void:
-		_transition_to_scene("res://features/sandbox/sandbox_game_view.tscn"))
+		if not is_inside_tree():
+			return
+		var prev_selected := GameProgressManager.get_selected_level_number()
+		var prev_step := GameProgressManager.get_current_gameplay_step()
+		var prev_return_scene := GameProgressManager.get_gameplay_return_scene()
+		GameProgressManager.set_selected_level_number(1)
+		GameProgressManager.set_current_gameplay_step(0)
+		GameProgressManager.consume_pending_dialogue_phase()
+		GameProgressManager.set_gameplay_return_scene("res://features/cutscene/inside_tower_cutscene.tscn")
+		if not _transition_to_scene("res://features/sandbox/sandbox_game_view.tscn"):
+			GameProgressManager.set_selected_level_number(prev_selected)
+			GameProgressManager.set_current_gameplay_step(prev_step)
+			GameProgressManager.set_gameplay_return_scene(prev_return_scene))
 
 
-func _transition_to_scene(target_path: String) -> void:
-	if not SceneLoader.change_scene(get_tree(), target_path):
+func _transition_to_scene(target_path: String) -> bool:
+	var tree := get_tree() if is_inside_tree() else null
+	if not SceneLoader.change_scene(tree, target_path):
+		_is_leaving = false
 		push_warning("[StartView] Scene not found: '%s'" % target_path)
+		return false
+	return true
 
 
 func _on_dressing_room_pressed() -> void:
+	if _is_leaving:
+		return
+	_is_leaving = true
 	_play_sfx(_sfx_click)
 	_append_terminal_text("> Accessing Royal Wardrobe & Dressing Room...")
 
 	get_tree().create_timer(0.35).timeout.connect(func() -> void:
+		if not is_inside_tree():
+			return
 		if ResourceLoader.exists("res://features/start/dressing_room_view.tscn"):
-			get_tree().change_scene_to_file("res://features/start/dressing_room_view.tscn")
+			_transition_to_scene("res://features/start/dressing_room_view.tscn")
 		else:
+			_is_leaving = false
 			_append_terminal_text("> Wardrobe module initialized."))
 
 
 func _on_tutorial_pressed() -> void:
+	if _is_leaving:
+		return
 	_play_sfx(_sfx_click)
 	_append_terminal_text("\n--- [ TUTORIAL & DOCUMENTATION ] ---")
 	_append_terminal_text("ยินดีต้อนรับสู่ Git-Diwaa! คุณจะได้เรียนรู้ Git ผ่านโลกเวทมนตร์")
@@ -160,6 +198,8 @@ func _on_tutorial_pressed() -> void:
 
 
 func _on_terminal_command_submitted(input: String) -> void:
+	if _is_leaving:
+		return
 	var cmd := input.strip_edges()
 	if cmd.is_empty():
 		return
@@ -182,7 +222,8 @@ func _on_terminal_command_submitted(input: String) -> void:
 		return
 
 	if lower == "level" or lower == "levels" or lower == "select":
-		get_tree().change_scene_to_file("res://features/level_select/level_select_view.tscn")
+		_is_leaving = true
+		_transition_to_scene("res://features/level_select/level_select_view.tscn")
 		return
 
 	if lower == "clear 1" or lower == "complete 1":

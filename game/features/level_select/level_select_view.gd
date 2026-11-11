@@ -149,7 +149,9 @@ const PATH_PASS_ACTIVE_GLOW := 2
 # State variables
 var _current_stage_idx: int = 0
 var _view_stage_idx: int = 0
+var _hovered_stage_idx: int = -1
 var _target_scroll_y: float = -1.0
+var _is_act_jump_tween: bool = false
 var _platform_nodes: Dictionary = {}
 var _is_jumping := false
 var _is_leaving := false
@@ -212,6 +214,7 @@ func _initial_scroll_to_current_stage() -> void:
 		var target_y := int(stg["y"]) - center_offset
 		var max_scroll := maxi(0, int(tower_content.custom_minimum_size.y - scroll_chamber.size.y))
 		scroll_chamber.scroll_vertical = clampi(target_y, 0, max_scroll)
+		_sync_view_stage_with_scroll()
 
 
 func _load_resources() -> void:
@@ -482,6 +485,13 @@ func _wire_navbar() -> void:
 		btn_sound.pressed.connect(_on_toggle_sound)
 	if btn_launch:
 		btn_launch.pressed.connect(_on_launch_stage_pressed)
+	if scroll_chamber:
+		var vsb := scroll_chamber.get_v_scroll_bar()
+		if vsb:
+			if not vsb.scrolling.is_connected(_on_vscroll_user_scrolling):
+				vsb.scrolling.connect(_on_vscroll_user_scrolling)
+			if not vsb.value_changed.is_connected(_on_vscroll_value_changed):
+				vsb.value_changed.connect(_on_vscroll_value_changed)
 
 
 func _on_back_pressed() -> void:
@@ -726,7 +736,7 @@ func _on_act_button_pressed(act_num: int) -> void:
 		target_y = 0
 		_view_stage_idx = 20
 
-	_scroll_to_y(target_y, true)
+	_scroll_to_y(target_y, true, 0.48, true)
 	_refresh_act_tabs(act_num)
 
 
@@ -770,6 +780,7 @@ func _init_game_progression() -> void:
 func _spawn_tower_platforms() -> void:
 	if not tower_content:
 		return
+	_hovered_stage_idx = -1
 
 	for child in tower_content.get_children():
 		if child.name.begins_with("Platform_") or child.name == "MasterSilhouette":
@@ -954,9 +965,12 @@ func _spawn_tower_platforms() -> void:
 		var current_idx := i
 		# แสดงรายละเอียดด่านใน HUD เมื่อนำเมาส์มาวางค้างไว้ (Hover / Hold)
 		slab_btn.mouse_entered.connect(func():
+			_hovered_stage_idx = current_idx
 			_update_hud_display(TOWER_STAGES[current_idx])
 		)
 		slab_btn.mouse_exited.connect(func():
+			if _hovered_stage_idx == current_idx:
+				_hovered_stage_idx = -1
 			_update_hud_display(TOWER_STAGES[_current_stage_idx])
 		)
 
@@ -1309,8 +1323,9 @@ func _show_locked_hud_notice(message: String) -> void:
 	tree.create_timer(1.8).timeout.connect(func():
 		if not is_instance_valid(hud_desc) or _locked_desc_seq_id != my_seq:
 			return
-		if _current_stage_idx >= 0 and _current_stage_idx < TOWER_STAGES.size():
-			hud_desc.text = str(TOWER_STAGES[_current_stage_idx]["desc"])
+		var restore_idx := _hovered_stage_idx if (_hovered_stage_idx >= 0 and _hovered_stage_idx < TOWER_STAGES.size()) else _current_stage_idx
+		if restore_idx >= 0 and restore_idx < TOWER_STAGES.size():
+			hud_desc.text = str(TOWER_STAGES[restore_idx]["desc"])
 	)
 
 
@@ -1762,6 +1777,20 @@ func _sync_view_stage_with_scroll() -> void:
 		_refresh_act_tabs(current_act)
 
 
+func _on_vscroll_user_scrolling() -> void:
+	if _scroll_tween and _scroll_tween.is_valid():
+		_scroll_tween.kill()
+	_is_act_jump_tween = false
+	_target_scroll_y = -1.0
+	_sync_view_stage_with_scroll()
+
+
+func _on_vscroll_value_changed(_value: float) -> void:
+	if not is_node_ready() or _is_act_jump_tween:
+		return
+	_sync_view_stage_with_scroll()
+
+
 func _scroll_wheel_offset(delta_pixels: float) -> void:
 	if not scroll_chamber:
 		return
@@ -1779,6 +1808,7 @@ func _scroll_wheel_offset(delta_pixels: float) -> void:
 
 	if _scroll_tween and _scroll_tween.is_valid():
 		_scroll_tween.kill()
+	_is_act_jump_tween = false
 
 	_scroll_tween = create_tween()
 	_scroll_tween.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
@@ -1788,7 +1818,7 @@ func _scroll_wheel_offset(delta_pixels: float) -> void:
 	)
 
 
-func _scroll_to_y(target_y: int, animate: bool = true, duration: float = 0.48) -> void:
+func _scroll_to_y(target_y: int, animate: bool = true, duration: float = 0.48, lock_act_tabs: bool = false) -> void:
 	if not scroll_chamber:
 		return
 	var max_scroll := 4450
@@ -1799,12 +1829,14 @@ func _scroll_to_y(target_y: int, animate: bool = true, duration: float = 0.48) -
 
 	if _scroll_tween and _scroll_tween.is_valid():
 		_scroll_tween.kill()
+	_is_act_jump_tween = animate and lock_act_tabs
 
 	if animate:
 		_scroll_tween = create_tween()
 		_scroll_tween.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
 		_scroll_tween.tween_property(scroll_chamber, "scroll_vertical", clamped_y, duration)
 		_scroll_tween.finished.connect(func():
+			_is_act_jump_tween = false
 			_sync_view_stage_with_scroll()
 		)
 	else:
@@ -1848,22 +1880,27 @@ func _draw_path_pass(target: CanvasItem, pass_mode: int) -> void:
 			return
 		var s_a: Dictionary = stages[idx_a]
 		var s_b: Dictionary = stages[idx_b]
+		var id_a: int = int(s_a["id"])
 		var id_b: int = int(s_b["id"])
 
+		var is_cleared_a := GameProgressManager.is_level_cleared(id_a)
 		var is_cleared_b := GameProgressManager.is_level_cleared(id_b)
+		var is_loop_back := id_b < id_a
+		var is_segment_cleared := (is_cleared_a and is_cleared_b) if is_loop_back else is_cleared_b
 		var is_unlocked_b := (id_b == 1) or GameProgressManager.is_level_cleared(id_b - 1)
-		var is_current_segment := (idx_b == _current_stage_idx) or (idx_a == _current_stage_idx and not is_cleared_b)
+		var is_current_segment := false if is_loop_back else ((idx_b == _current_stage_idx) or (idx_a == _current_stage_idx and not is_cleared_b))
+		var is_segment_active := false if is_loop_back else (is_current_segment or is_unlocked_b)
 
 		var p1 := Vector2(s_a["x"], s_a["y"])
 		var p2 := Vector2(s_b["x"], s_b["y"])
 
-		if is_cleared_b:
+		if is_segment_cleared:
 			# 1. Completed Path: Muted emerald green (glow alpha modulated in _process)
 			if pass_mode == PATH_PASS_CLEARED_GLOW:
 				_draw_curved_connection(p1, p2, Color(0.20, 0.75, 0.45, 1.0), 5.0, 4.0, target)
 			elif pass_mode == PATH_PASS_CORE:
 				_draw_curved_connection(p1, p2, Color(0.35, 0.78, 0.50, 0.95), 2.5, 4.0, target)
-		elif is_current_segment or is_unlocked_b:
+		elif is_segment_active:
 			# 2. Current Path: Warm golden orange (glow alpha modulated in _process)
 			if pass_mode == PATH_PASS_ACTIVE_GLOW:
 				_draw_curved_connection(p1, p2, Color(0.96, 0.62, 0.04, 1.0), 5.5, 4.0, target)

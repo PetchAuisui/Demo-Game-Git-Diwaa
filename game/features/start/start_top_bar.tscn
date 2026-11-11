@@ -36,6 +36,7 @@ theme_override_constants/separation = 16
 [node name="BrandBtn" parent="Margin/HBox/BrandHBox" instance=ExtResource("5_brand_btn")]
 unique_name_in_owner = true
 layout_mode = 2
+interactive = false
 
 [node name="Divider" type="ColorRect" parent="Margin/HBox/BrandHBox"]
 custom_minimum_size = Vector2(2, 28)
