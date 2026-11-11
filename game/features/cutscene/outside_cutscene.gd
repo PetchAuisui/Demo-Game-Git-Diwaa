@@ -72,9 +72,18 @@ func _input(event: InputEvent) -> void:
 	if not can_start or is_starting:
 		return
 	
-	if event.is_action_pressed("ui_accept") or \
-	   (event is InputEventKey and event.pressed and not event.echo and (event.keycode == KEY_SPACE or event.keycode == KEY_ENTER or event.keycode == KEY_ESCAPE)) or \
-	   (event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT):
+	var wants_start: bool = false
+	if event.is_action_pressed("ui_accept"):
+		wants_start = true
+	elif event is InputEventKey and event.pressed and not event.echo and (event.keycode == KEY_SPACE or event.keycode == KEY_ENTER or event.keycode == KEY_KP_ENTER or event.keycode == KEY_RIGHT):
+		wants_start = true
+	elif event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+		# ป้องกันการคลิกโดนปุ่ม UI ถูกกลืนเป็นการกดเริ่มด่าน
+		var hovered := get_viewport().gui_get_hovered_control()
+		if not (hovered is BaseButton):
+			wants_start = true
+	
+	if wants_start:
 		get_viewport().set_input_as_handled()
 		_trigger_start_level()
 
