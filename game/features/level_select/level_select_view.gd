@@ -1873,6 +1873,9 @@ func _bezier_interpolate(p0: Vector2, p1: Vector2, p2: Vector2, p3: Vector2, t: 
 
 
 func _on_launch_stage_pressed() -> void:
+	if _is_jumping:
+		return
+
 	var stg := TOWER_STAGES[_current_stage_idx]
 	var stg_id: int = stg["id"]
 	var is_unlocked := (stg_id == 1) or GameProgressManager.is_level_cleared(stg_id - 1)
