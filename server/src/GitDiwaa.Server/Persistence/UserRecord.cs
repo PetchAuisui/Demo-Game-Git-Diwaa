@@ -27,7 +27,9 @@ public sealed record UserRecord(
     DateTimeOffset? LastLoginAt,
     DateTimeOffset? DisplayNameChangedAt = null,
     bool LeaderboardOptIn = false,
-    int DisplayNameChangeCredits = AccountRules.InitialDisplayNameChanges)
+    int DisplayNameChangeCredits = AccountRules.InitialDisplayNameChanges,
+    // เวลาที่ใส่รหัสผิดครั้งล่าสุด (นับรวมทุกต้นทาง) ใช้ตัดสินว่า FailedLoginCount ยังนับต่อหรือเริ่มใหม่
+    DateTimeOffset? LastFailedLoginAt = null)
 {
     /// <summary>
     /// ตอนนี้เปลี่ยนชื่อที่แสดงได้กี่ครั้ง: ยังมีสิทธิ์เหลือก็ใช้ได้เลย
@@ -65,7 +67,8 @@ public sealed record UserRecord(
                .Append(", LastLoginAt = ").Append(LastLoginAt)
                .Append(", DisplayNameChangedAt = ").Append(DisplayNameChangedAt)
                .Append(", LeaderboardOptIn = ").Append(LeaderboardOptIn)
-               .Append(", DisplayNameChangeCredits = ").Append(DisplayNameChangeCredits);
+               .Append(", DisplayNameChangeCredits = ").Append(DisplayNameChangeCredits)
+               .Append(", LastFailedLoginAt = ").Append(LastFailedLoginAt);
         return true;
     }
 }

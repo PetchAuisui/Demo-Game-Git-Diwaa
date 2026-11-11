@@ -158,15 +158,24 @@ public sealed class InMemoryUserRepository : IUserRepository
             }
             _clientLoginFailures[key] = new ClientLoginFailures(clientCount, clientLockedUntil, now);
 
-            // ทั้งบัญชี: นับรวมทุกต้นทาง
-            int accountCount = user.FailedLoginCount + 1;
+            // ทั้งบัญชี: นับรวมทุกต้นทาง ครั้งล่าสุดนานเกินช่วงพักแล้ว เริ่มนับใหม่ (เหมือนตัวนับของต้นทาง)
+            // ไม่อย่างนั้นบัญชีที่ไม่ได้ล็อกอินสำเร็จนานๆ จะผิดสะสมข้ามวันข้ามเดือนจนครบเกณฑ์แล้วถูกพักทั้งบัญชี
+            bool accountStillCounting = user.LastFailedLoginAt is { } lastFailure &&
+                                        lastFailure.Add(rules.LockoutDuration) > now;
+            int accountCount = accountStillCounting ? user.FailedLoginCount + 1 : 1;
             DateTimeOffset? accountLockedUntil = user.LockoutUntil;
             if (accountCount >= rules.MaxPerAccount)
             {
                 accountLockedUntil = now.Add(rules.LockoutDuration);
                 accountCount = 0;
             }
-            StoreUser(user with { FailedLoginCount = accountCount, LockoutUntil = accountLockedUntil, UpdatedAt = now });
+            StoreUser(user with
+            {
+                FailedLoginCount = accountCount,
+                LockoutUntil = accountLockedUntil,
+                LastFailedLoginAt = now,
+                UpdatedAt = now
+            });
 
             if (_clientLoginFailures.Count > ClientLoginFailuresPruneThreshold)
             {
@@ -194,6 +203,7 @@ public sealed class InMemoryUserRepository : IUserRepository
                 PasswordHash = upgradedPasswordHash ?? user.PasswordHash,
                 FailedLoginCount = 0,
                 LockoutUntil = null,
+                LastFailedLoginAt = null,
                 LastLoginAt = now,
                 UpdatedAt = now
             });
