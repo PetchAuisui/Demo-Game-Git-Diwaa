@@ -4,7 +4,7 @@
 [ext_resource type="FontFile" uid="uid://deedcfbkojx6k" path="res://assets/fonts/ChakraPetch-Bold.ttf" id="2_font_bold"]
 [ext_resource type="FontFile" uid="uid://b8g6ela360qq1" path="res://assets/fonts/Silkscreen-Bold.ttf" id="3_font_silkscreen"]
 [ext_resource type="FontFile" uid="uid://kdsopvxcj40" path="res://assets/fonts/VT323-Regular.ttf" id="4_font_vt323"]
-[ext_resource type="Texture2D" uid="uid://0vd3e6u8e7la" path="res://assets/cutscene/characters/vel/vel_Hblue_Sredyellow_idle.png" id="5_vel_front"]
+[ext_resource type="Texture2D" uid="uid://don4qpk4c43rc" path="res://assets/cutscene/characters/vel/vel_Hblue_Sredyellow_idle.png" id="5_vel_front"]
 [ext_resource type="Texture2D" path="res://assets/art/dressing_room/magic_reticle.png" id="6_reticle"]
 [ext_resource type="Texture2D" path="res://assets/art/dressing_room/pedestal.png" id="7_pedestal"]
 [ext_resource type="Texture2D" path="res://assets/art/dressing_room/item_hood_green.png" id="8_hood_green"]
