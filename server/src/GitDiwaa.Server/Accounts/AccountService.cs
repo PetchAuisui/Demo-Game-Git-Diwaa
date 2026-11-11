@@ -2,7 +2,6 @@ using System.Globalization;
 using GitDiwaa.Online.Accounts;
 using GitDiwaa.Online.Accounts.Contracts;
 using GitDiwaa.Server.Persistence;
-using GitDiwaa.Server.Persistence.InMemory;
 using GitDiwaa.Server.Security;
 
 namespace GitDiwaa.Server.Accounts;
@@ -26,8 +25,8 @@ public sealed class AccountService
         PasswordHasher passwordHasher,
         SessionTokenService sessionTokenService,
         TimeProvider timeProvider,
-        AccountOptions? options = null,
-        IConsentRepository? consentRepository = null)
+        IConsentRepository consentRepository,
+        AccountOptions? options = null)
     {
         _userRepository = userRepository ?? throw new ArgumentNullException(nameof(userRepository));
         _sessionRepository = sessionRepository ?? throw new ArgumentNullException(nameof(sessionRepository));
@@ -35,8 +34,9 @@ public sealed class AccountService
         _sessionTokenService = sessionTokenService ?? throw new ArgumentNullException(nameof(sessionTokenService));
         _timeProvider = timeProvider ?? throw new ArgumentNullException(nameof(timeProvider));
         _options = options ?? new AccountOptions();
-        // server จริงได้ตัวที่ลงทะเบียนใน ServerApp เสมอ ตัว in-memory นี้มีไว้ให้เทสเก่าที่ไม่ได้ส่งมาใช้ได้
-        _consentRepository = consentRepository ?? new InMemoryConsentRepository();
+        // บังคับส่งเสมอ: ถ้าปล่อยให้สร้างตัวในหน่วยความจำเองได้ วันที่ลืมลงทะเบียนตัวฐานข้อมูลจริง
+        // หลักฐานความยินยอมจะหายตอน restart โดยไม่มี error บอก
+        _consentRepository = consentRepository ?? throw new ArgumentNullException(nameof(consentRepository));
     }
 
     public async Task<AccountResult<PlayerProfile>> RegisterAsync(RegisterRequest request, CancellationToken ct = default)
@@ -60,7 +60,7 @@ public sealed class AccountService
         string normalizedEmail = AccountNormalizer.NormalizeEmail(request.Email);
         bool generateDisplayName = string.IsNullOrWhiteSpace(request.DisplayName);
 
-        string passwordHash = _passwordHasher.Hash(request.Password);
+        string passwordHash = await _passwordHasher.HashAsync(request.Password, ct);
         DateTimeOffset now = _timeProvider.GetUtcNow();
 
         UserRecord user;
@@ -142,7 +142,10 @@ public sealed class AccountService
         return AccountResult<bool>.Success(true);
     }
 
-    public async Task<AccountResult<LoginSession>> LoginAsync(LoginRequest request, CancellationToken ct = default)
+    /// <summary>
+    /// clientKey = ต้นทางของคำขอ (IP) ใช้นับการใส่รหัสผิดแยกตามต้นทาง ไม่ส่ง = นับรวมเป็นต้นทางเดียว
+    /// </summary>
+    public async Task<AccountResult<LoginSession>> LoginAsync(LoginRequest request, string? clientKey = null, CancellationToken ct = default)
     {
         ArgumentNullException.ThrowIfNull(request);
 
@@ -153,68 +156,46 @@ public sealed class AccountService
         }
 
         DateTimeOffset now = _timeProvider.GetUtcNow();
+        string client = clientKey ?? string.Empty;
 
         string normalizedIdentifier = AccountNormalizer.NormalizeIdentifier(request.Identifier);
         UserRecord? user = AccountNormalizer.IsEmailIdentifier(request.Identifier)
             ? await _userRepository.FindByEmailAsync(normalizedIdentifier, ct)
             : await _userRepository.FindByUsernameAsync(normalizedIdentifier, ct);
 
-        if (user is null)
+        // ไม่มีบัญชี / บัญชีถูกปิด / ถูกพักอยู่: ตอบเหมือนรหัสผิดทุกกรณี และยังคำนวณ hash หลอกให้ใช้เวลาเท่ากัน
+        if (user is null ||
+            user.Status != UserStatus.Active ||
+            await _userRepository.IsLoginLockedAsync(user.Id, client, now, ct))
         {
-            _passwordHasher.Verify(request.Password, _passwordHasher.DummyHash);
+            await _passwordHasher.VerifyAsync(request.Password, _passwordHasher.DummyHash, ct);
             return AccountResult<LoginSession>.Failure(AuthErrorCode.InvalidCredentials);
         }
 
-        if (user.Status != UserStatus.Active)
-        {
-            _passwordHasher.Verify(request.Password, _passwordHasher.DummyHash);
-            return AccountResult<LoginSession>.Failure(AuthErrorCode.InvalidCredentials);
-        }
-
-        if (user.LockoutUntil.HasValue && user.LockoutUntil.Value > now)
-        {
-            _passwordHasher.Verify(request.Password, _passwordHasher.DummyHash);
-            return AccountResult<LoginSession>.Failure(AuthErrorCode.InvalidCredentials);
-        }
-
-        bool passwordMatches = _passwordHasher.Verify(request.Password, user.PasswordHash);
+        bool passwordMatches = await _passwordHasher.VerifyAsync(request.Password, user.PasswordHash, ct);
         if (!passwordMatches)
         {
-            int failedAttempts = user.FailedLoginCount + 1;
-            DateTimeOffset? lockoutUntil = user.LockoutUntil;
-
-            if (failedAttempts >= _options.MaxFailedLoginAttempts)
-            {
-                lockoutUntil = now.Add(_options.LockoutDuration);
-                failedAttempts = 0;
-            }
-
-            var updatedUser = user with
-            {
-                FailedLoginCount = failedAttempts,
-                LockoutUntil = lockoutUntil,
-                UpdatedAt = now
-            };
-
-            await _userRepository.UpdateAsync(updatedUser, ct);
+            // นับใน repository แบบ atomic: ถ้าอ่านค่ามาบวกเองตรงนี้ คำขอที่ยิงพร้อมกันจะอ่านได้ค่าเดียวกันแล้วเขียนทับกัน
+            // (ตรวจรหัสใช้เวลาหลายร้อย ms) ตัวนับไม่ถึงเกณฑ์สักที บัญชีเลยไม่ถูกพัก
+            var rules = new LoginLockoutRules(
+                _options.MaxFailedLoginAttempts,
+                _options.MaxFailedLoginAttemptsPerAccount,
+                _options.LockoutDuration);
+            await _userRepository.RecordFailedLoginAsync(user.Id, client, now, rules, ct);
             return AccountResult<LoginSession>.Failure(AuthErrorCode.InvalidCredentials);
         }
 
-        string currentPasswordHash = user.PasswordHash;
-        if (_passwordHasher.NeedsRehash(currentPasswordHash))
+        // ระหว่างตรวจรหัส มีคำขออื่นทำให้ถูกพักไปแล้ว: รหัสถูกก็ยังไม่ให้เข้า (ไม่อย่างนั้นยิงพร้อมกันจะเดาได้เกินโควตา)
+        if (await _userRepository.IsLoginLockedAsync(user.Id, client, now, ct))
         {
-            currentPasswordHash = _passwordHasher.Hash(request.Password);
+            return AccountResult<LoginSession>.Failure(AuthErrorCode.InvalidCredentials);
         }
 
-        var successfulUser = user with
-        {
-            PasswordHash = currentPasswordHash,
-            FailedLoginCount = 0,
-            LockoutUntil = null,
-            LastLoginAt = now,
-            UpdatedAt = now
-        };
-        await _userRepository.UpdateAsync(successfulUser, ct);
+        string? upgradedPasswordHash = _passwordHasher.NeedsRehash(user.PasswordHash)
+            ? await _passwordHasher.HashAsync(request.Password, ct)
+            : null;
+        await _userRepository.RecordSuccessfulLoginAsync(user.Id, client, upgradedPasswordHash, now, ct);
+        var successfulUser = user;
 
         TimeSpan sessionLifetime = request.RememberMe
             ? _options.PersistentSessionLifetime
@@ -294,7 +275,10 @@ public sealed class AccountService
             return AccountResult<LoginSession>.Failure(AuthErrorCode.InvalidCredentials);
         }
 
-        if (session.RevokedAt is not null)
+        // token ใบนี้ถูกยกเลิกไปแล้ว: ถ้าเพิ่งถูกหมุนและยังอยู่ในช่วงผ่อนผัน ถือเป็นการลองใหม่ตามปกติ
+        // นอกนั้นถือว่า token ถูกขโมย ตัดทุก session ของบัญชี
+        bool alreadyRotated = session.RevokedAt is not null;
+        if (alreadyRotated && !await IsWithinRotationGraceAsync(session, now, ct))
         {
             await _sessionRepository.RevokeAllForUserAsync(session.UserId, now, ct);
             return AccountResult<LoginSession>.Failure(AuthErrorCode.InvalidCredentials);
@@ -308,13 +292,6 @@ public sealed class AccountService
         var user = await _userRepository.FindByIdAsync(session.UserId, ct);
         if (user is null || user.Status != UserStatus.Active)
         {
-            return AccountResult<LoginSession>.Failure(AuthErrorCode.InvalidCredentials);
-        }
-
-        // Atomic revocation race check: only one concurrent refresh request can win
-        if (!await _sessionRepository.TryRevokeAsync(session.Id, now, ct))
-        {
-            await _sessionRepository.RevokeAllForUserAsync(session.UserId, now, ct);
             return AccountResult<LoginSession>.Failure(AuthErrorCode.InvalidCredentials);
         }
 
@@ -335,12 +312,47 @@ public sealed class AccountService
             LastUsedAt: now,
             RevokedAt: null);
 
+        // เพิ่ม session ใหม่ก่อน แล้วค่อยหมุนใบเก่า: คำขอที่เข้ามาพร้อมกันจะหา session ที่มาแทนเจอเสมอตอนตรวจช่วงผ่อนผัน
         await _sessionRepository.AddAsync(newSessionRecord, ct);
+
+        if (!alreadyRotated &&
+            !await _sessionRepository.TryRotateAsync(session.Id, newSessionRecord.Id, now, ct))
+        {
+            // แพ้คำขออื่นที่หมุนใบเดียวกันไปก่อน (atomic: ชนะได้คำขอเดียว) หรือถูกยกเลิกไประหว่างนี้
+            var latest = await _sessionRepository.FindByIdAsync(session.Id, ct);
+            if (latest is null || !await IsWithinRotationGraceAsync(latest, now, ct))
+            {
+                await _sessionRepository.RevokeAllForUserAsync(session.UserId, now, ct);
+                return AccountResult<LoginSession>.Failure(AuthErrorCode.InvalidCredentials);
+            }
+            // อยู่ในช่วงผ่อนผัน (เช่น เกม 2 หน้าต่าง refresh พร้อมกัน): ใช้ session ใหม่ที่เพิ่มไว้แล้วได้เลย
+        }
 
         var profile = new PlayerProfile(user.Id, user.Username, user.DisplayName);
         var loginSession = new LoginSession(profile, newIssuedToken.Token, newExpiresAt);
 
         return AccountResult<LoginSession>.Success(loginSession);
+    }
+
+    /// <summary>
+    /// token ใบเก่าที่ถูกหมุนไปแล้ว ยังอยู่ในช่วงผ่อนผันไหม ต้องครบทุกข้อ:
+    /// 1. ถูกยกเลิกเพราะ refresh (ไม่ใช่ logout / ถูกตัดทั้งบัญชี)
+    /// 2. เพิ่งถูกหมุนไม่เกิน RefreshReuseGracePeriod
+    /// 3. session ที่มาแทนยังใช้ได้อยู่: ถ้าผู้เล่น logout ไปแล้ว หรือบัญชีถูกตัดทุก session ใบเก่าต้องใช้ไม่ได้ทันที
+    /// กรณีปกติที่เข้าช่วงนี้: คำตอบ refresh หายกลางทางแล้วเกมลองใหม่ / เปิดเกม 2 หน้าต่างที่ใช้ไฟล์จดจำเดียวกัน
+    /// </summary>
+    private async Task<bool> IsWithinRotationGraceAsync(SessionRecord session, DateTimeOffset now, CancellationToken ct)
+    {
+        if (_options.RefreshReuseGracePeriod <= TimeSpan.Zero ||
+            session.RotatedAt is not { } rotatedAt ||
+            session.ReplacedBySessionId is not { } replacedBy ||
+            now - rotatedAt > _options.RefreshReuseGracePeriod)
+        {
+            return false;
+        }
+
+        var successor = await _sessionRepository.FindByIdAsync(replacedBy, ct);
+        return successor is not null && successor.RevokedAt is null;
     }
 
     /// <summary>

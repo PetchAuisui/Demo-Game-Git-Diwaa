@@ -59,8 +59,9 @@ public static class AccountEndpoints
             return Results.Json(new ApiError(result.Error ?? AuthErrorCode.Unknown, result.FieldErrors), statusCode: statusCode);
         }).RequireRateLimiting("auth");
 
-        group.MapPost("/login", async (LoginRequest? request, AccountService accountService, HttpResponse response, CancellationToken ct) =>
+        group.MapPost("/login", async (LoginRequest? request, AccountService accountService, HttpContext httpContext, CancellationToken ct) =>
         {
+            var response = httpContext.Response;
             response.Headers.CacheControl = "no-store";
 
             if (request is null)
@@ -69,7 +70,9 @@ public static class AccountEndpoints
                 return Results.Json(emptyError, statusCode: StatusCodes.Status400BadRequest);
             }
 
-            var result = await accountService.LoginAsync(request, ct);
+            // ต้นทางของคำขอ ใช้นับการใส่รหัสผิดแยกตาม IP (อยู่หลัง proxy ต้องตั้ง ForwardedHeaders ไม่งั้นทุกคนเป็น IP เดียวกัน)
+            string clientKey = httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+            var result = await accountService.LoginAsync(request, clientKey, ct);
             if (result.Succeeded && result.Value is not null)
             {
                 var loginResponse = new LoginResponse(
@@ -267,6 +270,6 @@ public static class AccountEndpoints
             }
 
             return Results.NoContent();
-        });
+        }).RequireRateLimiting("account");  // นับต่อ session เหมือน /me/* (การออกจากระบบของคนหนึ่งไม่กินโควตาล็อกอินของคนอื่นในเน็ตเดียวกัน)
     }
 }

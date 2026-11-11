@@ -39,6 +39,15 @@ public sealed class InMemorySessionRepository : ISessionRepository
         }
     }
 
+    public Task<SessionRecord?> FindByIdAsync(Guid sessionId, CancellationToken ct = default)
+    {
+        lock (_lock)
+        {
+            _sessionsById.TryGetValue(sessionId, out var session);
+            return Task.FromResult(session);
+        }
+    }
+
     public Task UpdateAsync(SessionRecord session, CancellationToken ct = default)
     {
         ArgumentNullException.ThrowIfNull(session);
@@ -97,6 +106,27 @@ public sealed class InMemorySessionRepository : ISessionRepository
             var revokedSession = session with { RevokedAt = revokedAt };
             _sessionsById[sessionId] = revokedSession;
             _sessionsByTokenHash[session.TokenHash] = revokedSession;
+            return Task.FromResult(true);
+        }
+    }
+
+    public Task<bool> TryRotateAsync(Guid sessionId, Guid replacedBySessionId, DateTimeOffset rotatedAt, CancellationToken ct = default)
+    {
+        lock (_lock)
+        {
+            if (!_sessionsById.TryGetValue(sessionId, out var session) || session.RevokedAt is not null)
+            {
+                return Task.FromResult(false);
+            }
+
+            var rotatedSession = session with
+            {
+                RevokedAt = rotatedAt,
+                RotatedAt = rotatedAt,
+                ReplacedBySessionId = replacedBySessionId
+            };
+            _sessionsById[sessionId] = rotatedSession;
+            _sessionsByTokenHash[session.TokenHash] = rotatedSession;
             return Task.FromResult(true);
         }
     }

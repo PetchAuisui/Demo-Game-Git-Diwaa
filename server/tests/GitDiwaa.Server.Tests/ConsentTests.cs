@@ -23,8 +23,8 @@ internal static class ConsentTests
             new PasswordHasher(),
             new SessionTokenService(),
             new ManualTimeProvider(AccountTestContext.StartTime),
-            new AccountOptions(),
-            consents);
+            consents,
+            new AccountOptions());
         return new Ctx(users, consents, service);
     }
 

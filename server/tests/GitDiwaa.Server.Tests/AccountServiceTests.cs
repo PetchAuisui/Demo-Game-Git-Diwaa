@@ -352,6 +352,9 @@ internal static class AccountServiceTests
             Assert.True(refreshA.Succeeded);
             string tokenA2 = refreshA.Value!.Token;
 
+            // เลยช่วงผ่อนผันหลังหมุน token ไปแล้ว (ค่าเริ่มต้น 60 วินาที)
+            ctx.Time.Advance(TimeSpan.FromSeconds(61));
+
             // Reusing old tokenA triggers security breach response -> Revoke all sessions
             var reuseAttempt = await ctx.Service.RefreshAsync(tokenA);
             Assert.False(reuseAttempt.Succeeded);
@@ -401,7 +404,8 @@ internal static class AccountServiceTests
 
         await runner.RunAsync("Refresh_ConcurrentSameToken_OnlyOneSucceeds", async static () =>
         {
-            var ctx = AccountTestContext.Create();
+            // ปิดช่วงผ่อนผัน: token ใบเดียวต้องหมุนได้ครั้งเดียว (กรณีเปิดช่วงผ่อนผันอยู่ใน LoginLockoutAndRefreshGraceTests)
+            var ctx = AccountTestContext.Create(new AccountOptions { RefreshReuseGracePeriod = TimeSpan.Zero });
             await ctx.Service.RegisterAsync(new RegisterRequest("mage01", "Mage", "mage@example.com", "S3cret-Pass!"));
             var login = await ctx.Service.LoginAsync(new LoginRequest("mage01", "S3cret-Pass!", false));
             string token = login.Value!.Token;

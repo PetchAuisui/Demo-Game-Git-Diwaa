@@ -48,7 +48,7 @@ internal sealed record AccountTestContext(
         var hasher = new PasswordHasher();
         var tokenService = new SessionTokenService();
         var time = new ManualTimeProvider(StartTime);
-        var service = new AccountService(users, sessions, hasher, tokenService, time, options ?? new AccountOptions());
+        var service = new AccountService(users, sessions, hasher, tokenService, time, new InMemoryConsentRepository(), options ?? new AccountOptions());
 
         return new(users, sessions, hasher, tokenService, time, service);
     }

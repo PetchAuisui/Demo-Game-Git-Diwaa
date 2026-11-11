@@ -7,6 +7,9 @@ public sealed class InMemoryUserRepository : IUserRepository
     private readonly Dictionary<string, UserRecord> _usersByUsername = new(StringComparer.Ordinal);
     private readonly Dictionary<string, UserRecord> _usersByEmail = new(StringComparer.Ordinal);
     private readonly Dictionary<string, UserRecord> _usersByDisplayName = new(StringComparer.Ordinal);
+    // ตัวนับใส่รหัสผิดแยกตาม (ผู้ใช้, ต้นทาง) ตัวนับรวมของบัญชีอยู่ใน UserRecord.FailedLoginCount / LockoutUntil
+    private readonly Dictionary<(Guid UserId, string ClientKey), ClientLoginFailures> _clientLoginFailures = [];
+    private const int ClientLoginFailuresPruneThreshold = 10_000;
     private long _lastPlayerNumber = GitDiwaa.Online.Accounts.AccountRules.FirstGeneratedPlayerNumber - 1;
 
     public Task<long> NextPlayerNumberAsync(CancellationToken ct = default) =>
@@ -107,6 +110,122 @@ public sealed class InMemoryUserRepository : IUserRepository
             return Task.CompletedTask;
         }
     }
+
+    public Task<bool> IsLoginLockedAsync(Guid userId, string clientKey, DateTimeOffset now, CancellationToken ct = default)
+    {
+        ArgumentNullException.ThrowIfNull(clientKey);
+
+        lock (_lock)
+        {
+            if (_usersById.TryGetValue(userId, out var user) && user.LockoutUntil > now)
+            {
+                return Task.FromResult(true);
+            }
+
+            bool clientLocked = _clientLoginFailures.TryGetValue((userId, clientKey), out var failures) &&
+                                failures.LockedUntil > now;
+            return Task.FromResult(clientLocked);
+        }
+    }
+
+    public Task RecordFailedLoginAsync(Guid userId, string clientKey, DateTimeOffset now, LoginLockoutRules rules, CancellationToken ct = default)
+    {
+        ArgumentNullException.ThrowIfNull(clientKey);
+
+        lock (_lock)
+        {
+            if (!_usersById.TryGetValue(userId, out var user))
+            {
+                return Task.CompletedTask;
+            }
+
+            var key = (userId, clientKey);
+            _clientLoginFailures.TryGetValue(key, out var failures);
+
+            // ถูกพักอยู่แล้ว (คำขอที่เข้ามาพร้อมกันก่อนจะพัก): ไม่นับเพิ่ม และไม่ยืดเวลาพัก
+            if (user.LockoutUntil > now || failures.LockedUntil > now)
+            {
+                return Task.CompletedTask;
+            }
+
+            // ต้นทางนี้: ครั้งล่าสุดนานเกินช่วงพักแล้ว เริ่มนับใหม่
+            int clientCount = failures.LastFailureAt.Add(rules.LockoutDuration) <= now ? 1 : failures.Count + 1;
+            DateTimeOffset? clientLockedUntil = null;
+            if (clientCount >= rules.MaxPerClient)
+            {
+                clientLockedUntil = now.Add(rules.LockoutDuration);
+                clientCount = 0;
+            }
+            _clientLoginFailures[key] = new ClientLoginFailures(clientCount, clientLockedUntil, now);
+
+            // ทั้งบัญชี: นับรวมทุกต้นทาง
+            int accountCount = user.FailedLoginCount + 1;
+            DateTimeOffset? accountLockedUntil = user.LockoutUntil;
+            if (accountCount >= rules.MaxPerAccount)
+            {
+                accountLockedUntil = now.Add(rules.LockoutDuration);
+                accountCount = 0;
+            }
+            StoreUser(user with { FailedLoginCount = accountCount, LockoutUntil = accountLockedUntil, UpdatedAt = now });
+
+            if (_clientLoginFailures.Count > ClientLoginFailuresPruneThreshold)
+            {
+                PruneClientLoginFailures(now, rules.LockoutDuration);
+            }
+
+            return Task.CompletedTask;
+        }
+    }
+
+    public Task RecordSuccessfulLoginAsync(Guid userId, string clientKey, string? upgradedPasswordHash, DateTimeOffset now, CancellationToken ct = default)
+    {
+        ArgumentNullException.ThrowIfNull(clientKey);
+
+        lock (_lock)
+        {
+            if (!_usersById.TryGetValue(userId, out var user))
+            {
+                return Task.CompletedTask;
+            }
+
+            _clientLoginFailures.Remove((userId, clientKey));
+            StoreUser(user with
+            {
+                PasswordHash = upgradedPasswordHash ?? user.PasswordHash,
+                FailedLoginCount = 0,
+                LockoutUntil = null,
+                LastLoginAt = now,
+                UpdatedAt = now
+            });
+
+            return Task.CompletedTask;
+        }
+    }
+
+    // เรียกภายใต้ _lock เท่านั้น
+    private void StoreUser(UserRecord user)
+    {
+        _usersById[user.Id] = user;
+        _usersByUsername[user.Username] = user;
+        _usersByEmail[user.EmailNormalized] = user;
+        _usersByDisplayName[user.DisplayNameKey] = user;
+    }
+
+    // เรียกภายใต้ _lock เท่านั้น: ทิ้งตัวนับที่หมดอายุแล้ว กันคนสลับ IP / ชื่อผู้ใช้ไปเรื่อยๆ จนหน่วยความจำโต
+    private void PruneClientLoginFailures(DateTimeOffset now, TimeSpan lockoutDuration)
+    {
+        foreach (var (key, failures) in _clientLoginFailures.ToList())
+        {
+            bool stillLocked = failures.LockedUntil > now;
+            bool stillCounting = failures.LastFailureAt.Add(lockoutDuration) > now;
+            if (!stillLocked && !stillCounting)
+            {
+                _clientLoginFailures.Remove(key);
+            }
+        }
+    }
+
+    private readonly record struct ClientLoginFailures(int Count, DateTimeOffset? LockedUntil, DateTimeOffset LastFailureAt);
 
     public Task<UserRecord?> TrySetLeaderboardOptInAsync(Guid userId, bool optIn, DateTimeOffset now, CancellationToken ct = default)
     {
