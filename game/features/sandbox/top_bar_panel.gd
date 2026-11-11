@@ -36,6 +36,7 @@ func _ready() -> void:
 	if _brand_btn != null:
 		_brand_btn.mouse_entered.connect(_on_brand_hover.bind(true))
 		_brand_btn.mouse_exited.connect(_on_brand_hover.bind(false))
+		_brand_btn.pressed.connect(func(): brand_pressed.emit())
 
 	if _btn_finish != null:
 		_btn_finish.pressed.connect(func(): finish_pressed.emit())

@@ -5,6 +5,9 @@ extends Control
 
 const CENTRAL_TOWER_CUTSCENE_PATH := "res://features/cutscene/central_tower_cutscene.tscn"
 const ENDING_CUTSCENE_PATH := "res://features/cutscene/ending_cutscene.tscn"
+const LEVEL_SELECT_PATH := "res://features/level_select/level_select_view.tscn"
+const DEFAULT_RETURN_SCENE_PATH := "res://features/cutscene/inside_tower_cutscene.tscn"
+const DIALOG_THEME_PATH := "res://features/sandbox/file_dialog_theme.tres"
 const ACT2_START_LEVEL := 16
 const ACT1_LOOP_SHEET_PATH := "res://assets/cutscene/backgrounds/inside-tower-loop-Sheet.png"
 const ACT2_CENTRAL_SHEET_PATH := "res://assets/cutscene/backgrounds/central-tower-Sheet.png"
@@ -28,9 +31,12 @@ var _files_panel: FilesPanel
 var _git_graph_panel: GitGraphPanel
 var _terminal_panel: TerminalPanel
 var _remote_repo_button: RemoteRepoButton
+var _leave_confirm_dialog: ConfirmationDialog
+var _leave_confirm_message: Label
 
 var _sandbox_service: GitSandboxService
 var _is_initialized := false
+var _is_leaving := false
 ## คำสั่ง git ที่รันสำเร็จในรอบนี้ (ตัวพิมพ์เล็ก) ใช้ตรวจเงื่อนไขภารกิจก่อนกลับสู่เนื้อเรื่อง
 var _successful_commands: PackedStringArray = []
 
@@ -38,7 +44,9 @@ var _successful_commands: PackedStringArray = []
 func _ready() -> void:
 	_bind_nodes()
 	_setup_animated_background()
+	_setup_leave_confirm_dialog()
 	_wire_events()
+	SceneLoader.request_preload(LEVEL_SELECT_PATH)
 	_initialize_sandbox()
 
 
@@ -119,7 +127,68 @@ func _wire_events() -> void:
 	_files_panel.delete_entry_requested.connect(_on_delete_entry_requested)
 	_git_graph_panel.commit_selected.connect(_on_commit_selected)
 	_top_bar.finish_pressed.connect(_on_finish_gameplay_pressed)
-	_top_bar.brand_pressed.connect(func(): get_tree().change_scene_to_file("res://features/level_select/level_select_view.tscn"))
+	_top_bar.brand_pressed.connect(_on_brand_pressed)
+
+
+func _setup_leave_confirm_dialog() -> void:
+	_leave_confirm_dialog = ConfirmationDialog.new()
+	_leave_confirm_dialog.name = "LeaveConfirmDialog"
+	_leave_confirm_dialog.title = "กลับหน้าเลือกด่าน"
+	_leave_confirm_dialog.borderless = true
+	_leave_confirm_dialog.unresizable = true
+	_leave_confirm_dialog.ok_button_text = "ออกจาก Sandbox"
+	_leave_confirm_dialog.cancel_button_text = "อยู่ต่อ"
+	if ResourceLoader.exists(DIALOG_THEME_PATH):
+		_leave_confirm_dialog.theme = load(DIALOG_THEME_PATH) as Theme
+	add_child(_leave_confirm_dialog)
+	_leave_confirm_message = DialogStyle.apply(
+		_leave_confirm_dialog,
+		DialogStyle.WARNING,
+		"!",
+		"กลับหน้าเลือกด่าน?",
+		true
+	)
+	_leave_confirm_dialog.size = Vector2i(520, 100)
+	_leave_confirm_dialog.confirmed.connect(_leave_to_level_select)
+
+
+func _on_brand_pressed() -> void:
+	if _is_leaving:
+		return
+	var step := GameProgressManager.get_current_gameplay_step()
+	var has_unsaved := _files_panel != null and _files_panel.has_unsaved_changes
+	if _leave_confirm_dialog == null or _leave_confirm_message == null:
+		_leave_to_level_select()
+		return
+	if step > 0 and has_unsaved:
+		_leave_confirm_message.text = "กำลังทำภารกิจด่านที่ %d (ขั้นที่ %d) และมีไฟล์ที่ยังไม่บันทึก\nหากกลับหน้าเลือกด่านตอนนี้ ความคืบหน้าในรอบนี้จะหายไป" % [
+			GameProgressManager.get_selected_level_number(), step
+		]
+	elif step > 0:
+		_leave_confirm_message.text = "กำลังทำภารกิจด่านที่ %d (ขั้นที่ %d) อยู่\nหากกลับหน้าเลือกด่านตอนนี้ ความคืบหน้าในรอบนี้จะไม่ถูกบันทึก" % [
+			GameProgressManager.get_selected_level_number(), step
+		]
+	elif has_unsaved:
+		_leave_confirm_message.text = "มีไฟล์ที่ยังไม่บันทึก\nต้องการออกจาก Sandbox กลับหน้าเลือกด่านหรือไม่?"
+	else:
+		_leave_confirm_message.text = "ต้องการออกจาก Sandbox กลับหน้าเลือกด่านหรือไม่?"
+	_leave_confirm_dialog.popup_centered()
+
+
+func _leave_to_level_select() -> void:
+	if _is_leaving:
+		return
+	_is_leaving = true
+	Engine.time_scale = 1.0
+	GameProgressManager.set_current_gameplay_step(0)
+	GameProgressManager.consume_pending_dialogue_phase()
+	GameProgressManager.set_gameplay_return_scene(DEFAULT_RETURN_SCENE_PATH)
+	if ResourceLoader.exists(LEVEL_SELECT_PATH):
+		if not SceneLoader.change_scene(get_tree(), LEVEL_SELECT_PATH):
+			_is_leaving = false
+	else:
+		_is_leaving = false
+		_change_scene_to_cutscene(CENTRAL_TOWER_CUTSCENE_PATH)
 
 
 ## Injects or creates the sandbox service. Allows OOP dependency injection.
@@ -134,12 +203,18 @@ func _initialize_sandbox() -> void:
 	if _sandbox_service == null:
 		var real_service := RealGitSandboxService.new()
 		var started := await real_service.initialize("checkpoint-01")
+		if _is_leaving or not is_inside_tree():
+			real_service.dispose()
+			return
 		if started.ok:
 			_sandbox_service = real_service
 		else:
 			push_error("Real Git initialization failed (%s), falling back to Mock service." % started.message)
 			var mock_service := MockGitSandboxService.new()
 			await mock_service.initialize()
+			if _is_leaving or not is_inside_tree():
+				mock_service.dispose()
+				return
 			_sandbox_service = mock_service
 
 	_is_initialized = true
@@ -489,15 +564,11 @@ func _on_finish_gameplay_pressed() -> void:
 		GameProgressManager.set_current_gameplay_step(0)
 		var return_scene := GameProgressManager.get_gameplay_return_scene()
 		if return_scene.is_empty():
-			return_scene = "res://features/cutscene/inside_tower_cutscene.tscn"
+			return_scene = DEFAULT_RETURN_SCENE_PATH
 		_terminal_panel.append_info("กำลังกลับสู่เนื้อเรื่อง...")
 		_change_scene_to_cutscene(return_scene)
 	else:
-		var level_select_path := "res://features/level_select/level_select_view.tscn"
-		if ResourceLoader.exists(level_select_path):
-			get_tree().change_scene_to_file(level_select_path)
-		else:
-			_change_scene_to_cutscene(CENTRAL_TOWER_CUTSCENE_PATH)
+		_leave_to_level_select()
 
 
 ## คืนรายการคำสั่งที่ภารกิจของขั้นนี้ต้องการ แต่ผู้เล่นยังไม่ได้รันสำเร็จ
