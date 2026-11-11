@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://p7vc733e1ylq"
-path="res://.godot/imported/home.svg-00b322cc5a4a03848d7eb396f822a76b.ctex"
+uid="uid://lywg414j8l4o"
+path="res://.godot/imported/Touchy_Cursors2.png-3274e36a93a16d1558982b1a97f8c0ce.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/icons/home.svg"
-dest_files=["res://.godot/imported/home.svg-00b322cc5a4a03848d7eb396f822a76b.ctex"]
+source_file="res://assets/icons/cursor_pixel/Touchy_Cursors2.png"
+dest_files=["res://.godot/imported/Touchy_Cursors2.png-3274e36a93a16d1558982b1a97f8c0ce.ctex"]
 
 [params]
 
@@ -38,6 +38,3 @@ process/hdr_as_srgb=false
 process/hdr_clamp_exposure=false
 process/size_limit=0
 detect_3d/compress_to=1
-svg/scale=1.0
-editor/scale_with_editor_scale=false
-editor/convert_colors_with_editor_theme=false

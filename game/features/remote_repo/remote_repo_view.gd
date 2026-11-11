@@ -340,6 +340,7 @@ static func _parent_path(path: String) -> String:
 func _branch_picker(branches: Array[RemoteBranchInfo], on_selected: Callable, selected: String = "") -> OptionButton:
 	var picker := OptionButton.new()
 	picker.mouse_filter = Control.MOUSE_FILTER_PASS
+	picker.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	GitHubUi.fill_branch_picker(picker, branches, on_selected, _branch if selected.is_empty() else selected)
 	return picker
 
@@ -1338,6 +1339,7 @@ func _show_review_menu(anchor: Button, pull: PullRequestInfo, pending_comments: 
 	var add_option := func(title: String, hint: String, value: int) -> void:
 		var option := CheckBox.new()
 		option.text = title
+		option.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 		option.button_group = group
 		option.button_pressed = value == verdict[0]
 		option.pressed.connect(func() -> void: verdict[0] = value)

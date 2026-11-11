@@ -1,39 +1,275 @@
 [gd_scene format=3 uid="uid://d3yq8vkm7w1a0"]
 
 [ext_resource type="Script" path="res://features/level_select/level_select_view.gd" id="1_script"]
-[ext_resource type="FontFile" uid="uid://caa27axnonbav" path="res://assets/fonts/Bungee-Regular.ttf" id="2_bungee"]
-[ext_resource type="FontFile" uid="uid://csurxmw2vmws4" path="res://assets/fonts/TA-8-bit.ttf" id="3_font"]
+[ext_resource type="FontFile" path="res://assets/fonts/Bungee-Regular.ttf" id="2_bungee"]
+[ext_resource type="FontFile" path="res://assets/fonts/ChakraPetch-Bold.ttf" id="3_chakra_bold"]
+[ext_resource type="FontFile" path="res://assets/fonts/ChakraPetch-Regular.ttf" id="4_chakra_reg"]
+[ext_resource type="FontFile" path="res://assets/fonts/TA-8-bit.ttf" id="5_ta_pixel"]
+[ext_resource type="Texture2D" path="res://assets/cutscene/characters/vel/vel_Hblue_Sredyellow_idle.png" id="6_vel_idle"]
+[ext_resource type="Texture2D" path="res://assets/art/dressing_room/cat_companion_black.png" id="7_cat"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx_click.wav" id="8_sfx_click"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx_command.wav" id="9_sfx_jump"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx_cat_meow.wav" id="10_sfx_meow"]
+[ext_resource type="Script" path="res://features/level_select/brick_wall_pillar.gd" id="11_brick_wall"]
+[ext_resource type="PackedScene" path="res://common/brand_button.tscn" id="12_brand_btn"]
+[ext_resource type="Script" path="res://features/level_select/twilight_sky_background.gd" id="13_sky"]
+[ext_resource type="Script" path="res://features/level_select/act_divider_walls.gd" id="14_act_dividers"]
+[ext_resource type="FontFile" path="res://assets/fonts/ChakraPetch-SemiBold.ttf" id="15_chakra_semi"]
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_window"]
-bg_color = Color(0.82, 0.82, 0.82, 1)
-border_width_left = 3
-border_width_top = 3
-border_width_right = 3
-border_width_bottom = 3
-border_color = Color(0.35, 0.28, 0.22, 1)
-corner_radius_top_left = 12
-corner_radius_top_right = 12
-corner_radius_bottom_left = 12
-corner_radius_bottom_right = 12
-shadow_color = Color(0, 0, 0, 0.4)
-shadow_size = 12
-shadow_offset = Vector2(0, 6)
+[sub_resource type="FontVariation" id="Font_ta_pixel_bold"]
+base_font = ExtResource("5_ta_pixel")
+variation_embolden = 0.5
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_titlebar"]
-bg_color = Color(0.38, 0.30, 0.24, 1)
-corner_radius_top_left = 10
-corner_radius_top_right = 10
+[sub_resource type="StyleBoxEmpty" id="Style_hint_panel"]
+
+[sub_resource type="StyleBoxFlat" id="Style_keycap"]
+content_margin_left = 4.0
+content_margin_top = 1.0
+content_margin_right = 4.0
+content_margin_bottom = 1.0
+bg_color = Color(0.08, 0.09, 0.13, 0.78)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 2
+border_color = Color(0.92, 0.94, 0.98, 0.92)
+anti_aliasing = false
+
+[sub_resource type="StyleBoxFlat" id="Style_navbar"]
+bg_color = Color(0.078, 0.063, 0.047, 1)
+border_width_bottom = 2
+border_color = Color(0.278, 0.176, 0.102, 1)
+
+[sub_resource type="StyleBoxEmpty" id="Style_empty"]
+
+[sub_resource type="StyleBoxFlat" id="Style_tab_act_active"]
+content_margin_left = 0.0
+content_margin_top = 0.0
+content_margin_right = 0.0
+content_margin_bottom = 2.0
+draw_center = false
+border_width_bottom = 2
+border_color = Color(0.722, 0.604, 0.404, 1)
+
+[sub_resource type="StyleBoxFlat" id="Style_tab_act"]
 content_margin_left = 16.0
-content_margin_right = 12.0
-
-[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_title_btn"]
-
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_close_hover"]
-bg_color = Color(0.85, 0.2, 0.2, 0.8)
+content_margin_top = 8.0
+content_margin_right = 16.0
+content_margin_bottom = 8.0
+bg_color = Color(0.271, 0.22, 0.125, 0.9)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.490, 0.388, 0.212, 1)
 corner_radius_top_left = 4
 corner_radius_top_right = 4
 corner_radius_bottom_left = 4
 corner_radius_bottom_right = 4
+
+[sub_resource type="StyleBoxFlat" id="Style_tab_act_hover"]
+content_margin_left = 16.0
+content_margin_top = 8.0
+content_margin_right = 16.0
+content_margin_bottom = 8.0
+bg_color = Color(0.369, 0.302, 0.173, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.9, 0.78, 0.45, 1)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_left = 4
+corner_radius_bottom_right = 4
+
+[sub_resource type="StyleBoxFlat" id="Style_tab_act_pressed"]
+content_margin_left = 16.0
+content_margin_top = 9.0
+content_margin_right = 16.0
+content_margin_bottom = 7.0
+bg_color = Color(0.200, 0.160, 0.090, 1.0)
+border_width_left = 1
+border_width_top = 2
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.490, 0.388, 0.212, 1)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_left = 4
+corner_radius_bottom_right = 4
+
+
+[sub_resource type="StyleBoxFlat" id="Style_pillar"]
+bg_color = Color(0.04, 0.05, 0.08, 1)
+border_width_left = 2
+border_width_right = 2
+border_color = Color(0.09, 0.11, 0.18, 1)
+
+[sub_resource type="StyleBoxFlat" id="Style_bottom_hud"]
+content_margin_left = 32.0
+content_margin_top = 10.0
+content_margin_right = 32.0
+content_margin_bottom = 10.0
+bg_color = Color(0.078, 0.063, 0.047, 1)
+border_width_top = 2
+border_color = Color(0.278, 0.176, 0.102, 1)
+
+[sub_resource type="StyleBoxFlat" id="Style_badge_no"]
+bg_color = Color(0.14, 0.11, 0.07, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.48, 0.38, 0.22, 1)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_left = 4
+corner_radius_bottom_right = 4
+
+[sub_resource type="StyleBoxFlat" id="Style_act_tag"]
+content_margin_left = 8.0
+content_margin_top = 2.0
+content_margin_right = 8.0
+content_margin_bottom = 2.0
+bg_color = Color(0.18, 0.14, 0.08, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.48, 0.38, 0.22, 0.8)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_left = 3
+corner_radius_bottom_right = 3
+
+[sub_resource type="StyleBoxFlat" id="Style_cmd_chip"]
+content_margin_left = 10.0
+content_margin_top = 2.0
+content_margin_right = 10.0
+content_margin_bottom = 2.0
+bg_color = Color(0.12, 0.09, 0.05, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.38, 0.30, 0.18, 1)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_left = 3
+corner_radius_bottom_right = 3
+
+[sub_resource type="StyleBoxFlat" id="Style_btn_launch"]
+content_margin_left = 24.0
+content_margin_top = 10.0
+content_margin_right = 24.0
+content_margin_bottom = 10.0
+bg_color = Color(0.16, 0.12, 0.08, 0.96)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 3
+border_color = Color(0.82, 0.58, 0.16, 0.95)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_left = 4
+corner_radius_bottom_right = 4
+shadow_color = Color(0, 0, 0, 0.4)
+shadow_size = 3
+
+[sub_resource type="StyleBoxFlat" id="Style_btn_launch_hover"]
+content_margin_left = 24.0
+content_margin_top = 10.0
+content_margin_right = 24.0
+content_margin_bottom = 10.0
+bg_color = Color(0.24, 0.17, 0.10, 0.98)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 3
+border_color = Color(0.96, 0.72, 0.22, 1)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_left = 4
+corner_radius_bottom_right = 4
+shadow_color = Color(0.96, 0.62, 0.08, 0.25)
+shadow_size = 5
+
+[sub_resource type="StyleBoxFlat" id="Style_btn_launch_pressed"]
+content_margin_left = 24.0
+content_margin_top = 12.0
+content_margin_right = 24.0
+content_margin_bottom = 8.0
+bg_color = Color(0.12, 0.09, 0.06, 0.98)
+border_width_left = 2
+border_width_top = 3
+border_width_right = 2
+border_width_bottom = 1
+border_color = Color(0.68, 0.46, 0.12, 1)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_left = 4
+corner_radius_bottom_right = 4
+
+[sub_resource type="StyleBoxFlat" id="Style_btn_launch_disabled"]
+content_margin_left = 24.0
+content_margin_top = 10.0
+content_margin_right = 24.0
+content_margin_bottom = 10.0
+bg_color = Color(0.08, 0.09, 0.12, 0.85)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 2
+border_color = Color(0.18, 0.22, 0.28, 0.8)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_left = 4
+corner_radius_bottom_right = 4
+
+[sub_resource type="StyleBoxFlat" id="Style_act_header_tab"]
+content_margin_left = 22.0
+content_margin_top = 7.0
+content_margin_right = 22.0
+content_margin_bottom = 7.0
+bg_color = Color(0.12, 0.09, 0.05, 0.94)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 2
+border_color = Color(0.76, 0.58, 0.28, 1)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_left = 4
+corner_radius_bottom_right = 4
+shadow_color = Color(0, 0, 0, 0.35)
+shadow_size = 4
+shadow_offset = Vector2(0, 2)
+
+[sub_resource type="StyleBoxFlat" id="Style_tooltip_panel"]
+content_margin_left = 10.0
+content_margin_top = 5.0
+content_margin_right = 10.0
+content_margin_bottom = 5.0
+bg_color = Color(0.08, 0.065, 0.05, 0.96)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.58, 0.44, 0.22, 0.95)
+corner_radius_top_left = 5
+corner_radius_top_right = 5
+corner_radius_bottom_left = 5
+corner_radius_bottom_right = 5
+shadow_color = Color(0, 0, 0, 0.45)
+shadow_size = 4
+shadow_offset = Vector2(0, 2)
+
+[sub_resource type="Theme" id="Theme_level_select"]
+TooltipLabel/colors/font_color = Color(0.96, 0.91, 0.82, 1)
+TooltipLabel/font_sizes/font_size = 15
+TooltipLabel/fonts/font = ExtResource("15_chakra_semi")
+TooltipPanel/styles/panel = SubResource("Style_tooltip_panel")
 
 [node name="LevelSelectView" type="Control"]
 layout_mode = 3
@@ -42,119 +278,700 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+theme = SubResource("Theme_level_select")
 script = ExtResource("1_script")
 
-[node name="DimBackground" type="ColorRect" parent="."]
+[node name="GothicSkyBackground" type="Control" parent="."]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-color = Color(0.08, 0.07, 0.12, 0.85)
+mouse_filter = 2
+script = ExtResource("13_sky")
 
-[node name="WindowPanel" type="PanelContainer" parent="."]
-custom_minimum_size = Vector2(1160, 720)
+[node name="LayoutVBox" type="VBoxContainer" parent="."]
 layout_mode = 1
-anchors_preset = 8
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -580.0
-offset_top = -360.0
-offset_right = 580.0
-offset_bottom = 360.0
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_styles/panel = SubResource("StyleBoxFlat_window")
-
-[node name="VBoxMain" type="VBoxContainer" parent="WindowPanel"]
-layout_mode = 2
 theme_override_constants/separation = 0
 
-[node name="TitleBar" type="PanelContainer" parent="WindowPanel/VBoxMain"]
-custom_minimum_size = Vector2(0, 48)
+[node name="TopNavbar" type="PanelContainer" parent="LayoutVBox"]
+z_index = 30
+custom_minimum_size = Vector2(0, 72)
 layout_mode = 2
-theme_override_styles/panel = SubResource("StyleBoxFlat_titlebar")
+theme_override_styles/panel = SubResource("Style_navbar")
 
-[node name="HBox" type="HBoxContainer" parent="WindowPanel/VBoxMain/TitleBar"]
+[node name="NavMargin" type="MarginContainer" parent="LayoutVBox/TopNavbar"]
 layout_mode = 2
-theme_override_constants/separation = 8
+theme_override_constants/margin_left = 32
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 32
+theme_override_constants/margin_bottom = 10
 
-[node name="TitleLabel" type="Label" parent="WindowPanel/VBoxMain/TitleBar/HBox"]
-layout_mode = 2
-theme_override_colors/font_color = Color(0.96, 0.96, 0.96, 1)
-theme_override_fonts/font = ExtResource("2_bungee")
-theme_override_font_sizes/font_size = 18
-text = "Level"
-
-[node name="Spacer" type="Control" parent="WindowPanel/VBoxMain/TitleBar/HBox"]
-layout_mode = 2
-size_flags_horizontal = 3
-
-[node name="BtnMin" type="Button" parent="WindowPanel/VBoxMain/TitleBar/HBox"]
-custom_minimum_size = Vector2(32, 28)
-layout_mode = 2
-focus_mode = 0
-theme_override_fonts/font = ExtResource("3_font")
-theme_override_font_sizes/font_size = 18
-theme_override_styles/normal = SubResource("StyleBoxEmpty_title_btn")
-text = "-"
-
-[node name="BtnMax" type="Button" parent="WindowPanel/VBoxMain/TitleBar/HBox"]
-custom_minimum_size = Vector2(32, 28)
-layout_mode = 2
-focus_mode = 0
-theme_override_fonts/font = ExtResource("3_font")
-theme_override_font_sizes/font_size = 16
-theme_override_styles/normal = SubResource("StyleBoxEmpty_title_btn")
-text = "□"
-
-[node name="BtnClose" type="Button" parent="WindowPanel/VBoxMain/TitleBar/HBox"]
-custom_minimum_size = Vector2(34, 28)
-layout_mode = 2
-focus_mode = 0
-mouse_default_cursor_shape = 2
-theme_override_fonts/font = ExtResource("3_font")
-theme_override_font_sizes/font_size = 18
-theme_override_styles/normal = SubResource("StyleBoxEmpty_title_btn")
-theme_override_styles/hover = SubResource("StyleBoxFlat_close_hover")
-text = "✕"
-
-[node name="Margin" type="MarginContainer" parent="WindowPanel/VBoxMain"]
-layout_mode = 2
-size_flags_vertical = 3
-theme_override_constants/margin_left = 40
-theme_override_constants/margin_top = 28
-theme_override_constants/margin_right = 40
-theme_override_constants/margin_bottom = 36
-
-[node name="VBox" type="VBoxContainer" parent="WindowPanel/VBoxMain/Margin"]
+[node name="NavHBox" type="HBoxContainer" parent="LayoutVBox/TopNavbar/NavMargin"]
 layout_mode = 2
 theme_override_constants/separation = 20
 
-[node name="SelectLevelLabel" type="Label" parent="WindowPanel/VBoxMain/Margin/VBox"]
+[node name="LeftSlot" type="HBoxContainer" parent="LayoutVBox/TopNavbar/NavMargin/NavHBox"]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.1, 0.1, 0.1, 1)
-theme_override_fonts/font = ExtResource("2_bungee")
-theme_override_font_sizes/font_size = 30
-text = "Select Level"
+size_flags_horizontal = 3
+
+[node name="BrandHBox" type="HBoxContainer" parent="LayoutVBox/TopNavbar/NavMargin/NavHBox/LeftSlot"]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="BrandBtn" parent="LayoutVBox/TopNavbar/NavMargin/NavHBox/LeftSlot/BrandHBox" instance=ExtResource("12_brand_btn")]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="Divider" type="ColorRect" parent="LayoutVBox/TopNavbar/NavMargin/NavHBox/LeftSlot/BrandHBox"]
+custom_minimum_size = Vector2(2, 28)
+layout_mode = 2
+size_flags_vertical = 4
+color = Color(0.239, 0.153, 0.098, 1)
+
+[node name="RoadmapTag" type="Label" parent="LayoutVBox/TopNavbar/NavMargin/NavHBox/LeftSlot/BrandHBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.604, 0.467, 0.341, 1)
+theme_override_fonts/font = ExtResource("5_ta_pixel")
+theme_override_font_sizes/font_size = 20
+text = "TOWER ROADMAP"
+vertical_alignment = 1
+
+[node name="ActTabsHBox" type="HBoxContainer" parent="LayoutVBox/TopNavbar/NavMargin/NavHBox"]
+layout_mode = 2
+theme_override_constants/separation = 16
+alignment = 1
+
+[node name="BtnAct1" type="Button" parent="LayoutVBox/TopNavbar/NavMargin/NavHBox/ActTabsHBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(96, 44)
+layout_mode = 2
+focus_mode = 0
+mouse_default_cursor_shape = 2
+theme_override_colors/font_color = Color(0.722, 0.604, 0.404, 1)
+theme_override_colors/font_hover_color = Color(0.894, 0.875, 0.835, 1)
+theme_override_fonts/font = SubResource("Font_ta_pixel_bold")
+theme_override_font_sizes/font_size = 16
+theme_override_styles/normal = SubResource("Style_tab_act_active")
+theme_override_styles/hover = SubResource("Style_tab_act_active")
+theme_override_styles/pressed = SubResource("Style_tab_act_active")
+theme_override_styles/focus = SubResource("Style_tab_act_active")
+flat = true
+text = "ACT 1"
+
+[node name="BtnAct2" type="Button" parent="LayoutVBox/TopNavbar/NavMargin/NavHBox/ActTabsHBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(96, 44)
+layout_mode = 2
+focus_mode = 0
+mouse_default_cursor_shape = 2
+theme_override_colors/font_color = Color(0.604, 0.588, 0.667, 1)
+theme_override_colors/font_hover_color = Color(0.894, 0.875, 0.835, 1)
+theme_override_fonts/font = SubResource("Font_ta_pixel_bold")
+theme_override_font_sizes/font_size = 16
+theme_override_styles/normal = SubResource("Style_empty")
+theme_override_styles/hover = SubResource("Style_empty")
+theme_override_styles/pressed = SubResource("Style_empty")
+theme_override_styles/focus = SubResource("Style_empty")
+flat = true
+text = "ACT 2"
+
+[node name="BtnAct3" type="Button" parent="LayoutVBox/TopNavbar/NavMargin/NavHBox/ActTabsHBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(96, 44)
+layout_mode = 2
+focus_mode = 0
+mouse_default_cursor_shape = 2
+theme_override_colors/font_color = Color(0.467, 0.459, 0.553, 1)
+theme_override_colors/font_hover_color = Color(0.467, 0.459, 0.553, 1)
+theme_override_fonts/font = SubResource("Font_ta_pixel_bold")
+theme_override_font_sizes/font_size = 16
+theme_override_styles/normal = SubResource("Style_empty")
+theme_override_styles/hover = SubResource("Style_empty")
+theme_override_styles/pressed = SubResource("Style_empty")
+theme_override_styles/focus = SubResource("Style_empty")
+flat = true
+text = "ACT 3"
+
+[node name="ActProgressPanel" type="PanelContainer" parent="LayoutVBox/TopNavbar/NavMargin/NavHBox/ActTabsHBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(200, 44)
+layout_mode = 2
+size_flags_vertical = 4
+theme_override_styles/panel = SubResource("Style_empty")
+
+[node name="ActProgressLabel" type="Label" parent="LayoutVBox/TopNavbar/NavMargin/NavHBox/ActTabsHBox/ActProgressPanel"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.604, 0.588, 0.667, 1)
+theme_override_fonts/font = SubResource("Font_ta_pixel_bold")
+theme_override_font_sizes/font_size = 16
+text = "ACT 1 · 0 / 15 LEVELS"
 horizontal_alignment = 1
+vertical_alignment = 1
 
-[node name="Divider" type="ColorRect" parent="WindowPanel/VBoxMain/Margin/VBox"]
-custom_minimum_size = Vector2(0, 3)
+[node name="BtnFocusCurrent" type="Button" parent="LayoutVBox/TopNavbar/NavMargin/NavHBox/ActTabsHBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(116, 44)
 layout_mode = 2
-color = Color(0.12, 0.12, 0.12, 1)
+size_flags_vertical = 4
+tooltip_text = "ไปยังด่านล่าสุดที่ปลดล็อก"
+focus_mode = 0
+mouse_default_cursor_shape = 2
+theme_override_colors/font_color = Color(0.722, 0.604, 0.404, 1)
+theme_override_colors/font_hover_color = Color(0.894, 0.875, 0.835, 1)
+theme_override_colors/font_pressed_color = Color(0.604, 0.588, 0.667, 1)
+theme_override_colors/font_focus_color = Color(0.722, 0.604, 0.404, 1)
+theme_override_fonts/font = ExtResource("3_chakra_bold")
+theme_override_font_sizes/font_size = 15
+theme_override_styles/normal = SubResource("Style_empty")
+theme_override_styles/hover = SubResource("Style_empty")
+theme_override_styles/pressed = SubResource("Style_empty")
+theme_override_styles/focus = SubResource("Style_empty")
+flat = true
+text = "เล่นต่อ →"
+alignment = 1
 
-[node name="Spacer" type="Control" parent="WindowPanel/VBoxMain/Margin/VBox"]
-custom_minimum_size = Vector2(0, 10)
+[node name="RightSlot" type="HBoxContainer" parent="LayoutVBox/TopNavbar/NavMargin/NavHBox"]
 layout_mode = 2
+size_flags_horizontal = 3
+alignment = 2
 
-[node name="GridContainer" type="GridContainer" parent="WindowPanel/VBoxMain/Margin/VBox"]
+[node name="RightControls" type="HBoxContainer" parent="LayoutVBox/TopNavbar/NavMargin/NavHBox/RightSlot"]
 layout_mode = 2
-size_flags_horizontal = 4
+theme_override_constants/separation = 14
+
+[node name="BtnSound" type="Button" parent="LayoutVBox/TopNavbar/NavMargin/NavHBox/RightSlot/RightControls"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(46, 44)
+layout_mode = 2
+size_flags_vertical = 4
+tooltip_text = "เปิด/ปิดเสียง"
+mouse_default_cursor_shape = 2
+theme_override_font_sizes/font_size = 18
+theme_override_styles/normal = SubResource("Style_tab_act")
+theme_override_styles/hover = SubResource("Style_tab_act_hover")
+theme_override_styles/pressed = SubResource("Style_tab_act_pressed")
+text = "🔊"
+
+[node name="BtnBack" type="Button" parent="LayoutVBox/TopNavbar/NavMargin/NavHBox/RightSlot/RightControls"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(118, 44)
+layout_mode = 2
+size_flags_vertical = 4
+tooltip_text = "กลับสู่หน้าเมนูหลัก (Esc)"
+mouse_default_cursor_shape = 2
+theme_override_colors/font_color = Color(0.961, 0.878, 0.741, 1)
+theme_override_colors/font_hover_color = Color(1, 0.88, 0.47, 1)
+theme_override_fonts/font = ExtResource("3_chakra_bold")
+theme_override_font_sizes/font_size = 16
+theme_override_styles/normal = SubResource("Style_tab_act")
+theme_override_styles/hover = SubResource("Style_tab_act_hover")
+theme_override_styles/pressed = SubResource("Style_tab_act_pressed")
+text = "‹ เมนูหลัก"
+
+[node name="MainChamberArea" type="HBoxContainer" parent="LayoutVBox"]
+layout_mode = 2
 size_flags_vertical = 3
-theme_override_constants/h_separation = 28
-theme_override_constants/v_separation = 24
-columns = 5
+theme_override_constants/separation = 0
+
+[node name="LeftPillar" type="PanelContainer" parent="LayoutVBox/MainChamberArea"]
+custom_minimum_size = Vector2(80, 0)
+layout_mode = 2
+theme_override_styles/panel = SubResource("Style_pillar")
+
+[node name="LeftBrickWall" type="Control" parent="LayoutVBox/MainChamberArea/LeftPillar"]
+layout_mode = 2
+script = ExtResource("11_brick_wall")
+
+[node name="ScrollChamber" type="ScrollContainer" parent="LayoutVBox/MainChamberArea"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+horizontal_scroll_mode = 0
+
+[node name="TowerContent" type="Control" parent="LayoutVBox/MainChamberArea/ScrollChamber"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(1760, 5590)
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="ActDividerWalls" type="Control" parent="LayoutVBox/MainChamberArea/ScrollChamber/TowerContent"]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("14_act_dividers")
+
+[node name="PathRenderer" type="Control" parent="LayoutVBox/MainChamberArea/ScrollChamber/TowerContent"]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="BlackCat" type="Control" parent="LayoutVBox/MainChamberArea/ScrollChamber/TowerContent"]
+unique_name_in_owner = true
+visible = false
+z_index = 24
+layout_mode = 0
+offset_left = 984.0
+offset_top = 5525.0
+offset_right = 1018.0
+offset_bottom = 5577.0
+
+[node name="CatSprite" type="TextureRect" parent="LayoutVBox/MainChamberArea/ScrollChamber/TowerContent/BlackCat"]
+unique_name_in_owner = true
+texture_filter = 1
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+texture = ExtResource("7_cat")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="VelHero" type="Control" parent="LayoutVBox/MainChamberArea/ScrollChamber/TowerContent"]
+unique_name_in_owner = true
+z_index = 25
+layout_mode = 0
+offset_left = 936.0
+offset_top = 3453.0
+offset_right = 984.0
+offset_bottom = 3536.0
+mouse_filter = 2
+
+[node name="VelSprite" type="TextureRect" parent="LayoutVBox/MainChamberArea/ScrollChamber/TowerContent/VelHero"]
+unique_name_in_owner = true
+texture_filter = 1
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+texture = ExtResource("6_vel_idle")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="RightPillar" type="PanelContainer" parent="LayoutVBox/MainChamberArea"]
+custom_minimum_size = Vector2(80, 0)
+layout_mode = 2
+theme_override_styles/panel = SubResource("Style_pillar")
+
+[node name="RightBrickWall" type="Control" parent="LayoutVBox/MainChamberArea/RightPillar"]
+layout_mode = 2
+script = ExtResource("11_brick_wall")
+is_right_side = true
+
+[node name="BottomHUD" type="PanelContainer" parent="LayoutVBox"]
+custom_minimum_size = Vector2(0, 72)
+layout_mode = 2
+theme_override_styles/panel = SubResource("Style_bottom_hud")
+
+[node name="HBox" type="HBoxContainer" parent="LayoutVBox/BottomHUD"]
+layout_mode = 2
+theme_override_constants/separation = 18
+
+[node name="BadgeBox" type="PanelContainer" parent="LayoutVBox/BottomHUD/HBox"]
+custom_minimum_size = Vector2(64, 44)
+layout_mode = 2
+size_flags_vertical = 4
+theme_override_styles/panel = SubResource("Style_badge_no")
+
+[node name="HudLevelBadge" type="Label" parent="LayoutVBox/BottomHUD/HBox/BadgeBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.96, 0.78, 0.35, 1)
+theme_override_fonts/font = ExtResource("2_bungee")
+theme_override_font_sizes/font_size = 18
+text = "LV 01"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="InfoVBox" type="VBoxContainer" parent="LayoutVBox/BottomHUD/HBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+alignment = 1
+theme_override_constants/separation = 4
+
+[node name="TopRow" type="HBoxContainer" parent="LayoutVBox/BottomHUD/HBox/InfoVBox"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="HudTitle" type="Label" parent="LayoutVBox/BottomHUD/HBox/InfoVBox/TopRow"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.96, 0.91, 0.82, 1)
+theme_override_fonts/font = ExtResource("3_chakra_bold")
+theme_override_font_sizes/font_size = 18
+text = "ด่าน 01 — git --version + git config"
+vertical_alignment = 1
+
+[node name="ActTagPanel" type="PanelContainer" parent="LayoutVBox/BottomHUD/HBox/InfoVBox/TopRow"]
+layout_mode = 2
+theme_override_styles/panel = SubResource("Style_act_tag")
+
+[node name="HudActTag" type="Label" parent="LayoutVBox/BottomHUD/HBox/InfoVBox/TopRow/ActTagPanel"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.85, 0.75, 0.55, 1)
+theme_override_fonts/font = ExtResource("5_ta_pixel")
+theme_override_font_sizes/font_size = 11
+text = "ACT 1"
+vertical_alignment = 1
+
+[node name="BottomRow" type="HBoxContainer" parent="LayoutVBox/BottomHUD/HBox/InfoVBox"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="CmdChipPanel" type="PanelContainer" parent="LayoutVBox/BottomHUD/HBox/InfoVBox/BottomRow"]
+layout_mode = 2
+theme_override_styles/panel = SubResource("Style_cmd_chip")
+
+[node name="HudCmd" type="Label" parent="LayoutVBox/BottomHUD/HBox/InfoVBox/BottomRow/CmdChipPanel"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.35, 0.82, 0.60, 1)
+theme_override_fonts/font = ExtResource("3_chakra_bold")
+theme_override_font_sizes/font_size = 14
+text = "git --version"
+vertical_alignment = 1
+
+[node name="HudDesc" type="Label" parent="LayoutVBox/BottomHUD/HBox/InfoVBox/BottomRow"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.76, 0.70, 0.60, 1)
+theme_override_fonts/font = ExtResource("4_chakra_reg")
+theme_override_font_sizes/font_size = 15
+text = "ตรวจสอบพลังและจารึกนามผู้ใช้ user.name และ user.email"
+vertical_alignment = 1
+text_overrun_behavior = 3
+
+[node name="BtnLaunch" type="Button" parent="LayoutVBox/BottomHUD/HBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(140, 44)
+layout_mode = 2
+size_flags_vertical = 4
+mouse_default_cursor_shape = 2
+theme_override_colors/font_color = Color(0.961, 0.878, 0.741, 1)
+theme_override_colors/font_hover_color = Color(1, 0.94, 0.80, 1)
+theme_override_colors/font_pressed_color = Color(0.85, 0.75, 0.58, 1)
+theme_override_colors/font_disabled_color = Color(0.45, 0.40, 0.35, 0.7)
+theme_override_fonts/font = ExtResource("3_chakra_bold")
+theme_override_font_sizes/font_size = 16
+theme_override_styles/normal = SubResource("Style_tab_act")
+theme_override_styles/hover = SubResource("Style_tab_act_hover")
+theme_override_styles/pressed = SubResource("Style_tab_act_pressed")
+theme_override_styles/disabled = SubResource("Style_tab_act")
+text = "เข้าสู่ด่าน"
+
+[node name="SfxClick" type="AudioStreamPlayer" parent="."]
+unique_name_in_owner = true
+stream = ExtResource("8_sfx_click")
+volume_db = -4.0
+
+[node name="SfxJump" type="AudioStreamPlayer" parent="."]
+unique_name_in_owner = true
+stream = ExtResource("9_sfx_jump")
+volume_db = -2.0
+
+[node name="SfxMeow" type="AudioStreamPlayer" parent="."]
+unique_name_in_owner = true
+stream = ExtResource("10_sfx_meow")
+volume_db = -1.0
+
+[node name="MapNavHint" type="PanelContainer" parent="."]
+layout_mode = 1
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -340.0
+offset_top = -178.0
+offset_right = -92.0
+offset_bottom = -84.0
+grow_horizontal = 0
+grow_vertical = 0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("Style_hint_panel")
+
+[node name="HintGrid" type="GridContainer" parent="MapNavHint"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/h_separation = 10
+theme_override_constants/v_separation = 5
+columns = 2
+
+[node name="KeysRow1" type="HBoxContainer" parent="MapNavHint/HintGrid"]
+layout_mode = 2
+size_flags_horizontal = 3
+mouse_filter = 2
+theme_override_constants/separation = 5
+alignment = 2
+
+[node name="KeyW" type="Control" parent="MapNavHint/HintGrid/KeysRow1"]
+custom_minimum_size = Vector2(28, 28)
+layout_mode = 2
+mouse_filter = 2
+
+[node name="Cap" type="PanelContainer" parent="MapNavHint/HintGrid/KeysRow1/KeyW"]
+layout_mode = 0
+offset_right = 28.0
+offset_bottom = 28.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("Style_keycap")
+
+[node name="Label" type="Label" parent="MapNavHint/HintGrid/KeysRow1/KeyW/Cap"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.96, 0.97, 1, 0.98)
+theme_override_fonts/font = ExtResource("3_chakra_bold")
+theme_override_font_sizes/font_size = 14
+text = "W"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="KeyUp" type="Control" parent="MapNavHint/HintGrid/KeysRow1"]
+custom_minimum_size = Vector2(28, 28)
+layout_mode = 2
+mouse_filter = 2
+
+[node name="Cap" type="PanelContainer" parent="MapNavHint/HintGrid/KeysRow1/KeyUp"]
+layout_mode = 0
+offset_right = 28.0
+offset_bottom = 28.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("Style_keycap")
+
+[node name="Label" type="Label" parent="MapNavHint/HintGrid/KeysRow1/KeyUp/Cap"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.96, 0.97, 1, 0.98)
+theme_override_fonts/font = ExtResource("2_bungee")
+theme_override_font_sizes/font_size = 14
+text = "↑"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="DescRow1" type="Label" parent="MapNavHint/HintGrid"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.92, 0.95, 0.98, 0.92)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.8)
+theme_override_colors/font_outline_color = Color(0.04, 0.06, 0.1, 0.85)
+theme_override_constants/shadow_offset_x = 1
+theme_override_constants/shadow_offset_y = 1
+theme_override_constants/outline_size = 2
+theme_override_fonts/font = ExtResource("3_chakra_bold")
+theme_override_font_sizes/font_size = 14
+text = "เพื่อไปด่านถัดไป"
+vertical_alignment = 1
+
+[node name="KeysRow2" type="HBoxContainer" parent="MapNavHint/HintGrid"]
+layout_mode = 2
+size_flags_horizontal = 3
+mouse_filter = 2
+theme_override_constants/separation = 5
+alignment = 2
+
+[node name="KeyS" type="Control" parent="MapNavHint/HintGrid/KeysRow2"]
+custom_minimum_size = Vector2(28, 28)
+layout_mode = 2
+mouse_filter = 2
+
+[node name="Cap" type="PanelContainer" parent="MapNavHint/HintGrid/KeysRow2/KeyS"]
+layout_mode = 0
+offset_right = 28.0
+offset_bottom = 28.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("Style_keycap")
+
+[node name="Label" type="Label" parent="MapNavHint/HintGrid/KeysRow2/KeyS/Cap"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.96, 0.97, 1, 0.98)
+theme_override_fonts/font = ExtResource("3_chakra_bold")
+theme_override_font_sizes/font_size = 14
+text = "S"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="KeyDown" type="Control" parent="MapNavHint/HintGrid/KeysRow2"]
+custom_minimum_size = Vector2(28, 28)
+layout_mode = 2
+mouse_filter = 2
+
+[node name="Cap" type="PanelContainer" parent="MapNavHint/HintGrid/KeysRow2/KeyDown"]
+layout_mode = 0
+offset_right = 28.0
+offset_bottom = 28.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("Style_keycap")
+
+[node name="Label" type="Label" parent="MapNavHint/HintGrid/KeysRow2/KeyDown/Cap"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.96, 0.97, 1, 0.98)
+theme_override_fonts/font = ExtResource("2_bungee")
+theme_override_font_sizes/font_size = 14
+text = "↓"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="DescRow2" type="Label" parent="MapNavHint/HintGrid"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.92, 0.95, 0.98, 0.92)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.8)
+theme_override_colors/font_outline_color = Color(0.04, 0.06, 0.1, 0.85)
+theme_override_constants/shadow_offset_x = 1
+theme_override_constants/shadow_offset_y = 1
+theme_override_constants/outline_size = 2
+theme_override_fonts/font = ExtResource("3_chakra_bold")
+theme_override_font_sizes/font_size = 14
+text = "เพื่อไปด่านก่อนหน้า"
+vertical_alignment = 1
+
+[node name="KeysRow3" type="HBoxContainer" parent="MapNavHint/HintGrid"]
+layout_mode = 2
+size_flags_horizontal = 3
+mouse_filter = 2
+theme_override_constants/separation = 5
+alignment = 2
+
+[node name="ScrollPrefix" type="Label" parent="MapNavHint/HintGrid/KeysRow3"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.92, 0.95, 0.98, 0.92)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.8)
+theme_override_colors/font_outline_color = Color(0.04, 0.06, 0.1, 0.85)
+theme_override_constants/shadow_offset_x = 1
+theme_override_constants/shadow_offset_y = 1
+theme_override_constants/outline_size = 2
+theme_override_fonts/font = ExtResource("3_chakra_bold")
+theme_override_font_sizes/font_size = 14
+text = "เลื่อน"
+vertical_alignment = 1
+
+[node name="KeyScrollUp" type="Control" parent="MapNavHint/HintGrid/KeysRow3"]
+custom_minimum_size = Vector2(38, 28)
+layout_mode = 2
+mouse_filter = 2
+
+[node name="Cap" type="PanelContainer" parent="MapNavHint/HintGrid/KeysRow3/KeyScrollUp"]
+layout_mode = 0
+offset_right = 38.0
+offset_bottom = 28.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("Style_keycap")
+
+[node name="Label" type="Label" parent="MapNavHint/HintGrid/KeysRow3/KeyScrollUp/Cap"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.96, 0.97, 1, 0.98)
+theme_override_fonts/font = ExtResource("3_chakra_bold")
+theme_override_font_sizes/font_size = 14
+text = "ขึ้น"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="KeyScrollDown" type="Control" parent="MapNavHint/HintGrid/KeysRow3"]
+custom_minimum_size = Vector2(38, 28)
+layout_mode = 2
+mouse_filter = 2
+
+[node name="Cap" type="PanelContainer" parent="MapNavHint/HintGrid/KeysRow3/KeyScrollDown"]
+layout_mode = 0
+offset_right = 38.0
+offset_bottom = 28.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("Style_keycap")
+
+[node name="Label" type="Label" parent="MapNavHint/HintGrid/KeysRow3/KeyScrollDown/Cap"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.96, 0.97, 1, 0.98)
+theme_override_fonts/font = ExtResource("3_chakra_bold")
+theme_override_font_sizes/font_size = 14
+text = "ลง"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="DescRow3" type="Label" parent="MapNavHint/HintGrid"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.92, 0.95, 0.98, 0.92)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.8)
+theme_override_colors/font_outline_color = Color(0.04, 0.06, 0.1, 0.85)
+theme_override_constants/shadow_offset_x = 1
+theme_override_constants/shadow_offset_y = 1
+theme_override_constants/outline_size = 2
+theme_override_fonts/font = ExtResource("3_chakra_bold")
+theme_override_font_sizes/font_size = 14
+text = "เพื่อสำรวจหอคอย"
+vertical_alignment = 1
+
+[node name="ActHeaderTab" type="PanelContainer" parent="."]
+unique_name_in_owner = true
+z_index = 25
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -300.0
+offset_top = 80.0
+offset_right = 300.0
+offset_bottom = 118.0
+grow_horizontal = 2
+mouse_filter = 2
+theme_override_styles/panel = SubResource("Style_act_header_tab")
+
+[node name="HBox" type="HBoxContainer" parent="ActHeaderTab"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 12
+alignment = 1
+
+[node name="ActBadge" type="Label" parent="ActHeaderTab/HBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.96, 0.78, 0.35, 1)
+theme_override_fonts/font = ExtResource("3_chakra_bold")
+theme_override_font_sizes/font_size = 15
+text = "ACT 1"
+vertical_alignment = 1
+
+[node name="TabDivider" type="ColorRect" parent="ActHeaderTab/HBox"]
+custom_minimum_size = Vector2(1, 16)
+layout_mode = 2
+size_flags_vertical = 4
+color = Color(0.48, 0.38, 0.22, 0.8)
+
+[node name="ActTitle" type="Label" parent="ActHeaderTab/HBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.96, 0.91, 0.82, 1)
+theme_override_fonts/font = ExtResource("3_chakra_bold")
+theme_override_font_sizes/font_size = 16
+text = "การใช้งาน Git เบื้องต้น / หอคอยแห่งการฝึกตน"
+vertical_alignment = 1
+
+[node name="ActDesc" type="Label" parent="ActHeaderTab/HBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.76, 0.70, 0.60, 1)
+theme_override_fonts/font = ExtResource("4_chakra_reg")
+theme_override_font_sizes/font_size = 14
+text = "15 ด่าน"
+vertical_alignment = 1
+

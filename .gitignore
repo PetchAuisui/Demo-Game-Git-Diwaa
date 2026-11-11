@@ -16,3 +16,5 @@ TestResults/
 *.sqlite
 *.pfx
 *.key
+[Bb]in/
+[Oo]bj/

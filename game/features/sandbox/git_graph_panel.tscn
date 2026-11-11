@@ -1,10 +1,16 @@
-[gd_scene load_steps=6 format=3]
+[gd_scene load_steps=7 format=3]
 
 [ext_resource type="Script" path="res://features/sandbox/git_graph_panel.gd" id="1_script"]
 [ext_resource type="FontFile" uid="uid://deedcfbkojx6k" path="res://assets/fonts/ChakraPetch-Bold.ttf" id="2_font_bold"]
+[ext_resource type="FontFile" uid="uid://c82lda4ldw0ve" path="res://assets/fonts/ChakraPetch-Regular.ttf" id="3_font_reg"]
 
 [sub_resource type="FontVariation" id="FontVariation_bold"]
 base_font = ExtResource("2_font_bold")
+spacing_top = 4
+spacing_bottom = 2
+
+[sub_resource type="FontVariation" id="FontVariation_reg"]
+base_font = ExtResource("3_font_reg")
 spacing_top = 4
 spacing_bottom = 2
 
@@ -19,9 +25,6 @@ corner_radius_top_left = 12
 corner_radius_top_right = 12
 corner_radius_bottom_right = 12
 corner_radius_bottom_left = 12
-
-[sub_resource type="SystemFont" id="Font_terminal"]
-font_names = PackedStringArray("Menlo", "Consolas", "DejaVu Sans Mono")
 
 [node name="GitGraphPanel" type="PanelContainer"]
 anchors_preset = 15
@@ -69,8 +72,8 @@ size_flags_vertical = 3
 focus_mode = 0
 mouse_filter = 1
 theme_override_colors/default_color = Color(0.87, 0.9, 0.95, 1)
-theme_override_fonts/normal_font = SubResource("Font_terminal")
-theme_override_font_sizes/normal_font_size = 21
+theme_override_fonts/normal_font = SubResource("FontVariation_reg")
+theme_override_font_sizes/normal_font_size = 20
 bbcode_enabled = true
 text = "ยังไม่มี Commit
 สร้าง repository และ commit แล้วประวัติจะแสดงที่นี่"

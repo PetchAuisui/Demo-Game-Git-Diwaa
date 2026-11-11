@@ -1,0 +1,53 @@
+[gd_scene load_steps=5 format=3]
+
+[ext_resource type="Script" uid="uid://bx4fi6v4vu1oj" path="res://common/brand_button.gd" id="1_script"]
+[ext_resource type="FontFile" uid="uid://caa27axnonbav" path="res://assets/fonts/Bungee-Regular.ttf" id="2_font_bungee"]
+[ext_resource type="Texture2D" uid="uid://bfyqk35ybo43k" path="res://assets/art/hats/hat_witch_purple.png" id="3_hat_purple"]
+
+[sub_resource type="StyleBoxEmpty" id="Style_brand_btn"]
+
+[node name="BrandBtn" type="Button"]
+custom_minimum_size = Vector2(174, 48)
+offset_right = 174.0
+offset_bottom = 48.0
+focus_mode = 0
+mouse_default_cursor_shape = 2
+theme_override_styles/focus = SubResource("Style_brand_btn")
+theme_override_styles/disabled = SubResource("Style_brand_btn")
+theme_override_styles/hover = SubResource("Style_brand_btn")
+theme_override_styles/pressed = SubResource("Style_brand_btn")
+theme_override_styles/normal = SubResource("Style_brand_btn")
+flat = true
+script = ExtResource("1_script")
+
+[node name="BrandTitle" type="Label" parent="."]
+layout_mode = 1
+anchors_preset = 4
+anchor_top = 0.5
+anchor_bottom = 0.5
+offset_left = 16.0
+offset_top = -18.0
+offset_right = 174.0
+offset_bottom = 18.0
+grow_vertical = 2
+theme_override_colors/font_color = Color(0.961, 0.620, 0.043, 1)
+theme_override_colors/font_shadow_color = Color(0.290, 0.122, 0.020, 1)
+theme_override_constants/shadow_offset_x = 0
+theme_override_constants/shadow_offset_y = 2
+theme_override_fonts/font = ExtResource("2_font_bungee")
+theme_override_font_sizes/font_size = 26
+text = "GIT DI WAA"
+vertical_alignment = 1
+
+[node name="BrandHat" type="TextureRect" parent="."]
+texture_filter = 1
+layout_mode = 1
+offset_left = 4.0
+offset_top = -4.0
+offset_right = 36.0
+offset_bottom = 22.0
+pivot_offset = Vector2(16, 26)
+mouse_filter = 2
+texture = ExtResource("3_hat_purple")
+expand_mode = 1
+stretch_mode = 5

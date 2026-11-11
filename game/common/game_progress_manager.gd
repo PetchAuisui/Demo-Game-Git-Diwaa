@@ -11,6 +11,8 @@ const SAVE_PATH := "user://game_progress.cfg"
 const SECTION_PROGRESS := "progress"
 const KEY_INTRO_SEEN := "has_seen_intro_cutscene"
 const SECTION_LEVELS := "levels_cleared"
+const TOTAL_LEVELS := 40
+const DEFAULT_GAMEPLAY_RETURN_SCENE := "res://features/cutscene/inside_tower_cutscene.tscn"
 
 ## ตัวแปรส่งผ่านสถานะระหว่าง Scene ชั่วคราว (Transient Session State)
 ## ใช้แทนการประกาศ static var ไว้บน UI View Script โดยตรง
@@ -18,7 +20,49 @@ const SECTION_LEVELS := "levels_cleared"
 static var _pending_dialogue_phase: int = 0
 static var _selected_level_number: int = 1
 static var _current_gameplay_step: int = 0
-static var _gameplay_return_scene: String = "res://features/cutscene/inside_tower_cutscene.tscn"
+static var _gameplay_return_scene: String = DEFAULT_GAMEPLAY_RETURN_SCENE
+
+## การสุ่มสีหมวกเวทมนตร์ 3 สี (ม่วง, ฟ้า, เขียว) เมื่อเริ่มเข้าเกมใหม่ อัตราดรอปเท่ากัน 1/3 (Equal Drop Rate)
+enum HatColor {
+	PURPLE = 0,
+	BLUE = 1,
+	GREEN = 2,
+}
+
+const HAT_TEXTURE_PATHS: Array[String] = [
+	"res://assets/art/hats/hat_witch_purple.png",
+	"res://assets/art/hats/hat_witch_blue.png",
+	"res://assets/art/hats/hat_witch_green.png",
+]
+
+static var _current_hat_color: int = -1
+
+static func randomize_hat_color() -> int:
+	_current_hat_color = randi() % 3
+	return _current_hat_color
+
+static func get_current_hat_color() -> int:
+	if _current_hat_color < 0:
+		randomize_hat_color()
+	return _current_hat_color
+
+static func get_current_hat_texture() -> Texture2D:
+	var idx := get_current_hat_color()
+	var path := HAT_TEXTURE_PATHS[idx]
+	if ResourceLoader.exists(path):
+		return load(path)
+	return null
+
+static func get_current_hat_color_name() -> String:
+	match get_current_hat_color():
+		HatColor.PURPLE:
+			return "Purple"
+		HatColor.BLUE:
+			return "Blue"
+		HatColor.GREEN:
+			return "Green"
+		_:
+			return "Unknown"
 
 static func set_selected_level_number(level_num: int) -> void:
 	_selected_level_number = level_num
@@ -85,7 +129,11 @@ static func set_level_cleared(level_num: int, cleared: bool = true) -> void:
 static func reset_progress() -> void:
 	var cfg := ConfigFile.new()
 	cfg.set_value(SECTION_PROGRESS, KEY_INTRO_SEEN, false)
-	for i in range(1, 16):
+	for i in range(1, TOTAL_LEVELS + 1):
 		cfg.set_value(SECTION_LEVELS, "level_%d" % i, false)
 	cfg.save(SAVE_PATH)
 	_cached_cfg = cfg
+	_pending_dialogue_phase = 0
+	_selected_level_number = 1
+	_current_gameplay_step = 0
+	_gameplay_return_scene = DEFAULT_GAMEPLAY_RETURN_SCENE

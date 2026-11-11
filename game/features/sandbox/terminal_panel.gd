@@ -5,6 +5,9 @@ extends PanelContainer
 
 signal command_submitted(command: String)
 
+const THAI_LOG_FONT_PATH := "res://assets/fonts/ChakraPetch-Regular.ttf"
+const THAI_LOG_FONT_SIZE := 22
+
 @export var window_title: String = "●  ●  ●    TERMINAL — learner@diwaa:~/checkpoint-01"
 @export var prompt_prefix: String = "learner@diwaa:~ $"
 
@@ -16,6 +19,7 @@ var _input_edit: LineEdit
 var _enter_button: Button
 var _commit_dialog: ConfirmationDialog
 var _commit_input: LineEdit
+var _thai_log_font: Font
 
 var _command_history: Array[String] = []
 var _history_index := 0
@@ -23,6 +27,9 @@ var _is_executing := false
 
 
 func _ready() -> void:
+	_thai_log_font = SandboxThemeTokens.create_terminal_thai_font()
+	if _thai_log_font == null:
+		_thai_log_font = load(THAI_LOG_FONT_PATH) as Font
 	_title_label = get_node("%TitleLabel")
 	_hint_label = get_node("%HintLabel")
 	_output_log = get_node("%OutputLog")
@@ -115,29 +122,33 @@ func _show_history_entry() -> void:
 
 
 func append_command(command: String) -> void:
-	_output_log.add_text("\n%s %s\n" % [prompt_prefix, command])
+	_append_styled_text("\n%s %s\n" % [prompt_prefix, command])
 	_scroll_to_bottom()
 
 
 func append_output(text: String) -> void:
 	if text.strip_edges().is_empty():
 		return
-	_output_log.add_text(text.strip_edges(false, true) + "\n")
+	_append_styled_text(text.strip_edges(false, true) + "\n")
 	_scroll_to_bottom()
 
 
 func append_error(error: String) -> void:
 	if error.strip_edges().is_empty():
 		return
-	_output_log.add_text("[Error] " + error.strip_edges(false, true) + "\n")
+	_append_styled_text("[Error] " + error.strip_edges(false, true) + "\n")
 	_scroll_to_bottom()
 
 
 func append_info(info: String) -> void:
 	if info.strip_edges().is_empty():
 		return
-	_output_log.add_text(info.strip_edges(false, true) + "\n")
+	_append_styled_text(info.strip_edges(false, true) + "\n")
 	_scroll_to_bottom()
+
+
+func _append_styled_text(text: String) -> void:
+	SandboxThemeTokens.append_terminal_styled_text(_output_log, text, _thai_log_font, THAI_LOG_FONT_SIZE)
 
 
 func clear_output() -> void:

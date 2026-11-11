@@ -20,7 +20,7 @@ func _init(sandbox: GitSandbox, remotes: RemoteRegistry) -> void:
 func validate(arguments: Array[String]) -> String:
 	if arguments.is_empty():
 		return "Missing Git command."
-	if arguments.size() == 1 and arguments[0] == "--version":
+	if arguments.size() == 1 and (arguments[0] == "--version" or arguments[0] == "version"):
 		return ""
 	if arguments[0] == "config":
 		return _validate_config(arguments)

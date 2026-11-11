@@ -39,7 +39,6 @@ AuthApiClient (services/auth_api_client.gd) ──► Repository (ตอนน�
 | `game/features/auth/privacy_policy.gd` | เนื้อหานโยบายความเป็นส่วนตัว + `VERSION` |
 | `game/features/auth/services/auth_config.gd` | ที่อยู่ server (`DEV_BASE_URL`, `RELEASE_BASE_URL`) |
 | `game/features/auth/services/session_store.gd` | เก็บ "จดจำการเข้าสู่ระบบ" ลงไฟล์แบบเข้ารหัส |
-| `game/common/home_button.tscn` | ปุ่มกลับหน้าหลัก (ใช้ในหน้าเล่นด่าน) |
 | `server/src/GitDiwaa.Online/Accounts/` | กติกาและ contract ที่ใช้ร่วม (เช่น `AccountRules.cs`, `PrivacyPolicy.cs`) |
 | `server/src/GitDiwaa.Server/` | ตัว server: endpoint, service, ความปลอดภัย, repository |
 
@@ -188,7 +187,6 @@ dotnet run --project tests/GitDiwaa.Server.Tests
 
 - **แกล้งล็อกบัญชีเพื่อนในเน็ตเดียวกัน**: การพักล็อกอินนับแยกตาม IP แล้ว แต่ในห้องเรียนที่ทุกคนออกเน็ต IP เดียวกัน เพื่อนที่รู้ชื่อผู้ใช้ยังใส่รหัสผิด 5 ครั้งให้เราล็อกอินไม่ได้ 15 นาที (คนที่ติ๊ก "จดจำ" ไว้ไม่กระทบ เพราะเข้าด้วยการต่ออายุ token) และคนที่มี 4 IP ขึ้นไปยังทำให้ทั้งบัญชีถูกพักได้ แก้ให้หมดต้องมีวิธียืนยันเจ้าของบัญชีทางอื่น เช่น ลิงก์ปลดล็อกทางอีเมล (รอระบบส่งอีเมล) ส่วนการบอกผู้เล่นตรงๆ ว่า "บัญชีถูกพัก" ยังไม่ทำ เพราะจะบอกใบ้ว่าบัญชีนั้นมีอยู่จริง ตอนนี้ข้อความล็อกอินผิดบอกรวมไว้แล้วว่าใส่ผิดหลายครั้งจะถูกพักชั่วคราว
 - **CI**: ขั้น "Project hygiene" ห้ามไฟล์ `.cs` แต่ `server/` เป็น C# ทั้งโฟลเดอร์ ข้อเสนอ: ยกเว้น `server/` จากขั้นนั้น แล้วเพิ่ม job ที่รัน `dotnet build` + เทสทั้ง 2 ชุด (และแก้ README ที่บอกว่าไม่ต้องติดตั้ง .NET)
-- **ปุ่มกลับหน้าหลักในหน้าเล่นด่าน**: ตอนนี้แค่เปลี่ยนหน้า ไม่ได้ล้าง `GameProgressManager` ให้คนทำส่วนเล่นด่านตัดสินว่าควรล้างไหม
 - **ความคืบหน้าแยกตามผู้เล่น** (ข้อเสนอ ยังไม่ได้ทำ เพราะเป็นไฟล์ของเจ้าของระบบเซฟ):
   - `game/common/game_progress_manager.gd`: เปลี่ยน `SAVE_PATH` เป็น `user://saves/<slot>/game_progress.cfg` โดย `<slot>` = `PlayerSession.get_save_slot()` (`user_<id>` หรือ `guest`), ล้าง `_cached_cfg` ทุกครั้งที่ `PlayerSession.session_changed`, ย้ายไฟล์เซฟเดิมเข้า slot แรกที่เข้ามาเล่น และให้ระบบสำรองไฟล์เซฟเสียใช้ path ใหม่ด้วย
   - `game/features/sandbox/services/real_git_sandbox_service.gd`: เปลี่ยน `user://git-workspaces` เป็น `user://git-workspaces/<slot>`

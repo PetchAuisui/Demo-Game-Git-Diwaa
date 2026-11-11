@@ -184,6 +184,7 @@ func _t_outside_repository() -> void:
 
 func _t_version_and_config() -> void:
 	_contains((await _run_git("git --version")).output, "git version")
+	_contains((await _run_git("git version")).output, "git version")
 	await _run_git("git config --global user.name \"Git Diwaa Player\"")
 	await _run_git("git config --global user.email player@git-diwaa.local")
 	_equal("Git Diwaa Player", (await _run_git("git config --global user.name")).output)
