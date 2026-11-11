@@ -147,10 +147,12 @@ var _target_scroll_y: float = -1.0
 var _platform_nodes: Dictionary = {}
 var _is_jumping := false
 var _target_queue_idx: int = -1
+var _jump_seq_id: int = 0
 var _landing_seq_id: int = 0
 var _angry_seq_id: int = 0
 var _locked_desc_seq_id: int = 0
 var _buffered_dir: Vector2 = Vector2.ZERO
+var _held_nav_keys: Dictionary = {}
 var _jump_tween: Tween = null
 var _angry_tween: Tween = null
 var _scroll_tween: Tween = null
@@ -305,6 +307,8 @@ func _process(delta: float) -> void:
 
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_WM_WINDOW_FOCUS_OUT or what == NOTIFICATION_APPLICATION_FOCUS_OUT:
+		_held_nav_keys.clear()
+		_buffered_dir = Vector2.ZERO
 		_release_all_nav_hint_keys()
 
 
@@ -1089,6 +1093,8 @@ func _stop_vel_angry(reset_to_breathe: bool = true) -> void:
 
 
 func _on_platform_selected(idx: int) -> void:
+	if idx < 0 or idx >= TOWER_STAGES.size():
+		return
 	if idx == _current_stage_idx and not _is_jumping:
 		_on_launch_stage_pressed()
 		return
@@ -1100,6 +1106,16 @@ func _on_platform_selected(idx: int) -> void:
 		_on_locked_platform_clicked(idx)
 		return
 
+	_buffered_dir = Vector2.ZERO
+
+	if _is_jumping:
+		# ถ้ากำลังโดดไปยังด่านเดิมอยู่แล้ว ไม่ต้องรีเซ็ตท่าโดดใหม่ซ้ำซ้อน
+		if idx == _target_queue_idx and _jump_tween and _jump_tween.is_valid():
+			return
+		# เปลี่ยนใจเลือกด่านใหม่กลางอากาศ -> หักเลี้ยวพุ่งไปด่านใหม่ทันที
+		_perform_direct_leap(idx)
+		return
+
 	var diff := absi(idx - _current_stage_idx)
 	if diff > 1:
 		_perform_direct_leap(idx)
@@ -1107,9 +1123,11 @@ func _on_platform_selected(idx: int) -> void:
 		_try_navigate_stage(idx)
 
 
-## กระโดดข้ามด่านระยะไกลรวดเดียว (Direct Leap) เมื่อคลิกข้ามหลายด่าน เช่น จาก 40 ลงมา 1
+## กระโดดข้ามด่านระยะไกลรวดเดียว (Direct Leap) เมื่อคลิกข้ามหลายด่าน หรือเปลี่ยนเป้ากลางอากาศ
 func _perform_direct_leap(to_idx: int) -> void:
-	if to_idx < 0 or to_idx >= TOWER_STAGES.size() or to_idx == _current_stage_idx:
+	if to_idx < 0 or to_idx >= TOWER_STAGES.size():
+		return
+	if to_idx == _current_stage_idx and not _is_jumping:
 		return
 
 	var target_stg: Dictionary = TOWER_STAGES[to_idx]
@@ -1118,6 +1136,10 @@ func _perform_direct_leap(to_idx: int) -> void:
 	if not is_unlocked:
 		_on_locked_platform_clicked(to_idx)
 		return
+
+	var was_jumping := _is_jumping
+	_jump_seq_id += 1
+	var my_jump_seq := _jump_seq_id
 
 	if _jump_tween and _jump_tween.is_valid():
 		_jump_tween.kill()
@@ -1136,6 +1158,7 @@ func _perform_direct_leap(to_idx: int) -> void:
 	var from_act: int = int(from_stg["act"])
 	var dx := target_vel_pos.x - start_vel_pos.x
 	var dy := target_vel_pos.y - start_vel_pos.y
+	var dist := start_vel_pos.distance_to(target_vel_pos)
 	var is_moving_right := dx >= 0.0
 
 	# เลือกแอนิเมชันให้เหมาะสมกับการพุ่งทะยาน/ดิ่งลง
@@ -1154,7 +1177,11 @@ func _perform_direct_leap(to_idx: int) -> void:
 	var leap_duration: float = 0.75
 	var scroll_duration: float = 0.70
 	var peak_height: float = 120.0
-	if dy > 600.0:
+	if was_jumping and dist < 320.0:
+		leap_duration = clampf(dist / 450.0, 0.25, 0.55)
+		scroll_duration = clampf(leap_duration * 0.92, 0.22, 0.50)
+		peak_height = clampf(dist * 0.28, 30.0, 95.0)
+	elif dy > 600.0:
 		peak_height = 60.0
 	elif dy < -600.0:
 		peak_height = 160.0
@@ -1172,6 +1199,8 @@ func _perform_direct_leap(to_idx: int) -> void:
 	, 0.0, 1.0, leap_duration).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 
 	_jump_tween.finished.connect(func():
+		if my_jump_seq != _jump_seq_id:
+			return
 		_update_platform_highlight(from_idx, false)
 		_current_stage_idx = to_idx
 		_target_queue_idx = to_idx
@@ -1190,10 +1219,13 @@ func _perform_direct_leap(to_idx: int) -> void:
 			vel_hero.position = target_vel_pos
 			vel_hero.scale = Vector2(VEL_SCALE, VEL_SCALE)
 
-		if _buffered_dir != Vector2.ZERO:
-			var queued_dir := _buffered_dir
-			_buffered_dir = Vector2.ZERO
-			_navigate_directional(queued_dir)
+		var next_dir := _buffered_dir
+		_buffered_dir = Vector2.ZERO
+		if next_dir == Vector2.ZERO:
+			next_dir = _get_held_nav_dir()
+
+		if next_dir != Vector2.ZERO:
+			_navigate_directional(next_dir)
 			if not _is_jumping:
 				_step_towards_queued_target()
 		else:
@@ -1245,6 +1277,7 @@ func _try_navigate_stage(target_idx: int) -> void:
 		_on_locked_platform_clicked(target_idx)
 		return
 
+	_buffered_dir = Vector2.ZERO
 	_target_queue_idx = target_idx
 
 	if not _is_jumping:
@@ -1358,6 +1391,9 @@ func _perform_jump_step(next_idx: int) -> void:
 
 	_scroll_to_stage_idx(to_idx, true, false, scroll_duration)
 
+	_jump_seq_id += 1
+	var my_jump_seq := _jump_seq_id
+
 	if _jump_tween and _jump_tween.is_valid():
 		_jump_tween.kill()
 
@@ -1379,6 +1415,8 @@ func _perform_jump_step(next_idx: int) -> void:
 	, 0.0, 1.0, jump_duration).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 
 	_jump_tween.finished.connect(func():
+		if my_jump_seq != _jump_seq_id:
+			return
 		# ตัวละครลงสู่แท่นหินปลายทางเรียบร้อยแล้ว -> สลับการ์ดและอัปเดตสถานะเมื่อตัวละครไปถึง!
 		_update_platform_highlight(from_idx, false)
 		_current_stage_idx = to_idx
@@ -1392,15 +1430,22 @@ func _perform_jump_step(next_idx: int) -> void:
 
 		_play_sfx(sfx_click)
 
-		if _buffered_dir != Vector2.ZERO:
+		var next_dir := _buffered_dir
+		_buffered_dir = Vector2.ZERO
+		if next_dir == Vector2.ZERO and (_target_queue_idx == _current_stage_idx or _target_queue_idx == -1):
+			next_dir = _get_held_nav_dir()
+
+		if next_dir != Vector2.ZERO:
 			_is_jumping = false
-			var queued_dir := _buffered_dir
-			_buffered_dir = Vector2.ZERO
-			_navigate_directional(queued_dir)
+			_navigate_directional(next_dir)
 			if not _is_jumping:
 				_step_towards_queued_target()
 		elif _target_queue_idx != _current_stage_idx and _target_queue_idx != -1:
-			get_tree().create_timer(0.06).timeout.connect(_step_towards_queued_target)
+			get_tree().create_timer(0.06).timeout.connect(func():
+				if my_jump_seq != _jump_seq_id:
+					return
+				_step_towards_queued_target()
+			)
 		else:
 			_step_towards_queued_target()
 	)
@@ -1410,8 +1455,11 @@ func _jump_to_stage(target_idx: int, animate: bool = true) -> void:
 	if target_idx < 0 or target_idx >= TOWER_STAGES.size():
 		return
 
+	_buffered_dir = Vector2.ZERO
+
 	if not animate:
 		_stop_vel_angry(false)
+		_jump_seq_id += 1
 		if _jump_tween and _jump_tween.is_valid():
 			_jump_tween.kill()
 		_is_jumping = false
@@ -1432,6 +1480,12 @@ func _jump_to_stage(target_idx: int, animate: bool = true) -> void:
 		if vel_anim:
 			vel_anim.play("breathe")
 		_scroll_to_stage_idx(_current_stage_idx, false)
+		return
+
+	if _is_jumping:
+		if target_idx == _target_queue_idx and _jump_tween and _jump_tween.is_valid():
+			return
+		_perform_direct_leap(target_idx)
 		return
 
 	var diff := absi(target_idx - _current_stage_idx)
@@ -1896,8 +1950,18 @@ func _play_sfx(player: AudioStreamPlayer) -> void:
 		player.play()
 
 
+func _get_held_nav_dir() -> Vector2:
+	var hold_up: bool = _held_nav_keys.get(KEY_W, false) or _held_nav_keys.get(KEY_UP, false)
+	var hold_down: bool = _held_nav_keys.get(KEY_S, false) or _held_nav_keys.get(KEY_DOWN, false)
+	if hold_up and not hold_down:
+		return Vector2.UP
+	if hold_down and not hold_up:
+		return Vector2.DOWN
+	return Vector2.ZERO
+
+
 func _navigate_directional(dir: Vector2) -> void:
-	# ถ้ากำลังกระโดดอยู่ ให้จดจำทิศทางที่กดไว้ (Input Buffer) เพื่อให้ก้าวต่อไปทันทีที่เท้าแตะแท่นหิน
+	# ถ้ากำลังกระโดดอยู่ ให้จดจำทิศทางที่กดไว้ 1 จังหวะ (Input Buffer) เพื่อให้ก้าวต่อไปเมื่อเท้าแตะแท่นหิน
 	if _is_jumping:
 		_buffered_dir = dir
 		return
@@ -1933,58 +1997,53 @@ func _input(event: InputEvent) -> void:
 		var key_ev := event as InputEventKey
 		if key_ev.keycode == KEY_W:
 			if not key_ev.echo:
+				_held_nav_keys[KEY_W] = key_ev.pressed
 				_set_nav_hint_key_down(&"w", key_ev.pressed)
 		elif key_ev.keycode == KEY_UP:
 			if not key_ev.echo:
+				_held_nav_keys[KEY_UP] = key_ev.pressed
 				_set_nav_hint_key_down(&"up", key_ev.pressed)
 		elif key_ev.keycode == KEY_S:
 			if not key_ev.echo:
+				_held_nav_keys[KEY_S] = key_ev.pressed
 				_set_nav_hint_key_down(&"s", key_ev.pressed)
 		elif key_ev.keycode == KEY_DOWN:
 			if not key_ev.echo:
+				_held_nav_keys[KEY_DOWN] = key_ev.pressed
 				_set_nav_hint_key_down(&"down", key_ev.pressed)
 
-		if key_ev.pressed:
-			var is_nav_key: bool = (
-				key_ev.keycode == KEY_UP or key_ev.keycode == KEY_W or
-				key_ev.keycode == KEY_DOWN or key_ev.keycode == KEY_S
-			)
-			if not key_ev.echo or is_nav_key:
-				if key_ev.keycode == KEY_ESCAPE:
-					get_viewport().set_input_as_handled()
-					_on_back_pressed()
-				elif key_ev.keycode == KEY_PAGEUP:
-					get_viewport().set_input_as_handled()
-					_scroll_to_y(0, true)
-				elif key_ev.keycode == KEY_PAGEDOWN:
-					get_viewport().set_input_as_handled()
-					var bottom_y := 4450
-					if tower_content and scroll_chamber and scroll_chamber.size.y > 0:
-						bottom_y = maxi(0, int(tower_content.custom_minimum_size.y - scroll_chamber.size.y))
-					elif tower_content:
-						bottom_y = int(tower_content.custom_minimum_size.y)
-					_scroll_to_y(bottom_y, true)
-				elif key_ev.keycode == KEY_UP or key_ev.keycode == KEY_W:
-					get_viewport().set_input_as_handled()
-					_navigate_directional(Vector2.UP)
-				elif key_ev.keycode == KEY_DOWN or key_ev.keycode == KEY_S:
-					get_viewport().set_input_as_handled()
-					_navigate_directional(Vector2.DOWN)
-				elif key_ev.keycode == KEY_LEFT or key_ev.keycode == KEY_RIGHT:
-					get_viewport().set_input_as_handled()
-				elif (key_ev.keycode == KEY_ENTER or key_ev.keycode == KEY_KP_ENTER or key_ev.keycode == KEY_SPACE) and not key_ev.alt_pressed:
-					if not key_ev.echo:
-						get_viewport().set_input_as_handled()
-						_on_launch_stage_pressed()
-				elif key_ev.keycode == KEY_1:
-					if not key_ev.echo:
-						get_viewport().set_input_as_handled()
-						_on_act_button_pressed(1)
-				elif key_ev.keycode == KEY_2:
-					if not key_ev.echo:
-						get_viewport().set_input_as_handled()
-						_on_act_button_pressed(2)
-				elif key_ev.keycode == KEY_3:
-					if not key_ev.echo:
-						get_viewport().set_input_as_handled()
-						_on_act_button_pressed(3)
+		if key_ev.pressed and not key_ev.echo:
+			if key_ev.keycode == KEY_ESCAPE:
+				get_viewport().set_input_as_handled()
+				_on_back_pressed()
+			elif key_ev.keycode == KEY_PAGEUP:
+				get_viewport().set_input_as_handled()
+				_scroll_to_y(0, true)
+			elif key_ev.keycode == KEY_PAGEDOWN:
+				get_viewport().set_input_as_handled()
+				var bottom_y := 4450
+				if tower_content and scroll_chamber and scroll_chamber.size.y > 0:
+					bottom_y = maxi(0, int(tower_content.custom_minimum_size.y - scroll_chamber.size.y))
+				elif tower_content:
+					bottom_y = int(tower_content.custom_minimum_size.y)
+				_scroll_to_y(bottom_y, true)
+			elif key_ev.keycode == KEY_UP or key_ev.keycode == KEY_W:
+				get_viewport().set_input_as_handled()
+				_navigate_directional(Vector2.UP)
+			elif key_ev.keycode == KEY_DOWN or key_ev.keycode == KEY_S:
+				get_viewport().set_input_as_handled()
+				_navigate_directional(Vector2.DOWN)
+			elif key_ev.keycode == KEY_LEFT or key_ev.keycode == KEY_RIGHT:
+				get_viewport().set_input_as_handled()
+			elif (key_ev.keycode == KEY_ENTER or key_ev.keycode == KEY_KP_ENTER or key_ev.keycode == KEY_SPACE) and not key_ev.alt_pressed:
+				get_viewport().set_input_as_handled()
+				_on_launch_stage_pressed()
+			elif key_ev.keycode == KEY_1:
+				get_viewport().set_input_as_handled()
+				_on_act_button_pressed(1)
+			elif key_ev.keycode == KEY_2:
+				get_viewport().set_input_as_handled()
+				_on_act_button_pressed(2)
+			elif key_ev.keycode == KEY_3:
+				get_viewport().set_input_as_handled()
+				_on_act_button_pressed(3)
