@@ -159,7 +159,7 @@ dotnet run --project tests/GitDiwaa.Server.Tests
 - [ ] เกมไม่บันทึกอีเมลลงไฟล์
 
 **ฝั่งเกม**
-- [ ] ทุกหน้าคุยกับ server ผ่าน `PlayerSession` เท่านั้น
+- [ ] ทุกอย่างที่ใช้ token คุยกับ server ผ่าน `PlayerSession` เท่านั้น (หน้าล็อกอินมี `AuthApiClient` ของตัวเองได้ เพราะส่งแค่คำขอที่ไม่ใช้ token: health / login / register / register-check)
 - [ ] ข้อความจาก server ไม่ถูกแสดงตรงๆ บนจอ
 - [ ] คำตอบที่มาช้า (หลังผู้เล่นเปลี่ยนหน้า / ออกจากระบบ) ถูกทิ้ง ไม่เขียนทับสถานะ
 
