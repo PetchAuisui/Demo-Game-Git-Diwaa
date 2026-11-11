@@ -61,6 +61,7 @@ extends Node2D
 @onready var dialogue_box: PanelContainer = $MagicStoryUI/DialogueBox
 @onready var speaker_label: Label = $MagicStoryUI/DialogueBox/Margin/VBox/SpeakerLabel
 @onready var dialogue_label: Label = $MagicStoryUI/DialogueBox/Margin/VBox/DialogueLabel
+@onready var arrow_wrapper: Control = $MagicStoryUI/DialogueBox/ArrowOverlay/ArrowWrapper
 @onready var continue_arrow: TextureRect = $MagicStoryUI/DialogueBox/ArrowOverlay/ArrowWrapper/ContinueArrow
 @onready var the_end_container: Control = $MagicStoryUI/TheEndContainer
 @onready var the_end_dark_overlay: ColorRect = $MagicStoryUI/TheEndContainer/DarkOverlay
@@ -102,6 +103,7 @@ var dialogue_callback: Callable = Callable()
 var is_fast_forwarding: bool = false
 var can_fast_forward: bool = true
 var typewriter_tween: Tween = null
+var dialogue_box_tween: Tween = null
 var arrow_tween: Tween = null
 var anger_bounce_tween: Tween = null
 var sigh_puff_tween: Tween = null
@@ -112,6 +114,16 @@ var epilogue_auto_tween: Tween = null
 var comic_pulse_tween: Tween = null
 var shard_drift_tweens: Array[Tween] = []
 var skip_btn_instance: CanvasLayer = null
+
+# Navigation Arrows (◀ ▶)
+var nav_arrows_container: HBoxContainer = null
+var btn_arrow_back: TextureButton = null
+var btn_arrow_next: TextureButton = null
+var press_tween_back: Tween = null
+var press_tween_next: Tween = null
+
+static var _cached_arrow_left_tex: ImageTexture = null
+static var _cached_arrow_right_tex: ImageTexture = null
 
 # Animation timers for spritesheets
 var storm_anim_timer: float = 0.0
@@ -131,6 +143,7 @@ func _ready() -> void:
 	skip_btn_instance = skip_btn
 	add_child(skip_btn)
 	
+	_create_nav_arrows()
 	_init_shards()
 	_reset_all_stages()
 	
@@ -143,8 +156,14 @@ func _exit_tree() -> void:
 	Engine.time_scale = 1.0
 	if typewriter_tween and typewriter_tween.is_valid():
 		typewriter_tween.kill()
+	if dialogue_box_tween and dialogue_box_tween.is_valid():
+		dialogue_box_tween.kill()
 	if arrow_tween and arrow_tween.is_valid():
 		arrow_tween.kill()
+	if press_tween_back and press_tween_back.is_valid():
+		press_tween_back.kill()
+	if press_tween_next and press_tween_next.is_valid():
+		press_tween_next.kill()
 	if anger_bounce_tween and anger_bounce_tween.is_valid():
 		anger_bounce_tween.kill()
 	if sigh_puff_tween and sigh_puff_tween.is_valid():
@@ -210,42 +229,54 @@ func _process(delta: float) -> void:
 	else:
 		camera.offset = Vector2.ZERO
 
+func _is_advance_key(event: InputEvent) -> bool:
+	return event is InputEventKey and event.pressed and not event.echo and (
+		event.keycode == KEY_SPACE or event.keycode == KEY_ENTER or event.keycode == KEY_KP_ENTER or event.keycode == KEY_RIGHT
+	)
+
+func _is_screen_click(event: InputEvent) -> bool:
+	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+		# ป้องกันการคลิกโดนปุ่มควบคุม (FF / Skip / ลูกศร ◀ ▶) ถูกกลืนเป็นการกดอ่านต่อ
+		var hovered := get_viewport().gui_get_hovered_control()
+		return not (hovered is BaseButton)
+	return false
+
 func _input(event: InputEvent) -> void:
 	if is_waiting_comic:
-		if event.is_action_pressed("ui_accept") or \
-		   (event is InputEventKey and event.pressed and not event.echo and (event.keycode == KEY_SPACE or event.keycode == KEY_ENTER)) or \
-		   (event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT):
+		if event.is_action_pressed("ui_accept") or _is_advance_key(event) or _is_screen_click(event):
 			get_viewport().set_input_as_handled()
 			_advance_comic_flashback()
 		return
 	
 	if is_waiting_dialogue:
-		if event.is_action_pressed("ui_accept") or \
-		   (event is InputEventKey and event.pressed and not event.echo and (event.keycode == KEY_SPACE or event.keycode == KEY_ENTER)) or \
-		   (event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT):
+		if event is InputEventKey and event.pressed and not event.echo:
+			if event.keycode == KEY_LEFT or event.keycode == KEY_BACKSPACE:
+				if _can_go_back():
+					get_viewport().set_input_as_handled()
+					_animate_button_press(btn_arrow_back)
+					_on_player_back()
+					return
+		if event.is_action_pressed("ui_accept") or _is_advance_key(event) or _is_screen_click(event):
 			get_viewport().set_input_as_handled()
+			_animate_button_press(btn_arrow_next)
 			_advance_dialogue()
 		return
 	
 	if is_epilogue_typing:
-		if event.is_action_pressed("ui_accept") or \
-		   (event is InputEventKey and event.pressed and not event.echo and (event.keycode == KEY_SPACE or event.keycode == KEY_ENTER)) or \
-		   (event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT):
+		if event.is_action_pressed("ui_accept") or _is_advance_key(event) or _is_screen_click(event):
 			get_viewport().set_input_as_handled()
 			_skip_epilogue_typewriter()
 		return
 	
 	if is_waiting_epilogue:
-		if event.is_action_pressed("ui_accept") or \
-		   (event is InputEventKey and event.pressed and not event.echo and (event.keycode == KEY_SPACE or event.keycode == KEY_ENTER)) or \
-		   (event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT):
+		if event.is_action_pressed("ui_accept") or _is_advance_key(event) or _is_screen_click(event):
 			get_viewport().set_input_as_handled()
 			_advance_epilogue_to_credits()
 		return
 	
 	if current_stage == 9:
 		if event.is_action_pressed("ui_accept") or \
-		   (event is InputEventKey and event.pressed and not event.echo and (event.keycode == KEY_SPACE or event.keycode == KEY_ENTER)):
+		   (event is InputEventKey and event.pressed and not event.echo and (event.keycode == KEY_SPACE or event.keycode == KEY_ENTER or event.keycode == KEY_KP_ENTER)):
 			get_viewport().set_input_as_handled()
 			_on_return_menu_pressed()
 			return
@@ -267,6 +298,21 @@ func _advance_dialogue() -> void:
 	
 	if dialogue_callback.is_valid():
 		dialogue_callback.call()
+
+func _can_go_back() -> bool:
+	if not is_instance_valid(dialogue_box) or not dialogue_box.visible:
+		return false
+	if not is_waiting_dialogue:
+		return false
+	return current_stage == 7 and stage_7_dialogue_index > 0
+
+func _on_player_back() -> void:
+	if not _can_go_back():
+		return
+	if typewriter_tween and typewriter_tween.is_valid():
+		typewriter_tween.kill()
+	stage_7_dialogue_index -= 1
+	_show_stage_7_current_dialogue(true)
 
 func _init_shards() -> void:
 	shards16.clear()
@@ -320,9 +366,13 @@ func _reset_all_stages() -> void:
 		the_end_continue_prompt.visible = false
 	if comic_continue_prompt:
 		comic_continue_prompt.modulate.a = 0.0
+	is_waiting_dialogue = false
 	is_waiting_comic = false
 	is_epilogue_typing = false
 	is_waiting_epilogue = false
+	if dialogue_box_tween and dialogue_box_tween.is_valid():
+		dialogue_box_tween.kill()
+	_hide_continue_arrow()
 	if comic_pulse_tween and comic_pulse_tween.is_valid():
 		comic_pulse_tween.kill()
 	if epilogue_pulse_tween and epilogue_pulse_tween.is_valid():
@@ -871,7 +921,7 @@ func play_stage_7_dialogue() -> void:
 	stage_7_dialogue_index = 0
 	_show_stage_7_current_dialogue()
 
-func _show_stage_7_current_dialogue() -> void:
+func _show_stage_7_current_dialogue(skip_typewriter: bool = false) -> void:
 	if stage_7_dialogue_index >= STAGE_7_DIALOGUES.size():
 		_stop_anger_mark()
 		_stop_sigh_puff()
@@ -897,7 +947,7 @@ func _show_stage_7_current_dialogue() -> void:
 	_show_dialogue(data["speaker"], data["text"], func():
 		stage_7_dialogue_index += 1
 		_show_stage_7_current_dialogue()
-	)
+	, skip_typewriter)
 
 func _start_anger_mark() -> void:
 	if not is_instance_valid(anger_mark):
@@ -1255,10 +1305,9 @@ func play_stage_9_credits() -> void:
 ## =============================================================
 ## ระบบกล่องข้อความบทสนทนา (Helper Functions)
 ## =============================================================
-func _show_dialogue(speaker: String, text: String, on_continue: Callable) -> void:
+func _show_dialogue(speaker: String, text: String, on_continue: Callable, skip_typewriter: bool = false) -> void:
 	is_waiting_dialogue = true
 	dialogue_callback = on_continue
-	_hide_continue_arrow()
 	
 	speaker_label.text = speaker
 	if speaker == "เวล":
@@ -1268,20 +1317,31 @@ func _show_dialogue(speaker: String, text: String, on_continue: Callable) -> voi
 	
 	dialogue_label.text = text
 	dialogue_label.visible_characters = -1
-	dialogue_label.visible_ratio = 0.0
 	
+	var needs_box_pop: bool = not dialogue_box.visible
 	dialogue_box.visible = true
-	dialogue_box.modulate = Color(1, 1, 1, 0)
-	dialogue_box.scale = Vector2(0.96, 0.96)
-	dialogue_box.pivot_offset = dialogue_box.size * 0.5
-	
-	var tw = create_tween().set_parallel(true)
-	tw.tween_property(dialogue_box, "modulate:a", 1.0, 0.25)
-	tw.tween_property(dialogue_box, "scale", Vector2.ONE, 0.25).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	if needs_box_pop:
+		if dialogue_box_tween and dialogue_box_tween.is_valid():
+			dialogue_box_tween.kill()
+		dialogue_box.modulate = Color(1, 1, 1, 0)
+		dialogue_box.scale = Vector2(0.96, 0.96)
+		dialogue_box.pivot_offset = dialogue_box.size * 0.5
+		
+		dialogue_box_tween = create_tween().set_parallel(true)
+		dialogue_box_tween.tween_property(dialogue_box, "modulate:a", 1.0, 0.25)
+		dialogue_box_tween.tween_property(dialogue_box, "scale", Vector2.ONE, 0.25).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	
 	# เอฟเฟกต์พิมพ์ตัวอักษรทีละตัว (Typewriter)
 	if typewriter_tween and typewriter_tween.is_valid():
 		typewriter_tween.kill()
+	
+	if skip_typewriter:
+		dialogue_label.visible_ratio = 1.0
+		_show_continue_arrow()
+		return
+	
+	dialogue_label.visible_ratio = 0.0
+	_hide_continue_arrow()
 	
 	var duration: float = clampf(float(text.length()) * 0.03, 0.35, 1.4)
 	typewriter_tween = create_tween()
@@ -1295,25 +1355,25 @@ func _hide_dialogue(on_finish: Callable) -> void:
 	_hide_continue_arrow()
 	if typewriter_tween and typewriter_tween.is_valid():
 		typewriter_tween.kill()
+	if dialogue_box_tween and dialogue_box_tween.is_valid():
+		dialogue_box_tween.kill()
 		
-	var tw = create_tween()
-	tw.tween_property(dialogue_box, "modulate:a", 0.0, 0.2)
-	tw.tween_callback(func():
+	dialogue_box_tween = create_tween()
+	dialogue_box_tween.tween_property(dialogue_box, "modulate:a", 0.0, 0.2)
+	dialogue_box_tween.tween_callback(func():
 		dialogue_box.visible = false
 		if on_finish.is_valid():
 			on_finish.call()
 	)
 
 func _show_continue_arrow() -> void:
-	if not is_instance_valid(continue_arrow):
-		return
 	if arrow_tween and arrow_tween.is_valid():
 		arrow_tween.kill()
-	continue_arrow.position.y = 0.0
-	continue_arrow.visible = true
-	arrow_tween = create_tween().set_loops()
-	arrow_tween.tween_property(continue_arrow, "position:y", 4.0, 0.45).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
-	arrow_tween.tween_property(continue_arrow, "position:y", 0.0, 0.45).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	if is_instance_valid(continue_arrow):
+		continue_arrow.visible = false
+	if is_instance_valid(arrow_wrapper):
+		arrow_wrapper.visible = false
+	_update_nav_arrows()
 
 func _hide_continue_arrow() -> void:
 	if arrow_tween and arrow_tween.is_valid():
@@ -1321,6 +1381,192 @@ func _hide_continue_arrow() -> void:
 	if is_instance_valid(continue_arrow):
 		continue_arrow.visible = false
 		continue_arrow.position.y = 0.0
+	if is_instance_valid(arrow_wrapper):
+		arrow_wrapper.visible = false
+	_update_nav_arrows()
+
+# ==============================================================================
+# NAVIGATION ARROWS SYSTEM (ลูกศร ◀ ▶ ข้างกัน)
+# ==============================================================================
+
+static func _get_nav_arrow_texture(is_left: bool) -> ImageTexture:
+	if is_left and _cached_arrow_left_tex != null:
+		return _cached_arrow_left_tex
+	if not is_left and _cached_arrow_right_tex != null:
+		return _cached_arrow_right_tex
+	
+	var arrow_stream = load("res://assets/cutscene/frame dialog text/arrow.png")
+	if not arrow_stream:
+		return null
+	var img: Image = arrow_stream.get_image()
+	if not img:
+		return null
+	var cropped: Image = img.get_region(Rect2i(561, 344, 537, 334))
+	
+	if is_left:
+		var img_left = cropped.duplicate()
+		img_left.rotate_90(CLOCKWISE)
+		_cached_arrow_left_tex = ImageTexture.create_from_image(img_left)
+		return _cached_arrow_left_tex
+	else:
+		var img_right = cropped.duplicate()
+		img_right.rotate_90(COUNTERCLOCKWISE)
+		_cached_arrow_right_tex = ImageTexture.create_from_image(img_right)
+		return _cached_arrow_right_tex
+
+func _create_nav_arrows() -> void:
+	if nav_arrows_container != null and is_instance_valid(nav_arrows_container):
+		return
+	
+	var arrow_overlay = dialogue_box.get_node_or_null("ArrowOverlay")
+	if not arrow_overlay:
+		return
+	
+	# ปรับระยะขอบขวาของ Margin เพื่อป้องกันข้อความยาวทับลูกศร ◀ ▶
+	var margin_node = dialogue_box.get_node_or_null("Margin")
+	if margin_node:
+		margin_node.add_theme_constant_override("margin_right", 96)
+	
+	# ซ่อนลูกศรเดี่ยวเดิม
+	if arrow_wrapper:
+		arrow_wrapper.visible = false
+	if continue_arrow:
+		continue_arrow.visible = false
+	
+	nav_arrows_container = HBoxContainer.new()
+	nav_arrows_container.name = "NavArrowsContainer"
+	nav_arrows_container.layout_mode = 1
+	nav_arrows_container.anchors_preset = Control.PRESET_BOTTOM_RIGHT
+	nav_arrows_container.anchor_left = 1.0
+	nav_arrows_container.anchor_right = 1.0
+	nav_arrows_container.anchor_top = 1.0
+	nav_arrows_container.anchor_bottom = 1.0
+	nav_arrows_container.offset_left = -78.0
+	nav_arrows_container.offset_top = -42.0
+	nav_arrows_container.offset_right = -24.0
+	nav_arrows_container.offset_bottom = -16.0
+	nav_arrows_container.grow_horizontal = Control.GROW_DIRECTION_BEGIN
+	nav_arrows_container.grow_vertical = Control.GROW_DIRECTION_BEGIN
+	nav_arrows_container.alignment = BoxContainer.ALIGNMENT_END
+	nav_arrows_container.add_theme_constant_override("separation", 12)
+	
+	# 1. ปุ่มลูกศรซ้าย ◀ (ย้อนกลับ)
+	btn_arrow_back = TextureButton.new()
+	btn_arrow_back.name = "BtnArrowBack"
+	btn_arrow_back.texture_normal = _get_nav_arrow_texture(true)
+	btn_arrow_back.ignore_texture_size = true
+	btn_arrow_back.stretch_mode = TextureButton.STRETCH_KEEP_ASPECT_CENTERED
+	btn_arrow_back.custom_minimum_size = Vector2(20, 26)
+	btn_arrow_back.focus_mode = Control.FOCUS_NONE
+	btn_arrow_back.mouse_filter = Control.MOUSE_FILTER_STOP
+	btn_arrow_back.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	_setup_arrow_hover(btn_arrow_back)
+	btn_arrow_back.pressed.connect(func():
+		_animate_button_press(btn_arrow_back)
+		_on_player_back()
+	)
+	nav_arrows_container.add_child(btn_arrow_back)
+	
+	# 2. ปุ่มลูกศรขวา ▶ (ไปต่อ)
+	btn_arrow_next = TextureButton.new()
+	btn_arrow_next.name = "BtnArrowNext"
+	btn_arrow_next.texture_normal = _get_nav_arrow_texture(false)
+	btn_arrow_next.ignore_texture_size = true
+	btn_arrow_next.stretch_mode = TextureButton.STRETCH_KEEP_ASPECT_CENTERED
+	btn_arrow_next.custom_minimum_size = Vector2(20, 26)
+	btn_arrow_next.focus_mode = Control.FOCUS_NONE
+	btn_arrow_next.mouse_filter = Control.MOUSE_FILTER_STOP
+	btn_arrow_next.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	_setup_arrow_hover(btn_arrow_next)
+	btn_arrow_next.pressed.connect(func():
+		_animate_button_press(btn_arrow_next)
+		_advance_dialogue()
+	)
+	nav_arrows_container.add_child(btn_arrow_next)
+	
+	arrow_overlay.add_child(nav_arrows_container)
+	_update_nav_arrows()
+
+func _animate_button_press(btn: TextureButton) -> void:
+	if not is_instance_valid(btn) or not btn.visible or btn.disabled:
+		return
+	if btn == btn_arrow_back and press_tween_back and press_tween_back.is_valid():
+		press_tween_back.kill()
+	elif btn == btn_arrow_next and press_tween_next and press_tween_next.is_valid():
+		press_tween_next.kill()
+	
+	btn.pivot_offset = btn.size / 2.0
+	btn.position.y = 2.0
+	btn.scale = Vector2(0.90, 0.90)
+	btn.modulate = Color(2.4, 2.4, 2.4, 1.0)
+	
+	var tw = btn.create_tween()
+	tw.set_parallel(true)
+	tw.tween_property(btn, "position:y", 0.0, 0.12).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	tw.tween_property(btn, "scale", Vector2.ONE, 0.12).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	var is_hovered = btn.get_global_rect().has_point(btn.get_global_mouse_position())
+	var target_mod = Color(1.4, 1.4, 1.4, 1.0) if is_hovered else Color(1.0, 1.0, 1.0, 1.0)
+	tw.tween_property(btn, "modulate", target_mod, 0.14)
+	
+	if btn == btn_arrow_back:
+		press_tween_back = tw
+	elif btn == btn_arrow_next:
+		press_tween_next = tw
+
+func _setup_arrow_hover(btn: TextureButton) -> void:
+	btn.mouse_entered.connect(func():
+		var is_pressing = (btn == btn_arrow_back and press_tween_back and press_tween_back.is_valid()) or \
+			(btn == btn_arrow_next and press_tween_next and press_tween_next.is_valid())
+		if not is_pressing and not btn.disabled and btn.visible:
+			var tw = create_tween()
+			tw.tween_property(btn, "modulate", Color(1.4, 1.4, 1.4, 1.0), 0.08)
+	)
+	btn.mouse_exited.connect(func():
+		var is_pressing = (btn == btn_arrow_back and press_tween_back and press_tween_back.is_valid()) or \
+			(btn == btn_arrow_next and press_tween_next and press_tween_next.is_valid())
+		if not is_pressing and not btn.disabled and btn.visible:
+			var tw = create_tween()
+			tw.tween_property(btn, "modulate", Color(1.0, 1.0, 1.0, 1.0), 0.12)
+	)
+
+func _update_nav_arrows() -> void:
+	if not nav_arrows_container or not is_instance_valid(nav_arrows_container):
+		return
+	if not is_instance_valid(dialogue_box) or not dialogue_box.visible or not is_waiting_dialogue:
+		nav_arrows_container.visible = false
+		return
+	
+	nav_arrows_container.visible = true
+	
+	# ลูกศรซ้าย ◀ (ย้อนกลับ)
+	var can_back = _can_go_back()
+	btn_arrow_back.disabled = not can_back
+	btn_arrow_back.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND if can_back else Control.CURSOR_ARROW
+	if can_back:
+		if not (press_tween_back and press_tween_back.is_valid()):
+			var is_hovered = btn_arrow_back.get_global_rect().has_point(btn_arrow_back.get_global_mouse_position())
+			btn_arrow_back.modulate = Color(1.4, 1.4, 1.4, 1.0) if is_hovered else Color(1.0, 1.0, 1.0, 1.0)
+	else:
+		if press_tween_back and press_tween_back.is_valid():
+			press_tween_back.kill()
+		btn_arrow_back.position.y = 0.0
+		btn_arrow_back.scale = Vector2.ONE
+		btn_arrow_back.modulate = Color(1.0, 1.0, 1.0, 0.25)
+	
+	# ลูกศรขวา ▶ (ไปต่อ)
+	var can_next = is_waiting_dialogue
+	btn_arrow_next.disabled = not can_next
+	btn_arrow_next.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND if can_next else Control.CURSOR_ARROW
+	if can_next:
+		if not (press_tween_next and press_tween_next.is_valid()):
+			var is_hovered = btn_arrow_next.get_global_rect().has_point(btn_arrow_next.get_global_mouse_position())
+			btn_arrow_next.modulate = Color(1.4, 1.4, 1.4, 1.0) if is_hovered else Color(1.0, 1.0, 1.0, 1.0)
+	else:
+		if press_tween_next and press_tween_next.is_valid():
+			press_tween_next.kill()
+		btn_arrow_next.position.y = 0.0
+		btn_arrow_next.scale = Vector2.ONE
+		btn_arrow_next.modulate = Color(1.0, 1.0, 1.0, 0.25)
 
 func _on_return_menu_pressed() -> void:
 	if is_instance_valid(return_menu_btn):
