@@ -10,7 +10,6 @@ extends Node
 ## 3. Everything read from a response is type-checked before use: network data is untrusted.
 ## 4. TLS certificate checks use Godot's defaults. Never switch to unsafe TLS options.
 
-const MAX_TOKEN_LENGTH := 128
 const MAX_CODE_LENGTH := 64
 const MAX_FIELD_ERRORS := 16
 const DEFAULT_RETRY_AFTER_SEC := 60
@@ -78,7 +77,7 @@ func login(identifier: String, password: String, remember_me: bool) -> AuthApiRe
 
 
 func refresh(token: String) -> AuthApiResult:
-	return await _send(HTTPClient.METHOD_POST, AuthConfig.API_PREFIX + "/refresh", null, token, AuthConfig.REQUEST_TIMEOUT_SEC)
+	return await _send(HTTPClient.METHOD_POST, AuthConfig.API_PREFIX + "/refresh", null, token, AuthConfig.REFRESH_TIMEOUT_SEC)
 
 
 func logout(token: String) -> AuthApiResult:
@@ -140,7 +139,8 @@ func _send(method: HTTPClient.Method, path: String, body: Variant, token: String
 		return AuthApiResult.failure(0, AuthApiResult.SERVER_ERROR)
 
 	# A malformed token could inject extra header lines; treat it as an invalid session.
-	if not token.is_empty() and not _is_safe_token(token):
+	# (token ว่าง = คำขอที่ไม่ใช้ token จึงไม่ต้องตรวจ รูปแบบที่ยอมรับอยู่ที่ SessionStore.is_safe_token ที่เดียว)
+	if not token.is_empty() and not SessionStore.is_safe_token(token):
 		return AuthApiResult.failure(0, AuthApiResult.INVALID_CREDENTIALS)
 
 	var headers := PackedStringArray(["Accept: application/json"])
@@ -228,17 +228,3 @@ func _read_retry_after(headers: PackedStringArray, max_sec: int = MAX_RETRY_AFTE
 		if value.is_valid_int():
 			return clampi(value.to_int(), 0, max_sec)
 	return DEFAULT_RETRY_AFTER_SEC
-
-
-func _is_safe_token(token: String) -> bool:
-	if token.length() > MAX_TOKEN_LENGTH:
-		return false
-	for i in range(token.length()):
-		var c := token.unicode_at(i)
-		var is_lower := c >= 0x61 and c <= 0x7A  # a-z
-		var is_upper := c >= 0x41 and c <= 0x5A  # A-Z
-		var is_digit := c >= 0x30 and c <= 0x39  # 0-9
-		var is_url_safe := c == 0x2D or c == 0x5F  # - _
-		if not (is_lower or is_upper or is_digit or is_url_safe):
-			return false
-	return true

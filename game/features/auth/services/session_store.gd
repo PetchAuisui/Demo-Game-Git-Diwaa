@@ -45,7 +45,7 @@ static func is_valid(session: Dictionary) -> bool:
 	if session.get("version") != FORMAT_VERSION:
 		return false
 	var token: Variant = session.get("token")
-	if not (token is String) or not _is_safe_token(token):
+	if not (token is String) or not is_safe_token(token):
 		return false
 	var expires: Variant = session.get("expires_unix")
 	if not (expires is int) or expires <= 0:
@@ -164,7 +164,10 @@ static func _parse_utc_unix(value: Variant) -> int:
 	return unix if unix > 0 else 0
 
 
-static func _is_safe_token(token: String) -> bool:
+## รูปแบบ token ที่ยอมรับ (ตัวอักษร base64url ไม่ว่าง ยาวไม่เกิน MAX_TOKEN_LENGTH) มีที่นี่ที่เดียว
+## ใช้ทั้งตอนบันทึก / อ่านไฟล์ และตอน AuthApiClient ใส่ token ใน header (กัน header injection)
+## ถ้ารูปแบบ token ของ server เปลี่ยน แก้ที่นี่ที่เดียว
+static func is_safe_token(token: String) -> bool:
 	if token.is_empty() or token.length() > MAX_TOKEN_LENGTH:
 		return false
 	for i in range(token.length()):
