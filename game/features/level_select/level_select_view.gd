@@ -177,6 +177,7 @@ var _keycap_style_pressed: StyleBox = null
 
 
 func _ready() -> void:
+	_is_muted = AudioServer.is_bus_mute(0)
 	_load_resources()
 	_bind_nodes()
 	_setup_nav_hint_keys()
@@ -458,6 +459,7 @@ func _wire_navbar() -> void:
 		btn_focus_current.add_theme_stylebox_override("pressed", empty_continue_sb)
 		btn_focus_current.add_theme_stylebox_override("focus", empty_continue_sb)
 	if btn_sound:
+		btn_sound.text = "🔇" if _is_muted else "🔊"
 		btn_sound.pressed.connect(_on_toggle_sound)
 	if btn_launch:
 		btn_launch.pressed.connect(_on_launch_stage_pressed)
