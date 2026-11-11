@@ -151,6 +151,7 @@ var _is_jumping := false
 var _target_queue_idx: int = -1
 var _landing_seq_id: int = 0
 var _angry_seq_id: int = 0
+var _locked_desc_seq_id: int = 0
 var _buffered_dir: Vector2 = Vector2.ZERO
 var _jump_tween: Tween = null
 var _angry_tween: Tween = null
@@ -679,8 +680,7 @@ func _on_act_button_pressed(act_num: int) -> void:
 	var prog := _get_act_progress(act_num)
 	if not prog["is_unlocked"]:
 		_play_sfx(sfx_click)
-		if hud_desc:
-			hud_desc.text = "🔒 ACT %d ยังถูกผนึก! ต้องผ่านบทก่อนหน้าเพื่อปลดล็อก" % act_num
+		_show_locked_hud_notice("🔒 ACT %d ยังถูกผนึก! ต้องผ่านบทก่อนหน้าเพื่อปลดล็อก" % act_num)
 		return
 
 	_play_sfx(sfx_click)
@@ -1230,15 +1230,28 @@ func _perform_direct_leap(to_idx: int) -> void:
 
 
 func _on_locked_platform_clicked(idx: int) -> void:
+	if idx < 0 or idx >= TOWER_STAGES.size():
+		return
 	_play_sfx(sfx_click)
 	var stg := TOWER_STAGES[idx]
-	if hud_desc:
-		var original_text := str(stg["desc"])
-		hud_desc.text = "🔒 แท่นหินด่าน %s ยังถูกผนึก! ต้องผ่านด่านก่อนหน้าเพื่อปลดล็อก" % stg["no"]
-		get_tree().create_timer(1.8).timeout.connect(func():
-			if _current_stage_idx == idx:
-				hud_desc.text = original_text
-		)
+	_show_locked_hud_notice("🔒 แท่นหินด่าน %s ยังถูกผนึก! ต้องผ่านด่านก่อนหน้าเพื่อปลดล็อก" % stg["no"])
+
+
+func _show_locked_hud_notice(message: String) -> void:
+	if not is_instance_valid(hud_desc):
+		return
+	_locked_desc_seq_id += 1
+	var my_seq := _locked_desc_seq_id
+	hud_desc.text = message
+	var tree := get_tree()
+	if not tree:
+		return
+	tree.create_timer(1.8).timeout.connect(func():
+		if not is_instance_valid(hud_desc) or _locked_desc_seq_id != my_seq:
+			return
+		if _current_stage_idx >= 0 and _current_stage_idx < TOWER_STAGES.size():
+			hud_desc.text = str(TOWER_STAGES[_current_stage_idx]["desc"])
+	)
 
 
 func _try_navigate_stage(target_idx: int) -> void:
@@ -1623,6 +1636,7 @@ func _update_hud_display(stg: Dictionary) -> void:
 	if hud_cmd:
 		hud_cmd.text = stg["cmd"]
 	if hud_desc:
+		_locked_desc_seq_id += 1
 		hud_desc.text = stg["desc"]
 
 	if btn_launch:
