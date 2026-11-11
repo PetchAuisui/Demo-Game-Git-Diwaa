@@ -1,3 +1,4 @@
+using System.Net;
 using System.Text.Json.Serialization;
 using System.Threading.RateLimiting;
 using GitDiwaa.Online.Accounts.Contracts;
@@ -9,6 +10,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Configuration;
@@ -60,6 +62,35 @@ public static class ServerApp
         builder.Services.AddSingleton<AccountService>();
         builder.Services.AddSingleton<RequireSessionFilter>();
 
+        // อยู่หลัง reverse proxy / load balancer: ต้องบอกว่า proxy ตัวไหนเชื่อถือได้ server ถึงจะอ่าน IP จริงของผู้เล่น
+        // จาก X-Forwarded-For (ไม่อย่างนั้นทุกคำขอมาจาก IP ของ proxy ผู้เล่นทั้งเกมใช้โควตา rate limit ร่วมกัน)
+        // และอ่าน X-Forwarded-Proto (ไม่อย่างนั้น UseHttpsRedirection จะ redirect วนเพราะเห็นทุกคำขอเป็น http)
+        //   ForwardedHeaders:KnownProxies   รายการ IP ของ proxy            เช่น ["10.0.0.5"]
+        //   ForwardedHeaders:KnownNetworks  รายการวง network ของ proxy     เช่น ["10.0.0.0/24"]
+        // ไม่ตั้งเลย = ไม่อ่าน header พวกนี้ (ปลอดภัยเมื่อ server รับคำขอตรงจากผู้เล่น)
+        // ห้ามเชื่อทุกต้นทาง: ใครก็ปลอม X-Forwarded-For มาหลบ rate limit และการพักล็อกอินได้
+        string[] knownProxies = builder.Configuration.GetSection("ForwardedHeaders:KnownProxies").Get<string[]>() ?? [];
+        string[] knownNetworks = builder.Configuration.GetSection("ForwardedHeaders:KnownNetworks").Get<string[]>() ?? [];
+        bool useForwardedHeaders = knownProxies.Length > 0 || knownNetworks.Length > 0;
+        if (useForwardedHeaders)
+        {
+            builder.Services.Configure<ForwardedHeadersOptions>(forwarded =>
+            {
+                forwarded.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+                // ล้างค่าเริ่มต้น (loopback) ออก เชื่อเฉพาะที่ตั้งไว้ ค่าที่พิมพ์ผิดจะทำให้ server ไม่ยอมเริ่ม (ดีกว่าเงียบแล้วเชื่อผิดตัว)
+                forwarded.KnownProxies.Clear();
+                forwarded.KnownIPNetworks.Clear();
+                foreach (string proxy in knownProxies)
+                {
+                    forwarded.KnownProxies.Add(IPAddress.Parse(proxy));
+                }
+                foreach (string network in knownNetworks)
+                {
+                    forwarded.KnownIPNetworks.Add(System.Net.IPNetwork.Parse(network));
+                }
+            });
+        }
+
         // Rate limiting configurations
         // ค่าเริ่มต้นคิดเผื่อห้องเรียน / แล็บที่ทุกคนออกเน็ต IP เดียวกัน (ประมาณ 40 คน) ทุกค่าตั้งใหม่ได้ใน appsettings / command line
         //   AuthPermitLimit    endpoint ที่ไม่ต้องล็อกอิน (สมัคร / ตรวจซ้ำ / ล็อกอิน / ต่ออายุ) ต่อ IP ต่อนาที
@@ -108,7 +139,7 @@ public static class ServerApp
                     });
             });
 
-            // endpoint ที่ต้องล็อกอิน (/me/*): นับต่อ session แทนต่อ IP ผู้เล่นหลายคนในเน็ตเดียวกันจึงไม่แย่งโควตากัน
+            // endpoint ที่ต้องล็อกอิน (/me/*) และ /logout: นับต่อ session แทนต่อ IP ผู้เล่นหลายคนในเน็ตเดียวกันจึงไม่แย่งโควตากัน
             // กุญแจเป็น hash ของ token (ไม่เก็บ token จริงไว้ในตัวนับ) ไม่มี token / token รูปแบบผิด = นับรวมต่อ IP
             // คนที่สุ่ม token รูปแบบถูกมายิงจะได้ตัวนับแยก แต่ยังติดเพดานรวมต่อ IP (GlobalLimiter) ด้านบน
             rateLimiterOptions.AddPolicy("account", httpContext =>
@@ -152,6 +183,12 @@ public static class ServerApp
                 await context.Response.WriteAsJsonAsync(new ApiError(AuthErrorCode.ServerError, []));
             });
         });
+
+        // ต้องมาก่อน rate limiter และ HTTPS redirection เพราะทั้งคู่ใช้ IP / scheme ที่แก้แล้ว
+        if (useForwardedHeaders)
+        {
+            app.UseForwardedHeaders();
+        }
 
         app.UseRateLimiter();
 
