@@ -116,10 +116,15 @@ func _on_button_focus_entered() -> void:
 func _on_start_career_pressed() -> void:
 	_play_sfx(_sfx_click)
 	_append_terminal_text("> Executing START NEW CAREER...")
-	_append_terminal_text("> Opening Tower Ascension Roadmap...")
 
-	get_tree().create_timer(0.35).timeout.connect(func() -> void:
-		get_tree().change_scene_to_file("res://features/level_select/level_select_view.tscn"))
+	if GameProgressManager.has_seen_intro_cutscene():
+		_append_terminal_text("> Opening Tower Ascension Roadmap...")
+		get_tree().create_timer(0.35).timeout.connect(func() -> void:
+			_transition_to_scene("res://features/level_select/level_select_view.tscn"))
+	else:
+		_append_terminal_text("> Initializing Magic Tower apprentice session...")
+		get_tree().create_timer(0.35).timeout.connect(func() -> void:
+			_transition_to_scene("res://features/cutscene/cut_scence_normal.tscn"))
 
 
 func _on_resume_work_pressed() -> void:
