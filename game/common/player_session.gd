@@ -44,6 +44,12 @@ var display_name_next_change_unix := 0
 ## ตอนนี้เปลี่ยนชื่อได้อีกกี่ครั้ง (-1 = ยังไม่รู้) ใช้แค่บอกผู้เล่น server เป็นผู้ตัดสินจริง
 var display_name_changes_available := -1
 
+# อีเมลที่จำไว้ในหน่วยความจำ (ดู fetch_email) ห้าม print ห้ามบันทึกลงไฟล์
+var _email_cache := ""
+var _email_cache_owner := ""
+var _email_fetching := false
+signal _email_fetched
+
 
 func _ready() -> void:
 	_api = AuthApiClient.new()
@@ -90,6 +96,7 @@ func start_session(login_data: Dictionary, remember_me: bool) -> bool:
 	var session := SessionStore.from_login_response(login_data)
 	if session.is_empty():
 		return false
+	_forget_email()  # ล็อกอินใหม่: ห้ามใช้อีเมลที่จำไว้ของบัญชีก่อนหน้า
 	_session = session
 	_remembered = remember_me
 	display_name_next_change_unix = 0
@@ -114,6 +121,7 @@ func sign_out() -> void:
 		session_changed.emit()
 		return
 	var token := get_token()
+	_forget_email()
 	_session = {}
 	_remembered = false
 	state = State.SIGNED_OUT
@@ -166,18 +174,43 @@ func _apply_display_name_status(data: Dictionary) -> void:
 	display_name_next_change_unix = SessionStore.parse_utc_unix(data.get("nextChangeAllowedAt"))
 
 
-## อีเมลของบัญชีที่ล็อกอินอยู่ ขอจาก server ทุกครั้ง ไม่เก็บไว้ในไฟล์หรือใน session (คืน "" ถ้าไม่ออนไลน์ / ขอไม่สำเร็จ)
+## อีเมลของบัญชีที่ล็อกอินอยู่ (คืน "" ถ้าไม่ออนไลน์ / ขอไม่สำเร็จ)
+## ขอจาก server ครั้งแรกครั้งเดียวต่อการล็อกอิน แล้วจำไว้ในหน่วยความจำ (ลดคำขอที่กินโควตาของ server)
+## ไม่เก็บลงไฟล์ และลืมทิ้งทันทีเมื่อออกจากระบบ / ล็อกอินบัญชีใหม่ (_forget_email)
 ## ใช้แสดงให้เจ้าของดูเท่านั้น (เมนูบัญชีปิดบังไว้ก่อน) ห้าม print หรือส่งต่อไปที่อื่น
 func fetch_email() -> String:
 	if state != State.ONLINE:
 		return ""
+	var owner_id := get_user_id()
+	if _email_fetching:
+		# มีคนกำลังขออยู่ (เช่น เมนูกับหน้าบัญชีเปิดพร้อมกัน) รอผลเดียวกัน ไม่ต้องขอซ้ำ
+		await _email_fetched
+		return _cached_email_for(owner_id)
+	if not _cached_email_for(owner_id).is_empty():
+		return _email_cache
+
+	_email_fetching = true
 	var result := await _api.get_my_email(get_token())
-	if not result.ok:
+	_email_fetching = false
+	var email: Variant = result.data.get("email") if result.ok else null
+	# ระหว่างรอ ออกจากระบบ / เปลี่ยนบัญชีไปแล้ว: ไม่จำ และไม่คืนอีเมลของบัญชีเก่า
+	if email is String and (email as String).length() <= 254 and (email as String).contains("@") \
+			and state == State.ONLINE and get_user_id() == owner_id:
+		_email_cache = email
+		_email_cache_owner = owner_id
+	_email_fetched.emit()
+	return _cached_email_for(owner_id)
+
+
+func _cached_email_for(owner_id: String) -> String:
+	if state != State.ONLINE or owner_id.is_empty() or _email_cache_owner != owner_id or get_user_id() != owner_id:
 		return ""
-	var email: Variant = result.data.get("email")
-	if not (email is String) or (email as String).length() > 254 or not (email as String).contains("@"):
-		return ""
-	return email
+	return _email_cache
+
+
+func _forget_email() -> void:
+	_email_cache = ""
+	_email_cache_owner = ""
 
 
 ## เปลี่ยนชื่อที่แสดง (ออนไลน์เท่านั้น) server เป็นผู้ตัดสินเรื่องชื่อซ้ำและกฎ 14 วัน
