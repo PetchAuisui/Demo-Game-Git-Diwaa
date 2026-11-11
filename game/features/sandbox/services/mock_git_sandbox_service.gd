@@ -71,7 +71,7 @@ func execute(command_line: String) -> GitCommandResult:
 			_current_branch_value = parts[3]
 			return GitCommandResult.new(true, 0, "Switched to a new branch '%s'" % _current_branch_value, "", trimmed)
 
-	if trimmed == "git --version":
+	if trimmed == "git --version" or trimmed == "git version":
 		return GitCommandResult.new(true, 0, "git version 2.45.0 (Git-Diwaa Mock)", "", trimmed)
 
 	if trimmed.begins_with("git commit"):
