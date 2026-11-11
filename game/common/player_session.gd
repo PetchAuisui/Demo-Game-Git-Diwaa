@@ -33,6 +33,9 @@ const RESTORE_RATE_LIMITED := "rate_limited"  # ลองบ่อยเกิ�
 
 # ต่ออายุ token ล่วงหน้าเมื่อเหลืออายุไม่เกินนี้ (วินาที) ทำตอนจะส่งคำขอที่ใช้ token (ดู _refresh_if_expiring)
 const REFRESH_MARGIN_SEC := 30 * 60
+# ลองต่ออายุไม่ถี่กว่านี้ (ms) เช่น ตอนถูกจำกัดจำนวนครั้ง หรือเน็ตต่อไม่ติด จะไม่ยิงซ้ำทุกคำขอ
+# นับด้วย Time.get_ticks_msec (เวลาตั้งแต่เปิดเกม) ไม่ใช่นาฬิกาเครื่อง ผู้เล่นแก้นาฬิกาแล้วไม่มีผล
+const REFRESH_RETRY_COOLDOWN_MSEC := 5 * 60 * 1000
 
 var state: State = State.SIGNED_OUT
 var _session: Dictionary = {}
@@ -52,6 +55,8 @@ var session_expired := false
 
 var _refreshing := false
 signal _refresh_finished
+# เวลา (Time.get_ticks_msec) ที่ลองต่ออายุครั้งล่าสุดของ session นี้ -1 = ยังไม่เคยลอง
+var _last_refresh_attempt_msec := -1
 
 # อีเมลที่จำไว้ในหน่วยความจำ (ดู fetch_email) ห้าม print ห้ามบันทึกลงไฟล์
 var _email_cache := ""
@@ -107,6 +112,7 @@ func start_session(login_data: Dictionary, remember_me: bool) -> bool:
 		return false
 	_forget_email()  # ล็อกอินใหม่: ห้ามใช้อีเมลที่จำไว้ของบัญชีก่อนหน้า
 	session_expired = false
+	_last_refresh_attempt_msec = -1
 	_session = session
 	_remembered = remember_me
 	display_name_next_change_unix = 0
@@ -132,6 +138,7 @@ func sign_out() -> void:
 		return
 	var token := get_token()
 	session_expired = false
+	_last_refresh_attempt_msec = -1
 	_forget_email()
 	_session = {}
 	_remembered = false
@@ -170,7 +177,12 @@ func _send_with_token(request: Callable) -> AuthApiResult:
 
 
 ## ต่ออายุ token ถ้าเหลืออายุไม่เกิน REFRESH_MARGIN_SEC (server เปลี่ยน token ใบใหม่ให้ ใบเก่าใช้ไม่ได้อีก)
-## ไม่ต่ออายุเมื่อเจอ 401 เฉยๆ: token ที่ถูกยกเลิกแล้วเอาไปต่ออายุ server จะถือว่าถูกขโมยและตัดทุก session ของบัญชี
+## - ไม่ต่ออายุเมื่อเจอ 401 เฉยๆ: token ที่ถูกยกเลิกแล้วเอาไปต่ออายุ server จะถือว่าถูกขโมยและตัดทุก session ของบัญชี
+## - นาฬิกาในเครื่องบอกว่าหมดอายุแล้วก็ยังลองต่ออายุ ให้ server เป็นผู้ตัดสิน (นาฬิกาเครื่องอาจผิด)
+## - ก่อนต่ออายุ ดูไฟล์จดจำก่อน: เกมอีกหน้าต่างอาจต่ออายุไปแล้ว ใช้ใบนั้นได้เลย (_adopt_newer_saved_token)
+## - คำขออาจไปถึง server แล้วแต่คำตอบหาย (maybe_delivered): server อาจเปลี่ยน token ไปแล้ว ลองใหม่ทันที 1 ครั้ง
+##   (server ผ่อนผันให้ใบเก่าต่ออายุซ้ำได้ช่วงสั้นๆ) ยังไม่สำเร็จ = ทิ้ง token ไม่เสี่ยงใช้ใบเก่าหลังช่วงผ่อนผัน
+## - ไปไม่ถึง server แน่ๆ หรือถูกจำกัดจำนวนครั้ง: token ใบเดิมยังดีอยู่ ใช้ต่อ แล้วเว้นช่วงก่อนลองใหม่
 func _refresh_if_expiring() -> void:
 	if _refreshing:
 		await _refresh_finished  # มีคำขออื่นกำลังต่ออายุอยู่ รอผลเดียวกัน ห้ามต่อซ้อน (ใบเก่าใช้ได้ครั้งเดียว)
@@ -178,17 +190,25 @@ func _refresh_if_expiring() -> void:
 	var expires: Variant = _session.get("expires_unix")
 	if not (expires is int):
 		return
-	var seconds_left := int(expires) - int(Time.get_unix_time_from_system())
-	if seconds_left > REFRESH_MARGIN_SEC:
+	if int(expires) - int(Time.get_unix_time_from_system()) > REFRESH_MARGIN_SEC:
 		return
-	if seconds_left <= 0:
-		_end_online_session()  # หมดอายุไปแล้ว server ไม่ต่อให้ ต้องเข้าสู่ระบบใหม่
+	if _remembered and _adopt_newer_saved_token():
 		return
+	var now_msec := Time.get_ticks_msec()
+	if _last_refresh_attempt_msec >= 0 and now_msec - _last_refresh_attempt_msec < REFRESH_RETRY_COOLDOWN_MSEC:
+		return  # เพิ่งลองไป: ใช้ token ใบเดิมไปก่อน ถ้า server ไม่รับแล้ว คำขอจะได้ 401 และจบที่ _send_with_token
+	_last_refresh_attempt_msec = now_msec
 
 	_refreshing = true
 	var owner_id := get_user_id()
-	var result := await _api.refresh(get_token())
+	var old_token := get_token()
+	var result := await _api.refresh(old_token)
+	var reply_lost := false
+	if not result.ok and result.maybe_delivered and state == State.ONLINE and get_user_id() == owner_id:
+		result = await _api.refresh(old_token)
+		reply_lost = not result.ok
 	_refreshing = false
+
 	var fresh := SessionStore.from_login_response(result.data) if result.ok else {}
 	if state != State.ONLINE or get_user_id() != owner_id:
 		# ระหว่างรอ ออกจากระบบไปแล้ว: token ใบใหม่ไม่มีใครใช้ แจ้ง server ให้ยกเลิกด้วย
@@ -206,10 +226,31 @@ func _refresh_if_expiring() -> void:
 			if _remembered and not SessionStore.save(fresh):
 				# บันทึกใบใหม่ไม่ได้: ลบไฟล์ทิ้ง ห้ามปล่อยใบเก่าค้างไว้ (เหตุผลเดียวกับ restore_saved_session)
 				SessionStore.clear()
-	elif result.code == AuthApiResult.INVALID_CREDENTIALS:
+	elif result.code == AuthApiResult.INVALID_CREDENTIALS or reply_lost:
+		# server ไม่รับ token แล้ว หรือลองใหม่แล้วก็ยังไม่รู้ผล (ใบเก่าอาจถูกเปลี่ยนไปแล้ว): ทิ้ง token
 		_end_online_session()
-	# เน็ตหลุด / ถูกจำกัดจำนวนครั้ง: ใช้ token ใบเดิมไปก่อน (ยังไม่หมดอายุ) คำขอครั้งหน้าจะลองต่ออายุใหม่
+	# ถูกจำกัดจำนวนครั้ง / ไปไม่ถึง server แน่ๆ: ใช้ token ใบเดิมไปก่อน ครบช่วงเว้นแล้วคำขอครั้งหน้าจะลองต่ออายุใหม่
 	_refresh_finished.emit()
+
+
+## เกมอีกหน้าต่างหนึ่ง (ใช้ไฟล์จดจำเดียวกัน) อาจต่ออายุไปก่อนแล้ว: ถ้าในไฟล์มี token ใบอื่นของบัญชีเดียวกันที่หมดอายุช้ากว่า
+## ใช้ใบนั้นแทน ไม่ต้องต่ออายุเอง (ถ้าต่อเองด้วยใบเก่า server จะมองว่าใบเก่าถูกใช้ซ้ำ) คืน true ถ้าเปลี่ยนมาใช้ใบในไฟล์
+## ข้อมูลในไฟล์ผ่าน SessionStore.is_valid แล้ว และ server เป็นผู้ตัดสินเสมอว่า token ใช้ได้จริงไหม
+func _adopt_newer_saved_token() -> bool:
+	var saved := SessionStore.load_session()
+	if saved.is_empty():
+		return false
+	var saved_profile: Dictionary = saved["profile"]
+	var my_expires: Variant = _session.get("expires_unix")
+	if saved_profile["id"] != get_user_id() or saved["token"] == get_token():
+		return false
+	if not (my_expires is int) or int(saved["expires_unix"]) <= int(my_expires):
+		return false
+	var name_changed: bool = saved_profile["display_name"] != get_display_name()
+	_session = saved
+	if name_changed:
+		session_changed.emit()
+	return true
 
 
 ## server ไม่รับ token แล้ว: ทิ้ง token ทั้งในหน่วยความจำและในไฟล์ แล้วเล่นต่อแบบออฟไลน์ในบัญชีเดิม
@@ -234,16 +275,12 @@ func _end_online_session() -> void:
 ## ดูว่าตอนนี้ยินยอมให้แสดงชื่อบนตารางอันดับไหม (ออนไลน์เท่านั้น)
 ## สำเร็จ: result.data["leaderboardOptIn"] เป็น bool (ตรวจชนิดอีกครั้งก่อนใช้)
 func get_leaderboard_consent() -> AuthApiResult:
-	if state != State.ONLINE:
-		return AuthApiResult.failure(0, AuthApiResult.NETWORK_UNAVAILABLE)
 	return await _send_with_token(func(token: String) -> AuthApiResult:
 		return await _api.get_leaderboard_consent(token))
 
 
 ## ให้หรือถอนความยินยอมแสดงชื่อบนตารางอันดับ ส่งเวอร์ชันนโยบายที่เกมนี้แสดงไปด้วย
 func set_leaderboard_consent(granted: bool) -> AuthApiResult:
-	if state != State.ONLINE:
-		return AuthApiResult.failure(0, AuthApiResult.NETWORK_UNAVAILABLE)
 	return await _send_with_token(func(token: String) -> AuthApiResult:
 		return await _api.set_leaderboard_consent(token, granted, PrivacyPolicy.VERSION))
 
@@ -251,8 +288,6 @@ func set_leaderboard_consent(granted: bool) -> AuthApiResult:
 ## ถาม server ว่าตอนนี้เปลี่ยนชื่อได้อีกกี่ครั้ง / เมื่อไหร่ (ออนไลน์เท่านั้น) ผลเก็บไว้ที่
 ## display_name_changes_available และ display_name_next_change_unix
 func refresh_display_name_status() -> AuthApiResult:
-	if state != State.ONLINE:
-		return AuthApiResult.failure(0, AuthApiResult.NETWORK_UNAVAILABLE)
 	var result := await _send_with_token(func(token: String) -> AuthApiResult:
 		return await _api.get_display_name_status(token))
 	if result.ok:
@@ -275,8 +310,6 @@ func _apply_display_name_status(data: Dictionary) -> void:
 ## ไม่เก็บลงไฟล์ และลืมทิ้งทันทีเมื่อออกจากระบบ / ล็อกอินบัญชีใหม่ (_forget_email)
 ## ใช้แสดงให้เจ้าของดูเท่านั้น (เมนูบัญชีปิดบังไว้ก่อน) ห้าม print หรือส่งต่อไปที่อื่น
 func fetch_email() -> String:
-	if state != State.ONLINE:
-		return ""
 	var owner_id := get_user_id()
 	if _email_fetching:
 		# มีคนกำลังขออยู่ (เช่น เมนูกับหน้าบัญชีเปิดพร้อมกัน) รอผลเดียวกัน ไม่ต้องขอซ้ำ
@@ -313,8 +346,6 @@ func _forget_email() -> void:
 ## เปลี่ยนชื่อที่แสดง (ออนไลน์เท่านั้น) server เป็นผู้ตัดสินเรื่องชื่อซ้ำและกฎ 14 วัน
 ## สำเร็จ: อัปเดตชื่อในเครื่อง (และในไฟล์ถ้าจดจำไว้) แล้วส่ง session_changed
 func change_display_name(new_name: String) -> AuthApiResult:
-	if state != State.ONLINE:
-		return AuthApiResult.failure(0, AuthApiResult.NETWORK_UNAVAILABLE)
 	var trimmed_name := new_name.strip_edges()
 	var result := await _send_with_token(func(token: String) -> AuthApiResult:
 		return await _api.change_display_name(token, trimmed_name))
@@ -413,6 +444,14 @@ func restore_saved_session() -> String:
 		return RESTORE_NEED_LOGIN
 
 	var result := await _api.refresh(saved["token"])
+	if not result.ok and result.maybe_delivered:
+		# คำขออาจไปถึง server แล้วแต่คำตอบหาย: server อาจเปลี่ยน token ไปแล้ว ลองใหม่ทันที 1 ครั้ง (อยู่ในช่วงผ่อนผันของ server)
+		result = await _api.refresh(saved["token"])
+		if not result.ok:
+			# ยังไม่รู้ผล: ไม่เก็บ token ที่อาจถูกเปลี่ยนไปแล้วไว้ใช้ครั้งหน้า
+			# (ใช้ใบเก่าหลังพ้นช่วงผ่อนผัน server จะถือว่าถูกขโมยและตัดทุก session ของบัญชี) ให้ล็อกอินใหม่
+			SessionStore.clear()
+			return RESTORE_NEED_LOGIN
 	if result.ok:
 		var fresh := SessionStore.from_login_response(result.data)
 		if fresh.is_empty():
@@ -430,6 +469,7 @@ func restore_saved_session() -> String:
 		_session = fresh
 		_remembered = true
 		session_expired = false
+		_last_refresh_attempt_msec = -1
 		state = State.ONLINE
 		session_changed.emit()
 		return RESTORE_OK
@@ -444,9 +484,7 @@ func restore_saved_session() -> String:
 		last_retry_after_sec = result.retry_after_sec
 		return RESTORE_RATE_LIMITED
 
-	# เน็ตหลุด / server ล่ม: เก็บ session ในเครื่องไว้ก่อน ยังไม่ลบ
-	# ถ้าคำขอไปถึง server แล้วแต่คำตอบหาย token ในไฟล์จะเป็นใบเก่า: server ผ่อนผันให้ต่ออายุซ้ำด้วยใบเก่าได้ 60 วินาที
-	# (กด "ลองใหม่" ทัน = เข้าได้ตามปกติ) เลยจากนั้นใบเก่าจะถูกมองว่าถูกขโมย ต้องล็อกอินใหม่ทุกเครื่อง
+	# ไปไม่ถึง server แน่ๆ (ต่อไม่ติด / หาชื่อไม่เจอ): token ในไฟล์ยังไม่ถูกแตะ เก็บไว้ ใช้เล่นออฟไลน์และลองใหม่ได้
 	return RESTORE_NETWORK_FAILED
 
 
