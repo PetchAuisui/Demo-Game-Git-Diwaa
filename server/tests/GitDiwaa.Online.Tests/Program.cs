@@ -90,6 +90,14 @@ internal static class Program
             Assert.Contains(text, "mage01");
         });
 
+        runner.Run("LoginRequest_ToString_HidesEmailIdentifier", static () =>
+        {
+            var text = new LoginRequest("mage@example.com", "S3cret-Pass!", false).ToString();
+
+            Assert.DoesNotContain(text, "mage@example.com");
+            Assert.DoesNotContain(text, "S3cret-Pass!");
+        });
+
         runner.Run("AuthErrorCode_DefaultIsUnknown", static () =>
         {
             Assert.Equal(AuthErrorCode.Unknown, default(AuthErrorCode));
