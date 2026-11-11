@@ -160,7 +160,9 @@ func _logout_on_server(token: String) -> void:
 
 ## ส่งคำขอที่ใช้ token (ทุกฟังก์ชันออนไลน์ด้านล่างเรียกผ่านตัวนี้) request รับ token แล้วคืน AuthApiResult
 ## 1. ก่อนส่ง: ถ้า token ใกล้หมดอายุ ต่ออายุก่อน ผู้เล่นที่เปิดเกมค้างไว้นานจะไม่หลุดกลางทาง
-## 2. หลังส่ง: ถ้า server ไม่รับ token แล้ว เปลี่ยนเป็นออฟไลน์และบอกทุกหน้า (session_changed)
+## 2. หลังส่ง: ถ้า server ไม่รับ token แล้ว (401) ดูไฟล์จดจำก่อน: เกมอีกหน้าต่างอาจต่ออายุไปแล้ว (ใบที่เราถือจึงถูกแทน)
+##    ถ้าในไฟล์มีใบใหม่ของบัญชีเดียวกัน ส่งคำขอซ้ำ 1 ครั้งด้วยใบนั้น
+## 3. ไม่มีใบใหม่ หรือยัง 401 อีก: เปลี่ยนเป็นออฟไลน์และบอกทุกหน้า (session_changed)
 ##    เดิมสถานะค้างเป็น ONLINE ทั้งที่ทุกฟีเจอร์ออนไลน์ล้มจนกว่าจะปิดเกมแล้วเปิดใหม่
 func _send_with_token(request: Callable) -> AuthApiResult:
 	if state != State.ONLINE:
@@ -170,14 +172,24 @@ func _send_with_token(request: Callable) -> AuthApiResult:
 		return AuthApiResult.failure(0, AuthApiResult.INVALID_CREDENTIALS)
 	var owner_id := get_user_id()
 	var result: AuthApiResult = await request.call(get_token())
-	# ระหว่างรอ ออกจากระบบ / เปลี่ยนบัญชีไปแล้ว: คำตอบนี้ไม่เกี่ยวกับ session ปัจจุบัน
-	if result.code == AuthApiResult.INVALID_CREDENTIALS and state == State.ONLINE and get_user_id() == owner_id:
-		_end_online_session()
+	if not _is_rejected_for(result, owner_id):
+		return result
+	if _remembered and _adopt_newer_saved_token():
+		result = await request.call(get_token())
+		if not _is_rejected_for(result, owner_id):
+			return result
+	_end_online_session()
 	return result
 
 
+## คำตอบนี้บอกว่า server ไม่รับ token ของ session ปัจจุบันไหม
+## (ระหว่างรอ ออกจากระบบ / เปลี่ยนบัญชีไปแล้ว = คำตอบไม่เกี่ยวกับ session ปัจจุบัน ไม่นับ)
+func _is_rejected_for(result: AuthApiResult, owner_id: String) -> bool:
+	return result.code == AuthApiResult.INVALID_CREDENTIALS and state == State.ONLINE and get_user_id() == owner_id
+
+
 ## ต่ออายุ token ถ้าเหลืออายุไม่เกิน REFRESH_MARGIN_SEC (server เปลี่ยน token ใบใหม่ให้ ใบเก่าใช้ไม่ได้อีก)
-## - ไม่ต่ออายุเมื่อเจอ 401 เฉยๆ: token ที่ถูกยกเลิกแล้วเอาไปต่ออายุ server จะถือว่าถูกขโมยและตัดทุก session ของบัญชี
+## - ไม่ต่ออายุเมื่อเจอ 401 เฉยๆ: token ที่ถูกยกเลิกแล้วเอาไปต่ออายุ server จะถือว่าถูกขโมยและตัดทั้งสายของเครื่องนี้
 ## - นาฬิกาในเครื่องบอกว่าหมดอายุแล้วก็ยังลองต่ออายุ ให้ server เป็นผู้ตัดสิน (นาฬิกาเครื่องอาจผิด)
 ## - ก่อนต่ออายุ ดูไฟล์จดจำก่อน: เกมอีกหน้าต่างอาจต่ออายุไปแล้ว ใช้ใบนั้นได้เลย (_adopt_newer_saved_token)
 ## - คำขออาจไปถึง server แล้วแต่คำตอบหาย (maybe_delivered): server อาจเปลี่ยน token ไปแล้ว ลองใหม่ทันที 1 ครั้ง
@@ -253,18 +265,20 @@ func _adopt_newer_saved_token() -> bool:
 	return true
 
 
-## server ไม่รับ token แล้ว: ทิ้ง token ทั้งในหน่วยความจำและในไฟล์ แล้วเล่นต่อแบบออฟไลน์ในบัญชีเดิม
-## (ความคืบหน้ายังอยู่กับบัญชีเดิม) ไม่เก็บ token ที่ใช้ไม่ได้ไว้: ครั้งหน้าที่เปิดเกมจะได้ถามล็อกอินใหม่ตรงๆ
-## ไม่ใช่เอาใบที่ถูกยกเลิกไปต่ออายุจน server ตัดทุก session
+## server ไม่รับ token แล้ว: ทิ้ง token แล้วเล่นต่อแบบออฟไลน์ในบัญชีเดิม (ความคืบหน้ายังอยู่กับบัญชีเดิม)
+## ไฟล์จดจำ: ลบเฉพาะเมื่อ token ในไฟล์เป็นใบเดียวกับที่เราถืออยู่ (ใบที่ใช้ไม่ได้แล้ว ครั้งหน้าที่เปิดเกมจะได้ถามล็อกอินใหม่ตรงๆ)
+## ถ้าในไฟล์เป็นใบอื่น = เกมอีกหน้าต่างบันทึกใบใหม่ไว้ ห้ามลบ ไม่งั้นหน้าต่างนั้นจะเสียการจดจำไปด้วย
 func _end_online_session() -> void:
 	if state != State.ONLINE:
 		return
+	var dead_token := get_token()
 	var profile: Dictionary = (_session.get("profile", {}) as Dictionary).duplicate()
 	last_username = profile.get("username", "")
 	_forget_email()
 	_session = {"profile": profile}
 	_remembered = false
-	SessionStore.clear()
+	if not dead_token.is_empty() and SessionStore.load_session().get("token", "") == dead_token:
+		SessionStore.clear()
 	display_name_next_change_unix = 0
 	display_name_changes_available = -1
 	session_expired = true
@@ -446,12 +460,9 @@ func restore_saved_session() -> String:
 	var result := await _api.refresh(saved["token"])
 	if not result.ok and result.maybe_delivered:
 		# คำขออาจไปถึง server แล้วแต่คำตอบหาย: server อาจเปลี่ยน token ไปแล้ว ลองใหม่ทันที 1 ครั้ง (อยู่ในช่วงผ่อนผันของ server)
+		# ยังไม่สำเร็จก็ไม่ล้างไฟล์: ผู้เล่นยังเล่นออฟไลน์ได้ และถ้าครั้งหน้า token ในไฟล์ใช้ไม่ได้แล้ว
+		# server ตัดแค่สายของเครื่องนี้ (ไม่กระทบเครื่องอื่น) แล้วเกมจะถามล็อกอินใหม่เอง
 		result = await _api.refresh(saved["token"])
-		if not result.ok:
-			# ยังไม่รู้ผล: ไม่เก็บ token ที่อาจถูกเปลี่ยนไปแล้วไว้ใช้ครั้งหน้า
-			# (ใช้ใบเก่าหลังพ้นช่วงผ่อนผัน server จะถือว่าถูกขโมยและตัดทุก session ของบัญชี) ให้ล็อกอินใหม่
-			SessionStore.clear()
-			return RESTORE_NEED_LOGIN
 	if result.ok:
 		var fresh := SessionStore.from_login_response(result.data)
 		if fresh.is_empty():
@@ -460,7 +471,7 @@ func restore_saved_session() -> String:
 		# server เปลี่ยน token ให้แล้ว ใบเก่าใช้ไม่ได้อีก ต้องเก็บใบใหม่เสมอ (แม้ผู้เล่นจะเลือกเล่นแบบอื่นไประหว่างรอ)
 		if not SessionStore.save(fresh):
 			# บันทึก token ใบใหม่ไม่ได้: ลบไฟล์ทิ้ง ห้ามปล่อย token ใบเก่าค้างไว้
-			# เพราะถ้าครั้งหน้าเอาใบเก่าไปใช้ server จะเข้าใจว่าถูกขโมย แล้วตัด session ทั้งหมดของบัญชีนี้
+			# เพราะถ้าครั้งหน้าเอาใบเก่าไปใช้ server จะเข้าใจว่าถูกขโมย แล้วตัดทั้งสายของเครื่องนี้ (ต้องล็อกอินใหม่)
 			SessionStore.clear()
 		# ระหว่างรอ ผู้เล่นเลือกเล่นแบบอื่นไปแล้ว (เช่น เล่นโดยไม่ล็อกอิน): ไม่เปลี่ยนสถานะทับการเลือกนั้น
 		# ครั้งหน้าที่เปิดเกมจะล็อกอินอัตโนมัติด้วย token ใบใหม่ที่เก็บไว้ได้ตามปกติ
@@ -484,7 +495,8 @@ func restore_saved_session() -> String:
 		last_retry_after_sec = result.retry_after_sec
 		return RESTORE_RATE_LIMITED
 
-	# ไปไม่ถึง server แน่ๆ (ต่อไม่ติด / หาชื่อไม่เจอ): token ในไฟล์ยังไม่ถูกแตะ เก็บไว้ ใช้เล่นออฟไลน์และลองใหม่ได้
+	# ไปไม่ถึง server (ต่อไม่ติด / หาชื่อไม่เจอ) หรือลองใหม่แล้วก็ยังไม่รู้ผล (หมดเวลารอ / server ล้ม):
+	# เก็บ token ในไฟล์ไว้ ใช้เล่นออฟไลน์และลองใหม่ได้
 	return RESTORE_NETWORK_FAILED
 
 
