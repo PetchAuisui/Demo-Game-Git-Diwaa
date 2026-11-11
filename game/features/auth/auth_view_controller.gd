@@ -543,6 +543,8 @@ func _message_for(field: String, reason: String) -> String:
 			if field == AuthRules.FIELD_EMAIL:
 				return "รูปแบบอีเมลไม่ถูกต้อง"
 			return "รูปแบบ%sไม่ถูกต้อง" % label
+		AuthRules.TOO_COMMON:
+			return "รหัสผ่านนี้เดาง่ายเกินไป (เช่น 12345678, password หรือเหมือนชื่อผู้ใช้) กรุณาตั้งรหัสอื่น"
 		AuthRules.RESERVED:
 			return "ชื่อรูปแบบ player-ตัวเลข สงวนไว้ให้ระบบ กรุณาใช้ชื่ออื่น"
 		AuthRules.TAKEN:

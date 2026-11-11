@@ -33,6 +33,7 @@ const INVALID_CHARACTERS := "InvalidCharacters"
 const INVALID_FORMAT := "InvalidFormat"
 const MISMATCH := "Mismatch"  # client-only: confirm password
 const TAKEN := "Taken"  # server-only: display name already used by someone else
+const TOO_COMMON := "TooCommon"  # server-only: รหัสผ่านเดาง่ายเกินไป (ปิดตอน server รันแบบ Development)
 const RESERVED := "Reserved"  # player-<ตัวเลข> สงวนไว้ให้ระบบตั้งให้ผู้เล่นใหม่
 
 # ตรงกับ AccountRules.GeneratedDisplayNamePrefix ใน server
