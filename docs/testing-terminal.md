@@ -70,7 +70,7 @@ repo ว่างตอนเริ่ม ผู้เล่นต้อง push
 
 ## คำสั่ง Git ที่เปิดใช้
 
-- ตรวจ/ตั้งค่า: `--version`, `config --global user.name`, `config --global user.email`, `init`
+- ตรวจ/ตั้งค่า: `--version` (หรือ `version`), `config --global user.name`, `config --global user.email`, `init`
 - ติดตามงาน: `status`, `add`, `commit`, `diff`, `restore`, `reset`
 - ประวัติ/branch: `log`, `branch`, `switch`, `merge`
 - remote: `clone`, `remote`, `fetch`, `pull`, `pull --rebase`, `push`
