@@ -29,10 +29,10 @@ const RESTORE_NONE := "none"  # ไม่มี session ที่จดจำไ
 const RESTORE_OK := "restored"  # ล็อกอินอัตโนมัติสำเร็จ
 const RESTORE_NEED_LOGIN := "need_login"  # session หมดอายุหรือถูกยกเลิก ต้องล็อกอินใหม่
 const RESTORE_NETWORK_FAILED := "network_failed"  # ติดต่อ server ไม่ได้ (session ในเครื่องยังเก็บไว้ ใช้กับโหมดออฟไลน์)
+const RESTORE_RATE_LIMITED := "rate_limited"  # ลองบ่อยเกินไป ต้องรอ (วินาทีที่ต้องรออยู่ใน last_retry_after_sec) session ในเครื่องยังเก็บไว้
+
 # ต่ออายุ token ล่วงหน้าเมื่อเหลืออายุไม่เกินนี้ (วินาที) ทำตอนจะส่งคำขอที่ใช้ token (ดู _refresh_if_expiring)
 const REFRESH_MARGIN_SEC := 30 * 60
-
-const RESTORE_RATE_LIMITED := "rate_limited"  # ลองบ่อยเกินไป ต้องรอ (วินาทีที่ต้องรออยู่ใน last_retry_after_sec) session ในเครื่องยังเก็บไว้
 
 var state: State = State.SIGNED_OUT
 var _session: Dictionary = {}
@@ -197,6 +197,9 @@ func _refresh_if_expiring() -> void:
 	elif result.ok:
 		var fresh_profile: Dictionary = fresh.get("profile", {})
 		if fresh.is_empty() or fresh_profile.get("id") != owner_id:
+			# คำตอบผิดรูปแบบ หรือเป็นของบัญชีอื่น: ไม่ใช้ token ใบใหม่ และแจ้ง server ให้ยกเลิก ไม่ทิ้งไว้เป็น session ที่ไม่มีใครถือ
+			if not fresh.is_empty():
+				_logout_on_server.call_deferred(fresh["token"])
 			_end_online_session()
 		else:
 			_session = fresh
