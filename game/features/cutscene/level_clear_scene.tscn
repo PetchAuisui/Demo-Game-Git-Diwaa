@@ -1,0 +1,322 @@
+[gd_scene format=3 uid="uid://dr0xyqq0idyc1"]
+
+[ext_resource type="Texture2D" uid="uid://bggxv0ul3scwf" path="res://assets/cutscene/backgrounds/stairs.png" id="1_p523f"]
+[ext_resource type="Texture2D" uid="uid://bvfiiywfa04t3" path="res://assets/cutscene/characters/vel/vel_walk-Sheet.png" id="2_2y5oc"]
+[ext_resource type="Texture2D" uid="uid://ccvcnopoctw6j" path="res://assets/cutscene/characters/vel/vel_walk_right-Sheet.png" id="3_lcxxy"]
+[ext_resource type="PackedScene" uid="uid://d4e5f6g7h8jaj" path="res://features/dialogue/level_clear_modal.tscn" id="4_modal"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_2h6iq"]
+atlas = ExtResource("2_2y5oc")
+region = Rect2(0, 0, 48, 83)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_uww2w"]
+atlas = ExtResource("2_2y5oc")
+region = Rect2(48, 0, 48, 83)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_p1yjc"]
+atlas = ExtResource("2_2y5oc")
+region = Rect2(96, 0, 48, 83)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_jc08p"]
+atlas = ExtResource("2_2y5oc")
+region = Rect2(144, 0, 48, 83)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_n58we"]
+atlas = ExtResource("2_2y5oc")
+region = Rect2(192, 0, 48, 83)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_qgjnr"]
+atlas = ExtResource("2_2y5oc")
+region = Rect2(240, 0, 48, 83)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_qa26k"]
+atlas = ExtResource("3_lcxxy")
+region = Rect2(0, 0, 48, 83)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_3he7v"]
+atlas = ExtResource("3_lcxxy")
+region = Rect2(48, 0, 48, 83)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_xy4im"]
+atlas = ExtResource("3_lcxxy")
+region = Rect2(96, 0, 48, 83)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_6gci1"]
+atlas = ExtResource("3_lcxxy")
+region = Rect2(144, 0, 48, 83)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_ybh4u"]
+atlas = ExtResource("3_lcxxy")
+region = Rect2(192, 0, 48, 83)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_gylbm"]
+atlas = ExtResource("3_lcxxy")
+region = Rect2(240, 0, 48, 83)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_ql73s"]
+animations = [{
+"frames": [{
+"duration": 2.0,
+"texture": SubResource("AtlasTexture_2h6iq")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_uww2w")
+}, {
+"duration": 2.0,
+"texture": SubResource("AtlasTexture_p1yjc")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_jc08p")
+}, {
+"duration": 2.0,
+"texture": SubResource("AtlasTexture_n58we")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_qgjnr")
+}],
+"loop": 1,
+"name": &"walk-idle",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 2.0,
+"texture": SubResource("AtlasTexture_qa26k")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_3he7v")
+}, {
+"duration": 2.0,
+"texture": SubResource("AtlasTexture_xy4im")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_6gci1")
+}, {
+"duration": 2.0,
+"texture": SubResource("AtlasTexture_ybh4u")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_gylbm")
+}],
+"loop": 1,
+"name": &"walk-right",
+"speed": 5.0
+}]
+
+[sub_resource type="Animation" id="Animation_2y5oc"]
+length = 0.001
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("vel:position")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 0,
+"values": [Vector2(628, 772)]
+}
+tracks/1/type = "value"
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/path = NodePath("vel:frame")
+tracks/1/interp = 1
+tracks/1/loop_wrap = true
+tracks/1/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 1,
+"values": [1]
+}
+tracks/2/type = "value"
+tracks/2/imported = false
+tracks/2/enabled = true
+tracks/2/path = NodePath("vel:modulate")
+tracks/2/interp = 1
+tracks/2/loop_wrap = true
+tracks/2/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 0,
+"values": [Color(1, 1, 1, 1)]
+}
+tracks/3/type = "value"
+tracks/3/imported = false
+tracks/3/enabled = true
+tracks/3/path = NodePath("ui/LevelClearModal:visible")
+tracks/3/interp = 1
+tracks/3/loop_wrap = true
+tracks/3/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 1,
+"values": [false]
+}
+tracks/4/type = "value"
+tracks/4/imported = false
+tracks/4/enabled = true
+tracks/4/path = NodePath("ui/LevelClearModal:modulate")
+tracks/4/interp = 1
+tracks/4/loop_wrap = true
+tracks/4/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 0,
+"values": [Color(1, 1, 1, 1)]
+}
+tracks/5/type = "value"
+tracks/5/imported = false
+tracks/5/enabled = true
+tracks/5/path = NodePath("ui/LevelClearModal:scale")
+tracks/5/interp = 1
+tracks/5/loop_wrap = true
+tracks/5/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 0,
+"values": [Vector2(1, 1)]
+}
+tracks/6/type = "value"
+tracks/6/imported = false
+tracks/6/enabled = true
+tracks/6/path = NodePath("ui/FadeOverlay:color")
+tracks/6/interp = 1
+tracks/6/loop_wrap = true
+tracks/6/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 0,
+"values": [Color(0, 0, 0, 0)]
+}
+
+[sub_resource type="Animation" id="Animation_lcxxy"]
+resource_name = "walk-stair"
+length = 3.5
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("vel:position")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 0.27, 0.54, 0.68, 0.81, 0.95, 1.08, 1.22, 1.35, 1.49, 1.62, 1.76, 1.89, 2.03, 2.16, 2.3, 2.43, 2.57, 2.7, 2.85, 3),
+"transitions": PackedFloat32Array(1, 1, 1, 0.7, 1, 0.7, 1, 0.7, 1, 0.7, 1, 0.7, 1, 0.7, 1, 0.7, 1, 0.7, 1, 1, 1),
+"update": 0,
+"values": [Vector2(628, 772), Vector2(760, 772), Vector2(890, 772), Vector2(950, 718), Vector2(1010, 736), Vector2(1070, 682), Vector2(1130, 700), Vector2(1190, 646), Vector2(1250, 664), Vector2(1310, 610), Vector2(1370, 628), Vector2(1430, 574), Vector2(1490, 592), Vector2(1550, 538), Vector2(1610, 556), Vector2(1670, 502), Vector2(1730, 520), Vector2(1790, 466), Vector2(1850, 484), Vector2(1935, 484), Vector2(2020, 484)]
+}
+tracks/1/type = "value"
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/path = NodePath("vel:frame")
+tracks/1/interp = 1
+tracks/1/loop_wrap = true
+tracks/1/keys = {
+"times": PackedFloat32Array(0, 0.14, 0.27, 0.41, 0.54, 0.81, 0.95, 1.08, 1.22, 1.35, 1.49, 1.62, 1.76, 1.89, 2.03, 2.16, 2.3, 2.43, 2.57, 2.7, 2.85, 3),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1),
+"update": 1,
+"values": [0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1]
+}
+tracks/2/type = "value"
+tracks/2/imported = false
+tracks/2/enabled = true
+tracks/2/path = NodePath("vel:modulate")
+tracks/2/interp = 1
+tracks/2/loop_wrap = true
+tracks/2/keys = {
+"times": PackedFloat32Array(0, 3.5),
+"transitions": PackedFloat32Array(1, 1),
+"update": 0,
+"values": [Color(1, 1, 1, 1), Color(1, 1, 1, 1)]
+}
+tracks/3/type = "value"
+tracks/3/imported = false
+tracks/3/enabled = true
+tracks/3/path = NodePath("ui/LevelClearModal:visible")
+tracks/3/interp = 1
+tracks/3/loop_wrap = true
+tracks/3/keys = {
+"times": PackedFloat32Array(0, 3),
+"transitions": PackedFloat32Array(1, 1),
+"update": 1,
+"values": [false, true]
+}
+tracks/4/type = "value"
+tracks/4/imported = false
+tracks/4/enabled = true
+tracks/4/path = NodePath("ui/LevelClearModal:modulate")
+tracks/4/interp = 1
+tracks/4/loop_wrap = true
+tracks/4/keys = {
+"times": PackedFloat32Array(0, 3, 3.25),
+"transitions": PackedFloat32Array(1, 1, 1),
+"update": 0,
+"values": [Color(1, 1, 1, 0), Color(1, 1, 1, 0), Color(1, 1, 1, 1)]
+}
+tracks/5/type = "value"
+tracks/5/imported = false
+tracks/5/enabled = true
+tracks/5/path = NodePath("ui/LevelClearModal:scale")
+tracks/5/interp = 1
+tracks/5/loop_wrap = true
+tracks/5/keys = {
+"times": PackedFloat32Array(0, 3, 3.18, 3.32),
+"transitions": PackedFloat32Array(1, 0.5, 1.5, 1),
+"update": 0,
+"values": [Vector2(1, 1), Vector2(0.8, 0.8), Vector2(1.04, 1.04), Vector2(1, 1)]
+}
+tracks/6/type = "value"
+tracks/6/imported = false
+tracks/6/enabled = true
+tracks/6/path = NodePath("ui/FadeOverlay:color")
+tracks/6/interp = 1
+tracks/6/loop_wrap = true
+tracks/6/keys = {
+"times": PackedFloat32Array(0, 0.25),
+"transitions": PackedFloat32Array(1, 1),
+"update": 0,
+"values": [Color(0, 0, 0, 1), Color(0, 0, 0, 0)]
+}
+
+[sub_resource type="AnimationLibrary" id="AnimationLibrary_2h6iq"]
+_data = {
+&"RESET": SubResource("Animation_2y5oc"),
+&"walk-stair": SubResource("Animation_lcxxy")
+}
+
+[node name="LevelClearScene" type="Node2D" unique_id=1913949996]
+
+[node name="Camera2D" type="Camera2D" parent="." unique_id=485032344]
+position = Vector2(960, 540)
+
+[node name="Stairs" type="Sprite2D" parent="." unique_id=110388998]
+texture_filter = 1
+position = Vector2(960, 540)
+scale = Vector2(4, 4)
+texture = ExtResource("1_p523f")
+
+[node name="vel" type="AnimatedSprite2D" parent="." unique_id=1873461857]
+texture_filter = 1
+position = Vector2(628, 772)
+scale = Vector2(4, 4)
+sprite_frames = SubResource("SpriteFrames_ql73s")
+animation = &"walk-right"
+autoplay = "walk-right"
+frame = 1
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="." unique_id=83863215]
+libraries/ = SubResource("AnimationLibrary_2h6iq")
+autoplay = &"walk-stair"
+
+[node name="ui" type="CanvasLayer" parent="." unique_id=719551824]
+
+[node name="FadeOverlay" type="ColorRect" parent="ui" unique_id=123456789]
+visible = false
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+color = Color(0, 0, 0, 0)
+
+[node name="LevelClearModal" parent="ui" unique_id=1998528347 instance=ExtResource("4_modal")]
+visible = false
+pivot_offset = Vector2(960, 540)

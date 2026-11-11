@@ -1,0 +1,17 @@
+extends "res://features/dialogue/level_dialogue_view.gd"
+
+## การควบคุมฉากภายในหอคอยเวท (Inside Tower Cutscene & Level 1)
+## ลำดับเหตุการณ์ในซีนเดียวต่อเนื่อง 100% (Single Scene Pipeline):
+## 1. เฟดเข้าจากจอดำสู่ห้องโถงภายในหอคอย (inside-tower-Sheet)
+## 2. เวลเดินเข้ามาในห้องโถง (-120 -> 700) และพบกับมิวรา (1220)
+## 3. มิวราปรากฏตัว + เวลสะดุ้งกระโดดตกใจ (!)
+## 4. เปิดกล่องข้อความ และเล่นบทนำ 5 ประโยค (มิวราทักทาย -> เวลถาม -> มิวราเตรียมเริ่มคาถา)
+## 5. เมื่อคุยจบข้อ 5 (หรือกดข้าม) จะเริ่มเข้าสู่บทเรียนด่าน 1 (git --version + git config)
+##    ในซีนเดิมทันที ไร้รอยต่อ 100% ไม่หลุดความเร็ว x2 และฉากหลัง/ตัวละครไม่รีเซ็ต
+
+func _init() -> void:
+	play_entrance_cutscene = true
+
+func _ready() -> void:
+	super._ready()
+	GameProgressManager.set_intro_cutscene_seen(true)

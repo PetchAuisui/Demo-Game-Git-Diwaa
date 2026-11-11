@@ -1,0 +1,118 @@
+[gd_resource type="Theme" load_steps=12 format=3 uid="uid://vgi5ukyjwx3"]
+
+[ext_resource type="FontFile" uid="uid://deedcfbkojx6k" path="res://assets/fonts/ChakraPetch-Bold.ttf" id="1_font_bold"]
+[ext_resource type="FontFile" path="res://assets/fonts/ChakraPetch-Regular.ttf" id="2_font_reg"]
+
+[sub_resource type="FontVariation" id="FontVariation_dialog_bold"]
+base_font = ExtResource("1_font_bold")
+spacing_top = 4
+spacing_bottom = 2
+
+[sub_resource type="FontVariation" id="FontVariation_dialog_reg"]
+base_font = ExtResource("2_font_reg")
+spacing_top = 4
+spacing_bottom = 2
+
+[sub_resource type="StyleBoxFlat" id="Panel"]
+content_margin_left = 24.0
+content_margin_top = 12.0
+content_margin_right = 24.0
+content_margin_bottom = 20.0
+bg_color = Color(0.035, 0.043, 0.075, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.72, 0.55, 0.28, 1)
+corner_radius_top_left = 14
+corner_radius_top_right = 14
+corner_radius_bottom_right = 14
+corner_radius_bottom_left = 14
+
+[sub_resource type="StyleBoxFlat" id="Focus"]
+draw_center = false
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(1, 0.79, 0.35, 1)
+corner_radius_top_left = 7
+corner_radius_top_right = 7
+corner_radius_bottom_right = 7
+corner_radius_bottom_left = 7
+
+[sub_resource type="StyleBoxFlat" id="Input"]
+content_margin_left = 16.0
+content_margin_right = 16.0
+bg_color = Color(0.015, 0.022, 0.042, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.32, 0.38, 0.55, 1)
+corner_radius_top_left = 7
+corner_radius_top_right = 7
+corner_radius_bottom_right = 7
+corner_radius_bottom_left = 7
+
+[sub_resource type="StyleBoxFlat" id="Button"]
+content_margin_left = 24.0
+content_margin_top = 10.0
+content_margin_right = 24.0
+content_margin_bottom = 10.0
+bg_color = Color(0.13, 0.16, 0.25, 1)
+corner_radius_top_left = 7
+corner_radius_top_right = 7
+corner_radius_bottom_right = 7
+corner_radius_bottom_left = 7
+
+[sub_resource type="StyleBoxFlat" id="GoldHover"]
+content_margin_left = 24.0
+content_margin_top = 10.0
+content_margin_right = 24.0
+content_margin_bottom = 10.0
+bg_color = Color(1, 0.85, 0.5, 1)
+corner_radius_top_left = 7
+corner_radius_top_right = 7
+corner_radius_bottom_right = 7
+corner_radius_bottom_left = 7
+
+[sub_resource type="StyleBoxFlat" id="Gold"]
+content_margin_left = 24.0
+content_margin_top = 10.0
+content_margin_right = 24.0
+content_margin_bottom = 10.0
+bg_color = Color(0.96, 0.73, 0.32, 1)
+corner_radius_top_left = 7
+corner_radius_top_right = 7
+corner_radius_bottom_right = 7
+corner_radius_bottom_left = 7
+
+[resource]
+default_font = SubResource("FontVariation_dialog_reg")
+default_font_size = 18
+AcceptDialog/constants/buttons_separation = 12
+AcceptDialog/styles/panel = SubResource("Panel")
+Button/colors/font_color = Color(0.84, 0.88, 0.96, 1)
+Button/fonts/font = SubResource("FontVariation_dialog_bold")
+Button/styles/focus = SubResource("Focus")
+Button/styles/hover = SubResource("Input")
+Button/styles/normal = SubResource("Button")
+Button/styles/pressed = SubResource("Input")
+CreateAction/base_type = &"Button"
+CreateAction/colors/font_color = Color(0.12, 0.085, 0.04, 1)
+CreateAction/colors/font_focus_color = Color(0.12, 0.085, 0.04, 1)
+CreateAction/colors/font_hover_color = Color(0.12, 0.085, 0.04, 1)
+CreateAction/colors/font_pressed_color = Color(0.12, 0.085, 0.04, 1)
+CreateAction/fonts/font = SubResource("FontVariation_dialog_bold")
+CreateAction/styles/hover = SubResource("GoldHover")
+CreateAction/styles/normal = SubResource("Gold")
+CreateAction/styles/pressed = SubResource("Gold")
+Label/colors/font_color = Color(0.9, 0.92, 0.97, 1)
+Label/fonts/font = SubResource("FontVariation_dialog_reg")
+LineEdit/colors/caret_color = Color(1, 0.79, 0.35, 1)
+LineEdit/colors/font_color = Color(0.94, 0.95, 1, 1)
+LineEdit/colors/font_placeholder_color = Color(0.55, 0.61, 0.73, 1)
+LineEdit/fonts/font = SubResource("FontVariation_dialog_reg")
+LineEdit/styles/focus = SubResource("Focus")
+LineEdit/styles/normal = SubResource("Input")

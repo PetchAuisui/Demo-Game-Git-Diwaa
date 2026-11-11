@@ -1,0 +1,76 @@
+[gd_scene load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://features/sandbox/git_graph_panel.gd" id="1_script"]
+[ext_resource type="FontFile" uid="uid://deedcfbkojx6k" path="res://assets/fonts/ChakraPetch-Bold.ttf" id="2_font_bold"]
+
+[sub_resource type="FontVariation" id="FontVariation_bold"]
+base_font = ExtResource("2_font_bold")
+spacing_top = 4
+spacing_bottom = 2
+
+[sub_resource type="StyleBoxFlat" id="Style_card"]
+bg_color = Color(0.025, 0.031, 0.055, 0.9)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.37, 0.42, 0.67, 0.9)
+corner_radius_top_left = 12
+corner_radius_top_right = 12
+corner_radius_bottom_right = 12
+corner_radius_bottom_left = 12
+
+[sub_resource type="SystemFont" id="Font_terminal"]
+font_names = PackedStringArray("Menlo", "Consolas", "DejaVu Sans Mono")
+
+[node name="GitGraphPanel" type="PanelContainer"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("Style_card")
+script = ExtResource("1_script")
+
+[node name="Margin" type="MarginContainer" parent="."]
+layout_mode = 2
+theme_override_constants/margin_left = 14
+theme_override_constants/margin_top = 14
+theme_override_constants/margin_right = 14
+theme_override_constants/margin_bottom = 14
+
+[node name="Layout" type="VBoxContainer" parent="Margin"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="Header" type="HBoxContainer" parent="Margin/Layout"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="TitleLabel" type="Label" parent="Margin/Layout/Header"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(1, 0.79, 0.35, 1)
+theme_override_fonts/font = SubResource("FontVariation_bold")
+theme_override_font_sizes/font_size = 22
+text = "GIT GRAPH"
+vertical_alignment = 1
+
+[node name="HeaderActions" type="HBoxContainer" parent="Margin/Layout/Header"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="GraphOutput" type="RichTextLabel" parent="Margin/Layout"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 3
+focus_mode = 0
+mouse_filter = 1
+theme_override_colors/default_color = Color(0.87, 0.9, 0.95, 1)
+theme_override_fonts/normal_font = SubResource("Font_terminal")
+theme_override_font_sizes/normal_font_size = 21
+bbcode_enabled = true
+text = "ยังไม่มี Commit
+สร้าง repository และ commit แล้วประวัติจะแสดงที่นี่"

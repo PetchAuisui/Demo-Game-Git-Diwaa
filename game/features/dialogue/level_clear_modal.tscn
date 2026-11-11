@@ -1,0 +1,475 @@
+[gd_scene format=3 uid="uid://d4e5f6g7h8jaj"]
+
+[ext_resource type="Script" path="res://features/dialogue/level_clear_modal.gd" id="1_script"]
+[ext_resource type="FontFile" uid="uid://deedcfbkojx6k" path="res://assets/fonts/ChakraPetch-Bold.ttf" id="2_chakra_bold"]
+[ext_resource type="FontFile" path="res://assets/fonts/ChakraPetch-Regular.ttf" id="3_chakra_reg"]
+[ext_resource type="Texture2D" uid="uid://du0ercqi3soo0" path="res://assets/icons/modal_replay.png" id="4_icon_replay"]
+[ext_resource type="Texture2D" uid="uid://djq5ryhi6kfpq" path="res://assets/icons/modal_level_select.png" id="5_icon_level_select"]
+[ext_resource type="Texture2D" uid="uid://cl45eqkow7pi3" path="res://assets/icons/modal_next_level.png" id="6_icon_next_level"]
+
+[sub_resource type="FontVariation" id="FontVariation_modal_bold"]
+base_font = ExtResource("2_chakra_bold")
+spacing_top = 4
+spacing_bottom = 2
+
+[sub_resource type="FontVariation" id="FontVariation_modal_reg"]
+base_font = ExtResource("3_chakra_reg")
+spacing_top = 4
+spacing_bottom = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_modal"]
+bg_color = Color(0.87, 0.87, 0.87, 1)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(0.35, 0.28, 0.22, 1)
+corner_radius_top_left = 12
+corner_radius_top_right = 12
+corner_radius_bottom_left = 12
+corner_radius_bottom_right = 12
+shadow_color = Color(0, 0, 0, 0.45)
+shadow_size = 16
+shadow_offset = Vector2(0, 8)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_modal_titlebar"]
+bg_color = Color(0.38, 0.30, 0.24, 1)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+content_margin_left = 16.0
+content_margin_right = 16.0
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_score_panel"]
+bg_color = Color(0.98, 0.97, 0.94, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.55, 0.47, 0.39, 1)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_left = 8
+corner_radius_bottom_right = 8
+content_margin_left = 18.0
+content_margin_top = 10.0
+content_margin_right = 18.0
+content_margin_bottom = 10.0
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_keyword_panel"]
+bg_color = Color(1, 0.90, 0.68, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.98, 0.76, 0.30, 1)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_left = 8
+corner_radius_bottom_right = 8
+content_margin_left = 12.0
+content_margin_top = 8.0
+content_margin_right = 12.0
+content_margin_bottom = 8.0
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_btn_beige"]
+bg_color = Color(0.88, 0.84, 0.77, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.54, 0.48, 0.42, 1)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_left = 10
+corner_radius_bottom_right = 10
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_btn_beige_hover"]
+bg_color = Color(0.93, 0.89, 0.83, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.40, 0.35, 0.30, 1)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_left = 10
+corner_radius_bottom_right = 10
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_btn_orange"]
+bg_color = Color(0.95, 0.57, 0.31, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.78, 0.38, 0.10, 1)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_left = 10
+corner_radius_bottom_right = 10
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_btn_orange_hover"]
+bg_color = Color(0.98, 0.64, 0.38, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.65, 0.30, 0.08, 1)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_left = 10
+corner_radius_bottom_right = 10
+
+[node name="LevelClearModal" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_script")
+
+[node name="DimOverlay" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.05, 0.04, 0.08, 0.75)
+
+[node name="WindowPanel" type="PanelContainer" parent="."]
+custom_minimum_size = Vector2(860, 640)
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -430.0
+offset_top = -320.0
+offset_right = 430.0
+offset_bottom = 320.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_modal")
+
+[node name="VBoxMain" type="VBoxContainer" parent="WindowPanel"]
+layout_mode = 2
+theme_override_constants/separation = 0
+
+[node name="TitleBar" type="PanelContainer" parent="WindowPanel/VBoxMain"]
+custom_minimum_size = Vector2(0, 44)
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_modal_titlebar")
+
+[node name="TitleLabel" type="Label" parent="WindowPanel/VBoxMain/TitleBar"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.96, 0.96, 0.96, 1)
+theme_override_fonts/font = SubResource("FontVariation_modal_bold")
+theme_override_font_sizes/font_size = 20
+text = "Success"
+
+[node name="Margin" type="MarginContainer" parent="WindowPanel/VBoxMain"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/margin_left = 40
+theme_override_constants/margin_top = 20
+theme_override_constants/margin_right = 40
+theme_override_constants/margin_bottom = 24
+
+[node name="VBox" type="VBoxContainer" parent="WindowPanel/VBoxMain/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="LevelTitle" type="Label" parent="WindowPanel/VBoxMain/Margin/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.12, 0.12, 0.12, 1)
+theme_override_fonts/font = SubResource("FontVariation_modal_bold")
+theme_override_font_sizes/font_size = 30
+text = "ด่านที่ 1 : git version"
+horizontal_alignment = 1
+
+[node name="StarsHBox" type="HBoxContainer" parent="WindowPanel/VBoxMain/Margin/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 16
+alignment = 1
+
+[node name="Star1" type="Label" parent="WindowPanel/VBoxMain/Margin/VBox/StarsHBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.85, 0.1, 1)
+theme_override_colors/font_outline_color = Color(0.3, 0.25, 0.05, 1)
+theme_override_constants/outline_size = 6
+theme_override_font_sizes/font_size = 56
+text = "★"
+
+[node name="Star2" type="Label" parent="WindowPanel/VBoxMain/Margin/VBox/StarsHBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.85, 0.1, 1)
+theme_override_colors/font_outline_color = Color(0.3, 0.25, 0.05, 1)
+theme_override_constants/outline_size = 6
+theme_override_font_sizes/font_size = 56
+text = "★"
+
+[node name="Star3" type="Label" parent="WindowPanel/VBoxMain/Margin/VBox/StarsHBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.42, 0.42, 0.42, 1)
+theme_override_colors/font_outline_color = Color(0.15, 0.15, 0.15, 1)
+theme_override_constants/outline_size = 6
+theme_override_font_sizes/font_size = 56
+text = "★"
+
+[node name="ScorePanel" type="PanelContainer" parent="WindowPanel/VBoxMain/Margin/VBox"]
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_score_panel")
+
+[node name="VBoxScore" type="VBoxContainer" parent="WindowPanel/VBoxMain/Margin/VBox/ScorePanel"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="Row1" type="HBoxContainer" parent="WindowPanel/VBoxMain/Margin/VBox/ScorePanel/VBoxScore"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="WindowPanel/VBoxMain/Margin/VBox/ScorePanel/VBoxScore/Row1"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.2, 0.2, 0.2, 1)
+theme_override_fonts/font = SubResource("FontVariation_modal_reg")
+theme_override_font_sizes/font_size = 20
+text = "คะแนนรอบนี้"
+
+[node name="Spacer" type="Control" parent="WindowPanel/VBoxMain/Margin/VBox/ScorePanel/VBoxScore/Row1"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Value" type="Label" parent="WindowPanel/VBoxMain/Margin/VBox/ScorePanel/VBoxScore/Row1"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.2, 0.2, 0.2, 1)
+theme_override_fonts/font = SubResource("FontVariation_modal_bold")
+theme_override_font_sizes/font_size = 20
+text = "100"
+
+[node name="Line1" type="ColorRect" parent="WindowPanel/VBoxMain/Margin/VBox/ScorePanel/VBoxScore"]
+custom_minimum_size = Vector2(0, 1)
+layout_mode = 2
+color = Color(0.85, 0.82, 0.77, 1)
+
+[node name="Row2" type="HBoxContainer" parent="WindowPanel/VBoxMain/Margin/VBox/ScorePanel/VBoxScore"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="WindowPanel/VBoxMain/Margin/VBox/ScorePanel/VBoxScore/Row2"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.2, 0.2, 0.2, 1)
+theme_override_fonts/font = SubResource("FontVariation_modal_reg")
+theme_override_font_sizes/font_size = 20
+text = "สถิติสูงสุดเดิม"
+
+[node name="Spacer" type="Control" parent="WindowPanel/VBoxMain/Margin/VBox/ScorePanel/VBoxScore/Row2"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Value" type="Label" parent="WindowPanel/VBoxMain/Margin/VBox/ScorePanel/VBoxScore/Row2"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.2, 0.2, 0.2, 1)
+theme_override_fonts/font = SubResource("FontVariation_modal_bold")
+theme_override_font_sizes/font_size = 20
+text = "70"
+
+[node name="Line2" type="ColorRect" parent="WindowPanel/VBoxMain/Margin/VBox/ScorePanel/VBoxScore"]
+custom_minimum_size = Vector2(0, 1)
+layout_mode = 2
+color = Color(0.85, 0.82, 0.77, 1)
+
+[node name="Row3" type="HBoxContainer" parent="WindowPanel/VBoxMain/Margin/VBox/ScorePanel/VBoxScore"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="WindowPanel/VBoxMain/Margin/VBox/ScorePanel/VBoxScore/Row3"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.2, 0.2, 0.2, 1)
+theme_override_fonts/font = SubResource("FontVariation_modal_reg")
+theme_override_font_sizes/font_size = 20
+text = "คะแนนสะสม"
+
+[node name="Spacer" type="Control" parent="WindowPanel/VBoxMain/Margin/VBox/ScorePanel/VBoxScore/Row3"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Value" type="Label" parent="WindowPanel/VBoxMain/Margin/VBox/ScorePanel/VBoxScore/Row3"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.18, 0.58, 0.20, 1)
+theme_override_fonts/font = SubResource("FontVariation_modal_bold")
+theme_override_font_sizes/font_size = 20
+text = "+30"
+
+[node name="Line3" type="ColorRect" parent="WindowPanel/VBoxMain/Margin/VBox/ScorePanel/VBoxScore"]
+custom_minimum_size = Vector2(0, 1)
+layout_mode = 2
+color = Color(0.85, 0.82, 0.77, 1)
+
+[node name="Row4" type="HBoxContainer" parent="WindowPanel/VBoxMain/Margin/VBox/ScorePanel/VBoxScore"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="WindowPanel/VBoxMain/Margin/VBox/ScorePanel/VBoxScore/Row4"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.2, 0.2, 0.2, 1)
+theme_override_fonts/font = SubResource("FontVariation_modal_reg")
+theme_override_font_sizes/font_size = 20
+text = "รางวัลที่ได้รับ"
+
+[node name="Spacer" type="Control" parent="WindowPanel/VBoxMain/Margin/VBox/ScorePanel/VBoxScore/Row4"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Value" type="Label" parent="WindowPanel/VBoxMain/Margin/VBox/ScorePanel/VBoxScore/Row4"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.76, 0.52, 0.10, 1)
+theme_override_fonts/font = SubResource("FontVariation_modal_bold")
+theme_override_font_sizes/font_size = 20
+text = "15 COINS"
+
+[node name="KeywordPanel" type="PanelContainer" parent="WindowPanel/VBoxMain/Margin/VBox"]
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_keyword_panel")
+
+[node name="VBoxKW" type="VBoxContainer" parent="WindowPanel/VBoxMain/Margin/VBox/KeywordPanel"]
+layout_mode = 2
+theme_override_constants/separation = 2
+
+[node name="Header" type="Label" parent="WindowPanel/VBoxMain/Margin/VBox/KeywordPanel/VBoxKW"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.46, 0.28, 0.02, 1)
+theme_override_fonts/font = SubResource("FontVariation_modal_bold")
+theme_override_font_sizes/font_size = 20
+text = "[คีย์เวิร์ดประจำด่านที่ 1]"
+horizontal_alignment = 1
+
+[node name="Body" type="Label" parent="WindowPanel/VBoxMain/Margin/VBox/KeywordPanel/VBoxKW"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.25, 0.16, 0.02, 1)
+theme_override_fonts/font = SubResource("FontVariation_modal_reg")
+theme_override_font_sizes/font_size = 20
+text = "การตรวจสอบพลัง หมายถึง git --version"
+horizontal_alignment = 1
+
+[node name="HBoxButtons" type="HBoxContainer" parent="WindowPanel/VBoxMain/Margin/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 20
+alignment = 1
+
+[node name="BtnReplay" type="Button" parent="WindowPanel/VBoxMain/Margin/VBox/HBoxButtons"]
+custom_minimum_size = Vector2(210, 92)
+layout_mode = 2
+focus_mode = 0
+mouse_default_cursor_shape = 2
+theme_override_styles/normal = SubResource("StyleBoxFlat_btn_beige")
+theme_override_styles/hover = SubResource("StyleBoxFlat_btn_beige_hover")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_btn_beige_hover")
+theme_override_styles/focus = SubResource("StyleBoxFlat_btn_beige_hover")
+
+[node name="VBoxContent" type="VBoxContainer" parent="WindowPanel/VBoxMain/Margin/VBox/HBoxButtons/BtnReplay"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme_override_constants/separation = 4
+alignment = 1
+
+[node name="Icon" type="TextureRect" parent="WindowPanel/VBoxMain/Margin/VBox/HBoxButtons/BtnReplay/VBoxContent"]
+texture_filter = 4
+custom_minimum_size = Vector2(0, 38)
+layout_mode = 2
+mouse_filter = 2
+texture = ExtResource("4_icon_replay")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Label" type="Label" parent="WindowPanel/VBoxMain/Margin/VBox/HBoxButtons/BtnReplay/VBoxContent"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.18, 0.18, 0.18, 1)
+theme_override_fonts/font = SubResource("FontVariation_modal_bold")
+theme_override_font_sizes/font_size = 18
+text = "เล่นอีกครั้ง"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="BtnLevelSelect" type="Button" parent="WindowPanel/VBoxMain/Margin/VBox/HBoxButtons"]
+custom_minimum_size = Vector2(210, 92)
+layout_mode = 2
+focus_mode = 0
+mouse_default_cursor_shape = 2
+theme_override_styles/normal = SubResource("StyleBoxFlat_btn_beige")
+theme_override_styles/hover = SubResource("StyleBoxFlat_btn_beige_hover")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_btn_beige_hover")
+theme_override_styles/focus = SubResource("StyleBoxFlat_btn_beige_hover")
+
+[node name="VBoxContent" type="VBoxContainer" parent="WindowPanel/VBoxMain/Margin/VBox/HBoxButtons/BtnLevelSelect"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme_override_constants/separation = 4
+alignment = 1
+
+[node name="Icon" type="TextureRect" parent="WindowPanel/VBoxMain/Margin/VBox/HBoxButtons/BtnLevelSelect/VBoxContent"]
+texture_filter = 4
+custom_minimum_size = Vector2(0, 38)
+layout_mode = 2
+mouse_filter = 2
+texture = ExtResource("5_icon_level_select")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Label" type="Label" parent="WindowPanel/VBoxMain/Margin/VBox/HBoxButtons/BtnLevelSelect/VBoxContent"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.18, 0.18, 0.18, 1)
+theme_override_fonts/font = SubResource("FontVariation_modal_bold")
+theme_override_font_sizes/font_size = 18
+text = "กลับไปหน้าเลือกด่าน"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="BtnNextLevel" type="Button" parent="WindowPanel/VBoxMain/Margin/VBox/HBoxButtons"]
+custom_minimum_size = Vector2(210, 92)
+layout_mode = 2
+focus_mode = 0
+mouse_default_cursor_shape = 2
+theme_override_styles/normal = SubResource("StyleBoxFlat_btn_orange")
+theme_override_styles/hover = SubResource("StyleBoxFlat_btn_orange_hover")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_btn_orange_hover")
+theme_override_styles/focus = SubResource("StyleBoxFlat_btn_orange_hover")
+
+[node name="VBoxContent" type="VBoxContainer" parent="WindowPanel/VBoxMain/Margin/VBox/HBoxButtons/BtnNextLevel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme_override_constants/separation = 4
+alignment = 1
+
+[node name="Icon" type="TextureRect" parent="WindowPanel/VBoxMain/Margin/VBox/HBoxButtons/BtnNextLevel/VBoxContent"]
+texture_filter = 4
+custom_minimum_size = Vector2(0, 38)
+layout_mode = 2
+mouse_filter = 2
+texture = ExtResource("6_icon_next_level")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Label" type="Label" parent="WindowPanel/VBoxMain/Margin/VBox/HBoxButtons/BtnNextLevel/VBoxContent"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.1, 0.05, 0.02, 1)
+theme_override_fonts/font = SubResource("FontVariation_modal_bold")
+theme_override_font_sizes/font_size = 18
+text = "ด่านต่อไป"
+horizontal_alignment = 1
+vertical_alignment = 1
