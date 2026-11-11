@@ -1,7 +1,6 @@
 [gd_scene format=3 uid="uid://b7qm4kvl1dr01"]
 
 [ext_resource type="Script" path="res://features/start/dressing_room_view_controller.gd" id="1_controller"]
-[ext_resource type="FontFile" path="res://assets/fonts/Bungee-Regular.ttf" id="2_font_bungee"]
 [ext_resource type="FontFile" uid="uid://deedcfbkojx6k" path="res://assets/fonts/ChakraPetch-Bold.ttf" id="2_font_bold"]
 [ext_resource type="FontFile" uid="uid://b8g6ela360qq1" path="res://assets/fonts/Silkscreen-Bold.ttf" id="3_font_silkscreen"]
 [ext_resource type="FontFile" uid="uid://kdsopvxcj40" path="res://assets/fonts/VT323-Regular.ttf" id="4_font_vt323"]
@@ -24,9 +23,7 @@
 [ext_resource type="AudioStream" uid="uid://cvlamp5b4er6q" path="res://assets/audio/sfx_click.wav" id="21_sfx_click"]
 [ext_resource type="AudioStream" path="res://assets/audio/sfx_cat_meow.wav" id="22_sfx_meow"]
 [ext_resource type="FontFile" path="res://assets/fonts/TA-8-bit.ttf" id="23_font_ta8bit"]
-[ext_resource type="Texture2D" path="res://assets/art/hats/hat_witch_purple.png" id="24_hat_purple"]
-
-[sub_resource type="StyleBoxEmpty" id="Style_brand_btn"]
+[ext_resource type="PackedScene" path="res://common/brand_button.tscn" id="24_brand_btn"]
 
 [sub_resource type="StyleBoxFlat" id="Style_topbar_bg"]
 content_margin_left = 32.0
@@ -258,52 +255,9 @@ theme_override_constants/separation = 20
 layout_mode = 2
 theme_override_constants/separation = 16
 
-[node name="BrandBtn" type="Button" parent="TopBar/TopHBox/BrandHBox"]
+[node name="BrandBtn" parent="TopBar/TopHBox/BrandHBox" instance=ExtResource("24_brand_btn")]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(174, 48)
 layout_mode = 2
-focus_mode = 0
-mouse_default_cursor_shape = 2
-theme_override_styles/focus = SubResource("Style_brand_btn")
-theme_override_styles/disabled = SubResource("Style_brand_btn")
-theme_override_styles/hover = SubResource("Style_brand_btn")
-theme_override_styles/pressed = SubResource("Style_brand_btn")
-theme_override_styles/normal = SubResource("Style_brand_btn")
-flat = true
-
-[node name="BrandTitle" type="Label" parent="TopBar/TopHBox/BrandHBox/BrandBtn"]
-unique_name_in_owner = true
-layout_mode = 1
-anchors_preset = 4
-anchor_top = 0.5
-anchor_bottom = 0.5
-offset_left = 16.0
-offset_top = -18.0
-offset_right = 174.0
-offset_bottom = 18.0
-grow_vertical = 2
-theme_override_colors/font_color = Color(0.961, 0.620, 0.043, 1)
-theme_override_colors/font_shadow_color = Color(0.290, 0.122, 0.020, 1)
-theme_override_constants/shadow_offset_x = 0
-theme_override_constants/shadow_offset_y = 2
-theme_override_fonts/font = ExtResource("2_font_bungee")
-theme_override_font_sizes/font_size = 26
-text = "GIT DI WAA"
-vertical_alignment = 1
-
-[node name="BrandHat" type="TextureRect" parent="TopBar/TopHBox/BrandHBox/BrandBtn"]
-unique_name_in_owner = true
-texture_filter = 1
-layout_mode = 1
-offset_left = 4.0
-offset_top = -4.0
-offset_right = 36.0
-offset_bottom = 22.0
-pivot_offset = Vector2(16, 26)
-mouse_filter = 2
-texture = ExtResource("24_hat_purple")
-expand_mode = 1
-stretch_mode = 5
 
 [node name="Divider" type="ColorRect" parent="TopBar/TopHBox/BrandHBox"]
 custom_minimum_size = Vector2(2, 28)

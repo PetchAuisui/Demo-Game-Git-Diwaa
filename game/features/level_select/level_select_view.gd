@@ -82,9 +82,7 @@ var sfx_jump: AudioStreamPlayer
 var sfx_meow: AudioStreamPlayer
 
 # Navbar Nodes
-var brand_btn: Button
-var brand_title: Label
-var brand_hat: TextureRect
+var brand_btn: BrandButton
 var btn_back: Button
 var btn_act1: Button
 var btn_act2: Button
@@ -266,13 +264,7 @@ func _bind_nodes() -> void:
 	sfx_jump = get_node_or_null("%SfxJump")
 	sfx_meow = get_node_or_null("%SfxMeow")
 
-	brand_btn = get_node_or_null("%BrandBtn")
-	brand_title = get_node_or_null("%BrandTitle")
-	brand_hat = get_node_or_null("%BrandHat")
-	if brand_hat:
-		brand_hat.texture = GameProgressManager.get_current_hat_texture()
-		brand_hat.position.y = -4.0
-		brand_hat.rotation_degrees = 0.0
+	brand_btn = get_node_or_null("%BrandBtn") as BrandButton
 
 	btn_back = get_node_or_null("%BtnBack")
 	btn_act1 = get_node_or_null("%BtnAct1")
@@ -431,8 +423,6 @@ func _apply_nav_hint_key_visual(entry: Dictionary) -> void:
 
 func _wire_navbar() -> void:
 	if brand_btn:
-		brand_btn.mouse_entered.connect(_on_brand_hover.bind(true))
-		brand_btn.mouse_exited.connect(_on_brand_hover.bind(false))
 		brand_btn.pressed.connect(_on_back_pressed)
 	if btn_back:
 		btn_back.pressed.connect(_on_back_pressed)
@@ -463,19 +453,6 @@ func _wire_navbar() -> void:
 		btn_sound.pressed.connect(_on_toggle_sound)
 	if btn_launch:
 		btn_launch.pressed.connect(_on_launch_stage_pressed)
-
-
-func _on_brand_hover(is_hover: bool) -> void:
-	if brand_hat:
-		var tw := create_tween()
-		if is_hover:
-			tw.tween_property(brand_hat, "position:y", -7.0, 0.10).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-			tw.parallel().tween_property(brand_hat, "rotation_degrees", -6.0, 0.10)
-			tw.tween_property(brand_hat, "position:y", -4.0, 0.12).set_trans(Tween.TRANS_BOUNCE).set_ease(Tween.EASE_OUT)
-			tw.parallel().tween_property(brand_hat, "rotation_degrees", 0.0, 0.12)
-		else:
-			tw.tween_property(brand_hat, "position:y", -4.0, 0.10)
-			tw.parallel().tween_property(brand_hat, "rotation_degrees", 0.0, 0.10)
 
 
 func _on_back_pressed() -> void:

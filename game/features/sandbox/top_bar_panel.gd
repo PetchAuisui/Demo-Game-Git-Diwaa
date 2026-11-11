@@ -9,50 +9,26 @@ signal brand_pressed
 @export var game_title: String = "GIT DI WAA"
 @export var mode_text: String = "SANDBOX"
 
-var _brand_btn: Button
-var _brand_label: Label
-var _brand_hat: TextureRect
+var _brand_btn: BrandButton
 var _mode_label: Label
 var _divider: ColorRect
 var _btn_finish: Button
 
 
 func _ready() -> void:
-	_brand_btn = get_node_or_null("%BrandBtn")
-	_brand_label = get_node_or_null("%BrandLabel")
-	_brand_hat = get_node_or_null("%BrandHat")
+	_brand_btn = get_node_or_null("%BrandBtn") as BrandButton
 	_mode_label = get_node_or_null("%ModeLabel")
 	_divider = get_node_or_null("%Divider")
 	_btn_finish = get_node_or_null("%BtnFinish")
 
-	if _brand_label != null:
-		_brand_label.text = game_title
-	if _brand_hat != null:
-		_brand_hat.texture = GameProgressManager.get_current_hat_texture()
-		_brand_hat.position.y = -4.0
-		_brand_hat.rotation_degrees = 0.0
 	set_mode_text(mode_text)
 
 	if _brand_btn != null:
-		_brand_btn.mouse_entered.connect(_on_brand_hover.bind(true))
-		_brand_btn.mouse_exited.connect(_on_brand_hover.bind(false))
+		_brand_btn.brand_title = game_title
 		_brand_btn.pressed.connect(func(): brand_pressed.emit())
 
 	if _btn_finish != null:
 		_btn_finish.pressed.connect(func(): finish_pressed.emit())
-
-
-func _on_brand_hover(is_hover: bool) -> void:
-	if _brand_hat != null:
-		var tw := create_tween()
-		if is_hover:
-			tw.tween_property(_brand_hat, "position:y", -7.0, 0.10).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-			tw.parallel().tween_property(_brand_hat, "rotation_degrees", -6.0, 0.10)
-			tw.tween_property(_brand_hat, "position:y", -4.0, 0.12).set_trans(Tween.TRANS_BOUNCE).set_ease(Tween.EASE_OUT)
-			tw.parallel().tween_property(_brand_hat, "rotation_degrees", 0.0, 0.12)
-		else:
-			tw.tween_property(_brand_hat, "position:y", -4.0, 0.10)
-			tw.parallel().tween_property(_brand_hat, "rotation_degrees", 0.0, 0.10)
 
 
 func set_mode_text(new_mode_text: String) -> void:

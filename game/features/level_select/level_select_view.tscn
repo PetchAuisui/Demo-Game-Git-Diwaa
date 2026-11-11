@@ -11,7 +11,7 @@
 [ext_resource type="AudioStream" path="res://assets/audio/sfx_command.wav" id="9_sfx_jump"]
 [ext_resource type="AudioStream" path="res://assets/audio/sfx_cat_meow.wav" id="10_sfx_meow"]
 [ext_resource type="Script" path="res://features/level_select/brick_wall_pillar.gd" id="11_brick_wall"]
-[ext_resource type="Texture2D" path="res://assets/art/hats/hat_witch_purple.png" id="12_hat_purple"]
+[ext_resource type="PackedScene" path="res://common/brand_button.tscn" id="12_brand_btn"]
 [ext_resource type="Script" path="res://features/level_select/twilight_sky_background.gd" id="13_sky"]
 [ext_resource type="Script" path="res://features/level_select/act_divider_walls.gd" id="14_act_dividers"]
 [ext_resource type="FontFile" path="res://assets/fonts/ChakraPetch-SemiBold.ttf" id="15_chakra_semi"]
@@ -19,8 +19,6 @@
 [sub_resource type="FontVariation" id="Font_ta_pixel_bold"]
 base_font = ExtResource("5_ta_pixel")
 variation_embolden = 0.5
-
-[sub_resource type="StyleBoxEmpty" id="Style_brand_btn"]
 
 [sub_resource type="StyleBoxEmpty" id="Style_hint_panel"]
 
@@ -326,52 +324,9 @@ size_flags_horizontal = 3
 layout_mode = 2
 theme_override_constants/separation = 16
 
-[node name="BrandBtn" type="Button" parent="LayoutVBox/TopNavbar/NavMargin/NavHBox/LeftSlot/BrandHBox"]
+[node name="BrandBtn" parent="LayoutVBox/TopNavbar/NavMargin/NavHBox/LeftSlot/BrandHBox" instance=ExtResource("12_brand_btn")]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(174, 48)
 layout_mode = 2
-focus_mode = 0
-mouse_default_cursor_shape = 2
-theme_override_styles/focus = SubResource("Style_brand_btn")
-theme_override_styles/disabled = SubResource("Style_brand_btn")
-theme_override_styles/hover = SubResource("Style_brand_btn")
-theme_override_styles/pressed = SubResource("Style_brand_btn")
-theme_override_styles/normal = SubResource("Style_brand_btn")
-flat = true
-
-[node name="BrandTitle" type="Label" parent="LayoutVBox/TopNavbar/NavMargin/NavHBox/LeftSlot/BrandHBox/BrandBtn"]
-unique_name_in_owner = true
-layout_mode = 1
-anchors_preset = 4
-anchor_top = 0.5
-anchor_bottom = 0.5
-offset_left = 16.0
-offset_top = -18.0
-offset_right = 174.0
-offset_bottom = 18.0
-grow_vertical = 2
-theme_override_colors/font_color = Color(0.961, 0.620, 0.043, 1)
-theme_override_colors/font_shadow_color = Color(0.290, 0.122, 0.020, 1)
-theme_override_constants/shadow_offset_x = 0
-theme_override_constants/shadow_offset_y = 2
-theme_override_fonts/font = ExtResource("2_bungee")
-theme_override_font_sizes/font_size = 26
-text = "GIT DI WAA"
-vertical_alignment = 1
-
-[node name="BrandHat" type="TextureRect" parent="LayoutVBox/TopNavbar/NavMargin/NavHBox/LeftSlot/BrandHBox/BrandBtn"]
-unique_name_in_owner = true
-texture_filter = 1
-layout_mode = 1
-offset_left = 4.0
-offset_top = -4.0
-offset_right = 36.0
-offset_bottom = 22.0
-pivot_offset = Vector2(16, 26)
-mouse_filter = 2
-texture = ExtResource("12_hat_purple")
-expand_mode = 1
-stretch_mode = 5
 
 [node name="Divider" type="ColorRect" parent="LayoutVBox/TopNavbar/NavMargin/NavHBox/LeftSlot/BrandHBox"]
 custom_minimum_size = Vector2(2, 28)
