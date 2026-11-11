@@ -7,6 +7,12 @@ extends Control
 ## Act 2: โถงประจำชั้นทีม (16-20) - Collab Chamber Floor Mat เป็น Loop GitHub Flow
 ## Act 3: ยอดหอคอยแก้ปัญหา (21-40) - Discrete Engineering Deck 5 คอลัมน์ พร้อมเงาปรมาจารย์ Git
 
+## ฉากบทสนทนาประจำด่าน (ไม่เล่นคัตซีนเดินเข้าห้องโถงซ้ำ ซึ่งเล่นเฉพาะครั้งแรกผ่าน inside_tower_cutscene)
+const LEVEL_DIALOGUE_SCENE := "res://features/dialogue/level_dialogue_view.tscn"
+const CENTRAL_TOWER_CUTSCENE_SCENE := "res://features/cutscene/central_tower_cutscene.tscn"
+const SANDBOX_SCENE := "res://features/sandbox/sandbox_game_view.tscn"
+const START_SCENE := "res://features/start/start_view.tscn"
+
 const TOWER_STAGES: Array[Dictionary] = [
 	# ACT 1: Winding Tower Ascent (01-15) - ไต่หอคอยแบบเป็นธรรมชาติ กึ่งกลางสมมาตรหอคอย x=880 (Screen x=960)
 	{ "id": 1, "act": 1, "no": "01", "title": "git --version + git config", "cmd": "git --version", "desc": "ตั้งค่านามผู้ใช้งาน user.name และ user.email", "x": 880.0, "y": 5345.0, "width": 260.0, "has_scripture": true },
@@ -180,6 +186,9 @@ func _ready() -> void:
 
 	# เลื่อนมุมมองกล้องไปยังตำแหน่งด่านเริ่มต้นของผู้เล่นทันทีหลังจากที่ layout เสร็จสมบูรณ์
 	_initial_scroll_to_current_stage()
+
+	SceneLoader.request_preload(LEVEL_DIALOGUE_SCENE)
+	SceneLoader.request_preload(SANDBOX_SCENE)
 
 
 func _initial_scroll_to_current_stage() -> void:
@@ -468,7 +477,8 @@ func _on_brand_hover(is_hover: bool) -> void:
 
 func _on_back_pressed() -> void:
 	_play_sfx(sfx_click)
-	get_tree().change_scene_to_file("res://features/start/start_view.tscn")
+	if not SceneLoader.change_scene(get_tree(), START_SCENE):
+		push_warning("[LevelSelectView] Start scene not found: '%s'" % START_SCENE)
 
 
 func _on_toggle_sound() -> void:
@@ -1873,16 +1883,16 @@ func _on_launch_stage_pressed() -> void:
 	_play_sfx(sfx_click)
 	GameProgressManager.set_selected_level_number(stg_id)
 
-	if stg_id == 1:
-		get_tree().change_scene_to_file("res://features/cutscene/inside_tower_cutscene.tscn")
-	elif stg_id == 16:
-		get_tree().change_scene_to_file("res://features/cutscene/central_tower_cutscene.tscn")
+	var target_scene: String
+	if stg_id == 16:
+		target_scene = CENTRAL_TOWER_CUTSCENE_SCENE
+	elif LevelDataLoader.has_level(stg_id):
+		target_scene = LEVEL_DIALOGUE_SCENE
 	else:
-		var lvl_path := "res://features/dialogue/levels/level_%02d.gd" % stg_id
-		if ResourceLoader.exists(lvl_path):
-			get_tree().change_scene_to_file("res://features/cutscene/inside_tower_cutscene.tscn")
-		else:
-			get_tree().change_scene_to_file("res://features/sandbox/sandbox_game_view.tscn")
+		target_scene = SANDBOX_SCENE
+
+	if not SceneLoader.change_scene(get_tree(), target_scene):
+		push_warning("[LevelSelectView] Target scene not found: '%s'" % target_scene)
 
 
 func _play_sfx(player: AudioStreamPlayer) -> void:

@@ -95,6 +95,7 @@ var warp_tween: Tween = null
 var reaction_tween: Tween = null
 var hop_tween: Tween = null
 var open_box_tween: Tween = null
+var intro_box_tween: Tween = null
 var is_in_entrance_cutscene: bool = false
 
 var typewriter_tween: Tween = null
@@ -175,8 +176,7 @@ func _ready() -> void:
 	add_child(skip_ctrl)
 	
 	# โหลดฉาก Sandbox รอไว้ล่วงหน้าใน Background Thread ทันทีที่เริ่มฉาก
-	if ResourceLoader.exists(SANDBOX_PATH):
-		ResourceLoader.load_threaded_request(SANDBOX_PATH)
+	SceneLoader.request_preload(SANDBOX_PATH)
 	
 	# ตรวจสอบด่านที่เลือกจาก Level Select
 	var selected_lvl := GameProgressManager.get_selected_level_number()
@@ -329,14 +329,11 @@ func _input(event: InputEvent) -> void:
 # ==============================================================================
 
 func _load_level_data(num: int) -> void:
-	var path = "res://features/dialogue/levels/level_%02d.gd" % num
-	if ResourceLoader.exists(path):
-		var script = load(path)
-		if script and script.has_method("get_data"):
-			level_data = script.get_data()
-			return
-			
-	push_warning("[LevelDialogueView] Data file not found for level %d at %s. Using fallback." % [num, path])
+	level_data = LevelDataLoader.load_data(num)
+	if not level_data.is_empty():
+		return
+		
+	push_warning("[LevelDialogueView] Data file not found for level %d at %s. Using fallback." % [num, LevelDataLoader.get_level_path(num)])
 	level_data = {
 		"title": "ด่านที่ %d" % num,
 		"is_fallback": true,
@@ -491,10 +488,13 @@ func _open_dialogue_box_for_intro() -> void:
 	dialogue_box.visible = true
 	dialogue_box.modulate.a = 0.0
 	
-	var box_tween = create_tween()
-	box_tween.tween_property(dialogue_box, "modulate:a", 1.0, 0.25)
-	box_tween.tween_callback(func():
-		if is_transitioning:
+	if intro_box_tween and intro_box_tween.is_valid():
+		intro_box_tween.kill()
+	intro_box_tween = create_tween()
+	intro_box_tween.tween_property(dialogue_box, "modulate:a", 1.0, 0.25)
+	intro_box_tween.tween_callback(func():
+		# ถ้าผู้เล่นกดข้ามระหว่างกล่องข้อความกำลังเฟดเข้า จะไม่โหลดบทนำทับบทเรียน
+		if is_transitioning or not is_in_entrance_cutscene:
 			return
 		_load_sequence(INTRO_DIALOGUES)
 	)
@@ -547,6 +547,7 @@ func _on_skip_step() -> void:
 	if reaction_tween and reaction_tween.is_valid(): reaction_tween.kill()
 	if hop_tween and hop_tween.is_valid(): hop_tween.kill()
 	if open_box_tween and open_box_tween.is_valid(): open_box_tween.kill()
+	if intro_box_tween and intro_box_tween.is_valid(): intro_box_tween.kill()
 	if typewriter_tween and typewriter_tween.is_valid(): typewriter_tween.kill()
 	
 	_hide_exclamation()
@@ -566,6 +567,11 @@ func _on_skip_step() -> void:
 		mewla.modulate = Color.WHITE
 		mewla.play("idle")
 		_begin_dialogue_phase(0)
+		return
+	
+	# ด่านที่ยังไม่มีข้อมูลบทเรียน (fallback) ไม่มีขั้นเล่นจริง -> กลับหน้าเลือกด่านโดยไม่บันทึกผ่านด่าน
+	if level_data.get("is_fallback", false):
+		_finish_dialogue_stage(false)
 		return
 	
 	# กดข้าม -> ไปยังหน้าเดียวกับที่กดคุยไปต่อเรื่อยๆ จนจบช่วงนั้น (Gameplay Placeholder View)
@@ -607,8 +613,15 @@ func _show_current_queue_item(skip_typewriter: bool = false) -> void:
 	if queue_index >= current_queue.size():
 		if is_in_entrance_cutscene:
 			# จบบทนำ 5 ประโยคของคัตซีน -> ไหลเข้าสู่บทสอนด่าน 1 ในซีนเดิมทันที ไร้รอยต่อ 100%
+			# บันทึก history ขณะยังอยู่ในโหมดคัตซีน เพื่อให้กดย้อนกลับมาแล้วไปต่อได้ถูกต้อง
+			sequence_history.append({
+				"queue": current_queue,
+				"index": current_queue.size() - 1,
+				"is_showing_choices": false,
+				"is_in_entrance_cutscene": true
+			})
 			is_in_entrance_cutscene = false
-			_load_sequence(level_data.get("intro_sequence", []))
+			_load_sequence(level_data.get("intro_sequence", []), false)
 			return
 		# บันทึกผ่านด่านเฉพาะเมื่อเล่น outro_sequence จบสมบูรณ์ (หรือ debug_phase == 2) และไม่ใช่ข้อมูล fallback
 		var is_fallback: bool = level_data.get("is_fallback", false)
@@ -846,18 +859,7 @@ func _open_gameplay_step(step: int) -> void:
 	var ret_path = scene_file_path if scene_file_path != "" else "res://features/cutscene/inside_tower_cutscene.tscn"
 	GameProgressManager.set_gameplay_return_scene(ret_path)
 	
-	if ResourceLoader.exists(SANDBOX_PATH):
-		var sandbox_packed: PackedScene = null
-		var load_status := ResourceLoader.load_threaded_get_status(SANDBOX_PATH)
-		if load_status == ResourceLoader.THREAD_LOAD_LOADED or load_status == ResourceLoader.THREAD_LOAD_IN_PROGRESS:
-			sandbox_packed = ResourceLoader.load_threaded_get(SANDBOX_PATH) as PackedScene
-		if not sandbox_packed:
-			sandbox_packed = load(SANDBOX_PATH) as PackedScene
-		
-		if sandbox_packed:
-			get_tree().change_scene_to_packed(sandbox_packed)
-		else:
-			get_tree().change_scene_to_file(SANDBOX_PATH)
+	if SceneLoader.change_scene(get_tree(), SANDBOX_PATH):
 		return
 	
 	var placeholder_res = load("res://features/dialogue/gameplay_placeholder_view.tscn")

@@ -18,11 +18,18 @@ env:
   # ต้องเป็น Godot รุ่นมาตรฐาน (ไม่ใช่ .NET/Mono) และ major.minor ต้องตรงกับ config/features ใน project.godot
   GODOT_VERSION: 4.7.2
   GODOT_PROJECT: game
+  # account server (ASP.NET Core) อยู่ใน server/ ต้องตรงกับ TargetFramework ใน server/Directory.Build.props
+  DOTNET_VERSION: 10.0.x
+  SERVER_DIR: server
+  DOTNET_NOLOGO: "true"
+  DOTNET_CLI_TELEMETRY_OPTOUT: "true"
 
 jobs:
   # ---------------------------------------------------------------------------
-  # Hygiene: ตรวจโครงสร้างโปรเจกต์ GDScript โดยไม่ต้องใช้ Godot
-  #  - ไม่มีไฟล์ C# / .NET หลงเหลือ และไม่มี .godot/ ถูก commit
+  # Hygiene: ตรวจโครงสร้างโปรเจกต์โดยไม่ต้องใช้ Godot / .NET
+  #  - เกม (ทุกอย่างนอก server/) ไม่มีไฟล์ C# / .NET หลงเหลือ
+  #  - ไม่มี build output (bin/ obj/) หรือแคชของ Godot (.godot/ .mono/) ถูก commit ที่ไหนเลย
+  #  - project.godot ไม่มีหัวข้อ [dotnet] (Godot รุ่น mono ชอบเติมกลับมาเอง)
   #  - ทุก .gd ใน game/ มี .uid คู่กัน (Godot 4.4+ ใช้ .uid ผูก reference ของสคริปต์)
   #  - Godot ใน CI ตรงกับเวอร์ชันที่ project.godot ระบุ
   # ---------------------------------------------------------------------------
@@ -33,12 +40,29 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: No C# / .NET leftovers or editor cache committed
+      # server/ เป็นโปรเจกต์ C# จึงยกเว้น ส่วนเกมต้องเป็น GDScript ล้วน
+      - name: No C# / .NET files in the game (outside server/)
         run: |
-          bad=$(git ls-files | grep -E '\.(cs|csproj|sln|slnx)$|(^|/)\.godot/|(^|/)\.mono/|(^|/)(bin|obj)/' || true)
+          bad=$(git ls-files | grep -E '\.(cs|csproj|sln|slnx)$' | grep -vE "^${SERVER_DIR}/" || true)
           if [ -n "$bad" ]; then
             echo "$bad"
-            echo "::error::พบไฟล์ C#/.NET หรือแคชของ Godot ที่ไม่ควรอยู่ใน repository (โปรเจกต์นี้ใช้ GDScript ล้วน)"
+            echo "::error::พบไฟล์ C#/.NET นอกโฟลเดอร์ ${SERVER_DIR}/ (ตัวเกมใช้ GDScript ล้วน โค้ด C# ต้องอยู่ใน ${SERVER_DIR}/ เท่านั้น)"
+            exit 1
+          fi
+
+      - name: No build output or editor cache committed
+        run: |
+          bad=$(git ls-files | grep -E '(^|/)\.godot/|(^|/)\.mono/|(^|/)(bin|obj)/|(^|/)TestResults/' || true)
+          if [ -n "$bad" ]; then
+            echo "$bad"
+            echo "::error::พบ build output (bin/ obj/) หรือแคชของ Godot ที่ไม่ควรอยู่ใน repository"
+            exit 1
+          fi
+
+      - name: project.godot has no [dotnet] section
+        run: |
+          if grep -n '^\[dotnet\]' "$GODOT_PROJECT/project.godot"; then
+            echo "::error file=$GODOT_PROJECT/project.godot::มีหัวข้อ [dotnet] (มักเกิดจากเปิดด้วย Godot รุ่น mono) ให้ git restore $GODOT_PROJECT/project.godot หรือลบหัวข้อนี้ก่อน commit"
             exit 1
           fi
 
@@ -210,15 +234,94 @@ jobs:
             run.log
           if-no-files-found: ignore
 
+  # ---------------------------------------------------------------------------
+  # Account server (server/, ASP.NET Core): restore + build (warning = error
+  # ตาม Directory.Build.props) แล้วรันเทสทั้ง 2 ชุด เทสเป็น console runner ที่
+  # คืน exit code != 0 เมื่อมีเทสล้ม และ server ในเทสผูกพอร์ต 0 จึงรันขนานได้
+  # ถ้า branch ยังไม่มี server/ (เช่น main ก่อน merge feature/auth-login) job นี้จะผ่านโดยข้ามทุกขั้น
+  # ---------------------------------------------------------------------------
+  server:
+    name: Account server (.NET)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        shell: bash
+        working-directory: ${{ env.SERVER_DIR }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Detect server project
+        id: detect
+        working-directory: .
+        run: |
+          sln=$(ls "$SERVER_DIR"/*.slnx "$SERVER_DIR"/*.sln 2>/dev/null | head -n1 || true)
+          if [ -z "$sln" ]; then
+            echo "::notice::ไม่พบ solution ใน $SERVER_DIR/ ข้ามการ build server"
+            echo "present=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "present=true" >> "$GITHUB_OUTPUT"
+            echo "solution=$(basename "$sln")" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Setup .NET
+        if: steps.detect.outputs.present == 'true'
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Cache NuGet packages
+        if: steps.detect.outputs.present == 'true'
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: nuget-${{ runner.os }}-${{ hashFiles('server/**/*.csproj', 'server/Directory.Build.props', 'server/NuGet.Config') }}
+          restore-keys: nuget-${{ runner.os }}-
+
+      - name: Show tool versions
+        if: steps.detect.outputs.present == 'true'
+        run: dotnet --info
+
+      - name: Restore
+        if: steps.detect.outputs.present == 'true'
+        run: dotnet restore "${{ steps.detect.outputs.solution }}"
+
+      - name: Build
+        if: steps.detect.outputs.present == 'true'
+        run: dotnet build "${{ steps.detect.outputs.solution }}" --configuration Release --no-restore
+
+      - name: Test (GitDiwaa.Online.Tests)
+        if: steps.detect.outputs.present == 'true'
+        run: |
+          set -o pipefail
+          dotnet run --project tests/GitDiwaa.Online.Tests --configuration Release --no-build 2>&1 | tee ../online-tests.log
+
+      - name: Test (GitDiwaa.Server.Tests)
+        if: steps.detect.outputs.present == 'true'
+        run: |
+          set -o pipefail
+          dotnet run --project tests/GitDiwaa.Server.Tests --configuration Release --no-build 2>&1 | tee ../server-tests.log
+
+      - name: Upload logs on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: server-logs
+          path: |
+            online-tests.log
+            server-tests.log
+          if-no-files-found: ignore
+
   ci-success:
     name: CI success
     if: always()
-    needs: [hygiene, engine, godot]
+    needs: [hygiene, engine, godot, server]
     runs-on: ubuntu-latest
     steps:
       - name: Require every job to succeed
         run: |
-          echo "hygiene=${{ needs.hygiene.result }} engine=${{ needs.engine.result }} godot=${{ needs.godot.result }}"
+          echo "hygiene=${{ needs.hygiene.result }} engine=${{ needs.engine.result }} godot=${{ needs.godot.result }} server=${{ needs.server.result }}"
           test "${{ needs.hygiene.result }}" = "success"
           test "${{ needs.engine.result }}" = "success"
           test "${{ needs.godot.result }}" = "success"
+          test "${{ needs.server.result }}" = "success"

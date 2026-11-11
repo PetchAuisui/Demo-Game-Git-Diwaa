@@ -35,9 +35,7 @@ func _ready() -> void:
 	_load_preview_animation()
 	_start_career_btn.grab_focus()
 
-	const SANDBOX_PATH := "res://features/sandbox/sandbox_game_view.tscn"
-	if ResourceLoader.exists(SANDBOX_PATH):
-		ResourceLoader.load_threaded_request(SANDBOX_PATH)
+	SceneLoader.request_preload("res://features/sandbox/sandbox_game_view.tscn")
 
 
 func _bind_nodes() -> void:
@@ -130,17 +128,8 @@ func _on_resume_work_pressed() -> void:
 
 
 func _transition_to_scene(target_path: String) -> void:
-	var packed: PackedScene = null
-	var load_status := ResourceLoader.load_threaded_get_status(target_path)
-	if load_status == ResourceLoader.THREAD_LOAD_LOADED or load_status == ResourceLoader.THREAD_LOAD_IN_PROGRESS:
-		packed = ResourceLoader.load_threaded_get(target_path) as PackedScene
-	if not packed and ResourceLoader.exists(target_path):
-		packed = load(target_path) as PackedScene
-		
-	if packed:
-		get_tree().change_scene_to_packed(packed)
-	else:
-		get_tree().change_scene_to_file(target_path)
+	if not SceneLoader.change_scene(get_tree(), target_path):
+		push_warning("[StartView] Scene not found: '%s'" % target_path)
 
 
 func _on_dressing_room_pressed() -> void:
