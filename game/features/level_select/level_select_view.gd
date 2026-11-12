@@ -139,6 +139,9 @@ const VEL_ANGRY_DURATION: float = 0.70
 const NAV_COLOR_ACTIVE := Color(0.722, 0.604, 0.404, 1.0)     # #B89A67 Antique gold
 const NAV_COLOR_COMPLETED := Color(0.510, 0.604, 0.569, 1.0)  # #829A91 Muted sage green
 const NAV_COLOR_LOCKED := Color(0.467, 0.459, 0.553, 1.0)     # #77758D Muted lavender-gray
+
+## ด่านที่ยังพัฒนาไม่เสร็จ: ล็อกไว้เสมอแม้ผ่านด่านก่อนหน้าแล้ว (เอา id ออกเมื่อด่านพร้อมเล่น)
+const IN_DEVELOPMENT_STAGE_IDS: Array[int] = [2]
 const NAV_COLOR_PRIMARY := Color(0.894, 0.875, 0.835, 1.0)    # #E4DFD5 Primary text
 const NAV_COLOR_SECONDARY := Color(0.604, 0.588, 0.667, 1.0)  # #9A96AA Secondary text
 
@@ -747,7 +750,7 @@ func _on_continue_pressed() -> void:
 	var latest_unlocked_idx := 0
 	for i in range(TOWER_STAGES.size()):
 		var stg_id: int = TOWER_STAGES[i]["id"]
-		var is_unlocked := (stg_id == 1) or GameProgressManager.is_level_cleared(stg_id - 1)
+		var is_unlocked := _is_stage_unlocked(stg_id)
 		if is_unlocked:
 			latest_unlocked_idx = i
 	_jump_to_stage(latest_unlocked_idx, true)
@@ -791,7 +794,7 @@ func _spawn_tower_platforms() -> void:
 		var stg := TOWER_STAGES[i]
 		var stg_id: int = stg["id"]
 		var is_cleared := GameProgressManager.is_level_cleared(stg_id)
-		var is_unlocked := (stg_id == 1) or GameProgressManager.is_level_cleared(stg_id - 1)
+		var is_unlocked := _is_stage_unlocked(stg_id)
 		var is_current := (i == _current_stage_idx)
 		var act_num: int = int(stg["act"])
 
@@ -1165,7 +1168,7 @@ func _on_platform_selected(idx: int) -> void:
 
 	var target_stg: Dictionary = TOWER_STAGES[idx]
 	var target_id: int = target_stg["id"]
-	var is_unlocked: bool = (target_id == 1) or GameProgressManager.is_level_cleared(target_id - 1)
+	var is_unlocked: bool = _is_stage_unlocked(target_id)
 	if not is_unlocked:
 		_on_locked_platform_clicked(idx)
 		return
@@ -1196,7 +1199,7 @@ func _perform_direct_leap(to_idx: int) -> void:
 
 	var target_stg: Dictionary = TOWER_STAGES[to_idx]
 	var target_id: int = target_stg["id"]
-	var is_unlocked: bool = (target_id == 1) or GameProgressManager.is_level_cleared(target_id - 1)
+	var is_unlocked: bool = _is_stage_unlocked(target_id)
 	if not is_unlocked:
 		_on_locked_platform_clicked(to_idx)
 		return
@@ -1303,12 +1306,26 @@ func _perform_direct_leap(to_idx: int) -> void:
 	)
 
 
+static func _is_stage_in_development(stg_id: int) -> bool:
+	return IN_DEVELOPMENT_STAGE_IDS.has(stg_id)
+
+
+## ด่านเล่นได้เมื่อเป็นด่านแรกหรือผ่านด่านก่อนหน้าแล้ว และไม่ได้อยู่ระหว่างพัฒนา
+static func _is_stage_unlocked(stg_id: int) -> bool:
+	if _is_stage_in_development(stg_id):
+		return false
+	return stg_id == 1 or GameProgressManager.is_level_cleared(stg_id - 1)
+
+
 func _on_locked_platform_clicked(idx: int) -> void:
 	if idx < 0 or idx >= TOWER_STAGES.size():
 		return
 	_play_sfx(sfx_click)
 	var stg := TOWER_STAGES[idx]
-	_show_locked_hud_notice("🔒 แท่นหินด่าน %s ยังถูกผนึก! ต้องผ่านด่านก่อนหน้าเพื่อปลดล็อก" % stg["no"])
+	if _is_stage_in_development(int(stg["id"])):
+		_show_locked_hud_notice("🚧 ด่าน %s อยู่ระหว่างพัฒนา เร็วๆ นี้!" % stg["no"])
+	else:
+		_show_locked_hud_notice("🔒 แท่นหินด่าน %s ยังถูกผนึก! ต้องผ่านด่านก่อนหน้าเพื่อปลดล็อก" % stg["no"])
 
 
 func _show_locked_hud_notice(message: String) -> void:
@@ -1335,7 +1352,7 @@ func _try_navigate_stage(target_idx: int) -> void:
 
 	var target_stg: Dictionary = TOWER_STAGES[target_idx]
 	var target_id: int = target_stg["id"]
-	var is_unlocked: bool = (target_id == 1) or GameProgressManager.is_level_cleared(target_id - 1)
+	var is_unlocked: bool = _is_stage_unlocked(target_id)
 
 	if not is_unlocked:
 		_on_locked_platform_clicked(target_idx)
@@ -1373,7 +1390,7 @@ func _step_towards_queued_target() -> void:
 
 	var next_stg: Dictionary = TOWER_STAGES[next_step_idx]
 	var next_id: int = next_stg["id"]
-	var is_unlocked: bool = (next_id == 1) or GameProgressManager.is_level_cleared(next_id - 1)
+	var is_unlocked: bool = _is_stage_unlocked(next_id)
 	if not is_unlocked:
 		_target_queue_idx = _current_stage_idx
 		_is_jumping = false
@@ -1638,7 +1655,7 @@ func _apply_platform_style(plat: Control, stg_id: int, is_active: bool) -> void:
 		return
 
 	var is_cleared := GameProgressManager.is_level_cleared(stg_id)
-	var is_unlocked := (stg_id == 1) or GameProgressManager.is_level_cleared(stg_id - 1)
+	var is_unlocked := _is_stage_unlocked(stg_id)
 	var colors := _get_stage_style_colors(stg_id, is_active, is_cleared, is_unlocked)
 
 	var sb_norm := StyleBoxFlat.new()
@@ -1715,7 +1732,7 @@ func _update_platform_highlight(idx: int, is_active: bool) -> void:
 func _update_hud_display(stg: Dictionary) -> void:
 	var stg_id: int = stg["id"]
 	var is_cleared := GameProgressManager.is_level_cleared(stg_id)
-	var is_unlocked := (stg_id == 1) or GameProgressManager.is_level_cleared(stg_id - 1)
+	var is_unlocked := _is_stage_unlocked(stg_id)
 
 	if hud_no_badge:
 		hud_no_badge.text = "LV %s" % stg["no"]
@@ -1742,7 +1759,7 @@ func _update_hud_display(stg: Dictionary) -> void:
 			btn_launch.text = "เข้าสู่ด่าน" if not is_cleared else "ทบทวนด่าน"
 		else:
 			btn_launch.disabled = true
-			btn_launch.text = "ยังไม่ปลดล็อก"
+			btn_launch.text = "อยู่ระหว่างพัฒนา" if _is_stage_in_development(stg_id) else "ยังไม่ปลดล็อก"
 
 
 func _scroll_to_stage_idx(stage_idx: int, animate: bool = true, update_hud: bool = false, duration: float = 0.48) -> void:
@@ -1887,7 +1904,7 @@ func _draw_path_pass(target: CanvasItem, pass_mode: int) -> void:
 		var is_cleared_b := GameProgressManager.is_level_cleared(id_b)
 		var is_loop_back := id_b < id_a
 		var is_segment_cleared := (is_cleared_a and is_cleared_b) if is_loop_back else is_cleared_b
-		var is_unlocked_b := (id_b == 1) or GameProgressManager.is_level_cleared(id_b - 1)
+		var is_unlocked_b := _is_stage_unlocked(id_b)
 		var is_current_segment := false if is_loop_back else ((idx_b == _current_stage_idx) or (idx_a == _current_stage_idx and not is_cleared_b))
 		var is_segment_active := false if is_loop_back else (is_current_segment or is_unlocked_b)
 
@@ -2033,7 +2050,7 @@ func _on_launch_stage_pressed() -> void:
 
 	var stg := TOWER_STAGES[_current_stage_idx]
 	var stg_id: int = stg["id"]
-	var is_unlocked := (stg_id == 1) or GameProgressManager.is_level_cleared(stg_id - 1)
+	var is_unlocked := _is_stage_unlocked(stg_id)
 	if not is_unlocked:
 		return
 
