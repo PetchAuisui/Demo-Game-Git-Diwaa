@@ -88,11 +88,14 @@ func _ready() -> void:
 	skip_ctrl.custom_skip_action = _on_skip_step
 	add_child(skip_ctrl)
 	_init_shards()
+	await _prewarm_cutscene_textures()
+	if not is_inside_tree() or is_continuing or can_continue:
+		return
 	_reset_cutscene_state()
 	
 	if playback_mode == "AnimationPlayer":
-		if not anim_player.is_playing() or anim_player.current_animation != "walk_in":
-			anim_player.play("walk_in")
+		anim_player.play("walk_in")
+		anim_player.seek(0.0, true)
 		anim_player.animation_finished.connect(func(_anim_name):
 			if not is_continuing:
 				vel.play("breathe_blink")
@@ -101,6 +104,41 @@ func _ready() -> void:
 		if anim_player.is_playing():
 			anim_player.stop()
 		play_with_tween()
+
+## บังคับให้ OpenGL อัปโหลดเทกซ์เจอร์ที่ซ่อนไว้ (เศษคัมภีร์ 16 ชิ้น, กระดาษ, คัมภีร์, หลุมดำ)
+## ตั้งแต่อยู่หลังฉากในเฟรมแรก เพื่อไม่ให้กระตุกกลางคันตอนแสดงผลจริง
+func _prewarm_cutscene_textures() -> void:
+	var targets: Array[CanvasItem] = []
+	if black_hole:
+		targets.append(black_hole)
+	if khampri:
+		targets.append(khampri)
+	if khampri_shadow:
+		targets.append(khampri_shadow)
+	if paper_shadow:
+		targets.append(paper_shadow)
+	if paper_on_floor:
+		targets.append(paper_on_floor)
+	for s in shards:
+		if is_instance_valid(s):
+			targets.append(s)
+	
+	for node in targets:
+		node.z_index = -1
+		node.position = Vector2.ZERO
+		node.scale = Vector2(0.01, 0.01)
+		node.modulate = Color(1, 1, 1, 0.05)
+		node.visible = true
+	
+	await get_tree().process_frame
+	if not is_inside_tree():
+		return
+	
+	for node in targets:
+		if is_instance_valid(node):
+			node.z_index = 0
+			if not is_continuing and not can_continue:
+				node.visible = false
 
 func _exit_tree() -> void:
 	Engine.time_scale = 1.0
@@ -168,14 +206,25 @@ func _skip_to_magic_text() -> void:
 	
 	for s in shards:
 		if is_instance_valid(s):
+			s.z_index = 0
 			s.visible = false
 	
+	paper_on_floor.z_index = 0
 	paper_on_floor.visible = true
 	paper_on_floor.position = Vector2(vel.position.x + 8.0, character_y - 28.0)
 	paper_on_floor.scale = Vector2(0.12, 0.12)
 	paper_on_floor.modulate = Color(2.0, 1.8, 1.2, 1.0)
 	if paper_shadow:
 		paper_shadow.visible = false
+	if backdrop:
+		backdrop.color = Color(0, 0, 0, 0.85)
+	if parchment_shadow:
+		parchment_shadow.modulate = Color(0, 0, 0, 0.55)
+	if parchment_frame:
+		parchment_frame.modulate = Color(1, 1, 1, 1)
+	if rune_container:
+		rune_container.scale = Vector2.ONE
+		rune_container.modulate = Color(1, 1, 1, 1)
 	
 	_on_reveal_magic_text()
 
@@ -187,7 +236,7 @@ func _trigger_continue_instant() -> void:
 	can_fast_forward = false
 	is_fast_forwarding = false
 	Engine.time_scale = 1.0
-	get_tree().change_scene_to_file("res://features/cutscene/outside_cutscene.tscn")
+	SceneLoader.change_scene(get_tree(), "res://features/cutscene/outside_cutscene.tscn")
 
 func _init_shards() -> void:
 	shards.clear()
@@ -241,12 +290,16 @@ func _reset_cutscene_state() -> void:
 		paper_on_floor.modulate = Color(1, 1, 1, 1)
 	
 	if backdrop:
+		backdrop.visible = false
 		backdrop.color = Color(0, 0, 0, 0)
 	if parchment_shadow:
+		parchment_shadow.visible = false
 		parchment_shadow.modulate = Color(0, 0, 0, 0)
 	if parchment_frame:
+		parchment_frame.visible = false
 		parchment_frame.modulate = Color(1, 1, 1, 0)
 	if rune_container:
+		rune_container.visible = false
 		rune_container.scale = Vector2(0.01, 0.01)
 		rune_container.modulate = Color(1, 1, 1, 0)
 	if rune_aura_label:
@@ -297,7 +350,7 @@ func _on_shatter_khampri() -> void:
 		var s: Sprite2D = shards[i]
 		s.position = origin
 		s.scale = Vector2(0.2, 0.2)
-		s.visible = true
+		s.visible = false
 		s.rotation = 0.0 # สไตล์ Pixel Art
 		
 		# คำนวณขนาดพื้นที่ของเศษชิ้นนี้
@@ -333,6 +386,7 @@ func _on_shatter_khampri() -> void:
 		tw_launch.tween_callback(func():
 			if not is_instance_valid(s):
 				return
+			s.visible = true
 			s.modulate = Color(1.15, 1.05, 0.90, 1.0)
 			var tw_move = create_tween().set_parallel(true)
 			tw_move.tween_property(s, "position:x", target.x, duration).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
@@ -438,6 +492,8 @@ func _on_pickup_shard() -> void:
 	if tw_paper_glow and tw_paper_glow.is_valid():
 		tw_paper_glow.kill()
 		tw_paper_glow = null
+	if playback_mode == "AnimationPlayer":
+		return
 	if paper_shadow:
 		var tw_ps = create_tween()
 		tw_ps.tween_property(paper_shadow, "modulate:a", 0.0, 0.5)
@@ -452,6 +508,14 @@ func _on_pickup_shard() -> void:
 func _on_reveal_magic_text() -> void:
 	if not rune_container:
 		return
+	SceneLoader.request_preload("res://features/cutscene/outside_cutscene.tscn")
+	if backdrop:
+		backdrop.visible = true
+	if parchment_shadow:
+		parchment_shadow.visible = true
+	if parchment_frame:
+		parchment_frame.visible = true
+	rune_container.visible = true
 	if skip_ctrl:
 		skip_ctrl.set_fast_forward_visible(false)
 	can_fast_forward = false
@@ -559,7 +623,7 @@ func _trigger_continue() -> void:
 		Engine.time_scale = 1.0
 		emit_signal("cutscene_finished")
 		print("[IntroCutscene] Transitioning to OutsideCutscene...")
-		get_tree().change_scene_to_file("res://features/cutscene/outside_cutscene.tscn")
+		SceneLoader.change_scene(get_tree(), "res://features/cutscene/outside_cutscene.tscn")
 	)
 
 ## โหมดสำรอง: เล่นด้วย GDScript Tween ล้วน ๆ
@@ -773,6 +837,14 @@ func play_with_tween() -> void:
 	var tw_ui = create_tween()
 	tw_ui.tween_interval(21.0)
 	tw_ui.tween_callback(func():
+		if backdrop:
+			backdrop.visible = true
+		if parchment_frame:
+			parchment_frame.visible = true
+		if parchment_shadow:
+			parchment_shadow.visible = true
+		if rune_container:
+			rune_container.visible = true
 		var tw_t = create_tween().set_parallel(true)
 		tw_t.tween_property(backdrop, "color", Color(0, 0, 0, 0.85), 0.5)
 		tw_t.tween_property(parchment_frame, "modulate", Color(1, 1, 1, 1.0), 0.5)
