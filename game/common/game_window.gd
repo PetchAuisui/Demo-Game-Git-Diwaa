@@ -101,6 +101,9 @@ func _ready() -> void:
 	var window := get_window()
 	window.min_size = Vector2i(MIN_WIDTH, MIN_HEIGHT)
 
+	if DisplayServer.get_name() == "headless" or Engine.is_embedded_in_editor():
+		return
+
 	# หากเปิดมาเป็น Windowed แล้วจอเล็กกว่า 1080p ให้ปรับขนาดให้พอดีกับจออัตโนมัติ
 	if window.mode == Window.MODE_WINDOWED:
 		_fit_windowed_to_screen(window)
@@ -451,19 +454,34 @@ func _input(event: InputEvent) -> void:
 
 
 func toggle_fullscreen() -> void:
+	if DisplayServer.get_name() == "headless" or Engine.is_embedded_in_editor():
+		return
 	var window := get_window()
 	if window.mode == Window.MODE_FULLSCREEN or window.mode == Window.MODE_EXCLUSIVE_FULLSCREEN:
-		window.mode = Window.MODE_WINDOWED
-		_fit_windowed_to_screen(window)
+		# บน Windows (Godot 4.7.2) การสั่ง MODE_WINDOWED จาก Fullscreen โดยตรงอาจเด้งเป็น mode=4 (Exclusive Fullscreen)
+		window.mode = Window.MODE_MAXIMIZED if OS.get_name() == "Windows" else Window.MODE_WINDOWED
+		_fit_windowed_after_mode_change(window)
 	else:
 		window.mode = Window.MODE_FULLSCREEN
 
 
+func _fit_windowed_after_mode_change(window: Window) -> void:
+	await get_tree().process_frame
+	await get_tree().process_frame
+	if not is_inside_tree() or not is_instance_valid(window):
+		return
+	if window.mode == Window.MODE_FULLSCREEN or window.mode == Window.MODE_EXCLUSIVE_FULLSCREEN:
+		return
+	_fit_windowed_to_screen(window)
+
+
 func _fit_windowed_to_screen(window: Window) -> void:
 	var screen := DisplayServer.screen_get_usable_rect(window.current_screen)
+	if screen.size.x <= 0 or screen.size.y <= 0:
+		return
 	var width := mini(BASE_WIDTH, int(screen.size.x * 0.85))
 	var height := mini(BASE_HEIGHT, int(screen.size.y * 0.85))
 	var window_scale := minf(float(width) / float(BASE_WIDTH), float(height) / float(BASE_HEIGHT))
-	window.size = Vector2i(int(BASE_WIDTH * window_scale), int(BASE_HEIGHT * window_scale))
+	window.size = Vector2i(maxi(MIN_WIDTH, int(BASE_WIDTH * window_scale)), maxi(MIN_HEIGHT, int(BASE_HEIGHT * window_scale)))
 	window.position = screen.position + (screen.size - window.size) / 2
 
