@@ -56,7 +56,7 @@ var bad_ending_btn: Button = null
 const BAD_END_LINE1: String = "เศษเสี้ยวที่กระจัดกระจายและใครบางคน... ยังคงรอคอยอยู่ในความมืดมิด"
 const BAD_END_LINE2: String = "ขณะที่เวลเดินพ้นประตูหอคอยไป ทิ้งทุกคำตอบไว้เบื้องหลังตลอดกาล"
 
-# Navigation Arrows (◀ ▶) & History
+# Navigation Arrows (ซ้าย-ขวา) & History
 var nav_arrows_container: HBoxContainer = null
 var btn_arrow_back: TextureButton = null
 var btn_arrow_next: TextureButton = null
@@ -1144,7 +1144,7 @@ func _hide_continue_arrow() -> void:
 	_update_nav_arrows()
 
 # ==============================================================================
-# NAVIGATION ARROWS SYSTEM (ลูกศร ◀ ▶ ข้างกัน)
+# NAVIGATION ARROWS SYSTEM (ลูกศรซ้าย-ขวาข้างกัน)
 # ==============================================================================
 
 static func _get_nav_arrow_texture(is_left: bool) -> ImageTexture:
@@ -1180,7 +1180,7 @@ func _create_nav_arrows() -> void:
 	if not arrow_overlay:
 		return
 		
-	# ปรับระยะขอบขวาของ Margin และเปิด fit_content เพื่อป้องกันข้อความยาวทับลูกศร ◀ ▶
+	# ปรับระยะขอบขวาของ Margin และเปิด fit_content เพื่อป้องกันข้อความยาวทับลูกศรซ้าย-ขวา
 	var margin_node = dialogue_box.get_node_or_null("Margin")
 	if margin_node:
 		margin_node.add_theme_constant_override("margin_right", 96)
@@ -1210,7 +1210,7 @@ func _create_nav_arrows() -> void:
 	nav_arrows_container.alignment = BoxContainer.ALIGNMENT_END
 	nav_arrows_container.add_theme_constant_override("separation", 12)
 	
-	# 1. ปุ่มลูกศรซ้าย ◀ (ย้อนกลับ)
+	# 1. ปุ่มลูกศรซ้าย (ย้อนกลับ)
 	btn_arrow_back = TextureButton.new()
 	btn_arrow_back.name = "BtnArrowBack"
 	btn_arrow_back.texture_normal = _get_nav_arrow_texture(true)
@@ -1228,7 +1228,7 @@ func _create_nav_arrows() -> void:
 	nav_arrows_container.add_child(btn_arrow_back)
 	btn_back = btn_arrow_back
 	
-	# 2. ปุ่มลูกศรขวา ▶ (ไปต่อ)
+	# 2. ปุ่มลูกศรขวา (ไปต่อ)
 	btn_arrow_next = TextureButton.new()
 	btn_arrow_next.name = "BtnArrowNext"
 	btn_arrow_next.texture_normal = _get_nav_arrow_texture(false)
@@ -1299,7 +1299,7 @@ func _update_nav_arrows() -> void:
 		
 	nav_arrows_container.visible = true
 	
-	# ลูกศรซ้าย ◀ (ย้อนกลับ)
+	# ลูกศรซ้าย (ย้อนกลับ)
 	var can_back = _can_go_back()
 	btn_arrow_back.disabled = not can_back
 	btn_arrow_back.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND if can_back else Control.CURSOR_ARROW
@@ -1314,7 +1314,7 @@ func _update_nav_arrows() -> void:
 		btn_arrow_back.scale = Vector2.ONE
 		btn_arrow_back.modulate = Color(1.0, 1.0, 1.0, 0.25)
 	
-	# ลูกศรขวา ▶ (ไปต่อ)
+	# ลูกศรขวา (ไปต่อ)
 	var can_next = (is_dialogue_active or is_typing) and not is_showing_choices
 	btn_arrow_next.disabled = not can_next
 	btn_arrow_next.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND if can_next else Control.CURSOR_ARROW
