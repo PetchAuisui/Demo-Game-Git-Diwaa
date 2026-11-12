@@ -277,7 +277,7 @@ unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 56)
 layout_mode = 2
 focus_neighbor_top = NodePath("../StartCareerBtn")
-focus_neighbor_bottom = NodePath("../DressingRoomBtn")
+focus_neighbor_bottom = NodePath("../SandboxBtn")
 mouse_default_cursor_shape = 2
 theme_override_colors/font_color = Color(0.18, 0.12, 0.08, 1)
 theme_override_colors/font_pressed_color = Color(0.18, 0.12, 0.08, 1)
@@ -289,11 +289,28 @@ theme_override_styles/pressed = SubResource("Style_btn_resume_pressed")
 theme_override_styles/hover = SubResource("Style_btn_resume_hover")
 text = "RESUME WORK 🕒"
 
-[node name="DressingRoomBtn" type="Button" parent="WindowAnchor/WindowFrame/WindowVBox/WindowContent/LeftMenuPanel/Margin/VBox" unique_id=1849204812]
+[node name="SandboxBtn" type="Button" parent="WindowAnchor/WindowFrame/WindowVBox/WindowContent/LeftMenuPanel/Margin/VBox"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 56)
 layout_mode = 2
 focus_neighbor_top = NodePath("../ResumeWorkBtn")
+focus_neighbor_bottom = NodePath("../DressingRoomBtn")
+mouse_default_cursor_shape = 2
+theme_override_colors/font_color = Color(0.18, 0.12, 0.08, 1)
+theme_override_colors/font_pressed_color = Color(0.18, 0.12, 0.08, 1)
+theme_override_colors/font_hover_color = Color(0.18, 0.12, 0.08, 1)
+theme_override_fonts/font = ExtResource("6_font_bungee")
+theme_override_font_sizes/font_size = 17
+theme_override_styles/normal = SubResource("Style_btn_resume_normal")
+theme_override_styles/pressed = SubResource("Style_btn_resume_pressed")
+theme_override_styles/hover = SubResource("Style_btn_resume_hover")
+text = "GIT SANDBOX 🧪"
+
+[node name="DressingRoomBtn" type="Button" parent="WindowAnchor/WindowFrame/WindowVBox/WindowContent/LeftMenuPanel/Margin/VBox" unique_id=1849204812]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 56)
+layout_mode = 2
+focus_neighbor_top = NodePath("../SandboxBtn")
 focus_neighbor_bottom = NodePath("../TutorialBtn")
 mouse_default_cursor_shape = 2
 theme_override_colors/font_color = Color(1, 1, 1, 1)

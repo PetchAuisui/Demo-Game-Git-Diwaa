@@ -3,13 +3,17 @@ extends Control
 
 ## Controller for the Start Screen View.
 ## Orchestrates start screen navigation, audio effects, live terminal simulation,
-## real-time system clock, and transition to Sandbox gameplay.
+## real-time system clock, and transitions to level select or the free-play Git sandbox.
 
 const PREVIEW_FPS := 6.67
 const THAI_LOG_FONT_SIZE := 22
+const LEVEL_SELECT_PATH := "res://features/level_select/level_select_view.tscn"
+const SANDBOX_PATH := "res://features/sandbox/sandbox_game_view.tscn"
+const START_VIEW_PATH := "res://features/start/start_view.tscn"
 
 var _start_career_btn: Button
 var _resume_work_btn: Button
+var _sandbox_btn: Button
 var _dressing_room_btn: Button
 var _tutorial_btn: Button
 var _clock_label: Label
@@ -39,12 +43,13 @@ func _ready() -> void:
 	_load_preview_animation()
 	_start_career_btn.grab_focus()
 
-	SceneLoader.request_preload("res://features/sandbox/sandbox_game_view.tscn")
+	SceneLoader.request_preload(SANDBOX_PATH)
 
 
 func _bind_nodes() -> void:
 	_start_career_btn = get_node("%StartCareerBtn")
 	_resume_work_btn = get_node("%ResumeWorkBtn")
+	_sandbox_btn = get_node("%SandboxBtn")
 	_dressing_room_btn = get_node("%DressingRoomBtn")
 	_tutorial_btn = get_node("%TutorialBtn")
 	_clock_label = get_node("%ClockLabel")
@@ -60,11 +65,13 @@ func _bind_nodes() -> void:
 func _wire_events() -> void:
 	_start_career_btn.pressed.connect(_on_start_career_pressed)
 	_resume_work_btn.pressed.connect(_on_resume_work_pressed)
+	_sandbox_btn.pressed.connect(_on_sandbox_pressed)
 	_dressing_room_btn.pressed.connect(_on_dressing_room_pressed)
 	_tutorial_btn.pressed.connect(_on_tutorial_pressed)
 
 	_start_career_btn.focus_entered.connect(_on_button_focus_entered)
 	_resume_work_btn.focus_entered.connect(_on_button_focus_entered)
+	_sandbox_btn.focus_entered.connect(_on_button_focus_entered)
 	_dressing_room_btn.focus_entered.connect(_on_button_focus_entered)
 	_tutorial_btn.focus_entered.connect(_on_button_focus_entered)
 
@@ -126,7 +133,7 @@ func _on_start_career_pressed() -> void:
 		get_tree().create_timer(0.35).timeout.connect(func() -> void:
 			if not is_inside_tree():
 				return
-			_transition_to_scene("res://features/level_select/level_select_view.tscn"))
+			_transition_to_scene(LEVEL_SELECT_PATH))
 	else:
 		_append_terminal_text("> Initializing Magic Tower apprentice session...")
 		get_tree().create_timer(0.35).timeout.connect(func() -> void:
@@ -138,27 +145,34 @@ func _on_start_career_pressed() -> void:
 				GameProgressManager.set_selected_level_number(prev_selected))
 
 
+## เล่นต่อจากที่ค้างไว้: ไปหน้าเลือกด่าน
 func _on_resume_work_pressed() -> void:
 	if _is_leaving:
 		return
 	_is_leaving = true
 	_play_sfx(_sfx_click)
-	_append_terminal_text("> Resuming active repository session...")
+	_append_terminal_text("> Opening Tower Ascension Roadmap...")
 
 	get_tree().create_timer(0.2).timeout.connect(func() -> void:
 		if not is_inside_tree():
 			return
-		var prev_selected := GameProgressManager.get_selected_level_number()
-		var prev_step := GameProgressManager.get_current_gameplay_step()
-		var prev_return_scene := GameProgressManager.get_gameplay_return_scene()
-		GameProgressManager.set_selected_level_number(1)
-		GameProgressManager.set_current_gameplay_step(0)
-		GameProgressManager.consume_pending_dialogue_phase()
-		GameProgressManager.set_gameplay_return_scene("res://features/cutscene/inside_tower_cutscene.tscn")
-		if not _transition_to_scene("res://features/sandbox/sandbox_game_view.tscn"):
-			GameProgressManager.set_selected_level_number(prev_selected)
-			GameProgressManager.set_current_gameplay_step(prev_step)
-			GameProgressManager.set_gameplay_return_scene(prev_return_scene))
+		_transition_to_scene(LEVEL_SELECT_PATH))
+
+
+## เข้าห้องทดลองคำสั่ง git แบบอิสระ ปุ่มออกใน Sandbox จะพากลับหน้าแรก
+func _on_sandbox_pressed() -> void:
+	if _is_leaving:
+		return
+	_is_leaving = true
+	_play_sfx(_sfx_click)
+	_append_terminal_text("> Opening free-play Git sandbox...")
+
+	get_tree().create_timer(0.2).timeout.connect(func() -> void:
+		if not is_inside_tree():
+			return
+		SandboxGameView.return_scene_path = START_VIEW_PATH
+		if not _transition_to_scene(SANDBOX_PATH):
+			SandboxGameView.return_scene_path = SandboxGameView.LEVEL_SELECT_PATH)
 
 
 func _transition_to_scene(target_path: String) -> bool:
@@ -223,7 +237,11 @@ func _on_terminal_command_submitted(input: String) -> void:
 
 	if lower == "level" or lower == "levels" or lower == "select":
 		_is_leaving = true
-		_transition_to_scene("res://features/level_select/level_select_view.tscn")
+		_transition_to_scene(LEVEL_SELECT_PATH)
+		return
+
+	if lower == "sandbox":
+		_on_sandbox_pressed()
 		return
 
 	if lower == "clear 1" or lower == "complete 1":
@@ -253,7 +271,7 @@ func _on_terminal_command_submitted(input: String) -> void:
 	elif lower == "git branch":
 		_append_terminal_text("* main\n  fireball")
 	elif lower == "help":
-		_append_terminal_text("Commands: git init, git status, git add, git commit, git branch, start, wardrobe, clear, help")
+		_append_terminal_text("Commands: git init, git status, git add, git commit, git branch, start, sandbox, wardrobe, clear, help")
 	else:
 		_append_terminal_text("git: '%s' executed in sandbox preview." % cmd)
 

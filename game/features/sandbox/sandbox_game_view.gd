@@ -6,7 +6,7 @@ extends Control
 const CENTRAL_TOWER_CUTSCENE_PATH := "res://features/cutscene/central_tower_cutscene.tscn"
 const ENDING_CUTSCENE_PATH := "res://features/cutscene/ending_cutscene.tscn"
 const LEVEL_SELECT_PATH := "res://features/level_select/level_select_view.tscn"
-const DEFAULT_RETURN_SCENE_PATH := "res://features/cutscene/inside_tower_cutscene.tscn"
+const START_VIEW_PATH := "res://features/start/start_view.tscn"
 const DIALOG_THEME_PATH := "res://features/sandbox/file_dialog_theme.tres"
 const ACT2_START_LEVEL := 16
 const ACT1_LOOP_SHEET_PATH := "res://assets/cutscene/backgrounds/inside-tower-loop-Sheet.png"
@@ -38,13 +38,16 @@ var _sandbox_service: GitSandboxService
 var _is_initialized := false
 var _is_leaving := false
 
+## ฉากที่ปุ่มออกจะพากลับไป ตั้งก่อนเปิด Sandbox (เช่น หน้าแรกตั้งเป็น START_VIEW_PATH) และรีเซ็ตกลับเป็นหน้าเลือกด่านเมื่อออก
+static var return_scene_path := LEVEL_SELECT_PATH
+
 
 func _ready() -> void:
 	_bind_nodes()
 	_setup_animated_background()
 	_setup_leave_confirm_dialog()
 	_wire_events()
-	SceneLoader.request_preload(LEVEL_SELECT_PATH)
+	SceneLoader.request_preload(return_scene_path)
 	_initialize_sandbox()
 
 
@@ -124,14 +127,14 @@ func _wire_events() -> void:
 	_files_panel.rename_entry_requested.connect(_on_rename_entry_requested)
 	_files_panel.delete_entry_requested.connect(_on_delete_entry_requested)
 	_git_graph_panel.commit_selected.connect(_on_commit_selected)
-	_top_bar.finish_pressed.connect(_on_exit_pressed)
+	_top_bar.finish_pressed.connect(_leave_sandbox)
 	_top_bar.brand_pressed.connect(_on_brand_pressed)
 
 
 func _setup_leave_confirm_dialog() -> void:
 	_leave_confirm_dialog = ConfirmationDialog.new()
 	_leave_confirm_dialog.name = "LeaveConfirmDialog"
-	_leave_confirm_dialog.title = "กลับหน้าเลือกด่าน"
+	_leave_confirm_dialog.title = "ออกจาก Sandbox"
 	_leave_confirm_dialog.borderless = true
 	_leave_confirm_dialog.unresizable = true
 	_leave_confirm_dialog.ok_button_text = "ออกจาก Sandbox"
@@ -143,11 +146,11 @@ func _setup_leave_confirm_dialog() -> void:
 		_leave_confirm_dialog,
 		DialogStyle.WARNING,
 		"!",
-		"กลับหน้าเลือกด่าน?",
+		"%s?" % _return_label(),
 		true
 	)
 	_leave_confirm_dialog.size = Vector2i(520, 100)
-	_leave_confirm_dialog.confirmed.connect(_leave_to_level_select)
+	_leave_confirm_dialog.confirmed.connect(_leave_sandbox)
 
 
 func _on_brand_pressed() -> void:
@@ -155,31 +158,26 @@ func _on_brand_pressed() -> void:
 		return
 	var has_unsaved := _files_panel != null and _files_panel.has_unsaved_changes
 	if _leave_confirm_dialog == null or _leave_confirm_message == null:
-		_leave_to_level_select()
+		_leave_sandbox()
 		return
 	if has_unsaved:
-		_leave_confirm_message.text = "มีไฟล์ที่ยังไม่บันทึก\nต้องการออกจาก Sandbox กลับหน้าเลือกด่านหรือไม่?"
+		_leave_confirm_message.text = "มีไฟล์ที่ยังไม่บันทึก\nต้องการออกจาก Sandbox %sหรือไม่?" % _return_label()
 	else:
-		_leave_confirm_message.text = "ต้องการออกจาก Sandbox กลับหน้าเลือกด่านหรือไม่?"
+		_leave_confirm_message.text = "ต้องการออกจาก Sandbox %sหรือไม่?" % _return_label()
 	_leave_confirm_dialog.popup_centered()
 
 
-func _leave_to_level_select() -> void:
+func _return_label() -> String:
+	return "กลับหน้าแรก" if return_scene_path == START_VIEW_PATH else "กลับหน้าเลือกด่าน"
+
+
+func _leave_sandbox() -> void:
 	if _is_leaving:
 		return
 	_is_leaving = true
 	var tree := get_tree() if is_inside_tree() else null
-	if SceneLoader.change_scene(tree, LEVEL_SELECT_PATH):
+	if SceneLoader.change_scene(tree, return_scene_path):
 		Engine.time_scale = 1.0
-		GameProgressManager.set_current_gameplay_step(0)
-		GameProgressManager.consume_pending_dialogue_phase()
-		GameProgressManager.set_gameplay_return_scene(DEFAULT_RETURN_SCENE_PATH)
-	elif not ResourceLoader.exists(LEVEL_SELECT_PATH):
-		_is_leaving = false
-		if _change_scene_to_cutscene(CENTRAL_TOWER_CUTSCENE_PATH):
-			GameProgressManager.set_current_gameplay_step(0)
-			GameProgressManager.consume_pending_dialogue_phase()
-			GameProgressManager.set_gameplay_return_scene(DEFAULT_RETURN_SCENE_PATH)
 	else:
 		_is_leaving = false
 
@@ -215,7 +213,7 @@ func _initialize_sandbox() -> void:
 	_terminal_panel.set_executing(false)
 
 	_top_bar.set_mode_text("SANDBOX")
-	_top_bar.set_finish_button_text("กลับสู่เนื้อเรื่อง ➔" if _is_opened_from_story() else "กลับหน้าเลือกด่าน")
+	_top_bar.set_finish_button_text(_return_label())
 
 	if _sandbox_service.info != null:
 		_terminal_panel.set_window_title("●  ●  ●    TERMINAL — learner@diwaa:~/%s" % _sandbox_service.info.mission_id)
@@ -244,7 +242,7 @@ func _on_command_submitted(command: String) -> void:
 
 	# Exit sandbox (same as the top-right button)
 	if lower in ["exit", "quit"]:
-		_on_exit_pressed()
+		_leave_sandbox()
 		return
 
 	# Built-in help handler
@@ -533,29 +531,8 @@ func _show_help() -> void:
                   sandbox-reset, cutscene <central|ending>, level 16, exit, clear, help""")
 
 
-## หน้าบทสนทนาเปิด Sandbox ระหว่างเล่าเรื่อง (ตั้ง gameplay step ไว้) -> ปุ่มออกจะพากลับเข้าเนื้อเรื่อง
-func _is_opened_from_story() -> bool:
-	return GameProgressManager.get_current_gameplay_step() > 0
-
-
-## ออกจาก Sandbox: กลับเข้าเนื้อเรื่องถ้าเปิดมาจากบทสนทนา ไม่เช่นนั้นกลับหน้าเลือกด่าน (ไม่มีการตรวจผ่าน/ไม่ผ่าน)
-func _on_exit_pressed() -> void:
-	if not _is_opened_from_story():
-		_leave_to_level_select()
-		return
-	# ส่งต่อไปยัง dialogue phase ถัดไป: ช่วงที่ 1 -> phase 1 (part 2 intro), ช่วงที่ 2 -> phase 2 (outro)
-	var next_phase := 1 if GameProgressManager.get_current_gameplay_step() == 1 else 2
-	var return_scene := GameProgressManager.get_gameplay_return_scene()
-	if return_scene.is_empty():
-		return_scene = DEFAULT_RETURN_SCENE_PATH
-	if _change_scene_to_cutscene(return_scene):
-		_terminal_panel.append_info("กำลังกลับสู่เนื้อเรื่อง...")
-		GameProgressManager.set_pending_dialogue_phase(next_phase)
-		GameProgressManager.set_current_gameplay_step(0)
-
-
 func _exit_tree() -> void:
-	# ออกจาก Sandbox ทางใดก็ตาม (เช่น คำสั่ง cutscene / level 16) ให้ล้าง gameplay step ไม่ให้ค้างไปรอบถัดไป
-	GameProgressManager.set_current_gameplay_step(0)
+	# ออกจาก Sandbox ทางใดก็ตาม (เช่น คำสั่ง cutscene / level 16) ให้รอบถัดไปกลับหน้าเลือกด่านตามค่าเริ่มต้น
+	return_scene_path = LEVEL_SELECT_PATH
 	if _sandbox_service != null:
 		_sandbox_service.dispose()

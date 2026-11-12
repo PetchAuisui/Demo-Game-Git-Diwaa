@@ -7,16 +7,15 @@ extends Node2D
 ## - กำหนด @export var level_number: int เพื่อเลือกด่านที่ต้องการเล่น (ค่าเริ่มต้น: 1)
 ## - สคริปต์จะโหลดข้อมูลจาก res://features/dialogue/levels/level_%02d.gd มาแสดงผลอัตโนมัติ
 ## - รองรับ Typewriter Effect, BBCode ไฮไลต์โค้ดสไตล์ Markdown, ช้อยส์ในกล่องข้อความเดิม,
-##   และเชื่อมต่อไปยังหน้าจำลองการเล่นภายในด่าน (Gameplay Placeholder View)
+##   เล่นบทสนทนาต่อเนื่องจนจบ (ยังไม่มีหน้าเล่นจริงของด่าน) แล้วบันทึกผ่านด่านและกลับหน้าเลือกด่าน
 
 @export var level_number: int = 1
 @export var next_scene_path: String = "res://features/start/start_view.tscn"
-@export var level_clear_scene_path: String = "res://features/cutscene/level_clear_scene.tscn"
 @export var play_entrance_cutscene: bool = false
 @export var fade_in_from_black: bool = false
 @export_enum("Intro & Part 1", "Part 2", "Outro") var debug_phase: int = 0
 
-const SANDBOX_PATH := "res://features/sandbox/sandbox_game_view.tscn"
+const LEVEL_SELECT_PATH := "res://features/level_select/level_select_view.tscn"
 
 # Animation & Visuals
 @onready var anim_player: AnimationPlayer = $AnimationPlayer
@@ -175,8 +174,8 @@ func _ready() -> void:
 	skip_ctrl.custom_skip_action = _on_skip_step
 	add_child(skip_ctrl)
 	
-	# โหลดฉาก Sandbox รอไว้ล่วงหน้าใน Background Thread ทันทีที่เริ่มฉาก
-	SceneLoader.request_preload(SANDBOX_PATH)
+	# โหลดหน้าเลือกด่านรอไว้ล่วงหน้าใน Background Thread เพื่อกลับไปได้ทันทีเมื่อจบบทสนทนา
+	SceneLoader.request_preload(LEVEL_SELECT_PATH)
 	
 	# ตรวจสอบด่านที่เลือกจาก Level Select
 	var selected_lvl := GameProgressManager.get_selected_level_number()
@@ -574,7 +573,7 @@ func _on_skip_step() -> void:
 		_finish_dialogue_stage(false)
 		return
 	
-	# กดข้าม -> ไปยังหน้าเดียวกับที่กดคุยไปต่อเรื่อยๆ จนจบช่วงนั้น (Gameplay Placeholder View)
+	# กดข้าม -> ข้ามไปบทสนทนาช่วงถัดไป เหมือนกดคุยไปต่อเรื่อยๆ จนจบช่วงนั้น
 	if debug_phase == 0:
 		_open_gameplay_step(1)
 		return
@@ -837,61 +836,16 @@ func _on_choice_selected(index: int) -> void:
 		dialogue_label.visible = false
 
 # ==============================================================================
-# GAMEPLAY PLACEHOLDER & STAGE FINISH
+# GAMEPLAY STEP & STAGE FINISH
 # ==============================================================================
 
+## ด่านยังไม่มีหน้าเล่นจริง -> ข้ามช่วงเล่นแล้วเล่นบทสนทนาช่วงถัดไปต่อในฉากเดิมทันที
+## ช่วงที่ 1 -> phase 1 (part 2 intro), ช่วงที่ 2 -> phase 2 (outro)
 func _open_gameplay_step(step: int) -> void:
 	if is_transitioning:
 		return
-	is_transitioning = true
-	is_dialogue_active = false
-	_hide_continue_arrow()
-	if is_instance_valid(choice_container):
-		choice_container.visible = false
-	if is_instance_valid(dialogue_box):
-		dialogue_box.visible = false
-	if is_instance_valid(nav_arrows_container):
-		nav_arrows_container.visible = false
-	if skip_ctrl:
-		skip_ctrl.visible = false
-	
-	GameProgressManager.set_current_gameplay_step(step)
-	var ret_path = scene_file_path if scene_file_path != "" else "res://features/cutscene/inside_tower_cutscene.tscn"
-	GameProgressManager.set_gameplay_return_scene(ret_path)
-	
-	if SceneLoader.change_scene(get_tree(), SANDBOX_PATH):
-		return
-	
-	var placeholder_res = load("res://features/dialogue/gameplay_placeholder_view.tscn")
-	if placeholder_res:
-		var placeholder = placeholder_res.instantiate()
-		placeholder.current_step = step
-		placeholder.return_scene_path = ret_path
-		placeholder.step_finished.connect(_on_gameplay_step_finished)
-		magic_ui.add_child(placeholder)
-		placeholder.modulate.a = 0.0
-		var tw = create_tween()
-		tw.tween_property(placeholder, "modulate:a", 1.0, 0.25)
-		tw.tween_callback(func():
-			is_transitioning = false
-		)
-	else:
-		is_transitioning = false
-
-func _on_gameplay_step_finished(step: int) -> void:
-	is_transitioning = false
 	sequence_history.clear()
-	if skip_ctrl:
-		skip_ctrl.visible = true
-	if is_instance_valid(dialogue_box):
-		dialogue_box.visible = true
-	if is_instance_valid(nav_arrows_container):
-		nav_arrows_container.visible = true
-	
-	if step == 1:
-		_begin_dialogue_phase(1)
-	else:
-		_begin_dialogue_phase(2)
+	_begin_dialogue_phase(1 if step == 1 else 2)
 
 func _finish_dialogue_stage(mark_cleared: bool = true) -> void:
 	if is_transitioning:
@@ -914,39 +868,20 @@ func _finish_dialogue_stage(mark_cleared: bool = true) -> void:
 	if mark_cleared:
 		GameProgressManager.set_level_cleared(level_number, true)
 	
-	# เปลี่ยนฉากไปยังคัตซีนเดินขึ้นบันไดและแสดงหน้าสรุปดาว (Level Clear Scene)
-	if mark_cleared and level_clear_scene_path != "" and ResourceLoader.exists(level_clear_scene_path):
-		if is_instance_valid(fade_overlay):
-			fade_overlay.visible = true
-			var tw = create_tween()
-			tw.tween_property(fade_overlay, "color:a", 1.0, 0.35)
-			tw.tween_callback(func():
-				get_tree().change_scene_to_file(level_clear_scene_path)
-			)
-		else:
-			get_tree().change_scene_to_file(level_clear_scene_path)
-		return
-	
-	# ถ้าไม่ได้ mark_cleared (เช่น เกิด error หรือด่าน fallback ที่ยังไม่มีข้อมูล) ให้กลับไปหน้า Level Select
-	if not mark_cleared:
-		const LEVEL_SELECT_PATH := "res://features/level_select/level_select_view.tscn"
-		if ResourceLoader.exists(LEVEL_SELECT_PATH):
-			get_tree().change_scene_to_file(LEVEL_SELECT_PATH)
-		elif next_scene_path != "" and ResourceLoader.exists(next_scene_path):
-			get_tree().change_scene_to_file(next_scene_path)
-		return
-
-	# แสดงหน้าสรุปผล / สรุปดาวเมื่อผ่านด่าน (Success Modal) เป็น Fallback
-	var clear_modal_res = load("res://features/dialogue/level_clear_modal.tscn")
-	if clear_modal_res:
-		var modal = clear_modal_res.instantiate()
-		magic_ui.add_child(modal)
-		modal.modulate.a = 0.0
+	# จบบทสนทนา -> เฟดดำแล้วกลับหน้าเลือกด่าน
+	if is_instance_valid(fade_overlay):
+		fade_overlay.visible = true
 		var tw = create_tween()
-		tw.tween_property(modal, "modulate:a", 1.0, 0.35)
+		tw.tween_property(fade_overlay, "color:a", 1.0, 0.35)
+		tw.tween_callback(_go_to_level_select)
 	else:
-		if next_scene_path != "" and ResourceLoader.exists(next_scene_path):
-			get_tree().change_scene_to_file(next_scene_path)
+		_go_to_level_select()
+
+func _go_to_level_select() -> void:
+	if SceneLoader.change_scene(get_tree(), LEVEL_SELECT_PATH):
+		return
+	if next_scene_path != "" and ResourceLoader.exists(next_scene_path):
+		get_tree().change_scene_to_file(next_scene_path)
 
 func _show_bad_ending_prompt() -> void:
 	is_bad_ending_typing = false
