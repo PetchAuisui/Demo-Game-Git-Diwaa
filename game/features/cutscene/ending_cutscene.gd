@@ -1,7 +1,7 @@
 extends Node2D
 
 ## การควบคุมฉากจบเกมทั้ง 8 ฉาก (Ending Cutscene - Complete 8 Stages)
-## 1. การฟื้นฟูคัมภีร์เวทต้นกำเนิด (khampri-null + ดูดเศษ 16 ชิ้นพร้อมกัน -> khampri สั่น 3 ครั้ง + ปล่อยวงแสง)
+## 1. การฟื้นฟูคัมภีร์เวทต้นกำเนิด (khampri-null + ดูดเศษ 20 ชิ้นพร้อมกัน -> khampri สั่น 3 ครั้ง + ปล่อยวงแสง)
 ## 2. ท้องฟ้าโกลาหลกลับคืนสู่สภาพปกติ (animated storm sky -> แสงวาบนุ่มนวล 0.3s -> animated peaceful sky)
 ## 3. บ้านเมืองกลับคืนสู่ความสงบ (animated chaos village -> แสงเวทเยียวยา -> peaceful village ต่อเนื่อง)
 ## 4. เวลถูกวาร์ปกลับห้องสมุด (ห้องโล่ง -> วาร์ปพร้อมวงแสงที่พื้น -> คัมภีร์ตกใส่มือแล้วเปลี่ยนเป็น vel_hold พอดี)
@@ -43,10 +43,12 @@ extends Node2D
 @onready var khampri_shadow: Sprite2D = $Stage4_Library/KhampriShadow
 @onready var khampri_floating: Sprite2D = $Stage4_Library/KhampriFloating
 @onready var vel: AnimatedSprite2D = $Stage4_Library/Vel
+@onready var vel_shadow: Sprite2D = $Stage4_Library/Vel/DropShadow
 @onready var exclamation_mark: Sprite2D = $Stage4_Library/Vel/ExclamationMark
 @onready var anger_mark: Sprite2D = $Stage4_Library/Vel/AngerMark
 @onready var sigh_puff: Sprite2D = $Stage4_Library/Vel/SighPuff
 @onready var master_char: AnimatedSprite2D = $Stage4_Library/Master
+@onready var master_shadow: Sprite2D = $Stage4_Library/Master/DropShadow
 
 # Stage 6: Comic Flashback Panel
 @onready var comic_container: Control = $ComicPanelContainer
@@ -54,6 +56,7 @@ extends Node2D
 @onready var comic_caption: Label = $ComicPanelContainer/ComicCaption
 @onready var comic_continue_prompt: Label = $ComicPanelContainer/ComicContinuePrompt
 @onready var flashback_master: AnimatedSprite2D = $ComicPanelContainer/ComicPanelBg/FlashbackMaster
+@onready var flashback_master_shadow: Sprite2D = $ComicPanelContainer/ComicPanelBg/FlashbackMaster/DropShadow
 @onready var flashback_hole: Sprite2D = $ComicPanelContainer/ComicPanelBg/FlashbackHole
 
 # UI Elements
@@ -92,7 +95,7 @@ const STAGE_7_DIALOGUES: Array[Dictionary] = [
 ]
 var stage_7_dialogue_index: int = 0
 
-var shards16: Array[Sprite2D] = []
+var shards: Array[Sprite2D] = []
 var shard_initial_positions: Array[Vector2] = []
 var current_stage: int = 1
 var is_waiting_dialogue: bool = false
@@ -229,6 +232,26 @@ func _process(delta: float) -> void:
 	else:
 		camera.offset = Vector2.ZERO
 
+	# ตรึงเงาที่เท้าของเวลและปรมาจารย์ให้อยู่บนพื้นตลอดเวลา (แม้ตอนกระโดดตกใจ)
+	if stage4 and stage4.visible and vel and vel.visible and is_instance_valid(vel_shadow):
+		var air_height := maxf(0.0, 59.0 - vel.position.y)
+		vel_shadow.position = Vector2(0.0, 38.5 + air_height)
+		var height_factor := clampf(1.0 - air_height / 60.0, 0.45, 1.0)
+		vel_shadow.scale = Vector2(0.65 * height_factor, 0.45 * height_factor)
+
+	if stage4 and stage4.visible and master_char and master_char.visible and is_instance_valid(master_shadow):
+		if master_char.scale.x < 0.98 or master_char.position.y > 60.0:
+			master_shadow.visible = false
+		else:
+			master_shadow.visible = true
+			var m_air := maxf(0.0, 59.0 - master_char.position.y)
+			master_shadow.position = Vector2(0.0, 38.5 + m_air)
+			var m_factor := clampf(1.0 - m_air / 60.0, 0.45, 1.0)
+			master_shadow.scale = Vector2(0.65 * m_factor, 0.45 * m_factor)
+
+	if comic_container and comic_container.visible and flashback_master and flashback_master.visible and is_instance_valid(flashback_master_shadow):
+		flashback_master_shadow.visible = flashback_master.scale.x >= 2.75 and flashback_master.position.y <= 346.0
+
 func _is_advance_key(event: InputEvent) -> bool:
 	return event is InputEventKey and event.pressed and not event.echo and (
 		event.keycode == KEY_SPACE or event.keycode == KEY_ENTER or event.keycode == KEY_KP_ENTER or event.keycode == KEY_RIGHT
@@ -315,11 +338,11 @@ func _on_player_back() -> void:
 	_show_stage_7_current_dialogue(true)
 
 func _init_shards() -> void:
-	shards16.clear()
+	shards.clear()
 	shard_initial_positions.clear()
 	for child in shards_container.get_children():
 		if child is Sprite2D:
-			shards16.append(child)
+			shards.append(child)
 
 func _reset_all_stages() -> void:
 	can_fast_forward = true
@@ -424,11 +447,13 @@ func _reset_all_stages() -> void:
 	if khampri_floating:
 		khampri_floating.modulate = Color(1, 1, 1, 1)
 	
-	# จัดตำแหน่งเศษ 16 ชิ้นกระจายรอบคัมภีร์ให้เห็นเป็นชิ้นชัดเจน ขนาดใหญ่ขึ้นเล็กน้อย (1.35)
+	# จัดตำแหน่งเศษ 20 ชิ้นกระจายรอบคัมภีร์ให้เห็นเป็นชิ้นชัดเจน ขนาดใหญ่ขึ้นเล็กน้อย (1.35)
+	if shards_container:
+		shards_container.visible = false
 	shard_initial_positions.clear()
-	var count = shards16.size()
+	var count = shards.size()
 	for i in range(count):
-		var s: Sprite2D = shards16[i]
+		var s: Sprite2D = shards[i]
 		var angle: float = (float(i) / float(count)) * TAU - (PI * 0.5)
 		var dist: float = 300.0 if (i % 2 == 0) else 250.0
 		var pos = Vector2(cos(angle) * dist * 1.25, sin(angle) * dist)
@@ -441,11 +466,13 @@ func _reset_all_stages() -> void:
 
 ## =============================================================
 ## ฉากที่ 1: การฟื้นฟูคัมภีร์เวทต้นกำเนิด
-## คัมภีร์เริ่มขนาดเล็กขยายขึ้น เศษ 16 ชิ้นหยุดนิ่งสั้นๆ พุ่งเข้าพร้อมกัน
+## คัมภีร์เริ่มขนาดเล็กขยายขึ้น เศษ 20 ชิ้นหยุดนิ่งสั้นๆ พุ่งเข้าพร้อมกัน
 ## คัมภีร์สั่น 2-3 ครั้ง ปล่อยวงแสง และมีออร่าเปล่งประกายรอบคัมภีร์
 ## =============================================================
 func play_stage_1_book_restoration() -> void:
 	current_stage = 1
+	if shards_container:
+		shards_container.visible = true
 	
 	# 1.1 คัมภีร์เริ่มจากขนาดเล็กขยายขึ้นเล็กน้อย ไม่ใหญ่จนเต็มจอ (scale 0.5 -> 2.2) (0.9s)
 	khampri_null.scale = Vector2(0.5, 0.5)
@@ -454,12 +481,12 @@ func play_stage_1_book_restoration() -> void:
 	tw_book.tween_property(khampri_null, "modulate:a", 1.0, 0.8)
 	tw_book.tween_property(khampri_null, "scale", Vector2(2.2, 2.2), 0.9).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	
-	# 1.2 เศษคัมภีร์ทั้ง 16 ชิ้น ปรากฏขึ้นรอบ ๆ ขนาดใหญ่ขึ้น และขยับพริ้วไหวนิดหน่อย ไม่เยอะมาก (1.0s)
+	# 1.2 เศษคัมภีร์ทั้ง 20 ชิ้น ปรากฏขึ้นรอบ ๆ ขนาดใหญ่ขึ้น และขยับพริ้วไหวนิดหน่อย ไม่เยอะมาก (1.0s)
 	var tw_shards_in = create_tween()
 	tw_shards_in.tween_interval(1.0)
 	tw_shards_in.tween_callback(func():
-		for i in range(shards16.size()):
-			var s: Sprite2D = shards16[i]
+		for i in range(shards.size()):
+			var s: Sprite2D = shards[i]
 			var tw_s = create_tween().set_parallel(true)
 			tw_s.tween_property(s, "modulate", Color(1.0, 1.0, 1.0, 1.0), 0.5).set_trans(Tween.TRANS_SINE)
 			
@@ -484,7 +511,7 @@ func play_stage_1_book_restoration() -> void:
 		
 		camera_shake_amount = 3.0
 		
-		for s in shards16:
+		for s in shards:
 			var tw_fly = create_tween().set_parallel(true)
 			tw_fly.tween_property(s, "position", Vector2.ZERO, 0.65).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN)
 			tw_fly.tween_property(s, "scale", Vector2(0.2, 0.2), 0.65)

@@ -7,9 +7,9 @@ extends Sprite2D
 ## 3. อาจารย์รู้ตัว ทำหน้า shock1 ยืนตกใจ
 ## 4. อาจารย์ตกหลุมดำ คัมภีร์ดรอปออกมาสไตล์ Minecraft (ดีดขึ้นนิดนึงแล้วตกถึงพื้นไม้ ไม่เด้ง ไม่เอียง)
 ## 5. อาจารย์จมหายไป -> เวลช็อก + หลุมดำแรกปิด
-## 6. คัมภีร์นอนนิ่งบนพื้นไม้ (30, 96) ก่อนแตก สั่นแค่ตัวคัมภีร์ แล้วแตกออกเป็น 16 ชิ้น (เศษไม่เอียง)
+## 6. คัมภีร์นอนนิ่งบนพื้นไม้ (30, 96) ก่อนแตก สั่นแค่ตัวคัมภีร์ แล้วแตกออกเป็น 20 ชิ้น (เศษไม่เอียง)
 ## 7. รอแปปนึง ให้เห็นเศษซากกระจายรอบห้อง
-## 8. วงเวท/หลุมดำรอบสองเปิดขึ้นมาแบบวงเล็ก ค่อย ๆ ดูดเศษทั้ง 16 ชิ้นหายไป
+## 8. วงเวท/หลุมดำรอบสองเปิดขึ้นมาแบบวงเล็ก ค่อย ๆ ดูดเศษทั้ง 20 ชิ้นหายไป
 ## 9. หลังการดูดเสร็จสิ้น เศษคัมภีร์หน้าสุดท้าย (paper.png) ร่อนตกลงมาจากด้านบน ส่ายลงมาสัมผัสพื้นไม้ (16.6s -> 17.8s)
 ## 10. เมื่อกระดาษลงสู่พื้นแล้ว หลุมดำปิด เวลได้สติเดินเข้าไปหากระดาษ (18.0s -> 20.0s)
 ## 11. เวลหยุดข้างกระดาษ กระดาษลอยขึ้นสู่มือเวล (20.3s)
@@ -27,7 +27,9 @@ extends Sprite2D
 
 @onready var anim_player: AnimationPlayer = $AnimationPlayer
 @onready var master: AnimatedSprite2D = $Master
+@onready var master_shadow: Sprite2D = $Master/DropShadow
 @onready var vel: AnimatedSprite2D = $Vel
+@onready var vel_shadow: Sprite2D = $Vel/DropShadow
 @onready var exclamation_mark: Node2D = $Vel/ExclamationMark
 @onready var black_hole: Sprite2D = $BlackHole
 @onready var room_lighting: CanvasModulate = $RoomLighting
@@ -35,6 +37,7 @@ extends Sprite2D
 @onready var khampri: Sprite2D = $Khampri
 @onready var khampri_shadow: Sprite2D = $KhampriShadow
 @onready var paper_shadow: Sprite2D = $PaperShadow
+@onready var shard_shadows_container: Node2D = $ShardShadows
 @onready var shards_container: Node2D = $Shards
 @onready var paper_on_floor: Sprite2D = $PaperOnFloor
 
@@ -47,7 +50,13 @@ extends Sprite2D
 @onready var rune_label: RichTextLabel = $MagicStoryUI/RuneContainer/RuneRichLabel
 @onready var continue_prompt: Label = $MagicStoryUI/RuneContainer/ContinuePrompt
 
+const DROP_SHADOW_TEX: Texture2D = preload("res://assets/cutscene/props/khampri/drop_shadow.png")
+
 var shards: Array[Sprite2D] = []
+var shard_shadows: Array[Sprite2D] = []
+var _shard_target_positions: Array[Vector2] = []
+var _shard_ground_y: Array[float] = []
+var _shard_base_shadow_scale: Array[Vector2] = []
 var can_continue: bool = false
 var is_continuing: bool = false
 var is_fast_forwarding: bool = false
@@ -64,7 +73,7 @@ signal cutscene_finished
 # โทนสีฟิลเตอร์คัมภีร์และเศษคัมภีร์ให้กลมกลืนกับห้องสมุด (ไม่เด่น/สว่างจ้าเกินไป)
 const BOOK_TINT: Color = Color(0.70, 0.63, 0.55, 1.0)
 
-# พิกัดปลายทางที่เศษทั้ง 16 ชิ้นจะกระจายตกบนพื้นห้องทางด้านขวา (ศูนย์กลางที่คัมภีร์ตก 64, 96 ไม่ลามไปใกล้ตัวเวลที่ -40)
+# พิกัดปลายทางที่เศษทั้ง 20 ชิ้นจะกระจายตกบนพื้นห้องทางด้านขวา (ศูนย์กลางที่คัมภีร์ตก 64, 96 ไม่ลามไปใกล้ตัวเวลที่ -40)
 const SHARD_LANDING_POSITIONS: Array[Vector2] = [
 	Vector2(40.0, 92.0),   # Shard 1 (ปานกลาง - ซ้ายบน)
 	Vector2(54.0, 95.0),   # Shard 2 (ชิ้นใหญ่ หนัก - ตกใกล้ซ้าย)
@@ -82,6 +91,10 @@ const SHARD_LANDING_POSITIONS: Array[Vector2] = [
 	Vector2(88.0, 98.0),   # Shard 14 (ปานกลาง - ขวาล่าง)
 	Vector2(26.0, 102.0),  # Shard 15 (ชิ้นเล็ก - กระเด็นไกล ซ้ายล่าง)
 	Vector2(65.0, 98.0),   # Shard 16 (ชิ้นใหญ่สุด หนักมาก - ตกกระแทกจุดแตก)
+	Vector2(76.0, 86.0),   # Shard 17 (ปานกลาง - บนขวา)
+	Vector2(114.0, 96.0),  # Shard 18 (ชิ้นเล็ก - ปลิวไกล ขวาสุด)
+	Vector2(89.0, 84.0),   # Shard 19 (ชิ้นเล็ก - ปลิวขวาบน)
+	Vector2(62.0, 104.0),  # Shard 20 (ชิ้นใหญ่ หนัก - ตกใกล้ล่าง)
 ]
 
 func _ready() -> void:
@@ -119,7 +132,7 @@ func _ready() -> void:
 			anim_player.stop()
 		play_with_tween()
 
-## บังคับให้ OpenGL อัปโหลดเทกซ์เจอร์ที่ซ่อนไว้ (เศษคัมภีร์ 16 ชิ้น, กระดาษ, คัมภีร์, หลุมดำ)
+## บังคับให้ OpenGL อัปโหลดเทกซ์เจอร์ที่ซ่อนไว้ (เศษคัมภีร์ 20 ชิ้น, กระดาษ, คัมภีร์, หลุมดำ)
 ## ตั้งแต่อยู่หลังฉากในเฟรมแรก เพื่อไม่ให้กระตุกกลางคันตอนแสดงผลจริง
 func _prewarm_cutscene_textures() -> void:
 	var targets: Array[CanvasItem] = []
@@ -177,6 +190,25 @@ func _exit_tree() -> void:
 		_has_saved_snap = false
 
 func _process(_delta: float) -> void:
+	# ตรึงเงาที่เท้าของเวลและปรมาจารย์ให้อยู่บนพื้นตลอดเวลา (แม้ตอนกระโดดตกใจ)
+	if vel and vel.visible and is_instance_valid(vel_shadow):
+		var air_height := maxf(0.0, character_y - vel.position.y)
+		vel_shadow.position = Vector2(0.0, 38.5 + air_height)
+		var height_factor := clampf(1.0 - air_height / 60.0, 0.45, 1.0)
+		vel_shadow.scale = Vector2(0.65 * height_factor, 0.45 * height_factor)
+
+	if master and master.visible and is_instance_valid(master_shadow):
+		if master.scale.x < 0.98 or master.position.y > character_y + 1.0:
+			master_shadow.visible = false
+		else:
+			master_shadow.visible = true
+			var m_air := maxf(0.0, character_y - master.position.y)
+			master_shadow.position = Vector2(0.0, 38.5 + m_air)
+			var m_factor := clampf(1.0 - m_air / 60.0, 0.45, 1.0)
+			master_shadow.scale = Vector2(0.65 * m_factor, 0.45 * m_factor)
+
+	_sync_shard_shadows()
+
 	if not can_fast_forward or is_continuing:
 		if is_fast_forwarding:
 			is_fast_forwarding = false
@@ -241,6 +273,9 @@ func _skip_to_magic_text() -> void:
 		if is_instance_valid(s):
 			s.z_index = 0
 			s.visible = false
+	for sh in shard_shadows:
+		if is_instance_valid(sh):
+			sh.visible = false
 	
 	paper_on_floor.z_index = 0
 	paper_on_floor.visible = true
@@ -273,13 +308,65 @@ func _trigger_continue_instant() -> void:
 
 func _init_shards() -> void:
 	shards.clear()
+	shard_shadows.clear()
+	_shard_target_positions.clear()
+	_shard_ground_y.clear()
+	_shard_base_shadow_scale.clear()
+	if shard_shadows_container:
+		for old in shard_shadows_container.get_children():
+			old.queue_free()
 	if shards_container:
 		for child in shards_container.get_children():
 			if child is Sprite2D:
-				if shards.size() < 16:
+				if shards.size() < 20:
 					shards.append(child)
 				else:
 					child.visible = false
+	for i in range(shards.size()):
+		var s: Sprite2D = shards[i]
+		var target := SHARD_LANDING_POSITIONS[i] if i < SHARD_LANDING_POSITIONS.size() else Vector2(64.0, 96.0)
+		var half_h := s.region_rect.size.y * 0.2 * 0.5
+		var w := s.region_rect.size.x * 0.2
+		_shard_target_positions.append(target)
+		_shard_ground_y.append(target.y + half_h + 0.5)
+		_shard_base_shadow_scale.append(Vector2(maxf(0.16, w / 36.0), 0.12))
+		if shard_shadows_container:
+			var sh := Sprite2D.new()
+			sh.name = "ShardShadow%d" % (i + 1)
+			sh.texture = DROP_SHADOW_TEX
+			sh.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+			sh.visible = false
+			sh.modulate = Color(1, 1, 1, 0.55)
+			sh.scale = _shard_base_shadow_scale[i]
+			shard_shadows_container.add_child(sh)
+			shard_shadows.append(sh)
+
+
+func _sync_shard_shadows() -> void:
+	for i in range(mini(shards.size(), shard_shadows.size())):
+		var s: Sprite2D = shards[i]
+		var sh: Sprite2D = shard_shadows[i]
+		if not is_instance_valid(s) or not is_instance_valid(sh):
+			continue
+		if not s.visible:
+			sh.visible = false
+			continue
+		sh.visible = true
+		var target_pos: Vector2 = _shard_target_positions[i]
+		var ground_y: float = _shard_ground_y[i]
+		var base_scale: Vector2 = _shard_base_shadow_scale[i]
+		var scale_ratio := clampf(s.scale.x / 0.2, 0.0, 1.0)
+		if scale_ratio < 0.97:
+			# ระหว่างถูกดูดเข้าหลุมดำ ให้เงาหดตามและตามแนวเศษเข้าไปในหลุมดำ
+			sh.position = Vector2(s.position.x, s.position.y + s.region_rect.size.y * s.scale.y * 0.5 + 0.5)
+			sh.scale = base_scale * scale_ratio
+			sh.modulate = Color(1, 1, 1, 0.55 * scale_ratio * s.modulate.a)
+		else:
+			var lift := maxf(0.0, target_pos.y - s.position.y)
+			var h_factor := clampf(1.0 - lift / 45.0, 0.45, 1.0)
+			sh.position = Vector2(s.position.x, ground_y)
+			sh.scale = base_scale * h_factor
+			sh.modulate = Color(1, 1, 1, 0.55 * h_factor * s.modulate.a)
 
 func _reset_cutscene_state() -> void:
 	can_continue = false
@@ -305,13 +392,13 @@ func _reset_cutscene_state() -> void:
 	
 	if khampri_shadow:
 		khampri_shadow.visible = false
-		khampri_shadow.position = Vector2(64, 98)
+		khampri_shadow.position = Vector2(64, 111.5)
 		khampri_shadow.scale = Vector2(1.1, 0.7)
 		khampri_shadow.modulate = Color(1, 1, 1, 0)
 	
 	if paper_shadow:
 		paper_shadow.visible = false
-		paper_shadow.position = Vector2(64, 98)
+		paper_shadow.position = Vector2(64, 105.5)
 		paper_shadow.scale = Vector2(0.55, 0.35)
 		paper_shadow.modulate = Color(1, 1, 1, 0)
 	
@@ -320,6 +407,9 @@ func _reset_cutscene_state() -> void:
 		s.scale = Vector2(0.2, 0.2)
 		s.modulate = BOOK_TINT
 		s.rotation = 0.0
+	for sh in shard_shadows:
+		if is_instance_valid(sh):
+			sh.visible = false
 	
 	if paper_on_floor:
 		paper_on_floor.visible = false
@@ -384,7 +474,7 @@ func _on_shatter_khampri() -> void:
 	if paper_on_floor:
 		paper_on_floor.visible = false
 	
-	# เศษคัมภีร์ทั้ง 16 ชิ้นแตกกระจายตามมวลจริง: ชิ้นใหญ่เคลื่อนช้าตกใกล้ ชิ้นเล็กกระเด็นไกลบินเร็ว ดีเลย์เหลื่อมล้ำกัน
+	# เศษคัมภีร์ทั้ง 20 ชิ้นแตกกระจายตามมวลจริง: ชิ้นใหญ่เคลื่อนช้าตกใกล้ ชิ้นเล็กกระเด็นไกลบินเร็ว ดีเลย์เหลื่อมล้ำกัน
 	for i in range(shards.size()):
 		var s: Sprite2D = shards[i]
 		s.position = origin
@@ -450,7 +540,7 @@ func _on_paper_flutter_down() -> void:
 	
 	if paper_shadow:
 		paper_shadow.visible = true
-		paper_shadow.position = Vector2(68.0, 98.0)
+		paper_shadow.position = Vector2(68.0, 105.5)
 		paper_shadow.scale = Vector2(0.25, 0.15)
 		paper_shadow.modulate = Color(1, 1, 1, 0.0)
 		var tw_ps_x = create_tween()
@@ -506,7 +596,7 @@ func _on_paper_flutter_down() -> void:
 func _on_suck_shards() -> void:
 	var vortex_center: Vector2 = black_hole.position # (35, 96)
 	
-	# ค่อย ๆ ดูดเศษทั้ง 16 ชิ้นหมุนวนเข้าไปในวงเวททีละชิ้นอย่างนุ่มนวล
+	# ค่อย ๆ ดูดเศษทั้ง 20 ชิ้นหมุนวนเข้าไปในวงเวททีละชิ้นอย่างนุ่มนวล
 	for i in range(shards.size()):
 		var s: Sprite2D = shards[i]
 		var delay: float = randf_range(0.0, 1.0)
@@ -768,7 +858,7 @@ func play_with_tween() -> void:
 		khampri.rotation = 0.0
 		if khampri_shadow:
 			khampri_shadow.visible = true
-			khampri_shadow.position = Vector2(42, 98)
+			khampri_shadow.position = Vector2(42, 111.5)
 			khampri_shadow.scale = Vector2(0.3, 0.2)
 			khampri_shadow.modulate = Color(1, 1, 1, 0.15)
 		
@@ -825,7 +915,7 @@ func play_with_tween() -> void:
 		tw_shake.tween_property(khampri, "position:x", 62.5, 0.05)
 	)
 	
-	# 7. คัมภีร์แตกเป็น 16 ชิ้น (11.8s)
+	# 7. คัมภีร์แตกเป็น 20 ชิ้น (11.8s)
 	var tw_shatter = create_tween()
 	tw_shatter.tween_interval(11.8)
 	tw_shatter.tween_callback(_on_shatter_khampri)

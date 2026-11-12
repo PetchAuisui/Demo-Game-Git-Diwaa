@@ -33,6 +33,10 @@
 [ext_resource type="Texture2D" uid="uid://cujobgtqpdh8q" path="res://assets/cutscene/props/khampri/minikhampri14.png" id="31_mini14"]
 [ext_resource type="Texture2D" uid="uid://lbxd43tusjvx" path="res://assets/cutscene/props/khampri/minikhampri15.png" id="32_mini15"]
 [ext_resource type="Texture2D" uid="uid://b6yre4fu0rwi2" path="res://assets/cutscene/props/khampri/minikhampri16.png" id="33_mini16"]
+[ext_resource type="Texture2D" uid="uid://bvtq4aeontxra" path="res://assets/cutscene/props/khampri/minikhampri17.png" id="34_mini17"]
+[ext_resource type="Texture2D" uid="uid://bqkhouckfvbcp" path="res://assets/cutscene/props/khampri/minikhampri18.png" id="35_mini18"]
+[ext_resource type="Texture2D" uid="uid://di3uyrprm4rma" path="res://assets/cutscene/props/khampri/minikhampri19.png" id="36_mini19"]
+[ext_resource type="Texture2D" uid="uid://du7l6oy362lqv" path="res://assets/cutscene/props/khampri/minikhampri20.png" id="37_mini20"]
 [ext_resource type="Texture2D" uid="uid://bngf0cdl4kc1q" path="res://assets/cutscene/props/khampri/paper.png" id="38_paper"]
 [ext_resource type="FontFile" uid="uid://csurxmw2vmws4" path="res://assets/fonts/TA-8-bit.ttf" id="39_ta_8_bit"]
 [ext_resource type="FontFile" uid="uid://deedcfbkojx6k" path="res://assets/fonts/ChakraPetch-Bold.ttf" id="41_chakra_bold"]
@@ -956,7 +960,7 @@ tracks/37/keys = {
 "times": PackedFloat32Array(0, 9.38, 9.56, 9.8, 11.8),
 "transitions": PackedFloat32Array(1, 1, 1, 1, 1),
 "update": 0,
-"values": [Vector2(42, 98), Vector2(42, 98), Vector2(54, 98), Vector2(64, 98), Vector2(64, 98)]
+"values": [Vector2(42, 111.5), Vector2(42, 111.5), Vector2(54, 111.5), Vector2(64, 111.5), Vector2(64, 111.5)]
 }
 tracks/38/type = "value"
 tracks/38/imported = false
@@ -1004,7 +1008,7 @@ tracks/41/keys = {
 "times": PackedFloat32Array(0, 16.4, 16.5, 16.6, 16.7, 16.8, 16.9, 17, 17.1, 17.2, 17.3, 17.4, 17.5, 17.6, 17.7, 17.8, 20.9),
 "transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1),
 "update": 0,
-"values": [Vector2(64, 98), Vector2(68, 98), Vector2(67.1, 98), Vector2(65.4, 98), Vector2(63.6, 98), Vector2(62.2, 98), Vector2(61.6, 98), Vector2(61.8, 98), Vector2(62.6, 98), Vector2(63.7, 98), Vector2(64.6, 98), Vector2(65, 98), Vector2(64.9, 98), Vector2(64.5, 98), Vector2(64.1, 98), Vector2(64, 98), Vector2(64, 98)]
+"values": [Vector2(64, 105.5), Vector2(68, 105.5), Vector2(67.1, 105.5), Vector2(65.4, 105.5), Vector2(63.6, 105.5), Vector2(62.2, 105.5), Vector2(61.6, 105.5), Vector2(61.8, 105.5), Vector2(62.6, 105.5), Vector2(63.7, 105.5), Vector2(64.6, 105.5), Vector2(65, 105.5), Vector2(64.9, 105.5), Vector2(64.5, 105.5), Vector2(64.1, 105.5), Vector2(64, 105.5), Vector2(64, 105.5)]
 }
 tracks/42/type = "value"
 tracks/42/imported = false
@@ -1113,18 +1117,21 @@ texture = ExtResource("15_black_hole")
 [node name="KhampriShadow" type="Sprite2D" parent="." unique_id=9871238]
 visible = false
 modulate = Color(1, 1, 1, 0)
-texture_filter = 2
-position = Vector2(64, 98)
+texture_filter = 1
+position = Vector2(64, 111.5)
 scale = Vector2(1.1, 0.7)
 texture = ExtResource("40_shadow")
 
 [node name="PaperShadow" type="Sprite2D" parent="." unique_id=9871239]
 visible = false
 modulate = Color(1, 1, 1, 0)
-texture_filter = 2
-position = Vector2(64, 98)
+texture_filter = 1
+position = Vector2(64, 105.5)
 scale = Vector2(0.55, 0.35)
 texture = ExtResource("40_shadow")
+
+[node name="ShardShadows" type="Node2D" parent="." unique_id=9871240]
+texture_filter = 1
 
 [node name="Khampri" type="Sprite2D" parent="." unique_id=9871234]
 visible = false
@@ -1258,10 +1265,45 @@ texture = ExtResource("33_mini16")
 region_enabled = true
 region_rect = Rect2(2, 149, 41, 33)
 
+[node name="Shard17" type="Sprite2D" parent="Shards" unique_id=1828444921]
+modulate = Color(0.7, 0.63, 0.55, 1)
+scale = Vector2(0.2, 0.2)
+texture = ExtResource("34_mini17")
+region_enabled = true
+region_rect = Rect2(53, 157, 39, 20)
+
+[node name="Shard18" type="Sprite2D" parent="Shards" unique_id=1828444922]
+modulate = Color(0.7, 0.63, 0.55, 1)
+scale = Vector2(0.2, 0.2)
+texture = ExtResource("35_mini18")
+region_enabled = true
+region_rect = Rect2(102, 155, 24, 28)
+
+[node name="Shard19" type="Sprite2D" parent="Shards" unique_id=1828444923]
+modulate = Color(0.7, 0.63, 0.55, 1)
+scale = Vector2(0.2, 0.2)
+texture = ExtResource("36_mini19")
+region_enabled = true
+region_rect = Rect2(145, 154, 24, 27)
+
+[node name="Shard20" type="Sprite2D" parent="Shards" unique_id=1828444924]
+modulate = Color(0.7, 0.63, 0.55, 1)
+scale = Vector2(0.2, 0.2)
+texture = ExtResource("37_mini20")
+region_enabled = true
+region_rect = Rect2(192, 147, 25, 39)
+
 [node name="Vel" type="AnimatedSprite2D" parent="." unique_id=1691617125]
 position = Vector2(-22, 72)
 sprite_frames = SubResource("SpriteFrames_et8ea")
 animation = &"breathe_blink"
+
+[node name="DropShadow" type="Sprite2D" parent="Vel" unique_id=1039572843]
+show_behind_parent = true
+texture_filter = 1
+position = Vector2(0, 38.5)
+scale = Vector2(0.65, 0.45)
+texture = ExtResource("40_shadow")
 
 [node name="ExclamationMark" type="Node2D" parent="Vel" unique_id=1039572841]
 visible = false
@@ -1291,6 +1333,13 @@ position = Vector2(40, 97)
 scale = Vector2(0.1, 0.1)
 sprite_frames = SubResource("SpriteFrames_ql73s")
 animation = &"shock1"
+
+[node name="DropShadow" type="Sprite2D" parent="Master" unique_id=1039572844]
+show_behind_parent = true
+texture_filter = 1
+position = Vector2(0, 38.5)
+scale = Vector2(0.65, 0.45)
+texture = ExtResource("40_shadow")
 
 [node name="MagicStoryUI" type="CanvasLayer" parent="." unique_id=9871236]
 

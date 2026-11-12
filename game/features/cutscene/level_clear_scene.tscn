@@ -4,6 +4,7 @@
 [ext_resource type="Texture2D" uid="uid://bvfiiywfa04t3" path="res://assets/cutscene/characters/vel/vel_walk-Sheet.png" id="2_2y5oc"]
 [ext_resource type="Texture2D" uid="uid://ccvcnopoctw6j" path="res://assets/cutscene/characters/vel/vel_walk_right-Sheet.png" id="3_lcxxy"]
 [ext_resource type="PackedScene" uid="uid://d4e5f6g7h8jaj" path="res://features/dialogue/level_clear_modal.tscn" id="4_modal"]
+[ext_resource type="Texture2D" uid="uid://dmykeg4jphdb0" path="res://assets/cutscene/props/khampri/drop_shadow.png" id="5_shadow"]
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_2h6iq"]
 atlas = ExtResource("2_2y5oc")
@@ -188,6 +189,42 @@ tracks/6/keys = {
 "update": 0,
 "values": [Color(0, 0, 0, 0)]
 }
+tracks/7/type = "value"
+tracks/7/imported = false
+tracks/7/enabled = true
+tracks/7/path = NodePath("VelShadow:position")
+tracks/7/interp = 1
+tracks/7/loop_wrap = true
+tracks/7/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 0,
+"values": [Vector2(628, 926)]
+}
+tracks/8/type = "value"
+tracks/8/imported = false
+tracks/8/enabled = true
+tracks/8/path = NodePath("VelShadow:scale")
+tracks/8/interp = 1
+tracks/8/loop_wrap = true
+tracks/8/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 0,
+"values": [Vector2(2.6, 1.8)]
+}
+tracks/9/type = "value"
+tracks/9/imported = false
+tracks/9/enabled = true
+tracks/9/path = NodePath("VelShadow:modulate")
+tracks/9/interp = 1
+tracks/9/loop_wrap = true
+tracks/9/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 0,
+"values": [Color(1, 1, 1, 0.9)]
+}
 
 [sub_resource type="Animation" id="Animation_lcxxy"]
 resource_name = "walk-stair"
@@ -276,6 +313,42 @@ tracks/6/keys = {
 "update": 0,
 "values": [Color(0, 0, 0, 1), Color(0, 0, 0, 0)]
 }
+tracks/7/type = "value"
+tracks/7/imported = false
+tracks/7/enabled = true
+tracks/7/path = NodePath("VelShadow:position")
+tracks/7/interp = 1
+tracks/7/loop_wrap = true
+tracks/7/keys = {
+"times": PackedFloat32Array(0, 0.27, 0.54, 0.68, 0.81, 0.95, 1.08, 1.22, 1.35, 1.49, 1.62, 1.76, 1.89, 2.03, 2.16, 2.3, 2.43, 2.57, 2.7, 2.85, 3),
+"transitions": PackedFloat32Array(1, 1, 1, 0.7, 1, 0.7, 1, 0.7, 1, 0.7, 1, 0.7, 1, 0.7, 1, 0.7, 1, 0.7, 1, 1, 1),
+"update": 0,
+"values": [Vector2(628, 926), Vector2(760, 926), Vector2(890, 926), Vector2(950, 908), Vector2(1010, 890), Vector2(1070, 872), Vector2(1130, 854), Vector2(1190, 836), Vector2(1250, 818), Vector2(1310, 800), Vector2(1370, 782), Vector2(1430, 764), Vector2(1490, 746), Vector2(1550, 728), Vector2(1610, 710), Vector2(1670, 692), Vector2(1730, 674), Vector2(1790, 656), Vector2(1850, 638), Vector2(1935, 638), Vector2(2020, 638)]
+}
+tracks/8/type = "value"
+tracks/8/imported = false
+tracks/8/enabled = true
+tracks/8/path = NodePath("VelShadow:scale")
+tracks/8/interp = 1
+tracks/8/loop_wrap = true
+tracks/8/keys = {
+"times": PackedFloat32Array(0, 0.54, 0.68, 0.81, 0.95, 1.08, 1.22, 1.35, 1.49, 1.62, 1.76, 1.89, 2.03, 2.16, 2.3, 2.43, 2.57, 2.7, 3),
+"transitions": PackedFloat32Array(1, 1, 0.7, 1.3, 0.7, 1.3, 0.7, 1.3, 0.7, 1.3, 0.7, 1.3, 0.7, 1.3, 0.7, 1.3, 0.7, 1.3, 1),
+"update": 0,
+"values": [Vector2(2.6, 1.8), Vector2(2.6, 1.8), Vector2(2.25, 1.55), Vector2(2.6, 1.8), Vector2(2.25, 1.55), Vector2(2.6, 1.8), Vector2(2.25, 1.55), Vector2(2.6, 1.8), Vector2(2.25, 1.55), Vector2(2.6, 1.8), Vector2(2.25, 1.55), Vector2(2.6, 1.8), Vector2(2.25, 1.55), Vector2(2.6, 1.8), Vector2(2.25, 1.55), Vector2(2.6, 1.8), Vector2(2.25, 1.55), Vector2(2.6, 1.8), Vector2(2.6, 1.8)]
+}
+tracks/9/type = "value"
+tracks/9/imported = false
+tracks/9/enabled = true
+tracks/9/path = NodePath("VelShadow:modulate")
+tracks/9/interp = 1
+tracks/9/loop_wrap = true
+tracks/9/keys = {
+"times": PackedFloat32Array(0, 0.54, 0.68, 0.81, 0.95, 1.08, 1.22, 1.35, 1.49, 1.62, 1.76, 1.89, 2.03, 2.16, 2.3, 2.43, 2.57, 2.7, 3),
+"transitions": PackedFloat32Array(1, 1, 0.7, 1.3, 0.7, 1.3, 0.7, 1.3, 0.7, 1.3, 0.7, 1.3, 0.7, 1.3, 0.7, 1.3, 0.7, 1.3, 1),
+"update": 0,
+"values": [Color(1, 1, 1, 0.9), Color(1, 1, 1, 0.9), Color(1, 1, 1, 0.72), Color(1, 1, 1, 0.9), Color(1, 1, 1, 0.72), Color(1, 1, 1, 0.9), Color(1, 1, 1, 0.72), Color(1, 1, 1, 0.9), Color(1, 1, 1, 0.72), Color(1, 1, 1, 0.9), Color(1, 1, 1, 0.72), Color(1, 1, 1, 0.9), Color(1, 1, 1, 0.72), Color(1, 1, 1, 0.9), Color(1, 1, 1, 0.72), Color(1, 1, 1, 0.9), Color(1, 1, 1, 0.72), Color(1, 1, 1, 0.9), Color(1, 1, 1, 0.9)]
+}
 
 [sub_resource type="AnimationLibrary" id="AnimationLibrary_2h6iq"]
 _data = {
@@ -293,6 +366,13 @@ texture_filter = 1
 position = Vector2(960, 540)
 scale = Vector2(4, 4)
 texture = ExtResource("1_p523f")
+
+[node name="VelShadow" type="Sprite2D" parent="." unique_id=1873461858]
+modulate = Color(1, 1, 1, 0.9)
+texture_filter = 1
+position = Vector2(628, 926)
+scale = Vector2(2.6, 1.8)
+texture = ExtResource("5_shadow")
 
 [node name="vel" type="AnimatedSprite2D" parent="." unique_id=1873461857]
 texture_filter = 1
