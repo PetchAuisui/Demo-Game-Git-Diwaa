@@ -19,6 +19,8 @@ var is_fast_forwarding: bool = false
 var can_fast_forward: bool = true
 var skip_ctrl = null
 var current_stage: int = 1 # 1 = village, 2 = sky, 3 = transitioning
+var tw_intro_fade: Tween = null
+var tw_sky_fade: Tween = null
 
 signal cutscene_finished
 
@@ -78,6 +80,9 @@ func _on_skip_step() -> void:
 		return
 	if current_stage == 1:
 		# ข้ามเฉพาะฉากหมู่บ้าน ไปยังฉากท้องฟ้า
+		if tw_intro_fade and tw_intro_fade.is_valid():
+			tw_intro_fade.kill()
+			tw_intro_fade = null
 		if village.animation_finished.is_connected(_on_village_finished):
 			village.animation_finished.disconnect(_on_village_finished)
 		village.stop()
@@ -94,25 +99,30 @@ func play_normal_sequence() -> void:
 	if not village.animation_finished.is_connected(_on_village_finished):
 		village.animation_finished.connect(_on_village_finished, CONNECT_ONE_SHOT)
 	
-	var tw = create_tween()
-	tw.tween_property(fade_overlay, "color:a", 0.0, 0.5)
+	if tw_intro_fade and tw_intro_fade.is_valid():
+		tw_intro_fade.kill()
+	tw_intro_fade = create_tween()
+	tw_intro_fade.tween_property(fade_overlay, "color:a", 0.0, 0.5)
 
 func _on_village_finished() -> void:
-	if current_stage >= 2 and sky.visible:
+	if current_stage >= 2 or is_transitioning:
 		return
 	current_stage = 2
 	sky.visible = true
 	sky.frame = 0
 	sky.modulate = Color(1, 1, 1, 0)
 	
-	var tw_sky_in = create_tween()
-	tw_sky_in.tween_property(sky, "modulate:a", 1.0, 0.35)
-	tw_sky_in.chain().tween_callback(func():
+	if tw_sky_fade and tw_sky_fade.is_valid():
+		tw_sky_fade.kill()
+	tw_sky_fade = create_tween()
+	tw_sky_fade.tween_property(sky, "modulate:a", 1.0, 0.35)
+	tw_sky_fade.chain().tween_callback(func():
 		village.visible = false
 	)
 	
 	sky.play("peaceful_sky", 1.0)
-	sky.animation_finished.connect(_on_sky_finished, CONNECT_ONE_SHOT)
+	if not sky.animation_finished.is_connected(_on_sky_finished):
+		sky.animation_finished.connect(_on_sky_finished, CONNECT_ONE_SHOT)
 
 func _on_sky_finished() -> void:
 	_go_to_intro_cutscene()
@@ -123,6 +133,12 @@ func _go_to_intro_cutscene() -> void:
 	is_transitioning = true
 	current_stage = 3
 	Engine.time_scale = 1.0
+	if tw_intro_fade and tw_intro_fade.is_valid():
+		tw_intro_fade.kill()
+		tw_intro_fade = null
+	if tw_sky_fade and tw_sky_fade.is_valid():
+		tw_sky_fade.kill()
+		tw_sky_fade = null
 	
 	var tw_fade_out = create_tween()
 	tw_fade_out.tween_property(fade_overlay, "color:a", 1.0, 0.5)

@@ -131,6 +131,7 @@ var exclamation_tween: Tween = null
 var question_tween: Tween = null
 var arrow_tween: Tween = null
 var entrance_tween: Tween = null
+var wait_tween: Tween = null
 
 # Navigation Arrows (◀ ▶)
 var nav_arrows_container: HBoxContainer = null
@@ -274,15 +275,19 @@ func _play_entrance_sequence() -> void:
 		guardian.play("breathe")
 		guardian.set_frame_and_progress(0, 0.0)
 		# หน่วงเวลาหยุดยืนนิ่ง 1.0s ให้ตัวละครยืนหายใจปกติและตั้งสติก่อนเริ่มบทสนทนาแรก
-		var tw_wait = create_tween()
-		tw_wait.tween_interval(1.0)
-		tw_wait.tween_callback(_start_dialogue_sequence)
+		if wait_tween and wait_tween.is_valid():
+			wait_tween.kill()
+		wait_tween = create_tween()
+		wait_tween.tween_interval(1.0)
+		wait_tween.tween_callback(_start_dialogue_sequence)
 	)
 
 ## -------------------------------------------------------------
 ## Sequence: ควบคุมบทสนทนาและท่าทางตัวละคร
 ## -------------------------------------------------------------
 func _start_dialogue_sequence() -> void:
+	if is_transitioning:
+		return
 	current_dialogue_index = 0
 	dialogue_box.visible = true
 	
@@ -721,6 +726,9 @@ func _skip_cutscene() -> void:
 		typewriter_tween.kill()
 	if entrance_tween and entrance_tween.is_valid():
 		entrance_tween.kill()
+	if wait_tween and wait_tween.is_valid():
+		wait_tween.kill()
+		wait_tween = null
 	_hide_continue_arrow()
 	_hide_question_mark()
 	_hide_exclamation()
@@ -732,3 +740,4 @@ func _switch_to_gameplay() -> void:
 	Engine.time_scale = 1.0
 	if not SceneLoader.change_scene(get_tree(), next_scene_path):
 		push_warning("[CentralTowerCutscene] next_scene_path not found: '%s'" % next_scene_path)
+		is_transitioning = false

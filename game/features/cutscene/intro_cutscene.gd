@@ -63,6 +63,9 @@ var is_fast_forwarding: bool = false
 var can_fast_forward: bool = true
 var tw_ex_bob: Tween = null
 var tw_paper_glow: Tween = null
+var tw_rune_aura: Tween = null
+var tw_cp_fade: Tween = null
+var tw_cp_pulse: Tween = null
 var skip_ctrl = null
 var _has_saved_snap: bool = false
 var _saved_snap_transforms: bool = true
@@ -655,23 +658,33 @@ func _on_reveal_magic_text() -> void:
 	
 	# ลูปแสงออร่าเวทมนตร์เรืองรองอ่อน ๆ นุ่มนวล ไม่สว่างจ้าเกินไป
 	if rune_aura_label:
+		if tw_rune_aura and tw_rune_aura.is_valid():
+			tw_rune_aura.kill()
 		rune_aura_label.modulate = Color(1.0, 0.95, 0.85, 0.35)
-		var tw_aura = create_tween().set_loops()
-		tw_aura.tween_property(rune_aura_label, "modulate:a", 0.55, 1.5).set_trans(Tween.TRANS_SINE)
-		tw_aura.tween_property(rune_aura_label, "modulate:a", 0.20, 1.5).set_trans(Tween.TRANS_SINE)
+		tw_rune_aura = create_tween().set_loops()
+		tw_rune_aura.tween_property(rune_aura_label, "modulate:a", 0.55, 1.5).set_trans(Tween.TRANS_SINE)
+		tw_rune_aura.tween_property(rune_aura_label, "modulate:a", 0.20, 1.5).set_trans(Tween.TRANS_SINE)
 	
 	# ตัวอักษรหลักคงความสว่างนวลตา คมชัด อ่านง่าย สบายตา
 	if rune_label:
 		rune_label.modulate = Color(1.0, 1.0, 1.0, 1.0)
 	
-	# แสงกระพริบแนะนำให้กดไปต่อ
+	# แสงกระพริบแนะนำให้กดไปต่อ (ค่อย ๆ ชัดขึ้นก่อน แล้วจึงเริ่มกระพริบ ไม่ตีกันช่วง 0.6s แรก)
 	if continue_prompt:
+		if tw_cp_fade and tw_cp_fade.is_valid():
+			tw_cp_fade.kill()
+		if tw_cp_pulse and tw_cp_pulse.is_valid():
+			tw_cp_pulse.kill()
 		continue_prompt.modulate = Color(1, 1, 1, 0)
-		var tw_cp = create_tween()
-		tw_cp.tween_property(continue_prompt, "modulate:a", 0.9, 0.6)
-		var tw_pulse = create_tween().set_loops()
-		tw_pulse.tween_property(continue_prompt, "modulate:a", 0.35, 0.8).set_trans(Tween.TRANS_SINE)
-		tw_pulse.tween_property(continue_prompt, "modulate:a", 0.95, 0.8).set_trans(Tween.TRANS_SINE)
+		tw_cp_fade = create_tween()
+		tw_cp_fade.tween_property(continue_prompt, "modulate:a", 0.95, 0.6).set_trans(Tween.TRANS_SINE)
+		tw_cp_fade.tween_callback(func():
+			if is_continuing or not is_instance_valid(continue_prompt):
+				return
+			tw_cp_pulse = create_tween().set_loops()
+			tw_cp_pulse.tween_property(continue_prompt, "modulate:a", 0.35, 0.8).set_trans(Tween.TRANS_SINE)
+			tw_cp_pulse.tween_property(continue_prompt, "modulate:a", 0.95, 0.8).set_trans(Tween.TRANS_SINE)
+		)
 
 ## สลายกระดาษและตัวหนังสือหายไปพร้อมกันเมื่อผู้เล่นกดไปต่อ
 func _trigger_continue() -> void:
@@ -685,6 +698,15 @@ func _trigger_continue() -> void:
 	if tw_paper_glow and tw_paper_glow.is_valid():
 		tw_paper_glow.kill()
 		tw_paper_glow = null
+	if tw_rune_aura and tw_rune_aura.is_valid():
+		tw_rune_aura.kill()
+		tw_rune_aura = null
+	if tw_cp_fade and tw_cp_fade.is_valid():
+		tw_cp_fade.kill()
+		tw_cp_fade = null
+	if tw_cp_pulse and tw_cp_pulse.is_valid():
+		tw_cp_pulse.kill()
+		tw_cp_pulse = null
 	
 	# หยุด AnimationPlayer โดยคงสถานะปัจจุบันไว้ (pause + active = false)
 	# ป้องกันไม่ให้ Godot รีเซ็ตค่าตำแหน่งของเวลกลับไปที่เฟรม 0 (-250)

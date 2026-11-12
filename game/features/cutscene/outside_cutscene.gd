@@ -29,6 +29,9 @@ var is_fast_forwarding: bool = false
 var can_fast_forward: bool = true
 var skip_ctrl = null
 var current_stage: int = 1 # 1 = storm sky, 2 = chaos village, 3 = tower & title
+var tw_stage1_fade: Tween = null
+var tw_stage2_fade: Tween = null
+var tw_stage3_wait: Tween = null
 
 signal cutscene_finished
 
@@ -151,6 +154,9 @@ func _skip_to_stage_2() -> void:
 	if current_stage >= 2 or is_starting:
 		return
 	current_stage = 2
+	if tw_stage1_fade and tw_stage1_fade.is_valid():
+		tw_stage1_fade.kill()
+		tw_stage1_fade = null
 	if storm_sky.animation_finished.is_connected(_on_storm_sky_finished):
 		storm_sky.animation_finished.disconnect(_on_storm_sky_finished)
 	storm_sky.stop()
@@ -168,6 +174,18 @@ func _skip_to_stage_3() -> void:
 	if is_starting:
 		return
 	current_stage = 3
+	if tw_stage1_fade and tw_stage1_fade.is_valid():
+		tw_stage1_fade.kill()
+		tw_stage1_fade = null
+	if tw_stage2_fade and tw_stage2_fade.is_valid():
+		tw_stage2_fade.kill()
+		tw_stage2_fade = null
+	if tw_stage3_wait and tw_stage3_wait.is_valid():
+		tw_stage3_wait.kill()
+		tw_stage3_wait = null
+	if storm_sky.animation_finished.is_connected(_on_storm_sky_finished):
+		storm_sky.animation_finished.disconnect(_on_storm_sky_finished)
+	storm_sky.stop()
 	if village.animation_finished.is_connected(_on_village_chaos_finished):
 		village.animation_finished.disconnect(_on_village_chaos_finished)
 	village.stop()
@@ -193,15 +211,20 @@ func _skip_to_stage_3() -> void:
 func play_chaos_sequence() -> void:
 	current_stage = 1
 	# 1. ค่อย ๆ สว่างขึ้นจากจอดำสู่ท้องฟ้าพายุ 0.5 วินาที
-	var tw = create_tween()
-	tw.tween_property(fade_overlay, "color:a", 0.0, 0.5)
-	tw.tween_callback(func():
+	if tw_stage1_fade and tw_stage1_fade.is_valid():
+		tw_stage1_fade.kill()
+	tw_stage1_fade = create_tween()
+	tw_stage1_fade.tween_property(fade_overlay, "color:a", 0.0, 0.5)
+	tw_stage1_fade.tween_callback(func():
+		if current_stage != 1 or is_starting:
+			return
 		storm_sky.play("storm_sky", 1.0)
-		storm_sky.animation_finished.connect(_on_storm_sky_finished, CONNECT_ONE_SHOT)
+		if not storm_sky.animation_finished.is_connected(_on_storm_sky_finished):
+			storm_sky.animation_finished.connect(_on_storm_sky_finished, CONNECT_ONE_SHOT)
 	)
 
 func _on_storm_sky_finished() -> void:
-	if current_stage >= 2 and village.visible:
+	if current_stage >= 2 or is_starting:
 		return
 	current_stage = 2
 	# 2. สลับภาพสู่บ้านเมืองโกลาหล (เล่นแอนิเมชันตั้งแต่เฟรมที่ 20 ถึงจบ 58)
@@ -209,9 +232,11 @@ func _on_storm_sky_finished() -> void:
 	village.frame = 0
 	village.modulate = Color(1, 1, 1, 0)
 	
-	var tw_vil_in = create_tween()
-	tw_vil_in.tween_property(village, "modulate:a", 1.0, 0.35)
-	tw_vil_in.chain().tween_callback(func():
+	if tw_stage2_fade and tw_stage2_fade.is_valid():
+		tw_stage2_fade.kill()
+	tw_stage2_fade = create_tween()
+	tw_stage2_fade.tween_property(village, "modulate:a", 1.0, 0.35)
+	tw_stage2_fade.chain().tween_callback(func():
 		storm_sky.visible = false
 	)
 	
@@ -220,7 +245,7 @@ func _on_storm_sky_finished() -> void:
 		village.animation_finished.connect(_on_village_chaos_finished, CONNECT_ONE_SHOT)
 
 func _on_village_chaos_finished() -> void:
-	if current_stage >= 3 and tower.visible:
+	if current_stage >= 3 or is_starting:
 		return
 	current_stage = 3
 	# 3. สลับภาพสู่หอคอยทมิฬ
@@ -252,9 +277,11 @@ func _on_village_chaos_finished() -> void:
 				skip_ctrl.visible = false
 		)
 	
-	var tw_wait = create_tween()
-	tw_wait.tween_interval(1.5)
-	tw_wait.tween_callback(func():
+	if tw_stage3_wait and tw_stage3_wait.is_valid():
+		tw_stage3_wait.kill()
+	tw_stage3_wait = create_tween()
+	tw_stage3_wait.tween_interval(1.5)
+	tw_stage3_wait.tween_callback(func():
 		if current_stage == 3 and not can_start and not is_starting:
 			_reveal_game_title()
 	)
