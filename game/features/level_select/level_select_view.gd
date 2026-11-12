@@ -143,6 +143,8 @@ const NAV_COLOR_LOCKED := Color(0.467, 0.459, 0.553, 1.0)     # #77758D Muted la
 
 ## ด่านที่ยังพัฒนาไม่เสร็จ: ล็อกไว้เสมอแม้ผ่านด่านก่อนหน้าแล้ว (เอา id ออกเมื่อด่านพร้อมเล่น)
 const IN_DEVELOPMENT_STAGE_IDS: Array[int] = [2]
+## ด่านที่มีเลขมากกว่านี้ถูกล็อกเสมอ ไม่ว่าเซฟจะผ่านด่านไปแล้วหรือไม่ (ตอนนี้เปิดให้เล่นแค่ด่าน 1)
+const MAX_OPEN_STAGE_ID := 1
 
 const ICON_VOLUME_ON := preload("res://assets/icons/ui_volume_on.svg")
 const ICON_VOLUME_OFF := preload("res://assets/icons/ui_volume_off.svg")
@@ -541,13 +543,13 @@ func _get_act_progress(act_num: int) -> Dictionary:
 				cleared_levels += 1
 	elif act_num == 2:
 		total_levels = 5
-		is_act_unlocked = GameProgressManager.is_level_cleared(15) or _current_stage_idx >= 15
+		is_act_unlocked = _is_stage_unlocked(16)
 		for id in range(16, 21):
 			if GameProgressManager.is_level_cleared(id):
 				cleared_levels += 1
 	elif act_num == 3:
 		total_levels = 20
-		is_act_unlocked = GameProgressManager.is_level_cleared(20) or _current_stage_idx >= 20
+		is_act_unlocked = _is_stage_unlocked(21)
 		for id in range(21, 41):
 			if GameProgressManager.is_level_cleared(id):
 				cleared_levels += 1
@@ -1319,9 +1321,9 @@ static func _is_stage_in_development(stg_id: int) -> bool:
 	return IN_DEVELOPMENT_STAGE_IDS.has(stg_id)
 
 
-## ด่านเล่นได้เมื่อเป็นด่านแรกหรือผ่านด่านก่อนหน้าแล้ว และไม่ได้อยู่ระหว่างพัฒนา
+## ด่านเล่นได้เมื่อเป็นด่านแรกหรือผ่านด่านก่อนหน้าแล้ว ไม่ได้อยู่ระหว่างพัฒนา และไม่เกิน MAX_OPEN_STAGE_ID
 static func _is_stage_unlocked(stg_id: int) -> bool:
-	if _is_stage_in_development(stg_id):
+	if _is_stage_in_development(stg_id) or stg_id > MAX_OPEN_STAGE_ID:
 		return false
 	return stg_id == 1 or GameProgressManager.is_level_cleared(stg_id - 1)
 
