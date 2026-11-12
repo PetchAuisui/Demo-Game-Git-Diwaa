@@ -304,12 +304,7 @@ flowchart TD
   * ใช้ `SceneLoader` ตัวเดียวกันใน `level_dialogue_view.gd`, `central_tower_cutscene.gd` และ `start_view_controller.gd` (ปุ่ม Resume Work)
   4. **ผลลัพธ์:** ตัดภาพเข้าสู่ Sandbox ทันทีโดยไม่ต้องรอดิสก์ I/O และไม่มีอาการจอดำค้าง 100%
 
-### 6.6 เงื่อนไขภารกิจใน Sandbox ก่อนกลับสู่เนื้อเรื่อง (Gameplay Steps)
-* ข้อมูลภารกิจของแต่ละขั้นอยู่ในไฟล์ข้อมูลด่าน (`levels/level_%02d.gd`) ใต้คีย์ `gameplay_steps` อ่านผ่าน `LevelDataLoader.get_gameplay_step(level, step)`:
-  * `hints`: ข้อความภารกิจที่แสดงใน Terminal เมื่อเข้า Sandbox
-  * `required`: รายการคำสั่งที่ต้องรันสำเร็จ แต่ละรายการมี `match` (ทุกคำในลิสต์ต้องอยู่ในคำสั่งเดียวกัน) และ `label` (ข้อความที่แสดงเมื่อยังขาด)
-* ด่านที่ 1:
-  * ขั้นที่ 1: `git --version`
-  * ขั้นที่ 2: `git config` ที่มี `user.name` และ `git config` ที่มี `user.email`
-* เมื่อกดปุ่ม **เสร็จสิ้น (ไปต่อ)** หรือพิมพ์ `done` / `finish` / `exit` / `quit` ระบบจะตรวจคำสั่งที่รันสำเร็จในรอบนั้น ถ้ายังขาดจะแสดงรายการคำสั่งที่ยังไม่ได้ทำ และไม่กลับสู่เนื้อเรื่อง
-* ออกจาก Sandbox ทางใดก็ตาม (เช่น คำสั่ง `cutscene central` หรือ `level 16`) ระบบจะรีเซ็ตขั้นภารกิจใน `_exit_tree` ไม่ให้ค้างไปรอบถัดไป
+### 6.6 Sandbox แบบเล่นอิสระ (ไม่มีภารกิจ)
+* Sandbox เป็นห้องทดลองคำสั่ง git เปล่า ๆ ไม่มีเป้าหมาย ไม่มี checklist และไม่มีการตรวจผ่าน/ไม่ผ่าน
+* เมื่อหน้าบทสนทนาเปิด Sandbox ระหว่างเล่าเรื่อง (ตั้ง `GameProgressManager.set_current_gameplay_step(step)` ไว้) ปุ่มขวาบนจะเป็น **กลับสู่เนื้อเรื่อง ➔** กด (หรือพิมพ์ `exit` / `quit`) แล้วกลับเข้า dialogue phase ถัดไปทันที ถ้าเข้ามาจากที่อื่นปุ่มจะเป็น **กลับหน้าเลือกด่าน**
+* ออกจาก Sandbox ทางใดก็ตาม (เช่น คำสั่ง `cutscene central` หรือ `level 16`) ระบบจะรีเซ็ต gameplay step ใน `_exit_tree` ไม่ให้ค้างไปรอบถัดไป
