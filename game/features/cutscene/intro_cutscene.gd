@@ -55,6 +55,9 @@ var can_fast_forward: bool = true
 var tw_ex_bob: Tween = null
 var tw_paper_glow: Tween = null
 var skip_ctrl = null
+var _has_saved_snap: bool = false
+var _saved_snap_transforms: bool = true
+var _saved_snap_vertices: bool = true
 
 signal cutscene_finished
 
@@ -83,11 +86,22 @@ const SHARD_LANDING_POSITIONS: Array[Vector2] = [
 
 func _ready() -> void:
 	Engine.time_scale = 1.0
+	var vp := get_viewport()
+	if vp:
+		_saved_snap_transforms = vp.snap_2d_transforms_to_pixel
+		_saved_snap_vertices = vp.snap_2d_vertices_to_pixel
+		_has_saved_snap = true
+		vp.snap_2d_transforms_to_pixel = false
+		vp.snap_2d_vertices_to_pixel = false
 	skip_ctrl = preload("res://features/cutscene/skip_cutscene_button.gd").new()
 	skip_ctrl.next_scene_path = "res://features/cutscene/outside_cutscene.tscn"
 	skip_ctrl.custom_skip_action = _on_skip_step
 	add_child(skip_ctrl)
 	_init_shards()
+	if vel:
+		vel.visible = false
+	if master:
+		master.visible = false
 	await _prewarm_cutscene_textures()
 	if not is_inside_tree() or is_continuing or can_continue:
 		return
@@ -123,25 +137,44 @@ func _prewarm_cutscene_textures() -> void:
 		if is_instance_valid(s):
 			targets.append(s)
 	
+	var saved_states: Array[Dictionary] = []
 	for node in targets:
+		saved_states.append({
+			"node": node,
+			"z": node.z_index,
+			"pos": node.position,
+			"scale": node.scale,
+			"modulate": node.modulate,
+			"visible": node.visible,
+		})
 		node.z_index = -1
 		node.position = Vector2.ZERO
 		node.scale = Vector2(0.01, 0.01)
-		node.modulate = Color(1, 1, 1, 0.05)
+		node.modulate = Color(1, 1, 1, 1)
 		node.visible = true
 	
 	await get_tree().process_frame
 	if not is_inside_tree():
 		return
 	
-	for node in targets:
+	for st in saved_states:
+		var node: CanvasItem = st["node"]
 		if is_instance_valid(node):
-			node.z_index = 0
+			node.z_index = st["z"]
+			node.modulate = st["modulate"]
 			if not is_continuing and not can_continue:
-				node.visible = false
+				node.position = st["pos"]
+				node.scale = st["scale"]
+				node.visible = st["visible"]
 
 func _exit_tree() -> void:
 	Engine.time_scale = 1.0
+	if _has_saved_snap:
+		var vp := get_viewport()
+		if vp:
+			vp.snap_2d_transforms_to_pixel = _saved_snap_transforms
+			vp.snap_2d_vertices_to_pixel = _saved_snap_vertices
+		_has_saved_snap = false
 
 func _process(_delta: float) -> void:
 	if not can_fast_forward or is_continuing:
@@ -256,6 +289,12 @@ func _reset_cutscene_state() -> void:
 	if room_lighting:
 		room_lighting.color = Color(1, 1, 1, 1)
 	position = Vector2(960, 540)
+	
+	if black_hole:
+		black_hole.visible = false
+		black_hole.position = Vector2(master_target_x, 97)
+		black_hole.scale = Vector2.ZERO
+		black_hole.modulate = Color(1, 1, 1, 1)
 	
 	if khampri:
 		khampri.visible = false
