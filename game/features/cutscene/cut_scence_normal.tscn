@@ -177,7 +177,7 @@ animations = [{
 }],
 "loop": 0,
 "name": &"village_normal",
-"speed": 6.67
+"speed": 8.0
 }]
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_sky_0"]
@@ -647,7 +647,7 @@ animations = [{
 }],
 "loop": 0,
 "name": &"peaceful_sky",
-"speed": 6.67
+"speed": 10.0
 }]
 
 [node name="CutScenceNormal" type="Node2D" unique_id=1565898123]

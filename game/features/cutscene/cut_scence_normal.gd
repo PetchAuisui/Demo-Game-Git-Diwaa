@@ -13,19 +13,18 @@ extends Node2D
 
 @export_group("การแสดงผลหมู่บ้าน (Village Settings)")
 @export var village_frame_index: int = 0
-@export var village_hold_seconds: float = 4.95 # ประมาณ 33 เฟรม (33 * 0.15s)
 
 var is_transitioning: bool = false
 var is_fast_forwarding: bool = false
 var can_fast_forward: bool = true
 var skip_ctrl = null
 var current_stage: int = 1 # 1 = village, 2 = sky, 3 = transitioning
-var tw_hold: Tween = null
 
 signal cutscene_finished
 
 func _ready() -> void:
 	Engine.time_scale = 1.0
+	SceneLoader.request_preload("res://features/cutscene/intro_cutscene.tscn")
 	skip_ctrl = preload("res://features/cutscene/skip_cutscene_button.gd").new()
 	skip_ctrl.next_scene_path = "res://features/cutscene/intro_cutscene.tscn"
 	skip_ctrl.custom_skip_action = _on_skip_step
@@ -79,8 +78,9 @@ func _on_skip_step() -> void:
 		return
 	if current_stage == 1:
 		# ข้ามเฉพาะฉากหมู่บ้าน ไปยังฉากท้องฟ้า
-		if tw_hold and tw_hold.is_valid():
-			tw_hold.kill()
+		if village.animation_finished.is_connected(_on_village_finished):
+			village.animation_finished.disconnect(_on_village_finished)
+		village.stop()
 		fade_overlay.color.a = 0.0
 		_on_village_finished()
 	elif current_stage == 2:
@@ -90,15 +90,12 @@ func _on_skip_step() -> void:
 func play_normal_sequence() -> void:
 	current_stage = 1
 	village.frame = village_frame_index
-	village.stop()
+	village.play("village_normal", 1.0)
+	if not village.animation_finished.is_connected(_on_village_finished):
+		village.animation_finished.connect(_on_village_finished, CONNECT_ONE_SHOT)
 	
 	var tw = create_tween()
 	tw.tween_property(fade_overlay, "color:a", 0.0, 0.5)
-	
-	# ค้างภาพไว้นิ่งๆ ประมาณ 33 เฟรม (4.95 วินาที) แล้วค่อย Cross-fade เข้าสู่ท้องฟ้าปกติ
-	tw_hold = create_tween()
-	tw_hold.tween_interval(village_hold_seconds)
-	tw_hold.tween_callback(_on_village_finished)
 
 func _on_village_finished() -> void:
 	if current_stage >= 2 and sky.visible:
@@ -133,5 +130,5 @@ func _go_to_intro_cutscene() -> void:
 		Engine.time_scale = 1.0
 		emit_signal("cutscene_finished")
 		print("[CutsceneNormal] Transitioning to IntroCutscene (Library)...")
-		get_tree().change_scene_to_file("res://features/cutscene/intro_cutscene.tscn")
+		SceneLoader.change_scene(get_tree(), "res://features/cutscene/intro_cutscene.tscn")
 	)
