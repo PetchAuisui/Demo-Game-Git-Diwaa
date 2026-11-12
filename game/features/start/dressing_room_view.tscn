@@ -24,6 +24,11 @@
 [ext_resource type="AudioStream" path="res://assets/audio/sfx_cat_meow.wav" id="22_sfx_meow"]
 [ext_resource type="FontFile" path="res://assets/fonts/TA-8-bit.ttf" id="23_font_ta8bit"]
 [ext_resource type="PackedScene" path="res://common/brand_button.tscn" id="24_brand_btn"]
+[ext_resource type="Texture2D" uid="uid://c1dvt3eyfitk2" path="res://assets/icons/ui_hood.svg" id="icon_hood"]
+[ext_resource type="Texture2D" uid="uid://wd72claq0c2t" path="res://assets/icons/ui_scarf.svg" id="icon_scarf"]
+[ext_resource type="Texture2D" uid="uid://o454us0glhm5" path="res://assets/icons/ui_backpack.svg" id="icon_backpack"]
+[ext_resource type="Texture2D" uid="uid://bqjt7hucj3tod" path="res://assets/icons/ui_cat.svg" id="icon_cat"]
+[ext_resource type="Texture2D" uid="uid://dh7rlxqa6sq5h" path="res://assets/icons/ui_sparkles.svg" id="icon_sparkles"]
 
 [sub_resource type="StyleBoxFlat" id="Style_topbar_bg"]
 content_margin_left = 32.0
@@ -445,12 +450,15 @@ theme_override_constants/separation = 14
 [node name="HeaderRow" type="HBoxContainer" parent="MainMargin/MainHBox/RightWardrobePanel/CardVBox"]
 layout_mode = 2
 
-[node name="TitleIcon" type="Label" parent="MainMargin/MainHBox/RightWardrobePanel/CardVBox/HeaderRow"]
+[node name="TitleIcon" type="TextureRect" parent="MainMargin/MainHBox/RightWardrobePanel/CardVBox/HeaderRow"]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.66, 0.33, 0.97, 1)
-theme_override_fonts/font = ExtResource("2_font_bold")
-theme_override_font_sizes/font_size = 22
-text = "✨ "
+custom_minimum_size = Vector2(26, 26)
+size_flags_vertical = 4
+texture_filter = 2
+self_modulate = Color(0.66, 0.33, 0.97, 1)
+texture = ExtResource("icon_sparkles")
+expand_mode = 1
+stretch_mode = 5
 
 [node name="CardTitle" type="Label" parent="MainMargin/MainHBox/RightWardrobePanel/CardVBox/HeaderRow"]
 layout_mode = 2
@@ -498,7 +506,10 @@ layout_mode = 2
 mouse_default_cursor_shape = 2
 theme_override_fonts/font = ExtResource("2_font_bold")
 theme_override_font_sizes/font_size = 14
-text = "🧙 ฮู้ด"
+text = "ฮู้ด"
+icon = ExtResource("icon_hood")
+texture_filter = 2
+theme_override_constants/icon_max_width = 18
 
 [node name="TabScarf" type="Button" parent="MainMargin/MainHBox/RightWardrobePanel/CardVBox/FilterTabsRow"]
 unique_name_in_owner = true
@@ -507,7 +518,10 @@ layout_mode = 2
 mouse_default_cursor_shape = 2
 theme_override_fonts/font = ExtResource("2_font_bold")
 theme_override_font_sizes/font_size = 14
-text = "🧣 ผ้าพันคอ"
+text = "ผ้าพันคอ"
+icon = ExtResource("icon_scarf")
+texture_filter = 2
+theme_override_constants/icon_max_width = 18
 
 [node name="TabBag" type="Button" parent="MainMargin/MainHBox/RightWardrobePanel/CardVBox/FilterTabsRow"]
 unique_name_in_owner = true
@@ -516,7 +530,10 @@ layout_mode = 2
 mouse_default_cursor_shape = 2
 theme_override_fonts/font = ExtResource("2_font_bold")
 theme_override_font_sizes/font_size = 14
-text = "🎒 กระเป๋า"
+text = "กระเป๋า"
+icon = ExtResource("icon_backpack")
+texture_filter = 2
+theme_override_constants/icon_max_width = 18
 
 [node name="TabCat" type="Button" parent="MainMargin/MainHBox/RightWardrobePanel/CardVBox/FilterTabsRow"]
 unique_name_in_owner = true
@@ -525,7 +542,10 @@ layout_mode = 2
 mouse_default_cursor_shape = 2
 theme_override_fonts/font = ExtResource("2_font_bold")
 theme_override_font_sizes/font_size = 14
-text = "🐱 แมว"
+text = "แมว"
+icon = ExtResource("icon_cat")
+texture_filter = 2
+theme_override_constants/icon_max_width = 18
 
 [node name="ScrollArea" type="ScrollContainer" parent="MainMargin/MainHBox/RightWardrobePanel/CardVBox"]
 layout_mode = 2
@@ -543,13 +563,15 @@ layout_mode = 2
 alignment = 1
 theme_override_constants/separation = 12
 
-[node name="EmptyIcon" type="Label" parent="MainMargin/MainHBox/RightWardrobePanel/CardVBox/ScrollArea/EmptyStateContainer/EmptyStateVBox"]
+[node name="EmptyIcon" type="TextureRect" parent="MainMargin/MainHBox/RightWardrobePanel/CardVBox/ScrollArea/EmptyStateContainer/EmptyStateVBox"]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.66, 0.45, 0.95, 1)
-theme_override_fonts/font = ExtResource("2_font_bold")
-theme_override_font_sizes/font_size = 46
-text = "✨"
-horizontal_alignment = 1
+custom_minimum_size = Vector2(56, 56)
+size_flags_horizontal = 4
+texture_filter = 2
+self_modulate = Color(0.66, 0.45, 0.95, 1)
+texture = ExtResource("icon_sparkles")
+expand_mode = 1
+stretch_mode = 5
 
 [node name="EmptyTitle" type="Label" parent="MainMargin/MainHBox/RightWardrobePanel/CardVBox/ScrollArea/EmptyStateContainer/EmptyStateVBox"]
 layout_mode = 2

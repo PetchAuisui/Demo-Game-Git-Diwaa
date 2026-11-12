@@ -230,7 +230,13 @@ func _apply_tab_style(button: Button, is_active: bool) -> void:
 	button.add_theme_stylebox_override("normal", style)
 	button.add_theme_stylebox_override("hover", style)
 	button.add_theme_stylebox_override("pressed", style)
-	button.add_theme_color_override("font_color", TAB_ACTIVE_TEXT if is_active else TAB_INACTIVE_TEXT)
+	var text_color := TAB_ACTIVE_TEXT if is_active else TAB_INACTIVE_TEXT
+	button.add_theme_color_override("font_color", text_color)
+	# ไอคอน SVG ของแท็บใช้สีเดียวกับตัวอักษร
+	button.add_theme_color_override("icon_normal_color", text_color)
+	button.add_theme_color_override("icon_hover_color", text_color)
+	button.add_theme_color_override("icon_pressed_color", text_color)
+	button.add_theme_color_override("icon_focus_color", text_color)
 
 
 func _on_back_pressed() -> void:
