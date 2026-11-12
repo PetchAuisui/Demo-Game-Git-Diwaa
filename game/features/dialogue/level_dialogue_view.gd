@@ -16,6 +16,8 @@ extends Node2D
 @export_enum("Intro & Part 1", "Part 2", "Outro") var debug_phase: int = 0
 
 const LEVEL_SELECT_PATH := "res://features/level_select/level_select_view.tscn"
+## ฉากเวลเดินขึ้นบันไดแล้วเปิดหน้าต่างดาว เล่นหลังผ่านด่าน (ปุ่มในหน้าต่างดาวพากลับหน้าเลือกด่านเอง)
+const LEVEL_CLEAR_SCENE_PATH := "res://features/cutscene/level_clear_scene.tscn"
 
 # Animation & Visuals
 @onready var anim_player: AnimationPlayer = $AnimationPlayer
@@ -176,6 +178,7 @@ func _ready() -> void:
 	
 	# โหลดหน้าเลือกด่านรอไว้ล่วงหน้าใน Background Thread เพื่อกลับไปได้ทันทีเมื่อจบบทสนทนา
 	SceneLoader.request_preload(LEVEL_SELECT_PATH)
+	SceneLoader.request_preload(LEVEL_CLEAR_SCENE_PATH)
 	
 	# ตรวจสอบด่านที่เลือกจาก Level Select
 	var selected_lvl := GameProgressManager.get_selected_level_number()
@@ -865,14 +868,20 @@ func _finish_dialogue_stage(mark_cleared: bool = true) -> void:
 	if mark_cleared:
 		GameProgressManager.set_level_cleared(level_number, true)
 	
-	# จบบทสนทนา -> เฟดดำแล้วกลับหน้าเลือกด่าน
+	# จบบทสนทนา -> เฟดดำ แล้วไปฉากเดินขึ้นบันได (ถ้าผ่านด่าน) หรือกลับหน้าเลือกด่าน
+	var next_step := _go_to_level_clear_scene if mark_cleared else _go_to_level_select
 	if is_instance_valid(fade_overlay):
 		fade_overlay.visible = true
 		var tw = create_tween()
 		tw.tween_property(fade_overlay, "color:a", 1.0, 0.35)
-		tw.tween_callback(_go_to_level_select)
+		tw.tween_callback(next_step)
 	else:
-		_go_to_level_select()
+		next_step.call()
+
+func _go_to_level_clear_scene() -> void:
+	if SceneLoader.change_scene(get_tree(), LEVEL_CLEAR_SCENE_PATH):
+		return
+	_go_to_level_select()
 
 func _go_to_level_select() -> void:
 	if SceneLoader.change_scene(get_tree(), LEVEL_SELECT_PATH):
