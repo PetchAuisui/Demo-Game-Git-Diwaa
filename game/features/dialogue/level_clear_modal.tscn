@@ -6,6 +6,7 @@
 [ext_resource type="Texture2D" uid="uid://du0ercqi3soo0" path="res://assets/icons/modal_replay.png" id="4_icon_replay"]
 [ext_resource type="Texture2D" uid="uid://djq5ryhi6kfpq" path="res://assets/icons/modal_level_select.png" id="5_icon_level_select"]
 [ext_resource type="Texture2D" uid="uid://cl45eqkow7pi3" path="res://assets/icons/modal_next_level.png" id="6_icon_next_level"]
+[ext_resource type="Texture2D" uid="uid://c8jitpw7labdd" path="res://assets/icons/ui_star.svg" id="icon_star"]
 
 [sub_resource type="FontVariation" id="FontVariation_modal_bold"]
 base_font = ExtResource("2_chakra_bold")
@@ -194,29 +195,32 @@ layout_mode = 2
 theme_override_constants/separation = 16
 alignment = 1
 
-[node name="Star1" type="Label" parent="WindowPanel/VBoxMain/Margin/VBox/StarsHBox"]
+[node name="Star1" type="TextureRect" parent="WindowPanel/VBoxMain/Margin/VBox/StarsHBox"]
 layout_mode = 2
-theme_override_colors/font_color = Color(1, 0.85, 0.1, 1)
-theme_override_colors/font_outline_color = Color(0.3, 0.25, 0.05, 1)
-theme_override_constants/outline_size = 6
-theme_override_font_sizes/font_size = 56
-text = "★"
+custom_minimum_size = Vector2(60, 60)
+texture_filter = 2
+self_modulate = Color(1, 0.85, 0.1, 1)
+texture = ExtResource("icon_star")
+expand_mode = 1
+stretch_mode = 5
 
-[node name="Star2" type="Label" parent="WindowPanel/VBoxMain/Margin/VBox/StarsHBox"]
+[node name="Star2" type="TextureRect" parent="WindowPanel/VBoxMain/Margin/VBox/StarsHBox"]
 layout_mode = 2
-theme_override_colors/font_color = Color(1, 0.85, 0.1, 1)
-theme_override_colors/font_outline_color = Color(0.3, 0.25, 0.05, 1)
-theme_override_constants/outline_size = 6
-theme_override_font_sizes/font_size = 56
-text = "★"
+custom_minimum_size = Vector2(60, 60)
+texture_filter = 2
+self_modulate = Color(1, 0.85, 0.1, 1)
+texture = ExtResource("icon_star")
+expand_mode = 1
+stretch_mode = 5
 
-[node name="Star3" type="Label" parent="WindowPanel/VBoxMain/Margin/VBox/StarsHBox"]
+[node name="Star3" type="TextureRect" parent="WindowPanel/VBoxMain/Margin/VBox/StarsHBox"]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.42, 0.42, 0.42, 1)
-theme_override_colors/font_outline_color = Color(0.15, 0.15, 0.15, 1)
-theme_override_constants/outline_size = 6
-theme_override_font_sizes/font_size = 56
-text = "★"
+custom_minimum_size = Vector2(60, 60)
+texture_filter = 2
+self_modulate = Color(0.42, 0.42, 0.42, 1)
+texture = ExtResource("icon_star")
+expand_mode = 1
+stretch_mode = 5
 
 [node name="ScorePanel" type="PanelContainer" parent="WindowPanel/VBoxMain/Margin/VBox"]
 layout_mode = 2

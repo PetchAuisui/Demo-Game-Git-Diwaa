@@ -108,6 +108,7 @@ var hud_title: Label
 var hud_act_tag: Label
 var hud_cmd: Label
 var hud_desc: Label
+var hud_notice_icon: TextureRect
 var btn_launch: Button
 
 # Assets & Textures
@@ -142,6 +143,12 @@ const NAV_COLOR_LOCKED := Color(0.467, 0.459, 0.553, 1.0)     # #77758D Muted la
 
 ## ด่านที่ยังพัฒนาไม่เสร็จ: ล็อกไว้เสมอแม้ผ่านด่านก่อนหน้าแล้ว (เอา id ออกเมื่อด่านพร้อมเล่น)
 const IN_DEVELOPMENT_STAGE_IDS: Array[int] = [2]
+
+const ICON_VOLUME_ON := preload("res://assets/icons/ui_volume_on.svg")
+const ICON_VOLUME_OFF := preload("res://assets/icons/ui_volume_off.svg")
+const ICON_LOCK := preload("res://assets/icons/ui_lock.svg")
+const ICON_CONSTRUCTION := preload("res://assets/icons/ui_construction.svg")
+const ICON_STAR := preload("res://assets/icons/ui_star.svg")
 const NAV_COLOR_PRIMARY := Color(0.894, 0.875, 0.835, 1.0)    # #E4DFD5 Primary text
 const NAV_COLOR_SECONDARY := Color(0.604, 0.588, 0.667, 1.0)  # #9A96AA Secondary text
 
@@ -304,6 +311,7 @@ func _bind_nodes() -> void:
 	hud_act_tag = get_node_or_null("%HudActTag")
 	hud_cmd = get_node_or_null("%HudCmd")
 	hud_desc = get_node_or_null("%HudDesc")
+	hud_notice_icon = get_node_or_null("%HudNoticeIcon")
 	btn_launch = get_node_or_null("%BtnLaunch")
 
 	if path_renderer:
@@ -484,7 +492,7 @@ func _wire_navbar() -> void:
 		btn_focus_current.add_theme_stylebox_override("pressed", empty_continue_sb)
 		btn_focus_current.add_theme_stylebox_override("focus", empty_continue_sb)
 	if btn_sound:
-		btn_sound.text = "🔇" if _is_muted else "🔊"
+		btn_sound.icon = ICON_VOLUME_OFF if _is_muted else ICON_VOLUME_ON
 		btn_sound.pressed.connect(_on_toggle_sound)
 	if btn_launch:
 		btn_launch.pressed.connect(_on_launch_stage_pressed)
@@ -512,7 +520,7 @@ func _on_toggle_sound() -> void:
 	_is_muted = not _is_muted
 	AudioServer.set_bus_mute(0, _is_muted)
 	if btn_sound:
-		btn_sound.text = "🔇" if _is_muted else "🔊"
+		btn_sound.icon = ICON_VOLUME_OFF if _is_muted else ICON_VOLUME_ON
 	if not _is_muted:
 		_play_sfx(sfx_click)
 
@@ -723,7 +731,7 @@ func _on_act_button_pressed(act_num: int) -> void:
 	var prog := _get_act_progress(act_num)
 	if not prog["is_unlocked"]:
 		_play_sfx(sfx_click)
-		_show_locked_hud_notice("🔒 ACT %d ยังถูกผนึก! ต้องผ่านบทก่อนหน้าเพื่อปลดล็อก" % act_num)
+		_show_locked_hud_notice("ACT %d ยังถูกผนึก! ต้องผ่านบทก่อนหน้าเพื่อปลดล็อก" % act_num, ICON_LOCK)
 		return
 
 	_play_sfx(sfx_click)
@@ -941,27 +949,9 @@ func _spawn_tower_platforms() -> void:
 			lock_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
 			hbox.add_child(lock_rect)
 		elif is_cleared:
-			var star_icon := Label.new()
-			star_icon.name = "StarIcon"
-			star_icon.text = "★★★"
-			star_icon.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-			star_icon.add_theme_color_override("font_outline_color", Color(0.12, 0.08, 0.02, 0.9))
-			star_icon.add_theme_constant_override("outline_size", 2)
-			if font_ta_pixel:
-				star_icon.add_theme_font_override("font", font_ta_pixel)
-			star_icon.add_theme_font_size_override("font_size", star_font_sz)
-			hbox.add_child(star_icon)
+			hbox.add_child(_create_star_row(star_font_sz))
 		elif is_unlocked:
-			var star_icon := Label.new()
-			star_icon.name = "StarIcon"
-			star_icon.text = "★★★"
-			star_icon.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-			star_icon.add_theme_color_override("font_outline_color", Color(0.08, 0.10, 0.14, 0.9))
-			star_icon.add_theme_constant_override("outline_size", 2)
-			if font_ta_pixel:
-				star_icon.add_theme_font_override("font", font_ta_pixel)
-			star_icon.add_theme_font_size_override("font_size", star_font_sz)
-			hbox.add_child(star_icon)
+			hbox.add_child(_create_star_row(star_font_sz))
 		inner_margin.add_child(hbox)
 		slab_btn.add_child(inner_margin)
 
@@ -1306,6 +1296,25 @@ func _perform_direct_leap(to_idx: int) -> void:
 	)
 
 
+## แถวดาว 3 ดวงจากไอคอน SVG (สีถูกตั้งผ่าน modulate ใน _apply_platform_style)
+func _create_star_row(star_size: int) -> HBoxContainer:
+	var row := HBoxContainer.new()
+	row.name = "StarIcon"
+	row.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	row.add_theme_constant_override("separation", 1)
+	for i in 3:
+		var star := TextureRect.new()
+		star.texture = ICON_STAR
+		star.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+		star.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		star.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		star.custom_minimum_size = Vector2(star_size, star_size) * 0.8
+		star.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		row.add_child(star)
+	return row
+
+
 static func _is_stage_in_development(stg_id: int) -> bool:
 	return IN_DEVELOPMENT_STAGE_IDS.has(stg_id)
 
@@ -1323,17 +1332,18 @@ func _on_locked_platform_clicked(idx: int) -> void:
 	_play_sfx(sfx_click)
 	var stg := TOWER_STAGES[idx]
 	if _is_stage_in_development(int(stg["id"])):
-		_show_locked_hud_notice("🚧 ด่าน %s อยู่ระหว่างพัฒนา เร็วๆ นี้!" % stg["no"])
+		_show_locked_hud_notice("ด่าน %s อยู่ระหว่างพัฒนา เร็วๆ นี้!" % stg["no"], ICON_CONSTRUCTION)
 	else:
-		_show_locked_hud_notice("🔒 แท่นหินด่าน %s ยังถูกผนึก! ต้องผ่านด่านก่อนหน้าเพื่อปลดล็อก" % stg["no"])
+		_show_locked_hud_notice("แท่นหินด่าน %s ยังถูกผนึก! ต้องผ่านด่านก่อนหน้าเพื่อปลดล็อก" % stg["no"], ICON_LOCK)
 
 
-func _show_locked_hud_notice(message: String) -> void:
+func _show_locked_hud_notice(message: String, icon: Texture2D = null) -> void:
 	if not is_instance_valid(hud_desc):
 		return
 	_locked_desc_seq_id += 1
 	var my_seq := _locked_desc_seq_id
 	hud_desc.text = message
+	_set_hud_notice_icon(icon)
 	var tree := get_tree()
 	if not tree:
 		return
@@ -1343,7 +1353,16 @@ func _show_locked_hud_notice(message: String) -> void:
 		var restore_idx := _hovered_stage_idx if (_hovered_stage_idx >= 0 and _hovered_stage_idx < TOWER_STAGES.size()) else _current_stage_idx
 		if restore_idx >= 0 and restore_idx < TOWER_STAGES.size():
 			hud_desc.text = str(TOWER_STAGES[restore_idx]["desc"])
+			_set_hud_notice_icon(null)
 	)
+
+
+## แสดงไอคอน SVG หน้าข้อความแจ้งเตือนใน HUD (null = ซ่อน)
+func _set_hud_notice_icon(icon: Texture2D) -> void:
+	if not is_instance_valid(hud_notice_icon):
+		return
+	hud_notice_icon.texture = icon
+	hud_notice_icon.visible = icon != null
 
 
 func _try_navigate_stage(target_idx: int) -> void:
@@ -1716,9 +1735,9 @@ func _apply_platform_style(plat: Control, stg_id: int, is_active: bool) -> void:
 	if lock_rect:
 		lock_rect.modulate = colors["lock_modulate"]
 
-	var star_icon := plat.find_child("StarIcon", true, false) as Label
+	var star_icon := plat.find_child("StarIcon", true, false) as Control
 	if star_icon:
-		star_icon.add_theme_color_override("font_color", colors["star_color"])
+		star_icon.modulate = colors["star_color"]
 
 
 func _update_platform_highlight(idx: int, is_active: bool) -> void:
@@ -1752,6 +1771,7 @@ func _update_hud_display(stg: Dictionary) -> void:
 	if hud_desc:
 		_locked_desc_seq_id += 1
 		hud_desc.text = stg["desc"]
+		_set_hud_notice_icon(null)
 
 	if btn_launch:
 		if is_unlocked:
