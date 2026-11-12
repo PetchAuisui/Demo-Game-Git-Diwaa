@@ -39,6 +39,7 @@ func _ready() -> void:
 	_thai_log_font = SandboxThemeTokens.create_terminal_thai_font()
 	_bind_nodes()
 	_wire_events()
+	_setup_inline_icons()
 	_update_clock()
 	_load_preview_animation()
 	_start_career_btn.grab_focus()
@@ -60,6 +61,35 @@ func _bind_nodes() -> void:
 	_sfx_click = get_node("%SfxClick")
 	_sfx_command = get_node("%SfxCommand")
 	_scene_preview_rect = get_node("%ScenePreviewRect")
+
+
+## วางไอคอน SVG ของปุ่มเมนูให้ติดกับข้อความตรงกลางปุ่ม (ตำแหน่งเดียวกับ emoji เดิม) แทนการชิดขอบปุ่ม
+func _setup_inline_icons() -> void:
+	for button: Button in [_resume_work_btn, _sandbox_btn, _dressing_room_btn, _tutorial_btn]:
+		button.resized.connect(_center_icon_with_text.bind(button))
+		_center_icon_with_text.call_deferred(button)
+
+
+## ตั้งระยะขอบซ้าย-ขวาเท่ากันให้พื้นที่เนื้อหาพอดีกับ ข้อความ + ช่องว่าง + ไอคอน จึงอยู่ติดกันกลางปุ่ม
+func _center_icon_with_text(button: Button) -> void:
+	if button.icon == null or button.size.x <= 0.0:
+		return
+	var font := button.get_theme_font("font")
+	var font_size := button.get_theme_font_size("font_size")
+	var text_width := font.get_string_size(button.text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x
+	var icon_width := float(button.get_theme_constant("icon_max_width"))
+	if icon_width <= 0.0:
+		icon_width = float(button.icon.get_width())
+	var group_width := ceilf(text_width) + float(button.get_theme_constant("h_separation")) + icon_width
+	var side_margin := floorf(maxf((button.size.x - group_width) * 0.5, 0.0))
+	for state in ["normal", "hover", "pressed", "disabled"]:
+		var style := button.get_theme_stylebox(state)
+		if style == null or (is_equal_approx(style.content_margin_left, side_margin) and is_equal_approx(style.content_margin_right, side_margin)):
+			continue
+		style = style.duplicate() as StyleBox
+		style.content_margin_left = side_margin
+		style.content_margin_right = side_margin
+		button.add_theme_stylebox_override(state, style)
 
 
 func _wire_events() -> void:
