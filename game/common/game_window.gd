@@ -158,7 +158,7 @@ func _process(delta: float) -> void:
 				_touchy_click_active = false
 				_apply_idle_cursors(hovered)
 			else:
-				_apply_uniform_cursor("touchy", TOUCHY_CLICK_SEQUENCE[_touchy_step])
+				_apply_touchy_click_cursor(TOUCHY_CLICK_SEQUENCE[_touchy_step])
 		return
 
 	_apply_idle_cursors(hovered)
@@ -271,6 +271,11 @@ func _apply_idle_cursors(hovered: Control) -> void:
 		_apply_uniform_cursor("buffy", 0)
 	else:
 		_apply_cursors("buffy", 0, "touchy", 0)
+
+
+func _apply_touchy_click_cursor(frame_idx: int) -> void:
+	# คง CURSOR_ARROW เป็น Buffy เสมอ เพื่อไม่ให้จุดที่คลิกไม่ได้เปลี่ยนเป็นรูปมือตอนกดหรือเลื่อนเมาส์ออก
+	_apply_cursors("buffy", 0, "touchy", frame_idx)
 
 
 func _setup_input_watcher() -> void:
@@ -393,6 +398,15 @@ func _is_hovering_scrollbar(hovered: Control) -> bool:
 	return hovered is ScrollBar and hovered.visible
 
 
+func _is_hovering_clickable(hovered: Control) -> bool:
+	if hovered == null or not is_instance_valid(hovered):
+		return false
+	if _is_hovering_disabled_button(hovered):
+		return false
+	var local_pos := hovered.get_local_mouse_position() if hovered.get_viewport() != null else Vector2.ZERO
+	return hovered.get_cursor_shape(local_pos) == Control.CURSOR_POINTING_HAND
+
+
 func _trigger_scroll_anim() -> void:
 	_touchy_click_active = false
 	var was_active := _scroll_anim_timer > 0.0
@@ -419,16 +433,21 @@ func _on_raw_input(event: InputEvent) -> void:
 				_trigger_scroll_anim()
 			return
 
-		if mb.button_index == MOUSE_BUTTON_LEFT or mb.button_index == MOUSE_BUTTON_RIGHT:
+		if mb.button_index == MOUSE_BUTTON_LEFT:
 			if mb.pressed:
-				if _dragging_scrollbar != null or _is_hovering_scrollbar(_get_hovered_control()):
+				var hovered := _get_hovered_control()
+				if _dragging_scrollbar != null or _is_hovering_scrollbar(hovered):
 					return
 				_scroll_anim_timer = 0.0
+				if not _is_hovering_clickable(hovered):
+					_touchy_click_active = false
+					_apply_idle_cursors(hovered)
+					return
 				_touchy_click_active = true
 				_touchy_step = 0
 				_touchy_timer = 0.0
-				_apply_uniform_cursor("touchy", TOUCHY_CLICK_SEQUENCE[0])
-			elif mb.button_index == MOUSE_BUTTON_LEFT:
+				_apply_touchy_click_cursor(TOUCHY_CLICK_SEQUENCE[0])
+			else:
 				_dragging_scrollbar = null
 	elif event is InputEventMouseMotion and _dragging_scrollbar != null:
 		if Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT):
