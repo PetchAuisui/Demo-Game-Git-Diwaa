@@ -285,24 +285,22 @@ flowchart TD
   * นำ `static var start_phase` ออกจาก `level_dialogue_view.gd`
   * นำ `static var current_step` และ `static var return_scene_path` ออกจาก `gameplay_placeholder_view.gd`
   * ตัดการ `load()` ข้ามสคริปต์เพื่อเซ็ตค่า static ซึ่งทำให้เกิด Circular Coupling
-* **ปรับสถาปัตยกรรมของ `gameplay_placeholder_view.tscn` เป็น In-Scene Modal Presentation:**
-  * เมื่อถึงขั้นตอน `open_gameplay` (ขั้นที่ 1 หรือ 2) หรือกดปุ่มข้าม ตัววิวจะ Instantiate หน้าจำลองขึ้นมาเป็น Modal Overlay ภายในเลเยอร์ `MagicStoryUI` ทันที
-  * ส่งค่าขั้นตอนผ่านตัวแปรของออบเจกต์โดยตรง (`placeholder.current_step = step`) ตามหลัก Dependency Injection
-  * สื่อสารกลับมายังบทสนทนาเมื่อกดปุ่ม "เสร็จสิ้น" ผ่านสัญญาณ `step_finished(step)` แล้วเรียก `queue_free()` ปิดหน้าต่างลง
-  * **ผลลัพธ์:** บทสนทนาเล่นต่อเนื่องในซีนเดิมทันที 100% ไม่ต้องสลับฉากไป-มา ไม่เกิดจอดำ และไม่มีตัวแปร static ค้างในหน่วยความจำ
-  * **ระบบสำรอง (Fallback):** มีฟังก์ชัน `GameProgressManager.consume_pending_dialogue_phase()` รองรับกรณีเปิดรันซีนเดี่ยวแยกอิสระ (F6 Standalone Debug) อย่างปลอดภัย
+* **ช่วงเล่นของด่าน (`open_gameplay`) เล่นต่อในฉากเดิม:**
+  * ด่าน 1 ยังไม่มีหน้าเล่นจริง เมื่อถึงขั้นตอน `open_gameplay` (ขั้นที่ 1 หรือ 2) หรือกดปุ่มข้าม บทสนทนาจะเล่นช่วงถัดไปต่อในซีนเดิมทันที ไม่สลับฉาก
+  * ล้างประวัติย้อนกลับเมื่อขึ้นช่วงใหม่ ปุ่มย้อนกลับจึงไม่พากลับไปที่รายการ `open_gameplay` แล้ววนกลับมาที่เดิม
+  * ลบ `gameplay_placeholder_view` และ API ส่งผ่านขั้นตอน (`gameplay_step` / `pending_dialogue_phase`) ใน `GameProgressManager` ที่ไม่มีใครใช้แล้ว
 
-### 6.5 การ Transition เข้าสู่ SandboxGameView แบบ Background Threaded Loading
-* **ปัญหาเดิม:** เมื่อผู้เล่นเลือกช้อยส์ "ฉันจะลองดู" หรือกดข้าม ระบบจะโหลด `sandbox_game_view.tscn` ซึ่งเป็นซีนขนาดใหญ่จากดิสก์ (ใช้เวลาโหลด ~586 ms) ทำให้การสลับฉากหยุดชะงัก เกิดอาการค้างหน้าเดิมหรือค้างที่จอดำ
+### 6.5 การโหลดฉากล่วงหน้าแบบ Background Threaded Loading
+* **ปัญหาเดิม:** ซีนขนาดใหญ่ (เช่น `sandbox_game_view.tscn` ใช้เวลาโหลด ~586 ms) ทำให้การสลับฉากหยุดชะงัก เกิดอาการค้างหน้าเดิมหรือค้างที่จอดำ
 * **โซลูชัน Background Threaded Loading (`game/common/scene_loader.gd`):**
-  1. เมื่อเริ่มต้นฉากใน `_ready()` ระบบจะเรียก `SceneLoader.request_preload(SANDBOX_PATH)` เพื่อโหลดซีนในแรมเงียบ ๆ ผ่าน Background Thread ระหว่างที่ผู้เล่นกำลังอ่านบทสนทนา
+  1. ฉากต้นทางเรียก `SceneLoader.request_preload(path)` ใน `_ready()` เพื่อโหลดฉากปลายทางในแรมเงียบ ๆ ผ่าน Background Thread
      * ถ้าไฟล์นั้นกำลังโหลดอยู่หรือโหลดเสร็จรอใช้งานอยู่แล้ว จะไม่ส่ง request ซ้ำ ป้องกัน request ค้างสะสมในหน่วยความจำเมื่อเข้าฉากเดิมหลายรอบ
-  2. เมื่อผู้เล่นกดเลือกช้อยส์ "ฉันจะลองดู" หรือกดข้าม จะเรียก `SceneLoader.change_scene(get_tree(), SANDBOX_PATH)` ซึ่งดึงผลจาก `load_threaded_get` (ใช้เวลา ~0 ms) ถ้าไม่มีผลที่โหลดไว้จะ `load()` แบบปกติแทน
+  2. ตอนเปลี่ยนฉากเรียก `SceneLoader.change_scene(get_tree(), path)` ซึ่งดึงผลจาก `load_threaded_get` (ใช้เวลา ~0 ms) ถ้าไม่มีผลที่โหลดไว้จะ `load()` แบบปกติแทน
   3. สลับฉากด้วย `change_scene_to_packed()` ได้ทันทีแบบไร้รอยต่อ
-  * ใช้ `SceneLoader` ตัวเดียวกันใน `level_dialogue_view.gd`, `central_tower_cutscene.gd` และ `start_view_controller.gd` (ปุ่ม Resume Work)
-  4. **ผลลัพธ์:** ตัดภาพเข้าสู่ Sandbox ทันทีโดยไม่ต้องรอดิสก์ I/O และไม่มีอาการจอดำค้าง 100%
+  * จุดที่ใช้: `level_dialogue_view.gd` (โหลดหน้าเลือกด่านรอไว้), `central_tower_cutscene.gd`, `start_view_controller.gd` (ปุ่ม GIT SANDBOX) และ `sandbox_game_view.gd` (โหลดฉากที่ปุ่มออกจะพากลับไป)
+  4. **ผลลัพธ์:** สลับฉากทันทีโดยไม่ต้องรอดิสก์ I/O และไม่มีอาการจอดำค้าง
 
 ### 6.6 Sandbox แบบเล่นอิสระ (ไม่มีภารกิจ)
 * Sandbox เป็นห้องทดลองคำสั่ง git เปล่า ๆ ไม่มีเป้าหมาย ไม่มี checklist และไม่มีการตรวจผ่าน/ไม่ผ่าน และบทสนทนาด่าน 1 ไม่พาเข้า Sandbox แล้ว
-* เข้าได้จากปุ่ม **GIT SANDBOX 🧪** หน้าแรก (หรือพิมพ์ `sandbox` ใน terminal หน้าแรก) ปุ่มขวาบนจะเป็น **กลับหน้าแรก** ส่วนด่านที่ยังไม่มีข้อมูลบทสนทนาซึ่งหน้าเลือกด่านเปิด Sandbox ให้ ปุ่มจะเป็น **กลับหน้าเลือกด่าน** (ตั้งผ่าน `SandboxGameView.return_scene_path`)
-* ออกจาก Sandbox ทางใดก็ตาม ระบบจะรีเซ็ต `return_scene_path` เป็นหน้าเลือกด่านใน `_exit_tree`
+* เข้าได้จากปุ่ม **GIT SANDBOX 🧪** หน้าแรก (หรือพิมพ์ `sandbox` ใน terminal หน้าแรก) ปุ่มขวาบนจะเป็น **กลับหน้าแรก** ส่วนด่านที่ยังไม่มีข้อมูลบทสนทนาซึ่งหน้าเลือกด่านเปิด Sandbox ให้ ปุ่มจะเป็น **กลับหน้าเลือกด่าน** (ตั้งผ่าน `GameProgressManager.set_sandbox_return_scene()`)
+* ออกจาก Sandbox ทางใดก็ตาม ระบบจะรีเซ็ตฉากปลายทางกลับเป็นค่าเริ่มต้น (หน้าเลือกด่าน) ใน `_exit_tree`

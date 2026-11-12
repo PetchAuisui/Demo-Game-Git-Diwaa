@@ -200,9 +200,9 @@ func _on_sandbox_pressed() -> void:
 	get_tree().create_timer(0.2).timeout.connect(func() -> void:
 		if not is_inside_tree():
 			return
-		SandboxGameView.return_scene_path = START_VIEW_PATH
+		GameProgressManager.set_sandbox_return_scene(START_VIEW_PATH)
 		if not _transition_to_scene(SANDBOX_PATH):
-			SandboxGameView.return_scene_path = SandboxGameView.LEVEL_SELECT_PATH)
+			GameProgressManager.set_sandbox_return_scene(""))
 
 
 func _transition_to_scene(target_path: String) -> bool:

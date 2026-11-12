@@ -38,16 +38,13 @@ var _sandbox_service: GitSandboxService
 var _is_initialized := false
 var _is_leaving := false
 
-## ฉากที่ปุ่มออกจะพากลับไป ตั้งก่อนเปิด Sandbox (เช่น หน้าแรกตั้งเป็น START_VIEW_PATH) และรีเซ็ตกลับเป็นหน้าเลือกด่านเมื่อออก
-static var return_scene_path := LEVEL_SELECT_PATH
-
 
 func _ready() -> void:
 	_bind_nodes()
 	_setup_animated_background()
 	_setup_leave_confirm_dialog()
 	_wire_events()
-	SceneLoader.request_preload(return_scene_path)
+	SceneLoader.request_preload(_return_scene_path())
 	_initialize_sandbox()
 
 
@@ -167,8 +164,14 @@ func _on_brand_pressed() -> void:
 	_leave_confirm_dialog.popup_centered()
 
 
-func _return_label() -> String:
-	return "กลับหน้าแรก" if return_scene_path == START_VIEW_PATH else "กลับหน้าเลือกด่าน"
+## ฉากที่ปุ่มออกจะพากลับไป: ตั้งผ่าน GameProgressManager ก่อนเปิด Sandbox (หน้าแรกตั้งเป็น START_VIEW_PATH) ค่าเริ่มต้นคือหน้าเลือกด่าน
+static func _return_scene_path() -> String:
+	var path := GameProgressManager.get_sandbox_return_scene()
+	return LEVEL_SELECT_PATH if path.is_empty() else path
+
+
+static func _return_label() -> String:
+	return "กลับหน้าแรก" if _return_scene_path() == START_VIEW_PATH else "กลับหน้าเลือกด่าน"
 
 
 func _leave_sandbox() -> void:
@@ -176,7 +179,7 @@ func _leave_sandbox() -> void:
 		return
 	_is_leaving = true
 	var tree := get_tree() if is_inside_tree() else null
-	if SceneLoader.change_scene(tree, return_scene_path):
+	if SceneLoader.change_scene(tree, _return_scene_path()):
 		Engine.time_scale = 1.0
 	else:
 		_is_leaving = false
@@ -533,6 +536,6 @@ func _show_help() -> void:
 
 func _exit_tree() -> void:
 	# ออกจาก Sandbox ทางใดก็ตาม (เช่น คำสั่ง cutscene / level 16) ให้รอบถัดไปกลับหน้าเลือกด่านตามค่าเริ่มต้น
-	return_scene_path = LEVEL_SELECT_PATH
+	GameProgressManager.set_sandbox_return_scene("")
 	if _sandbox_service != null:
 		_sandbox_service.dispose()

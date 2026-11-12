@@ -185,12 +185,6 @@ func _ready() -> void:
 	# โหลดข้อมูลด่าน
 	_load_level_data(level_number)
 	
-	var pending_phase := GameProgressManager.consume_pending_dialogue_phase()
-	if pending_phase > 0:
-		debug_phase = pending_phase
-		play_entrance_cutscene = false
-		fade_in_from_black = true
-	
 	if play_entrance_cutscene:
 		# เริ่มต้นในโหมดคัตซีนเดินเข้าห้องโถง
 		is_in_entrance_cutscene = true
@@ -844,7 +838,10 @@ func _on_choice_selected(index: int) -> void:
 func _open_gameplay_step(step: int) -> void:
 	if is_transitioning:
 		return
+	# เริ่มช่วงใหม่โดยไม่มีประวัติ: ไม่ให้ปุ่มย้อนกลับพากลับไปที่รายการ open_gameplay แล้ววนกลับมาที่เดิม
 	sequence_history.clear()
+	current_queue = []
+	queue_index = 0
 	_begin_dialogue_phase(1 if step == 1 else 2)
 
 func _finish_dialogue_stage(mark_cleared: bool = true) -> void:
