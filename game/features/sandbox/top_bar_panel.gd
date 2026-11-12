@@ -1,7 +1,7 @@
 class_name TopBarPanel
 extends PanelContainer
 ## Reusable Top Bar Component for Git-Diwaa Sandbox UI.
-## Displays the game title, mode/level badge, and mission complete button.
+## Displays the game title, mode badge, and the exit button.
 
 signal finish_pressed
 signal brand_pressed
