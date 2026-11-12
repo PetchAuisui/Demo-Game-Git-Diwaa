@@ -236,16 +236,7 @@ func _initialize_sandbox() -> void:
 
 	if _sandbox_service.info != null:
 		_terminal_panel.set_window_title("●  ●  ●    TERMINAL — learner@diwaa:~/%s" % _sandbox_service.info.mission_id)
-		if step > 0:
-			var step_info := LevelDataLoader.get_gameplay_step(lvl, step)
-			var hints: Array = step_info.get("hints", [])
-			if hints.is_empty():
-				_terminal_panel.append_info("📜 ภารกิจด่านที่ %d (ขั้นที่ %d)" % [lvl, step])
-			for hint in hints:
-				_terminal_panel.append_info("[ด่านที่ %d] %s" % [lvl, hint])
-			_terminal_panel.append_info("💡 เมื่อทำภารกิจครบแล้ว ให้กดปุ่ม [เสร็จสิ้น (ไปต่อ)] ด้านบนขวา หรือพิมพ์ 'done' เพื่อดำเนินเนื้อเรื่องต่อ\n")
-		else:
-			_terminal_panel.append_info("พร้อมใช้งาน — พิมพ์ help หรือเริ่มด้วย git --version\n")
+		_terminal_panel.append_info("พร้อมใช้งาน — พิมพ์ help หรือเริ่มด้วย git --version\n")
 
 	await _refresh_state()
 
