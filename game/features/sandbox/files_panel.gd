@@ -408,6 +408,11 @@ func notify_entry_renamed(source_path: String, destination_path: String) -> void
 		_editor_path_label.text = _open_file_path
 	if _selected_path == source_path or _selected_path.begins_with(source_path + "/"):
 		_selected_path = destination_path + _selected_path.substr(source_path.length())
+	# ย้ายสถานะพับของโฟลเดอร์ (และโฟลเดอร์ลูก) ตามไปที่ path ใหม่
+	for key: String in _collapsed.keys():
+		if key == source_path or key.begins_with(source_path + "/"):
+			_collapsed.erase(key)
+			_collapsed[destination_path + key.substr(source_path.length())] = true
 	# กางโฟลเดอร์ปลายทาง (และโฟลเดอร์แม่ทั้งหมด) ให้เห็นรายการที่เพิ่งย้าย/เปลี่ยนชื่อ
 	var folder := destination_path.get_base_dir()
 	while not folder.is_empty():
@@ -418,6 +423,9 @@ func notify_entry_renamed(source_path: String, destination_path: String) -> void
 func notify_entry_deleted(path: String) -> void:
 	if _open_file_path == path or _open_file_path.begins_with(path + "/"):
 		_show_empty_editor()
+	for key: String in _collapsed.keys():
+		if key == path or key.begins_with(path + "/"):
+			_collapsed.erase(key)
 
 
 func show_feedback(message: String, is_error: bool = false) -> void:
