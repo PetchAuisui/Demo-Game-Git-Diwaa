@@ -106,6 +106,8 @@ func _ready() -> void:
 	_setup_create_dialog(_create_folder_dialog, _create_folder_name_input)
 
 	_title_label.text = panel_title
+	for button in [_new_file_button, _new_folder_button]:
+		_fit_create_button_to_content(button)
 	# จองที่ 2 บรรทัดให้ข้อความสถานะเสมอ: ข้อความยาว (เช่น error) ขึ้นบรรทัดใหม่ได้โดยไม่ดันรายการลง
 	_feedback_label.custom_minimum_size.y = _feedback_label.get_line_height() * 2 \
 			+ _feedback_label.get_theme_constant("line_spacing")
@@ -427,8 +429,8 @@ func show_feedback(message: String, is_error: bool = false) -> void:
 
 func set_busy(busy: bool) -> void:
 	_is_busy = busy
-	_new_file_button.disabled = busy
-	_new_folder_button.disabled = busy
+	for button in [_new_file_button, _new_folder_button]:
+		_set_create_button_disabled(button, busy)
 	_open_button.disabled = busy or _selected_path.is_empty() or _selected_is_directory
 	_rename_button.disabled = busy or _selected_path.is_empty()
 	_delete_button.disabled = busy or _selected_path.is_empty()
@@ -648,6 +650,19 @@ func _on_files_list_gui_input(event: InputEvent) -> void:
 	else:
 		_mouse_held_on_list = false
 		_flush_pending_toggle()
+
+
+## ปุ่มสร้างวางไอคอน+ข้อความเป็นโหนดลูก (เพื่อจัดกึ่งกลาง) ซึ่ง Button ไม่นับรวมในขนาดขั้นต่ำ
+## และไม่จางตามตอนถูกปิดใช้ — สองฟังก์ชันนี้ชดเชยให้
+static func _fit_create_button_to_content(button: Button) -> void:
+	var content: Control = button.get_node("Center")
+	var frame := button.get_theme_stylebox("normal").get_minimum_size()
+	button.custom_minimum_size.x = maxf(button.custom_minimum_size.x, content.get_combined_minimum_size().x + frame.x)
+
+
+static func _set_create_button_disabled(button: Button, disabled: bool) -> void:
+	button.disabled = disabled
+	(button.get_node("Center") as Control).modulate.a = 0.45 if disabled else 1.0
 
 
 func _toggle_folder(path: String) -> void:
