@@ -23,7 +23,6 @@ func _init() -> void:
 	mouse_default_cursor_shape = Control.CURSOR_ARROW
 	mouse_exited.connect(func() -> void:
 		_hovered = -1
-		mouse_default_cursor_shape = Control.CURSOR_ARROW
 		tooltip_text = ""
 		queue_redraw())
 
@@ -39,7 +38,6 @@ func set_layout(layout: CommitGraphLayout) -> void:
 			_selected = index
 			break
 	_hovered = -1
-	mouse_default_cursor_shape = Control.CURSOR_ARROW
 	tooltip_text = ""
 	custom_minimum_size = Vector2(0, layout.rows.size() * ROW_HEIGHT + 8)
 	queue_redraw()
@@ -93,12 +91,18 @@ func _draw() -> void:
 				size.x - _text_x - 12, 14, color if refs.length() > 0 else Color("94a3bb"))
 
 
+func _get_cursor_shape(at_position: Vector2) -> CursorShape:
+	var row_index := floori(at_position.y / ROW_HEIGHT)
+	if _layout != null and row_index >= 0 and row_index < _layout.rows.size():
+		return Control.CURSOR_POINTING_HAND
+	return Control.CURSOR_ARROW
+
+
 func _gui_input(input: InputEvent) -> void:
 	if input is InputEventMouseMotion:
 		var row_index := floori(input.position.y / ROW_HEIGHT)
 		var has_row := row_index >= 0 and row_index < _layout.rows.size()
 		_hovered = row_index if has_row else -1
-		mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND if has_row else Control.CURSOR_ARROW
 		tooltip_text = "%s\nดับเบิลคลิก หรือ Ctrl/Cmd+C เพื่อคัดลอก ID" % _layout.rows[_hovered].commit.id \
 				if has_row else ""
 		queue_redraw()
