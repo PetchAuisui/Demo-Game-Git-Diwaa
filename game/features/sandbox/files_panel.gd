@@ -106,6 +106,9 @@ func _ready() -> void:
 	_setup_create_dialog(_create_folder_dialog, _create_folder_name_input)
 
 	_title_label.text = panel_title
+	# จองที่ 2 บรรทัดให้ข้อความสถานะเสมอ: ข้อความยาว (เช่น error) ขึ้นบรรทัดใหม่ได้โดยไม่ดันรายการลง
+	_feedback_label.custom_minimum_size.y = _feedback_label.get_line_height() * 2 \
+			+ _feedback_label.get_theme_constant("line_spacing")
 
 	_files_list.item_selected.connect(_on_item_selected)
 	_files_list.item_activated.connect(_on_item_activated)
@@ -417,7 +420,8 @@ func notify_entry_deleted(path: String) -> void:
 
 func show_feedback(message: String, is_error: bool = false) -> void:
 	_feedback_label.text = message
-	_feedback_label.modulate = Color(1.0, 0.48, 0.52) if is_error else Color(0.45, 0.95, 0.66)
+	# ตั้งสีตัวอักษรตรง ๆ (modulate จะคูณกับสีเขียวเดิมจน error กลายเป็นสีเทาอมเขียว)
+	_feedback_label.add_theme_color_override("font_color", Color(1.0, 0.48, 0.52) if is_error else Color(0.45, 0.95, 0.66))
 	_feedback_label.tooltip_text = message
 
 

@@ -162,7 +162,9 @@ theme_override_colors/font_color = Color(0.45, 0.95, 0.66, 1)
 theme_override_fonts/font = SubResource("FontVariation_reg")
 theme_override_font_sizes/font_size = 16
 text = "พร้อมใช้งาน"
+autowrap_mode = 3
 text_overrun_behavior = 3
+max_lines_visible = 2
 
 [node name="WorkspaceActions" type="VBoxContainer" parent="Margin/Layout"]
 unique_name_in_owner = true
