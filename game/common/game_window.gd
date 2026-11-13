@@ -115,10 +115,14 @@ func _ready() -> void:
 
 	# หากเปิดมาเป็น Windowed แล้วจอเล็กกว่า 1080p ให้ปรับขนาดให้พอดีกับจออัตโนมัติ
 	if window.mode == Window.MODE_WINDOWED:
-		_fit_windowed_to_screen(window)
+		_fit_windowed_to_screen(window, screen)
 
 
 func _exit_tree() -> void:
+	if OS.get_name() == "Windows":
+		var window := get_window()
+		if is_instance_valid(window):
+			DisplayServer.window_set_max_size(Vector2i.ZERO, window.get_window_id())
 	Input.set_custom_mouse_cursor(null, Input.CURSOR_ARROW)
 	Input.set_custom_mouse_cursor(null, Input.CURSOR_POINTING_HAND)
 	Input.set_custom_mouse_cursor(null, Input.CURSOR_DRAG)
@@ -461,8 +465,12 @@ func _input(event: InputEvent) -> void:
 	if not (is_f11 or is_alt_enter):
 		return
 
-	toggle_fullscreen()
+	# กิน input ทันทีเพื่อกัน double trigger หรือส่งคีย์ Enter หลุดไปกระตุ้น UI อื่น
 	get_viewport().set_input_as_handled()
+	if _is_toggling_fullscreen:
+		return
+
+	toggle_fullscreen()
 
 
 func toggle_fullscreen() -> void:
@@ -477,16 +485,18 @@ func toggle_fullscreen() -> void:
 
 func _switch_to_windowed(window: Window) -> void:
 	_is_toggling_fullscreen = true
-	var target_size := _calculate_windowed_size(window)
+	var is_windows := (OS.get_name() == "Windows")
+	var screen := DisplayServer.screen_get_usable_rect(window.current_screen)
+	var target_size := _calculate_windowed_size(window, screen)
 
 	# บน Windows (Godot 4.7.2) หากสลับจาก Fullscreen สู่ Windowed ขณะที่ขนาดหน้าต่างเดิมเท่ากับขนาดจอ
-	# ตัว OS/DisplayServer จะเด้งกลับเป็น EXCLUSIVE_FULLSCREEN (mode=4)
-	# การกำหนด max_size ชั่วคราวจะป้องกันไม่ให้ Godot เด้งกลับไปโหมดเต็มจอ
-	if OS.get_name() == "Windows":
+	# ตัว OS/DisplayServer อาจเด้งกลับเป็น EXCLUSIVE_FULLSCREEN (mode=4)
+	# การกำหนด max_size ชั่วคราวจะป้องกันไม่ให้เด้งกลับไปโหมดเต็มจอ
+	if is_windows:
 		DisplayServer.window_set_max_size(target_size, window.get_window_id())
 	window.mode = Window.MODE_WINDOWED
 
-	# รอจนกว่าหน้าต่างจะออกจากโหมดเต็มจอ (บน macOS เป็น animation แบบ async ประมาณ 0.3-0.5 วิ)
+	# รอจนกว่าหน้าต่างจะออกจากโหมดเต็มจอจริง (บน macOS เป็น animation แบบ async ประมาณ 0.3-0.5 วิ)
 	var max_wait_time := 1.0
 	var elapsed := 0.0
 	while is_inside_tree() and is_instance_valid(window):
@@ -497,13 +507,15 @@ func _switch_to_windowed(window: Window) -> void:
 		if elapsed >= max_wait_time:
 			break
 
+	# คืนค่า max_size บน Windows เสมอไม่ว่าจะสำเร็จ หลุด tree หรือ timeout
+	if is_windows and is_instance_valid(window):
+		DisplayServer.window_set_max_size(Vector2i.ZERO, window.get_window_id())
+
 	if not is_inside_tree() or not is_instance_valid(window):
 		_is_toggling_fullscreen = false
 		return
 
 	if window.mode == Window.MODE_FULLSCREEN or window.mode == Window.MODE_EXCLUSIVE_FULLSCREEN:
-		if OS.get_name() == "Windows":
-			DisplayServer.window_set_max_size(Vector2i(0, 0), window.get_window_id())
 		_is_toggling_fullscreen = false
 		return
 
@@ -511,35 +523,30 @@ func _switch_to_windowed(window: Window) -> void:
 	if window.mode == Window.MODE_MAXIMIZED:
 		window.mode = Window.MODE_WINDOWED
 
-	if OS.get_name() == "Windows":
-		DisplayServer.window_set_max_size(Vector2i(0, 0), window.get_window_id())
-
-	await get_tree().process_frame
-	if is_inside_tree() and is_instance_valid(window):
-		_fit_windowed_to_screen(window)
+	# ปรับขนาดและวางกึ่งกลางหน้าจอ
+	_fit_windowed_to_screen(window, screen, target_size)
 	_is_toggling_fullscreen = false
 
 
-func _calculate_windowed_size(window: Window) -> Vector2i:
-	var screen := DisplayServer.screen_get_usable_rect(window.current_screen)
+func _calculate_windowed_size(window: Window, screen: Rect2i) -> Vector2i:
 	if screen.size.x <= 0 or screen.size.y <= 0:
-		return Vector2i(MIN_WIDTH, MIN_HEIGHT)
+		return window.min_size
 	var max_w := mini(BASE_WIDTH, int(screen.size.x * 0.85))
 	var max_h := mini(BASE_HEIGHT, int(screen.size.y * 0.85))
 	var window_scale := minf(float(max_w) / float(BASE_WIDTH), float(max_h) / float(BASE_HEIGHT))
-	var target_w := mini(screen.size.x, int(BASE_WIDTH * window_scale))
-	var target_h := mini(screen.size.y, int(BASE_HEIGHT * window_scale))
+	# Clamp ไม่ให้เล็กกว่า window.min_size ป้องกัน max_size < min_size บนจอขนาดเล็ก (เช่น 1024x768)
+	var target_w := clampi(int(BASE_WIDTH * window_scale), window.min_size.x, screen.size.x)
+	var target_h := clampi(int(BASE_HEIGHT * window_scale), window.min_size.y, screen.size.y)
 	return Vector2i(target_w, target_h)
 
 
-func _fit_windowed_to_screen(window: Window) -> void:
-	var screen := DisplayServer.screen_get_usable_rect(window.current_screen)
+func _fit_windowed_to_screen(window: Window, screen: Rect2i = Rect2i(), target_size: Vector2i = Vector2i()) -> void:
 	if screen.size.x <= 0 or screen.size.y <= 0:
-		return
-	var target_size := _calculate_windowed_size(window)
+		screen = DisplayServer.screen_get_usable_rect(window.current_screen)
+		if screen.size.x <= 0 or screen.size.y <= 0:
+			return
+	if target_size == Vector2i.ZERO:
+		target_size = _calculate_windowed_size(window, screen)
 	window.size = target_size
-	window.position = screen.position + Vector2i(
-		maxi(0, (screen.size.x - target_size.x) / 2),
-		maxi(0, (screen.size.y - target_size.y) / 2)
-	)
+	window.position = screen.position + (screen.size - target_size) / 2
 
