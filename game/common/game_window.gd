@@ -89,6 +89,11 @@ var _dragging_scrollbar: ScrollBar = null
 
 var _applied_arrow_key := ""
 var _applied_hand_key := ""
+var _is_toggling_fullscreen := false
+
+
+func _can_manage_window() -> bool:
+	return DisplayServer.get_name() != "headless" and not Engine.is_embedded_in_editor()
 
 
 func _ready() -> void:
@@ -99,9 +104,13 @@ func _ready() -> void:
 	_setup_tree_hooks()
 
 	var window := get_window()
-	window.min_size = Vector2i(MIN_WIDTH, MIN_HEIGHT)
+	var screen := DisplayServer.screen_get_usable_rect(window.current_screen)
+	if screen.size.x > 0 and screen.size.y > 0:
+		window.min_size = Vector2i(mini(MIN_WIDTH, screen.size.x), mini(MIN_HEIGHT, screen.size.y))
+	else:
+		window.min_size = Vector2i(MIN_WIDTH, MIN_HEIGHT)
 
-	if DisplayServer.get_name() == "headless" or Engine.is_embedded_in_editor():
+	if not _can_manage_window():
 		return
 
 	# หากเปิดมาเป็น Windowed แล้วจอเล็กกว่า 1080p ให้ปรับขนาดให้พอดีกับจออัตโนมัติ
@@ -441,6 +450,9 @@ func _on_raw_input(event: InputEvent) -> void:
 
 
 func _input(event: InputEvent) -> void:
+	if not _can_manage_window():
+		return
+
 	if not (event is InputEventKey and event.pressed and not event.echo):
 		return
 
@@ -454,34 +466,80 @@ func _input(event: InputEvent) -> void:
 
 
 func toggle_fullscreen() -> void:
-	if DisplayServer.get_name() == "headless" or Engine.is_embedded_in_editor():
+	if not _can_manage_window() or _is_toggling_fullscreen:
 		return
 	var window := get_window()
 	if window.mode == Window.MODE_FULLSCREEN or window.mode == Window.MODE_EXCLUSIVE_FULLSCREEN:
-		# บน Windows (Godot 4.7.2) การสั่ง MODE_WINDOWED จาก Fullscreen โดยตรงอาจเด้งเป็น mode=4 (Exclusive Fullscreen)
-		window.mode = Window.MODE_MAXIMIZED if OS.get_name() == "Windows" else Window.MODE_WINDOWED
-		_fit_windowed_after_mode_change(window)
+		_switch_to_windowed(window)
 	else:
 		window.mode = Window.MODE_FULLSCREEN
 
 
-func _fit_windowed_after_mode_change(window: Window) -> void:
-	await get_tree().process_frame
-	await get_tree().process_frame
+func _switch_to_windowed(window: Window) -> void:
+	_is_toggling_fullscreen = true
+	var target_size := _calculate_windowed_size(window)
+
+	# บน Windows (Godot 4.7.2) หากสลับจาก Fullscreen สู่ Windowed ขณะที่ขนาดหน้าต่างเดิมเท่ากับขนาดจอ
+	# ตัว OS/DisplayServer จะเด้งกลับเป็น EXCLUSIVE_FULLSCREEN (mode=4)
+	# การกำหนด max_size ชั่วคราวจะป้องกันไม่ให้ Godot เด้งกลับไปโหมดเต็มจอ
+	if OS.get_name() == "Windows":
+		DisplayServer.window_set_max_size(target_size, window.get_window_id())
+	window.mode = Window.MODE_WINDOWED
+
+	# รอจนกว่าหน้าต่างจะออกจากโหมดเต็มจอ (บน macOS เป็น animation แบบ async ประมาณ 0.3-0.5 วิ)
+	var max_wait_time := 1.0
+	var elapsed := 0.0
+	while is_inside_tree() and is_instance_valid(window):
+		if window.mode != Window.MODE_FULLSCREEN and window.mode != Window.MODE_EXCLUSIVE_FULLSCREEN:
+			break
+		await get_tree().process_frame
+		elapsed += get_process_delta_time()
+		if elapsed >= max_wait_time:
+			break
+
 	if not is_inside_tree() or not is_instance_valid(window):
+		_is_toggling_fullscreen = false
 		return
+
 	if window.mode == Window.MODE_FULLSCREEN or window.mode == Window.MODE_EXCLUSIVE_FULLSCREEN:
+		if OS.get_name() == "Windows":
+			DisplayServer.window_set_max_size(Vector2i(0, 0), window.get_window_id())
+		_is_toggling_fullscreen = false
 		return
-	_fit_windowed_to_screen(window)
+
+	# หากหน้าต่างยังค้างสถานะ Maximized ให้เปลี่ยนเป็น Windowed ให้เรียบร้อย
+	if window.mode == Window.MODE_MAXIMIZED:
+		window.mode = Window.MODE_WINDOWED
+
+	if OS.get_name() == "Windows":
+		DisplayServer.window_set_max_size(Vector2i(0, 0), window.get_window_id())
+
+	await get_tree().process_frame
+	if is_inside_tree() and is_instance_valid(window):
+		_fit_windowed_to_screen(window)
+	_is_toggling_fullscreen = false
+
+
+func _calculate_windowed_size(window: Window) -> Vector2i:
+	var screen := DisplayServer.screen_get_usable_rect(window.current_screen)
+	if screen.size.x <= 0 or screen.size.y <= 0:
+		return Vector2i(MIN_WIDTH, MIN_HEIGHT)
+	var max_w := mini(BASE_WIDTH, int(screen.size.x * 0.85))
+	var max_h := mini(BASE_HEIGHT, int(screen.size.y * 0.85))
+	var window_scale := minf(float(max_w) / float(BASE_WIDTH), float(max_h) / float(BASE_HEIGHT))
+	var target_w := mini(screen.size.x, int(BASE_WIDTH * window_scale))
+	var target_h := mini(screen.size.y, int(BASE_HEIGHT * window_scale))
+	return Vector2i(target_w, target_h)
 
 
 func _fit_windowed_to_screen(window: Window) -> void:
 	var screen := DisplayServer.screen_get_usable_rect(window.current_screen)
 	if screen.size.x <= 0 or screen.size.y <= 0:
 		return
-	var width := mini(BASE_WIDTH, int(screen.size.x * 0.85))
-	var height := mini(BASE_HEIGHT, int(screen.size.y * 0.85))
-	var window_scale := minf(float(width) / float(BASE_WIDTH), float(height) / float(BASE_HEIGHT))
-	window.size = Vector2i(maxi(MIN_WIDTH, int(BASE_WIDTH * window_scale)), maxi(MIN_HEIGHT, int(BASE_HEIGHT * window_scale)))
-	window.position = screen.position + (screen.size - window.size) / 2
+	var target_size := _calculate_windowed_size(window)
+	window.size = target_size
+	window.position = screen.position + Vector2i(
+		maxi(0, (screen.size.x - target_size.x) / 2),
+		maxi(0, (screen.size.y - target_size.y) / 2)
+	)
 
