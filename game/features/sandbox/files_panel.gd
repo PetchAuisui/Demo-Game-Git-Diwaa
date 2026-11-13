@@ -403,6 +403,11 @@ func notify_entry_renamed(source_path: String, destination_path: String) -> void
 		_editor_path_label.text = _open_file_path
 	if _selected_path == source_path or _selected_path.begins_with(source_path + "/"):
 		_selected_path = destination_path + _selected_path.substr(source_path.length())
+	# กางโฟลเดอร์ปลายทาง (และโฟลเดอร์แม่ทั้งหมด) ให้เห็นรายการที่เพิ่งย้าย/เปลี่ยนชื่อ
+	var folder := destination_path.get_base_dir()
+	while not folder.is_empty():
+		_collapsed.erase(folder)
+		folder = folder.get_base_dir()
 
 
 func notify_entry_deleted(path: String) -> void:
@@ -683,7 +688,6 @@ func _drop_on_list(at_position: Vector2, data: Variant) -> void:
 	var source: String = data.path
 	var folder: String = target.folder
 	var destination := source.get_file() if folder.is_empty() else "%s/%s" % [folder, source.get_file()]
-	_collapsed.erase(folder)
 	move_entry_requested.emit(source, destination)
 
 
