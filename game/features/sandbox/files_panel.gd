@@ -74,6 +74,11 @@ var _is_busy := false
 var _drop_highlight_index := -1
 ## path ของแถวที่กดเมาส์ล่าสุด — จำไว้ตอนกด เพราะการเลือกแถวทำให้รายการเลื่อนลง
 var _pressed_entry_path := ""
+## true ระหว่างกดเมาส์ค้างบนรายการ — โฟลเดอร์จะพับ/กางตอนปล่อยเมาส์ (ถ้าไม่ได้ลาก) แทนตอนกด
+var _mouse_held_on_list := false
+## โฟลเดอร์ที่รอพับ/กางเมื่อปล่อยเมาส์ ("" = ไม่มี)
+var _pending_toggle_path := ""
+var _drag_in_progress := false
 
 var _file_icon: Texture2D
 var _folder_icon: Texture2D
@@ -425,9 +430,11 @@ func _on_item_selected(index: int) -> void:
 	_selected_is_directory = entry.is_directory
 	if entry.is_directory:
 		# Click toggles expand/collapse, like a VS Code explorer folder.
-		if not _collapsed.erase(entry.path):
-			_collapsed[entry.path] = true
-		_render_entries()
+		# เมาส์: รอจนปล่อยเมาส์ เพื่อไม่ให้การกดเพื่อลากโฟลเดอร์ไปพับ/กางมันและทำให้แถวเลื่อน
+		if _mouse_held_on_list:
+			_pending_toggle_path = entry.path
+		else:
+			_toggle_folder(entry.path)
 	_update_action_buttons()
 	show_feedback(("เลือกโฟลเดอร์ %s" if entry.is_directory else "เลือกไฟล์ %s") % entry.path)
 
@@ -601,7 +608,12 @@ func _update_action_buttons() -> void:
 
 
 func _notification(what: int) -> void:
-	if what == NOTIFICATION_DRAG_END:
+	if what == NOTIFICATION_DRAG_BEGIN:
+		_drag_in_progress = true
+	elif what == NOTIFICATION_DRAG_END:
+		_drag_in_progress = false
+		_mouse_held_on_list = false
+		_pending_toggle_path = ""
 		_set_drop_highlight(-1)
 
 
@@ -609,9 +621,30 @@ func _notification(what: int) -> void:
 
 func _on_files_list_gui_input(event: InputEvent) -> void:
 	var mouse := event as InputEventMouseButton
-	if mouse != null and mouse.button_index == MOUSE_BUTTON_LEFT and mouse.pressed:
+	if mouse == null or mouse.button_index != MOUSE_BUTTON_LEFT:
+		return
+	if mouse.pressed:
 		var index := _files_list.get_item_at_position(mouse.position, true)
 		_pressed_entry_path = _entries[index].path if index >= 0 and index < _entries.size() else ""
+		_mouse_held_on_list = true
+		_pending_toggle_path = ""
+	else:
+		_mouse_held_on_list = false
+		_flush_pending_toggle()
+
+
+func _toggle_folder(path: String) -> void:
+	if not _collapsed.erase(path):
+		_collapsed[path] = true
+	_render_entries()
+
+
+## พับ/กางโฟลเดอร์ที่รอไว้ เว้นแต่การกดครั้งนั้นกลายเป็นการลาก
+func _flush_pending_toggle() -> void:
+	var path := _pending_toggle_path
+	_pending_toggle_path = ""
+	if not path.is_empty() and not _drag_in_progress:
+		_toggle_folder(path)
 
 
 func _get_list_drag_data(_at_position: Vector2) -> Variant:
