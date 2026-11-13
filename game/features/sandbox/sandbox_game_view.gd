@@ -432,32 +432,29 @@ func _on_create_folder_requested(folder_path: String) -> void:
 
 
 func _on_rename_entry_requested(source_path: String, destination_path: String) -> void:
-	_files_panel.set_busy(true)
-	var result := _sandbox_service.rename_entry(source_path, destination_path)
-	if result.ok:
-		_files_panel.notify_entry_renamed(source_path, destination_path)
-		_files_panel.show_feedback("เปลี่ยนชื่อเป็น %s แล้ว" % destination_path)
-		_terminal_panel.append_info("✓ เปลี่ยนชื่อ '%s' → '%s'" % [source_path, destination_path])
-		await _refresh_state()
-	else:
-		_files_panel.show_feedback("เปลี่ยนชื่อไม่สำเร็จ: " + result.message, true)
-		_terminal_panel.append_error("เปลี่ยนชื่อไม่สำเร็จ: " + result.message)
-	_files_panel.set_busy(false)
+	await _relocate_entry(source_path, destination_path, "เปลี่ยนชื่อ",
+			"เปลี่ยนชื่อเป็น %s แล้ว" % destination_path)
 
 
 func _on_move_entry_requested(source_path: String, destination_path: String) -> void:
-	_files_panel.set_busy(true)
-	var result := _sandbox_service.rename_entry(source_path, destination_path)
 	var folder := destination_path.get_base_dir()
 	var folder_label := "WORKSPACE" if folder.is_empty() else folder
+	await _relocate_entry(source_path, destination_path, "ย้าย",
+			"ย้าย %s ไปที่ %s แล้ว" % [source_path.get_file(), folder_label])
+
+
+## เปลี่ยนชื่อ/ย้ายไฟล์หรือโฟลเดอร์ (ใช้ rename_entry ของ service เหมือนกัน ต่างกันแค่ข้อความ)
+func _relocate_entry(source_path: String, destination_path: String, verb: String, success_feedback: String) -> void:
+	_files_panel.set_busy(true)
+	var result := _sandbox_service.rename_entry(source_path, destination_path)
 	if result.ok:
 		_files_panel.notify_entry_renamed(source_path, destination_path)
-		_files_panel.show_feedback("ย้าย %s ไปที่ %s แล้ว" % [source_path.get_file(), folder_label])
-		_terminal_panel.append_info("✓ ย้าย '%s' → '%s'" % [source_path, destination_path])
+		_files_panel.show_feedback(success_feedback)
+		_terminal_panel.append_info("✓ %s '%s' → '%s'" % [verb, source_path, destination_path])
 		await _refresh_state()
 	else:
-		_files_panel.show_feedback("ย้ายไม่สำเร็จ: " + result.message, true)
-		_terminal_panel.append_error("ย้ายไม่สำเร็จ: " + result.message)
+		_files_panel.show_feedback("%sไม่สำเร็จ: %s" % [verb, result.message], true)
+		_terminal_panel.append_error("%sไม่สำเร็จ: %s" % [verb, result.message])
 	_files_panel.set_busy(false)
 
 
