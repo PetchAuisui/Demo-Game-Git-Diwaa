@@ -456,10 +456,9 @@ func _on_item_selected(index: int) -> void:
 	if entry.is_directory:
 		# Click toggles expand/collapse, like a VS Code explorer folder.
 		# เมาส์: รอจนปล่อยเมาส์ เพื่อไม่ให้การกดเพื่อลากโฟลเดอร์ไปพับ/กางมันและทำให้แถวเลื่อน
+		# คีย์บอร์ด: ลูกศรแค่เลื่อนการเลือก ไม่พับ/กาง (กด Enter เพื่อพับ/กาง — ดู _on_item_activated)
 		if _mouse_held_on_list:
 			_pending_toggle_path = entry.path
-		else:
-			_toggle_folder(entry.path)
 	_update_action_buttons()
 	show_feedback(("เลือกโฟลเดอร์ %s" if entry.is_directory else "เลือกไฟล์ %s") % entry.path)
 
@@ -476,7 +475,12 @@ func _on_empty_clicked(_at_position: Vector2, mouse_button_index: int) -> void:
 
 
 func _on_item_activated(index: int) -> void:
-	if index < 0 or index >= _entries.size() or _entries[index].is_directory:
+	if index < 0 or index >= _entries.size():
+		return
+	if _entries[index].is_directory:
+		# Enter บนโฟลเดอร์ = พับ/กาง (ดับเบิลคลิกเมาส์พับ/กางไปแล้วตอนปล่อยเมาส์ จึงข้าม)
+		if not _mouse_held_on_list:
+			_toggle_folder(_entries[index].path)
 		return
 	_request_open_file(_entries[index].path)
 
