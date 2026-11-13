@@ -6,6 +6,23 @@ public sealed class InMemorySessionRepository : ISessionRepository
     private readonly Dictionary<string, SessionRecord> _sessionsByTokenHash = new(StringComparer.Ordinal);
     private readonly Dictionary<Guid, SessionRecord> _sessionsById = [];
 
+    // ล้าง session ที่หมดอายุแล้วออกจากหน่วยความจำ ไม่อย่างนั้น server ที่เปิดค้างนานๆ ใช้ memory เพิ่มเรื่อยๆ
+    // (ทุกการ login / refresh เพิ่ม session ใหม่ 1 ใบ) ล้างเป็นรอบเมื่อจำนวนถึงเกณฑ์ ไม่ไล่ทั้งหมดทุกครั้งที่เพิ่ม
+    // เกณฑ์รอบถัดไป = 2 เท่าของที่เหลือหลังล้าง (ไม่ต่ำกว่าค่าเริ่มต้น) เฉลี่ยแล้วต่อการเพิ่ม 1 ครั้งยังเร็วเท่าเดิม
+    private const int DefaultPruneThreshold = 10_000;
+    // ล้างเฉพาะใบที่หมดอายุมาแล้วเกินช่วงนี้ เผื่อไว้มากกว่าช่วงผ่อนผันของการ refresh (60 วินาที) และนาฬิกาคลาดเล็กน้อย
+    private static readonly TimeSpan PruneAfterExpiry = TimeSpan.FromHours(1);
+    private readonly int _minPruneThreshold;
+    private int _nextPruneAt;
+
+    /// <param name="pruneThreshold">จำนวน session ที่จะเริ่มล้างใบหมดอายุ (เทสตั้งให้น้อยได้)</param>
+    public InMemorySessionRepository(int pruneThreshold = DefaultPruneThreshold)
+    {
+        ArgumentOutOfRangeException.ThrowIfLessThan(pruneThreshold, 1);
+        _minPruneThreshold = pruneThreshold;
+        _nextPruneAt = pruneThreshold;
+    }
+
     public Task AddAsync(SessionRecord session, CancellationToken ct = default)
     {
         ArgumentNullException.ThrowIfNull(session);
@@ -24,7 +41,32 @@ public sealed class InMemorySessionRepository : ISessionRepository
 
             _sessionsById[session.Id] = session;
             _sessionsByTokenHash[session.TokenHash] = session;
+
+            if (_sessionsById.Count >= _nextPruneAt)
+            {
+                // เวลาอ้างอิง = เวลาที่ session ใหม่ถูกสร้าง (มาจาก TimeProvider ของ AccountService ไม่ใช่นาฬิกาเครื่อง)
+                PruneExpired(session.CreatedAt);
+                _nextPruneAt = Math.Max(_minPruneThreshold, _sessionsById.Count * 2);
+            }
+
             return Task.CompletedTask;
+        }
+    }
+
+    // เรียกภายใต้ _lock เท่านั้น
+    // ลบเฉพาะใบที่ "หมดอายุ" แล้ว ไม่ลบใบที่ถูกหมุน / ถูกยกเลิกแต่ยังไม่หมดอายุ:
+    // ใบพวกนั้นต้องเก็บไว้ ถ้ามีคนเอาใบเก่าที่ถูกหมุนแล้วมาใช้ซ้ำ server ต้องหาเจอเพื่อตัดสาย token ของเครื่องนั้น
+    // ใบที่หมดอายุแล้วใช้ทำอะไรไม่ได้อีก (refresh / ใช้เรียก endpoint ไม่ผ่าน) ลบได้ปลอดภัย
+    private void PruneExpired(DateTimeOffset now)
+    {
+        DateTimeOffset cutoff = now - PruneAfterExpiry;
+        foreach (var (id, session) in _sessionsById.ToList())
+        {
+            if (session.ExpiresAt < cutoff)
+            {
+                _sessionsById.Remove(id);
+                _sessionsByTokenHash.Remove(session.TokenHash);
+            }
         }
     }
 

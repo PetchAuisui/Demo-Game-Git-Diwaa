@@ -343,6 +343,33 @@ internal static class RepositoryTests
             Assert.False(nonExistentRevoke);
         });
 
+        await runner.RunAsync("SessionRepo_Add_PrunesOnlyExpiredSessions", async static () =>
+        {
+            var repo = new InMemorySessionRepository(pruneThreshold: 4);
+            var now = new DateTimeOffset(2026, 11, 13, 0, 0, 0, TimeSpan.Zero);
+
+            // หมดอายุไปนานแล้ว 2 ใบ (ใบหนึ่งถูกยกเลิกแล้วด้วย)
+            var expired1 = new SessionRecord(Guid.NewGuid(), Guid.NewGuid(), "hash-expired-1", false, now.AddDays(-2), now.AddDays(-1), now.AddDays(-2), null);
+            var expired2 = new SessionRecord(Guid.NewGuid(), Guid.NewGuid(), "hash-expired-2", false, now.AddDays(-2), now.AddDays(-1), now.AddDays(-2), now.AddDays(-1));
+            // ถูกหมุนแล้วแต่ยังไม่หมดอายุ: ต้องเก็บไว้ตรวจการใช้ token เก่าซ้ำ
+            var rotated = new SessionRecord(Guid.NewGuid(), Guid.NewGuid(), "hash-rotated", true, now.AddHours(-1), now.AddDays(29), now.AddHours(-1), now.AddMinutes(-5),
+                RotatedAt: now.AddMinutes(-5), ReplacedBySessionId: Guid.NewGuid(), FamilyId: Guid.NewGuid());
+            await repo.AddAsync(expired1);
+            await repo.AddAsync(expired2);
+            await repo.AddAsync(rotated);
+            Assert.Equal(expired1, await repo.FindByIdAsync(expired1.Id));
+
+            // ใบที่ 4 ถึงเกณฑ์: ล้างโดยเทียบกับเวลาที่ใบใหม่ถูกสร้าง
+            var fresh = new SessionRecord(Guid.NewGuid(), Guid.NewGuid(), "hash-fresh", false, now, now.AddHours(12), now, null);
+            await repo.AddAsync(fresh);
+
+            Assert.Equal(null, await repo.FindByIdAsync(expired1.Id));
+            Assert.Equal(null, await repo.FindByTokenHashAsync("hash-expired-1"));
+            Assert.Equal(null, await repo.FindByIdAsync(expired2.Id));
+            Assert.Equal(rotated, await repo.FindByTokenHashAsync("hash-rotated"));
+            Assert.Equal(fresh, await repo.FindByTokenHashAsync("hash-fresh"));
+        });
+
         await runner.RunAsync("SessionRepo_Touch_DoesNotClearRevocation", async static () =>
         {
             var repo = new InMemorySessionRepository();
