@@ -575,7 +575,7 @@ func _submit_login(identifier: String, password: String, remember_me: bool) -> v
 		AuthApiResult.INVALID_CREDENTIALS:
 			# ข้อความเดียวกันทุกกรณี (รหัสผิด / ไม่มีบัญชีนี้ / ถูกพักชั่วคราว) ตามที่ server ตั้งใจ
 			# เพื่อไม่ให้ใครใช้หน้านี้เดาว่าบัญชีไหนมีอยู่จริง
-			_show_status(_login_status, "อีเมล/ชื่อผู้ใช้ หรือรหัสผ่านไม่ถูกต้อง\nหากใส่ผิดหลายครั้ง ระบบจะพักการเข้าสู่ระบบชั่วคราว", false)
+			_show_status(_login_status, "อีเมล/ชื่อผู้ใช้ หรือรหัสผ่านไม่ถูกต้อง\nกรอกผิดเกินกำหนด ระบบจะพักการเข้าสู่ระบบ 15 นาที", false)
 			_login_password_input.grab_focus()
 		AuthApiResult.VALIDATION_FAILED:
 			var shown := _apply_field_errors(result.field_errors, {
