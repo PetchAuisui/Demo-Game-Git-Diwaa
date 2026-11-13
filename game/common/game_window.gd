@@ -399,12 +399,11 @@ func _is_hovering_scrollbar(hovered: Control) -> bool:
 
 
 func _is_hovering_clickable(hovered: Control) -> bool:
-	if hovered == null or not is_instance_valid(hovered):
+	if hovered == null or not is_instance_valid(hovered) or not hovered.is_inside_tree():
 		return false
 	if _is_hovering_disabled_button(hovered):
 		return false
-	var local_pos := hovered.get_local_mouse_position() if hovered.get_viewport() != null else Vector2.ZERO
-	return hovered.get_cursor_shape(local_pos) == Control.CURSOR_POINTING_HAND
+	return DisplayServer.cursor_get_shape() == DisplayServer.CURSOR_POINTING_HAND
 
 
 func _trigger_scroll_anim() -> void:
