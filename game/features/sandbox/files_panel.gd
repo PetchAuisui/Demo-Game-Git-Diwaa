@@ -14,7 +14,7 @@ const INDENT_PIXELS := 22
 const CHEVRON_SLOT_PIXELS := 22
 
 @export var panel_title: String = "FILES — พื้นที่ทำงาน"
-@export var empty_message: String = "ยังไม่มีไฟล์ — เริ่มสร้างด้านบน"
+@export var empty_message: String = "ยังไม่มีไฟล์"
 
 var _title_label: Label
 var _feedback_label: Label
@@ -23,6 +23,9 @@ var _entry_actions: Control
 var _navigator_surface: Control
 var _editor_surface: Control
 var _files_list: ItemList
+var _empty_state: Control
+var _empty_title: Label
+var _entry_count_label: Label
 var _new_file_button: Button
 var _new_folder_button: Button
 var _open_button: Button
@@ -118,6 +121,10 @@ func _bind_nodes() -> void:
 	_navigator_surface = get_node("%NavigatorSurface")
 	_editor_surface = get_node("%EditorSurface")
 	_files_list = get_node("%FilesList")
+	_empty_state = get_node("%EmptyState")
+	_empty_title = get_node("%EmptyTitle")
+	_entry_count_label = get_node("%EntryCountLabel")
+	_empty_title.text = empty_message
 	_new_file_button = get_node("%NewFileButton")
 	_new_folder_button = get_node("%NewFolderButton")
 	_open_button = get_node("%OpenButton")
@@ -160,10 +167,10 @@ func _render_entries() -> void:
 		if not _is_hidden_by_collapsed_ancestor(entry.path):
 			_entries.append(entry)
 	_files_list.clear()
+	_empty_state.visible = _entries.is_empty()
+	_entry_count_label.text = "%d รายการ" % _all_entries.size()
 
 	if _entries.is_empty():
-		_files_list.add_item(empty_message)
-		_files_list.set_item_disabled(0, true)
 		_selected_path = ""
 		_selected_is_directory = false
 		_update_action_buttons()
