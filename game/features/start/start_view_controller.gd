@@ -3,13 +3,17 @@ extends Control
 
 ## Controller for the Start Screen View.
 ## Orchestrates start screen navigation, audio effects, live terminal simulation,
-## real-time system clock, and transition to Sandbox gameplay.
+## real-time system clock, and transitions to level select or the free-play Git sandbox.
 
 const PREVIEW_FPS := 6.67
 const THAI_LOG_FONT_SIZE := 22
+const LEVEL_SELECT_PATH := "res://features/level_select/level_select_view.tscn"
+const SANDBOX_PATH := "res://features/sandbox/sandbox_game_view.tscn"
+const START_VIEW_PATH := "res://features/start/start_view.tscn"
 
 var _start_career_btn: Button
 var _resume_work_btn: Button
+var _sandbox_btn: Button
 var _dressing_room_btn: Button
 var _tutorial_btn: Button
 var _clock_label: Label
@@ -35,16 +39,18 @@ func _ready() -> void:
 	_thai_log_font = SandboxThemeTokens.create_terminal_thai_font()
 	_bind_nodes()
 	_wire_events()
+	_setup_inline_icons()
 	_update_clock()
 	_load_preview_animation()
 	_start_career_btn.grab_focus()
 
-	SceneLoader.request_preload("res://features/sandbox/sandbox_game_view.tscn")
+	SceneLoader.request_preload(SANDBOX_PATH)
 
 
 func _bind_nodes() -> void:
 	_start_career_btn = get_node("%StartCareerBtn")
 	_resume_work_btn = get_node("%ResumeWorkBtn")
+	_sandbox_btn = get_node("%SandboxBtn")
 	_dressing_room_btn = get_node("%DressingRoomBtn")
 	_tutorial_btn = get_node("%TutorialBtn")
 	_clock_label = get_node("%ClockLabel")
@@ -57,14 +63,45 @@ func _bind_nodes() -> void:
 	_scene_preview_rect = get_node("%ScenePreviewRect")
 
 
+## วางไอคอน SVG ของปุ่มเมนูให้ติดกับข้อความตรงกลางปุ่ม (ตำแหน่งเดียวกับ emoji เดิม) แทนการชิดขอบปุ่ม
+func _setup_inline_icons() -> void:
+	for button: Button in [_resume_work_btn, _sandbox_btn, _dressing_room_btn, _tutorial_btn]:
+		button.resized.connect(_center_icon_with_text.bind(button))
+		_center_icon_with_text.call_deferred(button)
+
+
+## ตั้งระยะขอบซ้าย-ขวาเท่ากันให้พื้นที่เนื้อหาพอดีกับ ข้อความ + ช่องว่าง + ไอคอน จึงอยู่ติดกันกลางปุ่ม
+func _center_icon_with_text(button: Button) -> void:
+	if button.icon == null or button.size.x <= 0.0:
+		return
+	var font := button.get_theme_font("font")
+	var font_size := button.get_theme_font_size("font_size")
+	var text_width := font.get_string_size(button.text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x
+	var icon_width := float(button.get_theme_constant("icon_max_width"))
+	if icon_width <= 0.0:
+		icon_width = float(button.icon.get_width())
+	var group_width := ceilf(text_width) + float(button.get_theme_constant("h_separation")) + icon_width
+	var side_margin := floorf(maxf((button.size.x - group_width) * 0.5, 0.0))
+	for state in ["normal", "hover", "pressed", "disabled"]:
+		var style := button.get_theme_stylebox(state)
+		if style == null or (is_equal_approx(style.content_margin_left, side_margin) and is_equal_approx(style.content_margin_right, side_margin)):
+			continue
+		style = style.duplicate() as StyleBox
+		style.content_margin_left = side_margin
+		style.content_margin_right = side_margin
+		button.add_theme_stylebox_override(state, style)
+
+
 func _wire_events() -> void:
 	_start_career_btn.pressed.connect(_on_start_career_pressed)
 	_resume_work_btn.pressed.connect(_on_resume_work_pressed)
+	_sandbox_btn.pressed.connect(_on_sandbox_pressed)
 	_dressing_room_btn.pressed.connect(_on_dressing_room_pressed)
 	_tutorial_btn.pressed.connect(_on_tutorial_pressed)
 
 	_start_career_btn.focus_entered.connect(_on_button_focus_entered)
 	_resume_work_btn.focus_entered.connect(_on_button_focus_entered)
+	_sandbox_btn.focus_entered.connect(_on_button_focus_entered)
 	_dressing_room_btn.focus_entered.connect(_on_button_focus_entered)
 	_tutorial_btn.focus_entered.connect(_on_button_focus_entered)
 
@@ -126,7 +163,7 @@ func _on_start_career_pressed() -> void:
 		get_tree().create_timer(0.35).timeout.connect(func() -> void:
 			if not is_inside_tree():
 				return
-			_transition_to_scene("res://features/level_select/level_select_view.tscn"))
+			_transition_to_scene(LEVEL_SELECT_PATH))
 	else:
 		_append_terminal_text("> Initializing Magic Tower apprentice session...")
 		get_tree().create_timer(0.35).timeout.connect(func() -> void:
@@ -138,27 +175,34 @@ func _on_start_career_pressed() -> void:
 				GameProgressManager.set_selected_level_number(prev_selected))
 
 
+## เล่นต่อจากที่ค้างไว้: ไปหน้าเลือกด่าน
 func _on_resume_work_pressed() -> void:
 	if _is_leaving:
 		return
 	_is_leaving = true
 	_play_sfx(_sfx_click)
-	_append_terminal_text("> Resuming active repository session...")
+	_append_terminal_text("> Opening Tower Ascension Roadmap...")
 
 	get_tree().create_timer(0.2).timeout.connect(func() -> void:
 		if not is_inside_tree():
 			return
-		var prev_selected := GameProgressManager.get_selected_level_number()
-		var prev_step := GameProgressManager.get_current_gameplay_step()
-		var prev_return_scene := GameProgressManager.get_gameplay_return_scene()
-		GameProgressManager.set_selected_level_number(1)
-		GameProgressManager.set_current_gameplay_step(0)
-		GameProgressManager.consume_pending_dialogue_phase()
-		GameProgressManager.set_gameplay_return_scene("res://features/cutscene/inside_tower_cutscene.tscn")
-		if not _transition_to_scene("res://features/sandbox/sandbox_game_view.tscn"):
-			GameProgressManager.set_selected_level_number(prev_selected)
-			GameProgressManager.set_current_gameplay_step(prev_step)
-			GameProgressManager.set_gameplay_return_scene(prev_return_scene))
+		_transition_to_scene(LEVEL_SELECT_PATH))
+
+
+## เข้าห้องทดลองคำสั่ง git แบบอิสระ ปุ่มออกใน Sandbox จะพากลับหน้าแรก
+func _on_sandbox_pressed() -> void:
+	if _is_leaving:
+		return
+	_is_leaving = true
+	_play_sfx(_sfx_click)
+	_append_terminal_text("> Opening free-play Git sandbox...")
+
+	get_tree().create_timer(0.2).timeout.connect(func() -> void:
+		if not is_inside_tree():
+			return
+		GameProgressManager.set_sandbox_return_scene(START_VIEW_PATH)
+		if not _transition_to_scene(SANDBOX_PATH):
+			GameProgressManager.set_sandbox_return_scene(""))
 
 
 func _transition_to_scene(target_path: String) -> bool:
@@ -223,7 +267,11 @@ func _on_terminal_command_submitted(input: String) -> void:
 
 	if lower == "level" or lower == "levels" or lower == "select":
 		_is_leaving = true
-		_transition_to_scene("res://features/level_select/level_select_view.tscn")
+		_transition_to_scene(LEVEL_SELECT_PATH)
+		return
+
+	if lower == "sandbox":
+		_on_sandbox_pressed()
 		return
 
 	if lower == "clear 1" or lower == "complete 1":
@@ -253,7 +301,7 @@ func _on_terminal_command_submitted(input: String) -> void:
 	elif lower == "git branch":
 		_append_terminal_text("* main\n  fireball")
 	elif lower == "help":
-		_append_terminal_text("Commands: git init, git status, git add, git commit, git branch, start, wardrobe, clear, help")
+		_append_terminal_text("Commands: git init, git status, git add, git commit, git branch, start, sandbox, wardrobe, clear, help")
 	else:
 		_append_terminal_text("git: '%s' executed in sandbox preview." % cmd)
 

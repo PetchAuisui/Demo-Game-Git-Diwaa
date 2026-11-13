@@ -37,10 +37,3 @@ static func get_display_command(level_num: int, data: Dictionary = {}) -> String
 		return str(data["title"])
 	return "git version" if level_num == 1 else "git command"
 
-
-## ข้อมูลขั้นตอนเล่นจริงใน Sandbox ของด่าน (hints / required) หรือ {} ถ้าไม่มี
-static func get_gameplay_step(level_num: int, step: int, data: Dictionary = {}) -> Dictionary:
-	if data.is_empty():
-		data = load_data(level_num)
-	var steps: Dictionary = data.get("gameplay_steps", {})
-	return steps.get(step, {})

@@ -105,7 +105,7 @@ theme_override_font_sizes/font_size = 16
 theme_override_styles/normal = SubResource("Style_btn_finish")
 theme_override_styles/hover = SubResource("Style_btn_finish_hover")
 theme_override_styles/pressed = SubResource("Style_btn_finish_hover")
-text = "เสร็จสิ้น (ไปต่อ) ➔"
+text = "กลับหน้าเลือกด่าน"
 
 [node name="AccountMenu" parent="TopMargin/Header" instance=ExtResource("6_account_menu")]
 layout_mode = 2
