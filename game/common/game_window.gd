@@ -440,7 +440,6 @@ func _on_raw_input(event: InputEvent) -> void:
 				_scroll_anim_timer = 0.0
 				if not _is_hovering_clickable(hovered):
 					_touchy_click_active = false
-					_apply_idle_cursors(hovered)
 					return
 				_touchy_click_active = true
 				_touchy_step = 0
