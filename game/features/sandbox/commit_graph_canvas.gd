@@ -91,27 +91,34 @@ func _draw() -> void:
 				size.x - _text_x - 12, 14, color if refs.length() > 0 else Color("94a3bb"))
 
 
+func _row_at(y: float) -> int:
+	var row_index := floori(y / ROW_HEIGHT)
+	if row_index >= 0 and row_index < _layout.rows.size():
+		return row_index
+	return -1
+
+
 func _get_cursor_shape(at_position: Vector2) -> CursorShape:
-	var row_index := floori(at_position.y / ROW_HEIGHT)
-	if _layout != null and row_index >= 0 and row_index < _layout.rows.size():
+	if _row_at(at_position.y) != -1:
 		return Control.CURSOR_POINTING_HAND
 	return Control.CURSOR_ARROW
 
 
 func _gui_input(input: InputEvent) -> void:
 	if input is InputEventMouseMotion:
-		var row_index := floori(input.position.y / ROW_HEIGHT)
-		var has_row := row_index >= 0 and row_index < _layout.rows.size()
-		_hovered = row_index if has_row else -1
+		_hovered = _row_at(input.position.y)
+		var has_row := _hovered != -1
 		tooltip_text = "%s\nดับเบิลคลิก หรือ Ctrl/Cmd+C เพื่อคัดลอก ID" % _layout.rows[_hovered].commit.id \
 				if has_row else ""
 		queue_redraw()
 	if input is InputEventMouseButton and input.pressed and input.button_index == MOUSE_BUTTON_LEFT:
-		_choose(floori(input.position.y / ROW_HEIGHT))
-		if input.double_click:
-			_copy_selected_id()
-		grab_focus()
-		accept_event()
+		var row_idx := _row_at(input.position.y)
+		if row_idx != -1:
+			_choose(row_idx)
+			if input.double_click:
+				_copy_selected_id()
+			grab_focus()
+			accept_event()
 	if input is InputEventKey and input.pressed:
 		if input.keycode == KEY_C and (input.ctrl_pressed or input.meta_pressed):
 			_copy_selected_id()

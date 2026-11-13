@@ -158,7 +158,7 @@ func _process(delta: float) -> void:
 				_touchy_click_active = false
 				_apply_idle_cursors(hovered)
 			else:
-				_apply_touchy_click_cursor(TOUCHY_CLICK_SEQUENCE[_touchy_step])
+				_apply_idle_cursors(hovered, TOUCHY_CLICK_SEQUENCE[_touchy_step])
 		return
 
 	_apply_idle_cursors(hovered)
@@ -265,17 +265,13 @@ func _apply_uniform_cursor(mode: String, frame_idx: int) -> void:
 	_apply_cursors(mode, frame_idx, mode, frame_idx)
 
 
-func _apply_idle_cursors(hovered: Control) -> void:
-	# ปกติใช้ Buffy2 เป็นเมาส์หลัก และเปลี่ยนเป็น Touchy1 เมื่อชี้ปุ่มที่กดได้ (ไม่รวมปุ่มที่ disabled)
+func _apply_idle_cursors(hovered: Control, touchy_frame: int = 0) -> void:
+	# ปกติใช้ Buffy2 เป็นเมาส์หลัก และเปลี่ยนเป็น Touchy เมื่อชี้ปุ่มที่กดได้ (ไม่รวมปุ่มที่ disabled)
+	# คง CURSOR_ARROW เป็น Buffy เสมอ เพื่อไม่ให้จุดที่คลิกไม่ได้เปลี่ยนเป็นรูปมือตอนกดหรือเลื่อนเมาส์ออก
 	if _is_hovering_disabled_button(hovered):
 		_apply_uniform_cursor("buffy", 0)
 	else:
-		_apply_cursors("buffy", 0, "touchy", 0)
-
-
-func _apply_touchy_click_cursor(frame_idx: int) -> void:
-	# คง CURSOR_ARROW เป็น Buffy เสมอ เพื่อไม่ให้จุดที่คลิกไม่ได้เปลี่ยนเป็นรูปมือตอนกดหรือเลื่อนเมาส์ออก
-	_apply_cursors("buffy", 0, "touchy", frame_idx)
+		_apply_cursors("buffy", 0, "touchy", touchy_frame)
 
 
 func _setup_input_watcher() -> void:
@@ -403,7 +399,17 @@ func _is_hovering_clickable(hovered: Control) -> bool:
 		return false
 	if _is_hovering_disabled_button(hovered):
 		return false
-	return DisplayServer.cursor_get_shape() == DisplayServer.CURSOR_POINTING_HAND
+
+	var curr := hovered
+	while curr != null:
+		var local_pos := curr.get_local_mouse_position()
+		if curr.get_cursor_shape(local_pos) == Control.CURSOR_POINTING_HAND:
+			return true
+		if curr.mouse_filter == Control.MOUSE_FILTER_STOP:
+			break
+		var parent := curr.get_parent()
+		curr = parent as Control if parent is Control else null
+	return false
 
 
 func _trigger_scroll_anim() -> void:
@@ -440,13 +446,19 @@ func _on_raw_input(event: InputEvent) -> void:
 				_scroll_anim_timer = 0.0
 				if not _is_hovering_clickable(hovered):
 					_touchy_click_active = false
+					_apply_idle_cursors(hovered)
 					return
 				_touchy_click_active = true
 				_touchy_step = 0
 				_touchy_timer = 0.0
-				_apply_touchy_click_cursor(TOUCHY_CLICK_SEQUENCE[0])
+				_apply_idle_cursors(hovered, TOUCHY_CLICK_SEQUENCE[0])
 			else:
 				_dragging_scrollbar = null
+		elif mb.button_index == MOUSE_BUTTON_RIGHT and mb.pressed:
+			_scroll_anim_timer = 0.0
+			_touchy_click_active = false
+			_apply_idle_cursors(_get_hovered_control())
+			return
 	elif event is InputEventMouseMotion and _dragging_scrollbar != null:
 		if Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT):
 			_trigger_scroll_anim()
