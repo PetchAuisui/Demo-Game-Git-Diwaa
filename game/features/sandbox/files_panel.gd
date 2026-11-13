@@ -624,6 +624,14 @@ func _update_action_buttons() -> void:
 	_delete_button.disabled = not has_selection
 
 
+## ปล่อยเมาส์ที่ไหนก็ได้ = เลิกกดค้าง แม้รายการจะถูกซ่อนไปก่อนปล่อย (เช่น ดับเบิลคลิกเปิดไฟล์)
+## ซึ่งทำให้ event ปล่อยเมาส์ไม่ถึง FilesList
+func _input(event: InputEvent) -> void:
+	var mouse := event as InputEventMouseButton
+	if mouse != null and mouse.button_index == MOUSE_BUTTON_LEFT and not mouse.pressed:
+		_mouse_held_on_list = false
+
+
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_DRAG_BEGIN:
 		_drag_in_progress = true
