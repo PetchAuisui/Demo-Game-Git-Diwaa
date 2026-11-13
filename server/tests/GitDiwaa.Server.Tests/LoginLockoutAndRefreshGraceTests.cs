@@ -211,6 +211,20 @@ internal static class LoginLockoutAndRefreshGraceTests
             Assert.True((await ctx.Service.ValidateSessionAsync(tokenB)).Succeeded);
         });
 
+        await runner.RunAsync("Refresh_NewTokenUsedAtSameInstant_StillCountsAsUsed", async static () =>
+        {
+            var ctx = await CreateWithUserAsync();
+            string tokenA = (await ctx.Service.LoginAsync(new LoginRequest("mage01", Password, true))).Value!.Token;
+            string tokenA2 = (await ctx.Service.RefreshAsync(tokenA)).Value!.Token;
+
+            // ใช้ใบใหม่ในเวลาเดียวกับที่สร้างพอดี (ไม่เลื่อนเวลา): เดิมเทียบ LastUsedAt กับ CreatedAt แล้วยังนับว่า "ไม่เคยใช้"
+            Assert.True((await ctx.Service.ValidateSessionAsync(tokenA2)).Succeeded);
+
+            var reuse = await ctx.Service.RefreshAsync(tokenA);
+            Assert.False(reuse.Succeeded, "The old token must not refresh once its replacement has been used, even at the same instant.");
+            Assert.False((await ctx.Service.ValidateSessionAsync(tokenA2)).Succeeded);
+        });
+
         await runner.RunAsync("Refresh_GraceRetry_ThenNewTokenUsed_OldTokenStopsWorking", async static () =>
         {
             var ctx = await CreateWithUserAsync();

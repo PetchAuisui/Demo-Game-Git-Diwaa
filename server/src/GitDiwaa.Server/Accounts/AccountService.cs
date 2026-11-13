@@ -367,7 +367,7 @@ public sealed class AccountService
     /// 3. session ที่มาแทนยังใช้ได้อยู่: ถ้าผู้เล่น logout ไปแล้ว หรือสายถูกตัดไปแล้ว ใบเก่าต้องใช้ไม่ได้ทันที
     /// 4. session ที่มาแทนยังไม่เคยถูกใช้เลย: ยังไม่ถูกใช้ = คำตอบ refresh อาจหายกลางทางจริง
     ///    ถูกใช้แล้ว = เจ้าของได้ใบใหม่ไปแล้ว คนที่เอาใบเก่ามาใช้คือคนที่ขโมยไป
-    ///    (ValidateSessionAsync อัปเดต LastUsedAt ทุกครั้งที่ใบใหม่ถูกใช้เรียก endpoint)
+    ///    (ValidateSessionAsync ตั้ง FirstUsedAt ตอนใบใหม่ถูกใช้เรียก endpoint ครั้งแรก)
     /// มีไว้กรณีเดียว: คำตอบ refresh หายกลางทางแล้วเกมลองใหม่
     /// (เปิดเกม 2 หน้าต่างไม่ได้อาศัยช่วงนี้: เกมอ่าน token ใบใหม่จากไฟล์จดจำก่อนจะ refresh เอง)
     /// ช่องที่ยังเหลือ:
@@ -388,7 +388,7 @@ public sealed class AccountService
         var successor = await _sessionRepository.FindByIdAsync(replacedBy, ct);
         return successor is not null
             && successor.RevokedAt is null
-            && successor.LastUsedAt <= successor.CreatedAt;
+            && successor.FirstUsedAt is null;
     }
 
     /// <summary>

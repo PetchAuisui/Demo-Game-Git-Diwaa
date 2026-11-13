@@ -210,7 +210,7 @@ public sealed class InMemorySessionRepository : ISessionRepository
             // ใบที่มาแทนก่อนหน้า: ต้องยังใช้ได้และยังไม่เคยถูกใช้ ถึงจะยกเลิกแล้วออกใบใหม่แทนได้
             if (!_sessionsById.TryGetValue(expectedSuccessorId, out var previous) ||
                 previous.RevokedAt is not null ||
-                previous.LastUsedAt > previous.CreatedAt)
+                previous.FirstUsedAt is not null)
             {
                 return Task.FromResult(false);
             }
@@ -235,7 +235,7 @@ public sealed class InMemorySessionRepository : ISessionRepository
                 return Task.CompletedTask;
             }
 
-            var touchedSession = session with { LastUsedAt = lastUsedAt };
+            var touchedSession = session with { LastUsedAt = lastUsedAt, FirstUsedAt = session.FirstUsedAt ?? lastUsedAt };
             _sessionsById[sessionId] = touchedSession;
             _sessionsByTokenHash[session.TokenHash] = touchedSession;
             return Task.CompletedTask;
