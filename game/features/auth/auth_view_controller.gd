@@ -491,6 +491,7 @@ func _check_registration(username: String, email: String) -> bool:
 	var result := await _api.check_registration(username, email)
 	_set_busy(false)
 	_note_rate_limit(result)
+	_note_server_answered(result)
 	# ระหว่างรอ ผู้เล่นสลับไปหน้าอื่นแล้ว: ไม่เปิดหน้านโยบายขึ้นมาทับหน้าที่เขาเลือก
 	if not _register_form.visible:
 		return false
@@ -565,6 +566,7 @@ func _submit_login(identifier: String, password: String, remember_me: bool) -> v
 	var result := await _api.login(identifier, password, remember_me)
 	_set_busy(false)
 	_note_rate_limit(result)
+	_note_server_answered(result)
 
 	if result.ok:
 		_show_status(_login_status, "เข้าสู่ระบบสำเร็จ", true)
@@ -597,6 +599,7 @@ func _submit_register(username: String, email: String, password: String, leaderb
 	)
 	_set_busy(false)
 	_note_rate_limit(result)
+	_note_server_answered(result)
 
 	if result.ok:
 		# สมัครสำเร็จ: ล้างฟอร์มสมัคร (กันคนใช้เครื่องต่อเห็นข้อมูล) แล้วพาไปหน้า login พร้อมเติม username ให้
@@ -695,6 +698,14 @@ func _note_rate_limit(result: AuthApiResult) -> void:
 	_refresh_request_buttons()
 
 
+## server ตอบกลับมาจริง (ไม่ใช่เน็ตหลุด / server ล่ม / ถูกจำกัดจำนวนครั้ง): ซ่อนแถบ "เชื่อมต่อ server ไม่ได้"
+## ที่อาจค้างจากตอนเปิดหน้านี้ (เช่น เปิดเกมก่อนเปิด server) ไม่ให้ขึ้นคู่กับคำตอบจาก server จนผู้เล่นงง
+## status 0 = ไม่ได้คำตอบจาก server / 5xx = server มีปัญหา / 429 = แถบนี้ใช้บอกให้รอ: คงแถบไว้
+func _note_server_answered(result: AuthApiResult) -> void:
+	if result.status >= 200 and result.status < 500 and result.code != AuthApiResult.RATE_LIMITED:
+		_hide_connection_problem()
+
+
 func _cooldown_left_sec() -> int:
 	return maxi(0, ceili((_cooldown_until_msec - Time.get_ticks_msec()) / 1000.0))
 
@@ -720,11 +731,12 @@ func _check_connection() -> void:
 	var result := await _api.health()
 	_set_busy(false)
 	_note_rate_limit(result)
+	_note_server_answered(result)
 
 	if not result.ok:
 		_show_connection_problem(result)
 		return
-	_connection_panel.visible = false
+	_hide_connection_problem()
 	await _try_restore_session()
 
 
@@ -744,6 +756,12 @@ func _connection_message(result: AuthApiResult) -> String:
 	if result.code == AuthApiResult.RATE_LIMITED:
 		return "ลองบ่อยเกินไป รอสักครู่แล้วลองใหม่"
 	return "เชื่อมต่อ server ไม่ได้"
+
+
+## ซ่อนแถบเชื่อมต่อพร้อมปุ่มเล่นออฟไลน์ (ปุ่มไม่ได้อยู่ในแถบ ต้องซ่อนเองด้วย ไม่งั้นค้างหลัง server กลับมา)
+func _hide_connection_problem() -> void:
+	_connection_panel.visible = false
+	_offline_play_btn.visible = false
 
 
 func _show_connection_problem(result: AuthApiResult) -> void:
