@@ -362,7 +362,7 @@ theme_override_fonts/font = SubResource("FontVariation_reg")
 theme_override_font_sizes/font_size = 20
 theme_override_styles/panel = SubResource("Style_list")
 theme_override_styles/focus = SubResource("Style_list")
-theme_override_constants/v_separation = 8
+theme_override_constants/v_separation = 0
 allow_reselect = true
 
 [node name="EmptyState" type="CenterContainer" parent="Margin/Layout/WorkspaceBody/NavigatorSurface/NavigatorLayout/FilesList"]

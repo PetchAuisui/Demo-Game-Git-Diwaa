@@ -13,6 +13,9 @@ signal delete_entry_requested(entry_path: String, is_directory: bool)
 
 const INDENT_PIXELS := 22
 const CHEVRON_SLOT_PIXELS := 22
+## ความสูงไอคอนแต่ละแถว = ความสูงแถวทั้งแถว (v_separation = 0) เพื่อให้เส้นโยงต่อกันไม่ขาด
+const TREE_ROW_PIXELS := 40
+const GUIDE_COLOR := Color(0.36, 0.42, 0.64, 0.9)
 const DRAG_TYPE := "workspace_entry"
 const DROP_HIGHLIGHT := Color(0.98, 0.72, 0.28, 0.22)
 
@@ -187,11 +190,12 @@ func _render_entries() -> void:
 		_update_action_buttons()
 		return
 
+	var guides := _build_tree_guides()
 	for index in _entries.size():
 		var entry := _entries[index]
 		var depth := entry.path.count("/")
 		var status := "" if entry.status_badge.is_empty() else " " + entry.status_badge
-		var icon := _get_tree_icon(entry.is_directory, depth, entry.is_directory and not _collapsed.has(entry.path))
+		var icon := _get_tree_icon(entry.is_directory, depth, entry.is_directory and not _collapsed.has(entry.path), guides[index])
 		_files_list.add_item(entry.name + status, icon)
 		_files_list.set_item_tooltip(index, entry.path)
 		if entry.status_color != null:
@@ -217,8 +221,46 @@ func _is_hidden_by_collapsed_ancestor(path: String) -> bool:
 
 ## ItemList always draws the icon at the far left, so each row's icon texture is composed as
 ## [indent][chevron slot][icon]: folders get a chevron, files leave the slot blank (VS Code style).
-func _get_tree_icon(is_directory: bool, depth: int, expanded: bool) -> Texture2D:
-	var key := "%s|%d|%s" % [is_directory, depth, expanded]
+## รูปแบบเส้นโยงของแต่ละแถว (ตามลำดับ _entries) เป็น String ยาว depth+1 ตัว:
+## ตัวที่ k < depth-1 คือเส้นแนวตั้งผ่านของบรรพบุรุษระดับ k ("|" = มีพี่น้องถัดไป, " " = ไม่มี),
+## ตัวที่ depth-1 คือข้อต่อเข้าหาแถวนี้ ("T" = ยังมีพี่น้องถัดไป, "L" = ตัวสุดท้าย),
+## ตัวสุดท้ายคือ "v" เมื่อเป็นโฟลเดอร์ที่กางอยู่และมีลูกแสดงอยู่ข้างล่าง
+func _build_tree_guides() -> Array[String]:
+	var count := _entries.size()
+	var parent_of: Array[String] = []
+	var is_last: Array[bool] = []
+	var last_index_of_parent := {}
+	for i in count:
+		var parent := _entries[i].path.get_base_dir()
+		parent_of.append(parent)
+		last_index_of_parent[parent] = i
+	for i in count:
+		is_last.append(last_index_of_parent[parent_of[i]] == i)
+
+	# ancestor_open[level] = เส้นแนวตั้งระดับนั้นยังต้องลากต่อหรือไม่
+	var ancestor_open: Array[bool] = []
+	var guides: Array[String] = []
+	for i in count:
+		var entry := _entries[i]
+		var depth := entry.path.count("/")
+		ancestor_open.resize(depth)
+		var pattern := ""
+		for level in depth:
+			if level < depth - 1:
+				pattern += "|" if ancestor_open[level] else " "
+			else:
+				pattern += "L" if is_last[i] else "T"
+		var has_visible_child := i + 1 < count and parent_of[i + 1] == entry.path
+		pattern += "v" if entry.is_directory and has_visible_child else "-"
+		guides.append(pattern)
+		if depth > 0:
+			ancestor_open[depth - 1] = not is_last[i]
+		ancestor_open.append(false)
+	return guides
+
+
+func _get_tree_icon(is_directory: bool, depth: int, expanded: bool, guide: String = "") -> Texture2D:
+	var key := "%s|%d|%s|%s" % [is_directory, depth, expanded, guide]
 	if _tree_icons.has(key):
 		return _tree_icons[key]
 
@@ -230,8 +272,9 @@ func _get_tree_icon(is_directory: bool, depth: int, expanded: bool) -> Texture2D
 	var left := depth * INDENT_PIXELS
 	var gap := 2
 	var width := left + CHEVRON_SLOT_PIXELS + gap + source.get_width()
-	var height := maxi(source.get_height(), CHEVRON_SLOT_PIXELS)
+	var height := maxi(TREE_ROW_PIXELS, maxi(source.get_height(), CHEVRON_SLOT_PIXELS))
 	var image := Image.create_empty(width, height, false, Image.FORMAT_RGBA8)
+	_draw_tree_guides(image, depth, is_directory, guide)
 	if is_directory:
 		_draw_chevron(image, left, height / 2, expanded)
 	image.blit_rect(source, Rect2i(Vector2i.ZERO, source.get_size()),
@@ -240,6 +283,33 @@ func _get_tree_icon(is_directory: bool, depth: int, expanded: bool) -> Texture2D
 	var texture := ImageTexture.create_from_image(image)
 	_tree_icons[key] = texture
 	return texture
+
+
+static func _draw_tree_guides(image: Image, depth: int, is_directory: bool, guide: String) -> void:
+	if guide.is_empty():
+		return
+	var height := image.get_height()
+	var mid := height / 2
+	for level in depth:
+		var x := level * INDENT_PIXELS + CHEVRON_SLOT_PIXELS / 2 - 1
+		match guide[level]:
+			"|":
+				_fill(image, Rect2i(x, 0, 2, height))
+			"T", "L":
+				var bottom := height if guide[level] == "T" else mid + 1
+				_fill(image, Rect2i(x, 0, 2, bottom))
+				# เส้นแนวนอนวิ่งไปหาลูกศร (โฟลเดอร์) หรือไอคอนไฟล์
+				var end_x := depth * INDENT_PIXELS + (4 if is_directory else CHEVRON_SLOT_PIXELS - 2)
+				_fill(image, Rect2i(x, mid - 1, end_x - x, 2))
+	if guide[guide.length() - 1] == "v":
+		var cx := depth * INDENT_PIXELS + CHEVRON_SLOT_PIXELS / 2 - 1
+		_fill(image, Rect2i(cx, mid + 7, 2, height - mid - 7))
+
+
+static func _fill(image: Image, rect: Rect2i) -> void:
+	var clipped := rect.intersection(Rect2i(Vector2i.ZERO, image.get_size()))
+	if clipped.has_area():
+		image.fill_rect(clipped, GUIDE_COLOR)
 
 
 static func _draw_chevron(image: Image, slot_x: int, center_y: int, expanded: bool) -> void:
