@@ -137,6 +137,12 @@ func sign_out() -> void:
 		session_changed.emit()
 		return
 	var token := get_token()
+	if token.is_empty() and state == State.OFFLINE:
+		# เล่นออฟไลน์: ในหน่วยความจำไม่มี token แต่ไฟล์จดจำอาจยังมี token ที่ server ใช้ได้อีกถึง 30 วัน
+		# อ่านก่อนลบไฟล์ แล้วแจ้ง server ด้วย (เฉพาะ token ของบัญชีเดียวกัน ห้ามไปยกเลิก session ของบัญชีอื่น)
+		var saved := SessionStore.load_session()
+		if not saved.is_empty() and (saved["profile"] as Dictionary).get("id") == get_user_id():
+			token = saved["token"]
 	session_expired = false
 	_last_refresh_attempt_msec = -1
 	_forget_email()
@@ -149,6 +155,7 @@ func sign_out() -> void:
 	display_name_changes_available = -1
 	if not token.is_empty():
 		# แจ้ง server เบื้องหลัง ไม่ต้องให้หน้าจอรอ ถ้าเน็ตหลุดก็ไม่เป็นไร ในเครื่องลบไปแล้ว และ token จะหมดอายุเองบน server
+		# (ตอนออฟไลน์ ส่วนมากจะส่งไม่ถึง server: token ใบนั้นจะหมดอายุเองตามเวลา)
 		_logout_on_server.call_deferred(token)
 
 
