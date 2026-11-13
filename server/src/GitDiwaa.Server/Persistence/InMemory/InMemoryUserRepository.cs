@@ -64,10 +64,7 @@ public sealed class InMemoryUserRepository : IUserRepository
                 return Task.FromResult(UserAddResult.DisplayNameTaken);
             }
 
-            _usersById[user.Id] = user;
-            _usersByUsername[user.Username] = user;
-            _usersByEmail[user.EmailNormalized] = user;
-            _usersByDisplayName[user.DisplayNameKey] = user;
+            StoreUser(user);
 
             return Task.FromResult(UserAddResult.Added);
         }
@@ -102,10 +99,7 @@ public sealed class InMemoryUserRepository : IUserRepository
                 LeaderboardOptIn = existing.LeaderboardOptIn
             };
 
-            _usersById[merged.Id] = merged;
-            _usersByUsername[merged.Username] = merged;
-            _usersByEmail[merged.EmailNormalized] = merged;
-            _usersByDisplayName[merged.DisplayNameKey] = merged;
+            StoreUser(merged);
 
             return Task.CompletedTask;
         }
@@ -212,7 +206,8 @@ public sealed class InMemoryUserRepository : IUserRepository
         }
     }
 
-    // เรียกภายใต้ _lock เท่านั้น
+    // เรียกภายใต้ _lock เท่านั้น: เขียนลงทุก index ที่เดียว (เพิ่ม index ใหม่ให้แก้ตรงนี้ที่เดียว)
+    // ไม่ลบ key เก่าของชื่อที่แสดง: ผู้เรียกที่เปลี่ยนชื่อต้องลบเอง (ดู TryChangeDisplayNameAsync)
     private void StoreUser(UserRecord user)
     {
         _usersById[user.Id] = user;
@@ -247,10 +242,7 @@ public sealed class InMemoryUserRepository : IUserRepository
             }
 
             var updated = existing with { LeaderboardOptIn = optIn, UpdatedAt = now };
-            _usersById[updated.Id] = updated;
-            _usersByUsername[updated.Username] = updated;
-            _usersByEmail[updated.EmailNormalized] = updated;
-            _usersByDisplayName[updated.DisplayNameKey] = updated;
+            StoreUser(updated);
 
             return Task.FromResult<UserRecord?>(updated);
         }
@@ -301,10 +293,7 @@ public sealed class InMemoryUserRepository : IUserRepository
                 _usersByDisplayName.Remove(existing.DisplayNameKey);
             }
 
-            _usersById[updated.Id] = updated;
-            _usersByUsername[updated.Username] = updated;
-            _usersByEmail[updated.EmailNormalized] = updated;
-            _usersByDisplayName[updated.DisplayNameKey] = updated;
+            StoreUser(updated);
 
             return Task.FromResult(new DisplayNameChangeOutcome(DisplayNameChangeResult.Changed, updated));
         }
