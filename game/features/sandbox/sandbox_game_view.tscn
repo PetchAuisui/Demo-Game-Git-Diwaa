@@ -6,7 +6,6 @@
 [ext_resource type="PackedScene" path="res://features/sandbox/files_panel.tscn" id="4_files"]
 [ext_resource type="PackedScene" path="res://features/sandbox/git_graph_panel.tscn" id="5_graph"]
 [ext_resource type="PackedScene" path="res://features/sandbox/terminal_panel.tscn" id="6_terminal"]
-[ext_resource type="Shader" uid="uid://dsakd0n57dtv7" path="res://features/sandbox/sandbox_side_blur.gdshader" id="7_side_blur"]
 [ext_resource type="Texture2D" uid="uid://di2t2ymk1v7vy" path="res://assets/cutscene/backgrounds/cloud1.png" id="8_cloud"]
 [ext_resource type="Shader" uid="uid://bs6f2587plgrs" path="res://features/sandbox/sandbox_cloud_scroll.gdshader" id="9_cloud_scroll"]
 [ext_resource type="Shader" uid="uid://b31eepd6k30wl" path="res://features/sandbox/sandbox_tower_windows.gdshader" id="10_tower_windows"]
@@ -38,14 +37,6 @@ shader_parameter/min_blue_green_diff = 0.095
 atlas = ExtResource("2_background")
 region = Rect2(0, 0, 480, 270)
 filter_clip = true
-
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_side_blur"]
-shader = ExtResource("7_side_blur")
-shader_parameter/fade_color = Color(0.01, 0.01, 0.016, 1)
-shader_parameter/effect_start = 0.45
-shader_parameter/effect_end = 0.98
-shader_parameter/max_blur_px = 26.0
-shader_parameter/max_darkness = 0.76
 
 [node name="SandboxGameView" type="Control"]
 layout_mode = 3
@@ -107,16 +98,6 @@ grow_vertical = 2
 mouse_filter = 2
 color = Color(0.035, 0.028, 0.105, 0.14)
 
-[node name="SideBlurVignette" type="ColorRect" parent="."]
-material = SubResource("ShaderMaterial_side_blur")
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-mouse_filter = 2
-
 [node name="TopBar" parent="." instance=ExtResource("3_topbar")]
 unique_name_in_owner = true
 layout_mode = 1
@@ -129,10 +110,10 @@ grow_horizontal = 2
 unique_name_in_owner = true
 layout_mode = 1
 anchors_preset = 0
-anchor_left = 0.02
+anchor_left = 0.03
 anchor_top = 0.11
-anchor_right = 0.265
-anchor_bottom = 0.96
+anchor_right = 0.27
+anchor_bottom = 0.62
 grow_horizontal = 1
 grow_vertical = 1
 
@@ -140,10 +121,10 @@ grow_vertical = 1
 unique_name_in_owner = true
 layout_mode = 1
 anchors_preset = 0
-anchor_left = 0.735
+anchor_left = 0.73
 anchor_top = 0.11
-anchor_right = 0.98
-anchor_bottom = 0.60
+anchor_right = 0.97
+anchor_bottom = 0.62
 grow_horizontal = 1
 grow_vertical = 1
 
@@ -151,9 +132,9 @@ grow_vertical = 1
 unique_name_in_owner = true
 layout_mode = 1
 anchors_preset = 0
-anchor_left = 0.29
-anchor_top = 0.64
-anchor_right = 0.98
+anchor_left = 0.16
+anchor_top = 0.66
+anchor_right = 0.84
 anchor_bottom = 0.96
 grow_horizontal = 2
 grow_vertical = 2
