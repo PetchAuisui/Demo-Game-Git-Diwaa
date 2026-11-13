@@ -79,6 +79,9 @@ var _mouse_held_on_list := false
 ## โฟลเดอร์ที่รอพับ/กางเมื่อปล่อยเมาส์ ("" = ไม่มี)
 var _pending_toggle_path := ""
 var _drag_in_progress := false
+var _root_drop_highlighted := false
+var _list_panel_style: StyleBox
+var _root_drop_style: StyleBoxFlat
 
 var _file_icon: Texture2D
 var _folder_icon: Texture2D
@@ -108,6 +111,9 @@ func _ready() -> void:
 	_files_list.item_activated.connect(_on_item_activated)
 	_files_list.empty_clicked.connect(_on_empty_clicked)
 	_files_list.gui_input.connect(_on_files_list_gui_input)
+	set_process(false)
+	_list_panel_style = _files_list.get_theme_stylebox("panel")
+	_root_drop_style = _build_root_drop_style(_list_panel_style)
 	_files_list.set_drag_forwarding(_get_list_drag_data, _can_drop_on_list, _drop_on_list)
 	_new_file_button.pressed.connect(func() -> void: _show_create_dialog(_create_file_dialog, _create_file_name_input))
 	_new_folder_button.pressed.connect(func() -> void: _show_create_dialog(_create_folder_dialog, _create_folder_name_input))
@@ -610,11 +616,13 @@ func _update_action_buttons() -> void:
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_DRAG_BEGIN:
 		_drag_in_progress = true
+		set_process(true)
 	elif what == NOTIFICATION_DRAG_END:
 		_drag_in_progress = false
+		set_process(false)
 		_mouse_held_on_list = false
 		_pending_toggle_path = ""
-		_set_drop_highlight(-1)
+		_clear_drop_highlights()
 
 
 # --- ลากไฟล์/โฟลเดอร์ไปวางในโฟลเดอร์ ---------------------------------------
@@ -662,11 +670,13 @@ func _can_drop_on_list(at_position: Vector2, data: Variant) -> bool:
 	var target := _resolve_drop_target(at_position)
 	var ok := _is_valid_move(data, target.folder)
 	_set_drop_highlight(target.index if ok else -1)
+	# ปลายทางเป็น WORKSPACE (ไม่มีแถวโฟลเดอร์ให้ไฮไลต์) → ไฮไลต์กรอบรายการทั้งกล่องแทน
+	_set_root_drop_highlight(ok and target.folder.is_empty())
 	return ok
 
 
 func _drop_on_list(at_position: Vector2, data: Variant) -> void:
-	_set_drop_highlight(-1)
+	_clear_drop_highlights()
 	var target := _resolve_drop_target(at_position)
 	if not _is_valid_move(data, target.folder):
 		return
@@ -717,6 +727,36 @@ func _set_drop_highlight(index: int) -> void:
 	_drop_highlight_index = index
 	if index >= 0 and index < _files_list.item_count:
 		_files_list.set_item_custom_bg_color(index, DROP_HIGHLIGHT)
+
+
+## ระหว่างลาก: ถ้าเมาส์ออกนอกรายการ ให้ล้างไฮไลต์ (Godot เรียก _can_drop เฉพาะตอนอยู่บนรายการ)
+func _process(_delta: float) -> void:
+	if (_drop_highlight_index >= 0 or _root_drop_highlighted) \
+			and not _files_list.get_global_rect().has_point(_files_list.get_global_mouse_position()):
+		_clear_drop_highlights()
+
+
+func _clear_drop_highlights() -> void:
+	_set_drop_highlight(-1)
+	_set_root_drop_highlight(false)
+
+
+func _set_root_drop_highlight(on: bool) -> void:
+	if on == _root_drop_highlighted:
+		return
+	_root_drop_highlighted = on
+	_files_list.add_theme_stylebox_override("panel", _root_drop_style if on else _list_panel_style)
+
+
+static func _build_root_drop_style(base: StyleBox) -> StyleBoxFlat:
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color(DROP_HIGHLIGHT, 0.08)
+	style.border_color = Color(DROP_HIGHLIGHT, 0.8)
+	style.set_border_width_all(2)
+	style.set_corner_radius_all(6)
+	for side in [SIDE_LEFT, SIDE_TOP, SIDE_RIGHT, SIDE_BOTTOM]:
+		style.set_content_margin(side, base.get_content_margin(side))
+	return style
 
 
 func _build_drag_preview(entry: WorkspaceEntryDisplayItem) -> Control:
