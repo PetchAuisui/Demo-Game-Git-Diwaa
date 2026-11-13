@@ -67,6 +67,16 @@ public sealed class AccountService
         string normalizedEmail = AccountNormalizer.NormalizeEmail(request.Email);
         bool generateDisplayName = string.IsNullOrWhiteSpace(request.DisplayName);
 
+        // ชื่อผู้ใช้ / อีเมลซ้ำแน่นอน: ตอบเลยโดยไม่คำนวณ hash (PBKDF2 กิน CPU หลายร้อย ms และใช้ช่องคิวเดียวกับ login)
+        // ตอบเหมือนตอนที่ TryAddAsync บอกว่าซ้ำทุกอย่าง และไม่บอกว่าช่องไหน
+        // เวลาตอบจะสั้นกว่าตอนไม่ซ้ำ แต่ไม่ได้บอกอะไรเพิ่ม เพราะ /register/check บอกอยู่แล้วว่าซ้ำไหม
+        // ยังต้องพึ่ง TryAddAsync ด้านล่างเสมอ: คนอื่นอาจสมัครตัดหน้าไประหว่างนี้
+        if (await _userRepository.FindByUsernameAsync(normalizedUsername, ct) is not null ||
+            await _userRepository.FindByEmailAsync(normalizedEmail, ct) is not null)
+        {
+            return AccountResult<PlayerProfile>.Failure(AuthErrorCode.IdentifierTaken);
+        }
+
         string passwordHash = await _passwordHasher.HashAsync(request.Password, ct);
         DateTimeOffset now = _timeProvider.GetUtcNow();
 
