@@ -150,9 +150,10 @@ func sign_out() -> void:
 	_remembered = false
 	state = State.SIGNED_OUT
 	SessionStore.clear()
-	session_changed.emit()
+	# ล้างสถานะชื่อก่อนส่ง session_changed: หน้าที่อ่านค่าเหล่านี้ตอนรับ signal ต้องได้ "ยังไม่รู้" ไม่ใช่ค่าของบัญชีเก่า
 	display_name_next_change_unix = 0
 	display_name_changes_available = -1
+	session_changed.emit()
 	if not token.is_empty():
 		# แจ้ง server เบื้องหลัง ไม่ต้องให้หน้าจอรอ ถ้าเน็ตหลุดก็ไม่เป็นไร ในเครื่องลบไปแล้ว และ token จะหมดอายุเองบน server
 		# (ตอนออฟไลน์ ส่วนมากจะส่งไม่ถึง server: token ใบนั้นจะหมดอายุเองตามเวลา)
@@ -460,10 +461,8 @@ func restore_saved_session() -> String:
 	var saved_profile: Dictionary = saved["profile"]
 	last_username = saved_profile["username"]
 
-	if SessionStore.is_expired(saved):
-		SessionStore.clear()
-		return RESTORE_NEED_LOGIN
-
+	# ไม่ตัดสินหมดอายุจากนาฬิกาในเครื่อง (อาจเดินผิดหรือถูกปรับ): ส่งไปให้ server ตัดสินเสมอ
+	# หมดอายุจริง server ตอบ 401 แล้วเราล้างไฟล์ด้านล่าง (token ที่หมดอายุแล้วไม่ทำให้ server ตัดสาย)
 	var result := await _api.refresh(saved["token"])
 	if not result.ok and result.maybe_delivered:
 		# คำขออาจไปถึง server แล้วแต่คำตอบหาย: server อาจเปลี่ยน token ไปแล้ว ลองใหม่ทันที 1 ครั้ง (อยู่ในช่วงผ่อนผันของ server)
@@ -475,6 +474,11 @@ func restore_saved_session() -> String:
 		if fresh.is_empty():
 			SessionStore.clear()
 			return RESTORE_NEED_LOGIN
+		# ระหว่างรอ ไฟล์จดจำถูกเปลี่ยนไปแล้ว (เช่น เล่นโดยไม่ล็อกอินแล้วเข้าบัญชีอื่น / ออกจากระบบ): ไฟล์ไม่ใช่ของบัญชีนี้แล้ว
+		# ห้ามเขียนทับ ไม่งั้นเปิดเกมครั้งหน้าจะเข้าบัญชีที่ผู้เล่นไม่ได้เลือกจดจำ ยกเลิก token ใบใหม่ที่ server แทน
+		if SessionStore.load_session().get("token", "") != saved["token"]:
+			_logout_on_server.call_deferred(fresh["token"])
+			return RESTORE_NONE
 		# server เปลี่ยน token ให้แล้ว ใบเก่าใช้ไม่ได้อีก ต้องเก็บใบใหม่เสมอ (แม้ผู้เล่นจะเลือกเล่นแบบอื่นไประหว่างรอ)
 		if not SessionStore.save(fresh):
 			# บันทึก token ใบใหม่ไม่ได้: ลบไฟล์ทิ้ง ห้ามปล่อย token ใบเก่าค้างไว้

@@ -81,7 +81,8 @@ func refresh(token: String) -> AuthApiResult:
 
 
 func logout(token: String) -> AuthApiResult:
-	return await _send(HTTPClient.METHOD_POST, AuthConfig.API_PREFIX + "/logout", null, token, AuthConfig.REQUEST_TIMEOUT_SEC)
+	# logout ไม่ติดเพดานคิว: ต้องไปถึง server เสมอ ไม่งั้น token ยังใช้ได้บน server อีกถึง 30 วัน
+	return await _send(HTTPClient.METHOD_POST, AuthConfig.API_PREFIX + "/logout", null, token, AuthConfig.REQUEST_TIMEOUT_SEC, true)
 
 
 func get_display_name_status(token: String) -> AuthApiResult:
@@ -121,12 +122,12 @@ func me(token: String) -> AuthApiResult:
 	return await _send(HTTPClient.METHOD_GET, AuthConfig.API_PREFIX + "/me", null, token, AuthConfig.REQUEST_TIMEOUT_SEC)
 
 
-func _send(method: HTTPClient.Method, path: String, body: Variant, token: String, timeout_sec: float) -> AuthApiResult:
+func _send(method: HTTPClient.Method, path: String, body: Variant, token: String, timeout_sec: float, never_drop: bool = false) -> AuthApiResult:
 	# HTTPRequest ส่งได้ทีละคำขอ: ถ้ามีคำขออื่นค้างอยู่ ให้รอคิวแทนการล้ม
 	# (เดิมล้มทันที เช่น ออกจากระบบตอนมีคำขอค้าง /logout หายไปเงียบๆ token เลยยังใช้ได้บน server)
 	# หมายเหตุ: ตั้งแต่ออกจากลูปนี้จนถึง _busy = true ด้านล่างห้ามมี await ไม่งั้นคำขอที่รอจะแซงกันได้
 	if _busy:
-		if _waiting >= MAX_WAITING:
+		if _waiting >= MAX_WAITING and not never_drop:
 			push_warning("AuthApiClient: too many requests waiting.")
 			return AuthApiResult.failure(0, AuthApiResult.SERVER_ERROR)
 		_waiting += 1
