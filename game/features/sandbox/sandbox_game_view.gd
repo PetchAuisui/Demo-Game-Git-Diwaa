@@ -122,6 +122,7 @@ func _wire_events() -> void:
 	_files_panel.create_file_requested.connect(_on_create_file_requested)
 	_files_panel.create_folder_requested.connect(_on_create_folder_requested)
 	_files_panel.rename_entry_requested.connect(_on_rename_entry_requested)
+	_files_panel.move_entry_requested.connect(_on_move_entry_requested)
 	_files_panel.delete_entry_requested.connect(_on_delete_entry_requested)
 	_git_graph_panel.commit_selected.connect(_on_commit_selected)
 	_top_bar.finish_pressed.connect(_leave_sandbox)
@@ -441,6 +442,22 @@ func _on_rename_entry_requested(source_path: String, destination_path: String) -
 	else:
 		_files_panel.show_feedback("เปลี่ยนชื่อไม่สำเร็จ: " + result.message, true)
 		_terminal_panel.append_error("เปลี่ยนชื่อไม่สำเร็จ: " + result.message)
+	_files_panel.set_busy(false)
+
+
+func _on_move_entry_requested(source_path: String, destination_path: String) -> void:
+	_files_panel.set_busy(true)
+	var result := _sandbox_service.rename_entry(source_path, destination_path)
+	var folder := destination_path.get_base_dir()
+	var folder_label := "WORKSPACE" if folder.is_empty() else folder
+	if result.ok:
+		_files_panel.notify_entry_renamed(source_path, destination_path)
+		_files_panel.show_feedback("ย้าย %s ไปที่ %s แล้ว" % [source_path.get_file(), folder_label])
+		_terminal_panel.append_info("✓ ย้าย '%s' → '%s'" % [source_path, destination_path])
+		await _refresh_state()
+	else:
+		_files_panel.show_feedback("ย้ายไม่สำเร็จ: " + result.message, true)
+		_terminal_panel.append_error("ย้ายไม่สำเร็จ: " + result.message)
 	_files_panel.set_busy(false)
 
 
