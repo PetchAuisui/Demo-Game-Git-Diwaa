@@ -52,11 +52,16 @@ public static class AccountNormalizer
             }
             else
             {
-                sb.Append(c);
+                // ขีดทุกแบบ (‐ ‑ – — − ฯลฯ) นับเป็น '-' ตัวเดียวกัน กันตั้งชื่อหน้าตาเหมือนคนอื่น / เหมือน player-<เลข> ที่ระบบสงวนไว้
+                sb.Append(IsDashLike(c) ? '-' : c);
                 previousWasSpace = false;
             }
         }
 
         return sb.ToString().ToLowerInvariant();
     }
+
+    private static bool IsDashLike(char c) =>
+        char.GetUnicodeCategory(c) == System.Globalization.UnicodeCategory.DashPunctuation ||
+        c is '\u2212' or '\u2043';  // เครื่องหมายลบทางคณิตศาสตร์ / hyphen bullet
 }

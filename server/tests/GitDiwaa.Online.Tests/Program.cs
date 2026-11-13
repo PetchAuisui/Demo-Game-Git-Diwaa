@@ -417,6 +417,16 @@ internal static class Program
             Assert.Equal("hero", key);
         });
 
+        runner.Run("NormalizeDisplayNameKey_TreatsEveryDashAsHyphen", static () =>
+        {
+            // U+2010 hyphen, U+2011 non-breaking hyphen, U+2013 en dash, U+2014 em dash, U+2212 minus
+            foreach (string name in new[] { "player\u201010005", "player\u201110005", "player\u201310005", "player\u201410005", "player\u221210005" })
+            {
+                Assert.Equal("player-10005", AccountNormalizer.NormalizeDisplayNameKey(name));
+                Assert.True(AccountRules.IsReservedDisplayName(name), $"Expected '{name}' to be reserved.");
+            }
+        });
+
         runner.Run("NormalizeDisplayNameKey_DifferentNamesProduceDifferentKeys", static () =>
         {
             string key1 = AccountNormalizer.NormalizeDisplayNameKey("ผู้กล้า");
