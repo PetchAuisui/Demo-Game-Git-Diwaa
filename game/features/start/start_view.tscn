@@ -104,23 +104,6 @@ border_width_right = 5
 border_width_bottom = 5
 border_color = Color(0.29, 0.078, 0.549, 1)
 
-[sub_resource type="StyleBoxFlat" id="Style_btn_quit_normal"]
-bg_color = Color(0.72, 0.16, 0.16, 1)
-border_width_right = 5
-border_width_bottom = 5
-border_color = Color(0.42, 0.08, 0.08, 1)
-
-[sub_resource type="StyleBoxFlat" id="Style_btn_quit_pressed"]
-bg_color = Color(0.55, 0.1, 0.1, 1)
-border_width_left = 3
-border_width_top = 3
-border_color = Color(0.42, 0.08, 0.08, 1)
-
-[sub_resource type="StyleBoxFlat" id="Style_btn_quit_hover"]
-bg_color = Color(0.85, 0.22, 0.22, 1)
-border_width_right = 5
-border_width_bottom = 5
-border_color = Color(0.42, 0.08, 0.08, 1)
 
 [sub_resource type="StyleBoxFlat" id="Style_terminal_bg"]
 bg_color = Color(0.043, 0.051, 0.035, 1)
@@ -397,34 +380,32 @@ theme_override_colors/icon_hover_color = Color(0.871, 0.306, 0.137, 1)
 theme_override_colors/icon_pressed_color = Color(0.514, 0.133, 0.027, 1)
 theme_override_colors/icon_focus_color = Color(0.33, 0.24, 0.15, 1)
 
-[node name="SpacerBottom" type="Control" parent="WindowAnchor/WindowFrame/WindowVBox/WindowContent/LeftMenuPanel/Margin/VBox" unique_id=1002503397]
-layout_mode = 2
-size_flags_vertical = 3
-
 [node name="QuitGameBtn" type="Button" parent="WindowAnchor/WindowFrame/WindowVBox/WindowContent/LeftMenuPanel/Margin/VBox"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 52)
 layout_mode = 2
 focus_neighbor_top = NodePath("../TutorialBtn")
 focus_neighbor_bottom = NodePath("../StartCareerBtn")
 mouse_default_cursor_shape = 2
-theme_override_colors/font_color = Color(1, 1, 1, 1)
-theme_override_colors/font_pressed_color = Color(1, 0.88, 0.88, 1)
-theme_override_colors/font_hover_color = Color(1, 1, 1, 1)
+theme_override_colors/font_color = Color(0.75, 0.2, 0.2, 1)
+theme_override_colors/font_pressed_color = Color(0.5, 0.1, 0.1, 1)
+theme_override_colors/font_hover_color = Color(0.95, 0.25, 0.25, 1)
+theme_override_colors/font_focus_color = Color(0.75, 0.2, 0.2, 1)
 theme_override_fonts/font = ExtResource("8_font_chakra_bold")
-theme_override_font_sizes/font_size = 19
-theme_override_styles/normal = SubResource("Style_btn_quit_normal")
-theme_override_styles/pressed = SubResource("Style_btn_quit_pressed")
-theme_override_styles/hover = SubResource("Style_btn_quit_hover")
-text = "ปิดเกมส์"
+theme_override_font_sizes/font_size = 16
+flat = true
+text = "ออกจากเกม"
 icon = ExtResource("icon_power")
-icon_alignment = 2
+icon_alignment = 0
 texture_filter = 2
-theme_override_constants/icon_max_width = 22
-theme_override_colors/icon_normal_color = Color(1, 1, 1, 1)
-theme_override_colors/icon_hover_color = Color(1, 1, 1, 1)
-theme_override_colors/icon_pressed_color = Color(1, 0.88, 0.88, 1)
-theme_override_colors/icon_focus_color = Color(1, 1, 1, 1)
+theme_override_constants/icon_max_width = 18
+theme_override_colors/icon_normal_color = Color(0.75, 0.2, 0.2, 1)
+theme_override_colors/icon_hover_color = Color(0.95, 0.25, 0.25, 1)
+theme_override_colors/icon_pressed_color = Color(0.5, 0.1, 0.1, 1)
+theme_override_colors/icon_focus_color = Color(0.75, 0.2, 0.2, 1)
+
+[node name="SpacerBottom" type="Control" parent="WindowAnchor/WindowFrame/WindowVBox/WindowContent/LeftMenuPanel/Margin/VBox" unique_id=1002503397]
+layout_mode = 2
+size_flags_vertical = 3
 
 [node name="NavHintsContainer" type="VBoxContainer" parent="WindowAnchor/WindowFrame/WindowVBox/WindowContent/LeftMenuPanel/Margin/VBox" unique_id=405348502]
 layout_mode = 2
