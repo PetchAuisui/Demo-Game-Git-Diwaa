@@ -348,7 +348,7 @@ layout_mode = 2
 theme_override_colors/font_color = Color(0.25, 0.16, 0.02, 1)
 theme_override_fonts/font = SubResource("FontVariation_modal_reg")
 theme_override_font_sizes/font_size = 20
-text = "การตรวจสอบพลัง หมายถึง git --version"
+text = "การตรวจสอบพลังและตั้งค่าผู้ใช้งาน หมายถึง git --version และ git config"
 horizontal_alignment = 1
 
 [node name="HBoxButtons" type="HBoxContainer" parent="WindowPanel/VBoxMain/Margin/VBox"]

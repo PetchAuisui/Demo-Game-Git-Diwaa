@@ -12,7 +12,7 @@ static func get_data() -> Dictionary:
 		"time_limit": 130.0,
 		"max_score": 100,
 		"commands": ["git --version", "git config"],
-		"clear_keyword": "การตรวจสอบพลัง หมายถึง git --version",
+		"clear_keyword": "การตรวจสอบพลังและตั้งค่าผู้ใช้งาน หมายถึง git --version และ git config",
 
 		# ======================================================================
 		# 1. ขั้นสอน - ส่วนที่ 1: ตรวจสอบพลังเวท (git --version)
