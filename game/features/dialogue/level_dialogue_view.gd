@@ -690,7 +690,6 @@ func _show_single_dialogue(data: Dictionary, skip_typewriter: bool = false) -> v
 		if is_instance_valid(choice_slots_container):
 			choice_slots_container.visible = true
 	dialogue_label.visible = true
-	dialogue_label.remove_theme_font_size_override("normal_font_size")
 	speaker_label.visible = true
 	is_dialogue_active = true
 	_hide_continue_arrow()
@@ -1007,17 +1006,15 @@ func _display_choice_menu(menu_id: String) -> void:
 	var prompt_text: String = menu_info.get("prompt", "")
 	dialogue_label.visible = true
 	
-	if prompt_text == "เลือกข้อมูลที่ต้องการตรวจสอบก่อนเริ่มภารกิจ:" or prompt_text == "ตัวเลือกคำถาม" or prompt_text.is_empty():
+	if prompt_text.begins_with("เลือกข้อมูลที่ต้องการตรวจสอบก่อนเริ่มภารกิจ") or prompt_text == "ตัวเลือกคำถาม" or prompt_text.is_empty():
 		speaker_label.visible = false
 		speaker_label.text = ""
-		dialogue_label.text = "เลือกข้อมูลที่ต้องการตรวจสอบก่อนเริ่มภารกิจ:"
-		dialogue_label.add_theme_font_size_override("normal_font_size", 25)
+		dialogue_label.text = "\nเลือกข้อมูลที่ต้องการตรวจสอบก่อนเริ่มภารกิจ"
 	else:
 		speaker_label.visible = true
 		speaker_label.text = "มิวรา"
 		speaker_label.add_theme_color_override("font_color", Color(0.92, 0.80, 0.44, 1.0))
 		dialogue_label.text = prompt_text
-		dialogue_label.remove_theme_font_size_override("normal_font_size")
 		
 	dialogue_label.visible_ratio = 1.0
 	
