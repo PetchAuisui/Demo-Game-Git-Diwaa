@@ -108,9 +108,6 @@ func _ready() -> void:
 	_title_label.text = panel_title
 	for button in [_new_file_button, _new_folder_button]:
 		_fit_create_button_to_content(button)
-	# จองที่ 2 บรรทัดให้ข้อความสถานะเสมอ: ข้อความยาว (เช่น error) ขึ้นบรรทัดใหม่ได้โดยไม่ดันรายการลง
-	_feedback_label.custom_minimum_size.y = _feedback_label.get_line_height() * 2 \
-			+ _feedback_label.get_theme_constant("line_spacing")
 
 	_files_list.item_selected.connect(_on_item_selected)
 	_files_list.item_activated.connect(_on_item_activated)
