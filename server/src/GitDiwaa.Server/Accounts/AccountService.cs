@@ -1,0 +1,658 @@
+using System.Globalization;
+using GitDiwaa.Online.Accounts;
+using GitDiwaa.Online.Accounts.Contracts;
+using GitDiwaa.Server.Persistence;
+using GitDiwaa.Server.Security;
+
+namespace GitDiwaa.Server.Accounts;
+
+public sealed class AccountService
+{
+    private readonly IUserRepository _userRepository;
+    private readonly ISessionRepository _sessionRepository;
+    private readonly PasswordHasher _passwordHasher;
+    private readonly SessionTokenService _sessionTokenService;
+    private readonly TimeProvider _timeProvider;
+    private readonly AccountOptions _options;
+    private readonly IConsentRepository _consentRepository;
+
+    // ลองออกชื่อ player-<เลข> ได้กี่ครั้งถ้าบังเอิญชน (ปกติไม่ชน เพราะผู้เล่นตั้งชื่อรูปแบบนี้เองไม่ได้)
+    private const int MaxGeneratedNameAttempts = 5;
+
+    // ย้ายตัวชี้ตอนผ่อนผันแพ้คำขออื่นได้กี่รอบ (แพ้ 1 รอบ = มีคำขออื่นสำเร็จไป 1 คำขอ จึงจบแน่นอน)
+    // เกินนี้แปลว่ามีคำขอ refresh ใบเดียวกันพร้อมกันมากผิดปกติ ถือว่าไม่ผ่าน
+    private const int MaxRotationGraceAttempts = 32;
+
+    // logout ด้วย token ที่ถูกหมุนไปแล้ว: ไล่ยกเลิกใบที่มาแทนตามสายได้ไม่เกินกี่ขั้น (กันสายยาวผิดปกติ / วนกลับมาที่เดิม)
+    private const int MaxLogoutChainSteps = 32;
+
+    public AccountService(
+        IUserRepository userRepository,
+        ISessionRepository sessionRepository,
+        PasswordHasher passwordHasher,
+        SessionTokenService sessionTokenService,
+        TimeProvider timeProvider,
+        IConsentRepository consentRepository,
+        AccountOptions? options = null)
+    {
+        _userRepository = userRepository ?? throw new ArgumentNullException(nameof(userRepository));
+        _sessionRepository = sessionRepository ?? throw new ArgumentNullException(nameof(sessionRepository));
+        _passwordHasher = passwordHasher ?? throw new ArgumentNullException(nameof(passwordHasher));
+        _sessionTokenService = sessionTokenService ?? throw new ArgumentNullException(nameof(sessionTokenService));
+        _timeProvider = timeProvider ?? throw new ArgumentNullException(nameof(timeProvider));
+        _options = options ?? new AccountOptions();
+        // บังคับส่งเสมอ: ถ้าปล่อยให้สร้างตัวในหน่วยความจำเองได้ วันที่ลืมลงทะเบียนตัวฐานข้อมูลจริง
+        // หลักฐานความยินยอมจะหายตอน restart โดยไม่มี error บอก
+        _consentRepository = consentRepository ?? throw new ArgumentNullException(nameof(consentRepository));
+    }
+
+    public async Task<AccountResult<PlayerProfile>> RegisterAsync(RegisterRequest request, CancellationToken ct = default)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+
+        var validationErrors = AccountInputValidator.ValidateRegister(request);
+        if (validationErrors.Count > 0)
+        {
+            return AccountResult<PlayerProfile>.Failure(AuthErrorCode.ValidationFailed, validationErrors);
+        }
+
+        if (_options.RejectWeakPasswords &&
+            AccountInputValidator.ValidatePasswordStrength(request.Password, request.Username, request.Email) is { } weakPassword)
+        {
+            return AccountResult<PlayerProfile>.Failure(AuthErrorCode.ValidationFailed, [weakPassword]);
+        }
+
+        string normalizedUsername = AccountNormalizer.NormalizeUsername(request.Username);
+        string trimmedEmail = request.Email.Trim();
+        string normalizedEmail = AccountNormalizer.NormalizeEmail(request.Email);
+        bool generateDisplayName = string.IsNullOrWhiteSpace(request.DisplayName);
+
+        // ชื่อผู้ใช้ / อีเมลซ้ำแน่นอน: ตอบเลยโดยไม่คำนวณ hash (PBKDF2 กิน CPU หลายร้อย ms และใช้ช่องคิวเดียวกับ login)
+        // ตอบเหมือนตอนที่ TryAddAsync บอกว่าซ้ำทุกอย่าง และไม่บอกว่าช่องไหน
+        // เวลาตอบจะสั้นกว่าตอนไม่ซ้ำ แต่ไม่ได้บอกอะไรเพิ่ม เพราะ /register/check บอกอยู่แล้วว่าซ้ำไหม
+        // ยังต้องพึ่ง TryAddAsync ด้านล่างเสมอ: คนอื่นอาจสมัครตัดหน้าไประหว่างนี้
+        if (await _userRepository.FindByUsernameAsync(normalizedUsername, ct) is not null ||
+            await _userRepository.FindByEmailAsync(normalizedEmail, ct) is not null)
+        {
+            return AccountResult<PlayerProfile>.Failure(AuthErrorCode.IdentifierTaken);
+        }
+
+        string passwordHash = await _passwordHasher.HashAsync(request.Password, ct);
+        // ระหว่างรอคิว hash เกมอาจเลิกรอและตัดการเชื่อมต่อไปแล้ว (ct = คำขอถูกยกเลิก): ไม่สร้างบัญชีที่ผู้เล่นไม่รู้ว่าสร้างสำเร็จ
+        // ไม่งั้นกดสมัครซ้ำจะเจอ "ถูกใช้แล้ว" ทั้งที่เป็นบัญชีของตัวเอง
+        // กันได้เฉพาะกรณีที่ server รู้ทันว่าตัดไปแล้ว ถ้าตัดหลังจากนี้ เกมจะบอกผู้เล่นให้ลองเข้าสู่ระบบก่อน
+        ct.ThrowIfCancellationRequested();
+        DateTimeOffset now = _timeProvider.GetUtcNow();
+
+        UserRecord user;
+        UserAddResult addResult;
+        int attempt = 0;
+        do
+        {
+            // ไม่ได้ตั้งชื่อ: ใช้ player-<เลขลำดับ> ถ้าบังเอิญชน (เช่น ข้อมูลเก่า) ข้ามไปเลขถัดไป
+            string displayName = generateDisplayName
+                ? AccountRules.GeneratedDisplayNamePrefix +
+                  (await _userRepository.NextPlayerNumberAsync(ct)).ToString(CultureInfo.InvariantCulture)
+                : request.DisplayName!.Trim();
+
+            user = new UserRecord(
+                Id: Guid.NewGuid(),
+                Username: normalizedUsername,
+                Email: trimmedEmail,
+                EmailNormalized: normalizedEmail,
+                DisplayName: displayName,
+                DisplayNameKey: AccountNormalizer.NormalizeDisplayNameKey(displayName),
+                PasswordHash: passwordHash,
+                EmailVerifiedAt: null,
+                FailedLoginCount: 0,
+                LockoutUntil: null,
+                Status: UserStatus.Active,
+                CreatedAt: now,
+                UpdatedAt: now,
+                LastLoginAt: null,
+                LeaderboardOptIn: request.LeaderboardOptIn,
+                DisplayNameChangeCredits: AccountRules.InitialDisplayNameChanges);
+
+            addResult = await _userRepository.TryAddAsync(user, ct);
+            attempt++;
+        }
+        while (generateDisplayName && addResult == UserAddResult.DisplayNameTaken && attempt < MaxGeneratedNameAttempts);
+
+        if (addResult == UserAddResult.Added)
+        {
+            // บันทึกการตัดสินใจตอนสมัครเสมอ ทั้งยินยอมและไม่ยินยอม
+            await _consentRepository.AddAsync(
+                NewLeaderboardConsent(user.Id, request.LeaderboardOptIn, request.PolicyVersion, now), ct);
+        }
+        return addResult switch
+        {
+            UserAddResult.Added => AccountResult<PlayerProfile>.Success(new PlayerProfile(user.Id, user.Username, user.DisplayName)),
+            UserAddResult.IdentifierTaken => AccountResult<PlayerProfile>.Failure(AuthErrorCode.IdentifierTaken),
+            UserAddResult.DisplayNameTaken => AccountResult<PlayerProfile>.Failure(
+                AuthErrorCode.IdentifierTaken,
+                [new FieldError(AccountFields.DisplayName, FieldErrorReason.Taken)]),
+            _ => throw new InvalidOperationException($"Unexpected UserAddResult: {addResult}")
+        };
+    }
+
+    /// <summary>
+    /// ตรวจก่อนสมัครว่าใช้ชื่อผู้ใช้และอีเมลนี้ได้ไหม ไม่สร้างบัญชีและไม่บันทึกอะไร
+    /// ความปลอดภัย:
+    /// 1. ถ้ามีคนใช้แล้ว ตอบแค่ IdentifierTaken ไม่บอกว่าช่องไหน (เหมือนตอนสมัครจริง) ไม่ให้ใช้ไล่เช็คได้ง่ายว่าอีเมลไหนมีบัญชี
+    ///    และ endpoint นี้ถูกจำกัดจำนวนครั้งรวมกับ register / login
+    /// 2. ผลนี้ไม่ใช่การจอง ตอนสมัครจริง (RegisterAsync) ตรวจซ้ำเสมอ เพราะคนอื่นอาจสมัครตัดหน้าไประหว่างนั้น
+    /// </summary>
+    public async Task<AccountResult<bool>> CheckRegistrationAsync(RegisterCheckRequest request, CancellationToken ct = default)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+
+        var validationErrors = AccountInputValidator.ValidateRegisterCheck(request);
+        if (validationErrors.Count > 0)
+        {
+            return AccountResult<bool>.Failure(AuthErrorCode.ValidationFailed, validationErrors);
+        }
+
+        // ค้นทั้งสองอย่างทุกครั้ง (ไม่หยุดที่อันแรก) เวลาที่ใช้ตอบจะได้ไม่บอกใบ้ว่าช่องไหนซ้ำ
+        var byUsername = await _userRepository.FindByUsernameAsync(AccountNormalizer.NormalizeUsername(request.Username), ct);
+        var byEmail = await _userRepository.FindByEmailAsync(AccountNormalizer.NormalizeEmail(request.Email), ct);
+        if (byUsername is not null || byEmail is not null)
+        {
+            return AccountResult<bool>.Failure(AuthErrorCode.IdentifierTaken);
+        }
+
+        return AccountResult<bool>.Success(true);
+    }
+
+    /// <summary>
+    /// clientKey = ต้นทางของคำขอ (IP) ใช้นับการใส่รหัสผิดแยกตามต้นทาง ไม่ส่ง = นับรวมเป็นต้นทางเดียว
+    /// </summary>
+    public async Task<AccountResult<LoginSession>> LoginAsync(LoginRequest request, string? clientKey = null, CancellationToken ct = default)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+
+        var validationErrors = AccountInputValidator.ValidateLogin(request);
+        if (validationErrors.Count > 0)
+        {
+            return AccountResult<LoginSession>.Failure(AuthErrorCode.ValidationFailed, validationErrors);
+        }
+
+        DateTimeOffset now = _timeProvider.GetUtcNow();
+        string client = clientKey ?? string.Empty;
+
+        string normalizedIdentifier = AccountNormalizer.NormalizeIdentifier(request.Identifier);
+        UserRecord? user = AccountNormalizer.IsEmailIdentifier(request.Identifier)
+            ? await _userRepository.FindByEmailAsync(normalizedIdentifier, ct)
+            : await _userRepository.FindByUsernameAsync(normalizedIdentifier, ct);
+
+        // ไม่มีบัญชี / บัญชีถูกปิด / ถูกพักอยู่: ตอบเหมือนรหัสผิดทุกกรณี และยังคำนวณ hash หลอกให้ใช้เวลาเท่ากัน
+        if (user is null ||
+            user.Status != UserStatus.Active ||
+            await _userRepository.IsLoginLockedAsync(user.Id, client, now, ct))
+        {
+            await _passwordHasher.VerifyAsync(request.Password, _passwordHasher.DummyHash, ct);
+            return AccountResult<LoginSession>.Failure(AuthErrorCode.InvalidCredentials);
+        }
+
+        bool passwordMatches = await _passwordHasher.VerifyAsync(request.Password, user.PasswordHash, ct);
+        if (!passwordMatches)
+        {
+            // นับใน repository แบบ atomic: ถ้าอ่านค่ามาบวกเองตรงนี้ คำขอที่ยิงพร้อมกันจะอ่านได้ค่าเดียวกันแล้วเขียนทับกัน
+            // (ตรวจรหัสใช้เวลาหลายร้อย ms) ตัวนับไม่ถึงเกณฑ์สักที บัญชีเลยไม่ถูกพัก
+            var rules = new LoginLockoutRules(
+                _options.MaxFailedLoginAttempts,
+                _options.MaxFailedLoginAttemptsPerAccount,
+                _options.LockoutDuration);
+            await _userRepository.RecordFailedLoginAsync(user.Id, client, now, rules, ct);
+            return AccountResult<LoginSession>.Failure(AuthErrorCode.InvalidCredentials);
+        }
+
+        // ระหว่างตรวจรหัส มีคำขออื่นทำให้ถูกพักไปแล้ว: รหัสถูกก็ยังไม่ให้เข้า (ไม่อย่างนั้นยิงพร้อมกันจะเดาได้เกินโควตา)
+        if (await _userRepository.IsLoginLockedAsync(user.Id, client, now, ct))
+        {
+            return AccountResult<LoginSession>.Failure(AuthErrorCode.InvalidCredentials);
+        }
+
+        string? upgradedPasswordHash = _passwordHasher.NeedsRehash(user.PasswordHash)
+            ? await _passwordHasher.HashAsync(request.Password, ct)
+            : null;
+        await _userRepository.RecordSuccessfulLoginAsync(user.Id, client, upgradedPasswordHash, now, ct);
+
+        TimeSpan sessionLifetime = request.RememberMe
+            ? _options.PersistentSessionLifetime
+            : _options.ShortSessionLifetime;
+
+        DateTimeOffset expiresAt = now.Add(sessionLifetime);
+        IssuedToken issuedToken = _sessionTokenService.CreateToken();
+
+        var sessionRecord = new SessionRecord(
+            Id: Guid.NewGuid(),
+            UserId: user.Id,
+            TokenHash: issuedToken.TokenHash,
+            IsPersistent: request.RememberMe,
+            CreatedAt: now,
+            ExpiresAt: expiresAt,
+            LastUsedAt: now,
+            RevokedAt: null,
+            FamilyId: Guid.NewGuid());  // ล็อกอินใหม่ = เริ่มสาย token ใหม่
+
+        await _sessionRepository.AddAsync(sessionRecord, ct);
+
+        var profile = new PlayerProfile(user.Id, user.Username, user.DisplayName);
+        var loginSession = new LoginSession(profile, issuedToken.Token, expiresAt);
+
+        return AccountResult<LoginSession>.Success(loginSession);
+    }
+
+    public async Task<AccountResult<AuthenticatedSession>> ValidateSessionAsync(string? token, CancellationToken ct = default)
+    {
+        DateTimeOffset now = _timeProvider.GetUtcNow();
+
+        if (!_sessionTokenService.TryHashToken(token, out string tokenHash))
+        {
+            return AccountResult<AuthenticatedSession>.Failure(AuthErrorCode.InvalidCredentials);
+        }
+
+        var session = await _sessionRepository.FindByTokenHashAsync(tokenHash, ct);
+        if (session is null)
+        {
+            return AccountResult<AuthenticatedSession>.Failure(AuthErrorCode.InvalidCredentials);
+        }
+
+        if (session.RevokedAt is not null)
+        {
+            return AccountResult<AuthenticatedSession>.Failure(AuthErrorCode.InvalidCredentials);
+        }
+
+        if (session.ExpiresAt <= now)
+        {
+            return AccountResult<AuthenticatedSession>.Failure(AuthErrorCode.InvalidCredentials);
+        }
+
+        var user = await _userRepository.FindByIdAsync(session.UserId, ct);
+        if (user is null || user.Status != UserStatus.Active)
+        {
+            return AccountResult<AuthenticatedSession>.Failure(AuthErrorCode.InvalidCredentials);
+        }
+
+        // Atomic touch: does not overwrite RevokedAt
+        await _sessionRepository.TouchAsync(session.Id, now, ct);
+
+        var profile = new PlayerProfile(user.Id, user.Username, user.DisplayName);
+        return AccountResult<AuthenticatedSession>.Success(new AuthenticatedSession(session.Id, profile));
+    }
+
+    public async Task<AccountResult<LoginSession>> RefreshAsync(string? token, CancellationToken ct = default)
+    {
+        DateTimeOffset now = _timeProvider.GetUtcNow();
+
+        if (!_sessionTokenService.TryHashToken(token, out string tokenHash))
+        {
+            return AccountResult<LoginSession>.Failure(AuthErrorCode.InvalidCredentials);
+        }
+
+        var session = await _sessionRepository.FindByTokenHashAsync(tokenHash, ct);
+        if (session is null)
+        {
+            return AccountResult<LoginSession>.Failure(AuthErrorCode.InvalidCredentials);
+        }
+
+        // token ใบนี้ถูกยกเลิกไปแล้ว: ถ้าเพิ่งถูกหมุนและยังอยู่ในช่วงผ่อนผัน ถือเป็นการลองใหม่ตามปกติ
+        // นอกนั้นถือว่า token ถูกขโมย ตัดทั้งสายของเครื่องนั้น (ทุกใบที่ refresh ต่อกันมาจากการล็อกอินครั้งเดียวกัน)
+        // ไม่ตัดการล็อกอินจากเครื่องอื่น: คำตอบ refresh หายครั้งเดียวจะไม่ทำให้ผู้เล่นหลุดทุกเครื่อง
+        bool alreadyRotated = session.RevokedAt is not null;
+        if (alreadyRotated && await FindGraceSuccessorAsync(session.Id, now, ct) is null)
+        {
+            await RevokeTokenFamilyAsync(session, now, ct);
+            return AccountResult<LoginSession>.Failure(AuthErrorCode.InvalidCredentials);
+        }
+
+        if (session.ExpiresAt <= now)
+        {
+            return AccountResult<LoginSession>.Failure(AuthErrorCode.InvalidCredentials);
+        }
+
+        var user = await _userRepository.FindByIdAsync(session.UserId, ct);
+        if (user is null || user.Status != UserStatus.Active)
+        {
+            return AccountResult<LoginSession>.Failure(AuthErrorCode.InvalidCredentials);
+        }
+
+        TimeSpan sessionLifetime = session.IsPersistent
+            ? _options.PersistentSessionLifetime
+            : _options.ShortSessionLifetime;
+
+        DateTimeOffset newExpiresAt = now.Add(sessionLifetime);
+        IssuedToken newIssuedToken = _sessionTokenService.CreateToken();
+
+        var newSessionRecord = new SessionRecord(
+            Id: Guid.NewGuid(),
+            UserId: user.Id,
+            TokenHash: newIssuedToken.TokenHash,
+            IsPersistent: session.IsPersistent,
+            CreatedAt: now,
+            ExpiresAt: newExpiresAt,
+            LastUsedAt: now,
+            RevokedAt: null,
+            FamilyId: session.FamilyId);  // ต่ออายุ = อยู่สายเดิม
+
+        // เพิ่ม session ใหม่ก่อน แล้วค่อยหมุนใบเก่า: คำขอที่เข้ามาพร้อมกันจะหา session ที่มาแทนเจอเสมอตอนตรวจช่วงผ่อนผัน
+        await _sessionRepository.AddAsync(newSessionRecord, ct);
+
+        // ทางปกติ: หมุนใบเก่า (atomic: ชนะได้คำขอเดียว)
+        // ไม่ชนะ = ใบเก่าถูกหมุนไปแล้ว (ก่อนหน้านี้ หรือโดยคำขอที่เข้ามาพร้อมกัน) หรือถูกยกเลิกไประหว่างนี้:
+        // ให้ผ่านได้เฉพาะเมื่อยังอยู่ในช่วงผ่อนผัน โดยย้ายตัวชี้ของใบเก่ามาที่ session ใหม่นี้
+        bool rotatedNow = !alreadyRotated &&
+                          await _sessionRepository.TryRotateAsync(session.Id, newSessionRecord.Id, now, ct);
+
+        // แพ้การแข่งหมุนใบเดียวกัน (ใบเก่ายังไม่เคยถูกหมุนตอนอ่าน แต่มีคำขออื่นหมุนตัดหน้าไปแล้ว):
+        // คำขอที่ชนะเพิ่งตอบ token ใบใหม่ออกไป (ยังไม่เคยถูกใช้) ห้ามเข้าทางผ่อนผัน เพราะทางนั้นจะยกเลิกใบของคำขอที่ชนะ
+        // ทำให้คนแรกได้ 200 แต่ token ใช้ไม่ได้ (และถ้าใช้ต่อก็โดนตัดทั้งสาย)
+        // ให้คำขอที่แพ้ล้มเหลวเงียบๆ: ยกเลิกเฉพาะ session ที่เพิ่งสร้างของตัวเอง ไม่แตะใบของผู้ชนะและไม่ตัดทั้งสาย
+        // ข้อจำกัด: คำขอที่มาถึงหลังผู้ชนะหมุนเสร็จแล้ว (อ่านเจอว่าถูกหมุนแล้ว) แยกจาก "คำตอบหายแล้วลองใหม่" ไม่ได้
+        // จึงยังเข้าทางผ่อนผันและยกเลิกใบที่ยังไม่เคยถูกใช้ตามเดิม (ต้องทำแบบนั้นเพื่อให้ลองใหม่หลังคำตอบหายได้)
+        if (!rotatedNow && !alreadyRotated)
+        {
+            await _sessionRepository.TryRevokeAsync(newSessionRecord.Id, now, ct);
+            return AccountResult<LoginSession>.Failure(AuthErrorCode.InvalidCredentials);
+        }
+
+        if (!rotatedNow && !await TryGrantRotationGraceAsync(session.Id, newSessionRecord.Id, now, ct))
+        {
+            // ตัดทั้งสายของเครื่องนั้น (รวม session ใหม่ที่เพิ่งเพิ่มไว้ด้านบน ซึ่งอยู่สายเดียวกัน)
+            await RevokeTokenFamilyAsync(session, now, ct);
+            return AccountResult<LoginSession>.Failure(AuthErrorCode.InvalidCredentials);
+        }
+
+        var profile = new PlayerProfile(user.Id, user.Username, user.DisplayName);
+        var loginSession = new LoginSession(profile, newIssuedToken.Token, newExpiresAt);
+
+        return AccountResult<LoginSession>.Success(loginSession);
+    }
+
+    /// <summary>
+    /// ใบเก่าถูกใช้ซ้ำ: ตัดทั้งสายของเครื่องนั้น (session ที่ไม่มีสาย = ข้อมูลก่อนมีสาย ใช้วิธีเดิม ตัดทุก session ของผู้ใช้)
+    /// </summary>
+    private Task RevokeTokenFamilyAsync(SessionRecord session, DateTimeOffset now, CancellationToken ct) =>
+        session.FamilyId == Guid.Empty
+            ? _sessionRepository.RevokeAllForUserAsync(session.UserId, now, ct)
+            : _sessionRepository.RevokeFamilyAsync(session.FamilyId, now, ct);
+
+    /// <summary>
+    /// token ใบเก่าที่ถูกหมุนไปแล้ว ยังอยู่ในช่วงผ่อนผันไหม ต้องครบทุกข้อ:
+    /// 1. ถูกยกเลิกเพราะ refresh (ไม่ใช่ logout / ถูกตัดทั้งสาย)
+    /// 2. เพิ่งถูกหมุนไม่เกิน RefreshReuseGracePeriod
+    /// 3. session ที่มาแทนยังใช้ได้อยู่: ถ้าผู้เล่น logout ไปแล้ว หรือสายถูกตัดไปแล้ว ใบเก่าต้องใช้ไม่ได้ทันที
+    /// 4. session ที่มาแทนยังไม่เคยถูกใช้เลย: ยังไม่ถูกใช้ = คำตอบ refresh อาจหายกลางทางจริง
+    ///    ถูกใช้แล้ว = เจ้าของได้ใบใหม่ไปแล้ว คนที่เอาใบเก่ามาใช้คือคนที่ขโมยไป
+    ///    (ValidateSessionAsync ตั้ง FirstUsedAt ตอนใบใหม่ถูกใช้เรียก endpoint ครั้งแรก)
+    /// มีไว้กรณีเดียว: คำตอบ refresh หายกลางทางแล้วเกมลองใหม่
+    /// (เปิดเกม 2 หน้าต่างไม่ได้อาศัยช่วงนี้: เกมอ่าน token ใบใหม่จากไฟล์จดจำก่อนจะ refresh เอง)
+    /// ช่องที่ยังเหลือ:
+    /// - คนที่ขโมยใบเก่าแล้วยิงก่อนที่ใบใหม่จะถูกใช้ครั้งแรก ยังได้ session โดยไม่ถูกจับ (แต่ใบของเจ้าของจะถูกยกเลิก
+    ///   เจ้าของจึงหลุดและรู้ตัว) ปิดไม่ได้ตราบที่มีช่วงผ่อนผัน (ตั้ง RefreshReuseGracePeriod เป็นศูนย์ = ไม่ผ่อนผันเลย)
+    /// - เกม 2 หน้าต่าง refresh ใบเดียวกันพร้อมกันพอดี: คำขอที่แพ้การแข่งหมุนได้ 401 (ไม่ตัดสาย) ใบของคำขอที่ชนะยังใช้ได้
+    ///   แต่ถ้าคำขอที่สองมาถึงหลังผู้ชนะหมุนเสร็จ จะเข้าทางผ่อนผัน (เหมือนลองใหม่หลังคำตอบหาย) และยกเลิกใบของผู้ชนะที่ยังไม่ถูกใช้
+    /// </summary>
+    private async Task<bool> IsWithinRotationGraceAsync(SessionRecord session, DateTimeOffset now, CancellationToken ct)
+    {
+        if (_options.RefreshReuseGracePeriod <= TimeSpan.Zero ||
+            session.RotatedAt is not { } rotatedAt ||
+            session.ReplacedBySessionId is not { } replacedBy ||
+            now - rotatedAt > _options.RefreshReuseGracePeriod)
+        {
+            return false;
+        }
+
+        var successor = await _sessionRepository.FindByIdAsync(replacedBy, ct);
+        return successor is not null
+            && successor.RevokedAt is null
+            && successor.FirstUsedAt is null;
+    }
+
+    /// <summary>
+    /// ผ่อนผันให้ใบเก่าที่ถูกหมุนไปแล้ว: ถ้ายังอยู่ในช่วงผ่อนผัน ย้ายตัวชี้ "session ที่มาแทน" ของใบเก่ามาที่ session ใหม่
+    /// และยกเลิกใบที่มาแทนก่อนหน้า (ที่ยังไม่เคยถูกใช้) ในขั้นตอน atomic เดียวกัน
+    /// ผล: ใบเก่า 1 ใบ มี session ที่งอกจากการผ่อนผันใช้ได้พร้อมกันแค่ใบเดียวเสมอ ยิงใบเก่าซ้ำกี่ครั้งก็ไม่ได้ session เพิ่ม
+    /// และพอผู้เล่นใช้ใบที่ได้ ใบเก่าจะต่ออายุไม่ได้อีก
+    /// ถ้าคำขออื่นย้ายตัวชี้ไปก่อน จะอ่านใหม่แล้วตรวจเงื่อนไขกับใบล่าสุดอีกครั้ง
+    /// ถ้าใบที่มาแทนถูกใช้ไประหว่างนี้ = ไม่ผ่อนผัน (ผู้เรียกจะตัดทั้งสายของเครื่องนั้น)
+    /// </summary>
+    private async Task<bool> TryGrantRotationGraceAsync(Guid sessionId, Guid newSessionId, DateTimeOffset now, CancellationToken ct)
+    {
+        for (int attempt = 0; attempt < MaxRotationGraceAttempts; attempt++)
+        {
+            if (await FindGraceSuccessorAsync(sessionId, now, ct) is not { } currentSuccessor)
+            {
+                return false;
+            }
+
+            if (await _sessionRepository.TryReplaceSuccessorAsync(sessionId, currentSuccessor, newSessionId, now, ct))
+            {
+                return true;
+            }
+            // ไม่สำเร็จ: คำขออื่นย้ายตัวชี้ไปก่อน (วนตรวจกับใบล่าสุดอีกรอบ) หรือใบที่มาแทนถูกใช้ไปแล้ว (รอบหน้าจะได้ null)
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// ใบเก่ายังอยู่ในช่วงผ่อนผันไหม โดยตรวจกับ session ที่มาแทน "ใบล่าสุด" คืน id ของใบนั้น หรือ null ถ้าไม่ผ่อนผัน
+    /// อ่านใบเก่าใหม่ทุกครั้ง และถ้าตรวจไม่ผ่านเพราะคำขออื่นเพิ่งย้ายตัวชี้ไประหว่างที่ตรวจ (ใบที่ตรวจอยู่เลยถูกยกเลิก)
+    /// จะตรวจซ้ำกับใบใหม่ ไม่ตัดสินจากข้อมูลที่อ่านไว้ก่อนหน้า ไม่อย่างนั้นการลองใหม่ที่ซ้อนกันจะถูกมองว่าขโมย
+    /// </summary>
+    private async Task<Guid?> FindGraceSuccessorAsync(Guid sessionId, DateTimeOffset now, CancellationToken ct)
+    {
+        for (int attempt = 0; attempt < MaxRotationGraceAttempts; attempt++)
+        {
+            var latest = await _sessionRepository.FindByIdAsync(sessionId, ct);
+            if (latest?.ReplacedBySessionId is not { } successorId)
+            {
+                return null;
+            }
+
+            if (await IsWithinRotationGraceAsync(latest, now, ct))
+            {
+                return successorId;
+            }
+
+            var recheck = await _sessionRepository.FindByIdAsync(sessionId, ct);
+            if (recheck?.ReplacedBySessionId == successorId)
+            {
+                return null;  // ตัวชี้ไม่ได้เปลี่ยน: ไม่ผ่านจริง
+            }
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// เปลี่ยนชื่อที่แสดงของผู้ใช้ที่ login อยู่ (userId ต้องมาจาก session ที่ตรวจแล้วเท่านั้น ห้ามรับจาก request)
+    /// สำเร็จ: Value คือโปรไฟล์ใหม่ + เวลาที่เปลี่ยนได้อีกครั้ง
+    /// ยังไม่ครบกำหนด: Error = DisplayNameChangeCooldown และ Value บอกเวลาที่เปลี่ยนได้อีกครั้ง
+    /// </summary>
+    public async Task<AccountResult<ChangeDisplayNameResponse>> ChangeDisplayNameAsync(
+        Guid userId,
+        ChangeDisplayNameRequest request,
+        CancellationToken ct = default)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+
+        var validationErrors = AccountInputValidator.ValidateChangeDisplayName(request);
+        if (validationErrors.Count > 0)
+        {
+            return AccountResult<ChangeDisplayNameResponse>.Failure(AuthErrorCode.ValidationFailed, validationErrors);
+        }
+
+        DateTimeOffset now = _timeProvider.GetUtcNow();
+        string trimmedDisplayName = request.DisplayName.Trim();
+        string displayNameKey = AccountNormalizer.NormalizeDisplayNameKey(request.DisplayName);
+
+        var user = await _userRepository.FindByIdAsync(userId, ct);
+        if (user is null || user.Status != UserStatus.Active)
+        {
+            return AccountResult<ChangeDisplayNameResponse>.Failure(AuthErrorCode.InvalidCredentials);
+        }
+
+        // ชื่อเดิมทุกตัวอักษร: ไม่ต้องเปลี่ยน และไม่นับเป็นการใช้สิทธิ์เปลี่ยนชื่อ
+        if (string.Equals(user.DisplayName, trimmedDisplayName, StringComparison.Ordinal))
+        {
+            return AccountResult<ChangeDisplayNameResponse>.Success(ToChangeResponse(user, now));
+        }
+
+        var outcome = await _userRepository.TryChangeDisplayNameAsync(
+            userId,
+            trimmedDisplayName,
+            displayNameKey,
+            now,
+            _options.DisplayNameChangeCooldown,
+            ct);
+
+        return outcome.Result switch
+        {
+            DisplayNameChangeResult.Changed when outcome.User is not null =>
+                AccountResult<ChangeDisplayNameResponse>.Success(ToChangeResponse(outcome.User, now)),
+            DisplayNameChangeResult.CooldownActive when outcome.User is not null =>
+                new AccountResult<ChangeDisplayNameResponse>(
+                    ToChangeResponse(outcome.User, now),
+                    AuthErrorCode.DisplayNameChangeCooldown,
+                    []),
+            DisplayNameChangeResult.DisplayNameTaken =>
+                AccountResult<ChangeDisplayNameResponse>.Failure(
+                    AuthErrorCode.IdentifierTaken,
+                    [new FieldError(AccountFields.DisplayName, FieldErrorReason.Taken)]),
+            DisplayNameChangeResult.UserNotFound =>
+                AccountResult<ChangeDisplayNameResponse>.Failure(AuthErrorCode.InvalidCredentials),
+            _ => throw new InvalidOperationException($"Unexpected DisplayNameChangeResult: {outcome.Result}")
+        };
+    }
+
+    /// <summary>
+    /// สถานะชื่อที่แสดงตอนนี้ (ชื่อ, เปลี่ยนได้อีกกี่ครั้ง, เปลี่ยนได้อีกเมื่อไหร่) สำหรับหน้าบัญชี
+    /// </summary>
+    public async Task<AccountResult<ChangeDisplayNameResponse>> GetDisplayNameStatusAsync(
+        Guid userId,
+        CancellationToken ct = default)
+    {
+        var user = await _userRepository.FindByIdAsync(userId, ct);
+        if (user is null || user.Status != UserStatus.Active)
+        {
+            return AccountResult<ChangeDisplayNameResponse>.Failure(AuthErrorCode.InvalidCredentials);
+        }
+
+        return AccountResult<ChangeDisplayNameResponse>.Success(ToChangeResponse(user, _timeProvider.GetUtcNow()));
+    }
+
+    /// <summary>
+    /// อีเมลของผู้ใช้คนนี้ (userId มาจาก session เท่านั้น ขอของคนอื่นไม่ได้)
+    /// </summary>
+    public async Task<AccountResult<MyEmailResponse>> GetEmailAsync(Guid userId, CancellationToken ct = default)
+    {
+        var user = await _userRepository.FindByIdAsync(userId, ct);
+        if (user is null || user.Status != UserStatus.Active)
+        {
+            return AccountResult<MyEmailResponse>.Failure(AuthErrorCode.InvalidCredentials);
+        }
+
+        return AccountResult<MyEmailResponse>.Success(new MyEmailResponse(user.Email));
+    }
+
+    private ChangeDisplayNameResponse ToChangeResponse(UserRecord user, DateTimeOffset now)
+    {
+        TimeSpan cooldown = _options.DisplayNameChangeCooldown;
+        var profile = new PlayerProfile(user.Id, user.Username, user.DisplayName);
+        return new ChangeDisplayNameResponse(
+            profile,
+            user.NextDisplayNameChangeAt(now, cooldown),
+            user.AvailableDisplayNameChanges(now, cooldown));
+    }
+
+    public async Task<AccountResult<LeaderboardConsentResponse>> GetLeaderboardConsentAsync(
+        Guid userId,
+        CancellationToken ct = default)
+    {
+        var user = await _userRepository.FindByIdAsync(userId, ct);
+        if (user is null || user.Status != UserStatus.Active)
+        {
+            return AccountResult<LeaderboardConsentResponse>.Failure(AuthErrorCode.InvalidCredentials);
+        }
+
+        return AccountResult<LeaderboardConsentResponse>.Success(new LeaderboardConsentResponse(user.LeaderboardOptIn));
+    }
+
+    /// <summary>
+    /// ให้หรือถอนความยินยอมแสดงชื่อบนตารางอันดับ (ถอนได้ง่ายเท่ากับให้ ตาม PDPA) และบันทึกหลักฐานทุกครั้ง
+    /// userId ต้องมาจาก session ที่ตรวจแล้วเท่านั้น
+    /// </summary>
+    public async Task<AccountResult<LeaderboardConsentResponse>> SetLeaderboardConsentAsync(
+        Guid userId,
+        LeaderboardConsentRequest request,
+        CancellationToken ct = default)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+
+        var validationErrors = AccountInputValidator.ValidateLeaderboardConsent(request);
+        if (validationErrors.Count > 0)
+        {
+            return AccountResult<LeaderboardConsentResponse>.Failure(AuthErrorCode.ValidationFailed, validationErrors);
+        }
+
+        var existing = await _userRepository.FindByIdAsync(userId, ct);
+        if (existing is null || existing.Status != UserStatus.Active)
+        {
+            return AccountResult<LeaderboardConsentResponse>.Failure(AuthErrorCode.InvalidCredentials);
+        }
+
+        DateTimeOffset now = _timeProvider.GetUtcNow();
+        var updated = await _userRepository.TrySetLeaderboardOptInAsync(userId, request.Granted, now, ct);
+        if (updated is null)
+        {
+            return AccountResult<LeaderboardConsentResponse>.Failure(AuthErrorCode.InvalidCredentials);
+        }
+
+        await _consentRepository.AddAsync(NewLeaderboardConsent(userId, request.Granted, request.PolicyVersion, now), ct);
+        return AccountResult<LeaderboardConsentResponse>.Success(new LeaderboardConsentResponse(updated.LeaderboardOptIn));
+    }
+
+    private static ConsentRecord NewLeaderboardConsent(Guid userId, bool granted, string? policyVersion, DateTimeOffset now) =>
+        new(
+            Id: Guid.NewGuid(),
+            UserId: userId,
+            Purpose: ConsentPurposes.LeaderboardDisplay,
+            PolicyVersion: policyVersion ?? "unspecified",
+            Granted: granted,
+            RecordedAt: now);
+
+    public async Task LogoutAsync(string? token, CancellationToken ct = default)
+    {
+        DateTimeOffset now = _timeProvider.GetUtcNow();
+
+        if (!_sessionTokenService.TryHashToken(token, out string tokenHash))
+        {
+            return;
+        }
+
+        var session = await _sessionRepository.FindByTokenHashAsync(tokenHash, ct);
+        if (session is null)
+        {
+            return;
+        }
+
+        await _sessionRepository.TryRevokeAsync(session.Id, now, ct);
+
+        // token ใบนี้เคยถูกหมุนไปแล้ว (เช่น เกมถือใบเก่าเพราะคำตอบ refresh หาย): ผู้เล่นตั้งใจออกจากระบบ
+        // จึงยกเลิกใบที่มาแทนตามสายไปจนถึงใบล่าสุดด้วย ไม่ทิ้ง session ที่ยังใช้ได้ค้างไว้บน server
+        Guid? nextId = session.ReplacedBySessionId;
+        for (int step = 0; nextId is { } successorId && step < MaxLogoutChainSteps; step++)
+        {
+            var successor = await _sessionRepository.FindByIdAsync(successorId, ct);
+            if (successor is null || successor.UserId != session.UserId)
+            {
+                break;
+            }
+
+            await _sessionRepository.TryRevokeAsync(successor.Id, now, ct);
+            nextId = successor.ReplacedBySessionId;
+        }
+    }
+}

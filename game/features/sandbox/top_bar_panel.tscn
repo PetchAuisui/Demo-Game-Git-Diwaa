@@ -1,9 +1,10 @@
-[gd_scene load_steps=10 format=3]
+[gd_scene load_steps=11 format=3]
 
 [ext_resource type="Script" path="res://features/sandbox/top_bar_panel.gd" id="1_script"]
 [ext_resource type="FontFile" uid="uid://deedcfbkojx6k" path="res://assets/fonts/ChakraPetch-Bold.ttf" id="3_font_bold"]
 [ext_resource type="FontFile" path="res://assets/fonts/TA-8-bit.ttf" id="4_font_ta8bit"]
 [ext_resource type="PackedScene" path="res://common/brand_button.tscn" id="5_brand_btn"]
+[ext_resource type="PackedScene" path="res://features/auth/account_menu.tscn" id="6_account_menu"]
 [ext_resource type="Texture2D" uid="uid://d1ljd15ngmog5" path="res://assets/icons/ui_clock.svg" id="6_clock_icon"]
 
 [sub_resource type="StyleBoxFlat" id="Style_topbar"]
@@ -157,3 +158,7 @@ theme_override_styles/normal = SubResource("Style_btn_finish")
 theme_override_styles/hover = SubResource("Style_btn_finish_hover")
 theme_override_styles/pressed = SubResource("Style_btn_finish_hover")
 text = "กลับหน้าเลือกด่าน"
+
+[node name="AccountMenu" parent="TopMargin/Header" instance=ExtResource("6_account_menu")]
+layout_mode = 2
+confirm_sign_out = true

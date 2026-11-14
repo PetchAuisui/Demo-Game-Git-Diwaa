@@ -1,6 +1,7 @@
 [gd_scene format=3 uid="uid://b7qm4kvl1dr01"]
 
 [ext_resource type="Script" uid="uid://bi4mmo3m201yb" path="res://features/start/dressing_room_view_controller.gd" id="1_controller"]
+[ext_resource type="PackedScene" path="res://features/auth/account_menu.tscn" id="90_account_menu"]
 [ext_resource type="FontFile" uid="uid://deedcfbkojx6k" path="res://assets/fonts/ChakraPetch-Bold.ttf" id="2_font_bold"]
 [ext_resource type="FontFile" uid="uid://c82lda4ldw0ve" path="res://assets/fonts/ChakraPetch-Regular.ttf" id="3_font_reg"]
 [ext_resource type="Texture2D" uid="uid://don4qpk4c43rc" path="res://assets/cutscene/characters/vel/vel_Hblue_Sredyellow_idle.png" id="5_vel_front"]
@@ -261,6 +262,9 @@ vertical_alignment = 1
 [node name="Spacer" type="Control" parent="TopBar/TopHBox"]
 layout_mode = 2
 size_flags_horizontal = 3
+
+[node name="AccountMenu" parent="TopBar/TopHBox" instance=ExtResource("90_account_menu")]
+layout_mode = 2
 
 [node name="MainMargin" type="MarginContainer" parent="."]
 layout_mode = 1

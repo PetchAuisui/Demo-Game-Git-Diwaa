@@ -6,7 +6,15 @@ Library/
 .DS_Store
 git-workspaces/
 TestResults/
+# Auth: local secrets, certificates and databases (never commit)
+.env
+.env.*
+!.env.example
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+*.pfx
+*.key
 [Bb]in/
 [Oo]bj/
-
-
