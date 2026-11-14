@@ -203,7 +203,8 @@ func _ready() -> void:
 	# โหลดข้อมูลด่าน
 	_load_level_data(level_number)
 	
-	if play_entrance_cutscene:
+	if play_entrance_cutscene or (level_number == 1 and debug_phase == 0):
+		play_entrance_cutscene = true
 		# เริ่มต้นในโหมดคัตซีนเดินเข้าห้องโถง
 		is_in_entrance_cutscene = true
 		fade_overlay.visible = true
