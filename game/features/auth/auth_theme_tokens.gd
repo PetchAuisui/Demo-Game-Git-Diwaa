@@ -31,10 +31,16 @@ const TOGGLE_ICON := Color.WHITE
 const TOGGLE_BG := Color("4a3b2c")
 const TOGGLE_HOVER_BG := Color("5c4a37")
 
-# --- Error Feedback ---
+# --- Error Feedback & Danger ---
 const ERROR_TEXT := Color("a82828")
 # สีข้อความแจ้งผลสำเร็จ เช่น "สมัครสมาชิกสำเร็จ"
 const SUCCESS_TEXT := Color("2e6b34")
+
+# --- Danger Button (ออกจากระบบ / การกระทำที่มีความเสี่ยง) ---
+const BUTTON_DANGER_BG := Color("b83232")
+const BUTTON_DANGER_HOVER_BG := Color("cc3b3b")
+const BUTTON_DANGER_PRESSED_BG := Color("9e2727")
+const BUTTON_DANGER_TEXT := Color.WHITE
 
 
 static func create_input_style(border_color: Color = INPUT_BORDER) -> StyleBoxFlat:
@@ -60,6 +66,17 @@ static func style_button(btn: Button, normal: Color = BUTTON_BG, hover: Color = 
 	btn.add_theme_stylebox_override("disabled", create_button_style(BUTTON_DISABLED_BG))
 	for color_name in ["font_color", "font_hover_color", "font_pressed_color", "font_focus_color"]:
 		btn.add_theme_color_override(color_name, BUTTON_TEXT)
+	btn.add_theme_color_override("font_disabled_color", BUTTON_DISABLED_TEXT)
+
+
+## จัดสีปุ่มประเภทอันตราย (Danger / Sign Out) ให้เป็นสีแดงโดดเด่นและตัวหนังสือสีขาว
+static func style_danger_button(btn: Button) -> void:
+	btn.add_theme_stylebox_override("normal", create_button_style(BUTTON_DANGER_BG))
+	btn.add_theme_stylebox_override("hover", create_button_style(BUTTON_DANGER_HOVER_BG))
+	btn.add_theme_stylebox_override("pressed", create_button_style(BUTTON_DANGER_PRESSED_BG))
+	btn.add_theme_stylebox_override("disabled", create_button_style(BUTTON_DISABLED_BG))
+	for color_name in ["font_color", "font_hover_color", "font_pressed_color", "font_focus_color"]:
+		btn.add_theme_color_override(color_name, BUTTON_DANGER_TEXT)
 	btn.add_theme_color_override("font_disabled_color", BUTTON_DISABLED_TEXT)
 
 

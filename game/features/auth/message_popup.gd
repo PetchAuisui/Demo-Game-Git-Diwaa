@@ -59,7 +59,10 @@ func _ready() -> void:
 	(get_node("%MessageLabel") as Label).text = _message
 
 	var ok_btn := get_node("%OkBtn") as Button
-	AuthThemeTokens.style_button(ok_btn)
+	if _ok_text == "ออกจากระบบ" or _ok_text.begins_with("ออกจาก"):
+		AuthThemeTokens.style_danger_button(ok_btn)
+	else:
+		AuthThemeTokens.style_button(ok_btn)
 	ok_btn.text = _ok_text
 	ok_btn.pressed.connect(_finish.bind(true))
 

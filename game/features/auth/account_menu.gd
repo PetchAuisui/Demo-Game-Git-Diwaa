@@ -264,7 +264,7 @@ func _apply_theme() -> void:
 	for icon_color in ["icon_normal_color", "icon_hover_color", "icon_pressed_color", "icon_hover_pressed_color", "icon_focus_color"]:
 		_reveal_btn.add_theme_color_override(icon_color, AuthThemeTokens.TEXT_MUTED)
 
-	# ปุ่มหลัก (จัดการบัญชี) สีทอง / ปุ่มรอง (ออกจากระบบ) สีอ่อน
+	# ปุ่มหลัก (จัดการบัญชี) สีทอง / ปุ่มออกจากระบบ สีแดง
 	AuthThemeTokens.style_button(_manage_btn)
 	AuthThemeTokens.style_button(_reconnect_btn)
-	AuthThemeTokens.style_button(_sign_out_btn, AuthThemeTokens.INPUT_BG, Color.WHITE, AuthThemeTokens.CARD_BORDER)
+	AuthThemeTokens.style_danger_button(_sign_out_btn)
