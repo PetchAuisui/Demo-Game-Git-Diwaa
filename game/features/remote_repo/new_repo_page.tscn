@@ -34,7 +34,7 @@ layout_mode = 2
 mouse_filter = 2
 theme_override_colors/font_color = Color(0.941176, 0.964706, 0.988235, 1)
 theme_override_font_sizes/font_size = 35
-text = "Create a new repository"
+text = "สร้าง Repository ใหม่"
 
 [node name="Hint" type="Label" parent="Form"]
 layout_mode = 2
@@ -49,7 +49,7 @@ layout_mode = 2
 mouse_filter = 2
 theme_override_colors/font_color = Color(0.941176, 0.964706, 0.988235, 1)
 theme_override_font_sizes/font_size = 20
-text = "Repository name"
+text = "ชื่อ Repository"
 
 [node name="NameRow" type="HBoxContainer" parent="Form"]
 layout_mode = 2
@@ -82,7 +82,7 @@ layout_mode = 2
 mouse_filter = 2
 theme_override_colors/font_color = Color(0.941176, 0.964706, 0.988235, 1)
 theme_override_font_sizes/font_size = 20
-text = "Description (ไม่บังคับ)"
+text = "คำอธิบาย (ไม่บังคับ)"
 
 [node name="DescriptionEdit" type="LineEdit" parent="Form"]
 unique_name_in_owner = true
@@ -111,7 +111,7 @@ mouse_default_cursor_shape = 2
 focus_mode = 0
 mouse_filter = 1
 theme_type_variation = &"GhPrimaryButton"
-text = "Create repository"
+text = "สร้าง Repository"
 
 [node name="CancelButton" type="Button" parent="Form/Buttons"]
 unique_name_in_owner = true

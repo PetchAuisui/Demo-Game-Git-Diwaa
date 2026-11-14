@@ -8,7 +8,7 @@ const UNAVAILABLE_HINT := "ใช้ได้เฉพาะโหมด Real Gi
 
 
 func _ready() -> void:
-	text = "Remote Repo"
+	text = "คลังออนไลน์"
 	icon = GitHubIcons.get_icon(GhIcon.CLOUD, SandboxThemeTokens.GOLD_TITLE, 20)
 	focus_mode = Control.FOCUS_NONE
 	mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
