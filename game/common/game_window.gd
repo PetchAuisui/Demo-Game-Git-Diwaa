@@ -275,7 +275,7 @@ func _apply_idle_cursors(hovered: Control) -> void:
 
 
 func _apply_touchy_click_cursor(frame_idx: int) -> void:
-	# คง CURSOR_ARROW เป็น Buffy เสมอ เพื่อไม่ให้จุดที่คลิกไม่ได้เปลี่ยนเป็นรูปมือตอนกดหรือเลื่อนเมาส์ออก
+	# เล่นแอนิเมชันคลิก Touchy โดยคง CURSOR_ARROW เป็น Buffy
 	_apply_cursors("buffy", 0, "touchy", frame_idx)
 
 
@@ -383,16 +383,21 @@ func _get_hovered_control() -> Control:
 	return vp.gui_get_hovered_control()
 
 
-func _is_hovering_disabled_button(hovered: Control) -> bool:
+func _find_ancestor_button(hovered: Control) -> BaseButton:
 	var curr := hovered
 	while curr != null:
 		if curr is BaseButton:
-			return (curr as BaseButton).disabled
+			return curr as BaseButton
 		if curr.mouse_filter == Control.MOUSE_FILTER_STOP:
 			break
 		var parent := curr.get_parent()
 		curr = parent as Control if parent is Control else null
-	return false
+	return null
+
+
+func _is_hovering_disabled_button(hovered: Control) -> bool:
+	var btn := _find_ancestor_button(hovered)
+	return btn != null and btn.disabled
 
 
 func _is_hovering_scrollbar(hovered: Control) -> bool:
@@ -403,20 +408,20 @@ func _is_hovering_clickable(hovered: Control) -> bool:
 	if hovered == null or not is_instance_valid(hovered) or not hovered.is_inside_tree():
 		return false
 
-	var found_hand := false
+	var btn := _find_ancestor_button(hovered)
+	if btn != null:
+		return not btn.disabled
+
 	var curr := hovered
 	while curr != null:
-		if curr is BaseButton and (curr as BaseButton).disabled:
-			return false
-		if not found_hand:
-			var local_pos := curr.get_local_mouse_position()
-			if curr.get_cursor_shape(local_pos) == Control.CURSOR_POINTING_HAND:
-				found_hand = true
+		var local_pos := curr.get_local_mouse_position()
+		if curr.get_cursor_shape(local_pos) == Control.CURSOR_POINTING_HAND:
+			return true
 		if curr.mouse_filter == Control.MOUSE_FILTER_STOP:
 			break
 		var parent := curr.get_parent()
 		curr = parent as Control if parent is Control else null
-	return found_hand
+	return false
 
 
 func _trigger_scroll_anim() -> void:

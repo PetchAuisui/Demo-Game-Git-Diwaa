@@ -106,11 +106,11 @@ func _get_cursor_shape(at_position: Vector2) -> CursorShape:
 func _gui_input(input: InputEvent) -> void:
 	if input is InputEventMouseMotion:
 		var new_hovered := _row_at(input.position.y)
+		var has_row := new_hovered != -1
+		tooltip_text = "%s\nดับเบิลคลิก หรือ Ctrl/Cmd+C เพื่อคัดลอก ID" % _layout.rows[new_hovered].commit.id \
+				if has_row else ""
 		if new_hovered != _hovered:
 			_hovered = new_hovered
-			var has_row := _hovered != -1
-			tooltip_text = "%s\nดับเบิลคลิก หรือ Ctrl/Cmd+C เพื่อคัดลอก ID" % _layout.rows[_hovered].commit.id \
-					if has_row else ""
 			queue_redraw()
 	if input is InputEventMouseButton and input.pressed and input.button_index == MOUSE_BUTTON_LEFT:
 		var row_idx := _row_at(input.position.y)

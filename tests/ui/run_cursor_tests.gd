@@ -18,6 +18,7 @@ func _initialize() -> void:
 	_test_commit_graph_focus_on_blank_click()
 	_test_commit_graph_hover_deduplication()
 	_test_is_hovering_clickable_enabled_button()
+	_test_is_hovering_clickable_button_with_default_arrow()
 	_test_is_hovering_clickable_nested_label()
 	_test_is_hovering_clickable_disabled_button()
 	_test_is_hovering_clickable_plain_control()
@@ -66,12 +67,12 @@ func _test_commit_graph_cursor_shape() -> void:
 	canvas.set_layout(_create_sample_layout())
 
 	# แถวแรก y = 0..72 ต้องเป็น POINTING_HAND
-	var hand_shape := canvas._get_cursor_shape(Vector2(50, 20))
-	_assert_true(hand_shape == Control.CURSOR_POINTING_HAND, "commit graph: แถว commit ต้องได้ CURSOR_POINTING_HAND")
+	var hand_shape := canvas.get_cursor_shape(Vector2(50, 20))
+	_assert_true(hand_shape == Control.CURSOR_POINTING_HAND, "commit graph: แถว commit ต้องได้ CURSOR_POINTING_HAND ผ่าน get_cursor_shape")
 
 	# พื้นที่ว่างใต้แถวสุดท้าย y >= 72 ต้องเป็น CURSOR_ARROW
-	var arrow_shape := canvas._get_cursor_shape(Vector2(50, 200))
-	_assert_true(arrow_shape == Control.CURSOR_ARROW, "commit graph: พื้นที่ว่างต้องได้ CURSOR_ARROW")
+	var arrow_shape := canvas.get_cursor_shape(Vector2(50, 200))
+	_assert_true(arrow_shape == Control.CURSOR_ARROW, "commit graph: พื้นที่ว่างต้องได้ CURSOR_ARROW ผ่าน get_cursor_shape")
 	canvas.free()
 
 
@@ -133,6 +134,21 @@ func _test_is_hovering_clickable_enabled_button() -> void:
 
 	var is_clickable: bool = gw._is_hovering_clickable(btn)
 	_assert_true(is_clickable, "game_window: ปุ่มปกติที่เปิดใช้งานต้อง _is_hovering_clickable == true")
+
+	btn.free()
+	gw.free()
+
+
+func _test_is_hovering_clickable_button_with_default_arrow() -> void:
+	var gw = GameWindowScript.new()
+	get_root().add_child(gw)
+
+	var btn := Button.new()
+	btn.mouse_default_cursor_shape = Control.CURSOR_ARROW
+	get_root().add_child(btn)
+
+	var is_clickable: bool = gw._is_hovering_clickable(btn)
+	_assert_true(is_clickable, "game_window: ปุ่ม BaseButton แม้ใช้เคอร์เซอร์ลูกศรก็ต้อง _is_hovering_clickable == true")
 
 	btn.free()
 	gw.free()
