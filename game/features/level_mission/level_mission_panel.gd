@@ -140,29 +140,64 @@ func _build() -> void:
 	_title_label.clip_text = true
 	header.add_child(_title_label)
 	_hint_button = Button.new()
-	_hint_button.text = "คำใบ้"
-	if ResourceLoader.exists("res://assets/icons/ui_sparkles.svg"):
-		_hint_button.icon = load("res://assets/icons/ui_sparkles.svg")
-		_hint_button.expand_icon = true
-		_hint_button.add_theme_constant_override("icon_max_width", 16)
-		_hint_button.add_theme_constant_override("h_separation", 6)
+	_hint_button.custom_minimum_size = Vector2(96, 32)
 	_hint_button.focus_mode = Control.FOCUS_NONE
 	_hint_button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	var hint_btn_style := SandboxThemeTokens.create_button_style()
-	hint_btn_style.content_margin_left = 12
-	hint_btn_style.content_margin_right = 14
+	hint_btn_style.content_margin_left = 10
+	hint_btn_style.content_margin_right = 12
 	hint_btn_style.content_margin_top = 4
 	hint_btn_style.content_margin_bottom = 4
 	_hint_button.add_theme_stylebox_override("normal", hint_btn_style)
 	_hint_button.add_theme_stylebox_override("hover", hint_btn_style)
 	_hint_button.add_theme_stylebox_override("pressed", hint_btn_style)
-	_hint_button.add_theme_font_size_override("font_size", 16)
-	_hint_button.add_theme_color_override("icon_normal_color", SandboxThemeTokens.GOLD_TITLE)
-	_hint_button.add_theme_color_override("icon_hover_color", Color(1.0, 0.9, 0.5, 1.0))
-	_hint_button.add_theme_color_override("icon_pressed_color", SandboxThemeTokens.GOLD_TITLE)
-	_hint_button.add_theme_color_override("font_color", SandboxThemeTokens.GOLD_TITLE)
-	_hint_button.add_theme_color_override("font_hover_color", Color(1.0, 0.9, 0.5, 1.0))
-	_hint_button.add_theme_color_override("font_pressed_color", SandboxThemeTokens.GOLD_TITLE)
+
+	var hint_center := CenterContainer.new()
+	hint_center.layout_mode = 1
+	hint_center.anchors_preset = Control.PRESET_FULL_RECT
+	hint_center.anchor_right = 1.0
+	hint_center.anchor_bottom = 1.0
+	hint_center.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_hint_button.add_child(hint_center)
+
+	var hint_row := HBoxContainer.new()
+	hint_row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	hint_row.add_theme_constant_override("separation", 6)
+	hint_center.add_child(hint_row)
+
+	var hint_icon := TextureRect.new()
+	hint_icon.name = "HintIcon"
+	hint_icon.custom_minimum_size = Vector2(18, 18)
+	hint_icon.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	hint_icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	hint_icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	hint_icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	var icon_tex := load("res://assets/icons/ui_lightbulb.svg") as Texture2D
+	if icon_tex == null:
+		icon_tex = load("res://assets/icons/ui_sparkles.svg") as Texture2D
+	hint_icon.texture = icon_tex
+	hint_icon.modulate = SandboxThemeTokens.GOLD_TITLE
+	hint_row.add_child(hint_icon)
+
+	var hint_text := Label.new()
+	hint_text.name = "HintText"
+	hint_text.text = "คำใบ้"
+	hint_text.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	hint_text.add_theme_color_override("font_color", SandboxThemeTokens.GOLD_TITLE)
+	if _font_bold != null:
+		hint_text.add_theme_font_override("font", _font_bold)
+	hint_text.add_theme_font_size_override("font_size", 16)
+	hint_row.add_child(hint_text)
+
+	_hint_button.mouse_entered.connect(func():
+		hint_icon.modulate = Color(1.0, 0.9, 0.5, 1.0)
+		hint_text.add_theme_color_override("font_color", Color(1.0, 0.9, 0.5, 1.0))
+	)
+	_hint_button.mouse_exited.connect(func():
+		hint_icon.modulate = SandboxThemeTokens.GOLD_TITLE
+		hint_text.add_theme_color_override("font_color", SandboxThemeTokens.GOLD_TITLE)
+	)
+
 	_hint_button.pressed.connect(_on_hint_pressed)
 	header.add_child(_hint_button)
 
