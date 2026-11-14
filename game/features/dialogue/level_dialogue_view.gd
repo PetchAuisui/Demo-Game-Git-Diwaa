@@ -41,11 +41,15 @@ const LEVEL_CLEAR_SCENE_PATH := "res://features/cutscene/level_clear_scene.tscn"
 @onready var continue_arrow: TextureRect = $MagicStoryUI/DialogueBox/ArrowOverlay/ArrowWrapper/ContinueArrow
 @onready var arrow_wrapper: Control = $MagicStoryUI/DialogueBox/ArrowOverlay/ArrowWrapper
 
-# Choice System Elements
-var choice_container: VBoxContainer = null
+# Choice System Elements (Floating Slots with Active Glow)
+var choice_slots_container: VBoxContainer = null
 var choice_buttons: Array[Button] = []
 var active_choices: Array = []
 var is_showing_choices: bool = false
+var active_choice_id: String = ""
+var asked_choice_ids: Dictionary = {}
+var active_glow_tween: Tween = null
+var slot_pop_tween: Tween = null
 var bad_ending_panel: Control = null
 var is_bad_ending_typing: bool = false
 var is_bad_ending_waiting: bool = false
@@ -69,6 +73,8 @@ var press_tween_next: Tween = null
 
 static var _cached_arrow_left_tex: ImageTexture = null
 static var _cached_arrow_right_tex: ImageTexture = null
+static var _cached_silver_cursor_tex: ImageTexture = null
+static var _cached_empty_cursor_tex: ImageTexture = null
 
 # Data & Queue
 var level_data: Dictionary = {}
@@ -147,13 +153,22 @@ func _ready() -> void:
 		choice_font_var.spacing_bottom = 2
 		font_choice_regular = choice_font_var
 		
-	# สร้าง Choice Container ภายในกล่องข้อความเดิม (DialogueBox) ใต้ SpeakerLabel
-	var vbox = dialogue_box.get_node_or_null("Margin/VBox")
-	if vbox:
-		choice_container = VBoxContainer.new()
-		choice_container.visible = false
-		choice_container.add_theme_constant_override("separation", 6)
-		vbox.add_child(choice_container)
+	# สร้าง Floating Choice Slots Container บน MagicStoryUI อยู่ทางขวาเหนือกรอบ DialogueBox ตามตำแหน่งที่ผู้เล่นกำหนด
+	choice_slots_container = VBoxContainer.new()
+	choice_slots_container.name = "ChoiceSlotsContainer"
+	choice_slots_container.visible = false
+	choice_slots_container.anchor_left = 0.5
+	choice_slots_container.anchor_right = 0.5
+	choice_slots_container.anchor_top = 1.0
+	choice_slots_container.anchor_bottom = 1.0
+	choice_slots_container.offset_left = -56.0
+	choice_slots_container.offset_right = 544.0
+	choice_slots_container.offset_bottom = -244.0
+	choice_slots_container.grow_horizontal = Control.GROW_DIRECTION_BOTH
+	choice_slots_container.grow_vertical = Control.GROW_DIRECTION_BEGIN
+	choice_slots_container.add_theme_constant_override("separation", 8)
+	choice_slots_container.z_index = 5
+	magic_ui.add_child(choice_slots_container)
 		
 	camera.position = Vector2(960, 540)
 	continue_arrow.visible = false
@@ -233,6 +248,9 @@ func _exit_tree() -> void:
 	Engine.time_scale = 1.0
 	is_bad_ending_typing = false
 	is_bad_ending_waiting = false
+	_stop_active_slot_glow()
+	if slot_pop_tween and slot_pop_tween.is_valid():
+		slot_pop_tween.kill()
 	if bad_ending_tween and bad_ending_tween.is_valid():
 		bad_ending_tween.kill()
 	if bad_ending_pulse_tween and bad_ending_pulse_tween.is_valid():
@@ -375,6 +393,12 @@ func _start_dialogue_scene() -> void:
 func _begin_dialogue_phase(phase: int = -1) -> void:
 	if phase >= 0:
 		debug_phase = phase
+	_stop_active_slot_glow()
+	if slot_pop_tween and slot_pop_tween.is_valid():
+		slot_pop_tween.kill()
+	active_choice_id = ""
+	if is_instance_valid(choice_slots_container):
+		choice_slots_container.visible = false
 	dialogue_box.visible = true
 	dialogue_box.modulate.a = 1.0
 	if debug_phase == 1:
@@ -548,6 +572,12 @@ func _on_skip_step() -> void:
 	_hide_exclamation()
 	_hide_question_mark()
 	_hide_continue_arrow()
+	_stop_active_slot_glow()
+	if slot_pop_tween and slot_pop_tween.is_valid():
+		slot_pop_tween.kill()
+	active_choice_id = ""
+	if is_instance_valid(choice_slots_container):
+		choice_slots_container.visible = false
 	
 	if is_in_entrance_cutscene:
 		is_in_entrance_cutscene = false
@@ -647,9 +677,14 @@ func _show_current_queue_item(skip_typewriter: bool = false) -> void:
 
 func _show_single_dialogue(data: Dictionary, skip_typewriter: bool = false) -> void:
 	is_showing_choices = false
-	if choice_container:
-		choice_container.visible = false
+	if active_choice_id.is_empty():
+		if is_instance_valid(choice_slots_container):
+			choice_slots_container.visible = false
+	else:
+		if is_instance_valid(choice_slots_container):
+			choice_slots_container.visible = true
 	dialogue_label.visible = true
+	dialogue_label.remove_theme_font_size_override("normal_font_size")
 	speaker_label.visible = true
 	is_dialogue_active = true
 	_hide_continue_arrow()
@@ -722,25 +757,237 @@ func _on_player_advance() -> void:
 		_show_current_queue_item()
 
 # ==============================================================================
-# CHOICE SYSTEM
+# CHOICE SYSTEM (GOTHIC DARK FANTASY RPG PIXEL ART UI)
 # ==============================================================================
 
+static func _get_silver_arrow_texture() -> ImageTexture:
+	if _cached_silver_cursor_tex != null:
+		return _cached_silver_cursor_tex
+	var w := 14
+	var h := 14
+	var img := Image.create(w, h, false, Image.FORMAT_RGBA8)
+	img.fill(Color(0, 0, 0, 0))
+	
+	var c_border := Color(0.08, 0.05, 0.12, 1.0) # deep plum-black border
+	var c_highlight := Color(0.96, 0.95, 1.0, 1.0) # crisp white-silver
+	var c_silver := Color(0.80, 0.76, 0.88, 1.0) # pale silver
+	var c_shadow := Color(0.55, 0.50, 0.65, 1.0) # muted slate-silver
+	
+	var arrow_rows: Array = [
+		[1, 2, 4],
+		[2, 2, 6],
+		[3, 2, 7],
+		[4, 2, 9],
+		[5, 2, 10],
+		[6, 2, 11],
+		[7, 2, 12],
+		[8, 2, 11],
+		[9, 2, 10],
+		[10, 2, 9],
+		[11, 2, 7],
+		[12, 2, 6],
+		[13, 2, 4]
+	]
+	
+	for row in arrow_rows:
+		var y: int = row[0]
+		var x_start: int = row[1]
+		var x_end: int = row[2]
+		for x in range(x_start, x_end + 1):
+			if x == x_start or x == x_end or y == 1 or y == 13:
+				img.set_pixel(x, y, c_border)
+			elif y <= 6:
+				img.set_pixel(x, y, c_highlight if x == x_end - 1 else c_silver)
+			else:
+				img.set_pixel(x, y, c_shadow if x == x_start + 1 else c_silver)
+				
+	_cached_silver_cursor_tex = ImageTexture.create_from_image(img)
+	return _cached_silver_cursor_tex
+
+static func _get_empty_arrow_texture() -> ImageTexture:
+	if _cached_empty_cursor_tex != null:
+		return _cached_empty_cursor_tex
+	var img := Image.create(14, 14, false, Image.FORMAT_RGBA8)
+	img.fill(Color(0, 0, 0, 0))
+	_cached_empty_cursor_tex = ImageTexture.create_from_image(img)
+	return _cached_empty_cursor_tex
+
+static var _cached_question_frame_tex: Texture2D = null
+
+static func _get_question_frame_texture() -> Texture2D:
+	if _cached_question_frame_tex != null:
+		return _cached_question_frame_tex
+	const PATH = "res://assets/cutscene/frame dialog text/dialog-question1.png"
+	if ResourceLoader.exists(PATH):
+		_cached_question_frame_tex = load(PATH)
+	if not _cached_question_frame_tex:
+		var global_path = ProjectSettings.globalize_path(PATH)
+		if FileAccess.file_exists(global_path):
+			var img = Image.new()
+			if img.load(global_path) == OK:
+				_cached_question_frame_tex = ImageTexture.create_from_image(img)
+	return _cached_question_frame_tex
+
+static var _cached_question_frame_active_tex: Texture2D = null
+
+static func _get_question_frame_active_texture() -> Texture2D:
+	if _cached_question_frame_active_tex != null:
+		return _cached_question_frame_active_tex
+	const PATH = "res://assets/cutscene/frame dialog text/dialog-question1-active.png"
+	if ResourceLoader.exists(PATH):
+		_cached_question_frame_active_tex = load(PATH)
+	if not _cached_question_frame_active_tex:
+		var global_path = ProjectSettings.globalize_path(PATH)
+		if FileAccess.file_exists(global_path):
+			var img = Image.new()
+			if img.load(global_path) == OK:
+				_cached_question_frame_active_tex = ImageTexture.create_from_image(img)
+	if not _cached_question_frame_active_tex:
+		var base_tex = _get_question_frame_texture()
+		if base_tex:
+			var img = base_tex.get_image().duplicate()
+			for y in range(img.get_height()):
+				for x in range(img.get_width()):
+					var c = img.get_pixel(x, y)
+					if c.a > 0.2:
+						if abs(c.r - 0.54) < 0.15 and abs(c.g - 0.49) < 0.15 and abs(c.b - 0.58) < 0.15:
+							img.set_pixel(x, y, Color(1.0, 1.0, 1.0, 1.0))
+			_cached_question_frame_active_tex = ImageTexture.create_from_image(img)
+	return _cached_question_frame_active_tex
+
+func _create_slot_texture_stylebox(mod_color: Color = Color.WHITE) -> StyleBox:
+	var tex = _get_question_frame_texture()
+	if tex:
+		var sb = StyleBoxTexture.new()
+		sb.texture = tex
+		sb.region_rect = Rect2(5, 17, 468, 81)
+		sb.texture_margin_left = 32.0
+		sb.texture_margin_right = 32.0
+		sb.texture_margin_top = 18.0
+		sb.texture_margin_bottom = 18.0
+		sb.axis_stretch_horizontal = StyleBoxTexture.AXIS_STRETCH_MODE_STRETCH
+		sb.axis_stretch_vertical = StyleBoxTexture.AXIS_STRETCH_MODE_STRETCH
+		sb.content_margin_left = 32.0
+		sb.content_margin_right = 24.0
+		sb.content_margin_top = 8.0
+		sb.content_margin_bottom = 8.0
+		sb.modulate_color = mod_color
+		return sb
+		
+	var fallback_sb = StyleBoxFlat.new()
+	fallback_sb.bg_color = Color(0.12, 0.08, 0.18, 0.92)
+	fallback_sb.border_width_left = 2
+	fallback_sb.border_width_right = 2
+	fallback_sb.border_width_top = 2
+	fallback_sb.border_width_bottom = 2
+	fallback_sb.border_color = Color(0.45, 0.35, 0.58, 0.95)
+	fallback_sb.set_corner_radius_all(3)
+	fallback_sb.content_margin_left = 28.0
+	fallback_sb.content_margin_right = 24.0
+	fallback_sb.content_margin_top = 8.0
+	fallback_sb.content_margin_bottom = 8.0
+	return fallback_sb
+
+func _create_slot_active_stylebox(mod_color: Color = Color.WHITE) -> StyleBox:
+	var tex = _get_question_frame_active_texture()
+	if tex:
+		var sb = StyleBoxTexture.new()
+		sb.texture = tex
+		sb.region_rect = Rect2(5, 17, 468, 81)
+		sb.texture_margin_left = 32.0
+		sb.texture_margin_right = 32.0
+		sb.texture_margin_top = 18.0
+		sb.texture_margin_bottom = 18.0
+		sb.axis_stretch_horizontal = StyleBoxTexture.AXIS_STRETCH_MODE_STRETCH
+		sb.axis_stretch_vertical = StyleBoxTexture.AXIS_STRETCH_MODE_STRETCH
+		sb.content_margin_left = 32.0
+		sb.content_margin_right = 24.0
+		sb.content_margin_top = 8.0
+		sb.content_margin_bottom = 8.0
+		sb.modulate_color = mod_color
+		return sb
+	return _create_slot_texture_stylebox(Color(1.3, 1.3, 1.35, 1.0))
+
+func _on_choice_hover(btn: Button, is_hover: bool) -> void:
+	if not is_instance_valid(btn) or btn.disabled or not is_showing_choices:
+		return
+	if is_hover:
+		btn.icon = _get_silver_arrow_texture()
+	elif not btn.has_focus():
+		btn.icon = _get_empty_arrow_texture()
+
+func _on_choice_focus(btn: Button, is_focus: bool) -> void:
+	if not is_instance_valid(btn) or btn.disabled or not is_showing_choices:
+		return
+	if is_focus:
+		btn.icon = _get_silver_arrow_texture()
+	elif not btn.is_hovered():
+		btn.icon = _get_empty_arrow_texture()
+
+func _stop_active_slot_glow() -> void:
+	if active_glow_tween and active_glow_tween.is_valid():
+		active_glow_tween.kill()
+		active_glow_tween = null
+
+func _apply_active_slot_glow(btn: Button) -> void:
+	if not is_instance_valid(btn):
+		return
+	_stop_active_slot_glow()
+	
+	# สล็อตที่เลือก: ใช้กรอบ Texture ที่มีเส้นขอบสีขาวตรงตามรูปทรงกรอบเป๊ะๆ ไม่ใช้กล่องสี่เหลี่ยมคลุม และไม่ใช้เงาฟุ้ง
+	var active_sb = _create_slot_active_stylebox()
+	btn.add_theme_stylebox_override("normal", active_sb)
+	btn.add_theme_stylebox_override("hover", active_sb)
+	btn.add_theme_stylebox_override("pressed", active_sb)
+	btn.add_theme_stylebox_override("focus", active_sb)
+	btn.add_theme_stylebox_override("disabled", active_sb)
+	
+	btn.modulate = Color.WHITE
+	btn.add_theme_color_override("font_color", Color(1.0, 1.0, 1.0, 1.0))
+	btn.icon = _get_silver_arrow_texture()
+	
+	# พัลส์ความสว่างเบาๆ บนตัวเส้นขอบของกรอบโดยตรง (ไม่ใช้เงาฟุ้ง)
+	active_glow_tween = create_tween().set_loops()
+	active_glow_tween.tween_property(btn, "modulate", Color(1.20, 1.20, 1.25, 1.0), 0.70).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	active_glow_tween.tween_property(btn, "modulate", Color(1.0, 1.0, 1.0, 1.0), 0.70).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+
+func _setup_slot_button_styles(btn: Button, is_disabled: bool = false) -> void:
+	if is_disabled:
+		var dis_sb = _create_slot_texture_stylebox(Color(0.40, 0.38, 0.45, 0.60))
+		btn.add_theme_stylebox_override("normal", dis_sb)
+		btn.add_theme_stylebox_override("disabled", dis_sb)
+		btn.add_theme_color_override("font_disabled_color", Color(0.50, 0.48, 0.55, 1.0))
+		return
+		
+	# ทุกข้อความรวมถึง "ฉันจะลองดู" ใช้สไตล์สีเดียวกันทั้งหมด (อ่านซ้ำได้เรื่อยๆ ไม่เช็คว่าเคยอ่านแล้ว)
+	var normal_sb = _create_slot_texture_stylebox(Color(1.0, 1.0, 1.0, 1.0))
+	var hover_sb = _create_slot_active_stylebox(Color(1.0, 1.0, 1.0, 1.0))
+	var pressed_sb = _create_slot_active_stylebox(Color(1.15, 1.15, 1.20, 1.0))
+	
+	btn.add_theme_stylebox_override("normal", normal_sb)
+	btn.add_theme_stylebox_override("hover", hover_sb)
+	btn.add_theme_stylebox_override("pressed", pressed_sb)
+	btn.add_theme_stylebox_override("focus", hover_sb)
+	
+	btn.add_theme_color_override("font_color", Color(0.94, 0.92, 0.96, 1.0))
+	btn.add_theme_color_override("font_hover_color", Color(1.0, 1.0, 1.0, 1.0))
+	btn.add_theme_color_override("font_focus_color", Color(1.0, 1.0, 1.0, 1.0))
+	btn.add_theme_color_override("font_pressed_color", Color(1.0, 1.0, 1.0, 1.0))
+
 func _display_choice_menu(menu_id: String) -> void:
+	_stop_active_slot_glow()
+	active_choice_id = ""
 	is_showing_choices = true
+	is_dialogue_active = false
 	is_typing = false
 	_hide_continue_arrow()
 	_hide_question_mark()
-	dialogue_label.visible = false
 	
-	# ซ่อนหัวข้อผู้พูด/ตัวเลือกคำถาม ไม่ให้แสดงคำว่า "ตัวเลือก" ด้านบน
-	speaker_label.visible = false
-	speaker_label.text = ""
-	
-	if not choice_container:
+	if not choice_slots_container:
 		return
 		
-	for c in choice_container.get_children():
-		choice_container.remove_child(c)
+	for c in choice_slots_container.get_children():
+		choice_slots_container.remove_child(c)
 		c.queue_free()
 	choice_buttons.clear()
 	active_choices = []
@@ -750,67 +997,102 @@ func _display_choice_menu(menu_id: String) -> void:
 	var raw_options = menu_info.get("options", [])
 	active_choices = raw_options.duplicate(true)
 	
+	# แสดงข้อความใน DialogueBox ด้านล่าง
+	var prompt_text: String = menu_info.get("prompt", "")
+	dialogue_label.visible = true
+	
+	if prompt_text == "เลือกข้อมูลที่ต้องการตรวจสอบก่อนเริ่มภารกิจ:" or prompt_text == "ตัวเลือกคำถาม" or prompt_text.is_empty():
+		speaker_label.visible = false
+		speaker_label.text = ""
+		dialogue_label.text = "เลือกข้อมูลที่ต้องการตรวจสอบก่อนเริ่มภารกิจ:"
+		dialogue_label.add_theme_font_size_override("normal_font_size", 25)
+	else:
+		speaker_label.visible = true
+		speaker_label.text = "มิวรา"
+		speaker_label.add_theme_color_override("font_color", Color(0.92, 0.80, 0.44, 1.0))
+		dialogue_label.text = prompt_text
+		dialogue_label.remove_theme_font_size_override("normal_font_size")
+		
+	dialogue_label.visible_ratio = 1.0
+	
+	# สร้างสล็อตคำถามลอยขึ้นมา
+	choice_slots_container.visible = true
+	choice_slots_container.modulate.a = 1.0
+	
+	if slot_pop_tween and slot_pop_tween.is_valid():
+		slot_pop_tween.kill()
+	slot_pop_tween = create_tween()
+	
 	var num_strip_regex = RegEx.new()
 	num_strip_regex.compile("^\\s*\\d+[.)]\\s*")
 	
 	for i in range(active_choices.size()):
 		var choice = active_choices[i]
+		var choice_id = choice.get("id", "")
 		var raw_text: String = choice["text"]
 		var clean_text: String = num_strip_regex.sub(raw_text, "")
+		var is_disabled: bool = choice.get("disabled", false)
+		
+		# Slot Item Wrapper Control เพื่อให้สามารถสไลด์ position.x ได้อิสระโดยไม่ถูก VBoxContainer บังคับพิกัด
+		var slot_wrapper = Control.new()
+		slot_wrapper.custom_minimum_size = Vector2(600, 58)
+		slot_wrapper.size = Vector2(600, 58)
+		slot_wrapper.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		
 		var btn = Button.new()
-		btn.text = clean_text
-		btn.focus_mode = Control.FOCUS_ALL
-		btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+		btn.focus_mode = Control.FOCUS_NONE if is_disabled else Control.FOCUS_ALL
+		btn.disabled = is_disabled
+		btn.mouse_default_cursor_shape = Control.CURSOR_ARROW if is_disabled else Control.CURSOR_POINTING_HAND
 		btn.alignment = HORIZONTAL_ALIGNMENT_LEFT
+		btn.custom_minimum_size = Vector2(600, 58)
+		btn.size = Vector2(600, 58)
+		
+		# ข้อความบนปุ่ม (ทุกปุ่มรวมถึง "ฉันจะลองดู" ใช้ข้อความรูปแบบเดียวกัน ไม่อิงประวัติเคยอ่าน)
+		btn.text = clean_text
+		btn.icon = _get_empty_arrow_texture()
+		btn.expand_icon = false
+		btn.add_theme_constant_override("h_separation", 12)
 		
 		if font_choice_regular:
 			btn.add_theme_font_override("font", font_choice_regular)
-			btn.add_theme_font_size_override("font_size", 22)
+			btn.add_theme_font_size_override("font_size", 21)
 		elif font_chakra_regular:
 			btn.add_theme_font_override("font", font_chakra_regular)
-			btn.add_theme_font_size_override("font_size", 22)
+			btn.add_theme_font_size_override("font_size", 21)
 		elif font_chakra_bold:
 			btn.add_theme_font_override("font", font_chakra_bold)
-			btn.add_theme_font_size_override("font_size", 22)
+			btn.add_theme_font_size_override("font_size", 21)
 		elif font_ta8bit:
 			btn.add_theme_font_override("font", font_ta8bit)
-			btn.add_theme_font_size_override("font_size", 21)
+			btn.add_theme_font_size_override("font_size", 20)
 			
-		var normal_sb = StyleBoxFlat.new()
-		normal_sb.bg_color = Color(0, 0, 0, 0)
-		normal_sb.content_margin_left = 6
-		normal_sb.content_margin_top = 3
-		normal_sb.content_margin_bottom = 3
+		# กำหนด StyleBox ตาม Texture กรอบที่คุณวาด
+		_setup_slot_button_styles(btn, is_disabled)
 		
-		# แถบสีเมื่อเลือก/โฮเวอร์ โทนม่วงนวลโปร่งใสกลมกลืน ไม่เด่นแย่งสายตา
-		var hover_sb = StyleBoxFlat.new()
-		hover_sb.bg_color = Color(0.18, 0.14, 0.28, 0.45)
-		hover_sb.corner_radius_top_left = 5
-		hover_sb.corner_radius_top_right = 5
-		hover_sb.corner_radius_bottom_left = 5
-		hover_sb.corner_radius_bottom_right = 5
-		hover_sb.content_margin_left = 12
-		hover_sb.content_margin_top = 3
-		hover_sb.content_margin_bottom = 3
-		
-		btn.add_theme_stylebox_override("normal", normal_sb)
-		btn.add_theme_stylebox_override("hover", hover_sb)
-		btn.add_theme_stylebox_override("pressed", hover_sb)
-		btn.add_theme_stylebox_override("focus", hover_sb)
-		
-		# ตัวหนังสือ: สีขาวปกติเมื่อยังไม่เลือก และสว่างขาว (Bright White) เหมือนลูกศรเมื่อโฮเวอร์/เลือก
-		btn.add_theme_color_override("font_color", Color(0.92, 0.92, 0.94, 0.95))
-		btn.add_theme_color_override("font_hover_color", Color(2.0, 2.0, 2.0, 1.0))
-		btn.add_theme_color_override("font_focus_color", Color(2.0, 2.0, 2.0, 1.0))
-		btn.add_theme_color_override("font_pressed_color", Color(2.4, 2.4, 2.4, 1.0))
-		
-		btn.pressed.connect(_on_choice_selected.bind(i))
-		choice_container.add_child(btn)
+		if not is_disabled:
+			btn.mouse_entered.connect(_on_choice_hover.bind(btn, true))
+			btn.mouse_exited.connect(_on_choice_hover.bind(btn, false))
+			btn.focus_entered.connect(_on_choice_focus.bind(btn, true))
+			btn.focus_exited.connect(_on_choice_focus.bind(btn, false))
+			btn.pressed.connect(_on_choice_selected.bind(i))
+				
+		slot_wrapper.add_child(btn)
+		choice_slots_container.add_child(slot_wrapper)
 		choice_buttons.append(btn)
 		
-	choice_container.visible = true
-	_update_back_button_state()
+		# Animation ค่อยๆ เฟดเข้าและสไลด์จาก ขวาไปซ้าย
+		btn.position.x = 75.0
+		btn.modulate.a = 0.0
+		
+		var delay: float = float(i) * 0.08
+		slot_pop_tween.parallel().tween_property(btn, "position:x", 0.0, 0.40).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT).set_delay(delay)
+		slot_pop_tween.parallel().tween_property(btn, "modulate:a", 1.0, 0.32).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT).set_delay(delay)
+		
+	# ตอนเปิดเมนูครั้งแรก ไม่เลือกหรือไฮไลต์ข้อไหนก่อน ให้ผู้เล่นเลือกเองอย่างเป็นธรรมชาติ
+	for b in choice_buttons:
+		b.icon = _get_empty_arrow_texture()
+		
+	_update_nav_arrows()
 
 func _on_choice_selected(index: int) -> void:
 	if index < 0 or index >= active_choices.size():
@@ -818,32 +1100,103 @@ func _on_choice_selected(index: int) -> void:
 		
 	var choice = active_choices[index]
 	var choice_id = choice.get("id", "")
-	
 	var seq_key = "%s_seq" % choice_id
 	var seq = level_data.get(seq_key, [])
+	
+	var is_action_choice = choice_id.ends_with("_try") or (seq.size() > 0 and seq[0].get("type") == "open_gameplay")
+	
+	if is_action_choice:
+		# ผู้เล่นกด "ฉันจะลองดู" -> สล็อตเลื่อนลงและค่อยๆ จางหายไป แล้วตัดเข้าสู่หน้าเกมเพลย์ (Sandbox) ทันที
+		_stop_active_slot_glow()
+		active_choice_id = ""
+		is_showing_choices = false
+		if is_instance_valid(choice_slots_container):
+			var tw = create_tween().set_parallel(true)
+			tw.tween_property(choice_slots_container, "modulate:a", 0.0, 0.22)
+			tw.tween_property(choice_slots_container, "position:y", choice_slots_container.position.y + 16.0, 0.22)
+			tw.chain().tween_callback(func():
+				if is_instance_valid(choice_slots_container):
+					choice_slots_container.visible = false
+			)
+		if seq.size() > 0:
+			_load_sequence(seq)
+		else:
+			_open_gameplay_step(1)
+		return
+		
+	# ผู้เล่นกดเลือกคำถาม -> คงสล็อตคำถามไว้บนหน้าจอ และเปิดแสงเรืองสีขาวค้างไว้ (ไม่อ่านแล้วเช็คถูก สามารถอ่านซ้ำได้เรื่อยๆ)
+	active_choice_id = choice_id
+	is_showing_choices = false
+	
+	if index < choice_buttons.size():
+		var chosen_btn = choice_buttons[index]
+		_apply_active_slot_glow(chosen_btn)
+		
+	for j in range(choice_buttons.size()):
+		var b = choice_buttons[j]
+		if j != index:
+			b.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			b.focus_mode = Control.FOCUS_NONE
+			var tw = create_tween()
+			# ตรงที่ไม่ได้เลือก ไม่อยากให้จาง (คงความทึบ 100%) แต่ปรับเป็นสีเทาหม่น
+			tw.tween_property(b, "modulate", Color(0.50, 0.48, 0.54, 1.0), 0.20)
+			
 	if seq.size() > 0:
 		_load_sequence(seq)
 	else:
 		push_error("[LevelDialogueView] No sequence found for choice: %s" % choice_id)
-		# ถ้าไม่พบ sequence ของช้อยส์ ให้คงหน้าตัวเลือกไว้ เพื่อให้ผู้เล่นเลือกข้ออื่นต่อได้ ไม่หลุดไปจบด่าน
-		if choice_container:
-			choice_container.visible = true
-		is_showing_choices = true
-		dialogue_label.visible = false
+		_display_choice_menu("part1_main")
 
 # ==============================================================================
 # GAMEPLAY STEP & STAGE FINISH
 # ==============================================================================
 
-## ด่านยังไม่มีหน้าเล่นจริง -> ข้ามช่วงเล่นแล้วเล่นบทสนทนาช่วงถัดไปต่อในฉากเดิมทันที
-## ช่วงที่ 1 -> phase 1 (part 2 intro), ช่วงที่ 2 -> phase 2 (outro)
+## ผู้เล่นกด "ฉันจะลองดู" -> ตัดเข้าสู่หน้าเกมเพลย์ SandboxGameView ของด่านนี้ตามเดิม
 func _open_gameplay_step(step: int) -> void:
 	if is_transitioning:
 		return
-	# เริ่มช่วงใหม่โดยไม่มีประวัติ: ไม่ให้ปุ่มย้อนกลับพากลับไปที่รายการ open_gameplay แล้ววนกลับมาที่เดิม
+	is_transitioning = true
+	is_dialogue_active = false
+	_stop_active_slot_glow()
+	if slot_pop_tween and slot_pop_tween.is_valid():
+		slot_pop_tween.kill()
+	active_choice_id = ""
+	if is_instance_valid(choice_slots_container):
+		choice_slots_container.visible = false
+	_hide_continue_arrow()
+	_hide_question_mark()
+	if is_instance_valid(dialogue_box):
+		dialogue_box.visible = false
+	if is_instance_valid(nav_arrows_container):
+		nav_arrows_container.visible = false
+	if skip_ctrl:
+		skip_ctrl.visible = false
+		
 	sequence_history.clear()
 	current_queue = []
 	queue_index = 0
+	
+	# กำหนดสถานะและสลับฉากเข้า SandboxGameView ของด่านนี้ทันที
+	GameProgressManager.set_selected_level_number(level_number)
+	var ret_path = scene_file_path if scene_file_path != "" else "res://features/cutscene/inside_tower_cutscene.tscn"
+	GameProgressManager.set_sandbox_return_scene(ret_path)
+	
+	const SANDBOX_PATH := "res://features/sandbox/sandbox_game_view.tscn"
+	if ResourceLoader.exists(SANDBOX_PATH):
+		if is_instance_valid(fade_overlay):
+			fade_overlay.visible = true
+			var tw = create_tween()
+			tw.tween_property(fade_overlay, "color:a", 1.0, 0.3)
+			tw.tween_callback(func():
+				Engine.time_scale = 1.0
+				SceneLoader.change_scene(get_tree(), SANDBOX_PATH)
+			)
+		else:
+			Engine.time_scale = 1.0
+			SceneLoader.change_scene(get_tree(), SANDBOX_PATH)
+		return
+		
+	# Fallback ถ้าหา Sandbox ไม่เจอ
 	_begin_dialogue_phase(1 if step == 1 else 2)
 
 func _finish_dialogue_stage(mark_cleared: bool = true) -> void:
@@ -851,6 +1204,12 @@ func _finish_dialogue_stage(mark_cleared: bool = true) -> void:
 		return
 	is_transitioning = true
 	is_dialogue_active = false
+	_stop_active_slot_glow()
+	if slot_pop_tween and slot_pop_tween.is_valid():
+		slot_pop_tween.kill()
+	active_choice_id = ""
+	if is_instance_valid(choice_slots_container):
+		choice_slots_container.visible = false
 	
 	_hide_continue_arrow()
 	_hide_question_mark()
@@ -1366,8 +1725,10 @@ func _on_player_back() -> void:
 	# 3. หากกำลังแสดงเมนูช้อยส์อยู่
 	if is_showing_choices:
 		is_showing_choices = false
-		if choice_container:
-			choice_container.visible = false
+		_stop_active_slot_glow()
+		active_choice_id = ""
+		if is_instance_valid(choice_slots_container):
+			choice_slots_container.visible = false
 		dialogue_label.visible = true
 		
 		if queue_index > 0:
