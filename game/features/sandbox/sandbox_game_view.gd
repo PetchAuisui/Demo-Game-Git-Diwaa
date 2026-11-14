@@ -6,6 +6,7 @@ extends Control
 const CENTRAL_TOWER_CUTSCENE_PATH := "res://features/cutscene/central_tower_cutscene.tscn"
 const ENDING_CUTSCENE_PATH := "res://features/cutscene/ending_cutscene.tscn"
 const LEVEL_SELECT_PATH := "res://features/level_select/level_select_view.tscn"
+const LEVEL_DIALOGUE_PATH := "res://features/dialogue/level_dialogue_view.tscn"
 const START_VIEW_PATH := "res://features/start/start_view.tscn"
 const DIALOG_THEME_PATH := "res://features/sandbox/file_dialog_theme.tres"
 const ACT2_START_LEVEL := 16
@@ -31,6 +32,8 @@ var _files_panel: FilesPanel
 var _git_graph_panel: GitGraphPanel
 var _terminal_panel: TerminalPanel
 var _remote_repo_button: RemoteRepoButton
+var _mission: LevelMission
+var _mission_panel: LevelMissionPanel
 var _leave_confirm_dialog: ConfirmationDialog
 var _leave_confirm_message: Label
 
@@ -44,6 +47,7 @@ func _ready() -> void:
 	_setup_animated_background()
 	_setup_leave_confirm_dialog()
 	_wire_events()
+	_setup_mission()
 	SceneLoader.request_preload(_return_scene_path())
 	_initialize_sandbox()
 
@@ -127,6 +131,60 @@ func _wire_events() -> void:
 	_git_graph_panel.commit_selected.connect(_on_commit_selected)
 	_top_bar.finish_pressed.connect(_leave_sandbox)
 	_top_bar.brand_pressed.connect(_on_brand_pressed)
+
+
+## เปิดจากขั้นเล่นจริงของด่าน (หน้าบทสนทนาตั้งขั้นไว้ใน GameProgressManager) -> แสดงแผงภารกิจกลางจอ
+func _setup_mission() -> void:
+	var step := GameProgressManager.get_pending_mission_step()
+	GameProgressManager.set_pending_mission_step(0)
+	if step <= 0:
+		return
+	_mission = LevelMission.create(GameProgressManager.get_selected_level_number(), step)
+	if _mission == null:
+		return
+	_mission_panel = LevelMissionPanel.new()
+	_mission_panel.anchor_left = 0.29
+	_mission_panel.anchor_right = 0.72
+	_mission_panel.anchor_top = 0.12
+	_mission_panel.anchor_bottom = 0.12
+	_mission_panel.grow_vertical = Control.GROW_DIRECTION_END
+	_mission_panel.offset_left = 0.0
+	_mission_panel.offset_right = 0.0
+	add_child(_mission_panel)
+	_mission_panel.setup(_mission)
+	_mission_panel.continue_pressed.connect(_on_mission_continue)
+
+
+func _on_mission_progress(command: String, result: GitCommandResult) -> void:
+	var newly_done := _mission.on_command(command, result.success, result.standard_output)
+	_mission_panel.refresh()
+	if _mission.is_complete():
+		_mission_panel.show_complete(_mission.success_text, _mission_continue_label())
+		return
+	if not newly_done.is_empty():
+		_mission_panel.show_feedback("ถูกต้อง! ภารกิจสำเร็จ", false)
+		return
+	var mistake := _mission.mistake_message(command)
+	if not mistake.is_empty():
+		_mission_panel.show_feedback(mistake, true)
+
+
+func _mission_continue_label() -> String:
+	return "ไปต่อ"
+
+
+## ทำภารกิจครบ -> กลับหน้าบทสนทนาช่วงถัดไปของด่านเดิม (ขั้น 1 -> ช่วง 1, ขั้น 2 -> ช่วง 2)
+func _on_mission_continue() -> void:
+	if _is_leaving:
+		return
+	_is_leaving = true
+	GameProgressManager.set_resume_dialogue_phase(_mission.step)
+	var tree := get_tree() if is_inside_tree() else null
+	if SceneLoader.change_scene(tree, LEVEL_DIALOGUE_PATH):
+		Engine.time_scale = 1.0
+	else:
+		_is_leaving = false
+		GameProgressManager.set_resume_dialogue_phase(-1)
 
 
 func _setup_leave_confirm_dialog() -> void:
@@ -216,7 +274,7 @@ func _initialize_sandbox() -> void:
 	_remote_repo_button.set_available(_sandbox_service.remote_account != null)
 	_terminal_panel.set_executing(false)
 
-	_top_bar.set_mode_text("SANDBOX")
+	_top_bar.set_mode_text("ด่านที่ %d" % _mission.level_number if _mission != null else "SANDBOX")
 	_top_bar.set_finish_button_text(_return_label())
 
 	if _sandbox_service.info != null:
@@ -310,6 +368,8 @@ func _on_command_submitted(command: String) -> void:
 		_terminal_panel.append_error(error_message)
 
 	_terminal_panel.set_executing(false)
+	if _mission != null and not _is_leaving:
+		_on_mission_progress(trimmed, result)
 	await _refresh_state()
 
 

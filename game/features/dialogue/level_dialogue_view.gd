@@ -17,6 +17,8 @@ extends Node2D
 
 const LEVEL_SELECT_PATH := "res://features/level_select/level_select_view.tscn"
 ## ฉากเวลเดินขึ้นบันไดแล้วเปิดหน้าต่างดาว เล่นหลังผ่านด่าน (ปุ่มในหน้าต่างดาวพากลับหน้าเลือกด่านเอง)
+## หน้า Sandbox ที่ใช้เป็นขั้นเล่นจริงของด่าน (แสดงแผงภารกิจตามขั้นที่ตั้งไว้ใน GameProgressManager)
+const SANDBOX_SCENE_PATH := "res://features/sandbox/sandbox_game_view.tscn"
 const LEVEL_CLEAR_SCENE_PATH := "res://features/cutscene/level_clear_scene.tscn"
 
 # Animation & Visuals
@@ -179,6 +181,7 @@ func _ready() -> void:
 	# โหลดหน้าเลือกด่านรอไว้ล่วงหน้าใน Background Thread เพื่อกลับไปได้ทันทีเมื่อจบบทสนทนา
 	SceneLoader.request_preload(LEVEL_SELECT_PATH)
 	SceneLoader.request_preload(LEVEL_CLEAR_SCENE_PATH)
+	SceneLoader.request_preload(SANDBOX_SCENE_PATH)
 	
 	# ตรวจสอบด่านที่เลือกจาก Level Select
 	var selected_lvl := GameProgressManager.get_selected_level_number()
@@ -187,6 +190,13 @@ func _ready() -> void:
 		
 	# โหลดข้อมูลด่าน
 	_load_level_data(level_number)
+
+	# กลับมาจากขั้นเล่นจริงใน Sandbox -> เล่นบทสนทนาช่วงถัดไปต่อทันที (ไม่ซ้ำคัตซีนเดินเข้า)
+	var resume_phase := GameProgressManager.consume_resume_dialogue_phase()
+	if resume_phase >= 0:
+		debug_phase = resume_phase
+		play_entrance_cutscene = false
+		fade_in_from_black = true
 	
 	if play_entrance_cutscene:
 		# เริ่มต้นในโหมดคัตซีนเดินเข้าห้องโถง
@@ -841,11 +851,50 @@ func _on_choice_selected(index: int) -> void:
 func _open_gameplay_step(step: int) -> void:
 	if is_transitioning:
 		return
+	if LevelDataLoader.has_gameplay(level_number, step) and _go_to_gameplay_scene(step):
+		return
 	# เริ่มช่วงใหม่โดยไม่มีประวัติ: ไม่ให้ปุ่มย้อนกลับพากลับไปที่รายการ open_gameplay แล้ววนกลับมาที่เดิม
 	sequence_history.clear()
 	current_queue = []
 	queue_index = 0
 	_begin_dialogue_phase(1 if step == 1 else 2)
+
+## ด่านที่มีนิยามขั้นเล่นจริง -> เฟดดำแล้วไป Sandbox พร้อมแผงภารกิจ คืน false ถ้าเปลี่ยนฉากไม่ได้ (ใช้ทางสำรองข้ามช่วงเล่น)
+func _go_to_gameplay_scene(step: int) -> bool:
+	if not ResourceLoader.exists(SANDBOX_SCENE_PATH):
+		return false
+	is_transitioning = true
+	is_dialogue_active = false
+	_hide_continue_arrow()
+	_hide_question_mark()
+	if is_instance_valid(dialogue_box):
+		dialogue_box.visible = false
+	if is_instance_valid(nav_arrows_container):
+		nav_arrows_container.visible = false
+	if skip_ctrl:
+		skip_ctrl.visible = false
+	Engine.time_scale = 1.0
+	GameProgressManager.set_pending_mission_step(step)
+	var open_sandbox := func() -> void:
+		if not SceneLoader.change_scene(get_tree(), SANDBOX_SCENE_PATH):
+			# เปิดไม่ได้จริง -> คืนสถานะแล้วเล่นช่วงถัดไปต่อ เหมือนด่านที่ยังไม่มีหน้าเล่น
+			GameProgressManager.set_pending_mission_step(0)
+			is_transitioning = false
+			if skip_ctrl:
+				skip_ctrl.visible = true
+			sequence_history.clear()
+			current_queue = []
+			queue_index = 0
+			_begin_dialogue_phase(1 if step == 1 else 2)
+	if is_instance_valid(fade_overlay):
+		fade_overlay.visible = true
+		var tw := create_tween()
+		tw.tween_property(fade_overlay, "color:a", 1.0, 0.35)
+		tw.tween_callback(open_sandbox)
+	else:
+		open_sandbox.call()
+	return true
+
 
 func _finish_dialogue_stage(mark_cleared: bool = true) -> void:
 	if is_transitioning:
