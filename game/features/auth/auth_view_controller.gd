@@ -76,9 +76,11 @@ var _guest_back_link: LinkButton
 
 # หน้าต่างนโยบายตอนสมัครเปิดอยู่ไหม (กันกดสมัครซ้ำจนเปิดซ้อน)
 var _consent_open := false
-# รับทราบนโยบายแล้วในรอบสมัครนี้ไหม และเลือกเรื่องตารางอันดับไว้ว่าอะไร
-# (สมัครไม่ผ่าน แก้ข้อมูลแล้วกดใหม่ ไม่ต้องอ่านนโยบายซ้ำ) ล้างเมื่อสมัครสำเร็จใน _clear_register_form
-var _policy_acknowledged := false
+# รับทราบนโยบายไว้กับชื่อผู้ใช้ + อีเมลชุดไหน และเลือกเรื่องตารางอันดับไว้ว่าอะไร
+# สมัครไม่ผ่านแล้วแก้แค่รหัสผ่าน: ไม่ต้องอ่านนโยบายซ้ำ
+# ชื่อผู้ใช้หรืออีเมลเปลี่ยน = อาจเป็นคนใหม่ใช้เครื่องต่อ: ต้องอ่านนโยบาย ยืนยันอายุ และเลือกตารางอันดับใหม่เสมอ
+# (ห้ามใช้ความยินยอมของคนก่อน) ล้างเมื่อสมัครสำเร็จใน _clear_register_form
+var _policy_acknowledged_for := ""
 var _leaderboard_choice := false
 
 # --- Server ---
@@ -462,7 +464,11 @@ func _on_register_submit() -> void:
 	var em_val := _email_input.text.strip_edges()
 	var pw_val := _register_password_input.text
 
-	if not _policy_acknowledged:
+	var consent_key := _consent_key(un_val, em_val)
+	if _policy_acknowledged_for != consent_key:
+		# ข้อมูลชุดใหม่: ทิ้งความยินยอมเดิมก่อน ถ้ายกเลิกกลางทางจะไม่เหลือค่าของชุดก่อนค้างไว้
+		_policy_acknowledged_for = ""
+		_leaderboard_choice = false
 		# ถาม server ก่อนว่าชื่อผู้ใช้/อีเมลใช้ได้ไหม จะได้ไม่ต้องอ่านนโยบายจนจบแล้วค่อยรู้ว่าซ้ำ
 		if not await _check_registration(un_val, em_val):
 			return
@@ -477,11 +483,17 @@ func _on_register_submit() -> void:
 		_consent_open = false
 		if not choice[0]:
 			return  # ยกเลิก: ข้อมูลในฟอร์มยังอยู่ แก้แล้วกดสมัครใหม่ได้
-		_policy_acknowledged = true
+		_policy_acknowledged_for = consent_key
 		_leaderboard_choice = choice[1]
 
 	# ไม่ล้างรหัสผ่านตรงนี้: ถ้าสมัครไม่ผ่านจะได้ไม่ต้องพิมพ์ใหม่ (สมัครสำเร็จ / สลับหน้า ล้างให้เองใน _show_login)
 	await _submit_register(un_val, em_val, pw_val, _leaderboard_choice)
+
+
+## กุญแจของความยินยอม: ชื่อผู้ใช้กับอีเมลตามที่พิมพ์ (ไม่แปลงตัวเล็กตัวใหญ่ เปลี่ยนแม้แต่ตัวเดียวก็ถามใหม่)
+## คั่นด้วยขึ้นบรรทัดใหม่ ซึ่งกติกาของทั้งสองช่องไม่อนุญาต กุญแจของคนละชุดจึงไม่มีทางซ้ำกัน
+func _consent_key(username: String, email: String) -> String:
+	return username + "\n" + email
 
 
 ## ตรวจกับ server ก่อนเปิดหน้านโยบาย คืนค่า true ถ้าไปต่อได้
@@ -873,5 +885,5 @@ func _on_login_succeeded(session: Dictionary, remember_me: bool) -> void:
 func _clear_register_form() -> void:
 	_username_input.text = ""
 	_email_input.text = ""
-	_policy_acknowledged = false
+	_policy_acknowledged_for = ""
 	_leaderboard_choice = false
