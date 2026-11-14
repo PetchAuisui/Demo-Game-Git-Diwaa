@@ -197,6 +197,8 @@ func _ready() -> void:
 		debug_phase = resume_phase
 		play_entrance_cutscene = false
 		fade_in_from_black = true
+	else:
+		GameProgressManager.clear_level_timer(level_number)
 	
 	if play_entrance_cutscene:
 		# เริ่มต้นในโหมดคัตซีนเดินเข้าห้องโถง
@@ -916,6 +918,7 @@ func _finish_dialogue_stage(mark_cleared: bool = true) -> void:
 	# บันทึกสถานะว่าเล่นผ่านด่านนี้สำเร็จเฉพาะเมื่อ mark_cleared เป็น true
 	if mark_cleared:
 		GameProgressManager.set_level_cleared(level_number, true)
+		GameProgressManager.clear_level_timer(level_number)
 	
 	# จบบทสนทนา -> เฟดดำ แล้วไปฉากเดินขึ้นบันได (ถ้าผ่านด่าน) หรือกลับหน้าเลือกด่าน
 	var next_step := _go_to_level_clear_scene if mark_cleared else _go_to_level_select

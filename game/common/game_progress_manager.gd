@@ -93,6 +93,28 @@ static func consume_resume_dialogue_phase() -> int:
 	return phase
 
 
+static var _level_time_remaining: float = -1.0
+static var _level_timer_active_level: int = -1
+
+static func reset_level_timer(level_num: int, time_seconds: float) -> void:
+	_level_timer_active_level = level_num
+	_level_time_remaining = time_seconds
+
+static func get_level_time_remaining(level_num: int) -> float:
+	if _level_timer_active_level == level_num:
+		return _level_time_remaining
+	return -1.0
+
+static func set_level_time_remaining(level_num: int, remaining: float) -> void:
+	_level_timer_active_level = level_num
+	_level_time_remaining = remaining
+
+static func clear_level_timer(level_num: int = -1) -> void:
+	if level_num == -1 or _level_timer_active_level == level_num:
+		_level_time_remaining = -1.0
+		_level_timer_active_level = -1
+
+
 static var _cached_cfg: ConfigFile = null
 
 static func _get_config() -> ConfigFile:

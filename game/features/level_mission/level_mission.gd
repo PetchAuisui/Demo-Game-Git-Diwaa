@@ -21,6 +21,7 @@ var story: String
 var success_text: String
 var objectives: Array[Dictionary] = []
 var total_steps: int
+var time_limit: float = 0.0
 
 var _done: Dictionary = {}
 
@@ -37,6 +38,8 @@ static func create(level_num: int, step_num: int) -> LevelMission:
 	mission.title = str(definition.get("title", ""))
 	mission.story = str(definition.get("story", ""))
 	mission.success_text = str(definition.get("success_text", "ภารกิจสำเร็จ!"))
+	var level_data := LevelDataLoader.load_data(level_num)
+	mission.time_limit = float(definition.get("time_limit", level_data.get("time_limit", 0.0)))
 	for objective in definition.get("objectives", []):
 		mission.objectives.append(objective)
 	return mission

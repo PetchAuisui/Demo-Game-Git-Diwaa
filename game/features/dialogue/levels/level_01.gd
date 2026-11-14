@@ -9,6 +9,8 @@ static func get_data() -> Dictionary:
 	return {
 		"level_id": 1,
 		"title": "ด่านที่ 1: ตรวจสอบพลังและประกาศนาม",
+		"time_limit": 130.0,
+		"max_score": 100,
 		"commands": ["git --version", "git config"],
 		"clear_keyword": "การตรวจสอบพลัง หมายถึง git --version",
 
