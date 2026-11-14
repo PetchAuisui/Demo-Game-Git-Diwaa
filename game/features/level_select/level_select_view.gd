@@ -608,7 +608,7 @@ func _refresh_act_tabs(active_act: int) -> void:
 
 	var curr_prog := p1 if active_act == 1 else (p2 if active_act == 2 else p3)
 	if act_progress_label:
-		act_progress_label.text = "องก์ %d · %d / %d ด่าน" % [active_act, curr_prog["cleared"], curr_prog["total"]]
+		act_progress_label.text = "ACT %d · %d / %d LEVELS" % [active_act, curr_prog["cleared"], curr_prog["total"]]
 
 	_update_act_header_tab(active_act, true)
 
@@ -628,15 +628,15 @@ func _update_act_header_tab(act_num: int, animate: bool = true) -> void:
 
 	match act_num:
 		1:
-			badge_text = "องก์ 1"
+			badge_text = "ACT 1"
 			title_text = "การใช้งาน Git เบื้องต้น / หอคอยแห่งการฝึกตน"
 			desc_text = "15 ด่าน"
 		2:
-			badge_text = "องก์ 2"
+			badge_text = "ACT 2"
 			title_text = "การทำงานเป็นทีม Git Flow / หอสมุดคลังเวทกลาง"
 			desc_text = "5 ด่าน"
 		3:
-			badge_text = "องก์ 3"
+			badge_text = "ACT 3"
 			title_text = "การแก้ปัญหาในการใช้งาน Git"
 			desc_text = "20 ด่าน"
 
@@ -676,7 +676,7 @@ func _style_act_button(btn: Button, act_num: int, is_active: bool, prog: Diction
 	_ensure_act_tab_styleboxes()
 
 	btn.custom_minimum_size = Vector2(96, 44)
-	var text_base := "องก์ %d" % act_num
+	var text_base := "ACT %d" % act_num
 	if prog["is_completed"]:
 		btn.text = "%s ✓" % text_base
 	else:
@@ -734,7 +734,7 @@ func _on_act_button_pressed(act_num: int) -> void:
 	var prog := _get_act_progress(act_num)
 	if not prog["is_unlocked"]:
 		_play_sfx(sfx_click)
-		_show_locked_hud_notice("องก์ %d ยังถูกผนึก! ต้องผ่านบทก่อนหน้าเพื่อปลดล็อก" % act_num, ICON_LOCK)
+		_show_locked_hud_notice("ACT %d ยังถูกผนึก! ต้องผ่านบทก่อนหน้าเพื่อปลดล็อก" % act_num, ICON_LOCK)
 		return
 
 	_play_sfx(sfx_click)
@@ -1789,7 +1789,7 @@ func _update_hud_display(stg: Dictionary) -> void:
 		hud_title.text = "ด่าน %s — %s" % [stg["no"], stg["title"]]
 	if hud_act_tag:
 		var act_num: int = stg["act"]
-		hud_act_tag.text = "องก์ %d" % act_num
+		hud_act_tag.text = "ACT %d" % act_num
 		if act_num == 1:
 			hud_act_tag.add_theme_color_override("font_color", Color(0.55, 0.75, 0.95, 1.0))
 		elif act_num == 2:
