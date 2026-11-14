@@ -15,6 +15,7 @@
 [ext_resource type="Texture2D" uid="uid://h2ja1samhb7r" path="res://assets/icons/ui_flask.svg" id="icon_flask"]
 [ext_resource type="Texture2D" uid="uid://dh7rlxqa6sq5h" path="res://assets/icons/ui_sparkles.svg" id="icon_sparkles"]
 [ext_resource type="Texture2D" uid="uid://bl07yveahkgr6" path="res://assets/icons/ui_document.svg" id="icon_document"]
+[ext_resource type="Texture2D" uid="uid://cjj7qnfjm4ujd" path="res://assets/icons/ui_power.svg" id="icon_power"]
 [sub_resource type="Gradient" id="Gradient_magic_speck"]
 offsets = PackedFloat32Array(0, 0.4, 0.8, 1)
 colors = PackedColorArray(1, 1, 1, 1, 0.95, 0.9, 1, 0.85, 0.7, 0.65, 1, 0.35, 0, 0, 0, 0)
@@ -264,6 +265,7 @@ layout_mode = 2
 unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 62)
 layout_mode = 2
+focus_neighbor_top = NodePath("../QuitGameBtn")
 focus_neighbor_bottom = NodePath("../ResumeWorkBtn")
 mouse_default_cursor_shape = 2
 theme_override_colors/font_color = Color(1, 1, 1, 1)
@@ -359,6 +361,7 @@ horizontal_alignment = 1
 unique_name_in_owner = true
 layout_mode = 2
 focus_neighbor_top = NodePath("../DressingRoomBtn")
+focus_neighbor_bottom = NodePath("../QuitGameBtn")
 mouse_default_cursor_shape = 2
 theme_override_colors/font_color = Color(0.33, 0.24, 0.15, 1)
 theme_override_colors/font_pressed_color = Color(0.514, 0.133, 0.027, 1)
@@ -375,6 +378,29 @@ theme_override_colors/icon_normal_color = Color(0.33, 0.24, 0.15, 1)
 theme_override_colors/icon_hover_color = Color(0.871, 0.306, 0.137, 1)
 theme_override_colors/icon_pressed_color = Color(0.514, 0.133, 0.027, 1)
 theme_override_colors/icon_focus_color = Color(0.33, 0.24, 0.15, 1)
+
+[node name="QuitGameBtn" type="Button" parent="WindowAnchor/WindowFrame/WindowVBox/WindowContent/LeftMenuPanel/Margin/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+focus_neighbor_top = NodePath("../TutorialBtn")
+focus_neighbor_bottom = NodePath("../StartCareerBtn")
+mouse_default_cursor_shape = 2
+theme_override_colors/font_color = Color(0.75, 0.2, 0.2, 1)
+theme_override_colors/font_pressed_color = Color(0.5, 0.1, 0.1, 1)
+theme_override_colors/font_hover_color = Color(0.95, 0.25, 0.25, 1)
+theme_override_colors/font_focus_color = Color(0.75, 0.2, 0.2, 1)
+theme_override_fonts/font = ExtResource("8_font_chakra_bold")
+theme_override_font_sizes/font_size = 16
+flat = true
+text = "ออกจากเกม"
+icon = ExtResource("icon_power")
+icon_alignment = 0
+texture_filter = 2
+theme_override_constants/icon_max_width = 18
+theme_override_colors/icon_normal_color = Color(0.75, 0.2, 0.2, 1)
+theme_override_colors/icon_hover_color = Color(0.95, 0.25, 0.25, 1)
+theme_override_colors/icon_pressed_color = Color(0.5, 0.1, 0.1, 1)
+theme_override_colors/icon_focus_color = Color(0.75, 0.2, 0.2, 1)
 
 [node name="SpacerBottom" type="Control" parent="WindowAnchor/WindowFrame/WindowVBox/WindowContent/LeftMenuPanel/Margin/VBox" unique_id=1002503397]
 layout_mode = 2

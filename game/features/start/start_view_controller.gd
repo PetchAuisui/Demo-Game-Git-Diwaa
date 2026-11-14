@@ -15,6 +15,7 @@ var _start_career_btn: Button
 var _resume_work_btn: Button
 var _sandbox_btn: Button
 var _dressing_room_btn: Button
+var _quit_game_btn: Button
 var _tutorial_btn: Button
 var _clock_label: Label
 var _output_log: RichTextLabel
@@ -52,6 +53,9 @@ func _bind_nodes() -> void:
 	_resume_work_btn = get_node("%ResumeWorkBtn")
 	_sandbox_btn = get_node("%SandboxBtn")
 	_dressing_room_btn = get_node("%DressingRoomBtn")
+	_quit_game_btn = get_node("%QuitGameBtn")
+	# เว็บเอ็กซ์พอร์ตสั่ง quit() ไม่ได้ จึงซ่อนปุ่มไว้
+	_quit_game_btn.visible = not OS.has_feature("web")
 	_tutorial_btn = get_node("%TutorialBtn")
 	_clock_label = get_node("%ClockLabel")
 	_output_log = get_node("%OutputLog")
@@ -65,7 +69,7 @@ func _bind_nodes() -> void:
 
 ## วางไอคอน SVG ของปุ่มเมนูให้ติดกับข้อความตรงกลางปุ่ม (ตำแหน่งเดียวกับ emoji เดิม) แทนการชิดขอบปุ่ม
 func _setup_inline_icons() -> void:
-	for button: Button in [_resume_work_btn, _sandbox_btn, _dressing_room_btn, _tutorial_btn]:
+	for button: Button in [_resume_work_btn, _sandbox_btn, _dressing_room_btn, _quit_game_btn, _tutorial_btn]:
 		button.resized.connect(_center_icon_with_text.bind(button))
 		_center_icon_with_text.call_deferred(button)
 
@@ -97,12 +101,14 @@ func _wire_events() -> void:
 	_resume_work_btn.pressed.connect(_on_resume_work_pressed)
 	_sandbox_btn.pressed.connect(_on_sandbox_pressed)
 	_dressing_room_btn.pressed.connect(_on_dressing_room_pressed)
+	_quit_game_btn.pressed.connect(_on_quit_game_pressed)
 	_tutorial_btn.pressed.connect(_on_tutorial_pressed)
 
 	_start_career_btn.focus_entered.connect(_on_button_focus_entered)
 	_resume_work_btn.focus_entered.connect(_on_button_focus_entered)
 	_sandbox_btn.focus_entered.connect(_on_button_focus_entered)
 	_dressing_room_btn.focus_entered.connect(_on_button_focus_entered)
+	_quit_game_btn.focus_entered.connect(_on_button_focus_entered)
 	_tutorial_btn.focus_entered.connect(_on_button_focus_entered)
 
 	_command_input.text_submitted.connect(_on_terminal_command_submitted)
@@ -231,6 +237,32 @@ func _on_dressing_room_pressed() -> void:
 			_append_terminal_text("> Wardrobe module initialized."))
 
 
+## กดปุ่มออกจากเกม → ถามยืนยันก่อน เพื่อกันการกดพลาดจากคีย์บอร์ด/จอยที่โฟกัสวนมาถึงปุ่มนี้
+func _on_quit_game_pressed() -> void:
+	if _is_leaving:
+		return
+	_play_sfx(_sfx_click)
+	var dialog := ConfirmationDialog.new()
+	dialog.title = "ออกจากเกม"
+	dialog.dialog_text = "ต้องการออกจากเกมหรือไม่?"
+	dialog.ok_button_text = "ออกจากเกม"
+	dialog.cancel_button_text = "ยกเลิก"
+	dialog.confirmed.connect(_confirm_quit_game)
+	dialog.confirmed.connect(dialog.queue_free)
+	dialog.canceled.connect(dialog.queue_free)
+	add_child(dialog)
+	dialog.popup_centered()
+
+
+func _confirm_quit_game() -> void:
+	_is_leaving = true
+	_append_terminal_text("> Terminating DevLab Studio session... Good bye!")
+	get_tree().create_timer(0.25).timeout.connect(func() -> void:
+		if not is_inside_tree():
+			return
+		get_tree().quit())
+
+
 func _on_tutorial_pressed() -> void:
 	if _is_leaving:
 		return
@@ -255,6 +287,10 @@ func _on_terminal_command_submitted(input: String) -> void:
 	var lower := cmd.to_lower()
 	if lower == "clear" or lower == "cls":
 		_output_log.clear()
+		return
+
+	if lower == "exit" or lower == "quit":
+		_on_quit_game_pressed()
 		return
 
 	if lower == "start" or lower == "play" or lower == "run":
