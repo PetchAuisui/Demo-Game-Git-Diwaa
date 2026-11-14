@@ -158,7 +158,7 @@ func _process(delta: float) -> void:
 				_touchy_click_active = false
 				_apply_idle_cursors(hovered)
 			else:
-				_apply_idle_cursors(hovered, TOUCHY_CLICK_SEQUENCE[_touchy_step])
+				_apply_touchy_click_cursor(TOUCHY_CLICK_SEQUENCE[_touchy_step])
 		return
 
 	_apply_idle_cursors(hovered)
@@ -265,13 +265,18 @@ func _apply_uniform_cursor(mode: String, frame_idx: int) -> void:
 	_apply_cursors(mode, frame_idx, mode, frame_idx)
 
 
-func _apply_idle_cursors(hovered: Control, touchy_frame: int = 0) -> void:
+func _apply_idle_cursors(hovered: Control) -> void:
 	# ปกติใช้ Buffy2 เป็นเมาส์หลัก และเปลี่ยนเป็น Touchy เมื่อชี้ปุ่มที่กดได้ (ไม่รวมปุ่มที่ disabled)
 	# คง CURSOR_ARROW เป็น Buffy เสมอ เพื่อไม่ให้จุดที่คลิกไม่ได้เปลี่ยนเป็นรูปมือตอนกดหรือเลื่อนเมาส์ออก
 	if _is_hovering_disabled_button(hovered):
 		_apply_uniform_cursor("buffy", 0)
 	else:
-		_apply_cursors("buffy", 0, "touchy", touchy_frame)
+		_apply_cursors("buffy", 0, "touchy", 0)
+
+
+func _apply_touchy_click_cursor(frame_idx: int) -> void:
+	# คง CURSOR_ARROW เป็น Buffy เสมอ เพื่อไม่ให้จุดที่คลิกไม่ได้เปลี่ยนเป็นรูปมือตอนกดหรือเลื่อนเมาส์ออก
+	_apply_cursors("buffy", 0, "touchy", frame_idx)
 
 
 func _setup_input_watcher() -> void:
@@ -451,7 +456,7 @@ func _on_raw_input(event: InputEvent) -> void:
 				_touchy_click_active = true
 				_touchy_step = 0
 				_touchy_timer = 0.0
-				_apply_idle_cursors(hovered, TOUCHY_CLICK_SEQUENCE[0])
+				_apply_touchy_click_cursor(TOUCHY_CLICK_SEQUENCE[0])
 			else:
 				_dragging_scrollbar = null
 		elif mb.button_index == MOUSE_BUTTON_RIGHT and mb.pressed:
