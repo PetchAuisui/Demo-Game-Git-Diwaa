@@ -212,7 +212,7 @@ layout_mode = 2
 theme_override_colors/font_color = Color(0.72, 0.62, 0.5, 1)
 theme_override_fonts/font = ExtResource("7_font_ta8bit")
 theme_override_font_sizes/font_size = 16
-text = "▣  EXEC: START_SCREEN.EXE"
+text = "▣  หน้าหลัก: GIT DI WAA"
 vertical_alignment = 1
 
 [node name="Spacer" type="Control" parent="WindowAnchor/WindowFrame/WindowVBox/TitleBar/TitleRow" unique_id=1156029121]
@@ -269,12 +269,12 @@ mouse_default_cursor_shape = 2
 theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_colors/font_pressed_color = Color(1, 0.9, 0.85, 1)
 theme_override_colors/font_hover_color = Color(1, 1, 1, 1)
-theme_override_fonts/font = ExtResource("6_font_bungee")
-theme_override_font_sizes/font_size = 18
+theme_override_fonts/font = ExtResource("8_font_chakra_bold")
+theme_override_font_sizes/font_size = 20
 theme_override_styles/normal = SubResource("Style_btn_start_normal")
 theme_override_styles/pressed = SubResource("Style_btn_start_pressed")
 theme_override_styles/hover = SubResource("Style_btn_start_hover")
-text = "START NEW CAREER →"
+text = "เริ่มการผจญภัยใหม่ →"
 
 [node name="ResumeWorkBtn" type="Button" parent="WindowAnchor/WindowFrame/WindowVBox/WindowContent/LeftMenuPanel/Margin/VBox" unique_id=672344013]
 unique_name_in_owner = true
@@ -286,12 +286,12 @@ mouse_default_cursor_shape = 2
 theme_override_colors/font_color = Color(0.18, 0.12, 0.08, 1)
 theme_override_colors/font_pressed_color = Color(0.18, 0.12, 0.08, 1)
 theme_override_colors/font_hover_color = Color(0.18, 0.12, 0.08, 1)
-theme_override_fonts/font = ExtResource("6_font_bungee")
-theme_override_font_sizes/font_size = 17
+theme_override_fonts/font = ExtResource("8_font_chakra_bold")
+theme_override_font_sizes/font_size = 19
 theme_override_styles/normal = SubResource("Style_btn_resume_normal")
 theme_override_styles/pressed = SubResource("Style_btn_resume_pressed")
 theme_override_styles/hover = SubResource("Style_btn_resume_hover")
-text = "RESUME WORK"
+text = "เล่นต่อ"
 icon = ExtResource("icon_clock")
 icon_alignment = 2
 texture_filter = 2
@@ -311,12 +311,12 @@ mouse_default_cursor_shape = 2
 theme_override_colors/font_color = Color(0.18, 0.12, 0.08, 1)
 theme_override_colors/font_pressed_color = Color(0.18, 0.12, 0.08, 1)
 theme_override_colors/font_hover_color = Color(0.18, 0.12, 0.08, 1)
-theme_override_fonts/font = ExtResource("6_font_bungee")
-theme_override_font_sizes/font_size = 17
+theme_override_fonts/font = ExtResource("8_font_chakra_bold")
+theme_override_font_sizes/font_size = 19
 theme_override_styles/normal = SubResource("Style_btn_resume_normal")
 theme_override_styles/pressed = SubResource("Style_btn_resume_pressed")
 theme_override_styles/hover = SubResource("Style_btn_resume_hover")
-text = "GIT SANDBOX"
+text = "ห้องทดลอง Git"
 icon = ExtResource("icon_flask")
 icon_alignment = 2
 texture_filter = 2
@@ -336,12 +336,12 @@ mouse_default_cursor_shape = 2
 theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_colors/font_pressed_color = Color(0.9, 0.85, 1, 1)
 theme_override_colors/font_hover_color = Color(1, 1, 1, 1)
-theme_override_fonts/font = ExtResource("6_font_bungee")
-theme_override_font_sizes/font_size = 17
+theme_override_fonts/font = ExtResource("8_font_chakra_bold")
+theme_override_font_sizes/font_size = 19
 theme_override_styles/normal = SubResource("Style_btn_dressing_normal")
 theme_override_styles/pressed = SubResource("Style_btn_dressing_pressed")
 theme_override_styles/hover = SubResource("Style_btn_dressing_hover")
-text = "DRESSING ROOM"
+text = "ห้องแต่งตัว"
 icon = ExtResource("icon_sparkles")
 icon_alignment = 2
 texture_filter = 2
@@ -363,10 +363,10 @@ mouse_default_cursor_shape = 2
 theme_override_colors/font_color = Color(0.33, 0.24, 0.15, 1)
 theme_override_colors/font_pressed_color = Color(0.514, 0.133, 0.027, 1)
 theme_override_colors/font_hover_color = Color(0.871, 0.306, 0.137, 1)
-theme_override_fonts/font = ExtResource("7_font_ta8bit")
+theme_override_fonts/font = ExtResource("8_font_chakra_bold")
 theme_override_font_sizes/font_size = 16
 flat = true
-text = "TUTORIAL & DOCUMENTATION"
+text = "คู่มือและเอกสารการเล่น"
 icon = ExtResource("icon_document")
 icon_alignment = 0
 texture_filter = 2
@@ -389,14 +389,14 @@ layout_mode = 2
 theme_override_colors/font_color = Color(0.35, 0.25, 0.15, 1)
 theme_override_fonts/font = ExtResource("7_font_ta8bit")
 theme_override_font_sizes/font_size = 15
-text = "[ENTER]  NAVIGATE"
+text = "[Enter]  เลือก / ไปต่อ"
 
 [node name="SelectHint" type="Label" parent="WindowAnchor/WindowFrame/WindowVBox/WindowContent/LeftMenuPanel/Margin/VBox/NavHintsContainer" unique_id=600367546]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.35, 0.25, 0.15, 1)
 theme_override_fonts/font = ExtResource("7_font_ta8bit")
 theme_override_font_sizes/font_size = 15
-text = "[↑ ↓]   SELECT"
+text = "[↑ ↓]   เลื่อนเลือกเมนู"
 
 [node name="RightIllustrationPanel" type="VBoxContainer" parent="WindowAnchor/WindowFrame/WindowVBox/WindowContent" unique_id=817027629]
 layout_mode = 2
@@ -500,7 +500,7 @@ theme_override_fonts/font = SubResource("FontVariation_term_cmd")
 theme_override_font_sizes/font_size = 24
 theme_override_styles/normal = SubResource("Style_terminal_input")
 theme_override_styles/focus = SubResource("Style_terminal_input")
-placeholder_text = "type git command... (e.g. git status)"
+placeholder_text = "พิมพ์คำสั่ง git... (เช่น git status)"
 caret_blink = true
 
 [node name="CursorBlock" type="Label" parent="WindowAnchor/WindowFrame/WindowVBox/WindowContent/RightIllustrationPanel/TerminalPanel/Margin/VBox/PromptRow" unique_id=145397303]
@@ -539,7 +539,7 @@ layout_mode = 2
 theme_override_colors/font_color = Color(0.55, 0.42, 0.31, 1)
 theme_override_fonts/font = ExtResource("7_font_ta8bit")
 theme_override_font_sizes/font_size = 16
-text = "CONNECTED TO DEVLAB_STUDIO SERVER"
+text = "เชื่อมต่อระบบเรียบร้อย"
 
 [node name="Spacer" type="Control" parent="BottomStatusBar/HBox" unique_id=192118492]
 layout_mode = 2
