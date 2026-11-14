@@ -13,7 +13,7 @@ const STAR_GRAY := preload("res://assets/icons/star_gray.png")
 
 @export var level_number: int = 1
 @export var level_command: String = "git version"
-@export var level_keyword: String = "การตรวจสอบพลังและตั้งค่าผู้ใช้งาน หมายถึง git --version และ git config"
+@export var level_keyword: String = "git --version เพื่อเช็กความพร้อมของ Git และ git config เพื่อตั้งชื่อกับอีเมลผู้สร้างงาน"
 @export var replay_scene_path: String = "res://features/dialogue/level_dialogue_view.tscn"
 @export var level_select_scene_path: String = "res://features/level_select/level_select_view.tscn"
 
