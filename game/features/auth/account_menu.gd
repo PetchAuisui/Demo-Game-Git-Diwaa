@@ -1,6 +1,6 @@
 class_name AccountMenu
 extends Button
-## ปุ่มบัญชีมุมขวาบน (อยู่ใน StartTopBar) กดแล้วเปิดเมนู: ชื่อผู้เล่น / จัดการบัญชี / ออกจากระบบ
+## ปุ่มบัญชีมุมขวาบน (อยู่ใน StartTopBar) กดแล้วเปิดเมนู: ชื่อผู้เล่น / จัดการบัญชี / ลองเชื่อมต่ออีกครั้ง / ออกจากระบบ
 ## ซ่อนตัวเองเมื่อยังไม่มีผู้เล่น เช่น ที่หน้าเข้าสู่ระบบ (ใช้ StartTopBar ตัวเดียวกัน)
 ## เปิดเมนูแล้ว: กดที่อื่นหรือกด Esc = ปิด
 ##
@@ -23,6 +23,7 @@ var _trigger_avatar: PlayerAvatar
 var _name_label: Label
 var _sub_label: Label
 var _manage_btn: Button
+var _reconnect_btn: Button
 var _sign_out_btn: Button
 var _guest_hint: Label
 var _email_row: HBoxContainer
@@ -42,6 +43,7 @@ func _ready() -> void:
 	_name_label = get_node("%NameLabel") as Label
 	_sub_label = get_node("%SubLabel") as Label
 	_manage_btn = get_node("%ManageBtn") as Button
+	_reconnect_btn = get_node("%ReconnectBtn") as Button
 	_sign_out_btn = get_node("%SignOutBtn") as Button
 	_guest_hint = get_node("%GuestHint") as Label
 	_email_row = get_node("%EmailRow") as HBoxContainer
@@ -54,6 +56,7 @@ func _ready() -> void:
 	mouse_entered.connect(func() -> void: _trigger_avatar.modulate = Color(1.08, 1.08, 1.08))
 	mouse_exited.connect(func() -> void: _trigger_avatar.modulate = Color.WHITE)
 	_manage_btn.pressed.connect(_on_manage_pressed)
+	_reconnect_btn.pressed.connect(_on_reconnect_pressed)
 	_sign_out_btn.pressed.connect(_on_sign_out_pressed)
 	_reveal_btn.toggled.connect(func(_on: bool) -> void: _show_email())
 	PlayerSession.session_changed.connect(_refresh)
@@ -84,6 +87,11 @@ func _refresh() -> void:
 
 	# หน้าจัดการบัญชีต้องคุยกับ server จึงใช้ได้เฉพาะตอนออนไลน์
 	_manage_btn.visible = PlayerSession.state == PlayerSession.State.ONLINE
+	# ออฟไลน์เพราะติดต่อ server ไม่ได้ตอนเปิดเกม: ลองต่อใหม่ได้โดยไม่ต้องออกจากระบบ
+	# (หมดอายุ / ถูกยกเลิกระหว่างเล่น = token ใช้ไม่ได้แล้ว ต่อใหม่ไม่ได้ ต้องเข้าสู่ระบบใหม่)
+	_reconnect_btn.visible = PlayerSession.state == PlayerSession.State.OFFLINE and not PlayerSession.session_expired
+	_reconnect_btn.disabled = false
+	_reconnect_btn.text = "ลองเชื่อมต่ออีกครั้ง"
 	_sign_out_btn.text = "ออกจากโหมดไม่ล็อกอิน" if guest else "ออกจากระบบ"
 	_guest_hint.visible = guest
 
@@ -110,6 +118,8 @@ func _open() -> void:
 	_panel.position = Vector2(x, anchor.end.y + PANEL_GAP)
 	if _manage_btn.visible:
 		_manage_btn.grab_focus()
+	elif _reconnect_btn.visible:
+		_reconnect_btn.grab_focus()
 	else:
 		_sign_out_btn.grab_focus()
 	if _email.is_empty() and PlayerSession.state == PlayerSession.State.ONLINE:
@@ -183,6 +193,28 @@ func _on_manage_pressed() -> void:
 	AccountViewController.open(_layer)
 
 
+## ลองต่อ server ใหม่ด้วย token ที่จดจำไว้ (PlayerSession.reconnect) เมนูเปิดค้างไว้ให้เห็นผล
+## สำเร็จ / ต้องเข้าสู่ระบบใหม่: PlayerSession ส่ง session_changed แล้ว _refresh อัปเดตเมนูให้เอง
+func _on_reconnect_pressed() -> void:
+	_reconnect_btn.disabled = true
+	_reconnect_btn.text = "กำลังเชื่อมต่อ..."
+	var outcome := await PlayerSession.reconnect()
+	if not is_inside_tree():
+		return
+	_reconnect_btn.disabled = false
+	_reconnect_btn.text = "ลองเชื่อมต่ออีกครั้ง"
+	match outcome:
+		PlayerSession.RESTORE_NETWORK_FAILED:
+			_sub_label.text = "ยังเชื่อมต่อ server ไม่ได้ ลองใหม่ภายหลัง"
+		PlayerSession.RESTORE_RATE_LIMITED:
+			_sub_label.text = "ลองหลายครั้งเกินไป รอสักครู่แล้วลองใหม่"
+		_:
+			return
+	_sub_label.visible = true
+	if _panel.visible:
+		_panel.reset_size()
+
+
 ## ออกจากระบบ (บัญชี) หรือออกจากโหมดไม่ล็อกอิน (guest) แล้วกลับหน้าเข้าสู่ระบบ
 ## guest: ไม่ลบอะไร ความคืบหน้าและชื่อยังอยู่ในเครื่อง / บัญชี: ลบการจดจำในเครื่องและแจ้ง server (ดู PlayerSession.sign_out)
 func _on_sign_out_pressed() -> void:
@@ -234,6 +266,9 @@ func _apply_theme() -> void:
 
 	# ปุ่มหลัก (จัดการบัญชี) สีทอง / ปุ่มรอง (ออกจากระบบ) สีอ่อน
 	_style_button(_manage_btn, AuthThemeTokens.BUTTON_BG, AuthThemeTokens.BUTTON_HOVER_BG, AuthThemeTokens.BUTTON_PRESSED_BG)
+	_style_button(_reconnect_btn, AuthThemeTokens.BUTTON_BG, AuthThemeTokens.BUTTON_HOVER_BG, AuthThemeTokens.BUTTON_PRESSED_BG)
+	# ระหว่างกำลังเชื่อมต่อ ปุ่มถูกปิดไว้: ใช้สีปิดใช้งานแบบเดียวกับหน้าอื่น
+	_reconnect_btn.add_theme_stylebox_override("disabled", AuthThemeTokens.create_button_style(AuthThemeTokens.BUTTON_DISABLED_BG))
 	_style_button(_sign_out_btn, AuthThemeTokens.INPUT_BG, Color.WHITE, AuthThemeTokens.CARD_BORDER)
 
 

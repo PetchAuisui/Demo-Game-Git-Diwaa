@@ -38,6 +38,8 @@ const REFRESH_MARGIN_SEC := 30 * 60
 const REFRESH_RETRY_COOLDOWN_MSEC := 5 * 60 * 1000
 
 var state: State = State.SIGNED_OUT
+# กำลังลองเชื่อมต่อใหม่อยู่ (reconnect) กันกดซ้ำจนส่งต่ออายุ token ใบเดียวกันซ้อนกัน
+var _reconnecting := false
 var _session: Dictionary = {}
 var _remembered := false
 var _api: AuthApiClient
@@ -456,7 +458,9 @@ func start_guest(raw_name: String) -> bool:
 
 ## ล็อกอินอัตโนมัติด้วย session ที่จดจำไว้ โดยขอ token ใบใหม่จาก server (token ใบเก่าจะใช้ไม่ได้อีก)
 ## คืนค่าเป็น RESTORE_* ตัวใดตัวหนึ่ง
-func restore_saved_session() -> String:
+## from_state = สถานะตอนเริ่มเรียก (SIGNED_OUT ตอนเปิดเกม / OFFLINE ตอนกดลองเชื่อมต่ออีกครั้งผ่าน reconnect)
+## ถ้าระหว่างรอ สถานะเปลี่ยนไปจากนี้ = ผู้เล่นเลือกทำอย่างอื่นแล้ว ไม่เปลี่ยนสถานะทับ
+func restore_saved_session(from_state: State = State.SIGNED_OUT) -> String:
 	var saved := SessionStore.load_session()
 	if saved.is_empty():
 		return RESTORE_NONE
@@ -488,7 +492,7 @@ func restore_saved_session() -> String:
 			# บัญชีเดียวกัน: เกมอีกหน้าต่างเปิดพร้อมกันและต่ออายุ token ใบเดียวกันไปพร้อมเรา
 			# server ออกใบใหม่ให้ทั้งสองหน้าต่าง แต่ใบที่ออกทีหลังจะยกเลิกใบที่ออกก่อน เหลือใช้ได้ใบเดียว
 			# ดูจากเวลาหมดอายุไม่ได้ (ออกในวินาทีเดียวกันได้) จึงถาม server ว่าใบของเรายังใช้ได้ไหม
-			fresh = await _pick_live_session(fresh, now_saved)
+			fresh = await _pick_live_session(fresh, now_saved, from_state)
 			if fresh.is_empty():
 				return RESTORE_NONE
 			file_settled = true
@@ -499,7 +503,7 @@ func restore_saved_session() -> String:
 			SessionStore.clear()
 		# ระหว่างรอ ผู้เล่นเลือกเล่นแบบอื่นไปแล้ว (เช่น เล่นโดยไม่ล็อกอิน): ไม่เปลี่ยนสถานะทับการเลือกนั้น
 		# ครั้งหน้าที่เปิดเกมจะล็อกอินอัตโนมัติด้วย token ใบใหม่ที่เก็บไว้ได้ตามปกติ
-		if state != State.SIGNED_OUT:
+		if state != from_state:
 			return RESTORE_NONE
 		_session = fresh
 		_remembered = true
@@ -529,7 +533,7 @@ func restore_saved_session() -> String:
 ## - ใบของเราถูกยกเลิก (401): ใช้ใบในไฟล์ ไม่เขียนไฟล์ ไม่ต้องแจ้ง server
 ## - ถาม server ไม่ได้ (เน็ตหลุด / ถูกจำกัดจำนวนครั้ง): ใช้ใบของเราไปก่อน ไม่แตะไฟล์ ห้ามเขียนทับเพราะไม่รู้ว่าใบไหนใช้ได้
 ## คืน {} ถ้าระหว่างรอผู้เล่นเลือกเล่นแบบอื่นไปแล้ว (ไฟล์จัดการให้แล้ว ครั้งหน้าที่เปิดเกมใช้ใบที่ถูกต่อได้)
-func _pick_live_session(fresh: Dictionary, file_session: Dictionary) -> Dictionary:
+func _pick_live_session(fresh: Dictionary, file_session: Dictionary, from_state: State) -> Dictionary:
 	var check := await _api.me(fresh["token"])
 	var picked := fresh
 	if check.ok:
@@ -538,9 +542,37 @@ func _pick_live_session(fresh: Dictionary, file_session: Dictionary) -> Dictiona
 			SessionStore.clear()  # บันทึกไม่ได้: ห้ามปล่อยใบที่ถูกยกเลิกค้างในไฟล์
 	elif check.code == AuthApiResult.INVALID_CREDENTIALS:
 		picked = file_session
-	if state != State.SIGNED_OUT:
+	if state != from_state:
 		return {}
 	return picked
+
+
+## เล่นออฟไลน์อยู่ (เปิดเกมตอนติดต่อ server ไม่ได้): ลองต่อ server อีกครั้งด้วย token ที่จดจำไว้ในไฟล์
+## ไม่ต้องออกจากระบบ (ออกจากระบบ = ยกเลิก token ที่ยังดีและลบการจดจำ) ความคืบหน้าอยู่ที่บัญชีเดิม
+## คืน RESTORE_OK = กลับมาออนไลน์แล้ว / RESTORE_NEED_LOGIN = token ใช้ไม่ได้แล้ว สถานะเป็น "ต้องเข้าสู่ระบบใหม่"
+##      RESTORE_NETWORK_FAILED / RESTORE_RATE_LIMITED = ยังออฟไลน์เหมือนเดิม ลองใหม่ได้ / RESTORE_NONE = ไม่ได้ทำอะไร
+## ความปลอดภัย: ต่อได้เฉพาะเมื่อไฟล์จดจำยังเป็นบัญชีเดียวกับที่เล่นอยู่ ห้ามสลับไปเป็นบัญชีอื่นที่เกมอีกหน้าต่างบันทึกไว้
+func reconnect() -> String:
+	if state != State.OFFLINE or session_expired or _reconnecting:
+		return RESTORE_NONE
+	var owner_id := get_user_id()
+	var saved := SessionStore.load_session()
+	if saved.is_empty() or (saved["profile"] as Dictionary).get("id") != owner_id:
+		# ไฟล์ถูกลบ / เป็นของบัญชีอื่นแล้ว: ไม่มี token ของบัญชีนี้ให้ใช้ ต้องเข้าสู่ระบบใหม่
+		session_expired = true
+		session_changed.emit()
+		return RESTORE_NEED_LOGIN
+	_reconnecting = true
+	var outcome := await restore_saved_session(State.OFFLINE)
+	_reconnecting = false
+	if outcome == RESTORE_OK or state != State.OFFLINE or get_user_id() != owner_id:
+		return outcome  # ออนไลน์แล้ว หรือระหว่างรอผู้เล่นออกจากระบบไปแล้ว
+	if outcome == RESTORE_NEED_LOGIN or outcome == RESTORE_NONE:
+		# token ใช้ไม่ได้แล้ว หรือระหว่างรอไฟล์กลายเป็นของบัญชีอื่น: เล่นต่อออฟไลน์ได้ แต่ต้องเข้าสู่ระบบใหม่
+		session_expired = true
+		session_changed.emit()
+		return RESTORE_NEED_LOGIN
+	return outcome
 
 
 ## ชื่อโฟลเดอร์เซฟของผู้เล่นตอนนี้ ให้ระบบเซฟใช้แยกความคืบหน้าของแต่ละคน (เช่น user://saves/<slot>/)
