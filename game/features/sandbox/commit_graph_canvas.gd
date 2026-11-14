@@ -117,8 +117,8 @@ func _gui_input(input: InputEvent) -> void:
 			_choose(row_idx)
 			if input.double_click:
 				_copy_selected_id()
-			grab_focus()
-			accept_event()
+		grab_focus()
+		accept_event()
 	if input is InputEventKey and input.pressed:
 		if input.keycode == KEY_C and (input.ctrl_pressed or input.meta_pressed):
 			_copy_selected_id()
