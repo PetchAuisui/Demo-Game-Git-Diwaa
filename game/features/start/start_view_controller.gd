@@ -15,6 +15,7 @@ var _start_career_btn: Button
 var _resume_work_btn: Button
 var _sandbox_btn: Button
 var _dressing_room_btn: Button
+var _quit_game_btn: Button
 var _tutorial_btn: Button
 var _clock_label: Label
 var _output_log: RichTextLabel
@@ -52,6 +53,7 @@ func _bind_nodes() -> void:
 	_resume_work_btn = get_node("%ResumeWorkBtn")
 	_sandbox_btn = get_node("%SandboxBtn")
 	_dressing_room_btn = get_node("%DressingRoomBtn")
+	_quit_game_btn = get_node("%QuitGameBtn")
 	_tutorial_btn = get_node("%TutorialBtn")
 	_clock_label = get_node("%ClockLabel")
 	_output_log = get_node("%OutputLog")
@@ -97,12 +99,14 @@ func _wire_events() -> void:
 	_resume_work_btn.pressed.connect(_on_resume_work_pressed)
 	_sandbox_btn.pressed.connect(_on_sandbox_pressed)
 	_dressing_room_btn.pressed.connect(_on_dressing_room_pressed)
+	_quit_game_btn.pressed.connect(_on_quit_game_pressed)
 	_tutorial_btn.pressed.connect(_on_tutorial_pressed)
 
 	_start_career_btn.focus_entered.connect(_on_button_focus_entered)
 	_resume_work_btn.focus_entered.connect(_on_button_focus_entered)
 	_sandbox_btn.focus_entered.connect(_on_button_focus_entered)
 	_dressing_room_btn.focus_entered.connect(_on_button_focus_entered)
+	_quit_game_btn.focus_entered.connect(_on_button_focus_entered)
 	_tutorial_btn.focus_entered.connect(_on_button_focus_entered)
 
 	_command_input.text_submitted.connect(_on_terminal_command_submitted)
@@ -231,6 +235,16 @@ func _on_dressing_room_pressed() -> void:
 			_append_terminal_text("> Wardrobe module initialized."))
 
 
+func _on_quit_game_pressed() -> void:
+	if _is_leaving:
+		return
+	_is_leaving = true
+	_play_sfx(_sfx_click)
+	_append_terminal_text("> Terminating DevLab Studio session... Good bye!")
+	get_tree().create_timer(0.25).timeout.connect(func() -> void:
+		get_tree().quit())
+
+
 func _on_tutorial_pressed() -> void:
 	if _is_leaving:
 		return
@@ -255,6 +269,10 @@ func _on_terminal_command_submitted(input: String) -> void:
 	var lower := cmd.to_lower()
 	if lower == "clear" or lower == "cls":
 		_output_log.clear()
+		return
+
+	if lower == "exit" or lower == "quit" or lower == "q":
+		_on_quit_game_pressed()
 		return
 
 	if lower == "start" or lower == "play" or lower == "run":

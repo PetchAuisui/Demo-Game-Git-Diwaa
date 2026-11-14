@@ -103,6 +103,24 @@ border_width_right = 5
 border_width_bottom = 5
 border_color = Color(0.29, 0.078, 0.549, 1)
 
+[sub_resource type="StyleBoxFlat" id="Style_btn_quit_normal"]
+bg_color = Color(0.72, 0.16, 0.16, 1)
+border_width_right = 5
+border_width_bottom = 5
+border_color = Color(0.42, 0.08, 0.08, 1)
+
+[sub_resource type="StyleBoxFlat" id="Style_btn_quit_pressed"]
+bg_color = Color(0.55, 0.1, 0.1, 1)
+border_width_left = 3
+border_width_top = 3
+border_color = Color(0.42, 0.08, 0.08, 1)
+
+[sub_resource type="StyleBoxFlat" id="Style_btn_quit_hover"]
+bg_color = Color(0.85, 0.22, 0.22, 1)
+border_width_right = 5
+border_width_bottom = 5
+border_color = Color(0.42, 0.08, 0.08, 1)
+
 [sub_resource type="StyleBoxFlat" id="Style_terminal_bg"]
 bg_color = Color(0.043, 0.051, 0.035, 1)
 
@@ -331,7 +349,7 @@ unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 56)
 layout_mode = 2
 focus_neighbor_top = NodePath("../SandboxBtn")
-focus_neighbor_bottom = NodePath("../TutorialBtn")
+focus_neighbor_bottom = NodePath("../QuitGameBtn")
 mouse_default_cursor_shape = 2
 theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_colors/font_pressed_color = Color(0.9, 0.85, 1, 1)
@@ -347,6 +365,23 @@ icon_alignment = 2
 texture_filter = 2
 theme_override_constants/icon_max_width = 22
 
+[node name="QuitGameBtn" type="Button" parent="WindowAnchor/WindowFrame/WindowVBox/WindowContent/LeftMenuPanel/Margin/VBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 56)
+layout_mode = 2
+focus_neighbor_top = NodePath("../DressingRoomBtn")
+focus_neighbor_bottom = NodePath("../TutorialBtn")
+mouse_default_cursor_shape = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_pressed_color = Color(1, 0.88, 0.88, 1)
+theme_override_colors/font_hover_color = Color(1, 1, 1, 1)
+theme_override_fonts/font = ExtResource("8_font_chakra_bold")
+theme_override_font_sizes/font_size = 19
+theme_override_styles/normal = SubResource("Style_btn_quit_normal")
+theme_override_styles/pressed = SubResource("Style_btn_quit_pressed")
+theme_override_styles/hover = SubResource("Style_btn_quit_hover")
+text = "ปิดเกมส์"
+
 [node name="DottedSeparator" type="Label" parent="WindowAnchor/WindowFrame/WindowVBox/WindowContent/LeftMenuPanel/Margin/VBox" unique_id=1344059474]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.722, 0.604, 0.38, 1)
@@ -358,7 +393,7 @@ horizontal_alignment = 1
 [node name="TutorialBtn" type="Button" parent="WindowAnchor/WindowFrame/WindowVBox/WindowContent/LeftMenuPanel/Margin/VBox" unique_id=1448974232]
 unique_name_in_owner = true
 layout_mode = 2
-focus_neighbor_top = NodePath("../DressingRoomBtn")
+focus_neighbor_top = NodePath("../QuitGameBtn")
 mouse_default_cursor_shape = 2
 theme_override_colors/font_color = Color(0.33, 0.24, 0.15, 1)
 theme_override_colors/font_pressed_color = Color(0.514, 0.133, 0.027, 1)
