@@ -9,7 +9,18 @@ extends Control
 @onready var btn_next_level: Button = $WindowPanel/VBoxMain/Margin/VBox/HBoxButtons/BtnNextLevel
 
 const STAR_GOLD := preload("res://assets/icons/star_gold.png")
+const STAR_GOLD_SHEET := preload("res://assets/icons/star_gold_sheet.png")
 const STAR_GRAY := preload("res://assets/icons/star_gray.png")
+
+const FRAME_W := 320
+const FRAME_H := 320
+const COLS := 8
+const TOTAL_FRAMES := 31
+const FRAME_DURATION := 0.09 # ~11 fps matching original Animated Star GIF (100ms)
+
+var _anim_gold_stars: Array[TextureRect] = []
+var _anim_frame: int = 0
+var _anim_time: float = 0.0
 
 @export var level_number: int = 1
 @export var level_command: String = "git version"
@@ -22,7 +33,19 @@ const STAR_GRAY := preload("res://assets/icons/star_gray.png")
 @onready var star2: TextureRect = $WindowPanel/VBoxMain/Margin/VBox/StarsHBox/Star2
 @onready var star3: TextureRect = $WindowPanel/VBoxMain/Margin/VBox/StarsHBox/Star3
 
-var _star_idle_tweens: Array[Tween] = []
+func _process(delta: float) -> void:
+	if _anim_gold_stars.is_empty():
+		return
+	_anim_time += delta
+	if _anim_time >= FRAME_DURATION:
+		_anim_time -= FRAME_DURATION
+		_anim_frame = (_anim_frame + 1) % TOTAL_FRAMES
+		var col := _anim_frame % COLS
+		var row := _anim_frame / COLS
+		var reg := Rect2(col * FRAME_W, row * FRAME_H, FRAME_W, FRAME_H)
+		for star in _anim_gold_stars:
+			if star and star.texture is AtlasTexture:
+				(star.texture as AtlasTexture).region = reg
 
 @onready var score_current_label: Label = $WindowPanel/VBoxMain/Margin/VBox/ScorePanel/VBoxScore/Row1/Value
 @onready var score_prev_label: Label = $WindowPanel/VBoxMain/Margin/VBox/ScorePanel/VBoxScore/Row2/Value
@@ -75,17 +98,23 @@ func _apply_level_info() -> void:
 	var prev_score: int = int(last_run.get("prev_score", 70))
 	var score_diff: int = int(last_run.get("score_diff", 30))
 
-	if star1:
-		star1.texture = STAR_GOLD if earned_stars >= 1 else STAR_GRAY
-		star1.self_modulate = Color.WHITE
-	if star2:
-		star2.texture = STAR_GOLD if earned_stars >= 2 else STAR_GRAY
-		star2.self_modulate = Color.WHITE
-	if star3:
-		star3.texture = STAR_GOLD if earned_stars >= 3 else STAR_GRAY
-		star3.self_modulate = Color.WHITE
+	_anim_gold_stars.clear()
+	var stars_list: Array[TextureRect] = [star1, star2, star3]
+	for i in range(stars_list.size()):
+		var star := stars_list[i]
+		if not star:
+			continue
+		star.self_modulate = Color.WHITE
+		if i < earned_stars:
+			var atlas := AtlasTexture.new()
+			atlas.atlas = STAR_GOLD_SHEET
+			atlas.region = Rect2(0, 0, FRAME_W, FRAME_H)
+			star.texture = atlas
+			_anim_gold_stars.append(star)
+		else:
+			star.texture = STAR_GRAY
 
-	_animate_stars(earned_stars)
+	_animate_stars_entrance(earned_stars)
 
 	if score_current_label:
 		score_current_label.text = str(current_score)
@@ -122,13 +151,8 @@ func _input(event: InputEvent) -> void:
 			get_viewport().set_input_as_handled()
 			_on_level_select_pressed()
 
-## เล่นอนิเมชันเปิดตัวดาว (Pop-in Bounce) ทีละดวง และเริ่มอนิเมชันดุ๊กดิ๊กต่อเนื่อง (Idle Bobbing)
-func _animate_stars(earned_stars: int) -> void:
-	for t in _star_idle_tweens:
-		if t and t.is_valid():
-			t.kill()
-	_star_idle_tweens.clear()
-
+## เล่นเฉพาะ Pop-in Bounce ตอนเปิดหน้าต่าง โดยไม่เอียงหรือบิดดาว เพื่อให้เห็น pixel art ของ GIF แท้ ๆ ชัดเจน
+func _animate_stars_entrance(earned_stars: int) -> void:
 	var stars: Array[TextureRect] = [star1, star2, star3]
 	for i in range(stars.size()):
 		var star := stars[i]
@@ -139,30 +163,9 @@ func _animate_stars(earned_stars: int) -> void:
 		star.rotation_degrees = 0.0
 
 		var tw := create_tween()
-		tw.tween_interval(0.12 + i * 0.16)
-		# ขยายดาวพุ่งออกมาแบบ Bounce เด้งดึ๋ง
-		tw.tween_property(star, "scale", Vector2(1.25, 1.25), 0.22).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-		tw.tween_property(star, "scale", Vector2.ONE, 0.12).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN_OUT)
-
-		# ดาวทองที่ผู้เล่นได้รับ จะเริ่มขยับดุ๊กดิ๊กต่อเนื่องแบบ Idle Wobble / Pulse
-		if i < earned_stars:
-			var idx := i
-			tw.tween_callback(func(): _start_star_idle(star, idx))
-
-
-func _start_star_idle(star: TextureRect, index: int) -> void:
-	if not is_instance_valid(star):
-		return
-	var idle_tw := create_tween().set_loops()
-	_star_idle_tweens.append(idle_tw)
-	if index > 0:
-		idle_tw.tween_interval(index * 0.14)
-	# ลอยขยายและเอียงดุ๊กดิ๊กสลับซ้ายขวาอย่างนุ่มนวล
-	var rot_target := 4.0 if index % 2 == 0 else -4.0
-	idle_tw.tween_property(star, "scale", Vector2(1.12, 1.12), 0.55).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
-	idle_tw.parallel().tween_property(star, "rotation_degrees", rot_target, 0.55).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
-	idle_tw.tween_property(star, "scale", Vector2.ONE, 0.55).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
-	idle_tw.parallel().tween_property(star, "rotation_degrees", 0.0, 0.55).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+		tw.tween_interval(0.10 + i * 0.15)
+		tw.tween_property(star, "scale", Vector2(1.2, 1.2), 0.2).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+		tw.tween_property(star, "scale", Vector2.ONE, 0.1).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN_OUT)
 
 
 func _format_keyword_text(raw_text: String) -> String:

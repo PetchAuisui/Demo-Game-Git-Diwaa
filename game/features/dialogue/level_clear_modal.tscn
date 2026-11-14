@@ -201,7 +201,7 @@ alignment = 1
 
 [node name="Star1" type="TextureRect" parent="WindowPanel/VBoxMain/Margin/VBox/StarsHBox"]
 layout_mode = 2
-custom_minimum_size = Vector2(60, 60)
+custom_minimum_size = Vector2(68, 68)
 texture_filter = 2
 texture = ExtResource("icon_star_gold")
 expand_mode = 1
@@ -209,7 +209,7 @@ stretch_mode = 5
 
 [node name="Star2" type="TextureRect" parent="WindowPanel/VBoxMain/Margin/VBox/StarsHBox"]
 layout_mode = 2
-custom_minimum_size = Vector2(60, 60)
+custom_minimum_size = Vector2(68, 68)
 texture_filter = 2
 texture = ExtResource("icon_star_gold")
 expand_mode = 1
@@ -217,7 +217,7 @@ stretch_mode = 5
 
 [node name="Star3" type="TextureRect" parent="WindowPanel/VBoxMain/Margin/VBox/StarsHBox"]
 layout_mode = 2
-custom_minimum_size = Vector2(60, 60)
+custom_minimum_size = Vector2(68, 68)
 texture_filter = 2
 texture = ExtResource("icon_star_gray")
 expand_mode = 1
