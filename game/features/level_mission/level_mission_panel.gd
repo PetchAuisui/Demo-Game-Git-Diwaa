@@ -141,10 +141,15 @@ func _build() -> void:
 	header.add_child(_title_label)
 	_hint_button = Button.new()
 	_hint_button.text = "คำใบ้"
+	if ResourceLoader.exists("res://assets/icons/ui_sparkles.svg"):
+		_hint_button.icon = load("res://assets/icons/ui_sparkles.svg")
+		_hint_button.expand_icon = true
+		_hint_button.add_theme_constant_override("icon_max_width", 16)
+		_hint_button.add_theme_constant_override("h_separation", 6)
 	_hint_button.focus_mode = Control.FOCUS_NONE
 	_hint_button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	var hint_btn_style := SandboxThemeTokens.create_button_style()
-	hint_btn_style.content_margin_left = 14
+	hint_btn_style.content_margin_left = 12
 	hint_btn_style.content_margin_right = 14
 	hint_btn_style.content_margin_top = 4
 	hint_btn_style.content_margin_bottom = 4
@@ -152,6 +157,12 @@ func _build() -> void:
 	_hint_button.add_theme_stylebox_override("hover", hint_btn_style)
 	_hint_button.add_theme_stylebox_override("pressed", hint_btn_style)
 	_hint_button.add_theme_font_size_override("font_size", 16)
+	_hint_button.add_theme_color_override("icon_normal_color", SandboxThemeTokens.GOLD_TITLE)
+	_hint_button.add_theme_color_override("icon_hover_color", Color(1.0, 0.9, 0.5, 1.0))
+	_hint_button.add_theme_color_override("icon_pressed_color", SandboxThemeTokens.GOLD_TITLE)
+	_hint_button.add_theme_color_override("font_color", SandboxThemeTokens.GOLD_TITLE)
+	_hint_button.add_theme_color_override("font_hover_color", Color(1.0, 0.9, 0.5, 1.0))
+	_hint_button.add_theme_color_override("font_pressed_color", SandboxThemeTokens.GOLD_TITLE)
 	_hint_button.pressed.connect(_on_hint_pressed)
 	header.add_child(_hint_button)
 
