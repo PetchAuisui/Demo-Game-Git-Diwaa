@@ -11,6 +11,8 @@ const SAVE_PATH := "user://game_progress.cfg"
 const SECTION_PROGRESS := "progress"
 const KEY_INTRO_SEEN := "has_seen_intro_cutscene"
 const SECTION_LEVELS := "levels_cleared"
+const SECTION_STARS := "level_stars"
+const SECTION_SCORES := "level_scores"
 const TOTAL_LEVELS := 40
 
 ## ตัวแปรส่งผ่านสถานะระหว่าง Scene ชั่วคราว (Transient Session State)
@@ -151,11 +153,94 @@ static func set_level_cleared(level_num: int, cleared: bool = true) -> void:
 	cfg.set_value(SECTION_LEVELS, "level_%d" % level_num, cleared)
 	_save_config()
 
+
+static func get_level_stars(level_num: int) -> int:
+	var cfg := _get_config()
+	if cfg.has_section_key(SECTION_STARS, "level_%d" % level_num):
+		return int(cfg.get_value(SECTION_STARS, "level_%d" % level_num, 0))
+	if is_level_cleared(level_num):
+		return 2
+	return 0
+
+
+static func set_level_stars(level_num: int, stars: int) -> void:
+	var cfg := _get_config()
+	var current := get_level_stars(level_num)
+	if stars > current:
+		cfg.set_value(SECTION_STARS, "level_%d" % level_num, stars)
+		_save_config()
+
+
+static func get_level_score(level_num: int) -> int:
+	return int(_get_config().get_value(SECTION_SCORES, "level_%d" % level_num, 0))
+
+
+static func set_level_score(level_num: int, score: int) -> void:
+	var cfg := _get_config()
+	var current := get_level_score(level_num)
+	if score > current:
+		cfg.set_value(SECTION_SCORES, "level_%d" % level_num, score)
+		_save_config()
+
+
+static var _last_run_stars: int = 3
+static var _last_run_score: int = 100
+static var _last_run_prev_score: int = 0
+static var _last_run_score_diff: int = 0
+
+
+static func record_level_clear(level_num: int, time_remaining: float, time_limit: float, max_score: int = 100) -> Dictionary:
+	var stars: int = 3
+	var score: int = max_score
+	if time_limit > 0.0:
+		# เหลือเวลา >= 40% (ใช้เวลา <= 60% หรือ stack time): 3 ดาว
+		if time_remaining >= time_limit * 0.4:
+			stars = 3
+			score = max_score
+		elif time_remaining > 0.0:
+			stars = 2
+			score = 70 + int(20.0 * (time_remaining / (time_limit * 0.4)))
+		else:
+			stars = 1
+			score = 50
+	else:
+		stars = 3
+		score = max_score
+
+	var prev_score := get_level_score(level_num)
+	set_level_cleared(level_num, true)
+	set_level_stars(level_num, stars)
+	set_level_score(level_num, score)
+
+	_last_run_stars = stars
+	_last_run_score = score
+	_last_run_prev_score = prev_score
+	_last_run_score_diff = maxi(0, score - prev_score)
+
+	return {
+		"stars": stars,
+		"score": score,
+		"prev_score": prev_score,
+		"score_diff": _last_run_score_diff
+	}
+
+
+static func get_last_run_result() -> Dictionary:
+	return {
+		"stars": _last_run_stars,
+		"score": _last_run_score,
+		"prev_score": _last_run_prev_score,
+		"score_diff": _last_run_score_diff
+	}
+
+
 static func reset_progress() -> void:
 	var cfg := ConfigFile.new()
 	cfg.set_value(SECTION_PROGRESS, KEY_INTRO_SEEN, false)
 	for i in range(1, TOTAL_LEVELS + 1):
 		cfg.set_value(SECTION_LEVELS, "level_%d" % i, false)
+		cfg.set_value(SECTION_STARS, "level_%d" % i, 0)
+		cfg.set_value(SECTION_SCORES, "level_%d" % i, 0)
 	cfg.save(SAVE_PATH)
 	_cached_cfg = cfg
 	_selected_level_number = 1
