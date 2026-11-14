@@ -6,7 +6,7 @@ extends Control
 const CENTRAL_TOWER_CUTSCENE_PATH := "res://features/cutscene/central_tower_cutscene.tscn"
 const ENDING_CUTSCENE_PATH := "res://features/cutscene/ending_cutscene.tscn"
 const LEVEL_SELECT_PATH := "res://features/level_select/level_select_view.tscn"
-const DEFAULT_RETURN_SCENE_PATH := "res://features/cutscene/inside_tower_cutscene.tscn"
+const START_VIEW_PATH := "res://features/start/start_view.tscn"
 const DIALOG_THEME_PATH := "res://features/sandbox/file_dialog_theme.tres"
 const ACT2_START_LEVEL := 16
 const ACT1_LOOP_SHEET_PATH := "res://assets/cutscene/backgrounds/inside-tower-loop-Sheet.png"
@@ -37,8 +37,6 @@ var _leave_confirm_message: Label
 var _sandbox_service: GitSandboxService
 var _is_initialized := false
 var _is_leaving := false
-## คำสั่ง git ที่รันสำเร็จในรอบนี้ (ตัวพิมพ์เล็ก) ใช้ตรวจเงื่อนไขภารกิจก่อนกลับสู่เนื้อเรื่อง
-var _successful_commands: PackedStringArray = []
 
 
 func _ready() -> void:
@@ -46,7 +44,7 @@ func _ready() -> void:
 	_setup_animated_background()
 	_setup_leave_confirm_dialog()
 	_wire_events()
-	SceneLoader.request_preload(LEVEL_SELECT_PATH)
+	SceneLoader.request_preload(_return_scene_path())
 	_initialize_sandbox()
 
 
@@ -124,16 +122,17 @@ func _wire_events() -> void:
 	_files_panel.create_file_requested.connect(_on_create_file_requested)
 	_files_panel.create_folder_requested.connect(_on_create_folder_requested)
 	_files_panel.rename_entry_requested.connect(_on_rename_entry_requested)
+	_files_panel.move_entry_requested.connect(_on_move_entry_requested)
 	_files_panel.delete_entry_requested.connect(_on_delete_entry_requested)
 	_git_graph_panel.commit_selected.connect(_on_commit_selected)
-	_top_bar.finish_pressed.connect(_on_finish_gameplay_pressed)
+	_top_bar.finish_pressed.connect(_leave_sandbox)
 	_top_bar.brand_pressed.connect(_on_brand_pressed)
 
 
 func _setup_leave_confirm_dialog() -> void:
 	_leave_confirm_dialog = ConfirmationDialog.new()
 	_leave_confirm_dialog.name = "LeaveConfirmDialog"
-	_leave_confirm_dialog.title = "กลับหน้าเลือกด่าน"
+	_leave_confirm_dialog.title = "ออกจาก Sandbox"
 	_leave_confirm_dialog.borderless = true
 	_leave_confirm_dialog.unresizable = true
 	_leave_confirm_dialog.ok_button_text = "ออกจาก Sandbox"
@@ -145,52 +144,44 @@ func _setup_leave_confirm_dialog() -> void:
 		_leave_confirm_dialog,
 		DialogStyle.WARNING,
 		"!",
-		"กลับหน้าเลือกด่าน?",
+		"%s?" % _return_label(),
 		true
 	)
 	_leave_confirm_dialog.size = Vector2i(520, 100)
-	_leave_confirm_dialog.confirmed.connect(_leave_to_level_select)
+	_leave_confirm_dialog.confirmed.connect(_leave_sandbox)
 
 
 func _on_brand_pressed() -> void:
 	if _is_leaving:
 		return
-	var step := GameProgressManager.get_current_gameplay_step()
 	var has_unsaved := _files_panel != null and _files_panel.has_unsaved_changes
 	if _leave_confirm_dialog == null or _leave_confirm_message == null:
-		_leave_to_level_select()
+		_leave_sandbox()
 		return
-	if step > 0 and has_unsaved:
-		_leave_confirm_message.text = "กำลังทำภารกิจด่านที่ %d (ขั้นที่ %d) และมีไฟล์ที่ยังไม่บันทึก\nหากกลับหน้าเลือกด่านตอนนี้ ความคืบหน้าในรอบนี้จะหายไป" % [
-			GameProgressManager.get_selected_level_number(), step
-		]
-	elif step > 0:
-		_leave_confirm_message.text = "กำลังทำภารกิจด่านที่ %d (ขั้นที่ %d) อยู่\nหากกลับหน้าเลือกด่านตอนนี้ ความคืบหน้าในรอบนี้จะไม่ถูกบันทึก" % [
-			GameProgressManager.get_selected_level_number(), step
-		]
-	elif has_unsaved:
-		_leave_confirm_message.text = "มีไฟล์ที่ยังไม่บันทึก\nต้องการออกจาก Sandbox กลับหน้าเลือกด่านหรือไม่?"
+	if has_unsaved:
+		_leave_confirm_message.text = "มีไฟล์ที่ยังไม่บันทึก\nต้องการออกจาก Sandbox %sหรือไม่?" % _return_label()
 	else:
-		_leave_confirm_message.text = "ต้องการออกจาก Sandbox กลับหน้าเลือกด่านหรือไม่?"
+		_leave_confirm_message.text = "ต้องการออกจาก Sandbox %sหรือไม่?" % _return_label()
 	_leave_confirm_dialog.popup_centered()
 
 
-func _leave_to_level_select() -> void:
+## ฉากที่ปุ่มออกจะพากลับไป: ตั้งผ่าน GameProgressManager ก่อนเปิด Sandbox (หน้าแรกตั้งเป็น START_VIEW_PATH) ค่าเริ่มต้นคือหน้าเลือกด่าน
+static func _return_scene_path() -> String:
+	var path := GameProgressManager.get_sandbox_return_scene()
+	return LEVEL_SELECT_PATH if path.is_empty() else path
+
+
+static func _return_label() -> String:
+	return "กลับหน้าแรก" if _return_scene_path() == START_VIEW_PATH else "กลับหน้าเลือกด่าน"
+
+
+func _leave_sandbox() -> void:
 	if _is_leaving:
 		return
 	_is_leaving = true
 	var tree := get_tree() if is_inside_tree() else null
-	if SceneLoader.change_scene(tree, LEVEL_SELECT_PATH):
+	if SceneLoader.change_scene(tree, _return_scene_path()):
 		Engine.time_scale = 1.0
-		GameProgressManager.set_current_gameplay_step(0)
-		GameProgressManager.consume_pending_dialogue_phase()
-		GameProgressManager.set_gameplay_return_scene(DEFAULT_RETURN_SCENE_PATH)
-	elif not ResourceLoader.exists(LEVEL_SELECT_PATH):
-		_is_leaving = false
-		if _change_scene_to_cutscene(CENTRAL_TOWER_CUTSCENE_PATH):
-			GameProgressManager.set_current_gameplay_step(0)
-			GameProgressManager.consume_pending_dialogue_phase()
-			GameProgressManager.set_gameplay_return_scene(DEFAULT_RETURN_SCENE_PATH)
 	else:
 		_is_leaving = false
 
@@ -225,18 +216,12 @@ func _initialize_sandbox() -> void:
 	_remote_repo_button.set_available(_sandbox_service.remote_account != null)
 	_terminal_panel.set_executing(false)
 
-	var step := GameProgressManager.get_current_gameplay_step()
-	var lvl := GameProgressManager.get_selected_level_number()
-	if step > 0:
-		_top_bar.set_mode_text("ด่านที่ %d (ขั้นที่ %d)" % [lvl, step])
-		_top_bar.set_finish_button_text("เสร็จสิ้น (ไปต่อ) ➔")
-	else:
-		_top_bar.set_mode_text("SANDBOX")
-		_top_bar.set_finish_button_text("กลับหน้าเลือกด่าน")
+	_top_bar.set_mode_text("SANDBOX")
+	_top_bar.set_finish_button_text(_return_label())
 
 	if _sandbox_service.info != null:
 		_terminal_panel.set_window_title("●  ●  ●    TERMINAL — learner@diwaa:~/%s" % _sandbox_service.info.mission_id)
-		_terminal_panel.append_info("พร้อมใช้งาน — พิมพ์ help หรือเริ่มด้วย git --version\n")
+	_terminal_panel.append_info("พร้อมใช้งาน — พิมพ์ help หรือเริ่มด้วย git --version\n")
 
 	await _refresh_state()
 
@@ -259,9 +244,9 @@ func _on_command_submitted(command: String) -> void:
 	var trimmed := command.strip_edges()
 	var lower := trimmed.to_lower()
 
-	# Finished mission or exit
-	if lower in ["done", "finish", "exit", "quit"]:
-		_on_finish_gameplay_pressed()
+	# Exit sandbox (same as the top-right button)
+	if lower in ["exit", "quit"]:
+		_leave_sandbox()
 		return
 
 	# Built-in help handler
@@ -314,7 +299,6 @@ func _on_command_submitted(command: String) -> void:
 	var result := await _sandbox_service.execute(trimmed)
 
 	if result.success:
-		_successful_commands.append(lower)
 		if not result.standard_output.strip_edges().is_empty():
 			_terminal_panel.append_output(result.standard_output.strip_edges(false, true))
 		else:
@@ -448,16 +432,29 @@ func _on_create_folder_requested(folder_path: String) -> void:
 
 
 func _on_rename_entry_requested(source_path: String, destination_path: String) -> void:
+	await _relocate_entry(source_path, destination_path, "เปลี่ยนชื่อ",
+			"เปลี่ยนชื่อเป็น %s แล้ว" % destination_path)
+
+
+func _on_move_entry_requested(source_path: String, destination_path: String) -> void:
+	var folder := destination_path.get_base_dir()
+	var folder_label := "WORKSPACE" if folder.is_empty() else folder
+	await _relocate_entry(source_path, destination_path, "ย้าย",
+			"ย้าย %s ไปที่ %s แล้ว" % [source_path.get_file(), folder_label])
+
+
+## เปลี่ยนชื่อ/ย้ายไฟล์หรือโฟลเดอร์ (ใช้ rename_entry ของ service เหมือนกัน ต่างกันแค่ข้อความ)
+func _relocate_entry(source_path: String, destination_path: String, verb: String, success_feedback: String) -> void:
 	_files_panel.set_busy(true)
 	var result := _sandbox_service.rename_entry(source_path, destination_path)
 	if result.ok:
 		_files_panel.notify_entry_renamed(source_path, destination_path)
-		_files_panel.show_feedback("เปลี่ยนชื่อเป็น %s แล้ว" % destination_path)
-		_terminal_panel.append_info("✓ เปลี่ยนชื่อ '%s' → '%s'" % [source_path, destination_path])
+		_files_panel.show_feedback(success_feedback)
+		_terminal_panel.append_info("✓ %s '%s' → '%s'" % [verb, source_path, destination_path])
 		await _refresh_state()
 	else:
-		_files_panel.show_feedback("เปลี่ยนชื่อไม่สำเร็จ: " + result.message, true)
-		_terminal_panel.append_error("เปลี่ยนชื่อไม่สำเร็จ: " + result.message)
+		_files_panel.show_feedback("%sไม่สำเร็จ: %s" % [verb, result.message], true)
+		_terminal_panel.append_error("%sไม่สำเร็จ: %s" % [verb, result.message])
 	_files_panel.set_busy(false)
 
 
@@ -548,54 +545,11 @@ func _show_help() -> void:
             restore, reset, branch, switch, merge, clone, remote, pull, push
 
 คำสั่ง UI / ทดสอบ: write <path> <content>, cat <path>, delete <path>, files,
-                  sandbox-reset, cutscene <central|ending>, level 16, clear, help""")
-
-
-func _on_finish_gameplay_pressed() -> void:
-	var current_step := GameProgressManager.get_current_gameplay_step()
-	if current_step > 0:
-		var missing := _get_missing_requirements(current_step)
-		if not missing.is_empty():
-			_terminal_panel.append_error("ยังทำภารกิจไม่ครบ — ลองร่ายคาถาเหล่านี้ให้สำเร็จก่อน:\n  " + "\n  ".join(missing))
-			return
-		# ส่งต่อไปยัง dialogue phase ถัดไป:
-		# จบขั้น 1 -> ไป phase 1 (part 2 intro)
-		# จบขั้น 2 -> ไป phase 2 (outro)
-		var next_phase := 1 if current_step == 1 else 2
-		var return_scene := GameProgressManager.get_gameplay_return_scene()
-		if return_scene.is_empty():
-			return_scene = DEFAULT_RETURN_SCENE_PATH
-		if _change_scene_to_cutscene(return_scene):
-			_terminal_panel.append_info("กำลังกลับสู่เนื้อเรื่อง...")
-			GameProgressManager.set_pending_dialogue_phase(next_phase)
-			GameProgressManager.set_current_gameplay_step(0)
-	else:
-		_leave_to_level_select()
-
-
-## คืนรายการคำสั่งที่ภารกิจของขั้นนี้ต้องการ แต่ผู้เล่นยังไม่ได้รันสำเร็จ
-func _get_missing_requirements(step: int) -> PackedStringArray:
-	var missing: PackedStringArray = []
-	var step_info := LevelDataLoader.get_gameplay_step(GameProgressManager.get_selected_level_number(), step)
-	for req in step_info.get("required", []):
-		var tokens: Array = req.get("match", [])
-		var satisfied := false
-		for cmd in _successful_commands:
-			var has_all := true
-			for token in tokens:
-				if not cmd.contains(str(token).to_lower()):
-					has_all = false
-					break
-			if has_all:
-				satisfied = true
-				break
-		if not satisfied:
-			missing.append(str(req.get("label", " ".join(tokens))))
-	return missing
+                  sandbox-reset, cutscene <central|ending>, level 16, exit, clear, help""")
 
 
 func _exit_tree() -> void:
-	# ออกจาก Sandbox ทางใดก็ตาม (เช่น คำสั่ง cutscene / level 16) ให้ล้างขั้นภารกิจ ไม่ให้ค้างไปรอบถัดไป
-	GameProgressManager.set_current_gameplay_step(0)
+	# ออกจาก Sandbox ทางใดก็ตาม (เช่น คำสั่ง cutscene / level 16) ให้รอบถัดไปกลับหน้าเลือกด่านตามค่าเริ่มต้น
+	GameProgressManager.set_sandbox_return_scene("")
 	if _sandbox_service != null:
 		_sandbox_service.dispose()

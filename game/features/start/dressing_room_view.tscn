@@ -1,12 +1,10 @@
 [gd_scene format=3 uid="uid://b7qm4kvl1dr01"]
 
-[ext_resource type="Script" path="res://features/start/dressing_room_view_controller.gd" id="1_controller"]
+[ext_resource type="Script" uid="uid://bi4mmo3m201yb" path="res://features/start/dressing_room_view_controller.gd" id="1_controller"]
 [ext_resource type="FontFile" uid="uid://deedcfbkojx6k" path="res://assets/fonts/ChakraPetch-Bold.ttf" id="2_font_bold"]
-[ext_resource type="FontFile" uid="uid://b8g6ela360qq1" path="res://assets/fonts/Silkscreen-Bold.ttf" id="3_font_silkscreen"]
-[ext_resource type="FontFile" uid="uid://kdsopvxcj40" path="res://assets/fonts/VT323-Regular.ttf" id="4_font_vt323"]
+[ext_resource type="FontFile" uid="uid://c82lda4ldw0ve" path="res://assets/fonts/ChakraPetch-Regular.ttf" id="3_font_reg"]
 [ext_resource type="Texture2D" uid="uid://don4qpk4c43rc" path="res://assets/cutscene/characters/vel/vel_Hblue_Sredyellow_idle.png" id="5_vel_front"]
 [ext_resource type="Texture2D" path="res://assets/art/dressing_room/magic_reticle.png" id="6_reticle"]
-[ext_resource type="Texture2D" path="res://assets/art/dressing_room/pedestal.png" id="7_pedestal"]
 [ext_resource type="Texture2D" path="res://assets/art/dressing_room/item_hood_green.png" id="8_hood_green"]
 [ext_resource type="Texture2D" path="res://assets/art/dressing_room/item_hood_pink.png" id="9_hood_pink"]
 [ext_resource type="Texture2D" path="res://assets/art/dressing_room/item_hood_yellow.png" id="10_hood_yellow"]
@@ -19,11 +17,30 @@
 [ext_resource type="Texture2D" path="res://assets/art/dressing_room/item_cat_black.png" id="17_cat_black"]
 [ext_resource type="Texture2D" path="res://assets/art/dressing_room/item_cat_orange.png" id="18_cat_orange"]
 [ext_resource type="Texture2D" path="res://assets/art/dressing_room/item_cat_white.png" id="19_cat_white"]
-[ext_resource type="Texture2D" path="res://assets/art/dressing_room/cat_companion_black.png" id="20_companion_black"]
+[ext_resource type="Texture2D" uid="uid://chq3234y072dc" path="res://assets/cutscene/characters/mewla/mewla_idle.png" id="20_companion_black"]
 [ext_resource type="AudioStream" uid="uid://cvlamp5b4er6q" path="res://assets/audio/sfx_click.wav" id="21_sfx_click"]
 [ext_resource type="AudioStream" path="res://assets/audio/sfx_cat_meow.wav" id="22_sfx_meow"]
-[ext_resource type="FontFile" path="res://assets/fonts/TA-8-bit.ttf" id="23_font_ta8bit"]
+[ext_resource type="FontFile" uid="uid://csurxmw2vmws4" path="res://assets/fonts/TA-8-bit.ttf" id="23_font_ta8bit"]
 [ext_resource type="PackedScene" path="res://common/brand_button.tscn" id="24_brand_btn"]
+[ext_resource type="Texture2D" uid="uid://c1dvt3eyfitk2" path="res://assets/icons/ui_hood.svg" id="icon_hood"]
+[ext_resource type="Texture2D" uid="uid://wd72claq0c2t" path="res://assets/icons/ui_scarf.svg" id="icon_scarf"]
+[ext_resource type="Texture2D" uid="uid://o454us0glhm5" path="res://assets/icons/ui_backpack.svg" id="icon_backpack"]
+[ext_resource type="Texture2D" uid="uid://bqjt7hucj3tod" path="res://assets/icons/ui_cat.svg" id="icon_cat"]
+[ext_resource type="Texture2D" uid="uid://dh7rlxqa6sq5h" path="res://assets/icons/ui_sparkles.svg" id="icon_sparkles"]
+
+[sub_resource type="FontVariation" id="FontVariation_ui_bold"]
+base_font = ExtResource("2_font_bold")
+spacing_top = 4
+spacing_bottom = 2
+
+[sub_resource type="FontVariation" id="FontVariation_ui_reg"]
+base_font = ExtResource("3_font_reg")
+spacing_top = 4
+spacing_bottom = 2
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_mewla_idle"]
+atlas = ExtResource("20_companion_black")
+region = Rect2(11, 37, 25, 44)
 
 [sub_resource type="StyleBoxFlat" id="Style_topbar_bg"]
 content_margin_left = 32.0
@@ -33,38 +50,6 @@ content_margin_bottom = 10.0
 bg_color = Color(0.078, 0.063, 0.047, 0.98)
 border_width_bottom = 2
 border_color = Color(0.278, 0.176, 0.102, 1)
-
-[sub_resource type="StyleBoxFlat" id="Style_topbar_btn_normal"]
-content_margin_left = 18.0
-content_margin_top = 8.0
-content_margin_right = 18.0
-content_margin_bottom = 8.0
-bg_color = Color(0.271, 0.22, 0.125, 0.9)
-border_width_left = 1
-border_width_top = 1
-border_width_right = 1
-border_width_bottom = 1
-border_color = Color(0.651, 0.549, 0.31, 1)
-corner_radius_top_left = 4
-corner_radius_top_right = 4
-corner_radius_bottom_left = 4
-corner_radius_bottom_right = 4
-
-[sub_resource type="StyleBoxFlat" id="Style_topbar_btn_hover"]
-content_margin_left = 18.0
-content_margin_top = 8.0
-content_margin_right = 18.0
-content_margin_bottom = 8.0
-bg_color = Color(0.369, 0.302, 0.173, 1)
-border_width_left = 1
-border_width_top = 1
-border_width_right = 1
-border_width_bottom = 1
-border_color = Color(0.9, 0.78, 0.45, 1)
-corner_radius_top_left = 4
-corner_radius_top_right = 4
-corner_radius_bottom_left = 4
-corner_radius_bottom_right = 4
 
 [sub_resource type="StyleBoxFlat" id="Style_right_card_bg"]
 content_margin_left = 28.0
@@ -277,21 +262,6 @@ vertical_alignment = 1
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="BackBtn" type="Button" parent="TopBar/TopHBox"]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(160, 44)
-layout_mode = 2
-size_flags_vertical = 4
-mouse_default_cursor_shape = 2
-theme_override_colors/font_color = Color(0.961, 0.620, 0.043, 1)
-theme_override_colors/font_hover_color = Color(1, 0.88, 0.47, 1)
-theme_override_fonts/font = ExtResource("2_font_bold")
-theme_override_font_sizes/font_size = 16
-theme_override_styles/normal = SubResource("Style_topbar_btn_normal")
-theme_override_styles/hover = SubResource("Style_topbar_btn_hover")
-theme_override_styles/pressed = SubResource("Style_topbar_btn_hover")
-text = "← กลับสู่หน้าหลัก"
-
 [node name="MainMargin" type="MarginContainer" parent="."]
 layout_mode = 1
 anchors_preset = 15
@@ -340,26 +310,6 @@ texture = ExtResource("6_reticle")
 expand_mode = 1
 stretch_mode = 5
 
-[node name="Pedestal" type="TextureRect" parent="MainMargin/MainHBox/LeftShowcase/StageControl"]
-texture_filter = 1
-custom_minimum_size = Vector2(380, 110)
-layout_mode = 1
-anchors_preset = 8
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -190.0
-offset_top = 110.0
-offset_right = 190.0
-offset_bottom = 220.0
-grow_horizontal = 2
-grow_vertical = 2
-mouse_filter = 2
-texture = ExtResource("7_pedestal")
-expand_mode = 1
-stretch_mode = 5
-
 [node name="CharacterSprite" type="TextureRect" parent="MainMargin/MainHBox/LeftShowcase/StageControl"]
 unique_name_in_owner = true
 texture_filter = 1
@@ -383,22 +333,22 @@ stretch_mode = 5
 [node name="CatCompanionSprite" type="TextureRect" parent="MainMargin/MainHBox/LeftShowcase/StageControl"]
 unique_name_in_owner = true
 texture_filter = 1
-custom_minimum_size = Vector2(100, 140)
+custom_minimum_size = Vector2(76, 134)
 layout_mode = 1
 anchors_preset = 8
 anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = 92.0
-offset_top = 35.0
-offset_right = 192.0
-offset_bottom = 175.0
+offset_left = 100.0
+offset_top = 17.0
+offset_right = 176.0
+offset_bottom = 151.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 0
 mouse_default_cursor_shape = 2
-texture = ExtResource("20_companion_black")
+texture = SubResource("AtlasTexture_mewla_idle")
 expand_mode = 1
 stretch_mode = 5
 
@@ -411,9 +361,10 @@ theme_override_constants/separation = 24
 unique_name_in_owner = true
 custom_minimum_size = Vector2(190, 46)
 layout_mode = 2
+focus_mode = 0
 mouse_default_cursor_shape = 2
 theme_override_colors/font_color = Color(0.88, 0.85, 1, 1)
-theme_override_fonts/font = ExtResource("2_font_bold")
+theme_override_fonts/font = SubResource("FontVariation_ui_bold")
 theme_override_font_sizes/font_size = 16
 theme_override_styles/normal = SubResource("Style_rotate_btn_normal")
 theme_override_styles/hover = SubResource("Style_rotate_btn_hover")
@@ -424,9 +375,10 @@ text = "⟲ หมุนซ้าย (Rotate L)"
 unique_name_in_owner = true
 custom_minimum_size = Vector2(190, 46)
 layout_mode = 2
+focus_mode = 0
 mouse_default_cursor_shape = 2
 theme_override_colors/font_color = Color(0.88, 0.85, 1, 1)
-theme_override_fonts/font = ExtResource("2_font_bold")
+theme_override_fonts/font = SubResource("FontVariation_ui_bold")
 theme_override_font_sizes/font_size = 16
 theme_override_styles/normal = SubResource("Style_rotate_btn_normal")
 theme_override_styles/hover = SubResource("Style_rotate_btn_hover")
@@ -445,17 +397,20 @@ theme_override_constants/separation = 14
 [node name="HeaderRow" type="HBoxContainer" parent="MainMargin/MainHBox/RightWardrobePanel/CardVBox"]
 layout_mode = 2
 
-[node name="TitleIcon" type="Label" parent="MainMargin/MainHBox/RightWardrobePanel/CardVBox/HeaderRow"]
+[node name="TitleIcon" type="TextureRect" parent="MainMargin/MainHBox/RightWardrobePanel/CardVBox/HeaderRow"]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.66, 0.33, 0.97, 1)
-theme_override_fonts/font = ExtResource("2_font_bold")
-theme_override_font_sizes/font_size = 22
-text = "✨ "
+custom_minimum_size = Vector2(26, 26)
+size_flags_vertical = 4
+texture_filter = 2
+self_modulate = Color(0.66, 0.33, 0.97, 1)
+texture = ExtResource("icon_sparkles")
+expand_mode = 1
+stretch_mode = 5
 
 [node name="CardTitle" type="Label" parent="MainMargin/MainHBox/RightWardrobePanel/CardVBox/HeaderRow"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.93, 0.91, 1, 1)
-theme_override_fonts/font = ExtResource("2_font_bold")
+theme_override_fonts/font = SubResource("FontVariation_ui_bold")
 theme_override_font_sizes/font_size = 22
 text = "เครื่องแต่งกายเวทมนตร์"
 
@@ -466,7 +421,7 @@ size_flags_horizontal = 3
 [node name="CounterLabel" type="Label" parent="MainMargin/MainHBox/RightWardrobePanel/CardVBox/HeaderRow"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.62, 0.57, 0.78, 1)
-theme_override_fonts/font = ExtResource("2_font_bold")
+theme_override_fonts/font = SubResource("FontVariation_ui_reg")
 theme_override_font_sizes/font_size = 15
 text = "ไอเทมปลดล็อกแล้ว "
 
@@ -474,7 +429,7 @@ text = "ไอเทมปลดล็อกแล้ว "
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_colors/font_color = Color(1, 0.82, 0.4, 1)
-theme_override_fonts/font = ExtResource("2_font_bold")
+theme_override_fonts/font = SubResource("FontVariation_ui_bold")
 theme_override_font_sizes/font_size = 18
 text = "0 ชิ้น"
 
@@ -486,8 +441,9 @@ theme_override_constants/separation = 8
 unique_name_in_owner = true
 custom_minimum_size = Vector2(110, 38)
 layout_mode = 2
+focus_mode = 0
 mouse_default_cursor_shape = 2
-theme_override_fonts/font = ExtResource("2_font_bold")
+theme_override_fonts/font = SubResource("FontVariation_ui_bold")
 theme_override_font_sizes/font_size = 14
 text = "ทั้งหมด (All)"
 
@@ -495,37 +451,53 @@ text = "ทั้งหมด (All)"
 unique_name_in_owner = true
 custom_minimum_size = Vector2(100, 38)
 layout_mode = 2
+focus_mode = 0
 mouse_default_cursor_shape = 2
-theme_override_fonts/font = ExtResource("2_font_bold")
+theme_override_fonts/font = SubResource("FontVariation_ui_bold")
 theme_override_font_sizes/font_size = 14
-text = "🧙 ฮู้ด"
+text = "ฮู้ด"
+icon = ExtResource("icon_hood")
+texture_filter = 2
+theme_override_constants/icon_max_width = 18
 
 [node name="TabScarf" type="Button" parent="MainMargin/MainHBox/RightWardrobePanel/CardVBox/FilterTabsRow"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(105, 38)
 layout_mode = 2
+focus_mode = 0
 mouse_default_cursor_shape = 2
-theme_override_fonts/font = ExtResource("2_font_bold")
+theme_override_fonts/font = SubResource("FontVariation_ui_bold")
 theme_override_font_sizes/font_size = 14
-text = "🧣 ผ้าพันคอ"
+text = "ผ้าพันคอ"
+icon = ExtResource("icon_scarf")
+texture_filter = 2
+theme_override_constants/icon_max_width = 18
 
 [node name="TabBag" type="Button" parent="MainMargin/MainHBox/RightWardrobePanel/CardVBox/FilterTabsRow"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(100, 38)
 layout_mode = 2
+focus_mode = 0
 mouse_default_cursor_shape = 2
-theme_override_fonts/font = ExtResource("2_font_bold")
+theme_override_fonts/font = SubResource("FontVariation_ui_bold")
 theme_override_font_sizes/font_size = 14
-text = "🎒 กระเป๋า"
+text = "กระเป๋า"
+icon = ExtResource("icon_backpack")
+texture_filter = 2
+theme_override_constants/icon_max_width = 18
 
 [node name="TabCat" type="Button" parent="MainMargin/MainHBox/RightWardrobePanel/CardVBox/FilterTabsRow"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(95, 38)
 layout_mode = 2
+focus_mode = 0
 mouse_default_cursor_shape = 2
-theme_override_fonts/font = ExtResource("2_font_bold")
+theme_override_fonts/font = SubResource("FontVariation_ui_bold")
 theme_override_font_sizes/font_size = 14
-text = "🐱 แมว"
+text = "แมว"
+icon = ExtResource("icon_cat")
+texture_filter = 2
+theme_override_constants/icon_max_width = 18
 
 [node name="ScrollArea" type="ScrollContainer" parent="MainMargin/MainHBox/RightWardrobePanel/CardVBox"]
 layout_mode = 2
@@ -543,18 +515,20 @@ layout_mode = 2
 alignment = 1
 theme_override_constants/separation = 12
 
-[node name="EmptyIcon" type="Label" parent="MainMargin/MainHBox/RightWardrobePanel/CardVBox/ScrollArea/EmptyStateContainer/EmptyStateVBox"]
+[node name="EmptyIcon" type="TextureRect" parent="MainMargin/MainHBox/RightWardrobePanel/CardVBox/ScrollArea/EmptyStateContainer/EmptyStateVBox"]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.66, 0.45, 0.95, 1)
-theme_override_fonts/font = ExtResource("2_font_bold")
-theme_override_font_sizes/font_size = 46
-text = "✨"
-horizontal_alignment = 1
+custom_minimum_size = Vector2(56, 56)
+size_flags_horizontal = 4
+texture_filter = 2
+self_modulate = Color(0.66, 0.45, 0.95, 1)
+texture = ExtResource("icon_sparkles")
+expand_mode = 1
+stretch_mode = 5
 
 [node name="EmptyTitle" type="Label" parent="MainMargin/MainHBox/RightWardrobePanel/CardVBox/ScrollArea/EmptyStateContainer/EmptyStateVBox"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.9, 0.88, 1, 1)
-theme_override_fonts/font = ExtResource("2_font_bold")
+theme_override_fonts/font = SubResource("FontVariation_ui_bold")
 theme_override_font_sizes/font_size = 20
 text = "ตู้เสื้อผ้าว่างเปล่า"
 horizontal_alignment = 1
@@ -562,16 +536,16 @@ horizontal_alignment = 1
 [node name="EmptySubtitle" type="Label" parent="MainMargin/MainHBox/RightWardrobePanel/CardVBox/ScrollArea/EmptyStateContainer/EmptyStateVBox"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.65, 0.6, 0.78, 1)
-theme_override_fonts/font = ExtResource("2_font_bold")
-theme_override_font_sizes/font_size = 14
+theme_override_fonts/font = SubResource("FontVariation_ui_reg")
+theme_override_font_sizes/font_size = 15
 text = "ยังไม่มีไอเทมเครื่องแต่งกายหรือสัตว์เลี้ยงในครอบครอง"
 horizontal_alignment = 1
 
 [node name="EmptyHint" type="Label" parent="MainMargin/MainHBox/RightWardrobePanel/CardVBox/ScrollArea/EmptyStateContainer/EmptyStateVBox"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.48, 0.44, 0.6, 1)
-theme_override_fonts/font = ExtResource("2_font_bold")
-theme_override_font_sizes/font_size = 13
+theme_override_fonts/font = SubResource("FontVariation_ui_reg")
+theme_override_font_sizes/font_size = 14
 text = "(ไอเทมจะถูกดึงมาที่นี่หลังจากซื้อจากร้านค้า)"
 horizontal_alignment = 1
 

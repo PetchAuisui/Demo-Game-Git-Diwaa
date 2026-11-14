@@ -8,13 +8,19 @@ signal save_file_requested(file_path: String, content: String)
 signal create_file_requested(file_path: String, content: String)
 signal create_folder_requested(folder_path: String)
 signal rename_entry_requested(source_path: String, destination_path: String)
+signal move_entry_requested(source_path: String, destination_path: String)
 signal delete_entry_requested(entry_path: String, is_directory: bool)
 
 const INDENT_PIXELS := 22
 const CHEVRON_SLOT_PIXELS := 22
+## ความสูงไอคอนแต่ละแถว = ความสูงแถวทั้งแถว (v_separation = 0) เพื่อให้เส้นโยงต่อกันไม่ขาด
+const TREE_ROW_PIXELS := 40
+const GUIDE_COLOR := Color(0.36, 0.42, 0.64, 0.9)
+const DRAG_TYPE := "workspace_entry"
+const DROP_HIGHLIGHT := Color(0.98, 0.72, 0.28, 0.22)
 
 @export var panel_title: String = "FILES — พื้นที่ทำงาน"
-@export var empty_message: String = "ยังไม่มีไฟล์ — เริ่มสร้างด้านบน"
+@export var empty_message: String = "ยังไม่มีไฟล์"
 
 var _title_label: Label
 var _feedback_label: Label
@@ -23,6 +29,9 @@ var _entry_actions: Control
 var _navigator_surface: Control
 var _editor_surface: Control
 var _files_list: ItemList
+var _empty_state: Control
+var _empty_title: Label
+var _entry_count_label: Label
 var _new_file_button: Button
 var _new_folder_button: Button
 var _open_button: Button
@@ -60,6 +69,19 @@ var _saved_content := ""
 var _pending_open_path := ""
 var _pending_close := false
 var _suppress_text_changed := false
+var _is_busy := false
+## index ของแถวที่ไฮไลต์ขณะลาก (-1 = ไม่มี)
+var _drop_highlight_index := -1
+## path ของแถวที่กดเมาส์ล่าสุด — จำไว้ตอนกด เพราะการเลือกแถวทำให้รายการเลื่อนลง
+var _pressed_entry_path := ""
+## true ระหว่างกดเมาส์ค้างบนรายการ — โฟลเดอร์จะพับ/กางตอนปล่อยเมาส์ (ถ้าไม่ได้ลาก) แทนตอนกด
+var _mouse_held_on_list := false
+## โฟลเดอร์ที่รอพับ/กางเมื่อปล่อยเมาส์ ("" = ไม่มี)
+var _pending_toggle_path := ""
+var _drag_in_progress := false
+var _root_drop_highlighted := false
+var _list_panel_style: StyleBox
+var _root_drop_style: StyleBoxFlat
 
 var _file_icon: Texture2D
 var _folder_icon: Texture2D
@@ -84,10 +106,20 @@ func _ready() -> void:
 	_setup_create_dialog(_create_folder_dialog, _create_folder_name_input)
 
 	_title_label.text = panel_title
+	for button in [_new_file_button, _new_folder_button]:
+		_fit_create_button_to_content(button)
+	# จองที่ 2 บรรทัดให้ข้อความสถานะเสมอ: ข้อความยาว (เช่น error) ขึ้นบรรทัดใหม่ได้โดยไม่ดันรายการลง
+	_feedback_label.custom_minimum_size.y = _feedback_label.get_line_height() * 2 \
+			+ _feedback_label.get_theme_constant("line_spacing")
 
 	_files_list.item_selected.connect(_on_item_selected)
 	_files_list.item_activated.connect(_on_item_activated)
 	_files_list.empty_clicked.connect(_on_empty_clicked)
+	_files_list.gui_input.connect(_on_files_list_gui_input)
+	set_process(false)
+	_list_panel_style = _files_list.get_theme_stylebox("panel")
+	_root_drop_style = _build_root_drop_style(_list_panel_style)
+	_files_list.set_drag_forwarding(_get_list_drag_data, _can_drop_on_list, _drop_on_list)
 	_new_file_button.pressed.connect(func() -> void: _show_create_dialog(_create_file_dialog, _create_file_name_input))
 	_new_folder_button.pressed.connect(func() -> void: _show_create_dialog(_create_folder_dialog, _create_folder_name_input))
 	_open_button.pressed.connect(func() -> void:
@@ -118,6 +150,10 @@ func _bind_nodes() -> void:
 	_navigator_surface = get_node("%NavigatorSurface")
 	_editor_surface = get_node("%EditorSurface")
 	_files_list = get_node("%FilesList")
+	_empty_state = get_node("%EmptyState")
+	_empty_title = get_node("%EmptyTitle")
+	_entry_count_label = get_node("%EntryCountLabel")
+	_empty_title.text = empty_message
 	_new_file_button = get_node("%NewFileButton")
 	_new_folder_button = get_node("%NewFolderButton")
 	_open_button = get_node("%OpenButton")
@@ -160,20 +196,22 @@ func _render_entries() -> void:
 		if not _is_hidden_by_collapsed_ancestor(entry.path):
 			_entries.append(entry)
 	_files_list.clear()
+	_drop_highlight_index = -1
+	_empty_state.visible = _entries.is_empty()
+	_entry_count_label.text = "%d รายการ" % _all_entries.size()
 
 	if _entries.is_empty():
-		_files_list.add_item(empty_message)
-		_files_list.set_item_disabled(0, true)
 		_selected_path = ""
 		_selected_is_directory = false
 		_update_action_buttons()
 		return
 
+	var guides := _build_tree_guides()
 	for index in _entries.size():
 		var entry := _entries[index]
 		var depth := entry.path.count("/")
 		var status := "" if entry.status_badge.is_empty() else " " + entry.status_badge
-		var icon := _get_tree_icon(entry.is_directory, depth, entry.is_directory and not _collapsed.has(entry.path))
+		var icon := _get_tree_icon(entry.is_directory, depth, entry.is_directory and not _collapsed.has(entry.path), guides[index])
 		_files_list.add_item(entry.name + status, icon)
 		_files_list.set_item_tooltip(index, entry.path)
 		if entry.status_color != null:
@@ -199,8 +237,46 @@ func _is_hidden_by_collapsed_ancestor(path: String) -> bool:
 
 ## ItemList always draws the icon at the far left, so each row's icon texture is composed as
 ## [indent][chevron slot][icon]: folders get a chevron, files leave the slot blank (VS Code style).
-func _get_tree_icon(is_directory: bool, depth: int, expanded: bool) -> Texture2D:
-	var key := "%s|%d|%s" % [is_directory, depth, expanded]
+## รูปแบบเส้นโยงของแต่ละแถว (ตามลำดับ _entries) เป็น String ยาว depth+1 ตัว:
+## ตัวที่ k < depth-1 คือเส้นแนวตั้งผ่านของบรรพบุรุษระดับ k ("|" = มีพี่น้องถัดไป, " " = ไม่มี),
+## ตัวที่ depth-1 คือข้อต่อเข้าหาแถวนี้ ("T" = ยังมีพี่น้องถัดไป, "L" = ตัวสุดท้าย),
+## ตัวสุดท้ายคือ "v" เมื่อเป็นโฟลเดอร์ที่กางอยู่และมีลูกแสดงอยู่ข้างล่าง
+func _build_tree_guides() -> Array[String]:
+	var count := _entries.size()
+	var parent_of: Array[String] = []
+	var is_last: Array[bool] = []
+	var last_index_of_parent := {}
+	for i in count:
+		var parent := _entries[i].path.get_base_dir()
+		parent_of.append(parent)
+		last_index_of_parent[parent] = i
+	for i in count:
+		is_last.append(last_index_of_parent[parent_of[i]] == i)
+
+	# ancestor_open[level] = เส้นแนวตั้งระดับนั้นยังต้องลากต่อหรือไม่
+	var ancestor_open: Array[bool] = []
+	var guides: Array[String] = []
+	for i in count:
+		var entry := _entries[i]
+		var depth := entry.path.count("/")
+		ancestor_open.resize(depth)
+		var pattern := ""
+		for level in depth:
+			if level < depth - 1:
+				pattern += "|" if ancestor_open[level] else " "
+			else:
+				pattern += "L" if is_last[i] else "T"
+		var has_visible_child := i + 1 < count and parent_of[i + 1] == entry.path
+		pattern += "v" if entry.is_directory and has_visible_child else "-"
+		guides.append(pattern)
+		if depth > 0:
+			ancestor_open[depth - 1] = not is_last[i]
+		ancestor_open.append(false)
+	return guides
+
+
+func _get_tree_icon(is_directory: bool, depth: int, expanded: bool, guide: String = "") -> Texture2D:
+	var key := "%s|%d|%s|%s" % [is_directory, depth, expanded, guide]
 	if _tree_icons.has(key):
 		return _tree_icons[key]
 
@@ -212,8 +288,9 @@ func _get_tree_icon(is_directory: bool, depth: int, expanded: bool) -> Texture2D
 	var left := depth * INDENT_PIXELS
 	var gap := 2
 	var width := left + CHEVRON_SLOT_PIXELS + gap + source.get_width()
-	var height := maxi(source.get_height(), CHEVRON_SLOT_PIXELS)
+	var height := maxi(TREE_ROW_PIXELS, maxi(source.get_height(), CHEVRON_SLOT_PIXELS))
 	var image := Image.create_empty(width, height, false, Image.FORMAT_RGBA8)
+	_draw_tree_guides(image, depth, is_directory, guide)
 	if is_directory:
 		_draw_chevron(image, left, height / 2, expanded)
 	image.blit_rect(source, Rect2i(Vector2i.ZERO, source.get_size()),
@@ -222,6 +299,33 @@ func _get_tree_icon(is_directory: bool, depth: int, expanded: bool) -> Texture2D
 	var texture := ImageTexture.create_from_image(image)
 	_tree_icons[key] = texture
 	return texture
+
+
+static func _draw_tree_guides(image: Image, depth: int, is_directory: bool, guide: String) -> void:
+	if guide.is_empty():
+		return
+	var height := image.get_height()
+	var mid := height / 2
+	for level in depth:
+		var x := level * INDENT_PIXELS + CHEVRON_SLOT_PIXELS / 2 - 1
+		match guide[level]:
+			"|":
+				_fill(image, Rect2i(x, 0, 2, height))
+			"T", "L":
+				var bottom := height if guide[level] == "T" else mid + 1
+				_fill(image, Rect2i(x, 0, 2, bottom))
+				# เส้นแนวนอนวิ่งไปหาลูกศร (โฟลเดอร์) หรือไอคอนไฟล์
+				var end_x := depth * INDENT_PIXELS + (4 if is_directory else CHEVRON_SLOT_PIXELS - 2)
+				_fill(image, Rect2i(x, mid - 1, end_x - x, 2))
+	if guide[guide.length() - 1] == "v":
+		var cx := depth * INDENT_PIXELS + CHEVRON_SLOT_PIXELS / 2 - 1
+		_fill(image, Rect2i(cx, mid + 7, 2, height - mid - 7))
+
+
+static func _fill(image: Image, rect: Rect2i) -> void:
+	var clipped := rect.intersection(Rect2i(Vector2i.ZERO, image.get_size()))
+	if clipped.has_area():
+		image.fill_rect(clipped, GUIDE_COLOR)
 
 
 static func _draw_chevron(image: Image, slot_x: int, center_y: int, expanded: bool) -> void:
@@ -304,22 +408,37 @@ func notify_entry_renamed(source_path: String, destination_path: String) -> void
 		_editor_path_label.text = _open_file_path
 	if _selected_path == source_path or _selected_path.begins_with(source_path + "/"):
 		_selected_path = destination_path + _selected_path.substr(source_path.length())
+	# ย้ายสถานะพับของโฟลเดอร์ (และโฟลเดอร์ลูก) ตามไปที่ path ใหม่
+	for key: String in _collapsed.keys():
+		if key == source_path or key.begins_with(source_path + "/"):
+			_collapsed.erase(key)
+			_collapsed[destination_path + key.substr(source_path.length())] = true
+	# กางโฟลเดอร์ปลายทาง (และโฟลเดอร์แม่ทั้งหมด) ให้เห็นรายการที่เพิ่งย้าย/เปลี่ยนชื่อ
+	var folder := destination_path.get_base_dir()
+	while not folder.is_empty():
+		_collapsed.erase(folder)
+		folder = folder.get_base_dir()
 
 
 func notify_entry_deleted(path: String) -> void:
 	if _open_file_path == path or _open_file_path.begins_with(path + "/"):
 		_show_empty_editor()
+	for key: String in _collapsed.keys():
+		if key == path or key.begins_with(path + "/"):
+			_collapsed.erase(key)
 
 
 func show_feedback(message: String, is_error: bool = false) -> void:
 	_feedback_label.text = message
-	_feedback_label.modulate = Color(1.0, 0.48, 0.52) if is_error else Color(0.45, 0.95, 0.66)
-	_feedback_label.visible = true
+	# ตั้งสีตัวอักษรตรง ๆ (modulate จะคูณกับสีเขียวเดิมจน error กลายเป็นสีเทาอมเขียว)
+	_feedback_label.add_theme_color_override("font_color", Color(1.0, 0.48, 0.52) if is_error else Color(0.45, 0.95, 0.66))
+	_feedback_label.tooltip_text = message
 
 
 func set_busy(busy: bool) -> void:
-	_new_file_button.disabled = busy
-	_new_folder_button.disabled = busy
+	_is_busy = busy
+	for button in [_new_file_button, _new_folder_button]:
+		_set_create_button_disabled(button, busy)
 	_open_button.disabled = busy or _selected_path.is_empty() or _selected_is_directory
 	_rename_button.disabled = busy or _selected_path.is_empty()
 	_delete_button.disabled = busy or _selected_path.is_empty()
@@ -336,9 +455,10 @@ func _on_item_selected(index: int) -> void:
 	_selected_is_directory = entry.is_directory
 	if entry.is_directory:
 		# Click toggles expand/collapse, like a VS Code explorer folder.
-		if not _collapsed.erase(entry.path):
-			_collapsed[entry.path] = true
-		_render_entries()
+		# เมาส์: รอจนปล่อยเมาส์ เพื่อไม่ให้การกดเพื่อลากโฟลเดอร์ไปพับ/กางมันและทำให้แถวเลื่อน
+		# คีย์บอร์ด: ลูกศรแค่เลื่อนการเลือก ไม่พับ/กาง (กด Enter เพื่อพับ/กาง — ดู _on_item_activated)
+		if _mouse_held_on_list:
+			_pending_toggle_path = entry.path
 	_update_action_buttons()
 	show_feedback(("เลือกโฟลเดอร์ %s" if entry.is_directory else "เลือกไฟล์ %s") % entry.path)
 
@@ -355,7 +475,12 @@ func _on_empty_clicked(_at_position: Vector2, mouse_button_index: int) -> void:
 
 
 func _on_item_activated(index: int) -> void:
-	if index < 0 or index >= _entries.size() or _entries[index].is_directory:
+	if index < 0 or index >= _entries.size():
+		return
+	if _entries[index].is_directory:
+		# Enter บนโฟลเดอร์ = พับ/กาง (ดับเบิลคลิกเมาส์พับ/กางไปแล้วตอนปล่อยเมาส์ จึงข้าม)
+		if not _mouse_held_on_list:
+			_toggle_folder(_entries[index].path)
 		return
 	_request_open_file(_entries[index].path)
 
@@ -504,7 +629,199 @@ func _validate_simple_name(value: String) -> String:
 
 func _update_action_buttons() -> void:
 	var has_selection := not _selected_path.is_empty()
-	_entry_actions.visible = has_selection and _open_file_path.is_empty()
+	# แสดงปุ่มตลอด (ปิดใช้เมื่อยังไม่เลือก) เพื่อไม่ให้รายการกระโดดลงตอนกดแถว
+	_entry_actions.visible = _open_file_path.is_empty()
 	_open_button.disabled = not has_selection or _selected_is_directory
 	_rename_button.disabled = not has_selection
 	_delete_button.disabled = not has_selection
+
+
+## ปล่อยเมาส์ที่ไหนก็ได้ = เลิกกดค้าง แม้รายการจะถูกซ่อนไปก่อนปล่อย (เช่น ดับเบิลคลิกเปิดไฟล์)
+## ซึ่งทำให้ event ปล่อยเมาส์ไม่ถึง FilesList
+func _input(event: InputEvent) -> void:
+	var mouse := event as InputEventMouseButton
+	if mouse != null and mouse.button_index == MOUSE_BUTTON_LEFT and not mouse.pressed:
+		_mouse_held_on_list = false
+
+
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_DRAG_BEGIN:
+		_drag_in_progress = true
+		set_process(true)
+	elif what == NOTIFICATION_DRAG_END:
+		_drag_in_progress = false
+		set_process(false)
+		_mouse_held_on_list = false
+		_pending_toggle_path = ""
+		_clear_drop_highlights()
+
+
+# --- ลากไฟล์/โฟลเดอร์ไปวางในโฟลเดอร์ ---------------------------------------
+
+func _on_files_list_gui_input(event: InputEvent) -> void:
+	var mouse := event as InputEventMouseButton
+	if mouse == null or mouse.button_index != MOUSE_BUTTON_LEFT:
+		return
+	if mouse.pressed:
+		var index := _files_list.get_item_at_position(mouse.position, true)
+		_pressed_entry_path = _entries[index].path if index >= 0 and index < _entries.size() else ""
+		_mouse_held_on_list = true
+		_pending_toggle_path = ""
+	else:
+		_mouse_held_on_list = false
+		_flush_pending_toggle()
+
+
+## ปุ่มสร้างวางไอคอน+ข้อความเป็นโหนดลูก (เพื่อจัดกึ่งกลาง) ซึ่ง Button ไม่นับรวมในขนาดขั้นต่ำ
+## และไม่จางตามตอนถูกปิดใช้ — สองฟังก์ชันนี้ชดเชยให้
+static func _fit_create_button_to_content(button: Button) -> void:
+	var content: Control = button.get_node("Center")
+	var frame := button.get_theme_stylebox("normal").get_minimum_size()
+	button.custom_minimum_size.x = maxf(button.custom_minimum_size.x, content.get_combined_minimum_size().x + frame.x)
+
+
+static func _set_create_button_disabled(button: Button, disabled: bool) -> void:
+	button.disabled = disabled
+	(button.get_node("Center") as Control).modulate.a = 0.45 if disabled else 1.0
+
+
+func _toggle_folder(path: String) -> void:
+	if not _collapsed.erase(path):
+		_collapsed[path] = true
+	_render_entries()
+
+
+## พับ/กางโฟลเดอร์ที่รอไว้ เว้นแต่การกดครั้งนั้นกลายเป็นการลาก
+func _flush_pending_toggle() -> void:
+	var path := _pending_toggle_path
+	_pending_toggle_path = ""
+	if not path.is_empty() and not _drag_in_progress:
+		_toggle_folder(path)
+
+
+func _get_list_drag_data(_at_position: Vector2) -> Variant:
+	if _is_busy or _pressed_entry_path.is_empty():
+		return null
+	var index := _index_of_path(_pressed_entry_path)
+	if index < 0:
+		return null
+	var entry := _entries[index]
+	_files_list.set_drag_preview(_build_drag_preview(entry))
+	return {"type": DRAG_TYPE, "path": entry.path, "is_directory": entry.is_directory}
+
+
+func _can_drop_on_list(at_position: Vector2, data: Variant) -> bool:
+	var target := _resolve_drop_target(at_position)
+	var ok := _is_valid_move(data, target.folder)
+	_set_drop_highlight(target.index if ok else -1)
+	# ปลายทางเป็น WORKSPACE (ไม่มีแถวโฟลเดอร์ให้ไฮไลต์) → ไฮไลต์กรอบรายการทั้งกล่องแทน
+	_set_root_drop_highlight(ok and target.folder.is_empty())
+	return ok
+
+
+func _drop_on_list(at_position: Vector2, data: Variant) -> void:
+	_clear_drop_highlights()
+	var target := _resolve_drop_target(at_position)
+	if not _is_valid_move(data, target.folder):
+		return
+	var source: String = data.path
+	var folder: String = target.folder
+	var destination := source.get_file() if folder.is_empty() else "%s/%s" % [folder, source.get_file()]
+	move_entry_requested.emit(source, destination)
+
+
+## โฟลเดอร์ปลายทางตามตำแหน่งเมาส์: วางบนโฟลเดอร์ = เข้าโฟลเดอร์นั้น,
+## วางบนไฟล์ = โฟลเดอร์เดียวกับไฟล์นั้น, วางที่ว่าง = WORKSPACE (root)
+func _resolve_drop_target(at_position: Vector2) -> Dictionary:
+	var index := _files_list.get_item_at_position(at_position, true)
+	if index < 0 or index >= _entries.size():
+		return {"folder": "", "index": -1}
+	var entry := _entries[index]
+	if entry.is_directory:
+		return {"folder": entry.path, "index": index}
+	var parent := entry.path.get_base_dir()
+	return {"folder": parent, "index": _index_of_path(parent)}
+
+
+func _is_valid_move(data: Variant, folder: String) -> bool:
+	if _is_busy or not (data is Dictionary) or data.get("type") != DRAG_TYPE:
+		return false
+	var source: String = data.path
+	if source.get_base_dir() == folder:
+		return false
+	# ห้ามย้ายโฟลเดอร์เข้าไปในตัวเองหรือโฟลเดอร์ลูกของมัน
+	if data.is_directory and (folder == source or folder.begins_with(source + "/")):
+		return false
+	return true
+
+
+func _index_of_path(path: String) -> int:
+	for i in _entries.size():
+		if _entries[i].path == path:
+			return i
+	return -1
+
+
+func _set_drop_highlight(index: int) -> void:
+	if index == _drop_highlight_index:
+		return
+	if _drop_highlight_index >= 0 and _drop_highlight_index < _files_list.item_count:
+		_files_list.set_item_custom_bg_color(_drop_highlight_index, Color(0, 0, 0, 0))
+	_drop_highlight_index = index
+	if index >= 0 and index < _files_list.item_count:
+		_files_list.set_item_custom_bg_color(index, DROP_HIGHLIGHT)
+
+
+## ระหว่างลาก: ถ้าเมาส์ออกนอกรายการ ให้ล้างไฮไลต์ (Godot เรียก _can_drop เฉพาะตอนอยู่บนรายการ)
+func _process(_delta: float) -> void:
+	if (_drop_highlight_index >= 0 or _root_drop_highlighted) \
+			and not _files_list.get_global_rect().has_point(_files_list.get_global_mouse_position()):
+		_clear_drop_highlights()
+
+
+func _clear_drop_highlights() -> void:
+	_set_drop_highlight(-1)
+	_set_root_drop_highlight(false)
+
+
+func _set_root_drop_highlight(on: bool) -> void:
+	if on == _root_drop_highlighted:
+		return
+	_root_drop_highlighted = on
+	_files_list.add_theme_stylebox_override("panel", _root_drop_style if on else _list_panel_style)
+
+
+static func _build_root_drop_style(base: StyleBox) -> StyleBoxFlat:
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color(DROP_HIGHLIGHT, 0.08)
+	style.border_color = Color(DROP_HIGHLIGHT, 0.8)
+	style.set_border_width_all(2)
+	style.set_corner_radius_all(6)
+	for side in [SIDE_LEFT, SIDE_TOP, SIDE_RIGHT, SIDE_BOTTOM]:
+		style.set_content_margin(side, base.get_content_margin(side))
+	return style
+
+
+func _build_drag_preview(entry: WorkspaceEntryDisplayItem) -> Control:
+	var preview := PanelContainer.new()
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color(0.12, 0.14, 0.24, 0.95)
+	style.border_color = Color(0.98, 0.72, 0.28, 1)
+	style.set_border_width_all(2)
+	style.set_corner_radius_all(6)
+	style.set_content_margin_all(8)
+	preview.add_theme_stylebox_override("panel", style)
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 8)
+	var icon := TextureRect.new()
+	icon.texture = _folder_icon if entry.is_directory else _file_icon
+	icon.custom_minimum_size = Vector2(20, 20)
+	icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	row.add_child(icon)
+	var label := Label.new()
+	label.text = entry.name
+	label.add_theme_font_size_override("font_size", 18)
+	row.add_child(label)
+	preview.add_child(row)
+	return preview

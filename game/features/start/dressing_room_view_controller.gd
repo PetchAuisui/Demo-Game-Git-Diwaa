@@ -17,7 +17,6 @@ const TAB_ACTIVE_TEXT := Color(1.0, 1.0, 1.0, 1.0)
 const TAB_INACTIVE_TEXT := Color(0.65, 0.60, 0.80, 1.0)
 
 var _brand_btn: BrandButton
-var _back_btn: Button
 var _rotate_left_btn: Button
 var _rotate_right_btn: Button
 var _char_texture: TextureRect
@@ -76,7 +75,6 @@ func _ready() -> void:
 
 func _bind_nodes() -> void:
 	_brand_btn = get_node_or_null("%BrandBtn") as BrandButton
-	_back_btn = get_node("%BackBtn")
 	_rotate_left_btn = get_node("%RotateLeftBtn")
 	_rotate_right_btn = get_node("%RotateRightBtn")
 	_char_texture = get_node("%CharacterSprite")
@@ -100,9 +98,9 @@ func _bind_nodes() -> void:
 func _load_textures() -> void:
 	var paths: Array[String] = [
 		"res://assets/cutscene/characters/vel/vel_Hblue_Sredyellow_idle.png",
-		"res://assets/cutscene/characters/vel/vel_right.png",
+		"res://assets/cutscene/characters/vel/vel_Hblue_Sredyellow_idle_walk.png",
 		"res://assets/cutscene/characters/vel/vel_back.png",
-		"res://assets/cutscene/characters/vel/vel_left.png",
+		"res://assets/cutscene/characters/vel/vel_Hblue_Sredyellow_idle_walk.png",
 	]
 
 	for path in paths:
@@ -133,7 +131,6 @@ static func _tab_style(fill: Color, border: Color, border_width: int) -> StyleBo
 func _wire_events() -> void:
 	if _brand_btn != null:
 		_brand_btn.pressed.connect(_on_back_pressed)
-	_back_btn.pressed.connect(_on_back_pressed)
 	_rotate_left_btn.pressed.connect(_on_rotate_left)
 	_rotate_right_btn.pressed.connect(_on_rotate_right)
 
@@ -215,6 +212,7 @@ func _on_rotate_right() -> void:
 func _update_character_facing() -> void:
 	if _facing_textures.size() > _facing_index and _facing_textures[_facing_index] != null:
 		_char_texture.texture = _facing_textures[_facing_index]
+		_char_texture.flip_h = (_facing_index == 3)
 
 
 func _update_category_filter(category_index: int) -> void:
@@ -230,7 +228,13 @@ func _apply_tab_style(button: Button, is_active: bool) -> void:
 	button.add_theme_stylebox_override("normal", style)
 	button.add_theme_stylebox_override("hover", style)
 	button.add_theme_stylebox_override("pressed", style)
-	button.add_theme_color_override("font_color", TAB_ACTIVE_TEXT if is_active else TAB_INACTIVE_TEXT)
+	var text_color := TAB_ACTIVE_TEXT if is_active else TAB_INACTIVE_TEXT
+	button.add_theme_color_override("font_color", text_color)
+	# ไอคอน SVG ของแท็บใช้สีเดียวกับตัวอักษร
+	button.add_theme_color_override("icon_normal_color", text_color)
+	button.add_theme_color_override("icon_hover_color", text_color)
+	button.add_theme_color_override("icon_pressed_color", text_color)
+	button.add_theme_color_override("icon_focus_color", text_color)
 
 
 func _on_back_pressed() -> void:

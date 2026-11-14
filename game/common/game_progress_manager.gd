@@ -12,15 +12,13 @@ const SECTION_PROGRESS := "progress"
 const KEY_INTRO_SEEN := "has_seen_intro_cutscene"
 const SECTION_LEVELS := "levels_cleared"
 const TOTAL_LEVELS := 40
-const DEFAULT_GAMEPLAY_RETURN_SCENE := "res://features/cutscene/inside_tower_cutscene.tscn"
 
 ## ตัวแปรส่งผ่านสถานะระหว่าง Scene ชั่วคราว (Transient Session State)
 ## ใช้แทนการประกาศ static var ไว้บน UI View Script โดยตรง
-## พร้อมฟังก์ชัน consume ที่จะเคลียร์ค่ากลับเป็น 0 ทันทีที่อ่าน ป้องกันค่าค้างข้าม Session
-static var _pending_dialogue_phase: int = 0
+## - ด่านที่ผู้เล่นเลือกจากหน้าเลือกด่าน
+## - ฉากที่ปุ่มออกของ Sandbox จะพากลับไป ("" = ค่าเริ่มต้นของ Sandbox คือหน้าเลือกด่าน)
 static var _selected_level_number: int = 1
-static var _current_gameplay_step: int = 0
-static var _gameplay_return_scene: String = DEFAULT_GAMEPLAY_RETURN_SCENE
+static var _sandbox_return_scene: String = ""
 
 ## การสุ่มสีหมวกเวทมนตร์ 3 สี (ม่วง, ฟ้า, เขียว) เมื่อเริ่มเข้าเกมใหม่ อัตราดรอปเท่ากัน 1/3 (Equal Drop Rate)
 enum HatColor {
@@ -70,25 +68,12 @@ static func set_selected_level_number(level_num: int) -> void:
 static func get_selected_level_number() -> int:
 	return _selected_level_number
 
-static func set_pending_dialogue_phase(phase: int) -> void:
-	_pending_dialogue_phase = phase
+static func set_sandbox_return_scene(scene_path: String) -> void:
+	_sandbox_return_scene = scene_path
 
-static func consume_pending_dialogue_phase() -> int:
-	var phase := _pending_dialogue_phase
-	_pending_dialogue_phase = 0
-	return phase
+static func get_sandbox_return_scene() -> String:
+	return _sandbox_return_scene
 
-static func set_current_gameplay_step(step: int) -> void:
-	_current_gameplay_step = step
-
-static func get_current_gameplay_step() -> int:
-	return _current_gameplay_step
-
-static func set_gameplay_return_scene(scene_path: String) -> void:
-	_gameplay_return_scene = scene_path
-
-static func get_gameplay_return_scene() -> String:
-	return _gameplay_return_scene
 
 static var _cached_cfg: ConfigFile = null
 
@@ -133,7 +118,5 @@ static func reset_progress() -> void:
 		cfg.set_value(SECTION_LEVELS, "level_%d" % i, false)
 	cfg.save(SAVE_PATH)
 	_cached_cfg = cfg
-	_pending_dialogue_phase = 0
 	_selected_level_number = 1
-	_current_gameplay_step = 0
-	_gameplay_return_scene = DEFAULT_GAMEPLAY_RETURN_SCENE
+	_sandbox_return_scene = ""

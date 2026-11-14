@@ -15,6 +15,8 @@
 [ext_resource type="Script" path="res://features/level_select/twilight_sky_background.gd" id="13_sky"]
 [ext_resource type="Script" path="res://features/level_select/act_divider_walls.gd" id="14_act_dividers"]
 [ext_resource type="FontFile" path="res://assets/fonts/ChakraPetch-SemiBold.ttf" id="15_chakra_semi"]
+[ext_resource type="Texture2D" uid="uid://c6srk2jss3mfs" path="res://assets/icons/ui_volume_on.svg" id="icon_volume_on"]
+[ext_resource type="Texture2D" uid="uid://b41563ipj457v" path="res://assets/icons/ui_lock.svg" id="icon_lock"]
 
 [sub_resource type="FontVariation" id="Font_ta_pixel_bold"]
 base_font = ExtResource("5_ta_pixel")
@@ -458,7 +460,10 @@ theme_override_font_sizes/font_size = 18
 theme_override_styles/normal = SubResource("Style_tab_act")
 theme_override_styles/hover = SubResource("Style_tab_act_hover")
 theme_override_styles/pressed = SubResource("Style_tab_act_pressed")
-text = "🔊"
+icon = ExtResource("icon_volume_on")
+icon_alignment = 1
+texture_filter = 2
+theme_override_constants/icon_max_width = 22
 
 [node name="BtnBack" type="Button" parent="LayoutVBox/TopNavbar/NavMargin/NavHBox/RightSlot/RightControls"]
 unique_name_in_owner = true
@@ -654,6 +659,18 @@ theme_override_fonts/font = ExtResource("3_chakra_bold")
 theme_override_font_sizes/font_size = 14
 text = "git --version"
 vertical_alignment = 1
+
+[node name="HudNoticeIcon" type="TextureRect" parent="LayoutVBox/BottomHUD/HBox/InfoVBox/BottomRow"]
+unique_name_in_owner = true
+visible = false
+custom_minimum_size = Vector2(20, 20)
+layout_mode = 2
+size_flags_vertical = 4
+texture_filter = 2
+self_modulate = Color(0.76, 0.7, 0.6, 1)
+texture = ExtResource("icon_lock")
+expand_mode = 1
+stretch_mode = 5
 
 [node name="HudDesc" type="Label" parent="LayoutVBox/BottomHUD/HBox/InfoVBox/BottomRow"]
 unique_name_in_owner = true
