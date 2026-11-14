@@ -507,15 +507,14 @@ func _switch_to_windowed(window: Window) -> void:
 		if elapsed >= max_wait_time:
 			break
 
-	# คืนค่า max_size บน Windows เสมอไม่ว่าจะสำเร็จ หลุด tree หรือ timeout
-	if is_windows and is_instance_valid(window):
-		DisplayServer.window_set_max_size(Vector2i.ZERO, window.get_window_id())
-
 	if not is_inside_tree() or not is_instance_valid(window):
 		_is_toggling_fullscreen = false
 		return
 
 	if window.mode == Window.MODE_FULLSCREEN or window.mode == Window.MODE_EXCLUSIVE_FULLSCREEN:
+		# หาก timeout แล้วยังไม่ออกจากเต็มจอ ให้คืนค่า max_size บน Windows
+		if is_windows and is_instance_valid(window):
+			DisplayServer.window_set_max_size(Vector2i.ZERO, window.get_window_id())
 		_is_toggling_fullscreen = false
 		return
 
@@ -525,6 +524,17 @@ func _switch_to_windowed(window: Window) -> void:
 
 	# ปรับขนาดและวางกึ่งกลางหน้าจอ
 	_fit_windowed_to_screen(window, screen, target_size)
+
+	# บน Windows ให้รออย่างน้อย 1-2 process_frame เพื่อให้ OS (Win32 message loop เช่น WM_SIZE / WM_WINDOWPOSCHANGED)
+	# จัดการเปลี่ยนโหมดและปรับขนาดจริงให้เรียบร้อยก่อนคืนค่า max_size
+	# โดยระหว่างนี้ max_size จะยังคงช่วยบล็อกไม่ให้ OS หรือ DisplayServer เด้งกลับไปเป็น EXCLUSIVE_FULLSCREEN
+	if is_windows:
+		for _i in range(2):
+			if is_inside_tree():
+				await get_tree().process_frame
+		if is_instance_valid(window):
+			DisplayServer.window_set_max_size(Vector2i.ZERO, window.get_window_id())
+
 	_is_toggling_fullscreen = false
 
 
