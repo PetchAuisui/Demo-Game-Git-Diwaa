@@ -47,9 +47,12 @@ var choice_buttons: Array[Button] = []
 var active_choices: Array = []
 var is_showing_choices: bool = false
 var active_choice_id: String = ""
+var current_menu_id: String = ""
+var is_choice_sliding_out: bool = false
 var asked_choice_ids: Dictionary = {}
 var active_glow_tween: Tween = null
 var slot_pop_tween: Tween = null
+var choice_slide_tween: Tween = null
 var bad_ending_panel: Control = null
 var is_bad_ending_typing: bool = false
 var is_bad_ending_waiting: bool = false
@@ -163,7 +166,7 @@ func _ready() -> void:
 	choice_slots_container.anchor_bottom = 1.0
 	choice_slots_container.offset_left = -56.0
 	choice_slots_container.offset_right = 544.0
-	choice_slots_container.offset_bottom = -244.0
+	choice_slots_container.offset_bottom = -304.0
 	choice_slots_container.grow_horizontal = Control.GROW_DIRECTION_BOTH
 	choice_slots_container.grow_vertical = Control.GROW_DIRECTION_BEGIN
 	choice_slots_container.add_theme_constant_override("separation", 8)
@@ -398,6 +401,8 @@ func _begin_dialogue_phase(phase: int = -1) -> void:
 	if slot_pop_tween and slot_pop_tween.is_valid():
 		slot_pop_tween.kill()
 	active_choice_id = ""
+	is_showing_choices = false
+	is_choice_sliding_out = false
 	if is_instance_valid(choice_slots_container):
 		choice_slots_container.visible = false
 	dialogue_box.visible = true
@@ -583,6 +588,8 @@ func _on_skip_step() -> void:
 	if slot_pop_tween and slot_pop_tween.is_valid():
 		slot_pop_tween.kill()
 	active_choice_id = ""
+	is_showing_choices = false
+	is_choice_sliding_out = false
 	if is_instance_valid(choice_slots_container):
 		choice_slots_container.visible = false
 	
@@ -665,7 +672,20 @@ func _show_current_queue_item(skip_typewriter: bool = false) -> void:
 	if item.has("type"):
 		var type = item["type"]
 		if type == "choice_menu":
-			_display_choice_menu(item["menu"])
+			var target_menu = item.get("menu", "")
+			var intro_q = level_data.get("intro_sequence", [])
+			var part2_q = level_data.get("part2_intro_sequence", [])
+			var is_returning_from_sub = (current_queue != intro_q and current_queue != part2_q)
+			
+			if is_returning_from_sub and sequence_history.size() > 0 and (target_menu == "part1_main" or target_menu == "part2_main"):
+				while sequence_history.size() > 0 and current_queue != intro_q and current_queue != part2_q:
+					var parent_state = sequence_history.pop_back()
+					current_queue = parent_state.get("queue", current_queue)
+					queue_index = parent_state.get("index", queue_index)
+					if parent_state.has("is_in_entrance_cutscene"):
+						is_in_entrance_cutscene = parent_state["is_in_entrance_cutscene"]
+			var is_returning_to_main = is_returning_from_sub and (target_menu == "part1_main" or target_menu == "part2_main")
+			_display_choice_menu(target_menu, not is_returning_to_main)
 			return
 		elif type == "goto":
 			var target_seq = item.get("target", "")
@@ -685,11 +705,20 @@ func _show_current_queue_item(skip_typewriter: bool = false) -> void:
 func _show_single_dialogue(data: Dictionary, skip_typewriter: bool = false) -> void:
 	is_showing_choices = false
 	if active_choice_id.is_empty():
-		if is_instance_valid(choice_slots_container):
+		if is_instance_valid(choice_slots_container) and not is_choice_sliding_out:
 			choice_slots_container.visible = false
 	else:
 		if is_instance_valid(choice_slots_container):
 			choice_slots_container.visible = true
+			# ปรับตำแหน่ง Y เพื่อรับประกันว่าขอบล่างของช้อยส์จะไม่ทับกับ DialogueBox ด้านล่าง
+			var vp_size = get_viewport_rect().size if is_inside_tree() else Vector2(1920, 1080)
+			var total_h = choice_slots_container.size.y
+			var safe_bottom = vp_size.y - 304.0
+			if is_instance_valid(dialogue_box) and dialogue_box.visible:
+				var dbox_top = dialogue_box.position.y
+				if dbox_top > 400.0 and dbox_top < vp_size.y:
+					safe_bottom = minf(safe_bottom, dbox_top - 20.0)
+			choice_slots_container.position.y = safe_bottom - total_h
 	dialogue_label.visible = true
 	speaker_label.visible = true
 	is_dialogue_active = true
@@ -980,7 +1009,64 @@ func _setup_slot_button_styles(btn: Button, is_disabled: bool = false) -> void:
 	btn.add_theme_color_override("font_focus_color", Color(1.0, 1.0, 1.0, 1.0))
 	btn.add_theme_color_override("font_pressed_color", Color(1.0, 1.0, 1.0, 1.0))
 
-func _display_choice_menu(menu_id: String) -> void:
+func _display_choice_menu(menu_id: String, animate_entrance: bool = true) -> void:
+	if choice_slide_tween and choice_slide_tween.is_valid():
+		choice_slide_tween.kill()
+		choice_slide_tween = null
+	is_choice_sliding_out = false
+
+	# กรณีวนกลับมาคำถามเดิมหลังจากอ่านคำตอบจบ: ไม่ต้องสร้างปุ่มใหม่และไม่ต้องเล่นอนิเมชั่น ให้คืนค่าปุ่มเดิมที่มีอยู่บนจอทันที
+	if not animate_entrance and current_menu_id == menu_id and is_instance_valid(choice_slots_container) and choice_slots_container.visible and choice_buttons.size() > 0:
+		_stop_active_slot_glow()
+		active_choice_id = ""
+		is_showing_choices = true
+		is_dialogue_active = false
+		is_typing = false
+		_hide_continue_arrow()
+		_hide_question_mark()
+		
+		var menu_key = "%s_choices" % menu_id
+		var menu_info = level_data.get(menu_key, {})
+		var prompt_text: String = menu_info.get("prompt", "")
+		dialogue_label.visible = true
+		
+		if prompt_text.begins_with("เลือกข้อมูลที่ต้องการตรวจสอบก่อนเริ่มภารกิจ") or prompt_text == "ตัวเลือกคำถาม" or prompt_text.is_empty():
+			speaker_label.visible = false
+			speaker_label.text = ""
+			dialogue_label.text = "\nเลือกข้อมูลที่ต้องการตรวจสอบก่อนเริ่มภารกิจ"
+		else:
+			speaker_label.visible = true
+			speaker_label.text = "มิวรา"
+			speaker_label.add_theme_color_override("font_color", Color(0.92, 0.80, 0.44, 1.0))
+			dialogue_label.text = prompt_text
+		dialogue_label.visible_ratio = 1.0
+		
+		for b in choice_buttons:
+			if is_instance_valid(b):
+				_setup_slot_button_styles(b, b.disabled)
+				b.icon = _get_empty_arrow_texture()
+				if not b.disabled:
+					b.mouse_filter = Control.MOUSE_FILTER_STOP
+					b.focus_mode = Control.FOCUS_ALL
+				var tw = create_tween()
+				tw.tween_property(b, "modulate", Color.WHITE, 0.20)
+				
+		var vp_size_reuse = get_viewport_rect().size if is_inside_tree() else Vector2(1920, 1080)
+		var choice_count_reuse: int = choice_buttons.size()
+		var total_h_reuse: float = float(choice_count_reuse) * 58.0 + float(maxi(0, choice_count_reuse - 1)) * 8.0
+		var max_bottom_reuse: float = vp_size_reuse.y - 304.0
+		if is_instance_valid(dialogue_box) and dialogue_box.visible:
+			var dbox_top_reuse: float = dialogue_box.position.y
+			if dbox_top_reuse > 400.0 and dbox_top_reuse < vp_size_reuse.y:
+				max_bottom_reuse = minf(max_bottom_reuse, dbox_top_reuse - 20.0)
+		var target_y_reuse: float = max_bottom_reuse - total_h_reuse
+		var target_x_reuse: float = (vp_size_reuse.x * 0.5) - 56.0
+		choice_slots_container.position = Vector2(target_x_reuse, target_y_reuse)
+		
+		_update_nav_arrows()
+		return
+
+	current_menu_id = menu_id
 	_stop_active_slot_glow()
 	active_choice_id = ""
 	is_showing_choices = true
@@ -992,6 +1078,7 @@ func _display_choice_menu(menu_id: String) -> void:
 	if not choice_slots_container:
 		return
 		
+	is_choice_sliding_out = false
 	for c in choice_slots_container.get_children():
 		choice_slots_container.remove_child(c)
 		c.queue_free()
@@ -1019,9 +1106,29 @@ func _display_choice_menu(menu_id: String) -> void:
 		
 	dialogue_label.visible_ratio = 1.0
 	
-	# สร้างสล็อตคำถามลอยขึ้นมา
-	choice_slots_container.visible = true
+	# คำนวณความสูงตามจำนวนช้อยส์จริง เพื่อให้ช้อยส์ข้อล่างสุดอยู่ติดเหนือ DialogueBox ในระดับเดียวกันเสมอ
+	var vp_size = get_viewport_rect().size if is_inside_tree() else Vector2(1920, 1080)
+	var choice_count: int = active_choices.size()
+	var total_h: float = float(choice_count) * 58.0 + float(maxi(0, choice_count - 1)) * 8.0
+	var target_x: float = (vp_size.x * 0.5) - 56.0
+	var max_bottom_y: float = vp_size.y - 304.0
+	if is_instance_valid(dialogue_box) and dialogue_box.visible:
+		var dbox_top: float = dialogue_box.position.y
+		if dbox_top > 400.0 and dbox_top < vp_size.y:
+			max_bottom_y = minf(max_bottom_y, dbox_top - 20.0)
+			
+	var target_y: float = max_bottom_y - total_h
+	var bottom_offset: float = max_bottom_y - vp_size.y
+	
+	choice_slots_container.offset_left = -56.0
+	choice_slots_container.offset_right = 544.0
+	choice_slots_container.offset_bottom = bottom_offset
+	choice_slots_container.offset_top = bottom_offset - total_h
+	choice_slots_container.custom_minimum_size = Vector2(600, total_h)
+	choice_slots_container.size = Vector2(600, total_h)
+	choice_slots_container.position = Vector2(target_x, target_y)
 	choice_slots_container.modulate.a = 1.0
+	choice_slots_container.visible = true
 	
 	if slot_pop_tween and slot_pop_tween.is_valid():
 		slot_pop_tween.kill()
@@ -1084,13 +1191,17 @@ func _display_choice_menu(menu_id: String) -> void:
 		choice_slots_container.add_child(slot_wrapper)
 		choice_buttons.append(btn)
 		
-		# Animation ค่อยๆ เฟดเข้าและสไลด์จาก ขวาไปซ้าย
-		btn.position.x = 75.0
-		btn.modulate.a = 0.0
-		
-		var delay: float = float(i) * 0.08
-		slot_pop_tween.parallel().tween_property(btn, "position:x", 0.0, 0.40).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT).set_delay(delay)
-		slot_pop_tween.parallel().tween_property(btn, "modulate:a", 1.0, 0.32).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT).set_delay(delay)
+		if animate_entrance:
+			# Animation ค่อยๆ เฟดเข้าและสไลด์จาก ขวาไปซ้าย ทีละอัน
+			btn.position.x = 120.0
+			btn.modulate.a = 0.0
+			
+			var delay: float = float(i) * 0.08
+			slot_pop_tween.parallel().tween_property(btn, "position:x", 0.0, 0.40).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT).set_delay(delay)
+			slot_pop_tween.parallel().tween_property(btn, "modulate:a", 1.0, 0.32).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT).set_delay(delay)
+		else:
+			btn.position.x = 0.0
+			btn.modulate.a = 1.0
 		
 	# ตอนเปิดเมนูครั้งแรก ไม่เลือกหรือไฮไลต์ข้อไหนก่อน ให้ผู้เล่นเลือกเองอย่างเป็นธรรมชาติ
 	for b in choice_buttons:
@@ -1101,106 +1212,106 @@ func _display_choice_menu(menu_id: String) -> void:
 func _on_choice_selected(index: int) -> void:
 	if index < 0 or index >= active_choices.size():
 		return
-		
 	var choice = active_choices[index]
+	if choice.get("disabled", false):
+		return
+		
+	if slot_pop_tween and slot_pop_tween.is_valid():
+		slot_pop_tween.kill()
+	if choice_slide_tween and choice_slide_tween.is_valid():
+		choice_slide_tween.kill()
+		choice_slide_tween = null
+		
 	var choice_id = choice.get("id", "")
 	var seq_key = "%s_seq" % choice_id
 	var seq = level_data.get(seq_key, [])
 	
+	var is_yes_no = (current_menu_id == "part1_purpose_sub" or choice_id == "purpose_yes" or choice_id == "purpose_no")
 	var is_action_choice = choice_id.ends_with("_try") or (seq.size() > 0 and seq[0].get("type") == "open_gameplay")
+	var is_question = not is_yes_no and not is_action_choice
 	
-	if is_action_choice:
-		# ผู้เล่นกด "ฉันจะลองดู" -> สล็อตเลื่อนลงและค่อยๆ จางหายไป แล้วตัดเข้าสู่หน้าเกมเพลย์ (Sandbox) ทันที
+	if is_question:
+		# กรณีเป็นคำถามปกติ (ไม่ใช่ ใช่/ไม่ และไม่ใช่ ฉันจะลองดู):
+		# ให้คำถามยังคงอยู่บนหน้าจอ โดยไฮไลต์คำถามที่เลือก และหรี่ตัวเลือกอื่น พร้อมปิดรับการคลิก
+		active_choice_id = choice_id
+		is_showing_choices = false
+		is_choice_sliding_out = false
+		
+		if index < choice_buttons.size():
+			var chosen_btn = choice_buttons[index]
+			_apply_active_slot_glow(chosen_btn)
+			chosen_btn.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			chosen_btn.focus_mode = Control.FOCUS_NONE
+			
+		for j in range(choice_buttons.size()):
+			var b = choice_buttons[j]
+			if j != index:
+				b.mouse_filter = Control.MOUSE_FILTER_IGNORE
+				b.focus_mode = Control.FOCUS_NONE
+				b.icon = _get_empty_arrow_texture()
+				var tw = create_tween()
+				tw.tween_property(b, "modulate", Color(0.50, 0.48, 0.54, 1.0), 0.20)
+				
+		if is_instance_valid(choice_slots_container):
+			choice_slots_container.visible = true
+	else:
+		# กรณีที่เป็น "ใช่ / ไม่" หรือ "ฉันจะลองดู":
+		# ให้สไลด์ออกและซ่อนไปทันที ไม่ค้างอยู่บนจอระหว่างอ่านบทสนทนาถัดไป
 		_stop_active_slot_glow()
 		active_choice_id = ""
 		is_showing_choices = false
+		is_choice_sliding_out = true
+		
+		for b in choice_buttons:
+			b.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			b.focus_mode = Control.FOCUS_NONE
+			
 		if is_instance_valid(choice_slots_container):
-			var tw = create_tween().set_parallel(true)
-			tw.tween_property(choice_slots_container, "modulate:a", 0.0, 0.22)
-			tw.tween_property(choice_slots_container, "position:y", choice_slots_container.position.y + 16.0, 0.22)
-			tw.chain().tween_callback(func():
+			var start_x = choice_slots_container.position.x
+			choice_slide_tween = create_tween().set_parallel(true)
+			choice_slide_tween.tween_property(choice_slots_container, "position:x", start_x + 280.0, 0.28).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+			choice_slide_tween.tween_property(choice_slots_container, "modulate:a", 0.0, 0.25).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+			choice_slide_tween.chain().tween_callback(func():
+				is_choice_sliding_out = false
 				if is_instance_valid(choice_slots_container):
 					choice_slots_container.visible = false
 			)
-		if seq.size() > 0:
-			_load_sequence(seq)
 		else:
-			_open_gameplay_step(1)
-		return
+			is_choice_sliding_out = false
 		
-	# ผู้เล่นกดเลือกคำถาม -> คงสล็อตคำถามไว้บนหน้าจอ และเปิดแสงเรืองสีขาวค้างไว้ (ไม่อ่านแล้วเช็คถูก สามารถอ่านซ้ำได้เรื่อยๆ)
-	active_choice_id = choice_id
-	is_showing_choices = false
-	
-	if index < choice_buttons.size():
-		var chosen_btn = choice_buttons[index]
-		_apply_active_slot_glow(chosen_btn)
-		
-	for j in range(choice_buttons.size()):
-		var b = choice_buttons[j]
-		if j != index:
-			b.mouse_filter = Control.MOUSE_FILTER_IGNORE
-			b.focus_mode = Control.FOCUS_NONE
-			var tw = create_tween()
-			# ตรงที่ไม่ได้เลือก ไม่อยากให้จาง (คงความทึบ 100%) แต่ปรับเป็นสีเทาหม่น
-			tw.tween_property(b, "modulate", Color(0.50, 0.48, 0.54, 1.0), 0.20)
-			
 	if seq.size() > 0:
 		_load_sequence(seq)
 	else:
-		push_error("[LevelDialogueView] No sequence found for choice: %s" % choice_id)
-		_display_choice_menu("part1_main")
+		if is_action_choice:
+			_open_gameplay_step(1)
+		else:
+			push_error("[LevelDialogueView] No sequence found for choice: %s" % choice_id)
+			var fallback_menu = current_menu_id if current_menu_id != "" else ("part2_main" if debug_phase == 1 else "part1_main")
+			_display_choice_menu(fallback_menu)
 
 # ==============================================================================
 # GAMEPLAY STEP & STAGE FINISH
 # ==============================================================================
 
-## ผู้เล่นกด "ฉันจะลองดู" -> ตัดเข้าสู่หน้าเกมเพลย์ SandboxGameView ของด่านนี้ตามเดิม
+## ผู้เล่นกด "ฉันจะลองดู" -> ดำเนินบทสนทนาเข้าสู่ช่วงถัดไปในซีนเดิมทันที (ไม่เข้า Sandbox)
 func _open_gameplay_step(step: int) -> void:
 	if is_transitioning:
 		return
-	is_transitioning = true
-	is_dialogue_active = false
 	_stop_active_slot_glow()
 	if slot_pop_tween and slot_pop_tween.is_valid():
 		slot_pop_tween.kill()
 	active_choice_id = ""
+	is_showing_choices = false
+	is_choice_sliding_out = false
 	if is_instance_valid(choice_slots_container):
 		choice_slots_container.visible = false
 	_hide_continue_arrow()
 	_hide_question_mark()
-	if is_instance_valid(dialogue_box):
-		dialogue_box.visible = false
-	if is_instance_valid(nav_arrows_container):
-		nav_arrows_container.visible = false
-	if skip_ctrl:
-		skip_ctrl.visible = false
 		
 	sequence_history.clear()
 	current_queue = []
 	queue_index = 0
 	
-	# กำหนดสถานะและสลับฉากเข้า SandboxGameView ของด่านนี้ทันที
-	GameProgressManager.set_selected_level_number(level_number)
-	var ret_path = scene_file_path if scene_file_path != "" else "res://features/cutscene/inside_tower_cutscene.tscn"
-	GameProgressManager.set_sandbox_return_scene(ret_path)
-	
-	const SANDBOX_PATH := "res://features/sandbox/sandbox_game_view.tscn"
-	if ResourceLoader.exists(SANDBOX_PATH):
-		if is_instance_valid(fade_overlay):
-			fade_overlay.visible = true
-			var tw = create_tween()
-			tw.tween_property(fade_overlay, "color:a", 1.0, 0.3)
-			tw.tween_callback(func():
-				Engine.time_scale = 1.0
-				SceneLoader.change_scene(get_tree(), SANDBOX_PATH)
-			)
-		else:
-			Engine.time_scale = 1.0
-			SceneLoader.change_scene(get_tree(), SANDBOX_PATH)
-		return
-		
-	# Fallback ถ้าหา Sandbox ไม่เจอ
 	_begin_dialogue_phase(1 if step == 1 else 2)
 
 func _finish_dialogue_stage(mark_cleared: bool = true) -> void:
@@ -1212,6 +1323,8 @@ func _finish_dialogue_stage(mark_cleared: bool = true) -> void:
 	if slot_pop_tween and slot_pop_tween.is_valid():
 		slot_pop_tween.kill()
 	active_choice_id = ""
+	is_showing_choices = false
+	is_choice_sliding_out = false
 	if is_instance_valid(choice_slots_container):
 		choice_slots_container.visible = false
 	
@@ -1275,11 +1388,13 @@ func _on_bad_ending_exit() -> void:
 	if not is_bad_ending_waiting:
 		return
 	is_bad_ending_waiting = false
+	Engine.time_scale = 1.0
 	if bad_ending_pulse_tween and bad_ending_pulse_tween.is_valid():
 		bad_ending_pulse_tween.kill()
 	if bad_ending_tween and bad_ending_tween.is_valid():
 		bad_ending_tween.kill()
-	get_tree().change_scene_to_file("res://features/start/start_view.tscn")
+	if not SceneLoader.change_scene(get_tree(), "res://features/start/start_view.tscn"):
+		get_tree().change_scene_to_file("res://features/start/start_view.tscn")
 
 func _skip_bad_ending_typewriter() -> void:
 	if not is_bad_ending_typing:
@@ -1305,6 +1420,8 @@ func _trigger_bad_ending() -> void:
 		nav_arrows_container.visible = false
 	if is_instance_valid(skip_ctrl):
 		skip_ctrl.visible = false
+	if is_instance_valid(choice_slots_container):
+		choice_slots_container.visible = false
 	
 	# เปิดใช้งาน FadeOverlay และเริ่มเฟดจอดำสนิท
 	fade_overlay.visible = true
@@ -1728,27 +1845,63 @@ func _on_player_back() -> void:
 		
 	# 3. หากกำลังแสดงเมนูช้อยส์อยู่
 	if is_showing_choices:
+		if current_menu_id == "part1_purpose_sub":
+			_stop_active_slot_glow()
+			active_choice_id = ""
+			if sequence_history.size() > 0:
+				var parent_state = sequence_history.pop_back()
+				current_queue = parent_state.get("queue", current_queue)
+				queue_index = parent_state.get("index", queue_index)
+				if parent_state.has("is_in_entrance_cutscene"):
+					is_in_entrance_cutscene = parent_state["is_in_entrance_cutscene"]
+			_display_choice_menu("part1_main")
+			_update_nav_arrows()
+			return
+			
 		is_showing_choices = false
 		_stop_active_slot_glow()
 		active_choice_id = ""
+		if slot_pop_tween and slot_pop_tween.is_valid():
+			slot_pop_tween.kill()
+		if choice_slide_tween and choice_slide_tween.is_valid():
+			choice_slide_tween.kill()
+			choice_slide_tween = null
+		is_choice_sliding_out = true
+		for b in choice_buttons:
+			b.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			b.focus_mode = Control.FOCUS_NONE
 		if is_instance_valid(choice_slots_container):
-			choice_slots_container.visible = false
+			var start_x = choice_slots_container.position.x
+			choice_slide_tween = create_tween().set_parallel(true)
+			# สไลด์จากขวาไปซ้าย (เลื่อนถอยกลับไปทางซ้าย -X) พร้อมเฟดจางหายไป
+			choice_slide_tween.tween_property(choice_slots_container, "position:x", start_x - 240.0, 0.28).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+			choice_slide_tween.tween_property(choice_slots_container, "modulate:a", 0.0, 0.25).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+			choice_slide_tween.chain().tween_callback(func():
+				is_choice_sliding_out = false
+				if is_instance_valid(choice_slots_container):
+					choice_slots_container.visible = false
+			)
+		else:
+			is_choice_sliding_out = false
 		dialogue_label.visible = true
 		
-		if queue_index > 0:
+		# ถอยกลับไปประโยคก่อนหน้าช้อยส์
+		if queue_index > 0 and queue_index < current_queue.size() and current_queue[queue_index].get("type") == "choice_menu":
 			queue_index -= 1
-			_show_current_queue_item(true)
-			_update_nav_arrows()
-			return
+		elif queue_index > 0:
+			queue_index -= 1
 		elif sequence_history.size() > 0:
 			var prev_state = sequence_history.pop_back()
 			current_queue = prev_state.get("queue", [])
 			queue_index = prev_state.get("index", 0)
 			if prev_state.has("is_in_entrance_cutscene"):
 				is_in_entrance_cutscene = prev_state["is_in_entrance_cutscene"]
-			_show_current_queue_item(true)
-			_update_nav_arrows()
-			return
+			if queue_index > 0 and queue_index < current_queue.size() and current_queue[queue_index].get("type") == "choice_menu":
+				queue_index -= 1
+				
+		_show_current_queue_item(true)
+		_update_nav_arrows()
+		return
 			
 	# 4. หากแสดงข้อความปกติ
 	if queue_index > 0:
