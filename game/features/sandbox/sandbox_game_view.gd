@@ -142,9 +142,10 @@ func _setup_mission() -> void:
 	_mission = LevelMission.create(GameProgressManager.get_selected_level_number(), step)
 	if _mission == null:
 		return
+	_apply_mission_layout()
 	_mission_panel = LevelMissionPanel.new()
-	_mission_panel.anchor_left = 0.29
-	_mission_panel.anchor_right = 0.72
+	_mission_panel.anchor_left = 0.2
+	_mission_panel.anchor_right = 0.8
 	_mission_panel.anchor_top = 0.12
 	_mission_panel.anchor_bottom = 0.12
 	_mission_panel.grow_vertical = Control.GROW_DIRECTION_END
@@ -153,6 +154,17 @@ func _setup_mission() -> void:
 	add_child(_mission_panel)
 	_mission_panel.setup(_mission)
 	_mission_panel.continue_pressed.connect(_on_mission_continue)
+
+
+## ซ่อนแผงที่ขั้นนี้ยังไม่ต้องใช้ แล้วจัดเทอร์มินัลไว้กึ่งกลางใต้แผงภารกิจ
+func _apply_mission_layout() -> void:
+	if _mission.visible_panels.is_empty():
+		return
+	_files_panel.visible = "files" in _mission.visible_panels
+	_git_graph_panel.visible = "git_graph" in _mission.visible_panels
+	if not _files_panel.visible and not _git_graph_panel.visible:
+		_terminal_panel.anchor_left = 0.2
+		_terminal_panel.anchor_right = 0.8
 
 
 func _on_mission_progress(command: String, result: GitCommandResult) -> void:

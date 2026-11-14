@@ -157,11 +157,13 @@ static func get_data() -> Dictionary:
 		
 		# ======================================================================
 		# ขั้นเล่นจริง (Sandbox + แผงภารกิจ): เปิดจาก {"type": "open_gameplay", "step": N}
+		# visible_panels: แผงของ Sandbox ที่แสดงในขั้นนี้ (terminal | files | git_graph) ที่เหลือซ่อนเพื่อไม่ให้ผู้เล่นสับสน
 		# ตรวจคำสั่งด้วย LevelMission (ดูชนิด objective ที่ features/level_mission/level_mission.gd)
 		# ======================================================================
 		"gameplay": {
 			1: {
 				"title": "ตรวจสอบพลังเวท",
+				"visible_panels": ["terminal"],
 				"story": "ร่ายคาถาให้ Git เผยระดับพลังของมัน พิมพ์ในเทอร์มินัลด้านล่างแล้วกด Enter",
 				"objectives": [
 					{
@@ -181,6 +183,7 @@ static func get_data() -> Dictionary:
 			},
 			2: {
 				"title": "ประกาศนามบนคัมภีร์",
+				"visible_panels": ["terminal"],
 				"story": "ลงทะเบียนตัวตนของนักเวทกับสำนักเวท แล้วตรวจว่าหอคอยจดจำไว้แล้ว",
 				"objectives": [
 					{
