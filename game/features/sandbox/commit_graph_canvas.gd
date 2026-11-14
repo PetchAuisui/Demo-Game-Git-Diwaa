@@ -20,7 +20,6 @@ var _text_x: float:
 
 func _init() -> void:
 	focus_mode = Control.FOCUS_ALL
-	mouse_default_cursor_shape = Control.CURSOR_ARROW
 	mouse_exited.connect(func() -> void:
 		_hovered = -1
 		tooltip_text = ""
@@ -106,11 +105,13 @@ func _get_cursor_shape(at_position: Vector2) -> CursorShape:
 
 func _gui_input(input: InputEvent) -> void:
 	if input is InputEventMouseMotion:
-		_hovered = _row_at(input.position.y)
-		var has_row := _hovered != -1
-		tooltip_text = "%s\nดับเบิลคลิก หรือ Ctrl/Cmd+C เพื่อคัดลอก ID" % _layout.rows[_hovered].commit.id \
-				if has_row else ""
-		queue_redraw()
+		var new_hovered := _row_at(input.position.y)
+		if new_hovered != _hovered:
+			_hovered = new_hovered
+			var has_row := _hovered != -1
+			tooltip_text = "%s\nดับเบิลคลิก หรือ Ctrl/Cmd+C เพื่อคัดลอก ID" % _layout.rows[_hovered].commit.id \
+					if has_row else ""
+			queue_redraw()
 	if input is InputEventMouseButton and input.pressed and input.button_index == MOUSE_BUTTON_LEFT:
 		var row_idx := _row_at(input.position.y)
 		if row_idx != -1:
