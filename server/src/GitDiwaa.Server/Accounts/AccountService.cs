@@ -78,6 +78,10 @@ public sealed class AccountService
         }
 
         string passwordHash = await _passwordHasher.HashAsync(request.Password, ct);
+        // ระหว่างรอคิว hash เกมอาจเลิกรอและตัดการเชื่อมต่อไปแล้ว (ct = คำขอถูกยกเลิก): ไม่สร้างบัญชีที่ผู้เล่นไม่รู้ว่าสร้างสำเร็จ
+        // ไม่งั้นกดสมัครซ้ำจะเจอ "ถูกใช้แล้ว" ทั้งที่เป็นบัญชีของตัวเอง
+        // กันได้เฉพาะกรณีที่ server รู้ทันว่าตัดไปแล้ว ถ้าตัดหลังจากนี้ เกมจะบอกผู้เล่นให้ลองเข้าสู่ระบบก่อน
+        ct.ThrowIfCancellationRequested();
         DateTimeOffset now = _timeProvider.GetUtcNow();
 
         UserRecord user;

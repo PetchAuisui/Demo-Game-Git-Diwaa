@@ -82,6 +82,9 @@ var _consent_open := false
 # (ห้ามใช้ความยินยอมของคนก่อน) ล้างเมื่อสมัครสำเร็จใน _clear_register_form
 var _policy_acknowledged_for := ""
 var _leaderboard_choice := false
+# สมัครครั้งล่าสุดไม่รู้ผล (คำขออาจไปถึง server แล้วแต่คำตอบหาย) ด้วยชื่อผู้ใช้ + อีเมลชุดไหน
+# กดสมัครซ้ำด้วยชุดเดิมแล้วเจอ "ถูกใช้แล้ว" = น่าจะเป็นบัญชีที่เพิ่งสมัครสำเร็จ: บอกให้ลองเข้าสู่ระบบ
+var _register_unknown_for := ""
 
 # --- Server ---
 var _api: AuthApiClient
@@ -613,6 +616,15 @@ func _submit_register(username: String, email: String, password: String, leaderb
 	_note_rate_limit(result)
 	_note_server_answered(result)
 
+	var attempt_key := _consent_key(username, email)
+	if not result.ok and result.maybe_delivered:
+		_register_unknown_for = attempt_key
+		_show_status(_register_status, "ไม่แน่ใจว่าสมัครสำเร็จหรือยัง ลองเข้าสู่ระบบก่อน\nถ้าเข้าไม่ได้ ค่อยกดสมัครอีกครั้ง", false)
+		return
+	if result.code == AuthApiResult.IDENTIFIER_TAKEN and _register_unknown_for == attempt_key:
+		_show_status(_register_status, "ชื่อผู้ใช้หรืออีเมลนี้ถูกใช้แล้ว\nถ้าเพิ่งกดสมัครไป บัญชีอาจสร้างแล้ว ลองเข้าสู่ระบบก่อน", false)
+		return
+
 	if result.ok:
 		# สมัครสำเร็จ: ล้างฟอร์มสมัคร (กันคนใช้เครื่องต่อเห็นข้อมูล) แล้วพาไปหน้า login พร้อมเติม username ให้
 		_clear_register_form()
@@ -887,3 +899,4 @@ func _clear_register_form() -> void:
 	_email_input.text = ""
 	_policy_acknowledged_for = ""
 	_leaderboard_choice = false
+	_register_unknown_for = ""

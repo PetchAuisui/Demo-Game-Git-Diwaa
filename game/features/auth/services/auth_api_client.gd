@@ -54,7 +54,7 @@ func register(username: String, display_name: String, email: String, password: S
 	# ไม่ส่งชื่อที่แสดง = ให้ server ตั้งให้ (player-<เลข>)
 	if not display_name.is_empty():
 		body["displayName"] = display_name
-	return await _send(HTTPClient.METHOD_POST, AuthConfig.API_PREFIX + "/register", body, "", AuthConfig.REQUEST_TIMEOUT_SEC)
+	return await _send(HTTPClient.METHOD_POST, AuthConfig.API_PREFIX + "/register", body, "", AuthConfig.PASSWORD_REQUEST_TIMEOUT_SEC)
 
 
 ## ตรวจก่อนสมัครว่าใช้ชื่อผู้ใช้และอีเมลนี้ได้ไหม (server ไม่สร้างบัญชี ไม่บันทึกอะไร)
@@ -73,7 +73,7 @@ func login(identifier: String, password: String, remember_me: bool) -> AuthApiRe
 		"password": password,
 		"rememberMe": remember_me,
 	}
-	return await _send(HTTPClient.METHOD_POST, AuthConfig.API_PREFIX + "/login", body, "", AuthConfig.REQUEST_TIMEOUT_SEC)
+	return await _send(HTTPClient.METHOD_POST, AuthConfig.API_PREFIX + "/login", body, "", AuthConfig.PASSWORD_REQUEST_TIMEOUT_SEC)
 
 
 func refresh(token: String) -> AuthApiResult:
