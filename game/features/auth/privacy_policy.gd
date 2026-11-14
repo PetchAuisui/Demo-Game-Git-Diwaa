@@ -10,7 +10,7 @@ extends RefCounted
 ## 4. TODO ช่วงฐานข้อมูล: ทำบันทึกการเข้าสู่ระบบ (เก็บ 90 วัน) ให้ตรงกับที่เขียนไว้ในข้อ 2 และ 5
 
 const VERSION := "2026-11-10"
-const CONTACT_EMAIL := "TODO@example.invalid"
+const CONTACT_EMAIL := "670303351@kmitl.ac.th"
 const CONTROLLER_NAME := "ทีมพัฒนาเกม Git-Diwaa (TODO: ระบุชื่อผู้ควบคุมข้อมูลส่วนบุคคล)"
 
 const NOTICE_TEMPLATE := """1. ใครดูแลข้อมูลของคุณ
