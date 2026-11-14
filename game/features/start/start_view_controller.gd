@@ -67,7 +67,7 @@ func _bind_nodes() -> void:
 
 ## วางไอคอน SVG ของปุ่มเมนูให้ติดกับข้อความตรงกลางปุ่ม (ตำแหน่งเดียวกับ emoji เดิม) แทนการชิดขอบปุ่ม
 func _setup_inline_icons() -> void:
-	for button: Button in [_resume_work_btn, _sandbox_btn, _dressing_room_btn, _tutorial_btn]:
+	for button: Button in [_resume_work_btn, _sandbox_btn, _dressing_room_btn, _quit_game_btn, _tutorial_btn]:
 		button.resized.connect(_center_icon_with_text.bind(button))
 		_center_icon_with_text.call_deferred(button)
 
