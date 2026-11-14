@@ -12,21 +12,20 @@ config_version=5
 
 config/name="Git-Diwaa"
 config/description="Git-Diwaa: Real Git Learning Sandbox Game"
-run/main_scene="res://features/start/start_view.tscn"
+run/main_scene="res://features/auth/auth_view.tscn"
 config/features=PackedStringArray("4.7")
 config/icon="res://icon.svg"
 
 [autoload]
 
 GameWindow="*res://common/game_window.gd"
+PlayerSession="*res://common/player_session.gd"
 
 [display]
 
 window/size/viewport_width=1920
 window/size/viewport_height=1080
 window/size/mode=3
-window/size/window_width_override=1920
-window/size/window_height_override=1080
 window/stretch/mode="canvas_items"
 
 [gui]

@@ -173,6 +173,12 @@ func set_window_title(title: String) -> void:
 		_title_label.text = title
 
 
+## ข้อความจางในช่องพิมพ์ (ด่านใช้บอกภารกิจปัจจุบัน) ส่งค่าว่างเพื่อไม่แสดงอะไร
+func set_input_placeholder(text: String) -> void:
+	if _input_edit != null:
+		_input_edit.placeholder_text = text
+
+
 func set_prompt_prefix(prefix: String) -> void:
 	prompt_prefix = prefix
 	if _prompt_label != null:

@@ -11,16 +11,20 @@ const SAVE_PATH := "user://game_progress.cfg"
 const SECTION_PROGRESS := "progress"
 const KEY_INTRO_SEEN := "has_seen_intro_cutscene"
 const SECTION_LEVELS := "levels_cleared"
+const SECTION_STARS := "level_stars"
+const SECTION_SCORES := "level_scores"
 const TOTAL_LEVELS := 40
-const DEFAULT_GAMEPLAY_RETURN_SCENE := "res://features/cutscene/inside_tower_cutscene.tscn"
 
 ## ตัวแปรส่งผ่านสถานะระหว่าง Scene ชั่วคราว (Transient Session State)
 ## ใช้แทนการประกาศ static var ไว้บน UI View Script โดยตรง
-## พร้อมฟังก์ชัน consume ที่จะเคลียร์ค่ากลับเป็น 0 ทันทีที่อ่าน ป้องกันค่าค้างข้าม Session
-static var _pending_dialogue_phase: int = 0
+## - ด่านที่ผู้เล่นเลือกจากหน้าเลือกด่าน
+## - ฉากที่ปุ่มออกของ Sandbox จะพากลับไป ("" = ค่าเริ่มต้นของ Sandbox คือหน้าเลือกด่าน)
 static var _selected_level_number: int = 1
-static var _current_gameplay_step: int = 0
-static var _gameplay_return_scene: String = DEFAULT_GAMEPLAY_RETURN_SCENE
+static var _sandbox_return_scene: String = ""
+## ขั้นเล่นจริงที่ Sandbox ต้องแสดงแผงภารกิจ (0 = เปิด Sandbox แบบอิสระ) ตั้งโดยหน้าบทสนทนาก่อนเปลี่ยนฉาก
+static var _pending_mission_step: int = 0
+## ช่วงบทสนทนาที่หน้าบทสนทนาต้องเริ่มต่อหลังจบขั้นเล่นจริง (-1 = เริ่มตามปกติ) อ่านแล้วล้างทันที
+static var _resume_dialogue_phase: int = -1
 
 ## การสุ่มสีหมวกเวทมนตร์ 3 สี (ม่วง, ฟ้า, เขียว) เมื่อเริ่มเข้าเกมใหม่ อัตราดรอปเท่ากัน 1/3 (Equal Drop Rate)
 enum HatColor {
@@ -70,25 +74,48 @@ static func set_selected_level_number(level_num: int) -> void:
 static func get_selected_level_number() -> int:
 	return _selected_level_number
 
-static func set_pending_dialogue_phase(phase: int) -> void:
-	_pending_dialogue_phase = phase
+static func set_sandbox_return_scene(scene_path: String) -> void:
+	_sandbox_return_scene = scene_path
 
-static func consume_pending_dialogue_phase() -> int:
-	var phase := _pending_dialogue_phase
-	_pending_dialogue_phase = 0
+static func get_sandbox_return_scene() -> String:
+	return _sandbox_return_scene
+
+static func set_pending_mission_step(step: int) -> void:
+	_pending_mission_step = step
+
+static func get_pending_mission_step() -> int:
+	return _pending_mission_step
+
+static func set_resume_dialogue_phase(phase: int) -> void:
+	_resume_dialogue_phase = phase
+
+static func consume_resume_dialogue_phase() -> int:
+	var phase := _resume_dialogue_phase
+	_resume_dialogue_phase = -1
 	return phase
 
-static func set_current_gameplay_step(step: int) -> void:
-	_current_gameplay_step = step
 
-static func get_current_gameplay_step() -> int:
-	return _current_gameplay_step
+static var _level_time_remaining: float = -1.0
+static var _level_timer_active_level: int = -1
 
-static func set_gameplay_return_scene(scene_path: String) -> void:
-	_gameplay_return_scene = scene_path
+static func reset_level_timer(level_num: int, time_seconds: float) -> void:
+	_level_timer_active_level = level_num
+	_level_time_remaining = time_seconds
 
-static func get_gameplay_return_scene() -> String:
-	return _gameplay_return_scene
+static func get_level_time_remaining(level_num: int) -> float:
+	if _level_timer_active_level == level_num:
+		return _level_time_remaining
+	return -1.0
+
+static func set_level_time_remaining(level_num: int, remaining: float) -> void:
+	_level_timer_active_level = level_num
+	_level_time_remaining = remaining
+
+static func clear_level_timer(level_num: int = -1) -> void:
+	if level_num == -1 or _level_timer_active_level == level_num:
+		_level_time_remaining = -1.0
+		_level_timer_active_level = -1
+
 
 static var _cached_cfg: ConfigFile = null
 
@@ -126,14 +153,118 @@ static func set_level_cleared(level_num: int, cleared: bool = true) -> void:
 	cfg.set_value(SECTION_LEVELS, "level_%d" % level_num, cleared)
 	_save_config()
 
+
+## เกณฑ์ดาวตามคะแนน (จุดเดียวที่กำหนดเกณฑ์): >= 80 = 3 ดาว, >= 65 = 2 ดาว, อื่น ๆ = 1 ดาว
+static func stars_for_score(score: int) -> int:
+	if score >= 80:
+		return 3
+	if score >= 65:
+		return 2
+	return 1
+
+
+static func get_level_stars(level_num: int) -> int:
+	var cfg := _get_config()
+	if cfg.has_section_key(SECTION_STARS, "level_%d" % level_num):
+		var saved_stars := int(cfg.get_value(SECTION_STARS, "level_%d" % level_num, 0))
+		var saved_score := int(cfg.get_value(SECTION_SCORES, "level_%d" % level_num, 0))
+		return maxi(saved_stars, stars_for_score(saved_score) if saved_score > 0 else 0)
+	if is_level_cleared(level_num):
+		var saved_score := int(cfg.get_value(SECTION_SCORES, "level_%d" % level_num, 0))
+		return stars_for_score(saved_score) if saved_score > 0 else 1
+	return 0
+
+
+static func set_level_stars(level_num: int, stars: int) -> void:
+	var cfg := _get_config()
+	var current := int(cfg.get_value(SECTION_STARS, "level_%d" % level_num, 0))
+	if stars > current:
+		cfg.set_value(SECTION_STARS, "level_%d" % level_num, stars)
+		_save_config()
+
+
+static func get_level_score(level_num: int) -> int:
+	return int(_get_config().get_value(SECTION_SCORES, "level_%d" % level_num, 0))
+
+
+static func set_level_score(level_num: int, score: int) -> void:
+	var cfg := _get_config()
+	var current := int(cfg.get_value(SECTION_SCORES, "level_%d" % level_num, 0))
+	if score > current:
+		cfg.set_value(SECTION_SCORES, "level_%d" % level_num, score)
+		_save_config()
+
+
+static var _last_run_level: int = -1
+static var _last_run_stars: int = 0
+static var _last_run_score: int = 0
+static var _last_run_prev_score: int = 0
+static var _last_run_score_diff: int = 0
+
+
+## คะแนนจากเวลาที่เหลือ (time_remaining < 0 = ไม่มีตัวจับเวลาในรอบนี้ ไม่นับเป็นหมดเวลา)
+static func calculate_score(time_remaining: float, time_limit: float) -> int:
+	var score: int = 80
+	if time_limit > 0.0 and time_remaining >= 0.0:
+		# คิดคะแนนตามสัดส่วนเวลาที่เหลือ (ช่วง 80 - 100 คะแนนหากผ่านทันเวลา เพื่อการันตี 3 ดาว ให้ผู้เล่นพิมพ์ผิดแก้ตัวได้โดยไม่เสียดาว)
+		var ratio := clampf(time_remaining / time_limit, 0.0, 1.0)
+		if time_remaining > 0.0:
+			score = 80 + int(20.0 * ratio)
+		else:
+			score = 65
+	else:
+		score = 85
+
+	return score
+
+
+static func record_level_clear(level_num: int, time_remaining: float, time_limit: float, max_score: int = 100) -> Dictionary:
+	var score: int = calculate_score(time_remaining, time_limit)
+	# เกณฑ์ดาวตามคะแนน:
+	# >= 80 คะแนน: 3 ดาว
+	# >= 65 คะแนน: 2 ดาว
+	# < 65 คะแนน: 1 ดาว
+	var stars: int = stars_for_score(score)
+
+	var prev_score := get_level_score(level_num)
+	set_level_cleared(level_num, true)
+	set_level_stars(level_num, stars)
+	set_level_score(level_num, score)
+
+	_last_run_level = level_num
+	_last_run_stars = stars
+	_last_run_score = score
+	_last_run_prev_score = prev_score
+	_last_run_score_diff = maxi(0, score - prev_score)
+
+	return {
+		"stars": stars,
+		"score": score,
+		"prev_score": prev_score,
+		"score_diff": _last_run_score_diff
+	}
+
+
+static func get_last_run_result() -> Dictionary:
+	return {
+		"level": _last_run_level,
+		"stars": _last_run_stars,
+		"score": _last_run_score,
+		"prev_score": _last_run_prev_score,
+		"score_diff": _last_run_score_diff
+	}
+
+
 static func reset_progress() -> void:
 	var cfg := ConfigFile.new()
 	cfg.set_value(SECTION_PROGRESS, KEY_INTRO_SEEN, false)
 	for i in range(1, TOTAL_LEVELS + 1):
 		cfg.set_value(SECTION_LEVELS, "level_%d" % i, false)
+		cfg.set_value(SECTION_STARS, "level_%d" % i, 0)
+		cfg.set_value(SECTION_SCORES, "level_%d" % i, 0)
 	cfg.save(SAVE_PATH)
 	_cached_cfg = cfg
-	_pending_dialogue_phase = 0
 	_selected_level_number = 1
-	_current_gameplay_step = 0
-	_gameplay_return_scene = DEFAULT_GAMEPLAY_RETURN_SCENE
+	_sandbox_return_scene = ""
+	_pending_mission_step = 0
+	_resume_dialogue_phase = -1

@@ -7,16 +7,19 @@ extends Node2D
 ## - กำหนด @export var level_number: int เพื่อเลือกด่านที่ต้องการเล่น (ค่าเริ่มต้น: 1)
 ## - สคริปต์จะโหลดข้อมูลจาก res://features/dialogue/levels/level_%02d.gd มาแสดงผลอัตโนมัติ
 ## - รองรับ Typewriter Effect, BBCode ไฮไลต์โค้ดสไตล์ Markdown, ช้อยส์ในกล่องข้อความเดิม,
-##   และเชื่อมต่อไปยังหน้าจำลองการเล่นภายในด่าน (Gameplay Placeholder View)
+##   เล่นบทสนทนาต่อเนื่องจนจบ (ยังไม่มีหน้าเล่นจริงของด่าน) แล้วบันทึกผ่านด่านและกลับหน้าเลือกด่าน
 
 @export var level_number: int = 1
 @export var next_scene_path: String = "res://features/start/start_view.tscn"
-@export var level_clear_scene_path: String = "res://features/cutscene/level_clear_scene.tscn"
 @export var play_entrance_cutscene: bool = false
 @export var fade_in_from_black: bool = false
 @export_enum("Intro & Part 1", "Part 2", "Outro") var debug_phase: int = 0
 
-const SANDBOX_PATH := "res://features/sandbox/sandbox_game_view.tscn"
+const LEVEL_SELECT_PATH := "res://features/level_select/level_select_view.tscn"
+## ฉากเวลเดินขึ้นบันไดแล้วเปิดหน้าต่างดาว เล่นหลังผ่านด่าน (ปุ่มในหน้าต่างดาวพากลับหน้าเลือกด่านเอง)
+## หน้า Sandbox ที่ใช้เป็นขั้นเล่นจริงของด่าน (แสดงแผงภารกิจตามขั้นที่ตั้งไว้ใน GameProgressManager)
+const SANDBOX_SCENE_PATH := "res://features/sandbox/sandbox_game_view.tscn"
+const LEVEL_CLEAR_SCENE_PATH := "res://features/cutscene/level_clear_scene.tscn"
 
 # Animation & Visuals
 @onready var anim_player: AnimationPlayer = $AnimationPlayer
@@ -57,7 +60,7 @@ var bad_ending_btn: Button = null
 const BAD_END_LINE1: String = "เศษเสี้ยวที่กระจัดกระจายและใครบางคน... ยังคงรอคอยอยู่ในความมืดมิด"
 const BAD_END_LINE2: String = "ขณะที่เวลเดินพ้นประตูหอคอยไป ทิ้งทุกคำตอบไว้เบื้องหลังตลอดกาล"
 
-# Navigation Arrows (◀ ▶) & History
+# Navigation Arrows (ซ้าย-ขวา) & History
 var nav_arrows_container: HBoxContainer = null
 var btn_arrow_back: TextureButton = null
 var btn_arrow_next: TextureButton = null
@@ -175,8 +178,10 @@ func _ready() -> void:
 	skip_ctrl.custom_skip_action = _on_skip_step
 	add_child(skip_ctrl)
 	
-	# โหลดฉาก Sandbox รอไว้ล่วงหน้าใน Background Thread ทันทีที่เริ่มฉาก
-	SceneLoader.request_preload(SANDBOX_PATH)
+	# โหลดหน้าเลือกด่านรอไว้ล่วงหน้าใน Background Thread เพื่อกลับไปได้ทันทีเมื่อจบบทสนทนา
+	SceneLoader.request_preload(LEVEL_SELECT_PATH)
+	SceneLoader.request_preload(LEVEL_CLEAR_SCENE_PATH)
+	SceneLoader.request_preload(SANDBOX_SCENE_PATH)
 	
 	# ตรวจสอบด่านที่เลือกจาก Level Select
 	var selected_lvl := GameProgressManager.get_selected_level_number()
@@ -185,12 +190,15 @@ func _ready() -> void:
 		
 	# โหลดข้อมูลด่าน
 	_load_level_data(level_number)
-	
-	var pending_phase := GameProgressManager.consume_pending_dialogue_phase()
-	if pending_phase > 0:
-		debug_phase = pending_phase
+
+	# กลับมาจากขั้นเล่นจริงใน Sandbox -> เล่นบทสนทนาช่วงถัดไปต่อทันที (ไม่ซ้ำคัตซีนเดินเข้า)
+	var resume_phase := GameProgressManager.consume_resume_dialogue_phase()
+	if resume_phase >= 0:
+		debug_phase = resume_phase
 		play_entrance_cutscene = false
 		fade_in_from_black = true
+	else:
+		GameProgressManager.clear_level_timer(level_number)
 	
 	if play_entrance_cutscene:
 		# เริ่มต้นในโหมดคัตซีนเดินเข้าห้องโถง
@@ -574,7 +582,7 @@ func _on_skip_step() -> void:
 		_finish_dialogue_stage(false)
 		return
 	
-	# กดข้าม -> ไปยังหน้าเดียวกับที่กดคุยไปต่อเรื่อยๆ จนจบช่วงนั้น (Gameplay Placeholder View)
+	# กดข้าม -> ข้ามไปบทสนทนาช่วงถัดไป เหมือนกดคุยไปต่อเรื่อยๆ จนจบช่วงนั้น
 	if debug_phase == 0:
 		_open_gameplay_step(1)
 		return
@@ -837,61 +845,61 @@ func _on_choice_selected(index: int) -> void:
 		dialogue_label.visible = false
 
 # ==============================================================================
-# GAMEPLAY PLACEHOLDER & STAGE FINISH
+# GAMEPLAY STEP & STAGE FINISH
 # ==============================================================================
 
+## ด่านยังไม่มีหน้าเล่นจริง -> ข้ามช่วงเล่นแล้วเล่นบทสนทนาช่วงถัดไปต่อในฉากเดิมทันที
+## ช่วงที่ 1 -> phase 1 (part 2 intro), ช่วงที่ 2 -> phase 2 (outro)
 func _open_gameplay_step(step: int) -> void:
 	if is_transitioning:
 		return
+	if LevelDataLoader.has_gameplay(level_number, step) and _go_to_gameplay_scene(step):
+		return
+	# เริ่มช่วงใหม่โดยไม่มีประวัติ: ไม่ให้ปุ่มย้อนกลับพากลับไปที่รายการ open_gameplay แล้ววนกลับมาที่เดิม
+	sequence_history.clear()
+	current_queue = []
+	queue_index = 0
+	_begin_dialogue_phase(1 if step == 1 else 2)
+
+## ด่านที่มีนิยามขั้นเล่นจริง -> เฟดดำแล้วไป Sandbox พร้อมแผงภารกิจ คืน false ถ้าเปลี่ยนฉากไม่ได้ (ใช้ทางสำรองข้ามช่วงเล่น)
+func _go_to_gameplay_scene(step: int) -> bool:
+	if not ResourceLoader.exists(SANDBOX_SCENE_PATH):
+		return false
 	is_transitioning = true
 	is_dialogue_active = false
 	_hide_continue_arrow()
-	if is_instance_valid(choice_container):
-		choice_container.visible = false
+	_hide_question_mark()
 	if is_instance_valid(dialogue_box):
 		dialogue_box.visible = false
 	if is_instance_valid(nav_arrows_container):
 		nav_arrows_container.visible = false
 	if skip_ctrl:
 		skip_ctrl.visible = false
-	
-	GameProgressManager.set_current_gameplay_step(step)
-	var ret_path = scene_file_path if scene_file_path != "" else "res://features/cutscene/inside_tower_cutscene.tscn"
-	GameProgressManager.set_gameplay_return_scene(ret_path)
-	
-	if SceneLoader.change_scene(get_tree(), SANDBOX_PATH):
-		return
-	
-	var placeholder_res = load("res://features/dialogue/gameplay_placeholder_view.tscn")
-	if placeholder_res:
-		var placeholder = placeholder_res.instantiate()
-		placeholder.current_step = step
-		placeholder.return_scene_path = ret_path
-		placeholder.step_finished.connect(_on_gameplay_step_finished)
-		magic_ui.add_child(placeholder)
-		placeholder.modulate.a = 0.0
-		var tw = create_tween()
-		tw.tween_property(placeholder, "modulate:a", 1.0, 0.25)
-		tw.tween_callback(func():
+	Engine.time_scale = 1.0
+	GameProgressManager.set_pending_mission_step(step)
+	var open_sandbox := func() -> void:
+		if not SceneLoader.change_scene(get_tree(), SANDBOX_SCENE_PATH):
+			# เปิดไม่ได้จริง -> คืนสถานะแล้วเล่นช่วงถัดไปต่อ เหมือนด่านที่ยังไม่มีหน้าเล่น
+			GameProgressManager.set_pending_mission_step(0)
 			is_transitioning = false
-		)
+			if skip_ctrl:
+				skip_ctrl.visible = true
+			if is_instance_valid(fade_overlay):
+				fade_overlay.color.a = 0.0
+				fade_overlay.visible = false
+			sequence_history.clear()
+			current_queue = []
+			queue_index = 0
+			_begin_dialogue_phase(1 if step == 1 else 2)
+	if is_instance_valid(fade_overlay):
+		fade_overlay.visible = true
+		var tw := create_tween()
+		tw.tween_property(fade_overlay, "color:a", 1.0, 0.35)
+		tw.tween_callback(open_sandbox)
 	else:
-		is_transitioning = false
+		open_sandbox.call()
+	return true
 
-func _on_gameplay_step_finished(step: int) -> void:
-	is_transitioning = false
-	sequence_history.clear()
-	if skip_ctrl:
-		skip_ctrl.visible = true
-	if is_instance_valid(dialogue_box):
-		dialogue_box.visible = true
-	if is_instance_valid(nav_arrows_container):
-		nav_arrows_container.visible = true
-	
-	if step == 1:
-		_begin_dialogue_phase(1)
-	else:
-		_begin_dialogue_phase(2)
 
 func _finish_dialogue_stage(mark_cleared: bool = true) -> void:
 	if is_transitioning:
@@ -912,41 +920,33 @@ func _finish_dialogue_stage(mark_cleared: bool = true) -> void:
 	
 	# บันทึกสถานะว่าเล่นผ่านด่านนี้สำเร็จเฉพาะเมื่อ mark_cleared เป็น true
 	if mark_cleared:
-		GameProgressManager.set_level_cleared(level_number, true)
+		var time_rem := GameProgressManager.get_level_time_remaining(level_number)
+		var lvl_data := LevelDataLoader.load_data(level_number)
+		var time_lim := float(lvl_data.get("time_limit", 0.0))
+		var max_sc := int(lvl_data.get("max_score", 100))
+		GameProgressManager.record_level_clear(level_number, time_rem, time_lim, max_sc)
+		GameProgressManager.clear_level_timer(level_number)
 	
-	# เปลี่ยนฉากไปยังคัตซีนเดินขึ้นบันไดและแสดงหน้าสรุปดาว (Level Clear Scene)
-	if mark_cleared and level_clear_scene_path != "" and ResourceLoader.exists(level_clear_scene_path):
-		if is_instance_valid(fade_overlay):
-			fade_overlay.visible = true
-			var tw = create_tween()
-			tw.tween_property(fade_overlay, "color:a", 1.0, 0.35)
-			tw.tween_callback(func():
-				get_tree().change_scene_to_file(level_clear_scene_path)
-			)
-		else:
-			get_tree().change_scene_to_file(level_clear_scene_path)
-		return
-	
-	# ถ้าไม่ได้ mark_cleared (เช่น เกิด error หรือด่าน fallback ที่ยังไม่มีข้อมูล) ให้กลับไปหน้า Level Select
-	if not mark_cleared:
-		const LEVEL_SELECT_PATH := "res://features/level_select/level_select_view.tscn"
-		if ResourceLoader.exists(LEVEL_SELECT_PATH):
-			get_tree().change_scene_to_file(LEVEL_SELECT_PATH)
-		elif next_scene_path != "" and ResourceLoader.exists(next_scene_path):
-			get_tree().change_scene_to_file(next_scene_path)
-		return
-
-	# แสดงหน้าสรุปผล / สรุปดาวเมื่อผ่านด่าน (Success Modal) เป็น Fallback
-	var clear_modal_res = load("res://features/dialogue/level_clear_modal.tscn")
-	if clear_modal_res:
-		var modal = clear_modal_res.instantiate()
-		magic_ui.add_child(modal)
-		modal.modulate.a = 0.0
+	# จบบทสนทนา -> เฟดดำ แล้วไปฉากเดินขึ้นบันได (ถ้าผ่านด่าน) หรือกลับหน้าเลือกด่าน
+	var next_step := _go_to_level_clear_scene if mark_cleared else _go_to_level_select
+	if is_instance_valid(fade_overlay):
+		fade_overlay.visible = true
 		var tw = create_tween()
-		tw.tween_property(modal, "modulate:a", 1.0, 0.35)
+		tw.tween_property(fade_overlay, "color:a", 1.0, 0.35)
+		tw.tween_callback(next_step)
 	else:
-		if next_scene_path != "" and ResourceLoader.exists(next_scene_path):
-			get_tree().change_scene_to_file(next_scene_path)
+		next_step.call()
+
+func _go_to_level_clear_scene() -> void:
+	if SceneLoader.change_scene(get_tree(), LEVEL_CLEAR_SCENE_PATH):
+		return
+	_go_to_level_select()
+
+func _go_to_level_select() -> void:
+	if SceneLoader.change_scene(get_tree(), LEVEL_SELECT_PATH):
+		return
+	if next_scene_path != "" and ResourceLoader.exists(next_scene_path):
+		get_tree().change_scene_to_file(next_scene_path)
 
 func _show_bad_ending_prompt() -> void:
 	is_bad_ending_typing = false
@@ -1209,7 +1209,7 @@ func _hide_continue_arrow() -> void:
 	_update_nav_arrows()
 
 # ==============================================================================
-# NAVIGATION ARROWS SYSTEM (ลูกศร ◀ ▶ ข้างกัน)
+# NAVIGATION ARROWS SYSTEM (ลูกศรซ้าย-ขวาข้างกัน)
 # ==============================================================================
 
 static func _get_nav_arrow_texture(is_left: bool) -> ImageTexture:
@@ -1245,7 +1245,7 @@ func _create_nav_arrows() -> void:
 	if not arrow_overlay:
 		return
 		
-	# ปรับระยะขอบขวาของ Margin และเปิด fit_content เพื่อป้องกันข้อความยาวทับลูกศร ◀ ▶
+	# ปรับระยะขอบขวาของ Margin และเปิด fit_content เพื่อป้องกันข้อความยาวทับลูกศรซ้าย-ขวา
 	var margin_node = dialogue_box.get_node_or_null("Margin")
 	if margin_node:
 		margin_node.add_theme_constant_override("margin_right", 96)
@@ -1275,7 +1275,7 @@ func _create_nav_arrows() -> void:
 	nav_arrows_container.alignment = BoxContainer.ALIGNMENT_END
 	nav_arrows_container.add_theme_constant_override("separation", 12)
 	
-	# 1. ปุ่มลูกศรซ้าย ◀ (ย้อนกลับ)
+	# 1. ปุ่มลูกศรซ้าย (ย้อนกลับ)
 	btn_arrow_back = TextureButton.new()
 	btn_arrow_back.name = "BtnArrowBack"
 	btn_arrow_back.texture_normal = _get_nav_arrow_texture(true)
@@ -1293,7 +1293,7 @@ func _create_nav_arrows() -> void:
 	nav_arrows_container.add_child(btn_arrow_back)
 	btn_back = btn_arrow_back
 	
-	# 2. ปุ่มลูกศรขวา ▶ (ไปต่อ)
+	# 2. ปุ่มลูกศรขวา (ไปต่อ)
 	btn_arrow_next = TextureButton.new()
 	btn_arrow_next.name = "BtnArrowNext"
 	btn_arrow_next.texture_normal = _get_nav_arrow_texture(false)
@@ -1364,7 +1364,7 @@ func _update_nav_arrows() -> void:
 		
 	nav_arrows_container.visible = true
 	
-	# ลูกศรซ้าย ◀ (ย้อนกลับ)
+	# ลูกศรซ้าย (ย้อนกลับ)
 	var can_back = _can_go_back()
 	btn_arrow_back.disabled = not can_back
 	btn_arrow_back.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND if can_back else Control.CURSOR_ARROW
@@ -1379,7 +1379,7 @@ func _update_nav_arrows() -> void:
 		btn_arrow_back.scale = Vector2.ONE
 		btn_arrow_back.modulate = Color(1.0, 1.0, 1.0, 0.25)
 	
-	# ลูกศรขวา ▶ (ไปต่อ)
+	# ลูกศรขวา (ไปต่อ)
 	var can_next = (is_dialogue_active or is_typing) and not is_showing_choices
 	btn_arrow_next.disabled = not can_next
 	btn_arrow_next.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND if can_next else Control.CURSOR_ARROW

@@ -1,0 +1,10 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/GitDiwaa.Online/GitDiwaa.Online.csproj" />
+    <Project Path="src/GitDiwaa.Server/GitDiwaa.Server.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/GitDiwaa.Online.Tests/GitDiwaa.Online.Tests.csproj" />
+    <Project Path="tests/GitDiwaa.Server.Tests/GitDiwaa.Server.Tests.csproj" />
+  </Folder>
+</Solution>

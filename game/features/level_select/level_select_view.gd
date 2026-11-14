@@ -108,6 +108,7 @@ var hud_title: Label
 var hud_act_tag: Label
 var hud_cmd: Label
 var hud_desc: Label
+var hud_notice_icon: TextureRect
 var btn_launch: Button
 
 # Assets & Textures
@@ -139,6 +140,18 @@ const VEL_ANGRY_DURATION: float = 0.70
 const NAV_COLOR_ACTIVE := Color(0.722, 0.604, 0.404, 1.0)     # #B89A67 Antique gold
 const NAV_COLOR_COMPLETED := Color(0.510, 0.604, 0.569, 1.0)  # #829A91 Muted sage green
 const NAV_COLOR_LOCKED := Color(0.467, 0.459, 0.553, 1.0)     # #77758D Muted lavender-gray
+
+## ด่านที่ยังพัฒนาไม่เสร็จ: ล็อกไว้เสมอแม้ผ่านด่านก่อนหน้าแล้ว (เอา id ออกเมื่อด่านพร้อมเล่น)
+const IN_DEVELOPMENT_STAGE_IDS: Array[int] = [2]
+## ด่านที่มีเลขมากกว่านี้ถูกล็อกเสมอ ไม่ว่าเซฟจะผ่านด่านไปแล้วหรือไม่ (ตอนนี้เปิดให้เล่นแค่ด่าน 1)
+const MAX_OPEN_STAGE_ID := 1
+
+const ICON_VOLUME_ON := preload("res://assets/icons/ui_volume_on.svg")
+const ICON_VOLUME_OFF := preload("res://assets/icons/ui_volume_off.svg")
+const ICON_LOCK := preload("res://assets/icons/ui_lock.svg")
+const ICON_CONSTRUCTION := preload("res://assets/icons/ui_construction.svg")
+const ICON_STAR_GOLD := preload("res://assets/icons/star_gold.png")
+const ICON_STAR_GRAY := preload("res://assets/icons/star_gray.png")
 const NAV_COLOR_PRIMARY := Color(0.894, 0.875, 0.835, 1.0)    # #E4DFD5 Primary text
 const NAV_COLOR_SECONDARY := Color(0.604, 0.588, 0.667, 1.0)  # #9A96AA Secondary text
 
@@ -301,6 +314,7 @@ func _bind_nodes() -> void:
 	hud_act_tag = get_node_or_null("%HudActTag")
 	hud_cmd = get_node_or_null("%HudCmd")
 	hud_desc = get_node_or_null("%HudDesc")
+	hud_notice_icon = get_node_or_null("%HudNoticeIcon")
 	btn_launch = get_node_or_null("%BtnLaunch")
 
 	if path_renderer:
@@ -481,7 +495,7 @@ func _wire_navbar() -> void:
 		btn_focus_current.add_theme_stylebox_override("pressed", empty_continue_sb)
 		btn_focus_current.add_theme_stylebox_override("focus", empty_continue_sb)
 	if btn_sound:
-		btn_sound.text = "🔇" if _is_muted else "🔊"
+		btn_sound.icon = ICON_VOLUME_OFF if _is_muted else ICON_VOLUME_ON
 		btn_sound.pressed.connect(_on_toggle_sound)
 	if btn_launch:
 		btn_launch.pressed.connect(_on_launch_stage_pressed)
@@ -509,7 +523,7 @@ func _on_toggle_sound() -> void:
 	_is_muted = not _is_muted
 	AudioServer.set_bus_mute(0, _is_muted)
 	if btn_sound:
-		btn_sound.text = "🔇" if _is_muted else "🔊"
+		btn_sound.icon = ICON_VOLUME_OFF if _is_muted else ICON_VOLUME_ON
 	if not _is_muted:
 		_play_sfx(sfx_click)
 
@@ -530,13 +544,13 @@ func _get_act_progress(act_num: int) -> Dictionary:
 				cleared_levels += 1
 	elif act_num == 2:
 		total_levels = 5
-		is_act_unlocked = GameProgressManager.is_level_cleared(15) or _current_stage_idx >= 15
+		is_act_unlocked = _is_stage_unlocked(16)
 		for id in range(16, 21):
 			if GameProgressManager.is_level_cleared(id):
 				cleared_levels += 1
 	elif act_num == 3:
 		total_levels = 20
-		is_act_unlocked = GameProgressManager.is_level_cleared(20) or _current_stage_idx >= 20
+		is_act_unlocked = _is_stage_unlocked(21)
 		for id in range(21, 41):
 			if GameProgressManager.is_level_cleared(id):
 				cleared_levels += 1
@@ -720,7 +734,7 @@ func _on_act_button_pressed(act_num: int) -> void:
 	var prog := _get_act_progress(act_num)
 	if not prog["is_unlocked"]:
 		_play_sfx(sfx_click)
-		_show_locked_hud_notice("🔒 ACT %d ยังถูกผนึก! ต้องผ่านบทก่อนหน้าเพื่อปลดล็อก" % act_num)
+		_show_locked_hud_notice("ACT %d ยังถูกผนึก! ต้องผ่านบทก่อนหน้าเพื่อปลดล็อก" % act_num, ICON_LOCK)
 		return
 
 	_play_sfx(sfx_click)
@@ -747,7 +761,7 @@ func _on_continue_pressed() -> void:
 	var latest_unlocked_idx := 0
 	for i in range(TOWER_STAGES.size()):
 		var stg_id: int = TOWER_STAGES[i]["id"]
-		var is_unlocked := (stg_id == 1) or GameProgressManager.is_level_cleared(stg_id - 1)
+		var is_unlocked := _is_stage_unlocked(stg_id)
 		if is_unlocked:
 			latest_unlocked_idx = i
 	_jump_to_stage(latest_unlocked_idx, true)
@@ -760,7 +774,7 @@ func _init_game_progression() -> void:
 	for stg in TOWER_STAGES:
 		var stg_id: int = stg["id"]
 		if GameProgressManager.is_level_cleared(stg_id):
-			total_stars += 3
+			total_stars += GameProgressManager.get_level_stars(stg_id)
 			if stg_id > highest_cleared_id:
 				highest_cleared_id = stg_id
 
@@ -791,7 +805,7 @@ func _spawn_tower_platforms() -> void:
 		var stg := TOWER_STAGES[i]
 		var stg_id: int = stg["id"]
 		var is_cleared := GameProgressManager.is_level_cleared(stg_id)
-		var is_unlocked := (stg_id == 1) or GameProgressManager.is_level_cleared(stg_id - 1)
+		var is_unlocked := _is_stage_unlocked(stg_id)
 		var is_current := (i == _current_stage_idx)
 		var act_num: int = int(stg["act"])
 
@@ -938,27 +952,9 @@ func _spawn_tower_platforms() -> void:
 			lock_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
 			hbox.add_child(lock_rect)
 		elif is_cleared:
-			var star_icon := Label.new()
-			star_icon.name = "StarIcon"
-			star_icon.text = "★★★"
-			star_icon.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-			star_icon.add_theme_color_override("font_outline_color", Color(0.12, 0.08, 0.02, 0.9))
-			star_icon.add_theme_constant_override("outline_size", 2)
-			if font_ta_pixel:
-				star_icon.add_theme_font_override("font", font_ta_pixel)
-			star_icon.add_theme_font_size_override("font_size", star_font_sz)
-			hbox.add_child(star_icon)
+			hbox.add_child(_create_star_row(star_font_sz))
 		elif is_unlocked:
-			var star_icon := Label.new()
-			star_icon.name = "StarIcon"
-			star_icon.text = "★★★"
-			star_icon.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-			star_icon.add_theme_color_override("font_outline_color", Color(0.08, 0.10, 0.14, 0.9))
-			star_icon.add_theme_constant_override("outline_size", 2)
-			if font_ta_pixel:
-				star_icon.add_theme_font_override("font", font_ta_pixel)
-			star_icon.add_theme_font_size_override("font_size", star_font_sz)
-			hbox.add_child(star_icon)
+			hbox.add_child(_create_star_row(star_font_sz))
 		inner_margin.add_child(hbox)
 		slab_btn.add_child(inner_margin)
 
@@ -1165,7 +1161,7 @@ func _on_platform_selected(idx: int) -> void:
 
 	var target_stg: Dictionary = TOWER_STAGES[idx]
 	var target_id: int = target_stg["id"]
-	var is_unlocked: bool = (target_id == 1) or GameProgressManager.is_level_cleared(target_id - 1)
+	var is_unlocked: bool = _is_stage_unlocked(target_id)
 	if not is_unlocked:
 		_on_locked_platform_clicked(idx)
 		return
@@ -1196,7 +1192,7 @@ func _perform_direct_leap(to_idx: int) -> void:
 
 	var target_stg: Dictionary = TOWER_STAGES[to_idx]
 	var target_id: int = target_stg["id"]
-	var is_unlocked: bool = (target_id == 1) or GameProgressManager.is_level_cleared(target_id - 1)
+	var is_unlocked: bool = _is_stage_unlocked(target_id)
 	if not is_unlocked:
 		_on_locked_platform_clicked(to_idx)
 		return
@@ -1303,20 +1299,54 @@ func _perform_direct_leap(to_idx: int) -> void:
 	)
 
 
+## แถวดาว 3 ดวงจากไอคอนพิกเซล (สลับ texture ระหว่าง star_gold กับ star_gray ใน _apply_platform_style)
+func _create_star_row(star_size: int) -> HBoxContainer:
+	var row := HBoxContainer.new()
+	row.name = "StarIcon"
+	row.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	row.add_theme_constant_override("separation", 2)
+	for i in 3:
+		var star := TextureRect.new()
+		star.texture = ICON_STAR_GOLD
+		star.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+		star.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		star.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		star.custom_minimum_size = Vector2(star_size, star_size) * 0.95
+		star.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		row.add_child(star)
+	return row
+
+
+static func _is_stage_in_development(stg_id: int) -> bool:
+	return IN_DEVELOPMENT_STAGE_IDS.has(stg_id)
+
+
+## ด่านเล่นได้เมื่อเป็นด่านแรกหรือผ่านด่านก่อนหน้าแล้ว ไม่ได้อยู่ระหว่างพัฒนา และไม่เกิน MAX_OPEN_STAGE_ID
+static func _is_stage_unlocked(stg_id: int) -> bool:
+	if _is_stage_in_development(stg_id) or stg_id > MAX_OPEN_STAGE_ID:
+		return false
+	return stg_id == 1 or GameProgressManager.is_level_cleared(stg_id - 1)
+
+
 func _on_locked_platform_clicked(idx: int) -> void:
 	if idx < 0 or idx >= TOWER_STAGES.size():
 		return
 	_play_sfx(sfx_click)
 	var stg := TOWER_STAGES[idx]
-	_show_locked_hud_notice("🔒 แท่นหินด่าน %s ยังถูกผนึก! ต้องผ่านด่านก่อนหน้าเพื่อปลดล็อก" % stg["no"])
+	if _is_stage_in_development(int(stg["id"])):
+		_show_locked_hud_notice("ด่าน %s อยู่ระหว่างพัฒนา เร็วๆ นี้!" % stg["no"], ICON_CONSTRUCTION)
+	else:
+		_show_locked_hud_notice("แท่นหินด่าน %s ยังถูกผนึก! ต้องผ่านด่านก่อนหน้าเพื่อปลดล็อก" % stg["no"], ICON_LOCK)
 
 
-func _show_locked_hud_notice(message: String) -> void:
+func _show_locked_hud_notice(message: String, icon: Texture2D = null) -> void:
 	if not is_instance_valid(hud_desc):
 		return
 	_locked_desc_seq_id += 1
 	var my_seq := _locked_desc_seq_id
 	hud_desc.text = message
+	_set_hud_notice_icon(icon)
 	var tree := get_tree()
 	if not tree:
 		return
@@ -1326,7 +1356,16 @@ func _show_locked_hud_notice(message: String) -> void:
 		var restore_idx := _hovered_stage_idx if (_hovered_stage_idx >= 0 and _hovered_stage_idx < TOWER_STAGES.size()) else _current_stage_idx
 		if restore_idx >= 0 and restore_idx < TOWER_STAGES.size():
 			hud_desc.text = str(TOWER_STAGES[restore_idx]["desc"])
+			_set_hud_notice_icon(null)
 	)
+
+
+## แสดงไอคอน SVG หน้าข้อความแจ้งเตือนใน HUD (null = ซ่อน)
+func _set_hud_notice_icon(icon: Texture2D) -> void:
+	if not is_instance_valid(hud_notice_icon):
+		return
+	hud_notice_icon.texture = icon
+	hud_notice_icon.visible = icon != null
 
 
 func _try_navigate_stage(target_idx: int) -> void:
@@ -1335,7 +1374,7 @@ func _try_navigate_stage(target_idx: int) -> void:
 
 	var target_stg: Dictionary = TOWER_STAGES[target_idx]
 	var target_id: int = target_stg["id"]
-	var is_unlocked: bool = (target_id == 1) or GameProgressManager.is_level_cleared(target_id - 1)
+	var is_unlocked: bool = _is_stage_unlocked(target_id)
 
 	if not is_unlocked:
 		_on_locked_platform_clicked(target_idx)
@@ -1373,7 +1412,7 @@ func _step_towards_queued_target() -> void:
 
 	var next_stg: Dictionary = TOWER_STAGES[next_step_idx]
 	var next_id: int = next_stg["id"]
-	var is_unlocked: bool = (next_id == 1) or GameProgressManager.is_level_cleared(next_id - 1)
+	var is_unlocked: bool = _is_stage_unlocked(next_id)
 	if not is_unlocked:
 		_target_queue_idx = _current_stage_idx
 		_is_jumping = false
@@ -1638,7 +1677,7 @@ func _apply_platform_style(plat: Control, stg_id: int, is_active: bool) -> void:
 		return
 
 	var is_cleared := GameProgressManager.is_level_cleared(stg_id)
-	var is_unlocked := (stg_id == 1) or GameProgressManager.is_level_cleared(stg_id - 1)
+	var is_unlocked := _is_stage_unlocked(stg_id)
 	var colors := _get_stage_style_colors(stg_id, is_active, is_cleared, is_unlocked)
 
 	var sb_norm := StyleBoxFlat.new()
@@ -1699,9 +1738,18 @@ func _apply_platform_style(plat: Control, stg_id: int, is_active: bool) -> void:
 	if lock_rect:
 		lock_rect.modulate = colors["lock_modulate"]
 
-	var star_icon := plat.find_child("StarIcon", true, false) as Label
+	var star_icon := plat.find_child("StarIcon", true, false) as Control
 	if star_icon:
-		star_icon.add_theme_color_override("font_color", colors["star_color"])
+		star_icon.modulate = Color.WHITE
+		var earned_stars := GameProgressManager.get_level_stars(stg_id)
+		for i in range(star_icon.get_child_count()):
+			var star_node := star_icon.get_child(i) as TextureRect
+			if star_node != null:
+				star_node.modulate = Color.WHITE
+				if i < earned_stars:
+					star_node.texture = ICON_STAR_GOLD
+				else:
+					star_node.texture = ICON_STAR_GRAY
 
 
 func _update_platform_highlight(idx: int, is_active: bool) -> void:
@@ -1715,7 +1763,7 @@ func _update_platform_highlight(idx: int, is_active: bool) -> void:
 func _update_hud_display(stg: Dictionary) -> void:
 	var stg_id: int = stg["id"]
 	var is_cleared := GameProgressManager.is_level_cleared(stg_id)
-	var is_unlocked := (stg_id == 1) or GameProgressManager.is_level_cleared(stg_id - 1)
+	var is_unlocked := _is_stage_unlocked(stg_id)
 
 	if hud_no_badge:
 		hud_no_badge.text = "LV %s" % stg["no"]
@@ -1735,6 +1783,7 @@ func _update_hud_display(stg: Dictionary) -> void:
 	if hud_desc:
 		_locked_desc_seq_id += 1
 		hud_desc.text = stg["desc"]
+		_set_hud_notice_icon(null)
 
 	if btn_launch:
 		if is_unlocked:
@@ -1742,7 +1791,7 @@ func _update_hud_display(stg: Dictionary) -> void:
 			btn_launch.text = "เข้าสู่ด่าน" if not is_cleared else "ทบทวนด่าน"
 		else:
 			btn_launch.disabled = true
-			btn_launch.text = "ยังไม่ปลดล็อก"
+			btn_launch.text = "อยู่ระหว่างพัฒนา" if _is_stage_in_development(stg_id) else "ยังไม่ปลดล็อก"
 
 
 func _scroll_to_stage_idx(stage_idx: int, animate: bool = true, update_hud: bool = false, duration: float = 0.48) -> void:
@@ -1887,7 +1936,7 @@ func _draw_path_pass(target: CanvasItem, pass_mode: int) -> void:
 		var is_cleared_b := GameProgressManager.is_level_cleared(id_b)
 		var is_loop_back := id_b < id_a
 		var is_segment_cleared := (is_cleared_a and is_cleared_b) if is_loop_back else is_cleared_b
-		var is_unlocked_b := (id_b == 1) or GameProgressManager.is_level_cleared(id_b - 1)
+		var is_unlocked_b := _is_stage_unlocked(id_b)
 		var is_current_segment := false if is_loop_back else ((idx_b == _current_stage_idx) or (idx_a == _current_stage_idx and not is_cleared_b))
 		var is_segment_active := false if is_loop_back else (is_current_segment or is_unlocked_b)
 
@@ -2033,7 +2082,7 @@ func _on_launch_stage_pressed() -> void:
 
 	var stg := TOWER_STAGES[_current_stage_idx]
 	var stg_id: int = stg["id"]
-	var is_unlocked := (stg_id == 1) or GameProgressManager.is_level_cleared(stg_id - 1)
+	var is_unlocked := _is_stage_unlocked(stg_id)
 	if not is_unlocked:
 		return
 
