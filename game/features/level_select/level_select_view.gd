@@ -184,8 +184,9 @@ var _torch_flames: Array[ColorRect] = []
 var _torch_timer := 0.0
 var _path_glow_timer: float = 0.0
 var _view_act_num: int = 1
-var _act_tab_empty_sb: StyleBoxEmpty = null
-var _act_tab_active_sb: StyleBoxFlat = null
+var _act_tab_empty_sb: StyleBox = null
+var _act_tab_hover_sb: StyleBox = null
+var _act_tab_active_sb: StyleBox = null
 var _last_act_tabs_state: Array = []
 
 const NAV_HINT_KEY_TRAVEL_Y: float = 2.0
@@ -477,23 +478,64 @@ func _wire_navbar() -> void:
 	if btn_act3:
 		btn_act3.pressed.connect(func(): _on_act_button_pressed(3))
 	if act_progress_panel:
-		act_progress_panel.custom_minimum_size = Vector2(200, 44)
+		act_progress_panel.custom_minimum_size = Vector2(210, 40)
+		var prog_sb := StyleBoxFlat.new()
+		prog_sb.bg_color = Color(0.09, 0.07, 0.05, 0.85)
+		prog_sb.border_color = Color(0.28, 0.21, 0.14, 0.9)
+		prog_sb.set_border_width_all(1)
+		prog_sb.set_corner_radius_all(6)
+		prog_sb.content_margin_left = 14.0
+		prog_sb.content_margin_right = 14.0
+		prog_sb.content_margin_top = 4.0
+		prog_sb.content_margin_bottom = 4.0
+		act_progress_panel.add_theme_stylebox_override("panel", prog_sb)
 	if act_progress_label:
-		act_progress_label.add_theme_color_override("font_color", NAV_COLOR_SECONDARY)
+		act_progress_label.add_theme_color_override("font_color", Color(0.85, 0.78, 0.68, 1.0))
 	if btn_focus_current:
 		btn_focus_current.pressed.connect(_on_continue_pressed)
-		btn_focus_current.custom_minimum_size = Vector2(116, 44)
+		btn_focus_current.custom_minimum_size = Vector2(116, 40)
 		btn_focus_current.text = "เล่นต่อ →"
 		btn_focus_current.alignment = HORIZONTAL_ALIGNMENT_CENTER
-		btn_focus_current.add_theme_color_override("font_color", NAV_COLOR_ACTIVE)
-		btn_focus_current.add_theme_color_override("font_hover_color", NAV_COLOR_PRIMARY)
-		btn_focus_current.add_theme_color_override("font_pressed_color", NAV_COLOR_SECONDARY)
-		btn_focus_current.add_theme_color_override("font_focus_color", NAV_COLOR_ACTIVE)
-		var empty_continue_sb := StyleBoxEmpty.new()
-		btn_focus_current.add_theme_stylebox_override("normal", empty_continue_sb)
-		btn_focus_current.add_theme_stylebox_override("hover", empty_continue_sb)
-		btn_focus_current.add_theme_stylebox_override("pressed", empty_continue_sb)
-		btn_focus_current.add_theme_stylebox_override("focus", empty_continue_sb)
+		var cta_normal := StyleBoxFlat.new()
+		cta_normal.bg_color = Color(0.26, 0.18, 0.08, 0.95)
+		cta_normal.border_color = Color(0.722, 0.604, 0.404, 1.0)
+		cta_normal.set_border_width_all(1)
+		cta_normal.border_width_bottom = 2
+		cta_normal.set_corner_radius_all(6)
+		cta_normal.content_margin_left = 14.0
+		cta_normal.content_margin_right = 14.0
+		cta_normal.content_margin_top = 4.0
+		cta_normal.content_margin_bottom = 4.0
+
+		var cta_hover := StyleBoxFlat.new()
+		cta_hover.bg_color = Color(0.38, 0.27, 0.11, 1.0)
+		cta_hover.border_color = Color(0.96, 0.82, 0.45, 1.0)
+		cta_hover.set_border_width_all(1)
+		cta_hover.border_width_bottom = 2
+		cta_hover.set_corner_radius_all(6)
+		cta_hover.content_margin_left = 14.0
+		cta_hover.content_margin_right = 14.0
+		cta_hover.content_margin_top = 4.0
+		cta_hover.content_margin_bottom = 4.0
+
+		var cta_pressed := StyleBoxFlat.new()
+		cta_pressed.bg_color = Color(0.18, 0.12, 0.05, 1.0)
+		cta_pressed.border_color = Color(0.55, 0.42, 0.20, 1.0)
+		cta_pressed.set_border_width_all(1)
+		cta_pressed.set_corner_radius_all(6)
+		cta_pressed.content_margin_left = 14.0
+		cta_pressed.content_margin_right = 14.0
+		cta_pressed.content_margin_top = 5.0
+		cta_pressed.content_margin_bottom = 3.0
+
+		btn_focus_current.add_theme_stylebox_override("normal", cta_normal)
+		btn_focus_current.add_theme_stylebox_override("hover", cta_hover)
+		btn_focus_current.add_theme_stylebox_override("pressed", cta_pressed)
+		btn_focus_current.add_theme_stylebox_override("focus", cta_hover)
+		btn_focus_current.add_theme_color_override("font_color", Color(1.0, 0.94, 0.82, 1.0))
+		btn_focus_current.add_theme_color_override("font_hover_color", Color(1.0, 1.0, 1.0, 1.0))
+		btn_focus_current.add_theme_color_override("font_pressed_color", Color(0.85, 0.75, 0.58, 1.0))
+		btn_focus_current.add_theme_color_override("font_focus_color", Color(1.0, 0.94, 0.82, 1.0))
 	if btn_sound:
 		btn_sound.icon = ICON_VOLUME_OFF if _is_muted else ICON_VOLUME_ON
 		btn_sound.pressed.connect(_on_toggle_sound)
@@ -565,25 +607,41 @@ func _get_act_progress(act_num: int) -> Dictionary:
 
 func _ensure_act_tab_styleboxes() -> void:
 	if _act_tab_empty_sb == null:
-		_act_tab_empty_sb = StyleBoxEmpty.new()
-		_act_tab_empty_sb.content_margin_left = 0.0
-		_act_tab_empty_sb.content_margin_right = 0.0
-		_act_tab_empty_sb.content_margin_top = 0.0
-		_act_tab_empty_sb.content_margin_bottom = 2.0
+		var sb := StyleBoxFlat.new()
+		sb.bg_color = Color(0.12, 0.09, 0.06, 0.55)
+		sb.border_color = Color(0.28, 0.20, 0.14, 0.7)
+		sb.set_border_width_all(1)
+		sb.set_corner_radius_all(6)
+		sb.content_margin_left = 12.0
+		sb.content_margin_right = 12.0
+		sb.content_margin_top = 4.0
+		sb.content_margin_bottom = 4.0
+		_act_tab_empty_sb = sb
+
+	if _act_tab_hover_sb == null:
+		var sb := StyleBoxFlat.new()
+		sb.bg_color = Color(0.20, 0.15, 0.10, 0.85)
+		sb.border_color = Color(0.48, 0.36, 0.22, 0.9)
+		sb.set_border_width_all(1)
+		sb.set_corner_radius_all(6)
+		sb.content_margin_left = 12.0
+		sb.content_margin_right = 12.0
+		sb.content_margin_top = 4.0
+		sb.content_margin_bottom = 4.0
+		_act_tab_hover_sb = sb
 
 	if _act_tab_active_sb == null:
-		_act_tab_active_sb = StyleBoxFlat.new()
-		_act_tab_active_sb.bg_color = Color(0, 0, 0, 0)
-		_act_tab_active_sb.draw_center = false
-		_act_tab_active_sb.border_width_left = 0
-		_act_tab_active_sb.border_width_top = 0
-		_act_tab_active_sb.border_width_right = 0
-		_act_tab_active_sb.border_width_bottom = 2
-		_act_tab_active_sb.border_color = NAV_COLOR_ACTIVE
-		_act_tab_active_sb.content_margin_left = 0.0
-		_act_tab_active_sb.content_margin_right = 0.0
-		_act_tab_active_sb.content_margin_top = 0.0
-		_act_tab_active_sb.content_margin_bottom = 2.0
+		var sb := StyleBoxFlat.new()
+		sb.bg_color = Color(0.28, 0.20, 0.10, 0.95)
+		sb.border_color = NAV_COLOR_ACTIVE
+		sb.set_border_width_all(1)
+		sb.border_width_bottom = 2
+		sb.set_corner_radius_all(6)
+		sb.content_margin_left = 12.0
+		sb.content_margin_right = 12.0
+		sb.content_margin_top = 4.0
+		sb.content_margin_bottom = 4.0
+		_act_tab_active_sb = sb
 
 
 func _refresh_act_tabs(active_act: int) -> void:
@@ -675,7 +733,7 @@ func _style_act_button(btn: Button, act_num: int, is_active: bool, prog: Diction
 
 	_ensure_act_tab_styleboxes()
 
-	btn.custom_minimum_size = Vector2(96, 44)
+	btn.custom_minimum_size = Vector2(88, 40)
 	var text_base := "ACT %d" % act_num
 	if prog["is_completed"]:
 		btn.text = "%s ✓" % text_base
@@ -683,7 +741,7 @@ func _style_act_button(btn: Button, act_num: int, is_active: bool, prog: Diction
 		btn.text = text_base
 
 	if is_active:
-		# Active Act: Antique gold text, subtle 2px bottom underline, flat transparent background
+		# Active Act: Antique gold text, rich amber-gold pill background
 		btn.add_theme_color_override("font_color", NAV_COLOR_ACTIVE)
 		btn.add_theme_color_override("font_hover_color", NAV_COLOR_PRIMARY)
 		btn.add_theme_color_override("font_pressed_color", NAV_COLOR_ACTIVE)
@@ -694,18 +752,18 @@ func _style_act_button(btn: Button, act_num: int, is_active: bool, prog: Diction
 		btn.add_theme_stylebox_override("focus", _act_tab_active_sb)
 		btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	elif prog["is_completed"]:
-		# Completed Act: Muted sage green text, subtle checkmark, flat tab
+		# Completed Act: Muted sage green text, subtle checkmark
 		btn.add_theme_color_override("font_color", NAV_COLOR_COMPLETED)
 		btn.add_theme_color_override("font_hover_color", NAV_COLOR_PRIMARY)
 		btn.add_theme_color_override("font_pressed_color", NAV_COLOR_COMPLETED)
 		btn.add_theme_color_override("font_focus_color", NAV_COLOR_COMPLETED)
 		btn.add_theme_stylebox_override("normal", _act_tab_empty_sb)
-		btn.add_theme_stylebox_override("hover", _act_tab_empty_sb)
-		btn.add_theme_stylebox_override("pressed", _act_tab_empty_sb)
+		btn.add_theme_stylebox_override("hover", _act_tab_hover_sb)
+		btn.add_theme_stylebox_override("pressed", _act_tab_active_sb)
 		btn.add_theme_stylebox_override("focus", _act_tab_empty_sb)
 		btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	elif not prog["is_unlocked"]:
-		# Locked Act: Muted lavender-gray text, reduced visual emphasis
+		# Locked Act: Muted lavender-gray text
 		btn.add_theme_color_override("font_color", NAV_COLOR_LOCKED)
 		btn.add_theme_color_override("font_hover_color", NAV_COLOR_LOCKED)
 		btn.add_theme_color_override("font_pressed_color", NAV_COLOR_LOCKED)
@@ -716,14 +774,14 @@ func _style_act_button(btn: Button, act_num: int, is_active: bool, prog: Diction
 		btn.add_theme_stylebox_override("focus", _act_tab_empty_sb)
 		btn.mouse_default_cursor_shape = Control.CURSOR_ARROW
 	else:
-		# Unlocked, Inactive Act: Secondary muted text, clean flat tab
+		# Unlocked, Inactive Act: Secondary muted text
 		btn.add_theme_color_override("font_color", NAV_COLOR_SECONDARY)
 		btn.add_theme_color_override("font_hover_color", NAV_COLOR_PRIMARY)
 		btn.add_theme_color_override("font_pressed_color", NAV_COLOR_SECONDARY)
 		btn.add_theme_color_override("font_focus_color", NAV_COLOR_SECONDARY)
 		btn.add_theme_stylebox_override("normal", _act_tab_empty_sb)
-		btn.add_theme_stylebox_override("hover", _act_tab_empty_sb)
-		btn.add_theme_stylebox_override("pressed", _act_tab_empty_sb)
+		btn.add_theme_stylebox_override("hover", _act_tab_hover_sb)
+		btn.add_theme_stylebox_override("pressed", _act_tab_active_sb)
 		btn.add_theme_stylebox_override("focus", _act_tab_empty_sb)
 		btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 
