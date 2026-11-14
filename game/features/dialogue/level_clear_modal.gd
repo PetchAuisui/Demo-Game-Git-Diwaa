@@ -52,7 +52,7 @@ func _process(delta: float) -> void:
 @onready var score_diff_label: Label = $WindowPanel/VBoxMain/Margin/VBox/ScorePanel/VBoxScore/Row3/Value
 @onready var reward_label: Label = $WindowPanel/VBoxMain/Margin/VBox/ScorePanel/VBoxScore/Row4/Value
 
-@onready var keyword_header_label: Label = $WindowPanel/VBoxMain/Margin/VBox/KeywordPanel/VBoxKW/Header
+@onready var keyword_header_label: Label = $WindowPanel/VBoxMain/Margin/VBox/KeywordPanel/VBoxKW/HeaderHBox/Header
 @onready var keyword_body_label: Control = $WindowPanel/VBoxMain/Margin/VBox/KeywordPanel/VBoxKW/Body
 
 func _ready() -> void:
@@ -77,7 +77,7 @@ func _apply_level_info() -> void:
 	if level_title_label:
 		level_title_label.text = "ด่านที่ %d : %s" % [level_number, level_command]
 	if keyword_header_label:
-		keyword_header_label.text = "สรุปสิ่งสำคัญประจำด่านที่ %d" % level_number
+		keyword_header_label.text = "บันทึกคัมภีร์เวทประจำด่านที่ %d" % level_number
 	if keyword_body_label:
 		var formatted := _format_keyword_text(level_keyword)
 		if keyword_body_label is RichTextLabel:
