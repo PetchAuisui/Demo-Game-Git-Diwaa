@@ -140,6 +140,8 @@ const VEL_ANGRY_DURATION: float = 0.70
 const NAV_COLOR_ACTIVE := Color(0.722, 0.604, 0.404, 1.0)     # #B89A67 Antique gold
 const NAV_COLOR_COMPLETED := Color(0.510, 0.604, 0.569, 1.0)  # #829A91 Muted sage green
 const NAV_COLOR_LOCKED := Color(0.467, 0.459, 0.553, 1.0)     # #77758D Muted lavender-gray
+const NAV_COLOR_PROGRESS_TEXT := Color(0.85, 0.78, 0.68, 1.0)
+const NAV_PILL_RADIUS := 6
 
 ## ด่านที่ยังพัฒนาไม่เสร็จ: ล็อกไว้เสมอแม้ผ่านด่านก่อนหน้าแล้ว (เอา id ออกเมื่อด่านพร้อมเล่น)
 const IN_DEVELOPMENT_STAGE_IDS: Array[int] = [2]
@@ -184,9 +186,10 @@ var _torch_flames: Array[ColorRect] = []
 var _torch_timer := 0.0
 var _path_glow_timer: float = 0.0
 var _view_act_num: int = 1
-var _act_tab_empty_sb: StyleBox = null
-var _act_tab_hover_sb: StyleBox = null
-var _act_tab_active_sb: StyleBox = null
+var _act_tab_empty_sb: StyleBoxFlat = null
+var _act_tab_hover_sb: StyleBoxFlat = null
+var _act_tab_pressed_sb: StyleBoxFlat = null
+var _act_tab_active_sb: StyleBoxFlat = null
 var _last_act_tabs_state: Array = []
 
 const NAV_HINT_KEY_TRAVEL_Y: float = 2.0
@@ -479,54 +482,18 @@ func _wire_navbar() -> void:
 		btn_act3.pressed.connect(func(): _on_act_button_pressed(3))
 	if act_progress_panel:
 		act_progress_panel.custom_minimum_size = Vector2(210, 40)
-		var prog_sb := StyleBoxFlat.new()
-		prog_sb.bg_color = Color(0.09, 0.07, 0.05, 0.85)
-		prog_sb.border_color = Color(0.28, 0.21, 0.14, 0.9)
-		prog_sb.set_border_width_all(1)
-		prog_sb.set_corner_radius_all(6)
-		prog_sb.content_margin_left = 14.0
-		prog_sb.content_margin_right = 14.0
-		prog_sb.content_margin_top = 4.0
-		prog_sb.content_margin_bottom = 4.0
+		var prog_sb := _make_pill_stylebox(Color(0.09, 0.07, 0.05, 0.85), Color(0.28, 0.21, 0.14, 0.9), 1, 14.0, 4.0, 4.0)
 		act_progress_panel.add_theme_stylebox_override("panel", prog_sb)
 	if act_progress_label:
-		act_progress_label.add_theme_color_override("font_color", Color(0.85, 0.78, 0.68, 1.0))
+		act_progress_label.add_theme_color_override("font_color", NAV_COLOR_PROGRESS_TEXT)
 	if btn_focus_current:
 		btn_focus_current.pressed.connect(_on_continue_pressed)
 		btn_focus_current.custom_minimum_size = Vector2(116, 40)
 		btn_focus_current.text = "เล่นต่อ →"
 		btn_focus_current.alignment = HORIZONTAL_ALIGNMENT_CENTER
-		var cta_normal := StyleBoxFlat.new()
-		cta_normal.bg_color = Color(0.26, 0.18, 0.08, 0.95)
-		cta_normal.border_color = Color(0.722, 0.604, 0.404, 1.0)
-		cta_normal.set_border_width_all(1)
-		cta_normal.border_width_bottom = 2
-		cta_normal.set_corner_radius_all(6)
-		cta_normal.content_margin_left = 14.0
-		cta_normal.content_margin_right = 14.0
-		cta_normal.content_margin_top = 4.0
-		cta_normal.content_margin_bottom = 4.0
-
-		var cta_hover := StyleBoxFlat.new()
-		cta_hover.bg_color = Color(0.38, 0.27, 0.11, 1.0)
-		cta_hover.border_color = Color(0.96, 0.82, 0.45, 1.0)
-		cta_hover.set_border_width_all(1)
-		cta_hover.border_width_bottom = 2
-		cta_hover.set_corner_radius_all(6)
-		cta_hover.content_margin_left = 14.0
-		cta_hover.content_margin_right = 14.0
-		cta_hover.content_margin_top = 4.0
-		cta_hover.content_margin_bottom = 4.0
-
-		var cta_pressed := StyleBoxFlat.new()
-		cta_pressed.bg_color = Color(0.18, 0.12, 0.05, 1.0)
-		cta_pressed.border_color = Color(0.55, 0.42, 0.20, 1.0)
-		cta_pressed.set_border_width_all(1)
-		cta_pressed.set_corner_radius_all(6)
-		cta_pressed.content_margin_left = 14.0
-		cta_pressed.content_margin_right = 14.0
-		cta_pressed.content_margin_top = 5.0
-		cta_pressed.content_margin_bottom = 3.0
+		var cta_normal := _make_pill_stylebox(Color(0.26, 0.18, 0.08, 0.95), NAV_COLOR_ACTIVE, 2, 14.0, 4.0, 4.0)
+		var cta_hover := _make_pill_stylebox(Color(0.38, 0.27, 0.11, 1.0), Color(0.96, 0.82, 0.45, 1.0), 2, 14.0, 4.0, 4.0)
+		var cta_pressed := _make_pill_stylebox(Color(0.18, 0.12, 0.05, 1.0), Color(0.55, 0.42, 0.20, 1.0), 1, 14.0, 5.0, 3.0)
 
 		btn_focus_current.add_theme_stylebox_override("normal", cta_normal)
 		btn_focus_current.add_theme_stylebox_override("hover", cta_hover)
@@ -605,43 +572,30 @@ func _get_act_progress(act_num: int) -> Dictionary:
 	}
 
 
+## สร้าง StyleBoxFlat ทรงแคปซูลสำหรับ navbar (border_bottom > 1 = ขอบล่างหนากว่า)
+func _make_pill_stylebox(bg: Color, border: Color, border_bottom: int, margin_h: float, margin_top: float, margin_bottom: float) -> StyleBoxFlat:
+	var sb := StyleBoxFlat.new()
+	sb.bg_color = bg
+	sb.border_color = border
+	sb.set_border_width_all(1)
+	sb.border_width_bottom = border_bottom
+	sb.set_corner_radius_all(NAV_PILL_RADIUS)
+	sb.content_margin_left = margin_h
+	sb.content_margin_right = margin_h
+	sb.content_margin_top = margin_top
+	sb.content_margin_bottom = margin_bottom
+	return sb
+
+
 func _ensure_act_tab_styleboxes() -> void:
 	if _act_tab_empty_sb == null:
-		var sb := StyleBoxFlat.new()
-		sb.bg_color = Color(0.12, 0.09, 0.06, 0.55)
-		sb.border_color = Color(0.28, 0.20, 0.14, 0.7)
-		sb.set_border_width_all(1)
-		sb.set_corner_radius_all(6)
-		sb.content_margin_left = 12.0
-		sb.content_margin_right = 12.0
-		sb.content_margin_top = 4.0
-		sb.content_margin_bottom = 4.0
-		_act_tab_empty_sb = sb
-
+		_act_tab_empty_sb = _make_pill_stylebox(Color(0.12, 0.09, 0.06, 0.55), Color(0.28, 0.20, 0.14, 0.7), 1, 12.0, 4.0, 4.0)
 	if _act_tab_hover_sb == null:
-		var sb := StyleBoxFlat.new()
-		sb.bg_color = Color(0.20, 0.15, 0.10, 0.85)
-		sb.border_color = Color(0.48, 0.36, 0.22, 0.9)
-		sb.set_border_width_all(1)
-		sb.set_corner_radius_all(6)
-		sb.content_margin_left = 12.0
-		sb.content_margin_right = 12.0
-		sb.content_margin_top = 4.0
-		sb.content_margin_bottom = 4.0
-		_act_tab_hover_sb = sb
-
+		_act_tab_hover_sb = _make_pill_stylebox(Color(0.20, 0.15, 0.10, 0.85), Color(0.48, 0.36, 0.22, 0.9), 1, 12.0, 4.0, 4.0)
+	if _act_tab_pressed_sb == null:
+		_act_tab_pressed_sb = _make_pill_stylebox(Color(0.16, 0.11, 0.07, 0.95), Color(0.40, 0.30, 0.18, 0.9), 1, 12.0, 5.0, 3.0)
 	if _act_tab_active_sb == null:
-		var sb := StyleBoxFlat.new()
-		sb.bg_color = Color(0.28, 0.20, 0.10, 0.95)
-		sb.border_color = NAV_COLOR_ACTIVE
-		sb.set_border_width_all(1)
-		sb.border_width_bottom = 2
-		sb.set_corner_radius_all(6)
-		sb.content_margin_left = 12.0
-		sb.content_margin_right = 12.0
-		sb.content_margin_top = 4.0
-		sb.content_margin_bottom = 4.0
-		_act_tab_active_sb = sb
+		_act_tab_active_sb = _make_pill_stylebox(Color(0.28, 0.20, 0.10, 0.95), NAV_COLOR_ACTIVE, 2, 12.0, 4.0, 4.0)
 
 
 func _refresh_act_tabs(active_act: int) -> void:
@@ -759,7 +713,7 @@ func _style_act_button(btn: Button, act_num: int, is_active: bool, prog: Diction
 		btn.add_theme_color_override("font_focus_color", NAV_COLOR_COMPLETED)
 		btn.add_theme_stylebox_override("normal", _act_tab_empty_sb)
 		btn.add_theme_stylebox_override("hover", _act_tab_hover_sb)
-		btn.add_theme_stylebox_override("pressed", _act_tab_active_sb)
+		btn.add_theme_stylebox_override("pressed", _act_tab_pressed_sb)
 		btn.add_theme_stylebox_override("focus", _act_tab_empty_sb)
 		btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	elif not prog["is_unlocked"]:
@@ -781,7 +735,7 @@ func _style_act_button(btn: Button, act_num: int, is_active: bool, prog: Diction
 		btn.add_theme_color_override("font_focus_color", NAV_COLOR_SECONDARY)
 		btn.add_theme_stylebox_override("normal", _act_tab_empty_sb)
 		btn.add_theme_stylebox_override("hover", _act_tab_hover_sb)
-		btn.add_theme_stylebox_override("pressed", _act_tab_active_sb)
+		btn.add_theme_stylebox_override("pressed", _act_tab_pressed_sb)
 		btn.add_theme_stylebox_override("focus", _act_tab_empty_sb)
 		btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 
@@ -1844,7 +1798,7 @@ func _update_hud_display(stg: Dictionary) -> void:
 	if hud_no_badge:
 		hud_no_badge.text = "ด่าน %s" % stg["no"]
 	if hud_title:
-		hud_title.text = "ด่าน %s — %s" % [stg["no"], stg["title"]]
+		hud_title.text = str(stg["title"])
 	if hud_act_tag:
 		var act_num: int = stg["act"]
 		hud_act_tag.text = "ACT %d" % act_num
