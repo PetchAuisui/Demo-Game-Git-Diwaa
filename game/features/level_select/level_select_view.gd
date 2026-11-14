@@ -806,6 +806,7 @@ func _spawn_tower_platforms() -> void:
 		var stg_id: int = stg["id"]
 		var is_cleared := GameProgressManager.is_level_cleared(stg_id)
 		var is_unlocked := _is_stage_unlocked(stg_id)
+		var is_reachable := _is_stage_reachable(stg_id)
 		var is_current := (i == _current_stage_idx)
 		var act_num: int = int(stg["act"])
 
@@ -970,7 +971,7 @@ func _spawn_tower_platforms() -> void:
 			_update_hud_display(TOWER_STAGES[_current_stage_idx])
 		)
 
-		if is_unlocked:
+		if is_reachable:
 			slab_btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 			slab_btn.pressed.connect(func():
 				_on_platform_selected(current_idx)
@@ -1161,8 +1162,8 @@ func _on_platform_selected(idx: int) -> void:
 
 	var target_stg: Dictionary = TOWER_STAGES[idx]
 	var target_id: int = target_stg["id"]
-	var is_unlocked: bool = _is_stage_unlocked(target_id)
-	if not is_unlocked:
+	var is_reachable: bool = _is_stage_reachable(target_id)
+	if not is_reachable:
 		_on_locked_platform_clicked(idx)
 		return
 
@@ -1192,8 +1193,8 @@ func _perform_direct_leap(to_idx: int) -> void:
 
 	var target_stg: Dictionary = TOWER_STAGES[to_idx]
 	var target_id: int = target_stg["id"]
-	var is_unlocked: bool = _is_stage_unlocked(target_id)
-	if not is_unlocked:
+	var is_reachable: bool = _is_stage_reachable(target_id)
+	if not is_reachable:
 		_on_locked_platform_clicked(to_idx)
 		return
 
@@ -1329,15 +1330,31 @@ static func _is_stage_unlocked(stg_id: int) -> bool:
 	return stg_id == 1 or GameProgressManager.is_level_cleared(stg_id - 1)
 
 
+## ด่านที่ตัวละครยืนบนแท่นได้ = ด่านที่เล่นได้ หรือด่านที่อยู่ระหว่างพัฒนาซึ่งต่อจากด่านที่เล่นได้ (ยืนดูได้ แต่เข้าเล่นไม่ได้)
+static func _is_stage_reachable(stg_id: int) -> bool:
+	if _is_stage_unlocked(stg_id):
+		return true
+	return stg_id > 1 and _is_stage_in_development(stg_id) and _is_stage_unlocked(stg_id - 1)
+
+
+## ข้อความแจ้งเตือนของด่านที่ยังเข้าเล่นไม่ได้
+static func _locked_message(stg: Dictionary) -> String:
+	if _is_stage_in_development(int(stg["id"])):
+		return "ด่าน %s อยู่ระหว่างพัฒนา เร็วๆ นี้!" % stg["no"]
+	return "แท่นหินด่าน %s ยังถูกผนึก! ต้องผ่านด่านก่อนหน้าเพื่อปลดล็อก" % stg["no"]
+
+
 func _on_locked_platform_clicked(idx: int) -> void:
 	if idx < 0 or idx >= TOWER_STAGES.size():
 		return
 	_play_sfx(sfx_click)
+	_show_locked_notice(idx)
+
+
+func _show_locked_notice(idx: int) -> void:
 	var stg := TOWER_STAGES[idx]
-	if _is_stage_in_development(int(stg["id"])):
-		_show_locked_hud_notice("ด่าน %s อยู่ระหว่างพัฒนา เร็วๆ นี้!" % stg["no"], ICON_CONSTRUCTION)
-	else:
-		_show_locked_hud_notice("แท่นหินด่าน %s ยังถูกผนึก! ต้องผ่านด่านก่อนหน้าเพื่อปลดล็อก" % stg["no"], ICON_LOCK)
+	var icon := ICON_CONSTRUCTION if _is_stage_in_development(int(stg["id"])) else ICON_LOCK
+	_show_locked_hud_notice(_locked_message(stg), icon)
 
 
 func _show_locked_hud_notice(message: String, icon: Texture2D = null) -> void:
@@ -1374,9 +1391,9 @@ func _try_navigate_stage(target_idx: int) -> void:
 
 	var target_stg: Dictionary = TOWER_STAGES[target_idx]
 	var target_id: int = target_stg["id"]
-	var is_unlocked: bool = _is_stage_unlocked(target_id)
+	var is_reachable: bool = _is_stage_reachable(target_id)
 
-	if not is_unlocked:
+	if not is_reachable:
 		_on_locked_platform_clicked(target_idx)
 		return
 
@@ -1412,12 +1429,13 @@ func _step_towards_queued_target() -> void:
 
 	var next_stg: Dictionary = TOWER_STAGES[next_step_idx]
 	var next_id: int = next_stg["id"]
-	var is_unlocked: bool = _is_stage_unlocked(next_id)
-	if not is_unlocked:
+	var is_reachable: bool = _is_stage_reachable(next_id)
+	if not is_reachable:
 		_target_queue_idx = _current_stage_idx
 		_is_jumping = false
 		if vel_anim:
 			vel_anim.play("breathe")
+		_show_locked_notice(next_step_idx)
 		return
 
 	_perform_jump_step(next_step_idx)
@@ -1789,9 +1807,11 @@ func _update_hud_display(stg: Dictionary) -> void:
 		if is_unlocked:
 			btn_launch.disabled = false
 			btn_launch.text = "เข้าสู่ด่าน" if not is_cleared else "ทบทวนด่าน"
+			btn_launch.tooltip_text = ""
 		else:
 			btn_launch.disabled = true
 			btn_launch.text = "อยู่ระหว่างพัฒนา" if _is_stage_in_development(stg_id) else "ยังไม่ปลดล็อก"
+			btn_launch.tooltip_text = _locked_message(stg)
 
 
 func _scroll_to_stage_idx(stage_idx: int, animate: bool = true, update_hud: bool = false, duration: float = 0.48) -> void:
@@ -1937,7 +1957,7 @@ func _draw_path_pass(target: CanvasItem, pass_mode: int) -> void:
 		var is_loop_back := id_b < id_a
 		var is_segment_cleared := (is_cleared_a and is_cleared_b) if is_loop_back else is_cleared_b
 		var is_unlocked_b := _is_stage_unlocked(id_b)
-		var is_current_segment := false if is_loop_back else ((idx_b == _current_stage_idx) or (idx_a == _current_stage_idx and not is_cleared_b))
+		var is_current_segment := false if is_loop_back else ((idx_b == _current_stage_idx or (idx_a == _current_stage_idx and not is_cleared_b)) and _is_stage_reachable(id_b))
 		var is_segment_active := false if is_loop_back else (is_current_segment or is_unlocked_b)
 
 		var p1 := Vector2(s_a["x"], s_a["y"])
@@ -2084,6 +2104,9 @@ func _on_launch_stage_pressed() -> void:
 	var stg_id: int = stg["id"]
 	var is_unlocked := _is_stage_unlocked(stg_id)
 	if not is_unlocked:
+		if _is_stage_in_development(stg_id):
+			_trigger_vel_angry()
+		_on_locked_platform_clicked(_current_stage_idx)
 		return
 
 	_is_leaving = true
