@@ -15,6 +15,15 @@ extends Control
 @export var level_select_scene_path: String = "res://features/level_select/level_select_view.tscn"
 
 @onready var level_title_label: Label = $WindowPanel/VBoxMain/Margin/VBox/LevelTitle
+@onready var star1: TextureRect = $WindowPanel/VBoxMain/Margin/VBox/StarsHBox/Star1
+@onready var star2: TextureRect = $WindowPanel/VBoxMain/Margin/VBox/StarsHBox/Star2
+@onready var star3: TextureRect = $WindowPanel/VBoxMain/Margin/VBox/StarsHBox/Star3
+
+@onready var score_current_label: Label = $WindowPanel/VBoxMain/Margin/VBox/ScorePanel/VBoxScore/Row1/Value
+@onready var score_prev_label: Label = $WindowPanel/VBoxMain/Margin/VBox/ScorePanel/VBoxScore/Row2/Value
+@onready var score_diff_label: Label = $WindowPanel/VBoxMain/Margin/VBox/ScorePanel/VBoxScore/Row3/Value
+@onready var reward_label: Label = $WindowPanel/VBoxMain/Margin/VBox/ScorePanel/VBoxScore/Row4/Value
+
 @onready var keyword_header_label: Label = $WindowPanel/VBoxMain/Margin/VBox/KeywordPanel/VBoxKW/Header
 @onready var keyword_body_label: Label = $WindowPanel/VBoxMain/Margin/VBox/KeywordPanel/VBoxKW/Body
 
@@ -43,6 +52,30 @@ func _apply_level_info() -> void:
 		keyword_header_label.text = "[คีย์เวิร์ดประจำด่านที่ %d]" % level_number
 	if keyword_body_label:
 		keyword_body_label.text = level_keyword
+
+	var last_run := GameProgressManager.get_last_run_result()
+	var earned_stars: int = int(last_run.get("stars", 3))
+	var current_score: int = int(last_run.get("score", 100))
+	var prev_score: int = int(last_run.get("prev_score", 0))
+	var score_diff: int = int(last_run.get("score_diff", 0))
+
+	var gold_star := Color(1.0, 0.85, 0.1, 1.0)
+	var gray_star := Color(0.38, 0.38, 0.42, 0.55)
+	if star1:
+		star1.self_modulate = gold_star if earned_stars >= 1 else gray_star
+	if star2:
+		star2.self_modulate = gold_star if earned_stars >= 2 else gray_star
+	if star3:
+		star3.self_modulate = gold_star if earned_stars >= 3 else gray_star
+
+	if score_current_label:
+		score_current_label.text = str(current_score)
+	if score_prev_label:
+		score_prev_label.text = str(prev_score)
+	if score_diff_label:
+		score_diff_label.text = "+%d" % score_diff
+	if reward_label:
+		reward_label.text = "%d COINS" % (earned_stars * 5)
 
 func _on_replay_pressed() -> void:
 	var target = replay_scene_path
