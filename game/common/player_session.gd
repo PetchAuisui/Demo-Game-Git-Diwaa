@@ -264,7 +264,9 @@ func _adopt_newer_saved_token() -> bool:
 	var my_expires: Variant = _session.get("expires_unix")
 	if saved_profile["id"] != get_user_id() or saved["token"] == get_token():
 		return false
-	if not (my_expires is int) or int(saved["expires_unix"]) <= int(my_expires):
+	# หมดอายุวินาทีเดียวกันก็รับ: สองหน้าต่างต่ออายุในวินาทีเดียวกันได้ token คนละใบที่หมดอายุเท่ากัน
+	# (เช็คข้างบนแล้วว่าเป็นบัญชีเดียวกันและเป็นคนละใบ) ถ้าใบในไฟล์ใช้ไม่ได้ server ตอบ 401 แล้วจบที่ _end_online_session
+	if not (my_expires is int) or int(saved["expires_unix"]) < int(my_expires):
 		return false
 	var name_changed: bool = saved_profile["display_name"] != get_display_name()
 	_session = saved
@@ -474,13 +476,24 @@ func restore_saved_session() -> String:
 		if fresh.is_empty():
 			SessionStore.clear()
 			return RESTORE_NEED_LOGIN
-		# ระหว่างรอ ไฟล์จดจำถูกเปลี่ยนไปแล้ว (เช่น เล่นโดยไม่ล็อกอินแล้วเข้าบัญชีอื่น / ออกจากระบบ): ไฟล์ไม่ใช่ของบัญชีนี้แล้ว
-		# ห้ามเขียนทับ ไม่งั้นเปิดเกมครั้งหน้าจะเข้าบัญชีที่ผู้เล่นไม่ได้เลือกจดจำ ยกเลิก token ใบใหม่ที่ server แทน
-		if SessionStore.load_session().get("token", "") != saved["token"]:
-			_logout_on_server.call_deferred(fresh["token"])
-			return RESTORE_NONE
+		var file_settled := false  # _pick_live_session จัดการไฟล์ให้แล้ว ห้ามบันทึกทับด้านล่าง
+		var now_saved := SessionStore.load_session()
+		if now_saved.get("token", "") != saved["token"]:
+			var now_profile: Dictionary = now_saved.get("profile", {})
+			if now_saved.is_empty() or now_profile.get("id") != (fresh["profile"] as Dictionary)["id"]:
+				# ระหว่างรอ ไฟล์จดจำถูกลบ หรือเป็นของบัญชีอื่นแล้ว (เช่น ออกจากระบบ / เข้าบัญชีอื่น): ไฟล์ไม่ใช่ของบัญชีนี้แล้ว
+				# ห้ามเขียนทับ ไม่งั้นเปิดเกมครั้งหน้าจะเข้าบัญชีที่ผู้เล่นไม่ได้เลือกจดจำ ยกเลิก token ใบใหม่ที่ server แทน
+				_logout_on_server.call_deferred(fresh["token"])
+				return RESTORE_NONE
+			# บัญชีเดียวกัน: เกมอีกหน้าต่างเปิดพร้อมกันและต่ออายุ token ใบเดียวกันไปพร้อมเรา
+			# server ออกใบใหม่ให้ทั้งสองหน้าต่าง แต่ใบที่ออกทีหลังจะยกเลิกใบที่ออกก่อน เหลือใช้ได้ใบเดียว
+			# ดูจากเวลาหมดอายุไม่ได้ (ออกในวินาทีเดียวกันได้) จึงถาม server ว่าใบของเรายังใช้ได้ไหม
+			fresh = await _pick_live_session(fresh, now_saved)
+			if fresh.is_empty():
+				return RESTORE_NONE
+			file_settled = true
 		# server เปลี่ยน token ให้แล้ว ใบเก่าใช้ไม่ได้อีก ต้องเก็บใบใหม่เสมอ (แม้ผู้เล่นจะเลือกเล่นแบบอื่นไประหว่างรอ)
-		if not SessionStore.save(fresh):
+		if not file_settled and not SessionStore.save(fresh):
 			# บันทึก token ใบใหม่ไม่ได้: ลบไฟล์ทิ้ง ห้ามปล่อย token ใบเก่าค้างไว้
 			# เพราะถ้าครั้งหน้าเอาใบเก่าไปใช้ server จะเข้าใจว่าถูกขโมย แล้วตัดทั้งสายของเครื่องนี้ (ต้องล็อกอินใหม่)
 			SessionStore.clear()
@@ -509,6 +522,25 @@ func restore_saved_session() -> String:
 	# ไปไม่ถึง server (ต่อไม่ติด / หาชื่อไม่เจอ) หรือลองใหม่แล้วก็ยังไม่รู้ผล (หมดเวลารอ / server ล้ม):
 	# เก็บ token ในไฟล์ไว้ ใช้เล่นออฟไลน์และลองใหม่ได้
 	return RESTORE_NETWORK_FAILED
+
+
+## เลือก token ที่ยังใช้ได้ ระหว่างใบที่เราเพิ่งได้ (fresh) กับใบที่เกมอีกหน้าต่างบันทึกลงไฟล์ (บัญชีเดียวกัน)
+## - ใบของเราใช้ได้: บันทึกลงไฟล์แทน (ใบในไฟล์ถูกยกเลิกไปแล้ว) อีกหน้าต่างเจอ 401 แล้วจะหยิบใบนี้จากไฟล์ไปใช้เอง
+## - ใบของเราถูกยกเลิก (401): ใช้ใบในไฟล์ ไม่เขียนไฟล์ ไม่ต้องแจ้ง server
+## - ถาม server ไม่ได้ (เน็ตหลุด / ถูกจำกัดจำนวนครั้ง): ใช้ใบของเราไปก่อน ไม่แตะไฟล์ ห้ามเขียนทับเพราะไม่รู้ว่าใบไหนใช้ได้
+## คืน {} ถ้าระหว่างรอผู้เล่นเลือกเล่นแบบอื่นไปแล้ว (ไฟล์จัดการให้แล้ว ครั้งหน้าที่เปิดเกมใช้ใบที่ถูกต่อได้)
+func _pick_live_session(fresh: Dictionary, file_session: Dictionary) -> Dictionary:
+	var check := await _api.me(fresh["token"])
+	var picked := fresh
+	if check.ok:
+		# บันทึกก่อนดูสถานะเสมอ: ใบในไฟล์ถูกยกเลิกแล้ว ถ้าไม่เก็บใบนี้ไว้ ครั้งหน้าที่เปิดเกมจะเหลือแต่ใบที่ใช้ไม่ได้
+		if not SessionStore.save(fresh):
+			SessionStore.clear()  # บันทึกไม่ได้: ห้ามปล่อยใบที่ถูกยกเลิกค้างในไฟล์
+	elif check.code == AuthApiResult.INVALID_CREDENTIALS:
+		picked = file_session
+	if state != State.SIGNED_OUT:
+		return {}
+	return picked
 
 
 ## ชื่อโฟลเดอร์เซฟของผู้เล่นตอนนี้ ให้ระบบเซฟใช้แยกความคืบหน้าของแต่ละคน (เช่น user://saves/<slot>/)
