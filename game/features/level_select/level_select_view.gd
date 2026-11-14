@@ -150,7 +150,8 @@ const ICON_VOLUME_ON := preload("res://assets/icons/ui_volume_on.svg")
 const ICON_VOLUME_OFF := preload("res://assets/icons/ui_volume_off.svg")
 const ICON_LOCK := preload("res://assets/icons/ui_lock.svg")
 const ICON_CONSTRUCTION := preload("res://assets/icons/ui_construction.svg")
-const ICON_STAR := preload("res://assets/icons/ui_star.svg")
+const ICON_STAR_GOLD := preload("res://assets/icons/star_gold.png")
+const ICON_STAR_GRAY := preload("res://assets/icons/star_gray.png")
 const NAV_COLOR_PRIMARY := Color(0.894, 0.875, 0.835, 1.0)    # #E4DFD5 Primary text
 const NAV_COLOR_SECONDARY := Color(0.604, 0.588, 0.667, 1.0)  # #9A96AA Secondary text
 
@@ -1298,20 +1299,20 @@ func _perform_direct_leap(to_idx: int) -> void:
 	)
 
 
-## แถวดาว 3 ดวงจากไอคอน SVG (สีถูกตั้งผ่าน modulate ใน _apply_platform_style)
+## แถวดาว 3 ดวงจากไอคอนพิกเซล (สลับ texture ระหว่าง star_gold กับ star_gray ใน _apply_platform_style)
 func _create_star_row(star_size: int) -> HBoxContainer:
 	var row := HBoxContainer.new()
 	row.name = "StarIcon"
 	row.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	row.add_theme_constant_override("separation", 1)
+	row.add_theme_constant_override("separation", 2)
 	for i in 3:
 		var star := TextureRect.new()
-		star.texture = ICON_STAR
+		star.texture = ICON_STAR_GOLD
 		star.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
 		star.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		star.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-		star.custom_minimum_size = Vector2(star_size, star_size) * 0.8
+		star.custom_minimum_size = Vector2(star_size, star_size) * 0.95
 		star.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		row.add_child(star)
 	return row
@@ -1741,15 +1742,14 @@ func _apply_platform_style(plat: Control, stg_id: int, is_active: bool) -> void:
 	if star_icon:
 		star_icon.modulate = Color.WHITE
 		var earned_stars := GameProgressManager.get_level_stars(stg_id)
-		var gold_color := Color(0.98, 0.82, 0.10, 1.0)
-		var unlit_color := Color(0.35, 0.40, 0.48, 0.45)
 		for i in range(star_icon.get_child_count()):
-			var star_node := star_icon.get_child(i) as CanvasItem
+			var star_node := star_icon.get_child(i) as TextureRect
 			if star_node != null:
+				star_node.modulate = Color.WHITE
 				if i < earned_stars:
-					star_node.modulate = gold_color
+					star_node.texture = ICON_STAR_GOLD
 				else:
-					star_node.modulate = unlit_color
+					star_node.texture = ICON_STAR_GRAY
 
 
 func _update_platform_highlight(idx: int, is_active: bool) -> void:

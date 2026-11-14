@@ -8,6 +8,9 @@ extends Control
 @onready var btn_level_select: Button = $WindowPanel/VBoxMain/Margin/VBox/HBoxButtons/BtnLevelSelect
 @onready var btn_next_level: Button = $WindowPanel/VBoxMain/Margin/VBox/HBoxButtons/BtnNextLevel
 
+const STAR_GOLD := preload("res://assets/icons/star_gold.png")
+const STAR_GRAY := preload("res://assets/icons/star_gray.png")
+
 @export var level_number: int = 1
 @export var level_command: String = "git version"
 @export var level_keyword: String = "การตรวจสอบพลัง หมายถึง git --version"
@@ -59,14 +62,15 @@ func _apply_level_info() -> void:
 	var prev_score: int = int(last_run.get("prev_score", 70))
 	var score_diff: int = int(last_run.get("score_diff", 30))
 
-	var gold_star := Color(1.0, 0.85, 0.1, 1.0)
-	var gray_star := Color(0.42, 0.42, 0.42, 1.0)
 	if star1:
-		star1.self_modulate = gold_star if earned_stars >= 1 else gray_star
+		star1.texture = STAR_GOLD if earned_stars >= 1 else STAR_GRAY
+		star1.self_modulate = Color.WHITE
 	if star2:
-		star2.self_modulate = gold_star if earned_stars >= 2 else gray_star
+		star2.texture = STAR_GOLD if earned_stars >= 2 else STAR_GRAY
+		star2.self_modulate = Color.WHITE
 	if star3:
-		star3.self_modulate = gold_star if earned_stars >= 3 else gray_star
+		star3.texture = STAR_GOLD if earned_stars >= 3 else STAR_GRAY
+		star3.self_modulate = Color.WHITE
 
 	if score_current_label:
 		score_current_label.text = str(current_score)
