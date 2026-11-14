@@ -104,7 +104,6 @@ border_width_right = 5
 border_width_bottom = 5
 border_color = Color(0.29, 0.078, 0.549, 1)
 
-
 [sub_resource type="StyleBoxFlat" id="Style_terminal_bg"]
 bg_color = Color(0.043, 0.051, 0.035, 1)
 

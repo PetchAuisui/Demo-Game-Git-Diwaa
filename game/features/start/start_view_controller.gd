@@ -54,6 +54,8 @@ func _bind_nodes() -> void:
 	_sandbox_btn = get_node("%SandboxBtn")
 	_dressing_room_btn = get_node("%DressingRoomBtn")
 	_quit_game_btn = get_node("%QuitGameBtn")
+	# เว็บเอ็กซ์พอร์ตสั่ง quit() ไม่ได้ จึงซ่อนปุ่มไว้
+	_quit_game_btn.visible = not OS.has_feature("web")
 	_tutorial_btn = get_node("%TutorialBtn")
 	_clock_label = get_node("%ClockLabel")
 	_output_log = get_node("%OutputLog")
@@ -235,13 +237,29 @@ func _on_dressing_room_pressed() -> void:
 			_append_terminal_text("> Wardrobe module initialized."))
 
 
+## กดปุ่มออกจากเกม → ถามยืนยันก่อน เพื่อกันการกดพลาดจากคีย์บอร์ด/จอยที่โฟกัสวนมาถึงปุ่มนี้
 func _on_quit_game_pressed() -> void:
 	if _is_leaving:
 		return
-	_is_leaving = true
 	_play_sfx(_sfx_click)
+	var dialog := ConfirmationDialog.new()
+	dialog.title = "ออกจากเกม"
+	dialog.dialog_text = "ต้องการออกจากเกมหรือไม่?"
+	dialog.ok_button_text = "ออกจากเกม"
+	dialog.cancel_button_text = "ยกเลิก"
+	dialog.confirmed.connect(_confirm_quit_game)
+	dialog.confirmed.connect(dialog.queue_free)
+	dialog.canceled.connect(dialog.queue_free)
+	add_child(dialog)
+	dialog.popup_centered()
+
+
+func _confirm_quit_game() -> void:
+	_is_leaving = true
 	_append_terminal_text("> Terminating DevLab Studio session... Good bye!")
 	get_tree().create_timer(0.25).timeout.connect(func() -> void:
+		if not is_inside_tree():
+			return
 		get_tree().quit())
 
 
@@ -271,7 +289,7 @@ func _on_terminal_command_submitted(input: String) -> void:
 		_output_log.clear()
 		return
 
-	if lower == "exit" or lower == "quit" or lower == "q":
+	if lower == "exit" or lower == "quit":
 		_on_quit_game_pressed()
 		return
 
