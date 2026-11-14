@@ -22,6 +22,8 @@ const STAR_GRAY := preload("res://assets/icons/star_gray.png")
 @onready var star2: TextureRect = $WindowPanel/VBoxMain/Margin/VBox/StarsHBox/Star2
 @onready var star3: TextureRect = $WindowPanel/VBoxMain/Margin/VBox/StarsHBox/Star3
 
+var _star_idle_tweens: Array[Tween] = []
+
 @onready var score_current_label: Label = $WindowPanel/VBoxMain/Margin/VBox/ScorePanel/VBoxScore/Row1/Value
 @onready var score_prev_label: Label = $WindowPanel/VBoxMain/Margin/VBox/ScorePanel/VBoxScore/Row2/Value
 @onready var score_diff_label: Label = $WindowPanel/VBoxMain/Margin/VBox/ScorePanel/VBoxScore/Row3/Value
@@ -57,8 +59,15 @@ func _apply_level_info() -> void:
 		keyword_body_label.text = level_keyword
 
 	var last_run := GameProgressManager.get_last_run_result()
-	var earned_stars: int = int(last_run.get("stars", 2))
 	var current_score: int = int(last_run.get("score", 100))
+	var earned_stars: int = int(last_run.get("stars", 2))
+	if current_score >= 80 and earned_stars < 3:
+		earned_stars = 3
+		GameProgressManager.set_level_stars(level_number, 3)
+	elif current_score >= 65 and earned_stars < 2:
+		earned_stars = 2
+		GameProgressManager.set_level_stars(level_number, 2)
+
 	var prev_score: int = int(last_run.get("prev_score", 70))
 	var score_diff: int = int(last_run.get("score_diff", 30))
 
@@ -71,6 +80,8 @@ func _apply_level_info() -> void:
 	if star3:
 		star3.texture = STAR_GOLD if earned_stars >= 3 else STAR_GRAY
 		star3.self_modulate = Color.WHITE
+
+	_animate_stars(earned_stars)
 
 	if score_current_label:
 		score_current_label.text = str(current_score)
@@ -106,3 +117,45 @@ func _input(event: InputEvent) -> void:
 		if event.keycode == KEY_ESCAPE and event.pressed and not event.echo:
 			get_viewport().set_input_as_handled()
 			_on_level_select_pressed()
+
+## เล่นอนิเมชันเปิดตัวดาว (Pop-in Bounce) ทีละดวง และเริ่มอนิเมชันดุ๊กดิ๊กต่อเนื่อง (Idle Bobbing)
+func _animate_stars(earned_stars: int) -> void:
+	for t in _star_idle_tweens:
+		if t and t.is_valid():
+			t.kill()
+	_star_idle_tweens.clear()
+
+	var stars: Array[TextureRect] = [star1, star2, star3]
+	for i in range(stars.size()):
+		var star := stars[i]
+		if not star:
+			continue
+		star.pivot_offset = star.custom_minimum_size / 2.0
+		star.scale = Vector2.ZERO
+		star.rotation_degrees = 0.0
+
+		var tw := create_tween()
+		tw.tween_interval(0.12 + i * 0.16)
+		# ขยายดาวพุ่งออกมาแบบ Bounce เด้งดึ๋ง
+		tw.tween_property(star, "scale", Vector2(1.25, 1.25), 0.22).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+		tw.tween_property(star, "scale", Vector2.ONE, 0.12).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN_OUT)
+
+		# ดาวทองที่ผู้เล่นได้รับ จะเริ่มขยับดุ๊กดิ๊กต่อเนื่องแบบ Idle Wobble / Pulse
+		if i < earned_stars:
+			var idx := i
+			tw.tween_callback(func(): _start_star_idle(star, idx))
+
+
+func _start_star_idle(star: TextureRect, index: int) -> void:
+	if not is_instance_valid(star):
+		return
+	var idle_tw := create_tween().set_loops()
+	_star_idle_tweens.append(idle_tw)
+	if index > 0:
+		idle_tw.tween_interval(index * 0.14)
+	# ลอยขยายและเอียงดุ๊กดิ๊กสลับซ้ายขวาอย่างนุ่มนวล
+	var rot_target := 4.0 if index % 2 == 0 else -4.0
+	idle_tw.tween_property(star, "scale", Vector2(1.12, 1.12), 0.55).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	idle_tw.parallel().tween_property(star, "rotation_degrees", rot_target, 0.55).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	idle_tw.tween_property(star, "scale", Vector2.ONE, 0.55).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	idle_tw.parallel().tween_property(star, "rotation_degrees", 0.0, 0.55).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)

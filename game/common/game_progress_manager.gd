@@ -157,9 +157,15 @@ static func set_level_cleared(level_num: int, cleared: bool = true) -> void:
 static func get_level_stars(level_num: int) -> int:
 	var cfg := _get_config()
 	if cfg.has_section_key(SECTION_STARS, "level_%d" % level_num):
-		return int(cfg.get_value(SECTION_STARS, "level_%d" % level_num, 0))
+		var saved_stars := int(cfg.get_value(SECTION_STARS, "level_%d" % level_num, 0))
+		var saved_score := get_level_score(level_num)
+		if saved_score >= 80 and saved_stars < 3:
+			set_level_stars(level_num, 3)
+			return 3
+		return saved_stars
 	if is_level_cleared(level_num):
-		return 2
+		var saved_score := get_level_score(level_num)
+		return 3 if saved_score >= 80 else 2
 	return 0
 
 
@@ -190,22 +196,25 @@ static var _last_run_score_diff: int = 10
 
 
 static func record_level_clear(level_num: int, time_remaining: float, time_limit: float, max_score: int = 100) -> Dictionary:
-	var stars: int = 2
-	var score: int = 80
+	var score: int = 70
 	if time_limit > 0.0:
-		# เหลือเวลา >= 60% (เหลือเวลา >= 78s จาก 130s): 3 ดาว
-		if time_remaining >= time_limit * 0.6:
-			stars = 3
-			score = max_score
-		elif time_remaining > 0.0:
-			stars = 2
-			score = 70 + int(20.0 * (time_remaining / (time_limit * 0.6)))
-		else:
-			stars = 1
-			score = 50
+		# คิดคะแนนตามสัดส่วนเวลาที่เหลือ (ช่วง 70 - 100 คะแนน)
+		var ratio := clampf(time_remaining / time_limit, 0.0, 1.0)
+		score = 70 + int(30.0 * ratio)
 	else:
-		stars = 2
 		score = 80
+
+	# เกณฑ์ดาวตามคะแนน:
+	# >= 80 คะแนน: 3 ดาว
+	# >= 65 คะแนน: 2 ดาว
+	# < 65 คะแนน: 1 ดาว
+	var stars: int = 1
+	if score >= 80:
+		stars = 3
+	elif score >= 65:
+		stars = 2
+	else:
+		stars = 1
 
 	var prev_score := get_level_score(level_num)
 	set_level_cleared(level_num, true)
