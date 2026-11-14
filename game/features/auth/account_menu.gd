@@ -265,16 +265,6 @@ func _apply_theme() -> void:
 		_reveal_btn.add_theme_color_override(icon_color, AuthThemeTokens.TEXT_MUTED)
 
 	# ปุ่มหลัก (จัดการบัญชี) สีทอง / ปุ่มรอง (ออกจากระบบ) สีอ่อน
-	_style_button(_manage_btn, AuthThemeTokens.BUTTON_BG, AuthThemeTokens.BUTTON_HOVER_BG, AuthThemeTokens.BUTTON_PRESSED_BG)
-	_style_button(_reconnect_btn, AuthThemeTokens.BUTTON_BG, AuthThemeTokens.BUTTON_HOVER_BG, AuthThemeTokens.BUTTON_PRESSED_BG)
-	# ระหว่างกำลังเชื่อมต่อ ปุ่มถูกปิดไว้: ใช้สีปิดใช้งานแบบเดียวกับหน้าอื่น
-	_reconnect_btn.add_theme_stylebox_override("disabled", AuthThemeTokens.create_button_style(AuthThemeTokens.BUTTON_DISABLED_BG))
-	_style_button(_sign_out_btn, AuthThemeTokens.INPUT_BG, Color.WHITE, AuthThemeTokens.CARD_BORDER)
-
-
-static func _style_button(btn: Button, normal: Color, hover: Color, pressed_bg: Color) -> void:
-	btn.add_theme_stylebox_override("normal", AuthThemeTokens.create_button_style(normal))
-	btn.add_theme_stylebox_override("hover", AuthThemeTokens.create_button_style(hover))
-	btn.add_theme_stylebox_override("pressed", AuthThemeTokens.create_button_style(pressed_bg))
-	for color_name in ["font_color", "font_hover_color", "font_pressed_color", "font_focus_color"]:
-		btn.add_theme_color_override(color_name, AuthThemeTokens.BUTTON_TEXT)
+	AuthThemeTokens.style_button(_manage_btn)
+	AuthThemeTokens.style_button(_reconnect_btn)
+	AuthThemeTokens.style_button(_sign_out_btn, AuthThemeTokens.INPUT_BG, Color.WHITE, AuthThemeTokens.CARD_BORDER)

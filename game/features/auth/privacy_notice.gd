@@ -89,8 +89,8 @@ func _ready() -> void:
 
 	(get_node("%BodyLabel") as Label).text = PrivacyPolicy.notice_text()
 	(get_node("%VersionLabel") as Label).text = "ฉบับวันที่ %s" % PrivacyPolicy.VERSION
-	_style_button(_confirm_btn)
-	_style_button(_cancel_btn)
+	AuthThemeTokens.style_button(_confirm_btn)
+	AuthThemeTokens.style_button(_cancel_btn)
 
 	_consent_box.visible = _sign_up_mode
 	_cancel_btn.visible = _sign_up_mode
@@ -197,14 +197,3 @@ func _finish(accepted: bool) -> void:
 	var opt_in := confirmed and _leaderboard_check.button_pressed
 	closed.emit(confirmed, opt_in)
 	queue_free()
-
-
-func _style_button(btn: Button) -> void:
-	btn.add_theme_stylebox_override("normal", AuthThemeTokens.create_button_style(AuthThemeTokens.BUTTON_BG))
-	btn.add_theme_stylebox_override("hover", AuthThemeTokens.create_button_style(AuthThemeTokens.BUTTON_HOVER_BG))
-	btn.add_theme_stylebox_override("pressed", AuthThemeTokens.create_button_style(AuthThemeTokens.BUTTON_PRESSED_BG))
-	btn.add_theme_stylebox_override("disabled", AuthThemeTokens.create_button_style(AuthThemeTokens.BUTTON_DISABLED_BG))
-	btn.add_theme_color_override("font_color", AuthThemeTokens.BUTTON_TEXT)
-	btn.add_theme_color_override("font_hover_color", AuthThemeTokens.BUTTON_TEXT)
-	btn.add_theme_color_override("font_pressed_color", AuthThemeTokens.BUTTON_TEXT)
-	btn.add_theme_color_override("font_disabled_color", AuthThemeTokens.BUTTON_DISABLED_TEXT)

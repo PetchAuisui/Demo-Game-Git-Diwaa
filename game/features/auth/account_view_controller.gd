@@ -421,7 +421,7 @@ func _apply_theme() -> void:
 	_rename_input.add_theme_color_override("font_placeholder_color", AuthThemeTokens.TEXT_MUTED)
 	_rename_input.add_theme_color_override("caret_color", AuthThemeTokens.TEXT_PRIMARY)
 
-	_style_button(_rename_btn, AuthThemeTokens.BUTTON_BG, AuthThemeTokens.BUTTON_HOVER_BG, AuthThemeTokens.BUTTON_PRESSED_BG)
+	AuthThemeTokens.style_button(_rename_btn)
 
 	for color_name in ["font_color", "font_hover_color", "font_pressed_color", "font_focus_color"]:
 		_close_btn.add_theme_color_override(color_name, AuthThemeTokens.TEXT_PRIMARY)
@@ -431,16 +431,6 @@ func _apply_theme() -> void:
 			icon_btn.add_theme_color_override(icon_color, AuthThemeTokens.TEXT_MUTED)
 	_privacy_link.add_theme_color_override("font_color", AuthThemeTokens.LINK_TEXT)
 	_privacy_link.focus_mode = Control.FOCUS_ALL
-
-
-static func _style_button(btn: Button, normal: Color, hover: Color, pressed_bg: Color) -> void:
-	btn.add_theme_stylebox_override("normal", AuthThemeTokens.create_button_style(normal))
-	btn.add_theme_stylebox_override("hover", AuthThemeTokens.create_button_style(hover))
-	btn.add_theme_stylebox_override("pressed", AuthThemeTokens.create_button_style(pressed_bg))
-	btn.add_theme_stylebox_override("disabled", AuthThemeTokens.create_button_style(AuthThemeTokens.BUTTON_DISABLED_BG))
-	for color_name in ["font_color", "font_hover_color", "font_pressed_color", "font_focus_color"]:
-		btn.add_theme_color_override(color_name, AuthThemeTokens.BUTTON_TEXT)
-	btn.add_theme_color_override("font_disabled_color", AuthThemeTokens.BUTTON_DISABLED_TEXT)
 
 
 # ---------------------------------------------------------------- ข้อความ (เขียนเองทั้งหมด ไม่เอาข้อความดิบจาก server)

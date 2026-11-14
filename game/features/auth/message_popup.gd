@@ -59,7 +59,7 @@ func _ready() -> void:
 	(get_node("%MessageLabel") as Label).text = _message
 
 	var ok_btn := get_node("%OkBtn") as Button
-	_style_button(ok_btn, AuthThemeTokens.BUTTON_BG, AuthThemeTokens.BUTTON_HOVER_BG, AuthThemeTokens.BUTTON_PRESSED_BG)
+	AuthThemeTokens.style_button(ok_btn)
 	ok_btn.text = _ok_text
 	ok_btn.pressed.connect(_finish.bind(true))
 
@@ -67,7 +67,7 @@ func _ready() -> void:
 	if _cancel_text.is_empty():
 		ok_btn.grab_focus()  # แบบแจ้งผล: กด Enter แล้วปิดได้ทันที
 		return
-	_style_button(cancel_btn, AuthThemeTokens.INPUT_BG, Color.WHITE, AuthThemeTokens.CARD_BORDER)
+	AuthThemeTokens.style_button(cancel_btn, AuthThemeTokens.INPUT_BG, Color.WHITE, AuthThemeTokens.CARD_BORDER)
 	cancel_btn.text = _cancel_text
 	cancel_btn.visible = true
 	cancel_btn.pressed.connect(_finish.bind(false))
@@ -93,11 +93,3 @@ func _finish(confirmed: bool) -> void:
 	_closed = true
 	closed.emit(confirmed)
 	queue_free()
-
-
-static func _style_button(btn: Button, normal: Color, hover: Color, pressed_bg: Color) -> void:
-	btn.add_theme_stylebox_override("normal", AuthThemeTokens.create_button_style(normal))
-	btn.add_theme_stylebox_override("hover", AuthThemeTokens.create_button_style(hover))
-	btn.add_theme_stylebox_override("pressed", AuthThemeTokens.create_button_style(pressed_bg))
-	for color_name in ["font_color", "font_hover_color", "font_pressed_color", "font_focus_color"]:
-		btn.add_theme_color_override(color_name, AuthThemeTokens.BUTTON_TEXT)

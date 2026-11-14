@@ -50,6 +50,19 @@ static func create_input_style(border_color: Color = INPUT_BORDER) -> StyleBoxFl
 	return style
 
 
+## จัดสีปุ่มของหน้าบัญชีทุกหน้าให้เหมือนกัน (เดิมเขียนซ้ำไว้ 4 ไฟล์)
+## ค่าเริ่มต้น = ปุ่มหลักสีทอง / ปุ่มรองส่ง INPUT_BG, Color.WHITE, CARD_BORDER
+## ใส่สีตอนปิดใช้งานให้เสมอ ปุ่มไหนถูกปิดชั่วคราว (เช่น ระหว่างรอ server) จะได้ดูออกว่ากดไม่ได้
+static func style_button(btn: Button, normal: Color = BUTTON_BG, hover: Color = BUTTON_HOVER_BG, pressed_bg: Color = BUTTON_PRESSED_BG) -> void:
+	btn.add_theme_stylebox_override("normal", create_button_style(normal))
+	btn.add_theme_stylebox_override("hover", create_button_style(hover))
+	btn.add_theme_stylebox_override("pressed", create_button_style(pressed_bg))
+	btn.add_theme_stylebox_override("disabled", create_button_style(BUTTON_DISABLED_BG))
+	for color_name in ["font_color", "font_hover_color", "font_pressed_color", "font_focus_color"]:
+		btn.add_theme_color_override(color_name, BUTTON_TEXT)
+	btn.add_theme_color_override("font_disabled_color", BUTTON_DISABLED_TEXT)
+
+
 static func create_button_style(bg: Color) -> StyleBoxFlat:
 	var style := StyleBoxFlat.new()
 	style.bg_color = bg
