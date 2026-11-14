@@ -20,9 +20,9 @@ var _text_x: float:
 
 func _init() -> void:
 	focus_mode = Control.FOCUS_ALL
-	mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	mouse_exited.connect(func() -> void:
 		_hovered = -1
+		tooltip_text = ""
 		queue_redraw())
 
 
@@ -37,6 +37,7 @@ func set_layout(layout: CommitGraphLayout) -> void:
 			_selected = index
 			break
 	_hovered = -1
+	tooltip_text = ""
 	custom_minimum_size = Vector2(0, layout.rows.size() * ROW_HEIGHT + 8)
 	queue_redraw()
 
@@ -89,16 +90,35 @@ func _draw() -> void:
 				size.x - _text_x - 12, 14, color if refs.length() > 0 else Color("94a3bb"))
 
 
+func _row_at(y: float) -> int:
+	var row_index := floori(y / ROW_HEIGHT)
+	if row_index >= 0 and row_index < _layout.rows.size():
+		return row_index
+	return -1
+
+
+func _get_cursor_shape(at_position: Vector2) -> CursorShape:
+	if _row_at(at_position.y) != -1:
+		return Control.CURSOR_POINTING_HAND
+	return Control.CURSOR_ARROW
+
+
 func _gui_input(input: InputEvent) -> void:
 	if input is InputEventMouseMotion:
-		_hovered = int(input.position.y / ROW_HEIGHT)
-		tooltip_text = "%s\nดับเบิลคลิก หรือ Ctrl/Cmd+C เพื่อคัดลอก ID" % _layout.rows[_hovered].commit.id \
-				if _hovered >= 0 and _hovered < _layout.rows.size() else ""
-		queue_redraw()
+		var new_hovered := _row_at(input.position.y)
+		if new_hovered != _hovered:
+			_hovered = new_hovered
+			if _hovered != -1:
+				tooltip_text = "%s\nดับเบิลคลิก หรือ Ctrl/Cmd+C เพื่อคัดลอก ID" % _layout.rows[_hovered].commit.id
+			else:
+				tooltip_text = ""
+			queue_redraw()
 	if input is InputEventMouseButton and input.pressed and input.button_index == MOUSE_BUTTON_LEFT:
-		_choose(int(input.position.y / ROW_HEIGHT))
-		if input.double_click:
-			_copy_selected_id()
+		var row_idx := _row_at(input.position.y)
+		if row_idx != -1:
+			_choose(row_idx)
+			if input.double_click:
+				_copy_selected_id()
 		grab_focus()
 		accept_event()
 	if input is InputEventKey and input.pressed:
