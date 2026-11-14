@@ -142,30 +142,31 @@ func _setup_mission() -> void:
 	_mission = LevelMission.create(GameProgressManager.get_selected_level_number(), step)
 	if _mission == null:
 		return
-	_apply_mission_layout()
 	_mission_panel = LevelMissionPanel.new()
-	_mission_panel.anchor_left = 0.3
-	_mission_panel.anchor_right = 0.7
-	_mission_panel.anchor_top = 0.105
-	_mission_panel.anchor_bottom = 0.105
-	_mission_panel.grow_vertical = Control.GROW_DIRECTION_END
-	_mission_panel.offset_left = 0.0
-	_mission_panel.offset_right = 0.0
-	add_child(_mission_panel)
+	_mission_panel.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	_dock_mission_panel_above_files()
 	_mission_panel.setup(_mission)
 	_mission_panel.continue_pressed.connect(_on_mission_continue)
 	_update_mission_prompt()
 
 
-## ซ่อนแผงที่ขั้นนี้ยังไม่ต้องใช้ แล้วจัดเทอร์มินัลไว้กึ่งกลางใต้แผงภารกิจ
-func _apply_mission_layout() -> void:
-	if _mission.visible_panels.is_empty():
-		return
-	_files_panel.visible = "files" in _mission.visible_panels
-	_git_graph_panel.visible = "git_graph" in _mission.visible_panels
-	if not _files_panel.visible and not _git_graph_panel.visible:
-		_terminal_panel.anchor_left = 0.2
-		_terminal_panel.anchor_right = 0.8
+## แผงภารกิจอยู่บนสุดของคอลัมน์ซ้าย ส่วนแผง Files อยู่ใต้ลงมา (ใช้พื้นที่เดิมของแผง Files)
+func _dock_mission_panel_above_files() -> void:
+	var column := VBoxContainer.new()
+	column.name = "LeftColumn"
+	column.layout_mode = 1
+	column.anchor_left = _files_panel.anchor_left
+	column.anchor_top = _files_panel.anchor_top
+	column.anchor_right = _files_panel.anchor_right
+	column.anchor_bottom = _files_panel.anchor_bottom
+	column.add_theme_constant_override("separation", 10)
+	var index := _files_panel.get_index()
+	add_child(column)
+	move_child(column, index)
+	_files_panel.reparent(column, false)
+	_files_panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	column.add_child(_mission_panel)
+	column.move_child(_mission_panel, 0)
 
 
 ## ภารกิจปัจจุบันแสดงเป็นข้อความจางในช่องพิมพ์ของเทอร์มินัล (ครบแล้วไม่แสดง)

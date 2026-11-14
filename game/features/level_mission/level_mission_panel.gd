@@ -20,9 +20,6 @@ var _badge_label: Label
 var _title_label: Label
 var _story_label: Label
 var _rows_box: VBoxContainer
-var _progress_row: HBoxContainer
-var _progress_label: Label
-var _progress_bar: ProgressBar
 var _hint_button: Button
 var _hint_label: Label
 var _feedback_label: Label
@@ -68,20 +65,17 @@ func refresh() -> void:
 		_rows_box.remove_child(child)
 		child.queue_free()
 
-	# ภารกิจเดียว: ข้อความภารกิจไปอยู่ที่ช่องพิมพ์ของเทอร์มินัลแทน จึงไม่ต้องแสดงเช็กลิสต์/แถบความคืบหน้าซ้ำ
+	# ภารกิจเดียว: ข้อความภารกิจไปอยู่ที่ช่องพิมพ์ของเทอร์มินัลแทน จึงไม่ต้องแสดงเช็กลิสต์ซ้ำ
+	# หลายภารกิจ: แสดงเช็กลิสต์ชื่อสั้น และตัดคำอธิบายเรื่องย่อออกเพื่อประหยัดที่ (แผงอยู่บนแผง Files)
 	var show_checklist := _mission.objectives.size() > 1
 	_rows_box.visible = show_checklist
-	_progress_row.visible = show_checklist
+	_story_label.visible = not show_checklist
 
 	var current := _mission.current_objective()
 	for objective in _mission.objectives:
 		var done := _mission.is_done(str(objective["id"]))
 		var is_current: bool = not current.is_empty() and str(current["id"]) == str(objective["id"])
-		_rows_box.add_child(_build_row(str(objective["text"]), done, is_current))
-
-	_progress_label.text = "%d/%d ภารกิจ" % [_mission.done_count(), _mission.objectives.size()]
-	_progress_bar.max_value = maxf(1.0, float(_mission.objectives.size()))
-	_progress_bar.value = float(_mission.done_count())
+		_rows_box.add_child(_build_row(str(objective.get("short", objective["text"])), done, is_current))
 
 	var finished := _mission.is_complete()
 	_hint_button.visible = not finished
@@ -110,6 +104,7 @@ func show_complete(message: String, button_text: String) -> void:
 	_complete_label.text = message
 	_continue_button.text = button_text
 	_complete_box.visible = true
+	_rows_box.visible = false # ติ๊กครบแล้ว ใช้ข้อความสำเร็จแทน เพื่อไม่ให้แผงสูงจนดันแผง Files ลงไปใต้เทอร์มินัล
 	_hint_button.visible = false
 	_hint_label.visible = false
 	show_feedback("")
@@ -132,11 +127,12 @@ func _build() -> void:
 
 	var header := HBoxContainer.new()
 	root.add_child(header)
-	header.add_theme_constant_override("separation", 12)
-	_badge_label = _make_label(15, SandboxThemeTokens.GOLD_TITLE, true)
+	header.add_theme_constant_override("separation", 10)
+	_badge_label = _make_label(14, SandboxThemeTokens.GOLD_TITLE, true)
 	header.add_child(_badge_label)
-	_title_label = _make_label(20, SandboxThemeTokens.BRAND_TEXT, true)
+	_title_label = _make_label(19, SandboxThemeTokens.BRAND_TEXT, true)
 	_title_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_title_label.clip_text = true
 	header.add_child(_title_label)
 	_hint_button = Button.new()
 	_hint_button.text = "คำใบ้"
@@ -153,27 +149,13 @@ func _build() -> void:
 	root.add_child(_story_label)
 
 	_rows_box = VBoxContainer.new()
-	_rows_box.add_theme_constant_override("separation", 6)
+	_rows_box.add_theme_constant_override("separation", 3)
 	root.add_child(_rows_box)
 
 	_hint_label = _make_label(17, SandboxThemeTokens.GOLD_TITLE, false)
 	_hint_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_hint_label.visible = false
 	root.add_child(_hint_label)
-
-	_progress_row = HBoxContainer.new()
-	_progress_row.add_theme_constant_override("separation", 10)
-	root.add_child(_progress_row)
-	_progress_bar = ProgressBar.new()
-	_progress_bar.show_percentage = false
-	_progress_bar.custom_minimum_size = Vector2(0, 10)
-	_progress_bar.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_progress_bar.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	_progress_bar.add_theme_stylebox_override("background", _flat(SandboxThemeTokens.INPUT_BG, 5))
-	_progress_bar.add_theme_stylebox_override("fill", _flat(DONE_COLOR, 5))
-	_progress_row.add_child(_progress_bar)
-	_progress_label = _make_label(16, SandboxThemeTokens.TEXT_SECONDARY, false)
-	_progress_row.add_child(_progress_label)
 
 	_feedback_label = _make_label(17, DONE_COLOR, false)
 	_feedback_label.visible = false
@@ -204,12 +186,12 @@ func _build_row(text: String, done: bool, is_current: bool) -> Control:
 	row.add_theme_constant_override("separation", 12)
 	var check := _CheckBox.new()
 	check.done = done
-	check.custom_minimum_size = Vector2(24, 24)
+	check.custom_minimum_size = Vector2(20, 20)
 	check.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	row.add_child(check)
 	var color := SandboxThemeTokens.TEXT_SECONDARY if done \
 			else (SandboxThemeTokens.PRIMARY_TEXT if is_current else SandboxThemeTokens.TEXT_SECONDARY)
-	var label := _make_label(19, color, is_current)
+	var label := _make_label(16, color, is_current)
 	label.text = text
 	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	label.size_flags_horizontal = Control.SIZE_EXPAND_FILL

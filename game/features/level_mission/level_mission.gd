@@ -21,8 +21,6 @@ var story: String
 var success_text: String
 var objectives: Array[Dictionary] = []
 var total_steps: int
-## แผงของ Sandbox ที่แสดงในขั้นนี้ (ว่าง = แสดงทั้งหมด)
-var visible_panels: Array[String] = []
 
 var _done: Dictionary = {}
 
@@ -39,8 +37,6 @@ static func create(level_num: int, step_num: int) -> LevelMission:
 	mission.title = str(definition.get("title", ""))
 	mission.story = str(definition.get("story", ""))
 	mission.success_text = str(definition.get("success_text", "ภารกิจสำเร็จ!"))
-	for panel_id in definition.get("visible_panels", []):
-		mission.visible_panels.append(str(panel_id))
 	for objective in definition.get("objectives", []):
 		mission.objectives.append(objective)
 	return mission
