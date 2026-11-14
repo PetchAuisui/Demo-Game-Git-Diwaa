@@ -19,6 +19,10 @@ const TOTAL_LEVELS := 40
 ## - ฉากที่ปุ่มออกของ Sandbox จะพากลับไป ("" = ค่าเริ่มต้นของ Sandbox คือหน้าเลือกด่าน)
 static var _selected_level_number: int = 1
 static var _sandbox_return_scene: String = ""
+## ขั้นเล่นจริงที่ Sandbox ต้องแสดงแผงภารกิจ (0 = เปิด Sandbox แบบอิสระ) ตั้งโดยหน้าบทสนทนาก่อนเปลี่ยนฉาก
+static var _pending_mission_step: int = 0
+## ช่วงบทสนทนาที่หน้าบทสนทนาต้องเริ่มต่อหลังจบขั้นเล่นจริง (-1 = เริ่มตามปกติ) อ่านแล้วล้างทันที
+static var _resume_dialogue_phase: int = -1
 
 ## การสุ่มสีหมวกเวทมนตร์ 3 สี (ม่วง, ฟ้า, เขียว) เมื่อเริ่มเข้าเกมใหม่ อัตราดรอปเท่ากัน 1/3 (Equal Drop Rate)
 enum HatColor {
@@ -74,6 +78,20 @@ static func set_sandbox_return_scene(scene_path: String) -> void:
 static func get_sandbox_return_scene() -> String:
 	return _sandbox_return_scene
 
+static func set_pending_mission_step(step: int) -> void:
+	_pending_mission_step = step
+
+static func get_pending_mission_step() -> int:
+	return _pending_mission_step
+
+static func set_resume_dialogue_phase(phase: int) -> void:
+	_resume_dialogue_phase = phase
+
+static func consume_resume_dialogue_phase() -> int:
+	var phase := _resume_dialogue_phase
+	_resume_dialogue_phase = -1
+	return phase
+
 
 static var _cached_cfg: ConfigFile = null
 
@@ -120,3 +138,5 @@ static func reset_progress() -> void:
 	_cached_cfg = cfg
 	_selected_level_number = 1
 	_sandbox_return_scene = ""
+	_pending_mission_step = 0
+	_resume_dialogue_phase = -1
