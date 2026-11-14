@@ -132,7 +132,7 @@ func _apply_level_info() -> void:
 	if score_diff_label:
 		score_diff_label.text = "+%d" % score_diff
 	if reward_label:
-		reward_label.text = "%d COINS" % (earned_stars * 5)
+		reward_label.text = "%d เหรียญ" % (earned_stars * 5)
 
 func _on_replay_pressed() -> void:
 	var target = replay_scene_path
