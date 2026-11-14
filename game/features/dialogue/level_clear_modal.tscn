@@ -343,7 +343,7 @@ layout_mode = 2
 theme_override_colors/font_color = Color(0.48, 0.26, 0.04, 1)
 theme_override_fonts/font = SubResource("FontVariation_modal_bold")
 theme_override_font_sizes/font_size = 22
-text = "💡 สรุปสิ่งสำคัญประจำด่านที่ 1"
+text = "สรุปสิ่งสำคัญประจำด่านที่ 1"
 horizontal_alignment = 1
 
 [node name="Body" type="RichTextLabel" parent="WindowPanel/VBoxMain/Margin/VBox/KeywordPanel/VBoxKW"]

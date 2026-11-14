@@ -77,7 +77,7 @@ func _apply_level_info() -> void:
 	if level_title_label:
 		level_title_label.text = "ด่านที่ %d : %s" % [level_number, level_command]
 	if keyword_header_label:
-		keyword_header_label.text = "💡 สรุปสิ่งสำคัญประจำด่านที่ %d" % level_number
+		keyword_header_label.text = "สรุปสิ่งสำคัญประจำด่านที่ %d" % level_number
 	if keyword_body_label:
 		var formatted := _format_keyword_text(level_keyword)
 		if keyword_body_label is RichTextLabel:
