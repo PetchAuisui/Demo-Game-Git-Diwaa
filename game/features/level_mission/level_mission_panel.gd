@@ -20,6 +20,7 @@ var _badge_label: Label
 var _title_label: Label
 var _story_label: Label
 var _rows_box: VBoxContainer
+var _progress_row: HBoxContainer
 var _progress_label: Label
 var _progress_bar: ProgressBar
 var _hint_button: Button
@@ -51,6 +52,7 @@ func setup(mission: LevelMission) -> void:
 	_hint_visible = false
 	_complete_box.visible = false
 	_feedback_label.text = ""
+	_feedback_label.visible = false
 	refresh()
 
 
@@ -61,6 +63,11 @@ func refresh() -> void:
 	for child in _rows_box.get_children():
 		_rows_box.remove_child(child)
 		child.queue_free()
+
+	# ภารกิจเดียว: ข้อความภารกิจไปอยู่ที่ช่องพิมพ์ของเทอร์มินัลแทน จึงไม่ต้องแสดงเช็กลิสต์/แถบความคืบหน้าซ้ำ
+	var show_checklist := _mission.objectives.size() > 1
+	_rows_box.visible = show_checklist
+	_progress_row.visible = show_checklist
 
 	var current := _mission.current_objective()
 	for objective in _mission.objectives:
@@ -83,6 +90,7 @@ func show_feedback(text: String, is_error: bool = false) -> void:
 	if _feedback_tween != null and _feedback_tween.is_valid():
 		_feedback_tween.kill()
 	_feedback_label.text = text
+	_feedback_label.visible = not text.is_empty()
 	_feedback_label.add_theme_color_override("font_color",
 			SandboxThemeTokens.ERROR_TEXT if is_error else DONE_COLOR)
 	_feedback_label.modulate.a = 1.0
@@ -148,9 +156,9 @@ func _build() -> void:
 	_hint_label.visible = false
 	root.add_child(_hint_label)
 
-	var progress_row := HBoxContainer.new()
-	progress_row.add_theme_constant_override("separation", 10)
-	root.add_child(progress_row)
+	_progress_row = HBoxContainer.new()
+	_progress_row.add_theme_constant_override("separation", 10)
+	root.add_child(_progress_row)
 	_progress_bar = ProgressBar.new()
 	_progress_bar.show_percentage = false
 	_progress_bar.custom_minimum_size = Vector2(0, 10)
@@ -158,11 +166,12 @@ func _build() -> void:
 	_progress_bar.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	_progress_bar.add_theme_stylebox_override("background", _flat(SandboxThemeTokens.INPUT_BG, 5))
 	_progress_bar.add_theme_stylebox_override("fill", _flat(DONE_COLOR, 5))
-	progress_row.add_child(_progress_bar)
+	_progress_row.add_child(_progress_bar)
 	_progress_label = _make_label(16, SandboxThemeTokens.TEXT_SECONDARY, false)
-	progress_row.add_child(_progress_label)
+	_progress_row.add_child(_progress_label)
 
 	_feedback_label = _make_label(17, DONE_COLOR, false)
+	_feedback_label.visible = false
 	_feedback_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	root.add_child(_feedback_label)
 

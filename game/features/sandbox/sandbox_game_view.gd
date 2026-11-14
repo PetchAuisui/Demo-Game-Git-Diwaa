@@ -154,6 +154,7 @@ func _setup_mission() -> void:
 	add_child(_mission_panel)
 	_mission_panel.setup(_mission)
 	_mission_panel.continue_pressed.connect(_on_mission_continue)
+	_update_mission_prompt()
 
 
 ## ซ่อนแผงที่ขั้นนี้ยังไม่ต้องใช้ แล้วจัดเทอร์มินัลไว้กึ่งกลางใต้แผงภารกิจ
@@ -167,9 +168,15 @@ func _apply_mission_layout() -> void:
 		_terminal_panel.anchor_right = 0.8
 
 
+## ภารกิจปัจจุบันแสดงเป็นข้อความจางในช่องพิมพ์ของเทอร์มินัล (ครบแล้วไม่แสดง)
+func _update_mission_prompt() -> void:
+	_terminal_panel.set_input_placeholder(str(_mission.current_objective().get("text", "")))
+
+
 func _on_mission_progress(command: String, result: GitCommandResult) -> void:
 	var newly_done := _mission.on_command(command, result.success, result.standard_output)
 	_mission_panel.refresh()
+	_update_mission_prompt()
 	if _mission.is_complete():
 		_mission_panel.show_complete(_mission.success_text, _mission_continue_label())
 		return
