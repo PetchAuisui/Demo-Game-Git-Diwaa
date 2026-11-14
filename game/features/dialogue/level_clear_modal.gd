@@ -40,10 +40,12 @@ func _process(delta: float) -> void:
 	if _anim_time >= FRAME_DURATION:
 		_anim_time -= FRAME_DURATION
 		_anim_frame = (_anim_frame + 1) % TOTAL_FRAMES
-		var col := _anim_frame % COLS
-		var row := _anim_frame / COLS
-		var reg := Rect2(col * FRAME_W, row * FRAME_H, FRAME_W, FRAME_H)
-		for star in _anim_gold_stars:
+		for i in range(_anim_gold_stars.size()):
+			var star := _anim_gold_stars[i]
+			var star_frame := (_anim_frame + i * 8) % TOTAL_FRAMES
+			var col := star_frame % COLS
+			var row := star_frame / COLS
+			var reg := Rect2(col * FRAME_W, row * FRAME_H, FRAME_W, FRAME_H)
 			if star and star.texture is AtlasTexture:
 				(star.texture as AtlasTexture).region = reg
 
@@ -108,7 +110,10 @@ func _apply_level_info() -> void:
 		if i < earned_stars:
 			var atlas := AtlasTexture.new()
 			atlas.atlas = STAR_GOLD_SHEET
-			atlas.region = Rect2(0, 0, FRAME_W, FRAME_H)
+			var start_frame := (i * 8) % TOTAL_FRAMES
+			var col := start_frame % COLS
+			var row := start_frame / COLS
+			atlas.region = Rect2(col * FRAME_W, row * FRAME_H, FRAME_W, FRAME_H)
 			star.texture = atlas
 			_anim_gold_stars.append(star)
 		else:
