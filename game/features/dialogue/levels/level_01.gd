@@ -9,8 +9,10 @@ static func get_data() -> Dictionary:
 	return {
 		"level_id": 1,
 		"title": "ด่านที่ 1: ตรวจสอบพลังและประกาศนาม",
+		"time_limit": 130.0,
+		"max_score": 100,
 		"commands": ["git --version", "git config"],
-		"clear_keyword": "การตรวจสอบพลัง หมายถึง git --version",
+		"clear_keyword": "git --version เพื่อเช็กความพร้อมของ Git และ git config เพื่อตั้งชื่อกับอีเมลผู้สร้างงาน",
 
 		# ======================================================================
 		# 1. ขั้นสอน - ส่วนที่ 1: ตรวจสอบพลังเวท (git --version)
@@ -155,6 +157,73 @@ static func get_data() -> Dictionary:
 			{"type": "open_gameplay", "step": 2}
 		],
 		
+		# ======================================================================
+		# ขั้นเล่นจริง (Sandbox + แผงภารกิจ): เปิดจาก {"type": "open_gameplay", "step": N}
+		# objective.text = ข้อความเต็ม (แสดงในช่องพิมพ์เทอร์มินัล) / short = ชื่อสั้นในเช็กลิสต์ของแผงภารกิจ (ไม่ใส่ = ใช้ text)
+		# ตรวจคำสั่งด้วย LevelMission (ดูชนิด objective ที่ features/level_mission/level_mission.gd)
+		# ======================================================================
+		"gameplay": {
+			1: {
+				"title": "ตรวจสอบพลังเวท",
+				"story": "ร่ายคาถาให้ Git เผยระดับพลังของมัน พิมพ์ในเทอร์มินัลด้านล่างแล้วกด Enter",
+				"objectives": [
+					{
+						"id": "version",
+						"text": "ร่ายคาถา git --version",
+						"type": "command",
+						"commands": ["git --version", "git version"],
+						"hint": "พิมพ์ git เว้นวรรค แล้วตามด้วยขีดคู่ติดกับคำว่า version (--version)",
+						"near_miss": [
+							{"pattern": "^git\\s+-version", "message": "ขีดหน้า version ต้องเป็นขีดคู่ --version"},
+							{"pattern": "^git--", "message": "ต้องเว้นวรรคระหว่าง git กับ --version"},
+							{"pattern": "^git\\s+–", "message": "อักขระนั้นไม่ใช่ขีดกลางธรรมดา ลองพิมพ์ -- ใหม่"}
+						]
+					}
+				],
+				"success_text": "พลัง Git ตอบสนองแล้ว! คาถาแรกสำเร็จ"
+			},
+			2: {
+				"title": "ประกาศนามบนคัมภีร์",
+				"story": "ลงทะเบียนตัวตนของนักเวทกับสำนักเวท แล้วตรวจว่าหอคอยจดจำไว้แล้ว",
+				"objectives": [
+					{
+						"id": "name",
+						"text": "ประกาศนามด้วย git config --global user.name \"Vel\"",
+						"short": "ประกาศนาม (user.name)",
+						"type": "config_set",
+						"key": "user.name",
+						"validator": "non_empty",
+						"hint": "git config --global user.name แล้วตามด้วยชื่อในเครื่องหมายคำพูด เช่น \"Vel\"",
+						"near_miss": [
+							{"pattern": "^git\\s+config\\s+-global", "message": "--global ต้องเป็นขีดคู่"},
+							{"pattern": "^git\\s+config\\s+--global\\s+user\\.name\\s*$", "message": "ยังไม่ได้ใส่ชื่อต่อท้าย (คำสั่งนี้ใช้ตรวจชื่อเท่านั้น)"}
+						]
+					},
+					{
+						"id": "email",
+						"text": "ผูกตราประทับด้วย git config --global user.email \"vel@magic-tower.local\"",
+						"short": "ผูกตราประทับ (user.email)",
+						"type": "config_set",
+						"key": "user.email",
+						"validator": "email",
+						"hint": "git config --global user.email แล้วตามด้วยอีเมลในเครื่องหมายคำพูด ต้องมี @ และโดเมน",
+						"near_miss": [
+							{"pattern": "^git\\s+config\\s+--global\\s+user\\.email\\s+\\S+", "message": "อีเมลต้องมี @ และโดเมน เช่น vel@magic-tower.local"}
+						]
+					},
+					{
+						"id": "verify",
+						"text": "ตรวจชื่อที่จดไว้ด้วย git config --global user.name",
+						"short": "ตรวจชื่อที่จดไว้",
+						"type": "config_get",
+						"key": "user.name",
+						"hint": "ร่ายคาถาเดิมแต่ไม่ต้องใส่ชื่อต่อท้าย หอคอยจะตอบชื่อที่จดจำไว้"
+					}
+				],
+				"success_text": "หอคอยจดจำนามของนายแล้ว!"
+			}
+		},
+
 		# ======================================================================
 		# 3. สรุปผลหลังผ่านด่านที่ 1
 		# ======================================================================

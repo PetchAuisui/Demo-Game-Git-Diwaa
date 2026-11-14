@@ -9,6 +9,15 @@ internal static class AccountApiTests
 {
     public static async Task RunAsync(TestRunner runner)
     {
+        await runner.RunAsync("Build_Production_InMemoryStore_RefusesToStart_UnlessAllowed", async static () =>
+        {
+            // ที่เก็บข้อมูลยังเป็น in-memory: นอก Development / Testing ต้องไม่ยอมเริ่มเอง
+            Assert.Throws<InvalidOperationException>(() => ServerApp.Build([], "Production"));
+
+            // จงใจยืนยันเองด้วย Persistence:AllowInMemory=true จึงเริ่มได้
+            await using var allowed = ServerApp.Build(["--Persistence:AllowInMemory=true"], "Production");
+        });
+
         await runner.RunAsync("Api_Register_Returns201_WithoutEmailOrHash", async static () =>
         {
             await using var host = await TestServerHost.StartNewAsync();

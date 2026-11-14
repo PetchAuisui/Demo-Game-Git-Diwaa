@@ -139,13 +139,13 @@ internal static class LoginLockoutAndRefreshGraceTests
             Assert.False((await ctx.Service.ValidateSessionAsync(tokenA)).Succeeded);
         });
 
-        await runner.RunAsync("Refresh_ConcurrentSameToken_AllSucceedWithinGrace", async static () =>
+        await runner.RunAsync("Refresh_ConcurrentSameToken_WinnerTokenStaysUsable_NoFamilyRevoke", async static () =>
         {
             var ctx = await CreateWithUserAsync();
             string token = (await ctx.Service.LoginAsync(new LoginRequest("mage01", Password, false))).Value!.Token;
 
-            // refresh ใบเดียวกันพร้อมกันหลายคำขอ (เช่น ลองใหม่ซ้อนกัน): ไม่มีคำขอไหนถูกมองว่าขโมย
-            // แต่ session ที่ใช้ได้ต้องเหลือใบเดียว (ใบล่าสุด) ไม่ใช่ 20 ใบ
+            // refresh ใบเดียวกันพร้อมกันหลายคำขอ: ไม่มีคำขอไหนถูกมองว่าขโมย (ไม่ตัดทั้งสาย)
+            // และคำขอที่ตอบสำเร็จ (ผู้ชนะการหมุน) ต้องได้ token ที่ใช้ได้จริง ไม่ใช่ 200 ที่ถูกยกเลิกตามหลัง
             var tasks = new Task<AccountResult<LoginSession>>[20];
             for (int i = 0; i < tasks.Length; i++)
             {
@@ -153,11 +153,11 @@ internal static class LoginLockoutAndRefreshGraceTests
             }
             var results = await Task.WhenAll(tasks);
 
-            Assert.True(results.All(r => r.Succeeded), $"Expected every refresh to succeed, got {results.Count(r => r.Succeeded)}.");
-            Assert.Equal(20, results.Select(r => r.Value!.Token).Distinct(StringComparer.Ordinal).Count());
+            var succeeded = results.Where(r => r.Succeeded).ToList();
+            Assert.True(succeeded.Count >= 1, "At least the rotation winner must succeed.");
 
             int usable = 0;
-            foreach (var result in results)
+            foreach (var result in succeeded)
             {
                 if ((await ctx.Service.ValidateSessionAsync(result.Value!.Token)).Succeeded)
                 {

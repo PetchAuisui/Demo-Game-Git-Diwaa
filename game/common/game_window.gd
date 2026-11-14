@@ -89,6 +89,11 @@ var _dragging_scrollbar: ScrollBar = null
 
 var _applied_arrow_key := ""
 var _applied_hand_key := ""
+var _is_toggling_fullscreen := false
+
+
+func _can_manage_window() -> bool:
+	return DisplayServer.get_name() != "headless" and not Engine.is_embedded_in_editor()
 
 
 func _ready() -> void:
@@ -99,14 +104,25 @@ func _ready() -> void:
 	_setup_tree_hooks()
 
 	var window := get_window()
-	window.min_size = Vector2i(MIN_WIDTH, MIN_HEIGHT)
+	var screen := DisplayServer.screen_get_usable_rect(window.current_screen)
+	if screen.size.x > 0 and screen.size.y > 0:
+		window.min_size = Vector2i(mini(MIN_WIDTH, screen.size.x), mini(MIN_HEIGHT, screen.size.y))
+	else:
+		window.min_size = Vector2i(MIN_WIDTH, MIN_HEIGHT)
+
+	if not _can_manage_window():
+		return
 
 	# หากเปิดมาเป็น Windowed แล้วจอเล็กกว่า 1080p ให้ปรับขนาดให้พอดีกับจออัตโนมัติ
 	if window.mode == Window.MODE_WINDOWED:
-		_fit_windowed_to_screen(window)
+		_fit_windowed_to_screen(window, screen)
 
 
 func _exit_tree() -> void:
+	if OS.get_name() == "Windows":
+		var window := get_window()
+		if is_instance_valid(window):
+			DisplayServer.window_set_max_size(Vector2i.ZERO, window.get_window_id())
 	Input.set_custom_mouse_cursor(null, Input.CURSOR_ARROW)
 	Input.set_custom_mouse_cursor(null, Input.CURSOR_POINTING_HAND)
 	Input.set_custom_mouse_cursor(null, Input.CURSOR_DRAG)
@@ -438,6 +454,9 @@ func _on_raw_input(event: InputEvent) -> void:
 
 
 func _input(event: InputEvent) -> void:
+	if not _can_manage_window():
+		return
+
 	if not (event is InputEventKey and event.pressed and not event.echo):
 		return
 
@@ -446,24 +465,98 @@ func _input(event: InputEvent) -> void:
 	if not (is_f11 or is_alt_enter):
 		return
 
-	toggle_fullscreen()
+	# กิน input ทันทีเพื่อกัน double trigger หรือส่งคีย์ Enter หลุดไปกระตุ้น UI อื่น
 	get_viewport().set_input_as_handled()
+	if _is_toggling_fullscreen:
+		return
+
+	toggle_fullscreen()
 
 
 func toggle_fullscreen() -> void:
+	if not _can_manage_window() or _is_toggling_fullscreen:
+		return
 	var window := get_window()
 	if window.mode == Window.MODE_FULLSCREEN or window.mode == Window.MODE_EXCLUSIVE_FULLSCREEN:
-		window.mode = Window.MODE_WINDOWED
-		_fit_windowed_to_screen(window)
+		_switch_to_windowed(window)
 	else:
 		window.mode = Window.MODE_FULLSCREEN
 
 
-func _fit_windowed_to_screen(window: Window) -> void:
+func _switch_to_windowed(window: Window) -> void:
+	_is_toggling_fullscreen = true
+	var is_windows := (OS.get_name() == "Windows")
 	var screen := DisplayServer.screen_get_usable_rect(window.current_screen)
-	var width := mini(BASE_WIDTH, int(screen.size.x * 0.85))
-	var height := mini(BASE_HEIGHT, int(screen.size.y * 0.85))
-	var window_scale := minf(float(width) / float(BASE_WIDTH), float(height) / float(BASE_HEIGHT))
-	window.size = Vector2i(int(BASE_WIDTH * window_scale), int(BASE_HEIGHT * window_scale))
-	window.position = screen.position + (screen.size - window.size) / 2
+	var target_size := _calculate_windowed_size(window, screen)
+
+	# บน Windows (Godot 4.7.2) หากสลับจาก Fullscreen สู่ Windowed ขณะที่ขนาดหน้าต่างเดิมเท่ากับขนาดจอ
+	# ตัว OS/DisplayServer อาจเด้งกลับเป็น EXCLUSIVE_FULLSCREEN (mode=4)
+	# การกำหนด max_size ชั่วคราวจะป้องกันไม่ให้เด้งกลับไปโหมดเต็มจอ
+	if is_windows:
+		DisplayServer.window_set_max_size(target_size, window.get_window_id())
+	window.mode = Window.MODE_WINDOWED
+
+	# รอจนกว่าหน้าต่างจะออกจากโหมดเต็มจอจริง (บน macOS เป็น animation แบบ async ประมาณ 0.3-0.5 วิ)
+	var max_wait_time := 1.0
+	var elapsed := 0.0
+	while is_inside_tree() and is_instance_valid(window):
+		if window.mode != Window.MODE_FULLSCREEN and window.mode != Window.MODE_EXCLUSIVE_FULLSCREEN:
+			break
+		await get_tree().process_frame
+		elapsed += get_process_delta_time()
+		if elapsed >= max_wait_time:
+			break
+
+	if not is_inside_tree() or not is_instance_valid(window):
+		_is_toggling_fullscreen = false
+		return
+
+	if window.mode == Window.MODE_FULLSCREEN or window.mode == Window.MODE_EXCLUSIVE_FULLSCREEN:
+		# หาก timeout แล้วยังไม่ออกจากเต็มจอ ให้คืนค่า max_size บน Windows
+		if is_windows and is_instance_valid(window):
+			DisplayServer.window_set_max_size(Vector2i.ZERO, window.get_window_id())
+		_is_toggling_fullscreen = false
+		return
+
+	# หากหน้าต่างยังค้างสถานะ Maximized ให้เปลี่ยนเป็น Windowed ให้เรียบร้อย
+	if window.mode == Window.MODE_MAXIMIZED:
+		window.mode = Window.MODE_WINDOWED
+
+	# ปรับขนาดและวางกึ่งกลางหน้าจอ
+	_fit_windowed_to_screen(window, screen, target_size)
+
+	# บน Windows ให้รออย่างน้อย 1-2 process_frame เพื่อให้ OS (Win32 message loop เช่น WM_SIZE / WM_WINDOWPOSCHANGED)
+	# จัดการเปลี่ยนโหมดและปรับขนาดจริงให้เรียบร้อยก่อนคืนค่า max_size
+	# โดยระหว่างนี้ max_size จะยังคงช่วยบล็อกไม่ให้ OS หรือ DisplayServer เด้งกลับไปเป็น EXCLUSIVE_FULLSCREEN
+	if is_windows:
+		for _i in range(2):
+			if is_inside_tree():
+				await get_tree().process_frame
+		if is_instance_valid(window):
+			DisplayServer.window_set_max_size(Vector2i.ZERO, window.get_window_id())
+
+	_is_toggling_fullscreen = false
+
+
+func _calculate_windowed_size(window: Window, screen: Rect2i) -> Vector2i:
+	if screen.size.x <= 0 or screen.size.y <= 0:
+		return window.min_size
+	var max_w := mini(BASE_WIDTH, int(screen.size.x * 0.85))
+	var max_h := mini(BASE_HEIGHT, int(screen.size.y * 0.85))
+	var window_scale := minf(float(max_w) / float(BASE_WIDTH), float(max_h) / float(BASE_HEIGHT))
+	# Clamp ไม่ให้เล็กกว่า window.min_size ป้องกัน max_size < min_size บนจอขนาดเล็ก (เช่น 1024x768)
+	var target_w := clampi(int(BASE_WIDTH * window_scale), window.min_size.x, screen.size.x)
+	var target_h := clampi(int(BASE_HEIGHT * window_scale), window.min_size.y, screen.size.y)
+	return Vector2i(target_w, target_h)
+
+
+func _fit_windowed_to_screen(window: Window, screen: Rect2i = Rect2i(), target_size: Vector2i = Vector2i()) -> void:
+	if screen.size.x <= 0 or screen.size.y <= 0:
+		screen = DisplayServer.screen_get_usable_rect(window.current_screen)
+		if screen.size.x <= 0 or screen.size.y <= 0:
+			return
+	if target_size == Vector2i.ZERO:
+		target_size = _calculate_windowed_size(window, screen)
+	window.size = target_size
+	window.position = screen.position + (screen.size - target_size) / 2
 

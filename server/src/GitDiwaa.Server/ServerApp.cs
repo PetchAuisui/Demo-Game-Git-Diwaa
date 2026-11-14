@@ -47,6 +47,18 @@ public static class ServerApp
             o.SerializerOptions.Converters.Add(new JsonStringEnumConverter());
         });
 
+        // ตอนนี้มีแต่ที่เก็บข้อมูลในหน่วยความจำ: restart / deploy แล้วผู้ใช้ session และหลักฐานความยินยอม (PDPA) หายหมด
+        // จึงไม่ยอมเริ่มนอกโหมด Development / Testing จนกว่าจะมีที่เก็บถาวร (PR ฐานข้อมูล)
+        // ถ้าจงใจรันแบบนี้จริง (เช่น เดโมภายในทีม) ตั้ง Persistence:AllowInMemory=true ยืนยันเอง
+        if (!builder.Environment.IsDevelopment() &&
+            !string.Equals(builder.Environment.EnvironmentName, "Testing", StringComparison.OrdinalIgnoreCase) &&
+            !builder.Configuration.GetValue<bool>("Persistence:AllowInMemory"))
+        {
+            throw new InvalidOperationException(
+                "server ยังมีแต่ที่เก็บข้อมูลในหน่วยความจำ (ข้อมูลหายเมื่อ restart) จึงไม่เริ่มนอกโหมด Development " +
+                "ถ้าต้องการรันจริงๆ ให้ตั้ง Persistence:AllowInMemory=true");
+        }
+
         // Register repositories and core services as Singletons
         builder.Services.AddSingleton<IUserRepository, InMemoryUserRepository>();
         builder.Services.AddSingleton<ISessionRepository, InMemorySessionRepository>();

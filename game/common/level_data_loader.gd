@@ -27,6 +27,20 @@ static func load_data(level_num: int) -> Dictionary:
 	return {}
 
 
+## นิยามภารกิจของ "ขั้นเล่นจริง" (คีย์ "gameplay" ในไฟล์ข้อมูลด่าน) หรือ {} ถ้าด่านนั้นยังไม่มีขั้นนี้
+static func get_gameplay_step(level_num: int, step: int) -> Dictionary:
+	var gameplay: Dictionary = load_data(level_num).get("gameplay", {})
+	return gameplay.get(step, {})
+
+
+static func get_gameplay_step_count(level_num: int) -> int:
+	return load_data(level_num).get("gameplay", {}).size()
+
+
+static func has_gameplay(level_num: int, step: int) -> bool:
+	return not get_gameplay_step(level_num, step).is_empty()
+
+
 ## ชื่อคำสั่งหลักของด่าน สำหรับแสดงบนการ์ดเลือกด่านและหน้าสรุปผล
 static func get_display_command(level_num: int, data: Dictionary = {}) -> String:
 	if data.is_empty():
