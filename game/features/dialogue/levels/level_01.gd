@@ -16,6 +16,11 @@ static func get_data() -> Dictionary:
 		# 1. ขั้นสอน - ส่วนที่ 1: ตรวจสอบพลังเวท (git --version)
 		# ======================================================================
 		"intro_sequence": [
+			{"speaker": "มิวรา", "text": "ร่ายคาถานี้ดู", "mewla_anim": "talk"},
+			{"speaker": "มิวรา", "text": "`git --version`", "mewla_anim": "talk"},
+			{"speaker": "เวล", "text": "แค่นี้เอง?", "emote": "question", "mewla_anim": "idle"},
+			{"speaker": "มิวรา", "text": "ถ้าพลัง Git ถูกปลุกไว้แล้ว คาถานี้จะแสดงระดับพลังตอบกลับมาเอง ใช้สำหรับเช็กว่าพลัง Git พร้อมไหม", "mewla_anim": "talk"},
+			{"speaker": "เวล", "text": "เข้าใจแล้ว", "mewla_anim": "idle"},
 			{"type": "choice_menu", "menu": "part1_main"}
 		],
 		
