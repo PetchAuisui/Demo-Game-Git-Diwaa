@@ -183,29 +183,29 @@ static func set_level_score(level_num: int, score: int) -> void:
 		_save_config()
 
 
-static var _last_run_stars: int = 3
-static var _last_run_score: int = 100
-static var _last_run_prev_score: int = 0
-static var _last_run_score_diff: int = 0
+static var _last_run_stars: int = 2
+static var _last_run_score: int = 80
+static var _last_run_prev_score: int = 70
+static var _last_run_score_diff: int = 10
 
 
 static func record_level_clear(level_num: int, time_remaining: float, time_limit: float, max_score: int = 100) -> Dictionary:
-	var stars: int = 3
-	var score: int = max_score
+	var stars: int = 2
+	var score: int = 80
 	if time_limit > 0.0:
-		# เหลือเวลา >= 40% (ใช้เวลา <= 60% หรือ stack time): 3 ดาว
-		if time_remaining >= time_limit * 0.4:
+		# เหลือเวลา >= 60% (เหลือเวลา >= 78s จาก 130s): 3 ดาว
+		if time_remaining >= time_limit * 0.6:
 			stars = 3
 			score = max_score
 		elif time_remaining > 0.0:
 			stars = 2
-			score = 70 + int(20.0 * (time_remaining / (time_limit * 0.4)))
+			score = 70 + int(20.0 * (time_remaining / (time_limit * 0.6)))
 		else:
 			stars = 1
 			score = 50
 	else:
-		stars = 3
-		score = max_score
+		stars = 2
+		score = 80
 
 	var prev_score := get_level_score(level_num)
 	set_level_cleared(level_num, true)

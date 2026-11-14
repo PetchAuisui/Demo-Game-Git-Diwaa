@@ -54,13 +54,13 @@ func _apply_level_info() -> void:
 		keyword_body_label.text = level_keyword
 
 	var last_run := GameProgressManager.get_last_run_result()
-	var earned_stars: int = int(last_run.get("stars", 3))
+	var earned_stars: int = int(last_run.get("stars", 2))
 	var current_score: int = int(last_run.get("score", 100))
-	var prev_score: int = int(last_run.get("prev_score", 0))
-	var score_diff: int = int(last_run.get("score_diff", 0))
+	var prev_score: int = int(last_run.get("prev_score", 70))
+	var score_diff: int = int(last_run.get("score_diff", 30))
 
 	var gold_star := Color(1.0, 0.85, 0.1, 1.0)
-	var gray_star := Color(0.38, 0.38, 0.42, 0.55)
+	var gray_star := Color(0.42, 0.42, 0.42, 1.0)
 	if star1:
 		star1.self_modulate = gold_star if earned_stars >= 1 else gray_star
 	if star2:
