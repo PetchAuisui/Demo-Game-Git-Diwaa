@@ -159,7 +159,7 @@ func _dock_mission_panel_above_files() -> void:
 	column.anchor_top = _files_panel.anchor_top
 	column.anchor_right = _files_panel.anchor_right
 	column.anchor_bottom = _files_panel.anchor_bottom
-	column.add_theme_constant_override("separation", 10)
+	column.add_theme_constant_override("separation", 8)
 	var index := _files_panel.get_index()
 	add_child(column)
 	move_child(column, index)

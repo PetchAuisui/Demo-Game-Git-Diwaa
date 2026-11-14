@@ -629,8 +629,8 @@ func _validate_simple_name(value: String) -> String:
 
 func _update_action_buttons() -> void:
 	var has_selection := not _selected_path.is_empty()
-	# แสดงปุ่มตลอด (ปิดใช้เมื่อยังไม่เลือก) เพื่อไม่ให้รายการกระโดดลงตอนกดแถว
-	_entry_actions.visible = _open_file_path.is_empty()
+	# แสดงปุ่มเมื่อมีรายการใน workspace (ปิดใช้เมื่อยังไม่เลือก) แต่ซ่อนเมื่อไม่มีรายการหรือเปิด editor
+	_entry_actions.visible = not _entries.is_empty() and _open_file_path.is_empty()
 	_open_button.disabled = not has_selection or _selected_is_directory
 	_rename_button.disabled = not has_selection
 	_delete_button.disabled = not has_selection
