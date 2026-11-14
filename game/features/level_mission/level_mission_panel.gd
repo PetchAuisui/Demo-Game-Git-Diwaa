@@ -36,7 +36,11 @@ var _hint_visible := false
 func _init() -> void:
 	name = "LevelMissionPanel"
 	mouse_filter = Control.MOUSE_FILTER_STOP
-	add_theme_stylebox_override("panel", SandboxThemeTokens.create_card_style())
+	var card := SandboxThemeTokens.create_card_style()
+	card.bg_color.a = 0.82
+	card.set_border_width_all(2)
+	card.set_content_margin_all(10)
+	add_theme_stylebox_override("panel", card)
 	if ResourceLoader.exists(FONT_REGULAR_PATH):
 		_font_regular = load(FONT_REGULAR_PATH) as Font
 	if ResourceLoader.exists(FONT_BOLD_PATH):
@@ -46,7 +50,7 @@ func _init() -> void:
 
 func setup(mission: LevelMission) -> void:
 	_mission = mission
-	_badge_label.text = "ด่านที่ %d  ·  ขั้นที่ %d/%d" % [mission.level_number, mission.step, mission.total_steps]
+	_badge_label.text = "ด่านที่ %d · %d/%d" % [mission.level_number, mission.step, mission.total_steps]
 	_title_label.text = mission.title
 	_story_label.text = mission.story
 	_hint_visible = false
@@ -123,27 +127,28 @@ func _build() -> void:
 	add_child(margin)
 
 	var root := VBoxContainer.new()
-	root.add_theme_constant_override("separation", 8)
+	root.add_theme_constant_override("separation", 4)
 	margin.add_child(root)
 
 	var header := HBoxContainer.new()
 	root.add_child(header)
-	_badge_label = _make_label(18, SandboxThemeTokens.GOLD_TITLE, true)
-	_badge_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	header.add_theme_constant_override("separation", 12)
+	_badge_label = _make_label(15, SandboxThemeTokens.GOLD_TITLE, true)
 	header.add_child(_badge_label)
+	_title_label = _make_label(20, SandboxThemeTokens.BRAND_TEXT, true)
+	_title_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	header.add_child(_title_label)
 	_hint_button = Button.new()
 	_hint_button.text = "คำใบ้"
 	_hint_button.focus_mode = Control.FOCUS_NONE
 	_hint_button.add_theme_stylebox_override("normal", SandboxThemeTokens.create_button_style())
 	_hint_button.add_theme_stylebox_override("hover", SandboxThemeTokens.create_button_style())
 	_hint_button.add_theme_stylebox_override("pressed", SandboxThemeTokens.create_button_style())
-	_hint_button.add_theme_font_size_override("font_size", 16)
+	_hint_button.add_theme_font_size_override("font_size", 14)
 	_hint_button.pressed.connect(_on_hint_pressed)
 	header.add_child(_hint_button)
 
-	_title_label = _make_label(26, SandboxThemeTokens.BRAND_TEXT, true)
-	root.add_child(_title_label)
-	_story_label = _make_label(18, SandboxThemeTokens.SUBTITLE_TEXT, false)
+	_story_label = _make_label(16, SandboxThemeTokens.SUBTITLE_TEXT, false)
 	_story_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	root.add_child(_story_label)
 

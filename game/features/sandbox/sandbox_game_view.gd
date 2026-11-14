@@ -144,10 +144,10 @@ func _setup_mission() -> void:
 		return
 	_apply_mission_layout()
 	_mission_panel = LevelMissionPanel.new()
-	_mission_panel.anchor_left = 0.2
-	_mission_panel.anchor_right = 0.8
-	_mission_panel.anchor_top = 0.12
-	_mission_panel.anchor_bottom = 0.12
+	_mission_panel.anchor_left = 0.3
+	_mission_panel.anchor_right = 0.7
+	_mission_panel.anchor_top = 0.105
+	_mission_panel.anchor_bottom = 0.105
 	_mission_panel.grow_vertical = Control.GROW_DIRECTION_END
 	_mission_panel.offset_left = 0.0
 	_mission_panel.offset_right = 0.0
