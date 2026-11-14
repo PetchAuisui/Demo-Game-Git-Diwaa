@@ -813,7 +813,7 @@ func _on_offline_play_pressed() -> void:
 ## เริ่มเล่นแบบไม่ล็อกอิน: ตรวจชื่อด้วยกติกาเดียวกับชื่อที่แสดง แล้วบันทึกไว้ในเครื่อง
 func _on_guest_start() -> void:
 	_guest_name_error.visible = false
-	var display_name := _guest_name_input.text.strip_edges()
+	var display_name := AuthRules.trim_spaces(_guest_name_input.text)
 	var reason := AuthRules.validate_new_display_name(display_name)
 	if not reason.is_empty():
 		_guest_name_error.text = _message_for(AuthRules.FIELD_DISPLAY_NAME, reason)

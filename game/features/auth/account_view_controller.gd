@@ -276,7 +276,7 @@ func _on_rename_text_changed(_text: String) -> void:
 ## ปุ่มบันทึกกดได้เฉพาะเมื่อ: พิมพ์ชื่อใหม่ที่ต่างจากเดิม ถูกกติกา และยังมีสิทธิ์เหลือ
 ## show_reason: บอกเหตุผลใต้ช่องทันทีถ้าชื่อที่พิมพ์ใช้ไม่ได้ (ไม่ต้องรอกดก่อนถึงรู้)
 func _update_save_button(show_reason: bool = false) -> void:
-	var new_name := _rename_input.text.strip_edges()
+	var new_name := AuthRules.trim_spaces(_rename_input.text)
 	var changed := new_name != PlayerSession.get_display_name()
 	var reason := AuthRules.validate_new_display_name(new_name) if changed else ""
 	var no_credit := PlayerSession.display_name_changes_available == 0
@@ -288,7 +288,7 @@ func _update_save_button(show_reason: bool = false) -> void:
 func _on_rename_pressed() -> void:
 	if _busy or _rename_btn.disabled:
 		return
-	var new_name := _rename_input.text.strip_edges()
+	var new_name := AuthRules.trim_spaces(_rename_input.text)
 	var warning := "เปลี่ยนชื่อในเกมเป็น \"%s\"" % new_name
 	var changes := PlayerSession.display_name_changes_available
 	if changes == 1:

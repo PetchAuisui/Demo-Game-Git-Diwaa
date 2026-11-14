@@ -372,7 +372,7 @@ func _forget_email() -> void:
 ## เปลี่ยนชื่อที่แสดง (ออนไลน์เท่านั้น) server เป็นผู้ตัดสินเรื่องชื่อซ้ำและกฎ 14 วัน
 ## สำเร็จ: อัปเดตชื่อในเครื่อง (และในไฟล์ถ้าจดจำไว้) แล้วส่ง session_changed
 func change_display_name(new_name: String) -> AuthApiResult:
-	var trimmed_name := new_name.strip_edges()
+	var trimmed_name := AuthRules.trim_spaces(new_name)
 	var result := await _send_with_token(func(token: String) -> AuthApiResult:
 		return await _api.change_display_name(token, trimmed_name))
 
@@ -445,7 +445,7 @@ func start_offline() -> bool:
 func start_guest(raw_name: String) -> bool:
 	if state == State.ONLINE:
 		return false
-	var display_name := raw_name.strip_edges()
+	var display_name := AuthRules.trim_spaces(raw_name)
 	if not AuthRules.validate_display_name(display_name).is_empty():
 		return false
 	_session = {"profile": {"id": "", "username": "", "display_name": display_name}}

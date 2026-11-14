@@ -139,6 +139,30 @@ static func is_reserved_display_name(raw: String) -> bool:
 	return true
 
 
+# ช่องว่างทุกแบบที่ C# string.Trim() ตัด (char.IsWhiteSpace) แต่ strip_edges() ของ Godot ไม่ตัด
+# strip_edges() ตัดแค่รหัสไม่เกิน 0x20 จึงเหลือ NBSP / ช่องว่างญี่ปุ่น (U+3000) ฯลฯ ทำให้ชื่อที่มีแต่ช่องว่างผ่านการตรวจ
+const _EXTRA_SPACES := [
+	0x0085, 0x00A0, 0x1680,
+	0x2000, 0x2001, 0x2002, 0x2003, 0x2004, 0x2005, 0x2006, 0x2007, 0x2008, 0x2009, 0x200A,
+	0x2028, 0x2029, 0x202F, 0x205F, 0x3000,
+]
+
+
+## ตัดช่องว่างหัวท้ายให้ตรงกับ string.Trim() ของ server (ชื่อที่แสดง / ชื่อ guest ใช้ตัวนี้แทน strip_edges)
+static func trim_spaces(raw: String) -> String:
+	var start := 0
+	var end := raw.length()
+	while start < end and _is_space(raw.unicode_at(start)):
+		start += 1
+	while end > start and _is_space(raw.unicode_at(end - 1)):
+		end -= 1
+	return raw.substr(start, end - start)
+
+
+static func _is_space(c: int) -> bool:
+	return c == 0x20 or (c >= 0x09 and c <= 0x0D) or _EXTRA_SPACES.has(c)
+
+
 ## ใช้ตอนผู้เล่นตั้งชื่อเอง (เปลี่ยนชื่อ / ชื่อ guest): กติกาเดียวกับชื่อที่แสดง และห้ามใช้ชื่อสงวน
 static func validate_new_display_name(raw: String) -> String:
 	var reason := validate_display_name(raw)
@@ -148,7 +172,7 @@ static func validate_new_display_name(raw: String) -> String:
 
 
 static func validate_display_name(raw: String) -> String:
-	var trimmed := raw.strip_edges()
+	var trimmed := trim_spaces(raw)
 	if trimmed.is_empty():
 		return REQUIRED
 	if trimmed.length() > DISPLAY_NAME_MAX_LEN:
