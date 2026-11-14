@@ -406,7 +406,13 @@ func _begin_dialogue_phase(phase: int = -1) -> void:
 	elif debug_phase == 2:
 		_load_sequence(level_data.get("outro_sequence", []))
 	else:
-		_load_sequence(level_data.get("intro_sequence", []))
+		if level_number == 1 and not play_entrance_cutscene:
+			var full_intro: Array = []
+			full_intro.append_array(INTRO_DIALOGUES)
+			full_intro.append_array(level_data.get("intro_sequence", []))
+			_load_sequence(full_intro)
+		else:
+			_load_sequence(level_data.get("intro_sequence", []))
 
 # ==============================================================================
 # ENTRANCE CUTSCENE (เดินเข้าห้องโถง & พบมิวราก่อนเริ่มบทเรียน)
