@@ -181,13 +181,14 @@ func _setup_mission() -> void:
 
 	if _mission.time_limit > 0.0:
 		var saved_time := GameProgressManager.get_level_time_remaining(_mission.level_number)
-		if saved_time <= 0.0:
+		if saved_time < 0.0:
 			_level_time_remaining = _mission.time_limit
 			GameProgressManager.set_level_time_remaining(_mission.level_number, _level_time_remaining)
 		else:
 			_level_time_remaining = saved_time
 		_level_timer_active = true
-		_timer_expired_notified = false
+		# เวลาที่หมดไปแล้วในขั้นก่อนหน้า (0) ต้องไม่ถูกรีเซ็ตและไม่แจ้งเตือนซ้ำ
+		_timer_expired_notified = _level_time_remaining <= 0.0
 		if _top_bar != null:
 			_top_bar.set_timer_visible(true)
 			_top_bar.set_timer_seconds(_level_time_remaining)
@@ -221,6 +222,8 @@ func _update_mission_prompt() -> void:
 
 
 func _on_mission_progress(command: String, result: GitCommandResult) -> void:
+	if _mission.is_complete():
+		return
 	var newly_done := _mission.on_command(command, result.success, result.standard_output)
 	_mission_panel.refresh()
 	_update_mission_prompt()

@@ -884,6 +884,9 @@ func _go_to_gameplay_scene(step: int) -> bool:
 			is_transitioning = false
 			if skip_ctrl:
 				skip_ctrl.visible = true
+			if is_instance_valid(fade_overlay):
+				fade_overlay.color.a = 0.0
+				fade_overlay.visible = false
 			sequence_history.clear()
 			current_queue = []
 			queue_index = 0

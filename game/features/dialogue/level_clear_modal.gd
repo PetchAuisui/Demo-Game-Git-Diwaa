@@ -87,18 +87,22 @@ func _apply_level_info() -> void:
 		elif "text" in keyword_body_label:
 			keyword_body_label.text = level_keyword
 
+	# ผลรอบล่าสุดใช้ได้เฉพาะเมื่อเป็นของด่านนี้ ไม่งั้นแสดงค่าที่บันทึกไว้จริง (ไม่แต่งตัวเลขและไม่เขียนเซฟจากหน้านี้)
 	var last_run := GameProgressManager.get_last_run_result()
-	var current_score: int = int(last_run.get("score", 100))
-	var earned_stars: int = int(last_run.get("stars", 2))
-	if current_score >= 80 and earned_stars < 3:
-		earned_stars = 3
-		GameProgressManager.set_level_stars(level_number, 3)
-	elif current_score >= 65 and earned_stars < 2:
-		earned_stars = 2
-		GameProgressManager.set_level_stars(level_number, 2)
-
-	var prev_score: int = int(last_run.get("prev_score", 70))
-	var score_diff: int = int(last_run.get("score_diff", 30))
+	var current_score: int
+	var earned_stars: int
+	var prev_score: int
+	var score_diff: int
+	if int(last_run.get("level", -1)) == level_number:
+		current_score = int(last_run.get("score", 0))
+		earned_stars = int(last_run.get("stars", 0))
+		prev_score = int(last_run.get("prev_score", 0))
+		score_diff = int(last_run.get("score_diff", 0))
+	else:
+		current_score = GameProgressManager.get_level_score(level_number)
+		earned_stars = GameProgressManager.get_level_stars(level_number)
+		prev_score = current_score
+		score_diff = 0
 
 	_anim_gold_stars.clear()
 	var stars_list: Array[TextureRect] = [star1, star2, star3]

@@ -14,6 +14,9 @@ signal mission_completed
 
 const EMAIL_PATTERN := "^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$"
 
+## RegEx ที่คอมไพล์แล้ว (pattern -> RegEx หรือ null ถ้า pattern ผิด) ไม่ต้องคอมไพล์ใหม่ทุกคำสั่ง
+static var _regex_cache: Dictionary = {}
+
 var level_number: int
 var step: int
 var title: String
@@ -28,17 +31,18 @@ var _done: Dictionary = {}
 
 ## คืน null ถ้าด่านนี้ไม่มีขั้นเล่นจริงตามหมายเลขขั้นที่ระบุ
 static func create(level_num: int, step_num: int) -> LevelMission:
-	var definition := LevelDataLoader.get_gameplay_step(level_num, step_num)
+	var level_data := LevelDataLoader.load_data(level_num)
+	var gameplay: Dictionary = level_data.get("gameplay", {})
+	var definition: Dictionary = gameplay.get(step_num, {})
 	if definition.is_empty():
 		return null
 	var mission := LevelMission.new()
 	mission.level_number = level_num
 	mission.step = step_num
-	mission.total_steps = LevelDataLoader.get_gameplay_step_count(level_num)
+	mission.total_steps = gameplay.size()
 	mission.title = str(definition.get("title", ""))
 	mission.story = str(definition.get("story", ""))
 	mission.success_text = str(definition.get("success_text", "ภารกิจสำเร็จ!"))
-	var level_data := LevelDataLoader.load_data(level_num)
 	mission.time_limit = float(definition.get("time_limit", level_data.get("time_limit", 0.0)))
 	for objective in definition.get("objectives", []):
 		mission.objectives.append(objective)
@@ -86,8 +90,8 @@ func on_command(command: String, success: bool, output: String) -> Array[String]
 func mistake_message(command: String) -> String:
 	var objective := current_objective()
 	for near_miss in objective.get("near_miss", []):
-		var regex := RegEx.new()
-		if regex.compile(str(near_miss["pattern"])) == OK and regex.search(command.strip_edges()) != null:
+		var regex := _get_regex(str(near_miss["pattern"]))
+		if regex != null and regex.search(command.strip_edges()) != null:
 			return str(near_miss["message"])
 	return ""
 
@@ -113,14 +117,20 @@ func _matches(objective: Dictionary, tokens: PackedStringArray, success: bool, o
 	return false
 
 
+static func _get_regex(pattern: String) -> RegEx:
+	if not _regex_cache.has(pattern):
+		var regex := RegEx.new()
+		_regex_cache[pattern] = regex if regex.compile(pattern) == OK else null
+	return _regex_cache[pattern]
+
+
 static func _valid_value(validator: String, value: String) -> bool:
 	var trimmed := value.strip_edges()
 	if trimmed.is_empty():
 		return false
 	if validator == "email":
-		var regex := RegEx.new()
-		regex.compile(EMAIL_PATTERN)
-		return regex.search(trimmed) != null
+		var regex := _get_regex(EMAIL_PATTERN)
+		return regex != null and regex.search(trimmed) != null
 	return true
 
 

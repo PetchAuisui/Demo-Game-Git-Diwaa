@@ -57,6 +57,7 @@ func _run() -> void:
 	await _test("workspace API manages folders and renames safely", _t_workspace_api)
 	await _test("attempt identifiers and duplicate attempts are rejected", _t_attempt_identifiers)
 	await _test("level 1 mission step 1 accepts only the exact version spell", _t_level1_step1)
+	await _test("clear scoring: no timer is not a timeout, expiry gives 2 stars", _t_clear_scoring)
 	await _test("level 1 mission step 2 needs name, email and a non-empty name check", _t_level1_step2)
 
 	FsUtil.delete_recursive(_test_root)
@@ -697,3 +698,10 @@ func _t_level1_step2() -> void:
 	_check(mission.done_count() == 2 and not mission.is_complete())
 	mission.on_command("git config --global user.name", true, "Vel\n")
 	_check(mission.is_complete())
+
+
+func _t_clear_scoring() -> void:
+	_check(GameProgressManager.stars_for_score(80) == 3 and GameProgressManager.stars_for_score(65) == 2 and GameProgressManager.stars_for_score(64) == 1)
+	_check(GameProgressManager.calculate_score(-1.0, 130.0) == 85, "missing timer (-1) must not count as a timeout")
+	_check(GameProgressManager.calculate_score(0.0, 130.0) == 65, "expired timer gives 2 stars")
+	_check(GameProgressManager.calculate_score(130.0, 130.0) == 100)
