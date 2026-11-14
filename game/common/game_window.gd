@@ -402,19 +402,21 @@ func _is_hovering_scrollbar(hovered: Control) -> bool:
 func _is_hovering_clickable(hovered: Control) -> bool:
 	if hovered == null or not is_instance_valid(hovered) or not hovered.is_inside_tree():
 		return false
-	if _is_hovering_disabled_button(hovered):
-		return false
 
+	var found_hand := false
 	var curr := hovered
 	while curr != null:
-		var local_pos := curr.get_local_mouse_position()
-		if curr.get_cursor_shape(local_pos) == Control.CURSOR_POINTING_HAND:
-			return true
+		if curr is BaseButton and (curr as BaseButton).disabled:
+			return false
+		if not found_hand:
+			var local_pos := curr.get_local_mouse_position()
+			if curr.get_cursor_shape(local_pos) == Control.CURSOR_POINTING_HAND:
+				found_hand = true
 		if curr.mouse_filter == Control.MOUSE_FILTER_STOP:
 			break
 		var parent := curr.get_parent()
 		curr = parent as Control if parent is Control else null
-	return false
+	return found_hand
 
 
 func _trigger_scroll_anim() -> void:
