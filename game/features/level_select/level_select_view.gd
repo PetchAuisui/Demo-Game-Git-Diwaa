@@ -806,6 +806,7 @@ func _spawn_tower_platforms() -> void:
 		var stg_id: int = stg["id"]
 		var is_cleared := GameProgressManager.is_level_cleared(stg_id)
 		var is_unlocked := _is_stage_unlocked(stg_id)
+		var is_reachable := _is_stage_reachable(stg_id)
 		var is_current := (i == _current_stage_idx)
 		var act_num: int = int(stg["act"])
 
@@ -970,7 +971,7 @@ func _spawn_tower_platforms() -> void:
 			_update_hud_display(TOWER_STAGES[_current_stage_idx])
 		)
 
-		if is_unlocked:
+		if is_reachable:
 			slab_btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 			slab_btn.pressed.connect(func():
 				_on_platform_selected(current_idx)
@@ -1161,8 +1162,8 @@ func _on_platform_selected(idx: int) -> void:
 
 	var target_stg: Dictionary = TOWER_STAGES[idx]
 	var target_id: int = target_stg["id"]
-	var is_unlocked: bool = _is_stage_unlocked(target_id)
-	if not is_unlocked:
+	var is_reachable: bool = _is_stage_reachable(target_id)
+	if not is_reachable:
 		_on_locked_platform_clicked(idx)
 		return
 
@@ -1192,8 +1193,8 @@ func _perform_direct_leap(to_idx: int) -> void:
 
 	var target_stg: Dictionary = TOWER_STAGES[to_idx]
 	var target_id: int = target_stg["id"]
-	var is_unlocked: bool = _is_stage_unlocked(target_id)
-	if not is_unlocked:
+	var is_reachable: bool = _is_stage_reachable(target_id)
+	if not is_reachable:
 		_on_locked_platform_clicked(to_idx)
 		return
 
@@ -1329,6 +1330,15 @@ static func _is_stage_unlocked(stg_id: int) -> bool:
 	return stg_id == 1 or GameProgressManager.is_level_cleared(stg_id - 1)
 
 
+## ด่านที่ตัวละครสามารถกระโดดไปยืนดูได้ (เช่น ด่าน 02 หรือด่านถัดไปหลังจากผ่านด่านก่อนหน้า แม้ตัวด่านยังอยู่ระหว่างพัฒนา)
+static func _is_stage_reachable(stg_id: int) -> bool:
+	if _is_stage_unlocked(stg_id):
+		return true
+	if stg_id == 2:
+		return true
+	return stg_id > 1 and GameProgressManager.is_level_cleared(stg_id - 1)
+
+
 func _on_locked_platform_clicked(idx: int) -> void:
 	if idx < 0 or idx >= TOWER_STAGES.size():
 		return
@@ -1374,9 +1384,9 @@ func _try_navigate_stage(target_idx: int) -> void:
 
 	var target_stg: Dictionary = TOWER_STAGES[target_idx]
 	var target_id: int = target_stg["id"]
-	var is_unlocked: bool = _is_stage_unlocked(target_id)
+	var is_reachable: bool = _is_stage_reachable(target_id)
 
-	if not is_unlocked:
+	if not is_reachable:
 		_on_locked_platform_clicked(target_idx)
 		return
 
@@ -1412,12 +1422,13 @@ func _step_towards_queued_target() -> void:
 
 	var next_stg: Dictionary = TOWER_STAGES[next_step_idx]
 	var next_id: int = next_stg["id"]
-	var is_unlocked: bool = _is_stage_unlocked(next_id)
-	if not is_unlocked:
+	var is_reachable: bool = _is_stage_reachable(next_id)
+	if not is_reachable:
 		_target_queue_idx = _current_stage_idx
 		_is_jumping = false
 		if vel_anim:
 			vel_anim.play("breathe")
+		_on_locked_platform_clicked(next_step_idx)
 		return
 
 	_perform_jump_step(next_step_idx)
@@ -1789,9 +1800,12 @@ func _update_hud_display(stg: Dictionary) -> void:
 		if is_unlocked:
 			btn_launch.disabled = false
 			btn_launch.text = "เข้าสู่ด่าน" if not is_cleared else "ทบทวนด่าน"
+			btn_launch.tooltip_text = ""
 		else:
 			btn_launch.disabled = true
+			var dev_msg := "ด่าน %s อยู่ระหว่างพัฒนา เร็วๆ นี้!" % stg["no"] if _is_stage_in_development(stg_id) else "แท่นหินด่าน %s ยังถูกผนึก! ต้องผ่านด่านก่อนหน้าเพื่อปลดล็อก" % stg["no"]
 			btn_launch.text = "อยู่ระหว่างพัฒนา" if _is_stage_in_development(stg_id) else "ยังไม่ปลดล็อก"
+			btn_launch.tooltip_text = dev_msg
 
 
 func _scroll_to_stage_idx(stage_idx: int, animate: bool = true, update_hud: bool = false, duration: float = 0.48) -> void:
@@ -1937,7 +1951,7 @@ func _draw_path_pass(target: CanvasItem, pass_mode: int) -> void:
 		var is_loop_back := id_b < id_a
 		var is_segment_cleared := (is_cleared_a and is_cleared_b) if is_loop_back else is_cleared_b
 		var is_unlocked_b := _is_stage_unlocked(id_b)
-		var is_current_segment := false if is_loop_back else ((idx_b == _current_stage_idx) or (idx_a == _current_stage_idx and not is_cleared_b))
+		var is_current_segment := false if is_loop_back else ((idx_b == _current_stage_idx and (is_cleared_a or id_a == 1)) or (idx_a == _current_stage_idx and is_cleared_a and not is_cleared_b))
 		var is_segment_active := false if is_loop_back else (is_current_segment or is_unlocked_b)
 
 		var p1 := Vector2(s_a["x"], s_a["y"])
@@ -2084,6 +2098,8 @@ func _on_launch_stage_pressed() -> void:
 	var stg_id: int = stg["id"]
 	var is_unlocked := _is_stage_unlocked(stg_id)
 	if not is_unlocked:
+		_trigger_vel_angry()
+		_on_locked_platform_clicked(_current_stage_idx)
 		return
 
 	_is_leaving = true
