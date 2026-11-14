@@ -57,7 +57,6 @@ func _bind_nodes() -> void:
 	_quit_game_btn = get_node("%QuitGameBtn")
 	# เว็บเอ็กซ์พอร์ตสั่ง quit() ไม่ได้ จึงซ่อนปุ่มไว้
 	_quit_game_btn.visible = not OS.has_feature("web")
-	(get_node("%DottedSeparator2") as Control).visible = _quit_game_btn.visible
 	_tutorial_btn = get_node("%TutorialBtn")
 	_clock_label = get_node("%ClockLabel")
 	_output_log = get_node("%OutputLog")
