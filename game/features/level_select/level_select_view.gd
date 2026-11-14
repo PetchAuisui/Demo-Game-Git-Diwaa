@@ -773,7 +773,7 @@ func _init_game_progression() -> void:
 	for stg in TOWER_STAGES:
 		var stg_id: int = stg["id"]
 		if GameProgressManager.is_level_cleared(stg_id):
-			total_stars += 3
+			total_stars += GameProgressManager.get_level_stars(stg_id)
 			if stg_id > highest_cleared_id:
 				highest_cleared_id = stg_id
 
@@ -1739,7 +1739,17 @@ func _apply_platform_style(plat: Control, stg_id: int, is_active: bool) -> void:
 
 	var star_icon := plat.find_child("StarIcon", true, false) as Control
 	if star_icon:
-		star_icon.modulate = colors["star_color"]
+		star_icon.modulate = Color.WHITE
+		var earned_stars := GameProgressManager.get_level_stars(stg_id)
+		var gold_color := Color(0.98, 0.82, 0.10, 1.0)
+		var unlit_color := Color(0.35, 0.40, 0.48, 0.45)
+		for i in range(star_icon.get_child_count()):
+			var star_node := star_icon.get_child(i) as CanvasItem
+			if star_node != null:
+				if i < earned_stars:
+					star_node.modulate = gold_color
+				else:
+					star_node.modulate = unlit_color
 
 
 func _update_platform_highlight(idx: int, is_active: bool) -> void:
