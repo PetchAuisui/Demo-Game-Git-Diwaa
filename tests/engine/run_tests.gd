@@ -56,6 +56,9 @@ func _run() -> void:
 	await _test("file API blocks traversal and Git metadata", _t_file_api_blocks)
 	await _test("workspace API manages folders and renames safely", _t_workspace_api)
 	await _test("attempt identifiers and duplicate attempts are rejected", _t_attempt_identifiers)
+	await _test("level 1 mission step 1 accepts only the exact version spell", _t_level1_step1)
+	await _test("clear scoring: no timer is not a timeout, expiry gives 2 stars", _t_clear_scoring)
+	await _test("level 1 mission step 2 needs name, email and a non-empty name check", _t_level1_step2)
 
 	FsUtil.delete_recursive(_test_root)
 	if not _failures.is_empty():
@@ -663,3 +666,42 @@ func _t_workspace_api() -> void:
 func _t_attempt_identifiers() -> void:
 	_check(not (await _factory.create("../bad", "attempt")).ok)
 	_check(not (await _factory.create("act1", "player")).ok)
+
+
+func _t_level1_step1() -> void:
+	var mission := LevelMission.create(1, 1)
+	if not _check(mission != null, "level 1 step 1 should exist"):
+		return
+	_check(LevelMission.create(1, 3) == null)
+	mission.on_command("git -version", false, "")
+	_check(not mission.is_complete())
+	_check(not mission.mistake_message("git -version").is_empty())
+	mission.on_command("git --version", false, "")
+	_check(not mission.is_complete(), "a failed command must not count")
+	mission.on_command("git   --version", true, "git version 2.0")
+	_check(mission.is_complete())
+
+
+func _t_level1_step2() -> void:
+	var mission := LevelMission.create(1, 2)
+	if not _check(mission != null, "level 1 step 2 should exist"):
+		return
+	_equal(["git", "config", "--global", "user.name", "Vel Hero"], Array(LevelMission.tokenize("git config --global user.name \"Vel Hero\"")))
+	mission.on_command("git config --global user.name \"\"", true, "")
+	_check(mission.done_count() == 0, "empty name must not count")
+	mission.on_command("git config --global user.email \"vel\"", true, "")
+	_check(mission.done_count() == 0, "email without @ must not count")
+	mission.on_command("git config --global user.name", true, "")
+	_check(mission.done_count() == 0, "name check before a name is set must not count")
+	mission.on_command("git config --global user.name \"Vel\"", true, "")
+	mission.on_command("git config --global user.email \"vel@magic-tower.local\"", true, "")
+	_check(mission.done_count() == 2 and not mission.is_complete())
+	mission.on_command("git config --global user.name", true, "Vel\n")
+	_check(mission.is_complete())
+
+
+func _t_clear_scoring() -> void:
+	_check(GameProgressManager.stars_for_score(80) == 3 and GameProgressManager.stars_for_score(65) == 2 and GameProgressManager.stars_for_score(64) == 1)
+	_check(GameProgressManager.calculate_score(-1.0, 130.0) == 85, "missing timer (-1) must not count as a timeout")
+	_check(GameProgressManager.calculate_score(0.0, 130.0) == 65, "expired timer gives 2 stars")
+	_check(GameProgressManager.calculate_score(130.0, 130.0) == 100)

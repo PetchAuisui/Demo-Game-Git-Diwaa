@@ -6,6 +6,7 @@ extends Control
 const CENTRAL_TOWER_CUTSCENE_PATH := "res://features/cutscene/central_tower_cutscene.tscn"
 const ENDING_CUTSCENE_PATH := "res://features/cutscene/ending_cutscene.tscn"
 const LEVEL_SELECT_PATH := "res://features/level_select/level_select_view.tscn"
+const LEVEL_DIALOGUE_PATH := "res://features/dialogue/level_dialogue_view.tscn"
 const START_VIEW_PATH := "res://features/start/start_view.tscn"
 const DIALOG_THEME_PATH := "res://features/sandbox/file_dialog_theme.tres"
 const ACT2_START_LEVEL := 16
@@ -31,12 +32,17 @@ var _files_panel: FilesPanel
 var _git_graph_panel: GitGraphPanel
 var _terminal_panel: TerminalPanel
 var _remote_repo_button: RemoteRepoButton
+var _mission: LevelMission
+var _mission_panel: LevelMissionPanel
 var _leave_confirm_dialog: ConfirmationDialog
 var _leave_confirm_message: Label
 
 var _sandbox_service: GitSandboxService
 var _is_initialized := false
 var _is_leaving := false
+var _level_timer_active := false
+var _level_time_remaining := 0.0
+var _timer_expired_notified := false
 
 
 func _ready() -> void:
@@ -44,11 +50,17 @@ func _ready() -> void:
 	_setup_animated_background()
 	_setup_leave_confirm_dialog()
 	_wire_events()
+	_setup_mission()
 	SceneLoader.request_preload(_return_scene_path())
 	_initialize_sandbox()
 
 
 func _process(delta: float) -> void:
+	_process_background_anim(delta)
+	_process_level_timer(delta)
+
+
+func _process_background_anim(delta: float) -> void:
 	if _bg_atlas == null:
 		return
 	var frame_duration := 1.0 / BG_FPS
@@ -58,6 +70,24 @@ func _process(delta: float) -> void:
 		_bg_anim_timer = fmod(_bg_anim_timer, frame_duration)
 		_bg_frame_index = (_bg_frame_index + steps) % BG_FRAME_COUNT
 		_apply_background_frame(_bg_frame_index)
+
+
+func _process_level_timer(delta: float) -> void:
+	if not _level_timer_active or _mission == null or _mission.time_limit <= 0.0:
+		return
+	if _level_time_remaining > 0.0:
+		_level_time_remaining = maxf(0.0, _level_time_remaining - delta)
+		GameProgressManager.set_level_time_remaining(_mission.level_number, _level_time_remaining)
+		if _top_bar != null:
+			_top_bar.set_timer_seconds(_level_time_remaining)
+		if _level_time_remaining <= 0.0 and not _timer_expired_notified:
+			_timer_expired_notified = true
+			_on_level_timer_expired()
+
+
+func _on_level_timer_expired() -> void:
+	if _mission_panel != null:
+		_mission_panel.show_feedback("หมดเวลาทดสอบแล้ว! ยังสามารถพิมพ์คำสั่งต่อเพื่อฝึกฝนได้", true)
 
 
 func _bind_nodes() -> void:
@@ -129,6 +159,104 @@ func _wire_events() -> void:
 	_top_bar.brand_pressed.connect(_on_brand_pressed)
 
 
+## เปิดจากขั้นเล่นจริงของด่าน (หน้าบทสนทนาตั้งขั้นไว้ใน GameProgressManager) -> แสดงแผงภารกิจกลางจอ
+func _setup_mission() -> void:
+	var step := GameProgressManager.get_pending_mission_step()
+	GameProgressManager.set_pending_mission_step(0)
+	if step <= 0:
+		if _top_bar != null:
+			_top_bar.set_timer_visible(false)
+		return
+	_mission = LevelMission.create(GameProgressManager.get_selected_level_number(), step)
+	if _mission == null:
+		if _top_bar != null:
+			_top_bar.set_timer_visible(false)
+		return
+	_mission_panel = LevelMissionPanel.new()
+	_mission_panel.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	_dock_mission_panel_above_files()
+	_mission_panel.setup(_mission)
+	_mission_panel.continue_pressed.connect(_on_mission_continue)
+	_update_mission_prompt()
+
+	if _mission.time_limit > 0.0:
+		var saved_time := GameProgressManager.get_level_time_remaining(_mission.level_number)
+		if saved_time < 0.0:
+			_level_time_remaining = _mission.time_limit
+			GameProgressManager.set_level_time_remaining(_mission.level_number, _level_time_remaining)
+		else:
+			_level_time_remaining = saved_time
+		_level_timer_active = true
+		# เวลาที่หมดไปแล้วในขั้นก่อนหน้า (0) ต้องไม่ถูกรีเซ็ตและไม่แจ้งเตือนซ้ำ
+		_timer_expired_notified = _level_time_remaining <= 0.0
+		if _top_bar != null:
+			_top_bar.set_timer_visible(true)
+			_top_bar.set_timer_seconds(_level_time_remaining)
+	else:
+		if _top_bar != null:
+			_top_bar.set_timer_visible(false)
+
+
+## แผงภารกิจอยู่บนสุดของคอลัมน์ซ้าย ส่วนแผง Files อยู่ใต้ลงมา (ใช้พื้นที่เดิมของแผง Files)
+func _dock_mission_panel_above_files() -> void:
+	var column := VBoxContainer.new()
+	column.name = "LeftColumn"
+	column.layout_mode = 1
+	column.anchor_left = _files_panel.anchor_left
+	column.anchor_top = _files_panel.anchor_top
+	column.anchor_right = _files_panel.anchor_right
+	column.anchor_bottom = _files_panel.anchor_bottom
+	column.add_theme_constant_override("separation", 8)
+	var index := _files_panel.get_index()
+	add_child(column)
+	move_child(column, index)
+	_files_panel.reparent(column, false)
+	_files_panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	column.add_child(_mission_panel)
+	column.move_child(_mission_panel, 0)
+
+
+## ภารกิจปัจจุบันแสดงเป็นข้อความจางในช่องพิมพ์ของเทอร์มินัล (ครบแล้วไม่แสดง)
+func _update_mission_prompt() -> void:
+	_terminal_panel.set_input_placeholder(str(_mission.current_objective().get("text", "")))
+
+
+func _on_mission_progress(command: String, result: GitCommandResult) -> void:
+	if _mission.is_complete():
+		return
+	var newly_done := _mission.on_command(command, result.success, result.standard_output)
+	_mission_panel.refresh()
+	_update_mission_prompt()
+	if _mission.is_complete():
+		_level_timer_active = false
+		_mission_panel.show_complete(_mission.success_text, _mission_continue_label())
+		return
+	if not newly_done.is_empty():
+		_mission_panel.show_feedback("ถูกต้อง! ภารกิจสำเร็จ", false)
+		return
+	var mistake := _mission.mistake_message(command)
+	if not mistake.is_empty():
+		_mission_panel.show_feedback(mistake, true)
+
+
+func _mission_continue_label() -> String:
+	return "ไปต่อ"
+
+
+## ทำภารกิจครบ -> กลับหน้าบทสนทนาช่วงถัดไปของด่านเดิม (ขั้น 1 -> ช่วง 1, ขั้น 2 -> ช่วง 2)
+func _on_mission_continue() -> void:
+	if _is_leaving:
+		return
+	_is_leaving = true
+	GameProgressManager.set_resume_dialogue_phase(_mission.step)
+	var tree := get_tree() if is_inside_tree() else null
+	if SceneLoader.change_scene(tree, LEVEL_DIALOGUE_PATH):
+		Engine.time_scale = 1.0
+	else:
+		_is_leaving = false
+		GameProgressManager.set_resume_dialogue_phase(-1)
+
+
 func _setup_leave_confirm_dialog() -> void:
 	_leave_confirm_dialog = ConfirmationDialog.new()
 	_leave_confirm_dialog.name = "LeaveConfirmDialog"
@@ -179,6 +307,7 @@ func _leave_sandbox() -> void:
 	if _is_leaving:
 		return
 	_is_leaving = true
+	GameProgressManager.clear_level_timer()
 	var tree := get_tree() if is_inside_tree() else null
 	if SceneLoader.change_scene(tree, _return_scene_path()):
 		Engine.time_scale = 1.0
@@ -216,7 +345,7 @@ func _initialize_sandbox() -> void:
 	_remote_repo_button.set_available(_sandbox_service.remote_account != null)
 	_terminal_panel.set_executing(false)
 
-	_top_bar.set_mode_text("SANDBOX")
+	_top_bar.set_mode_text("ด่านที่ %d" % _mission.level_number if _mission != null else "SANDBOX")
 	_top_bar.set_finish_button_text(_return_label())
 
 	if _sandbox_service.info != null:
@@ -310,6 +439,8 @@ func _on_command_submitted(command: String) -> void:
 		_terminal_panel.append_error(error_message)
 
 	_terminal_panel.set_executing(false)
+	if _mission != null and not _is_leaving:
+		_on_mission_progress(trimmed, result)
 	await _refresh_state()
 
 

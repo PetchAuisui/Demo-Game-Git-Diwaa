@@ -1,9 +1,10 @@
-[gd_scene load_steps=8 format=3]
+[gd_scene load_steps=10 format=3]
 
 [ext_resource type="Script" path="res://features/sandbox/top_bar_panel.gd" id="1_script"]
 [ext_resource type="FontFile" uid="uid://deedcfbkojx6k" path="res://assets/fonts/ChakraPetch-Bold.ttf" id="3_font_bold"]
 [ext_resource type="FontFile" path="res://assets/fonts/TA-8-bit.ttf" id="4_font_ta8bit"]
 [ext_resource type="PackedScene" path="res://common/brand_button.tscn" id="5_brand_btn"]
+[ext_resource type="Texture2D" uid="uid://d1ljd15ngmog5" path="res://assets/icons/ui_clock.svg" id="6_clock_icon"]
 
 [sub_resource type="StyleBoxFlat" id="Style_topbar"]
 bg_color = Color(0.078, 0.063, 0.047, 0.98)
@@ -41,6 +42,22 @@ corner_radius_top_left = 4
 corner_radius_top_right = 4
 corner_radius_bottom_left = 4
 corner_radius_bottom_right = 4
+
+[sub_resource type="StyleBoxFlat" id="Style_timer_pill"]
+content_margin_left = 16.0
+content_margin_top = 6.0
+content_margin_right = 16.0
+content_margin_bottom = 6.0
+bg_color = Color(0.04, 0.05, 0.09, 0.92)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.92, 0.74, 0.35, 0.95)
+corner_radius_top_left = 18
+corner_radius_top_right = 18
+corner_radius_bottom_left = 18
+corner_radius_bottom_right = 18
 
 [node name="TopBarPanel" type="PanelContainer"]
 custom_minimum_size = Vector2(0, 72)
@@ -86,7 +103,42 @@ theme_override_font_sizes/font_size = 20
 text = "SANDBOX"
 vertical_alignment = 1
 
-[node name="Spacer" type="Control" parent="TopMargin/Header"]
+[node name="LeftSpacer" type="Control" parent="TopMargin/Header"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="TimerPill" type="PanelContainer" parent="TopMargin/Header"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 4
+theme_override_styles/panel = SubResource("Style_timer_pill")
+
+[node name="TimerHBox" type="HBoxContainer" parent="TopMargin/Header/TimerPill"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="ClockIcon" type="TextureRect" parent="TopMargin/Header/TimerPill/TimerHBox"]
+unique_name_in_owner = true
+modulate = Color(1, 0.79, 0.35, 1)
+custom_minimum_size = Vector2(20, 20)
+layout_mode = 2
+size_flags_vertical = 4
+texture = ExtResource("6_clock_icon")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="TimerLabel" type="Label" parent="TopMargin/Header/TimerPill/TimerHBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.79, 0.35, 1)
+theme_override_fonts/font = ExtResource("3_font_bold")
+theme_override_font_sizes/font_size = 20
+text = "02:10"
+vertical_alignment = 1
+
+[node name="RightSpacer" type="Control" parent="TopMargin/Header"]
 layout_mode = 2
 size_flags_horizontal = 3
 
