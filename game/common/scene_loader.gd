@@ -41,6 +41,7 @@ static func flush_preloads() -> void:
 	_pending_preloads.clear()
 	for path_var: Variant in paths:
 		var path := str(path_var)
-		var status := ResourceLoader.load_threaded_get_status(path)
-		if status == ResourceLoader.THREAD_LOAD_IN_PROGRESS or status == ResourceLoader.THREAD_LOAD_LOADED:
+		while ResourceLoader.load_threaded_get_status(path) == ResourceLoader.THREAD_LOAD_IN_PROGRESS:
+			OS.delay_msec(5)
+		if ResourceLoader.load_threaded_get_status(path) == ResourceLoader.THREAD_LOAD_LOADED:
 			ResourceLoader.load_threaded_get(path)

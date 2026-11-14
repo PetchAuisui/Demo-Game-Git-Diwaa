@@ -43,6 +43,12 @@ const GUARDIAN_IDLE_SEQ: Array[String] = ["breathe", "breathe_blink", "breathe",
 # เวล (ท่าปกติวนลูป): breathe -> breathe_blink -> breathe -> breathe -> breathe_blink
 const VEL_IDLE_SEQ: Array[String] = ["breathe", "breathe_blink", "breathe", "breathe", "breathe_blink"]
 
+# Speaker Focus & Inactive Character Dimming (สีเทาเมื่อไม่ได้พูด)
+const CHAR_ACTIVE_COLOR := Color(1.0, 1.0, 1.0, 1.0)
+const CHAR_INACTIVE_COLOR := Color(0.5, 0.5, 0.5, 1.0)
+var char_dim_tween_vel: Tween = null
+var char_dim_tween_guardian: Tween = null
+
 # สถานะลำดับแอนิเมชันของตัวละคร
 var is_guardian_speaking: bool = false
 var guardian_seq_step: int = 0
@@ -250,6 +256,12 @@ func _exit_tree() -> void:
 		press_tween_back.kill()
 	if press_tween_next and press_tween_next.is_valid():
 		press_tween_next.kill()
+	if char_dim_tween_vel and char_dim_tween_vel.is_valid():
+		char_dim_tween_vel.kill()
+		char_dim_tween_vel = null
+	if char_dim_tween_guardian and char_dim_tween_guardian.is_valid():
+		char_dim_tween_guardian.kill()
+		char_dim_tween_guardian = null
 
 
 ## -------------------------------------------------------------
@@ -359,6 +371,9 @@ func _show_current_dialogue(skip_typewriter: bool = false) -> void:
 		speaker_label.add_theme_color_override("font_color", Color(0.45, 0.75, 0.95, 1.0)) # สีฟ้าอ่อนสดใส (เวล / ผู้เล่น)
 	dialogue_label.text = data["text"]
 	
+	# ปรับสีตัวละคร: ผู้พูดสีปกติ ตัวละครไม่พูดใส่สีเทา
+	_update_speaker_dim(data["speaker"], skip_typewriter)
+	
 	# อัปเดตท่าทางตัวละคร (อิงสถานะ ไม่รีสตาร์ทเฟรมใหม่ทุกครั้งที่กดข้อความ)
 	var vel_override = data.get("vel_anim_override", "")
 	_update_character_postures(data["speaker"], vel_override)
@@ -396,6 +411,36 @@ func _show_current_dialogue(skip_typewriter: bool = false) -> void:
 		is_typing = false
 		_show_continue_arrow()
 	)
+
+func _update_speaker_dim(speaker: String, immediate: bool = false) -> void:
+	if not is_instance_valid(vel) or not is_instance_valid(guardian):
+		return
+		
+	var is_guardian_speaking: bool = (speaker == "ผู้พิทักษ์")
+	var is_vel_speaking: bool = (speaker == "เวล" or (!is_guardian_speaking and speaker != ""))
+	
+	var target_vel_color: Color = CHAR_ACTIVE_COLOR if is_vel_speaking else (CHAR_INACTIVE_COLOR if is_guardian_speaking else CHAR_ACTIVE_COLOR)
+	var target_guardian_color: Color = CHAR_ACTIVE_COLOR if is_guardian_speaking else (CHAR_INACTIVE_COLOR if is_vel_speaking else CHAR_ACTIVE_COLOR)
+	
+	if immediate:
+		if char_dim_tween_vel and char_dim_tween_vel.is_valid():
+			char_dim_tween_vel.kill()
+		if char_dim_tween_guardian and char_dim_tween_guardian.is_valid():
+			char_dim_tween_guardian.kill()
+		vel.self_modulate = target_vel_color
+		guardian.self_modulate = target_guardian_color
+	else:
+		if vel.self_modulate != target_vel_color:
+			if char_dim_tween_vel and char_dim_tween_vel.is_valid():
+				char_dim_tween_vel.kill()
+			char_dim_tween_vel = create_tween()
+			char_dim_tween_vel.tween_property(vel, "self_modulate", target_vel_color, 0.2).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+			
+		if guardian.self_modulate != target_guardian_color:
+			if char_dim_tween_guardian and char_dim_tween_guardian.is_valid():
+				char_dim_tween_guardian.kill()
+			char_dim_tween_guardian = create_tween()
+			char_dim_tween_guardian.tween_property(guardian, "self_modulate", target_guardian_color, 0.2).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
 
 func _on_player_advance() -> void:
 	if not is_dialogue_active:
@@ -701,6 +746,10 @@ func _finish_cutscene() -> void:
 	_hide_continue_arrow()
 	_hide_question_mark()
 	_hide_exclamation()
+	if char_dim_tween_vel and char_dim_tween_vel.is_valid(): char_dim_tween_vel.kill()
+	if char_dim_tween_guardian and char_dim_tween_guardian.is_valid(): char_dim_tween_guardian.kill()
+	if is_instance_valid(vel): vel.self_modulate = CHAR_ACTIVE_COLOR
+	if is_instance_valid(guardian): guardian.self_modulate = CHAR_ACTIVE_COLOR
 	
 	# ซ่อนกล่องข้อความ
 	if is_instance_valid(dialogue_box):
@@ -732,6 +781,10 @@ func _skip_cutscene() -> void:
 	_hide_continue_arrow()
 	_hide_question_mark()
 	_hide_exclamation()
+	if char_dim_tween_vel and char_dim_tween_vel.is_valid(): char_dim_tween_vel.kill()
+	if char_dim_tween_guardian and char_dim_tween_guardian.is_valid(): char_dim_tween_guardian.kill()
+	if is_instance_valid(vel): vel.self_modulate = CHAR_ACTIVE_COLOR
+	if is_instance_valid(guardian): guardian.self_modulate = CHAR_ACTIVE_COLOR
 	if is_instance_valid(dialogue_box):
 		dialogue_box.visible = false
 	_switch_to_gameplay()

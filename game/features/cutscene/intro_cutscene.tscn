@@ -802,7 +802,7 @@ tracks/25/path = NodePath(".")
 tracks/25/interp = 1
 tracks/25/loop_wrap = true
 tracks/25/keys = {
-"times": PackedFloat32Array(11.8, 15, 20.3, 21),
+"times": PackedFloat32Array(11.8, 15, 20, 20.35),
 "transitions": PackedFloat32Array(1, 1, 1, 1),
 "values": [{
 "args": [],
@@ -825,10 +825,10 @@ tracks/26/path = NodePath("MagicStoryUI/Backdrop:color")
 tracks/26/interp = 1
 tracks/26/loop_wrap = true
 tracks/26/keys = {
-"times": PackedFloat32Array(0, 20.8, 21.4, 24),
+"times": PackedFloat32Array(0, 20.35, 20.65, 24),
 "transitions": PackedFloat32Array(1, 1, 1, 1),
 "update": 0,
-"values": [Color(0, 0, 0, 0), Color(0, 0, 0, 0), Color(0, 0, 0, 0.85), Color(0, 0, 0, 0.85)]
+"values": [Color(0, 0, 0, 0), Color(0, 0, 0, 0), Color(0, 0, 0, 0.98), Color(0, 0, 0, 0.98)]
 }
 tracks/27/type = "value"
 tracks/27/imported = false
@@ -837,7 +837,7 @@ tracks/27/path = NodePath("MagicStoryUI/ParchmentFrame:modulate")
 tracks/27/interp = 1
 tracks/27/loop_wrap = true
 tracks/27/keys = {
-"times": PackedFloat32Array(0, 20.8, 21.4, 24),
+"times": PackedFloat32Array(0, 20.35, 20.65, 24),
 "transitions": PackedFloat32Array(1, 1, 1, 1),
 "update": 0,
 "values": [Color(1, 1, 1, 0), Color(1, 1, 1, 0), Color(1, 1, 1, 1), Color(1, 1, 1, 1)]
@@ -849,10 +849,10 @@ tracks/28/path = NodePath("MagicStoryUI/RuneContainer:scale")
 tracks/28/interp = 1
 tracks/28/loop_wrap = true
 tracks/28/keys = {
-"times": PackedFloat32Array(0, 21, 21.4, 21.6, 24),
+"times": PackedFloat32Array(0, 20.35, 20.65, 20.75, 24),
 "transitions": PackedFloat32Array(1, 0.5, 2, 1, 1),
 "update": 0,
-"values": [Vector2(0.01, 0.01), Vector2(0.2, 0.2), Vector2(1.08, 1.08), Vector2(1, 1), Vector2(1, 1)]
+"values": [Vector2(0.01, 0.01), Vector2(0.3, 0.3), Vector2(1.05, 1.05), Vector2(1, 1), Vector2(1, 1)]
 }
 tracks/29/type = "value"
 tracks/29/imported = false
@@ -861,7 +861,7 @@ tracks/29/path = NodePath("MagicStoryUI/RuneContainer:modulate")
 tracks/29/interp = 1
 tracks/29/loop_wrap = true
 tracks/29/keys = {
-"times": PackedFloat32Array(0, 21, 21.4, 24),
+"times": PackedFloat32Array(0, 20.35, 20.65, 24),
 "transitions": PackedFloat32Array(1, 1, 1, 1),
 "update": 0,
 "values": [Color(1, 1, 1, 0), Color(1, 1, 1, 0), Color(1, 1, 1, 1), Color(1, 1, 1, 1)]
@@ -873,10 +873,10 @@ tracks/30/path = NodePath("PaperOnFloor:visible")
 tracks/30/interp = 1
 tracks/30/loop_wrap = true
 tracks/30/keys = {
-"times": PackedFloat32Array(0, 16.4),
-"transitions": PackedFloat32Array(1, 1),
+"times": PackedFloat32Array(0, 16.4, 20.35),
+"transitions": PackedFloat32Array(1, 1, 1),
 "update": 1,
-"values": [false, true]
+"values": [false, true, false]
 }
 tracks/31/type = "value"
 tracks/31/imported = false
@@ -885,7 +885,7 @@ tracks/31/path = NodePath("PaperOnFloor:position")
 tracks/31/interp = 1
 tracks/31/loop_wrap = true
 tracks/31/keys = {
-"times": PackedFloat32Array(0, 16.4, 16.5, 16.6, 16.7, 16.8, 16.9, 17, 17.1, 17.2, 17.3, 17.4, 17.5, 17.6, 17.7, 17.8, 20.3, 20.9, 24),
+"times": PackedFloat32Array(0, 16.4, 16.5, 16.6, 16.7, 16.8, 16.9, 17, 17.1, 17.2, 17.3, 17.4, 17.5, 17.6, 17.7, 17.8, 20, 20.35, 24),
 "transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0.5, 1, 1),
 "update": 0,
 "values": [Vector2(64, 96), Vector2(68, 44), Vector2(67.1, 51.2), Vector2(65.4, 57.8), Vector2(63.6, 64), Vector2(62.2, 69.5), Vector2(61.6, 74.6), Vector2(61.8, 79.1), Vector2(62.6, 83), Vector2(63.7, 86.4), Vector2(64.6, 89.3), Vector2(65, 91.7), Vector2(64.9, 93.6), Vector2(64.5, 95), Vector2(64.1, 95.7), Vector2(64, 96), Vector2(64, 96), Vector2(56, 59), Vector2(56, 59)]
@@ -909,7 +909,7 @@ tracks/33/path = NodePath("PaperOnFloor:scale")
 tracks/33/interp = 1
 tracks/33/loop_wrap = true
 tracks/33/keys = {
-"times": PackedFloat32Array(0, 16.4, 16.6, 17.8, 18.4, 19, 19.6, 20.3, 20.9, 24),
+"times": PackedFloat32Array(0, 16.4, 16.6, 17.8, 18.4, 19, 19.6, 20, 20.35, 24),
 "transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 0.5, 1, 1),
 "update": 0,
 "values": [Vector2(0.095, 0.095), Vector2(0.08, 0.08), Vector2(0.095, 0.095), Vector2(0.095, 0.095), Vector2(0.099, 0.099), Vector2(0.095, 0.095), Vector2(0.099, 0.099), Vector2(0.095, 0.095), Vector2(0.12, 0.12), Vector2(0.12, 0.12)]
@@ -921,7 +921,7 @@ tracks/34/path = NodePath("PaperOnFloor:modulate")
 tracks/34/interp = 1
 tracks/34/loop_wrap = true
 tracks/34/keys = {
-"times": PackedFloat32Array(0, 16.4, 16.55, 16.85, 17.3, 17.8, 18.4, 19, 19.6, 20.3, 20.9, 24),
+"times": PackedFloat32Array(0, 16.4, 16.55, 16.85, 17.3, 17.8, 18.4, 19, 19.6, 20, 20.35, 24),
 "transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1),
 "update": 0,
 "values": [Color(1, 1, 1, 1), Color(0.08, 0.08, 0.1, 0), Color(0.12, 0.1, 0.15, 0.95), Color(0.28, 0.25, 0.3, 1), Color(0.65, 0.6, 0.55, 1), Color(1, 1, 1, 1), Color(1.45, 1.35, 1.15, 1), Color(1.05, 1, 0.95, 1), Color(1.45, 1.35, 1.15, 1), Color(1.2, 1.15, 1, 1), Color(2, 1.8, 1.2, 1), Color(2, 1.8, 1.2, 1)]
@@ -933,10 +933,10 @@ tracks/35/path = NodePath("MagicStoryUI/ParchmentShadow:modulate")
 tracks/35/interp = 1
 tracks/35/loop_wrap = true
 tracks/35/keys = {
-"times": PackedFloat32Array(0, 20.8, 21.4, 24),
+"times": PackedFloat32Array(0, 20.35, 20.65, 24),
 "transitions": PackedFloat32Array(1, 1, 1, 1),
 "update": 0,
-"values": [Color(0, 0, 0, 0), Color(0, 0, 0, 0), Color(0, 0, 0, 0.55), Color(0, 0, 0, 0.55)]
+"values": [Color(0, 0, 0, 0), Color(0, 0, 0, 0), Color(0, 0, 0, 0.65), Color(0, 0, 0, 0.65)]
 }
 tracks/36/type = "value"
 tracks/36/imported = false
@@ -1029,7 +1029,7 @@ tracks/43/path = NodePath("PaperShadow:modulate")
 tracks/43/interp = 1
 tracks/43/loop_wrap = true
 tracks/43/keys = {
-"times": PackedFloat32Array(0, 16.4, 16.6, 17.8, 20.3, 20.9),
+"times": PackedFloat32Array(0, 16.4, 16.6, 17.8, 20, 20.35),
 "transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1),
 "update": 0,
 "values": [Color(1, 1, 1, 0), Color(1, 1, 1, 0), Color(1, 1, 1, 0.2), Color(1, 1, 1, 0.55), Color(1, 1, 1, 0.55), Color(1, 1, 1, 0)]
@@ -1041,7 +1041,7 @@ tracks/44/path = NodePath("MagicStoryUI/Backdrop:visible")
 tracks/44/interp = 1
 tracks/44/loop_wrap = true
 tracks/44/keys = {
-"times": PackedFloat32Array(0, 20.8),
+"times": PackedFloat32Array(0, 20.35),
 "transitions": PackedFloat32Array(1, 1),
 "update": 1,
 "values": [false, true]
@@ -1053,7 +1053,7 @@ tracks/45/path = NodePath("MagicStoryUI/ParchmentShadow:visible")
 tracks/45/interp = 1
 tracks/45/loop_wrap = true
 tracks/45/keys = {
-"times": PackedFloat32Array(0, 20.8),
+"times": PackedFloat32Array(0, 20.35),
 "transitions": PackedFloat32Array(1, 1),
 "update": 1,
 "values": [false, true]
@@ -1065,7 +1065,7 @@ tracks/46/path = NodePath("MagicStoryUI/ParchmentFrame:visible")
 tracks/46/interp = 1
 tracks/46/loop_wrap = true
 tracks/46/keys = {
-"times": PackedFloat32Array(0, 20.8),
+"times": PackedFloat32Array(0, 20.35),
 "transitions": PackedFloat32Array(1, 1),
 "update": 1,
 "values": [false, true]
@@ -1077,7 +1077,7 @@ tracks/47/path = NodePath("MagicStoryUI/RuneContainer:visible")
 tracks/47/interp = 1
 tracks/47/loop_wrap = true
 tracks/47/keys = {
-"times": PackedFloat32Array(0, 21),
+"times": PackedFloat32Array(0, 20.35),
 "transitions": PackedFloat32Array(1, 1),
 "update": 1,
 "values": [false, true]
@@ -1413,7 +1413,9 @@ mouse_filter = 2
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
+offset_left = 140.0
 offset_top = 85.0
+offset_right = -140.0
 offset_bottom = 0.0
 grow_horizontal = 2
 grow_vertical = 2
@@ -1421,6 +1423,7 @@ mouse_filter = 2
 bbcode_enabled = true
 fit_content = false
 scroll_active = false
+autowrap_mode = 0
 theme_override_colors/default_color = Color(0.92, 0.75, 0.35, 0.35)
 theme_override_colors/font_outline_color = Color(0.92, 0.7, 0.25, 0.3)
 theme_override_constants/outline_size = 6
@@ -1430,16 +1433,20 @@ theme_override_constants/shadow_offset_y = 0
 theme_override_constants/shadow_outline_size = 8
 theme_override_constants/line_separation = 16
 theme_override_fonts/normal_font = SubResource("FontVariation_rune_bold")
-theme_override_font_sizes/normal_font_size = 30
-text = "[center][wave amp=10.0 freq=1.8 connected=1]หากคัมภีร์แตกสลาย
+theme_override_font_sizes/normal_font_size = 28
+text = "[wave amp=10.0 freq=1.8 connected=1]หากคัมภีร์แตกสลาย
 จงตามหาเศษแห่งต้นกำเนิด
-เพื่อคืนความสงบสุขแก่อาณาจักร[/wave][/center]"
+เพื่อคืนความสงบสุขแก่อาณาจักร[/wave]"
+visible_characters = 0
+visible_ratio = 0.0
 
 [node name="RuneRichLabel" type="RichTextLabel" parent="MagicStoryUI/RuneContainer" unique_id=2117922670]
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
+offset_left = 140.0
 offset_top = 85.0
+offset_right = -140.0
 offset_bottom = 0.0
 grow_horizontal = 2
 grow_vertical = 2
@@ -1447,15 +1454,19 @@ mouse_filter = 2
 bbcode_enabled = true
 fit_content = false
 scroll_active = false
+autowrap_mode = 0
 theme_override_colors/default_color = Color(0.14, 0.08, 0.18, 1)
 theme_override_constants/line_separation = 16
 theme_override_fonts/normal_font = SubResource("FontVariation_rune_bold")
-theme_override_font_sizes/normal_font_size = 30
-text = "[center][wave amp=10.0 freq=1.8 connected=1]หากคัมภีร์แตกสลาย
+theme_override_font_sizes/normal_font_size = 28
+text = "[wave amp=10.0 freq=1.8 connected=1]หากคัมภีร์แตกสลาย
 จงตามหาเศษแห่งต้นกำเนิด
-เพื่อคืนความสงบสุขแก่อาณาจักร[/wave][/center]"
+เพื่อคืนความสงบสุขแก่อาณาจักร[/wave]"
+visible_characters = 0
+visible_ratio = 0.0
 
 [node name="ContinuePrompt" type="Label" parent="MagicStoryUI/RuneContainer" unique_id=2117922671]
+visible = false
 modulate = Color(1, 1, 1, 0)
 anchors_preset = 7
 anchor_left = 0.5

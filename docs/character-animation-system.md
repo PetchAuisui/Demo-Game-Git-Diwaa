@@ -136,3 +136,18 @@ func _update_character_postures(speaker: String, custom_vel_anim: String = "") -
 * **การยึดติดพื้น (Y-Axis & Grounding):** Sprite ตัวละครขนาด 48×83 (สเกล 4x) กำหนดระดับจุดศูนย์กลางที่ `y = 700` (หรือ `y = 680` ใน `level_dialogue_view` / `inside_tower_cutscene`) เพื่อให้ปลายเท้าอยู่เหนือกล่องข้อความ พร้อมใส่โหนดเงา `DropShadow` (`res://assets/cutscene/props/khampri/drop_shadow.png`) ใต้เท้า
 * **ระยะปลอดกล่องข้อความ (Dialogue Clearance):** กล่องข้อความด้านล่างควรอยู่ใต้ปลายเท้าของตัวละคร (มาตรฐานเอกสารอ้างอิงที่ `y = 880` หรือ `y = 864` เมื่อตัวละครยืนที่ `y = 680`) เพื่อให้แสดงผลตัวละครครบถ้วน 100% เหนือกล่องข้อความ
 * *(หมายเหตุ: มาตรฐานนี้ใช้กับฉากสนทนาทั่วไปและด่านใน `level_dialogue_view` โดยไม่นำไปแก้ไขฉากเฉพาะเดิมอย่าง `intro_cutscene`, `central_tower_cutscene` [ดูค่าเฉพาะที่ `central-tower-cutscene.md`](central-tower-cutscene.md) หรือ `ending_cutscene`)*
+
+---
+
+## 6. ระบบไฮไลต์ผู้พูดและตัวละครสีเทาขณะไม่ได้พูด (Speaker Focus & Inactive Gray System)
+
+เพื่อให้ผู้เล่นแยกแยะได้ชัดเจนว่าใครกำลังพูดอยู่ในแต่ละประโยคของกล่องข้อความ (Visual Novel / Dialogue Speaker Focus):
+* **ผู้ที่กำลังพูด (Active Speaker):**
+  - ใช้สีปกติสว่างชัดเจน 100%: `self_modulate = Color(1.0, 1.0, 1.0, 1.0)` (`CHAR_ACTIVE_COLOR`)
+* **ผู้ที่ไม่ได้พูด / กำลังฟัง (Inactive Character):**
+  - ลดความสว่างและติดโทนสีเทาลงอย่างเป็นธรรมชาติ: `self_modulate = Color(0.5, 0.5, 0.5, 1.0)` (`CHAR_INACTIVE_COLOR`)
+* **การเปลี่ยนผ่านสี (Smooth Tween Transition):**
+  - เมื่อเปลี่ยนประโยคหรือสลับคนพูด ระบบจะเล่น Tween ความเร็ว `0.20s` (`Tween.TRANS_SINE`, `Tween.EASE_OUT`) ปรับ `self_modulate` อย่างนุ่มนวล
+  - การใช้ `self_modulate` รับประกันว่าเงาใต้เท้า (`DropShadow`) และไอคอนอีโมตเหนือศีรษะ (`ExclamationMark`, `QuestionMark`, `AngerMark`) จะไม่ถูกย้อมสีหรือมืดลงผิดปกติ
+  - รองรับการย้อนกลับบทสนทนา (Back navigation), การข้าม (Skip/Fast-Forward), และการเลือกตัวเลือกคำถาม (Choice Menu) ครอบคลุมทั้งฉากด่านสนทนา (`level_dialogue_view`), คัตซีนหอคอยกลาง (`central_tower_cutscene`), และคัตซีนบทส่งท้าย (`ending_cutscene`)
+

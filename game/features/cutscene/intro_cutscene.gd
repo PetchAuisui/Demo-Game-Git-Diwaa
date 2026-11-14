@@ -12,10 +12,10 @@ extends Sprite2D
 ## 8. วงเวท/หลุมดำรอบสองเปิดขึ้นมาแบบวงเล็ก ค่อย ๆ ดูดเศษทั้ง 20 ชิ้นหายไป
 ## 9. หลังการดูดเสร็จสิ้น เศษคัมภีร์หน้าสุดท้าย (paper.png) ร่อนตกลงมาจากด้านบน ส่ายลงมาสัมผัสพื้นไม้ (16.6s -> 17.8s)
 ## 10. เมื่อกระดาษลงสู่พื้นแล้ว หลุมดำปิด เวลได้สติเดินเข้าไปหากระดาษ (18.0s -> 20.0s)
-## 11. เวลหยุดข้างกระดาษ กระดาษลอยขึ้นสู่มือเวล (20.3s)
-## 12. หน้าจอปรากฏกระดาษโบราณกึ่งกลางจอ พร้อมข้อความมนตราโบราณภาษาไทย (ฟอนต์ ChakraPetch-Bold)
-##     กึ่งกลางแผ่นกระดาษ ลอยพริ้วไหวอย่างสงบ
-## 13. เมื่อผู้เล่นกดไปต่อ (Space / คลิก) กระดาษในมือและตัวหนังสือจะสลายหายไปพร้อมกัน
+## 11. เวลหยุดข้างกระดาษ กระดาษลอยขึ้นสู่มือและหายไปพร้อมแผ่นกระดาษโบราณใบใหญ่ที่ปรากฏขึ้นมาทันที (20.35s)
+## 12. พื้นหลังเฟดมืดสนิท ข้อความมนตราโบราณภาษาไทย (ฟอนต์ ChakraPetch-Bold)
+##     พิมพ์ขึ้นมาแบบ Typewriter Effect เรียงจากซ้ายไปขวา (ความเร็ว ~0.032s/ตัวอักษร) พร้อมลอยพริ้วไหวด้วย wave
+## 13. เมื่อพิมพ์เสร็จสิ้น ค้างไว้ประมาณ 0.85 วินาที แล้วกระดาษจะสลายหายไปและตัดเข้าสู่ฉากถัดไปโดยอัตโนมัติ
 
 @export_enum("AnimationPlayer", "ScriptTween") var playback_mode: String = "AnimationPlayer"
 
@@ -59,11 +59,14 @@ var _shard_ground_y: Array[float] = []
 var _shard_base_shadow_scale: Array[Vector2] = []
 var can_continue: bool = false
 var is_continuing: bool = false
+var is_typing: bool = false
 var is_fast_forwarding: bool = false
 var can_fast_forward: bool = true
 var tw_ex_bob: Tween = null
 var tw_paper_glow: Tween = null
 var tw_rune_aura: Tween = null
+var tw_typing: Tween = null
+var tw_auto_continue: Tween = null
 var tw_cp_fade: Tween = null
 var tw_cp_pulse: Tween = null
 var skip_ctrl = null
@@ -246,7 +249,31 @@ func _input(event: InputEvent) -> void:
 	
 	if wants_continue:
 		get_viewport().set_input_as_handled()
-		_trigger_continue()
+		if is_typing:
+			_skip_typing()
+		else:
+			_trigger_continue()
+
+func _skip_typing() -> void:
+	if not is_typing:
+		return
+	is_typing = false
+	if tw_typing and tw_typing.is_valid():
+		tw_typing.kill()
+		tw_typing = null
+	if rune_label:
+		rune_label.visible_ratio = 1.0
+	if rune_aura_label:
+		rune_aura_label.visible_ratio = 1.0
+	
+	if tw_auto_continue and tw_auto_continue.is_valid():
+		tw_auto_continue.kill()
+	tw_auto_continue = create_tween()
+	tw_auto_continue.tween_interval(0.85)
+	tw_auto_continue.tween_callback(func():
+		if not is_continuing:
+			_trigger_continue()
+	)
 
 func _on_skip_step() -> void:
 	if is_continuing:
@@ -280,20 +307,20 @@ func _skip_to_magic_text() -> void:
 		if is_instance_valid(sh):
 			sh.visible = false
 	
-	paper_on_floor.z_index = 0
-	paper_on_floor.visible = true
-	paper_on_floor.position = Vector2(vel.position.x + 8.0, character_y - 28.0)
-	paper_on_floor.scale = Vector2(0.12, 0.12)
-	paper_on_floor.modulate = Color(2.0, 1.8, 1.2, 1.0)
+	paper_on_floor.visible = false
 	if paper_shadow:
 		paper_shadow.visible = false
 	if backdrop:
-		backdrop.color = Color(0, 0, 0, 0.85)
+		backdrop.visible = true
+		backdrop.color = Color(0, 0, 0, 0.98)
 	if parchment_shadow:
-		parchment_shadow.modulate = Color(0, 0, 0, 0.55)
+		parchment_shadow.visible = true
+		parchment_shadow.modulate = Color(0, 0, 0, 0.65)
 	if parchment_frame:
+		parchment_frame.visible = true
 		parchment_frame.modulate = Color(1, 1, 1, 1)
 	if rune_container:
+		rune_container.visible = true
 		rune_container.scale = Vector2.ONE
 		rune_container.modulate = Color(1, 1, 1, 1)
 	
@@ -306,6 +333,13 @@ func _trigger_continue_instant() -> void:
 	can_continue = false
 	can_fast_forward = false
 	is_fast_forwarding = false
+	is_typing = false
+	if tw_typing and tw_typing.is_valid():
+		tw_typing.kill()
+		tw_typing = null
+	if tw_auto_continue and tw_auto_continue.is_valid():
+		tw_auto_continue.kill()
+		tw_auto_continue = null
 	Engine.time_scale = 1.0
 	SceneLoader.change_scene(get_tree(), "res://features/cutscene/outside_cutscene.tscn")
 
@@ -374,6 +408,13 @@ func _sync_shard_shadows() -> void:
 func _reset_cutscene_state() -> void:
 	can_continue = false
 	is_continuing = false
+	is_typing = false
+	if tw_typing and tw_typing.is_valid():
+		tw_typing.kill()
+		tw_typing = null
+	if tw_auto_continue and tw_auto_continue.is_valid():
+		tw_auto_continue.kill()
+		tw_auto_continue = null
 	
 	# แสงห้องปกติ ไม่มืด กล้องนิ่ง
 	if room_lighting:
@@ -435,8 +476,12 @@ func _reset_cutscene_state() -> void:
 		rune_container.scale = Vector2(0.01, 0.01)
 		rune_container.modulate = Color(1, 1, 1, 0)
 	if rune_aura_label:
+		rune_aura_label.visible_ratio = 0.0
 		rune_aura_label.modulate = Color(1, 1, 1, 1)
+	if rune_label:
+		rune_label.visible_ratio = 0.0
 	if continue_prompt:
+		continue_prompt.visible = false
 		continue_prompt.modulate = Color(1, 1, 1, 0)
 	
 	if tw_ex_bob and tw_ex_bob.is_valid():
@@ -617,7 +662,7 @@ func _on_suck_shards() -> void:
 			tw_suck.chain().tween_callback(func(): s.visible = false)
 		)
 
-## เรียกเมื่อเวลเดินมาหยุดข้างกระดาษ แล้วกระดาษลอยขึ้นสู่มือเวล (20.3s)
+## เรียกเมื่อเวลเดินมาหยุดข้างกระดาษ แล้วกระดาษลอยขึ้นสู่มือเวล (20.0s)
 func _on_pickup_shard() -> void:
 	if not paper_on_floor:
 		return
@@ -628,26 +673,42 @@ func _on_pickup_shard() -> void:
 		return
 	if paper_shadow:
 		var tw_ps = create_tween()
-		tw_ps.tween_property(paper_shadow, "modulate:a", 0.0, 0.5)
+		tw_ps.tween_property(paper_shadow, "modulate:a", 0.0, 0.35)
 		tw_ps.chain().tween_callback(func(): paper_shadow.visible = false)
 	var hand_pos: Vector2 = vel.position + Vector2(6.0, 0.0)
 	var tw = create_tween().set_parallel(true)
-	tw.tween_property(paper_on_floor, "position", hand_pos, 0.6).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-	tw.tween_property(paper_on_floor, "scale", Vector2(0.12, 0.12), 0.6)
-	tw.tween_property(paper_on_floor, "modulate", Color(2.0, 1.8, 1.2, 1.0), 0.6)
+	tw.tween_property(paper_on_floor, "position", hand_pos, 0.35).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	tw.tween_property(paper_on_floor, "scale", Vector2(0.12, 0.12), 0.35)
+	tw.tween_property(paper_on_floor, "modulate", Color(2.0, 1.8, 1.2, 1.0), 0.35)
+	tw.chain().tween_callback(func():
+		if paper_on_floor:
+			paper_on_floor.visible = false
+	)
 
-## แสดงตัวอักษรเวทมนตร์เด้งขึ้นมาพร้อมพื้นหลังกระดาษจาง ๆ และปุ่มกดไปต่อ (21.0s)
+## แสดงตัวอักษรเวทมนตร์ค่อย ๆ พิมพ์ขึ้นมา (Typewriter) พร้อมพื้นหลังกระดาษโบราณ และค้างไว้ก่อนเฟดหายไปอัตโนมัติ (20.35s)
 func _on_reveal_magic_text() -> void:
 	if not rune_container:
 		return
 	SceneLoader.request_preload("res://features/cutscene/outside_cutscene.tscn")
+	
+	# เมื่อกระดาษใบใหญ่ขึ้นมา ใบเล็กบนพื้น/ในมือจะหายไปทันที
+	if paper_on_floor:
+		paper_on_floor.visible = false
+	if paper_shadow:
+		paper_shadow.visible = false
+	
+	# ฉากหลังเฟดมืดสนิทตามรูปแรก (98% black)
 	if backdrop:
 		backdrop.visible = true
+		backdrop.color = Color(0, 0, 0, 0.98)
 	if parchment_shadow:
 		parchment_shadow.visible = true
+		parchment_shadow.modulate = Color(0, 0, 0, 0.65)
 	if parchment_frame:
 		parchment_frame.visible = true
+		parchment_frame.modulate = Color(1, 1, 1, 1)
 	rune_container.visible = true
+	
 	if skip_ctrl:
 		skip_ctrl.set_fast_forward_visible(false)
 	can_fast_forward = false
@@ -655,9 +716,21 @@ func _on_reveal_magic_text() -> void:
 	Engine.time_scale = 1.0
 	can_continue = true
 	is_continuing = false
+	is_typing = true
+	
+	# ไม่แสดงปุ่มคลิกเพื่อไปต่อ
+	if continue_prompt:
+		continue_prompt.visible = false
+		continue_prompt.modulate = Color(1, 1, 1, 0)
+	
+	# เตรียมสถานะเริ่มต้นของข้อความมนตรา (ซ่อนตัวอักษรเพื่อรอพิมพ์)
+	if rune_label:
+		rune_label.visible_ratio = 0.0
+		rune_label.modulate = Color(1.0, 1.0, 1.0, 1.0)
 	
 	# ลูปแสงออร่าเวทมนตร์เรืองรองอ่อน ๆ นุ่มนวล ไม่สว่างจ้าเกินไป
 	if rune_aura_label:
+		rune_aura_label.visible_ratio = 0.0
 		if tw_rune_aura and tw_rune_aura.is_valid():
 			tw_rune_aura.kill()
 		rune_aura_label.modulate = Color(1.0, 0.95, 0.85, 0.35)
@@ -665,28 +738,36 @@ func _on_reveal_magic_text() -> void:
 		tw_rune_aura.tween_property(rune_aura_label, "modulate:a", 0.55, 1.5).set_trans(Tween.TRANS_SINE)
 		tw_rune_aura.tween_property(rune_aura_label, "modulate:a", 0.20, 1.5).set_trans(Tween.TRANS_SINE)
 	
-	# ตัวอักษรหลักคงความสว่างนวลตา คมชัด อ่านง่าย สบายตา
-	if rune_label:
-		rune_label.modulate = Color(1.0, 1.0, 1.0, 1.0)
+	# Typewriter Effect: พิมพ์จากซ้ายไปขวาด้วยความเร็วอิงรูปแรก (~0.032s/ตัวอักษร, รวม 2.2 วินาที)
+	if tw_typing and tw_typing.is_valid():
+		tw_typing.kill()
+		tw_typing = null
+	if tw_auto_continue and tw_auto_continue.is_valid():
+		tw_auto_continue.kill()
+		tw_auto_continue = null
 	
-	# แสงกระพริบแนะนำให้กดไปต่อ (ค่อย ๆ ชัดขึ้นก่อน แล้วจึงเริ่มกระพริบ ไม่ตีกันช่วง 0.6s แรก)
-	if continue_prompt:
-		if tw_cp_fade and tw_cp_fade.is_valid():
-			tw_cp_fade.kill()
-		if tw_cp_pulse and tw_cp_pulse.is_valid():
-			tw_cp_pulse.kill()
-		continue_prompt.modulate = Color(1, 1, 1, 0)
-		tw_cp_fade = create_tween()
-		tw_cp_fade.tween_property(continue_prompt, "modulate:a", 0.95, 0.6).set_trans(Tween.TRANS_SINE)
-		tw_cp_fade.tween_callback(func():
-			if is_continuing or not is_instance_valid(continue_prompt):
-				return
-			tw_cp_pulse = create_tween().set_loops()
-			tw_cp_pulse.tween_property(continue_prompt, "modulate:a", 0.35, 0.8).set_trans(Tween.TRANS_SINE)
-			tw_cp_pulse.tween_property(continue_prompt, "modulate:a", 0.95, 0.8).set_trans(Tween.TRANS_SINE)
-		)
+	tw_typing = create_tween()
+	# ดีเลย์สั้น ๆ 0.2 วินาที ให้กระดาษโบราณกางออกชัดเจนก่อนเริ่มพิมพ์
+	tw_typing.tween_interval(0.2)
+	
+	var typing_duration: float = 2.2
+	var tw_type_parallel := tw_typing.parallel()
+	if rune_label:
+		tw_type_parallel.tween_property(rune_label, "visible_ratio", 1.0, typing_duration).set_trans(Tween.TRANS_LINEAR)
+	if rune_aura_label:
+		tw_type_parallel.tween_property(rune_aura_label, "visible_ratio", 1.0, typing_duration).set_trans(Tween.TRANS_LINEAR)
+	
+	# เมื่อพิมพ์ครบทุกตัวแล้ว ค้างไว้สั้น ๆ 0.85 วินาที (ไม่อยู่นานเกินไป) แล้วเฟดหายไปตามเดิมโดยอัตโนมัติ
+	tw_typing.chain().tween_callback(func():
+		is_typing = false
+	)
+	tw_typing.tween_interval(0.85)
+	tw_typing.tween_callback(func():
+		if not is_continuing:
+			_trigger_continue()
+	)
 
-## สลายกระดาษและตัวหนังสือหายไปพร้อมกันเมื่อผู้เล่นกดไปต่อ
+## สลายกระดาษและตัวหนังสือหายไปพร้อมกัน
 func _trigger_continue() -> void:
 	if is_continuing:
 		return
@@ -694,7 +775,14 @@ func _trigger_continue() -> void:
 	can_continue = false
 	can_fast_forward = false
 	is_fast_forwarding = false
+	is_typing = false
 	Engine.time_scale = 1.0
+	if tw_typing and tw_typing.is_valid():
+		tw_typing.kill()
+		tw_typing = null
+	if tw_auto_continue and tw_auto_continue.is_valid():
+		tw_auto_continue.kill()
+		tw_auto_continue = null
 	if tw_paper_glow and tw_paper_glow.is_valid():
 		tw_paper_glow.kill()
 		tw_paper_glow = null
@@ -745,8 +833,8 @@ func _trigger_continue() -> void:
 	if paper_shadow:
 		tw_dissolve.tween_property(paper_shadow, "modulate:a", 0.0, 0.4)
 	
-	# แผ่นกระดาษบนมือเวลสลายหายไปพร้อมตัวหนังสือ
-	if paper_on_floor:
+	# แผ่นกระดาษบนมือเวลสลายหายไปพร้อมตัวหนังสือ (หากยังแสดงอยู่)
+	if paper_on_floor and paper_on_floor.visible:
 		tw_dissolve.tween_property(paper_on_floor, "modulate", Color(3.0, 2.5, 1.5, 0.0), 0.6)
 		tw_dissolve.tween_property(paper_on_floor, "scale", Vector2(0.16, 0.16), 0.6)
 		tw_dissolve.tween_property(paper_on_floor, "position:y", paper_on_floor.position.y - 10.0, 0.6)
@@ -979,14 +1067,14 @@ func play_with_tween() -> void:
 		vel.play("breathe_blink")
 	)
 	
-	# 10. เวลหยิบกระดาษลอยขึ้น (20.3s)
+	# 10. เวลหยิบกระดาษลอยขึ้นทันทีเมื่อเดินถึง (20.0s)
 	var tw_pickup = create_tween()
-	tw_pickup.tween_interval(20.3)
+	tw_pickup.tween_interval(20.0)
 	tw_pickup.tween_callback(_on_pickup_shard)
 	
-	# 11. ตัวอักษรเวทมนตร์เด้งขึ้นมาพร้อมพื้นหลังกระดาษจาง ๆ กึ่งกลางจอ (21.0s)
+	# 11. ตัวอักษรเวทมนตร์และกระดาษใบใหญ่ขึ้นมาทันที (20.35s)
 	var tw_ui = create_tween()
-	tw_ui.tween_interval(21.0)
+	tw_ui.tween_interval(20.35)
 	tw_ui.tween_callback(func():
 		if backdrop:
 			backdrop.visible = true
@@ -997,15 +1085,15 @@ func play_with_tween() -> void:
 		if rune_container:
 			rune_container.visible = true
 		var tw_t = create_tween().set_parallel(true)
-		tw_t.tween_property(backdrop, "color", Color(0, 0, 0, 0.85), 0.5)
-		tw_t.tween_property(parchment_frame, "modulate", Color(1, 1, 1, 1.0), 0.5)
+		tw_t.tween_property(backdrop, "color", Color(0, 0, 0, 0.98), 0.35)
+		tw_t.tween_property(parchment_frame, "modulate", Color(1, 1, 1, 1.0), 0.35)
 		if parchment_shadow:
-			tw_t.tween_property(parchment_shadow, "modulate", Color(0, 0, 0, 0.55), 0.5)
+			tw_t.tween_property(parchment_shadow, "modulate", Color(0, 0, 0, 0.65), 0.35)
 		
-		rune_container.scale = Vector2(0.2, 0.2)
+		rune_container.scale = Vector2(0.3, 0.3)
 		rune_container.modulate = Color(1, 1, 1, 0)
 		var tw_pop = create_tween().set_parallel(true)
-		tw_pop.tween_property(rune_container, "scale", Vector2(1.0, 1.0), 0.5).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-		tw_pop.tween_property(rune_container, "modulate", Color(1, 1, 1, 1), 0.4)
+		tw_pop.tween_property(rune_container, "scale", Vector2(1.0, 1.0), 0.35).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+		tw_pop.tween_property(rune_container, "modulate", Color(1, 1, 1, 1), 0.3)
 		_on_reveal_magic_text()
 	)

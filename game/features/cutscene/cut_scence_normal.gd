@@ -27,6 +27,7 @@ signal cutscene_finished
 func _ready() -> void:
 	Engine.time_scale = 1.0
 	SceneLoader.request_preload("res://features/cutscene/intro_cutscene.tscn")
+	SceneLoader.request_preload("res://assets/audio/gitdiwa-sound+effect.MP3")
 	skip_ctrl = preload("res://features/cutscene/skip_cutscene_button.gd").new()
 	skip_ctrl.next_scene_path = "res://features/cutscene/intro_cutscene.tscn"
 	skip_ctrl.custom_skip_action = _on_skip_step

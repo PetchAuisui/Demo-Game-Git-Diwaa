@@ -213,7 +213,8 @@ func _ready() -> void:
 	# เลื่อนมุมมองกล้องไปยังตำแหน่งด่านเริ่มต้นของผู้เล่นทันทีหลังจากที่ layout เสร็จสมบูรณ์
 	_initial_scroll_to_current_stage()
 
-	SceneLoader.request_preload(INSIDE_TOWER_CUTSCENE_SCENE)
+	if not GameProgressManager.has_seen_intro_cutscene():
+		SceneLoader.request_preload(INSIDE_TOWER_CUTSCENE_SCENE)
 	SceneLoader.request_preload(LEVEL_DIALOGUE_SCENE)
 	SceneLoader.request_preload(SANDBOX_SCENE)
 
@@ -2085,7 +2086,7 @@ func _on_launch_stage_pressed() -> void:
 	GameProgressManager.set_selected_level_number(stg_id)
 
 	var target_scene: String
-	if stg_id == 1:
+	if stg_id == 1 and not GameProgressManager.has_seen_intro_cutscene():
 		target_scene = INSIDE_TOWER_CUTSCENE_SCENE
 	elif stg_id == 16:
 		target_scene = CENTRAL_TOWER_CUTSCENE_SCENE

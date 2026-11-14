@@ -94,6 +94,12 @@ var font_chakra_bold: Font = null
 var font_chakra_regular: Font = null
 var font_choice_regular: FontVariation = null
 
+# Speaker Focus & Inactive Character Dimming (สีเทาเมื่อไม่ได้พูด)
+const CHAR_ACTIVE_COLOR := Color(1.0, 1.0, 1.0, 1.0)
+const CHAR_INACTIVE_COLOR := Color(0.5, 0.5, 0.5, 1.0)
+var char_dim_tween_vel: Tween = null
+var char_dim_tween_mewla: Tween = null
+
 # Animation Sequence
 const VEL_IDLE_SEQ: Array[String] = ["breathe", "breathe_blink", "breathe", "breathe", "breathe_blink"]
 var vel_seq_step: int = 0
@@ -194,10 +200,6 @@ func _ready() -> void:
 	skip_ctrl.custom_skip_action = _on_skip_step
 	add_child(skip_ctrl)
 	
-	# โหลดหน้าเลือกด่านรอไว้ล่วงหน้าใน Background Thread เพื่อกลับไปได้ทันทีเมื่อจบบทสนทนา
-	SceneLoader.request_preload(LEVEL_SELECT_PATH)
-	SceneLoader.request_preload(LEVEL_CLEAR_SCENE_PATH)
-	
 	# ตรวจสอบด่านที่เลือกจาก Level Select
 	var selected_lvl := GameProgressManager.get_selected_level_number()
 	if selected_lvl > 0:
@@ -206,8 +208,7 @@ func _ready() -> void:
 	# โหลดข้อมูลด่าน
 	_load_level_data(level_number)
 	
-	if play_entrance_cutscene or (level_number == 1 and debug_phase == 0):
-		play_entrance_cutscene = true
+	if play_entrance_cutscene:
 		# เริ่มต้นในโหมดคัตซีนเดินเข้าห้องโถง
 		is_in_entrance_cutscene = true
 		fade_overlay.visible = true
@@ -255,10 +256,71 @@ func _exit_tree() -> void:
 	_stop_active_slot_glow()
 	if slot_pop_tween and slot_pop_tween.is_valid():
 		slot_pop_tween.kill()
+		slot_pop_tween = null
 	if bad_ending_tween and bad_ending_tween.is_valid():
 		bad_ending_tween.kill()
+		bad_ending_tween = null
 	if bad_ending_pulse_tween and bad_ending_pulse_tween.is_valid():
 		bad_ending_pulse_tween.kill()
+		bad_ending_pulse_tween = null
+	if choice_slide_tween and choice_slide_tween.is_valid():
+		choice_slide_tween.kill()
+		choice_slide_tween = null
+	if entrance_tween and entrance_tween.is_valid():
+		entrance_tween.kill()
+		entrance_tween = null
+	if stand_tween and stand_tween.is_valid():
+		stand_tween.kill()
+		stand_tween = null
+	if warp_tween and warp_tween.is_valid():
+		warp_tween.kill()
+		warp_tween = null
+	if reaction_tween and reaction_tween.is_valid():
+		reaction_tween.kill()
+		reaction_tween = null
+	if hop_tween and hop_tween.is_valid():
+		hop_tween.kill()
+		hop_tween = null
+	if open_box_tween and open_box_tween.is_valid():
+		open_box_tween.kill()
+		open_box_tween = null
+	if intro_box_tween and intro_box_tween.is_valid():
+		intro_box_tween.kill()
+		intro_box_tween = null
+	if typewriter_tween and typewriter_tween.is_valid():
+		typewriter_tween.kill()
+		typewriter_tween = null
+	if question_tween and question_tween.is_valid():
+		question_tween.kill()
+		question_tween = null
+	if exclamation_tween and exclamation_tween.is_valid():
+		exclamation_tween.kill()
+		exclamation_tween = null
+	if arrow_tween and arrow_tween.is_valid():
+		arrow_tween.kill()
+		arrow_tween = null
+	if press_tween_back and press_tween_back.is_valid():
+		press_tween_back.kill()
+		press_tween_back = null
+	if press_tween_next and press_tween_next.is_valid():
+		press_tween_next.kill()
+		press_tween_next = null
+	if char_dim_tween_vel and char_dim_tween_vel.is_valid():
+		char_dim_tween_vel.kill()
+		char_dim_tween_vel = null
+	if char_dim_tween_mewla and char_dim_tween_mewla.is_valid():
+		char_dim_tween_mewla.kill()
+		char_dim_tween_mewla = null
+	_clear_cached_textures()
+	SceneLoader.flush_preloads()
+
+static func _clear_cached_textures() -> void:
+	_cached_arrow_left_tex = null
+	_cached_arrow_right_tex = null
+	_cached_silver_cursor_tex = null
+	_cached_empty_cursor_tex = null
+	_cached_question_frame_tex = null
+	_cached_question_frame_active_tex = null
 
 func _process(_delta: float) -> void:
 	if is_transitioning:
@@ -412,13 +474,7 @@ func _begin_dialogue_phase(phase: int = -1) -> void:
 	elif debug_phase == 2:
 		_load_sequence(level_data.get("outro_sequence", []))
 	else:
-		if level_number == 1 and not play_entrance_cutscene:
-			var full_intro: Array = []
-			full_intro.append_array(INTRO_DIALOGUES)
-			full_intro.append_array(level_data.get("intro_sequence", []))
-			_load_sequence(full_intro)
-		else:
-			_load_sequence(level_data.get("intro_sequence", []))
+		_load_sequence(level_data.get("intro_sequence", []))
 
 # ==============================================================================
 # ENTRANCE CUTSCENE (เดินเข้าห้องโถง & พบมิวราก่อนเริ่มบทเรียน)
@@ -580,6 +636,10 @@ func _on_skip_step() -> void:
 	if open_box_tween and open_box_tween.is_valid(): open_box_tween.kill()
 	if intro_box_tween and intro_box_tween.is_valid(): intro_box_tween.kill()
 	if typewriter_tween and typewriter_tween.is_valid(): typewriter_tween.kill()
+	if char_dim_tween_vel and char_dim_tween_vel.is_valid(): char_dim_tween_vel.kill()
+	if char_dim_tween_mewla and char_dim_tween_mewla.is_valid(): char_dim_tween_mewla.kill()
+	vel.self_modulate = CHAR_ACTIVE_COLOR
+	mewla.self_modulate = CHAR_ACTIVE_COLOR
 	
 	_hide_exclamation()
 	_hide_question_mark()
@@ -727,6 +787,9 @@ func _show_single_dialogue(data: Dictionary, skip_typewriter: bool = false) -> v
 	speaker_label.text = data["speaker"]
 	dialogue_label.text = _format_bbcode(data["text"])
 	
+	# ปรับสีตัวละคร: ผู้พูดสีปกติ ตัวละครไม่พูดใส่สีเทา
+	_update_speaker_dim(data["speaker"], skip_typewriter)
+	
 	# สีชื่อผู้พูด
 	var target_mewla_anim = data.get("mewla_anim", "talk")
 	if data["speaker"] == "มิวรา":
@@ -777,6 +840,39 @@ func _show_single_dialogue(data: Dictionary, skip_typewriter: bool = false) -> v
 		)
 		
 	_update_back_button_state()
+
+func _update_speaker_dim(speaker: String, immediate: bool = false) -> void:
+	if not is_instance_valid(vel) or not is_instance_valid(mewla):
+		return
+	if not mewla.visible:
+		vel.self_modulate = CHAR_ACTIVE_COLOR
+		return
+		
+	var is_mewla_speaking: bool = (speaker == "มิวรา")
+	var is_vel_speaking: bool = (speaker == "เวล" or (!is_mewla_speaking and speaker != ""))
+	
+	var target_vel_color: Color = CHAR_ACTIVE_COLOR if is_vel_speaking else (CHAR_INACTIVE_COLOR if is_mewla_speaking else CHAR_ACTIVE_COLOR)
+	var target_mewla_color: Color = CHAR_ACTIVE_COLOR if is_mewla_speaking else (CHAR_INACTIVE_COLOR if is_vel_speaking else CHAR_ACTIVE_COLOR)
+	
+	if immediate:
+		if char_dim_tween_vel and char_dim_tween_vel.is_valid():
+			char_dim_tween_vel.kill()
+		if char_dim_tween_mewla and char_dim_tween_mewla.is_valid():
+			char_dim_tween_mewla.kill()
+		vel.self_modulate = target_vel_color
+		mewla.self_modulate = target_mewla_color
+	else:
+		if vel.self_modulate != target_vel_color:
+			if char_dim_tween_vel and char_dim_tween_vel.is_valid():
+				char_dim_tween_vel.kill()
+			char_dim_tween_vel = create_tween()
+			char_dim_tween_vel.tween_property(vel, "self_modulate", target_vel_color, 0.2).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+			
+		if mewla.self_modulate != target_mewla_color:
+			if char_dim_tween_mewla and char_dim_tween_mewla.is_valid():
+				char_dim_tween_mewla.kill()
+			char_dim_tween_mewla = create_tween()
+			char_dim_tween_mewla.tween_property(mewla, "self_modulate", target_mewla_color, 0.2).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
 
 func _on_player_advance() -> void:
 	if is_typing:
@@ -1015,8 +1111,15 @@ func _display_choice_menu(menu_id: String, animate_entrance: bool = true) -> voi
 		choice_slide_tween = null
 	is_choice_sliding_out = false
 
+	var can_reuse_existing_slots: bool = (
+		current_menu_id == menu_id
+		and is_instance_valid(choice_slots_container)
+		and choice_slots_container.visible
+		and choice_buttons.size() > 0
+	)
+
 	# กรณีวนกลับมาคำถามเดิมหลังจากอ่านคำตอบจบ: ไม่ต้องสร้างปุ่มใหม่และไม่ต้องเล่นอนิเมชั่น ให้คืนค่าปุ่มเดิมที่มีอยู่บนจอทันที
-	if not animate_entrance and current_menu_id == menu_id and is_instance_valid(choice_slots_container) and choice_slots_container.visible and choice_buttons.size() > 0:
+	if not animate_entrance and can_reuse_existing_slots:
 		_stop_active_slot_glow()
 		active_choice_id = ""
 		is_showing_choices = true
@@ -1040,11 +1143,14 @@ func _display_choice_menu(menu_id: String, animate_entrance: bool = true) -> voi
 			speaker_label.add_theme_color_override("font_color", Color(0.92, 0.80, 0.44, 1.0))
 			dialogue_label.text = prompt_text
 		dialogue_label.visible_ratio = 1.0
+		_update_speaker_dim(speaker_label.text if speaker_label.visible else "", false)
 		
 		for b in choice_buttons:
 			if is_instance_valid(b):
 				_setup_slot_button_styles(b, b.disabled)
 				b.icon = _get_empty_arrow_texture()
+				b.position.x = 0.0
+				b.modulate.a = 1.0
 				if not b.disabled:
 					b.mouse_filter = Control.MOUSE_FILTER_STOP
 					b.focus_mode = Control.FOCUS_ALL
@@ -1105,6 +1211,7 @@ func _display_choice_menu(menu_id: String, animate_entrance: bool = true) -> voi
 		dialogue_label.text = prompt_text
 		
 	dialogue_label.visible_ratio = 1.0
+	_update_speaker_dim(speaker_label.text if speaker_label.visible else "", false)
 	
 	# คำนวณความสูงตามจำนวนช้อยส์จริง เพื่อให้ช้อยส์ข้อล่างสุดอยู่ติดเหนือ DialogueBox ในระดับเดียวกันเสมอ
 	var vp_size = get_viewport_rect().size if is_inside_tree() else Vector2(1920, 1080)
@@ -1130,9 +1237,14 @@ func _display_choice_menu(menu_id: String, animate_entrance: bool = true) -> voi
 	choice_slots_container.modulate.a = 1.0
 	choice_slots_container.visible = true
 	
+	if not can_reuse_existing_slots:
+		animate_entrance = true
+
 	if slot_pop_tween and slot_pop_tween.is_valid():
 		slot_pop_tween.kill()
-	slot_pop_tween = create_tween()
+	slot_pop_tween = null
+	if animate_entrance:
+		slot_pop_tween = create_tween()
 	
 	var num_strip_regex = RegEx.new()
 	num_strip_regex.compile("^\\s*\\d+[.)]\\s*")
@@ -1191,7 +1303,7 @@ func _display_choice_menu(menu_id: String, animate_entrance: bool = true) -> voi
 		choice_slots_container.add_child(slot_wrapper)
 		choice_buttons.append(btn)
 		
-		if animate_entrance:
+		if animate_entrance and slot_pop_tween:
 			# Animation ค่อยๆ เฟดเข้าและสไลด์จาก ขวาไปซ้าย ทีละอัน
 			btn.position.x = 120.0
 			btn.modulate.a = 0.0
@@ -1218,6 +1330,7 @@ func _on_choice_selected(index: int) -> void:
 		
 	if slot_pop_tween and slot_pop_tween.is_valid():
 		slot_pop_tween.kill()
+		slot_pop_tween = null
 	if choice_slide_tween and choice_slide_tween.is_valid():
 		choice_slide_tween.kill()
 		choice_slide_tween = null
@@ -1229,6 +1342,30 @@ func _on_choice_selected(index: int) -> void:
 	var is_yes_no = (current_menu_id == "part1_purpose_sub" or choice_id == "purpose_yes" or choice_id == "purpose_no")
 	var is_action_choice = choice_id.ends_with("_try") or (seq.size() > 0 and seq[0].get("type") == "open_gameplay")
 	var is_question = not is_yes_no and not is_action_choice
+	
+	# ถ้าผู้เล่นคลิกเลือกก่อนที่อนิเมชั่นเลื่อนเข้าจะเล่นจบ (slot_pop_tween ถูกขัดจังหวะ)
+	# ให้ปรับพิกัดปุ่มทุกปุ่มเข้าที่ x = 0.0 ให้เรียบร้อย ไม่ให้ค้างเยื้องกลางอากาศ
+	var needs_align_tween: bool = false
+	if is_question:
+		for b in choice_buttons:
+			if is_instance_valid(b) and absf(b.position.x) > 0.5:
+				needs_align_tween = true
+				break
+				
+	if needs_align_tween:
+		slot_pop_tween = create_tween().set_parallel(true)
+		for b in choice_buttons:
+			if is_instance_valid(b):
+				b.modulate.a = 1.0
+				if absf(b.position.x) > 0.5:
+					slot_pop_tween.tween_property(b, "position:x", 0.0, 0.15).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+				else:
+					b.position.x = 0.0
+	else:
+		for b in choice_buttons:
+			if is_instance_valid(b):
+				b.position.x = 0.0
+				b.modulate.a = 1.0
 	
 	if is_question:
 		# กรณีเป็นคำถามปกติ (ไม่ใช่ ใช่/ไม่ และไม่ใช่ ฉันจะลองดู):
@@ -1327,6 +1464,11 @@ func _finish_dialogue_stage(mark_cleared: bool = true) -> void:
 	is_choice_sliding_out = false
 	if is_instance_valid(choice_slots_container):
 		choice_slots_container.visible = false
+	
+	if char_dim_tween_vel and char_dim_tween_vel.is_valid(): char_dim_tween_vel.kill()
+	if char_dim_tween_mewla and char_dim_tween_mewla.is_valid(): char_dim_tween_mewla.kill()
+	if is_instance_valid(vel): vel.self_modulate = CHAR_ACTIVE_COLOR
+	if is_instance_valid(mewla): mewla.self_modulate = CHAR_ACTIVE_COLOR
 	
 	_hide_continue_arrow()
 	_hide_question_mark()
@@ -1863,13 +2005,17 @@ func _on_player_back() -> void:
 		active_choice_id = ""
 		if slot_pop_tween and slot_pop_tween.is_valid():
 			slot_pop_tween.kill()
+			slot_pop_tween = null
 		if choice_slide_tween and choice_slide_tween.is_valid():
 			choice_slide_tween.kill()
 			choice_slide_tween = null
 		is_choice_sliding_out = true
 		for b in choice_buttons:
-			b.mouse_filter = Control.MOUSE_FILTER_IGNORE
-			b.focus_mode = Control.FOCUS_NONE
+			if is_instance_valid(b):
+				b.position.x = 0.0
+				b.modulate.a = 1.0
+				b.mouse_filter = Control.MOUSE_FILTER_IGNORE
+				b.focus_mode = Control.FOCUS_NONE
 		if is_instance_valid(choice_slots_container):
 			var start_x = choice_slots_container.position.x
 			choice_slide_tween = create_tween().set_parallel(true)

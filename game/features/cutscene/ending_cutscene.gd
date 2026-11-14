@@ -93,6 +93,12 @@ const STAGE_7_DIALOGUES: Array[Dictionary] = [
 		"sigh_puff": true,
 	}
 ]
+# Speaker Focus & Inactive Character Dimming (สีเทาเมื่อไม่ได้พูด)
+const CHAR_ACTIVE_COLOR := Color(1.0, 1.0, 1.0, 1.0)
+const CHAR_INACTIVE_COLOR := Color(0.5, 0.5, 0.5, 1.0)
+var char_dim_tween_vel: Tween = null
+var char_dim_tween_master: Tween = null
+
 var stage_7_dialogue_index: int = 0
 
 var shards: Array[Sprite2D] = []
@@ -167,6 +173,12 @@ func _exit_tree() -> void:
 		press_tween_back.kill()
 	if press_tween_next and press_tween_next.is_valid():
 		press_tween_next.kill()
+	if char_dim_tween_vel and char_dim_tween_vel.is_valid():
+		char_dim_tween_vel.kill()
+		char_dim_tween_vel = null
+	if char_dim_tween_master and char_dim_tween_master.is_valid():
+		char_dim_tween_master.kill()
+		char_dim_tween_master = null
 	if anger_bounce_tween and anger_bounce_tween.is_valid():
 		anger_bounce_tween.kill()
 	if sigh_puff_tween and sigh_puff_tween.is_valid():
@@ -1342,6 +1354,9 @@ func _show_dialogue(speaker: String, text: String, on_continue: Callable, skip_t
 	else:
 		speaker_label.add_theme_color_override("font_color", Color(0.92, 0.80, 0.44, 1.0)) # สีทองอบอุ่น (ปรมาจารย์)
 	
+	# ปรับสีตัวละคร: ผู้พูดสีปกติ ตัวละครไม่พูดใส่สีเทา
+	_update_speaker_dim(speaker, skip_typewriter)
+	
 	dialogue_label.text = text
 	dialogue_label.visible_characters = -1
 	
@@ -1380,6 +1395,10 @@ func _show_dialogue(speaker: String, text: String, on_continue: Callable, skip_t
 func _hide_dialogue(on_finish: Callable) -> void:
 	is_waiting_dialogue = false
 	_hide_continue_arrow()
+	if char_dim_tween_vel and char_dim_tween_vel.is_valid(): char_dim_tween_vel.kill()
+	if char_dim_tween_master and char_dim_tween_master.is_valid(): char_dim_tween_master.kill()
+	if is_instance_valid(vel): vel.self_modulate = CHAR_ACTIVE_COLOR
+	if is_instance_valid(master_char): master_char.self_modulate = CHAR_ACTIVE_COLOR
 	if typewriter_tween and typewriter_tween.is_valid():
 		typewriter_tween.kill()
 	if dialogue_box_tween and dialogue_box_tween.is_valid():
@@ -1392,6 +1411,39 @@ func _hide_dialogue(on_finish: Callable) -> void:
 		if on_finish.is_valid():
 			on_finish.call()
 	)
+
+func _update_speaker_dim(speaker: String, immediate: bool = false) -> void:
+	if not is_instance_valid(vel) or not is_instance_valid(master_char):
+		return
+	if not master_char.visible:
+		vel.self_modulate = CHAR_ACTIVE_COLOR
+		return
+		
+	var is_master_speaking: bool = (speaker == "ปรมาจารย์")
+	var is_vel_speaking: bool = (speaker == "เวล" or (!is_master_speaking and speaker != ""))
+	
+	var target_vel_color: Color = CHAR_ACTIVE_COLOR if is_vel_speaking else (CHAR_INACTIVE_COLOR if is_master_speaking else CHAR_ACTIVE_COLOR)
+	var target_master_color: Color = CHAR_ACTIVE_COLOR if is_master_speaking else (CHAR_INACTIVE_COLOR if is_vel_speaking else CHAR_ACTIVE_COLOR)
+	
+	if immediate:
+		if char_dim_tween_vel and char_dim_tween_vel.is_valid():
+			char_dim_tween_vel.kill()
+		if char_dim_tween_master and char_dim_tween_master.is_valid():
+			char_dim_tween_master.kill()
+		vel.self_modulate = target_vel_color
+		master_char.self_modulate = target_master_color
+	else:
+		if vel.self_modulate != target_vel_color:
+			if char_dim_tween_vel and char_dim_tween_vel.is_valid():
+				char_dim_tween_vel.kill()
+			char_dim_tween_vel = create_tween()
+			char_dim_tween_vel.tween_property(vel, "self_modulate", target_vel_color, 0.2).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+			
+		if master_char.self_modulate != target_master_color:
+			if char_dim_tween_master and char_dim_tween_master.is_valid():
+				char_dim_tween_master.kill()
+			char_dim_tween_master = create_tween()
+			char_dim_tween_master.tween_property(master_char, "self_modulate", target_master_color, 0.2).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
 
 func _show_continue_arrow() -> void:
 	if arrow_tween and arrow_tween.is_valid():
