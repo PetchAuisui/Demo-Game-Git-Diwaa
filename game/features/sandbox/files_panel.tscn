@@ -157,7 +157,7 @@ size_flags_horizontal = 3
 theme_override_colors/font_color = Color(1, 0.79, 0.35, 1)
 theme_override_fonts/font = SubResource("FontVariation_bold")
 theme_override_font_sizes/font_size = 22
-text = "FILES — พื้นที่ทำงาน"
+text = "ไฟล์ — พื้นที่ทำงาน"
 vertical_alignment = 1
 
 [node name="FeedbackLabel" type="Label" parent="Margin/Layout/Header"]
@@ -295,7 +295,7 @@ size_flags_horizontal = 3
 theme_override_colors/font_color = Color(0.6, 0.66, 0.82, 1)
 theme_override_fonts/font = SubResource("FontVariation_bold")
 theme_override_font_sizes/font_size = 15
-text = "WORKSPACE"
+text = "พื้นที่ทำงาน"
 
 [node name="EntryCountLabel" type="Label" parent="Margin/Layout/WorkspaceBody/NavigatorSurface/NavigatorLayout/NavigatorHeader"]
 unique_name_in_owner = true

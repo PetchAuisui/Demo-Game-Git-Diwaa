@@ -7,7 +7,7 @@ signal finish_pressed
 signal brand_pressed
 
 @export var game_title: String = "GIT DI WAA"
-@export var mode_text: String = "SANDBOX"
+@export var mode_text: String = "ห้องทดลอง SANDBOX"
 
 var _brand_btn: BrandButton
 var _mode_label: Label
