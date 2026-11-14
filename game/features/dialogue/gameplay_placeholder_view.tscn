@@ -1,4 +1,4 @@
-[gd_scene load_steps=6 format=3 uid="uid://d1p8y4k7m9v2z"]
+[gd_scene format=3 uid="uid://d1p8y4k7nav20"]
 
 [ext_resource type="Script" path="res://features/dialogue/gameplay_placeholder_view.gd" id="1_script"]
 [ext_resource type="FontFile" uid="uid://deedcfbkojx6k" path="res://assets/fonts/ChakraPetch-Bold.ttf" id="2_chakra_bold"]

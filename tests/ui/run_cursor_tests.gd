@@ -17,12 +17,21 @@ func _initialize() -> void:
 	_test_commit_graph_cursor_shape()
 	_test_commit_graph_focus_on_blank_click()
 	_test_commit_graph_hover_deduplication()
-	_test_is_hovering_clickable_enabled_button()
-	_test_is_hovering_clickable_button_with_default_arrow()
-	_test_is_hovering_clickable_nested_label()
-	_test_is_hovering_clickable_disabled_button()
-	_test_is_hovering_clickable_plain_control()
-	_test_touchy_click_animation_on_disabled_button()
+
+	var gw = GameWindowScript.new()
+	get_root().add_child(gw)
+	await process_frame
+
+	_test_is_hovering_clickable_enabled_button(gw)
+	_test_is_hovering_clickable_button_with_default_arrow(gw)
+	_test_is_hovering_clickable_nested_label(gw)
+	_test_is_hovering_clickable_disabled_button(gw)
+	_test_is_hovering_clickable_plain_control(gw)
+	_test_touchy_click_animation_on_disabled_button(gw)
+	_test_right_click_does_not_clear_scrollbar_drag(gw)
+
+	gw.free()
+	await process_frame
 
 	print("\n--- Test Results ---")
 	print("Passed: %d / %d" % [_passed, _total])
@@ -124,40 +133,29 @@ func _test_commit_graph_hover_deduplication() -> void:
 	canvas.free()
 
 
-func _test_is_hovering_clickable_enabled_button() -> void:
-	var gw = GameWindowScript.new()
-	get_root().add_child(gw)
-
+func _test_is_hovering_clickable_enabled_button(gw: Node) -> void:
 	var btn := Button.new()
 	btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	get_root().add_child(btn)
 
 	var is_clickable: bool = gw._is_hovering_clickable(btn)
-	_assert_true(is_clickable, "game_window: ปุ่มปกติที่เปิดใช้งานต้อง _is_hovering_clickable == true")
+	_assert_true(is_clickable, "game_window: ปุ่มปกติที่เปิดใช้งานและมีรูปมือต้อง _is_hovering_clickable == true")
 
 	btn.free()
-	gw.free()
 
 
-func _test_is_hovering_clickable_button_with_default_arrow() -> void:
-	var gw = GameWindowScript.new()
-	get_root().add_child(gw)
-
+func _test_is_hovering_clickable_button_with_default_arrow(gw: Node) -> void:
 	var btn := Button.new()
 	btn.mouse_default_cursor_shape = Control.CURSOR_ARROW
 	get_root().add_child(btn)
 
 	var is_clickable: bool = gw._is_hovering_clickable(btn)
-	_assert_true(is_clickable, "game_window: ปุ่ม BaseButton แม้ใช้เคอร์เซอร์ลูกศรก็ต้อง _is_hovering_clickable == true")
+	_assert_true(not is_clickable, "game_window: ปุ่ม BaseButton ที่ใช้เคอร์เซอร์ลูกศรต้อง _is_hovering_clickable == false")
 
 	btn.free()
-	gw.free()
 
 
-func _test_is_hovering_clickable_nested_label() -> void:
-	var gw = GameWindowScript.new()
-	get_root().add_child(gw)
-
+func _test_is_hovering_clickable_nested_label(gw: Node) -> void:
 	var btn := Button.new()
 	btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	var label := Label.new()
@@ -169,13 +167,9 @@ func _test_is_hovering_clickable_nested_label() -> void:
 	_assert_true(is_clickable, "game_window: โหนดลูกในปุ่ม (Label) ต้อง walk parent เจอและ _is_hovering_clickable == true")
 
 	btn.free()
-	gw.free()
 
 
-func _test_is_hovering_clickable_disabled_button() -> void:
-	var gw = GameWindowScript.new()
-	get_root().add_child(gw)
-
+func _test_is_hovering_clickable_disabled_button(gw: Node) -> void:
 	var btn := Button.new()
 	btn.disabled = true
 	btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
@@ -191,13 +185,9 @@ func _test_is_hovering_clickable_disabled_button() -> void:
 	_assert_true(not is_label_clickable, "game_window: โหนดลูกในปุ่ม disabled ต้อง _is_hovering_clickable == false")
 
 	btn.free()
-	gw.free()
 
 
-func _test_is_hovering_clickable_plain_control() -> void:
-	var gw = GameWindowScript.new()
-	get_root().add_child(gw)
-
+func _test_is_hovering_clickable_plain_control(gw: Node) -> void:
 	var panel := Panel.new()
 	panel.mouse_filter = Control.MOUSE_FILTER_STOP
 	get_root().add_child(panel)
@@ -206,17 +196,14 @@ func _test_is_hovering_clickable_plain_control() -> void:
 	_assert_true(not is_clickable, "game_window: โหนด Control ธรรมดา (ไม่ใช่ปุ่มและไม่มีรูปมือ) ต้อง _is_hovering_clickable == false")
 
 	panel.free()
-	gw.free()
 
 
-func _test_touchy_click_animation_on_disabled_button() -> void:
-	var gw = GameWindowScript.new()
-	get_root().add_child(gw)
-
+func _test_touchy_click_animation_on_disabled_button(gw: Node) -> void:
 	var btn := Button.new()
 	btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	get_root().add_child(btn)
 
+	gw._hovered_control_override = btn
 	gw._touchy_click_active = true
 	gw._touchy_step = 0
 	gw._touchy_timer = 0.0
@@ -230,5 +217,26 @@ func _test_touchy_click_animation_on_disabled_button() -> void:
 	_assert_true(gw._touchy_step == 1, "touchy click: แอนิเมชันต้องเลื่อนไปยัง step 1")
 	_assert_true(gw._applied_hand_key.begins_with("touchy:"), "touchy click: เคอร์เซอร์ hand ต้องเป็น touchy ไม่ใช่ buffy")
 
+	gw._hovered_control_override = null
 	btn.free()
-	gw.free()
+
+
+func _test_right_click_does_not_clear_scrollbar_drag(gw: Node) -> void:
+	var sb := VScrollBar.new()
+	get_root().add_child(sb)
+
+	gw._dragging_scrollbar = sb
+	gw._scroll_anim_timer = gw.SCROLL_HOLD_DURATION
+
+	var rclick := InputEventMouseButton.new()
+	rclick.button_index = MOUSE_BUTTON_RIGHT
+	rclick.pressed = true
+
+	gw._on_raw_input(rclick)
+
+	_assert_true(gw._dragging_scrollbar == sb, "game_window: คลิกขวาต้องไม่ล้างการลาก scrollbar")
+	_assert_true(gw._scroll_anim_timer > 0.0, "game_window: คลิกขวาต้องไม่รีเซ็ต _scroll_anim_timer ระหว่างลาก scrollbar")
+
+	gw._dragging_scrollbar = null
+	gw._scroll_anim_timer = 0.0
+	sb.free()

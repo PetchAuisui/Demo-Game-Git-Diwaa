@@ -65,9 +65,16 @@ class _CursorInputWatcher extends Node:
 		process_mode = Node.PROCESS_MODE_ALWAYS
 		_owner_window = owner_window
 
+	func _notification(what: int) -> void:
+		if what == NOTIFICATION_ENTER_TREE:
+			if _owner_window == null or not is_instance_valid(_owner_window) or not _owner_window.is_inside_tree():
+				queue_free()
+
 	func _input(event: InputEvent) -> void:
-		if _owner_window != null and is_instance_valid(_owner_window):
+		if _owner_window != null and is_instance_valid(_owner_window) and _owner_window.is_inside_tree():
 			_owner_window._on_raw_input(event)
+		else:
+			queue_free()
 
 
 var _buffy_image: Image = null
@@ -77,6 +84,7 @@ var _secondary_cursor_images: Array[Image] = []
 var _tracked_windows: Array[Window] = []
 var _watcher: _CursorInputWatcher
 var _last_raw_event: InputEvent = null
+var _hovered_control_override: Control = null
 
 var _touchy_click_active := false
 var _touchy_step := 0
@@ -119,7 +127,20 @@ func _exit_tree() -> void:
 	_tracked_windows.clear()
 	_last_raw_event = null
 	_dragging_scrollbar = null
+
+	var tree := get_tree()
+	if tree != null:
+		if tree.node_added.is_connected(_on_tree_node_added):
+			tree.node_added.disconnect(_on_tree_node_added)
+		var root_vp := tree.root
+		if root_vp != null and root_vp.child_entered_tree.is_connected(_on_root_child_entered):
+			root_vp.child_entered_tree.disconnect(_on_root_child_entered)
+
+	if _watcher != null and is_instance_valid(_watcher):
+		_watcher._owner_window = null
+		_watcher.queue_free()
 	_watcher = null
+	_hovered_control_override = null
 	SceneLoader.flush_preloads()
 
 
@@ -362,6 +383,9 @@ func _on_scrollbar_gui_input(event: InputEvent, sb: ScrollBar) -> void:
 
 
 func _get_hovered_control() -> Control:
+	if _hovered_control_override != null and is_instance_valid(_hovered_control_override):
+		return _hovered_control_override
+
 	var write_idx := 0
 	var hovered_in_subwindow: Control = null
 	for i in _tracked_windows.size():
@@ -384,6 +408,8 @@ func _get_hovered_control() -> Control:
 
 
 func _find_ancestor_button(hovered: Control) -> BaseButton:
+	if hovered == null or not is_instance_valid(hovered) or not hovered.is_inside_tree():
+		return null
 	var curr := hovered
 	while curr != null:
 		if curr is BaseButton:
@@ -408,20 +434,20 @@ func _is_hovering_clickable(hovered: Control) -> bool:
 	if hovered == null or not is_instance_valid(hovered) or not hovered.is_inside_tree():
 		return false
 
-	var btn := _find_ancestor_button(hovered)
-	if btn != null:
-		return not btn.disabled
-
 	var curr := hovered
+	var has_pointing_hand := false
 	while curr != null:
-		var local_pos := curr.get_local_mouse_position()
-		if curr.get_cursor_shape(local_pos) == Control.CURSOR_POINTING_HAND:
-			return true
+		if curr is BaseButton and (curr as BaseButton).disabled:
+			return false
+		if not has_pointing_hand:
+			var local_pos := curr.get_local_mouse_position()
+			if curr.get_cursor_shape(local_pos) == Control.CURSOR_POINTING_HAND:
+				has_pointing_hand = true
 		if curr.mouse_filter == Control.MOUSE_FILTER_STOP:
 			break
 		var parent := curr.get_parent()
 		curr = parent as Control if parent is Control else null
-	return false
+	return has_pointing_hand
 
 
 func _trigger_scroll_anim() -> void:
@@ -467,9 +493,12 @@ func _on_raw_input(event: InputEvent) -> void:
 			else:
 				_dragging_scrollbar = null
 		elif mb.button_index == MOUSE_BUTTON_RIGHT and mb.pressed:
+			var hovered := _get_hovered_control()
+			if _dragging_scrollbar != null or _is_hovering_scrollbar(hovered):
+				return
 			_scroll_anim_timer = 0.0
 			_touchy_click_active = false
-			_apply_idle_cursors(_get_hovered_control())
+			_apply_idle_cursors(hovered)
 			return
 	elif event is InputEventMouseMotion and _dragging_scrollbar != null:
 		if Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT):
