@@ -7,7 +7,8 @@ extends Control
 ## Act 2: โถงประจำชั้นทีม (16-20) - Collab Chamber Floor Mat เป็น Loop GitHub Flow
 ## Act 3: ยอดหอคอยแก้ปัญหา (21-40) - Discrete Engineering Deck 5 คอลัมน์ พร้อมเงาปรมาจารย์ Git
 
-## ฉากบทสนทนาประจำด่าน (ไม่เล่นคัตซีนเดินเข้าห้องโถงซ้ำ ซึ่งเล่นเฉพาะครั้งแรกผ่าน inside_tower_cutscene)
+## ฉากบทสนทนาประจำด่าน และคัตซีนเปิดตัวด่าน 1
+const INSIDE_TOWER_CUTSCENE_SCENE := "res://features/cutscene/inside_tower_cutscene.tscn"
 const LEVEL_DIALOGUE_SCENE := "res://features/dialogue/level_dialogue_view.tscn"
 const CENTRAL_TOWER_CUTSCENE_SCENE := "res://features/cutscene/central_tower_cutscene.tscn"
 const SANDBOX_SCENE := "res://features/sandbox/sandbox_game_view.tscn"
@@ -212,6 +213,7 @@ func _ready() -> void:
 	# เลื่อนมุมมองกล้องไปยังตำแหน่งด่านเริ่มต้นของผู้เล่นทันทีหลังจากที่ layout เสร็จสมบูรณ์
 	_initial_scroll_to_current_stage()
 
+	SceneLoader.request_preload(INSIDE_TOWER_CUTSCENE_SCENE)
 	SceneLoader.request_preload(LEVEL_DIALOGUE_SCENE)
 	SceneLoader.request_preload(SANDBOX_SCENE)
 
@@ -2083,7 +2085,9 @@ func _on_launch_stage_pressed() -> void:
 	GameProgressManager.set_selected_level_number(stg_id)
 
 	var target_scene: String
-	if stg_id == 16:
+	if stg_id == 1:
+		target_scene = INSIDE_TOWER_CUTSCENE_SCENE
+	elif stg_id == 16:
 		target_scene = CENTRAL_TOWER_CUTSCENE_SCENE
 	elif LevelDataLoader.has_level(stg_id):
 		target_scene = LEVEL_DIALOGUE_SCENE
