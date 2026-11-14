@@ -242,16 +242,11 @@ func _on_quit_game_pressed() -> void:
 	if _is_leaving:
 		return
 	_play_sfx(_sfx_click)
-	var dialog := ConfirmationDialog.new()
-	dialog.title = "ออกจากเกม"
-	dialog.dialog_text = "ต้องการออกจากเกมหรือไม่?"
-	dialog.ok_button_text = "ออกจากเกม"
-	dialog.cancel_button_text = "ยกเลิก"
-	dialog.confirmed.connect(_confirm_quit_game)
-	dialog.confirmed.connect(dialog.queue_free)
-	dialog.canceled.connect(dialog.queue_free)
-	add_child(dialog)
-	dialog.popup_centered()
+	var popup := MessagePopup.open_confirm(self, "ออกจากเกม", "ต้องการออกจากเกมหรือไม่?", "ออกจากเกม", "ยกเลิก", true)
+	if popup != null:
+		var confirmed: bool = await popup.closed
+		if confirmed:
+			_confirm_quit_game()
 
 
 func _confirm_quit_game() -> void:
