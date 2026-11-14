@@ -6,12 +6,12 @@ extends RefCounted
 ## 1. VERSION ต้องตรงกับ CurrentVersion ใน server/src/GitDiwaa.Online/Accounts/PrivacyPolicy.cs เสมอ
 ##    แก้เนื้อหาเมื่อไหร่ ต้องเปลี่ยนเลขเวอร์ชันทั้งสองที่ (ไม่อย่างนั้น server จะไม่รับการยินยอม)
 ## 2. เนื้อหานี้เป็นฉบับร่าง TODO: ให้ผู้รู้กฎหมายตรวจก่อนเปิดให้คนทั่วไปเล่น
-## 3. TODO ก่อนปล่อยจริง: เปลี่ยน CONTACT_EMAIL และ CONTROLLER_NAME เป็นข้อมูลจริง
+## 3. CONTACT_EMAIL / CONTROLLER_NAME ตั้งค่าแล้ว (ทีมพัฒนาเป็นผู้ควบคุมข้อมูล) ถ้าจะเผยแพร่จริง ควรเปลี่ยนเป็นอีเมลกลางของทีม
 ## 4. TODO ช่วงฐานข้อมูล: ทำบันทึกการเข้าสู่ระบบ (เก็บ 90 วัน) ให้ตรงกับที่เขียนไว้ในข้อ 2 และ 5
 
 const VERSION := "2026-11-10"
 const CONTACT_EMAIL := "670303351@kmitl.ac.th"
-const CONTROLLER_NAME := "ทีมพัฒนาเกม Git-Diwaa (TODO: ระบุชื่อผู้ควบคุมข้อมูลส่วนบุคคล)"
+const CONTROLLER_NAME := "ทีมพัฒนาเกม Git-Diwaa"
 
 const NOTICE_TEMPLATE := """1. ใครดูแลข้อมูลของคุณ
 {controller}

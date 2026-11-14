@@ -222,7 +222,7 @@ func _on_sign_out_pressed() -> void:
 	if confirm_sign_out:
 		var action := _sign_out_btn.text
 		# วางหน้าต่างใน CanvasLayer ของเมนู ให้อยู่บนสุดเสมอ ไม่ว่าหน้านั้นจะมีชั้นอะไรซ้อนอยู่
-		var popup := MessagePopup.open_confirm(_layer, "%sตอนนี้?" % action, "ความคืบหน้าที่ยังไม่บันทึกจะหาย", action)
+		var popup := MessagePopup.open_confirm(_layer, "%sตอนนี้?" % action, "ความคืบหน้าที่ยังไม่บันทึกจะหาย", action, "ยกเลิก", true)
 		if popup == null:
 			return
 		var confirmed: bool = await popup.closed

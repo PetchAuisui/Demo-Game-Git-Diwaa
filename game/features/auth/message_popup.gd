@@ -5,7 +5,8 @@ extends Control
 ##      var popup := MessagePopup.open(get_tree(), "หัวข้อ", "ข้อความ")
 ##      if popup != null: await popup.closed
 ## 2. ถามยืนยัน (ปุ่ม "ยกเลิก" + ปุ่มยืนยันที่ตั้งชื่อตามการกระทำ เช่น "ออกจากระบบ"):
-##      var popup := MessagePopup.open_confirm(parent, "หัวข้อ", "ข้อความ", "ออกจากระบบ")
+##      var popup := MessagePopup.open_confirm(parent, "หัวข้อ", "ข้อความ", "ออกจากระบบ", "ยกเลิก", true)
+##      (พารามิเตอร์ตัวสุดท้าย danger = true ทำให้ปุ่มยืนยันเป็นสีแดง)
 ##      if popup != null: var confirmed: bool = await popup.closed
 ##    โฟกัสเริ่มที่ "ยกเลิก" และกด Esc = ยกเลิก กันกดยืนยันโดยไม่ตั้งใจ
 ## ใช้ Label ธรรมดา (ไม่ใช่ RichTextLabel) และห้ามส่งข้อความดิบจาก server มาแสดง
@@ -20,6 +21,7 @@ var _title := ""
 var _message := ""
 var _ok_text := "ตกลง"
 var _cancel_text := ""  # ว่าง = ไม่มีปุ่มยกเลิก (แบบแจ้งผล)
+var _danger := false  # true = ปุ่มยืนยันเป็นสีแดง (การกระทำที่มีความเสี่ยง เช่น ออกจากระบบ)
 var _closed := false
 
 
@@ -36,11 +38,11 @@ static func open_info(parent: Node, title: String, message: String) -> MessagePo
 
 
 ## parent: ที่จะวางหน้าต่าง (เช่น CanvasLayer ของเมนู เพื่อให้อยู่บนสุดของหน้า)
-static func open_confirm(parent: Node, title: String, message: String, confirm_text: String, cancel_text: String = "ยกเลิก") -> MessagePopup:
-	return _spawn(parent, title, message, confirm_text, cancel_text)
+static func open_confirm(parent: Node, title: String, message: String, confirm_text: String, cancel_text: String = "ยกเลิก", danger: bool = false) -> MessagePopup:
+	return _spawn(parent, title, message, confirm_text, cancel_text, danger)
 
 
-static func _spawn(parent: Node, title: String, message: String, ok_text: String, cancel_text: String) -> MessagePopup:
+static func _spawn(parent: Node, title: String, message: String, ok_text: String, cancel_text: String, danger: bool = false) -> MessagePopup:
 	var scene := load(SCENE_PATH) as PackedScene
 	if scene == null or parent == null:
 		push_error("MessagePopup: could not open the popup.")
@@ -50,6 +52,7 @@ static func _spawn(parent: Node, title: String, message: String, ok_text: String
 	popup._message = message
 	popup._ok_text = ok_text
 	popup._cancel_text = cancel_text
+	popup._danger = danger
 	parent.add_child(popup)
 	return popup
 
@@ -59,7 +62,7 @@ func _ready() -> void:
 	(get_node("%MessageLabel") as Label).text = _message
 
 	var ok_btn := get_node("%OkBtn") as Button
-	if _ok_text == "ออกจากระบบ" or _ok_text.begins_with("ออกจาก"):
+	if _danger:
 		AuthThemeTokens.style_danger_button(ok_btn)
 	else:
 		AuthThemeTokens.style_button(ok_btn)
