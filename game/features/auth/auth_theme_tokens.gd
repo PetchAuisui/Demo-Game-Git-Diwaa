@@ -31,10 +31,16 @@ const TOGGLE_ICON := Color.WHITE
 const TOGGLE_BG := Color("4a3b2c")
 const TOGGLE_HOVER_BG := Color("5c4a37")
 
-# --- Error Feedback ---
+# --- Error Feedback & Danger ---
 const ERROR_TEXT := Color("a82828")
 # สีข้อความแจ้งผลสำเร็จ เช่น "สมัครสมาชิกสำเร็จ"
 const SUCCESS_TEXT := Color("2e6b34")
+
+# --- Danger Button (ออกจากระบบ / การกระทำที่มีความเสี่ยง) ---
+const BUTTON_DANGER_BG := Color("b83232")
+const BUTTON_DANGER_HOVER_BG := Color("cc3b3b")
+const BUTTON_DANGER_PRESSED_BG := Color("9e2727")
+const BUTTON_DANGER_TEXT := Color.WHITE
 
 
 static func create_input_style(border_color: Color = INPUT_BORDER) -> StyleBoxFlat:
@@ -53,14 +59,19 @@ static func create_input_style(border_color: Color = INPUT_BORDER) -> StyleBoxFl
 ## จัดสีปุ่มของหน้าบัญชีทุกหน้าให้เหมือนกัน (เดิมเขียนซ้ำไว้ 4 ไฟล์)
 ## ค่าเริ่มต้น = ปุ่มหลักสีทอง / ปุ่มรองส่ง INPUT_BG, Color.WHITE, CARD_BORDER
 ## ใส่สีตอนปิดใช้งานให้เสมอ ปุ่มไหนถูกปิดชั่วคราว (เช่น ระหว่างรอ server) จะได้ดูออกว่ากดไม่ได้
-static func style_button(btn: Button, normal: Color = BUTTON_BG, hover: Color = BUTTON_HOVER_BG, pressed_bg: Color = BUTTON_PRESSED_BG) -> void:
+static func style_button(btn: Button, normal: Color = BUTTON_BG, hover: Color = BUTTON_HOVER_BG, pressed_bg: Color = BUTTON_PRESSED_BG, font: Color = BUTTON_TEXT) -> void:
 	btn.add_theme_stylebox_override("normal", create_button_style(normal))
 	btn.add_theme_stylebox_override("hover", create_button_style(hover))
 	btn.add_theme_stylebox_override("pressed", create_button_style(pressed_bg))
 	btn.add_theme_stylebox_override("disabled", create_button_style(BUTTON_DISABLED_BG))
 	for color_name in ["font_color", "font_hover_color", "font_pressed_color", "font_focus_color"]:
-		btn.add_theme_color_override(color_name, BUTTON_TEXT)
+		btn.add_theme_color_override(color_name, font)
 	btn.add_theme_color_override("font_disabled_color", BUTTON_DISABLED_TEXT)
+
+
+## จัดสีปุ่มประเภทอันตราย (Danger / Sign Out) ให้เป็นสีแดงโดดเด่นและตัวหนังสือสีขาว
+static func style_danger_button(btn: Button) -> void:
+	style_button(btn, BUTTON_DANGER_BG, BUTTON_DANGER_HOVER_BG, BUTTON_DANGER_PRESSED_BG, BUTTON_DANGER_TEXT)
 
 
 static func create_button_style(bg: Color) -> StyleBoxFlat:

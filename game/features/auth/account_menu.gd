@@ -222,7 +222,7 @@ func _on_sign_out_pressed() -> void:
 	if confirm_sign_out:
 		var action := _sign_out_btn.text
 		# วางหน้าต่างใน CanvasLayer ของเมนู ให้อยู่บนสุดเสมอ ไม่ว่าหน้านั้นจะมีชั้นอะไรซ้อนอยู่
-		var popup := MessagePopup.open_confirm(_layer, "%sตอนนี้?" % action, "ความคืบหน้าที่ยังไม่บันทึกจะหาย", action)
+		var popup := MessagePopup.open_confirm(_layer, "%sตอนนี้?" % action, "ความคืบหน้าที่ยังไม่บันทึกจะหาย", action, "ยกเลิก", true)
 		if popup == null:
 			return
 		var confirmed: bool = await popup.closed
@@ -264,7 +264,7 @@ func _apply_theme() -> void:
 	for icon_color in ["icon_normal_color", "icon_hover_color", "icon_pressed_color", "icon_hover_pressed_color", "icon_focus_color"]:
 		_reveal_btn.add_theme_color_override(icon_color, AuthThemeTokens.TEXT_MUTED)
 
-	# ปุ่มหลัก (จัดการบัญชี) สีทอง / ปุ่มรอง (ออกจากระบบ) สีอ่อน
+	# ปุ่มหลัก (จัดการบัญชี) สีทอง / ปุ่มออกจากระบบ สีแดง
 	AuthThemeTokens.style_button(_manage_btn)
 	AuthThemeTokens.style_button(_reconnect_btn)
-	AuthThemeTokens.style_button(_sign_out_btn, AuthThemeTokens.INPUT_BG, Color.WHITE, AuthThemeTokens.CARD_BORDER)
+	AuthThemeTokens.style_danger_button(_sign_out_btn)
