@@ -917,7 +917,11 @@ func _finish_dialogue_stage(mark_cleared: bool = true) -> void:
 	
 	# บันทึกสถานะว่าเล่นผ่านด่านนี้สำเร็จเฉพาะเมื่อ mark_cleared เป็น true
 	if mark_cleared:
-		GameProgressManager.set_level_cleared(level_number, true)
+		var time_rem := GameProgressManager.get_level_time_remaining(level_number)
+		var lvl_data := LevelDataLoader.load_data(level_number)
+		var time_lim := float(lvl_data.get("time_limit", 0.0))
+		var max_sc := int(lvl_data.get("max_score", 100))
+		GameProgressManager.record_level_clear(level_number, time_rem, time_lim, max_sc)
 		GameProgressManager.clear_level_timer(level_number)
 	
 	# จบบทสนทนา -> เฟดดำ แล้วไปฉากเดินขึ้นบันได (ถ้าผ่านด่าน) หรือกลับหน้าเลือกด่าน
