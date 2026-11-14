@@ -34,9 +34,14 @@ func _init() -> void:
 	name = "LevelMissionPanel"
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	var card := SandboxThemeTokens.create_card_style()
-	card.bg_color.a = 0.82
+	card.bg_color = Color(0.035, 0.042, 0.08, 0.96)
+	card.border_color = Color(0.92, 0.74, 0.35, 1.0)
 	card.set_border_width_all(2)
-	card.set_content_margin_all(10)
+	card.set_corner_radius_all(10)
+	card.content_margin_left = 14
+	card.content_margin_right = 14
+	card.content_margin_top = 10
+	card.content_margin_bottom = 10
 	add_theme_stylebox_override("panel", card)
 	if ResourceLoader.exists(FONT_REGULAR_PATH):
 		_font_regular = load(FONT_REGULAR_PATH) as Font
@@ -116,48 +121,54 @@ func show_complete(message: String, button_text: String) -> void:
 func _build() -> void:
 	var margin := MarginContainer.new()
 	for side in ["left", "right"]:
-		margin.add_theme_constant_override("margin_" + side, 6)
+		margin.add_theme_constant_override("margin_" + side, 4)
 	margin.add_theme_constant_override("margin_top", 2)
 	margin.add_theme_constant_override("margin_bottom", 2)
 	add_child(margin)
 
 	var root := VBoxContainer.new()
-	root.add_theme_constant_override("separation", 4)
+	root.add_theme_constant_override("separation", 6)
 	margin.add_child(root)
 
 	var header := HBoxContainer.new()
 	root.add_child(header)
 	header.add_theme_constant_override("separation", 10)
-	_badge_label = _make_label(14, SandboxThemeTokens.GOLD_TITLE, true)
+	_badge_label = _make_label(16, SandboxThemeTokens.GOLD_TITLE, true)
 	header.add_child(_badge_label)
-	_title_label = _make_label(19, SandboxThemeTokens.BRAND_TEXT, true)
+	_title_label = _make_label(22, SandboxThemeTokens.BRAND_TEXT, true)
 	_title_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_title_label.clip_text = true
 	header.add_child(_title_label)
 	_hint_button = Button.new()
 	_hint_button.text = "คำใบ้"
 	_hint_button.focus_mode = Control.FOCUS_NONE
-	_hint_button.add_theme_stylebox_override("normal", SandboxThemeTokens.create_button_style())
-	_hint_button.add_theme_stylebox_override("hover", SandboxThemeTokens.create_button_style())
-	_hint_button.add_theme_stylebox_override("pressed", SandboxThemeTokens.create_button_style())
-	_hint_button.add_theme_font_size_override("font_size", 14)
+	_hint_button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	var hint_btn_style := SandboxThemeTokens.create_button_style()
+	hint_btn_style.content_margin_left = 14
+	hint_btn_style.content_margin_right = 14
+	hint_btn_style.content_margin_top = 4
+	hint_btn_style.content_margin_bottom = 4
+	_hint_button.add_theme_stylebox_override("normal", hint_btn_style)
+	_hint_button.add_theme_stylebox_override("hover", hint_btn_style)
+	_hint_button.add_theme_stylebox_override("pressed", hint_btn_style)
+	_hint_button.add_theme_font_size_override("font_size", 15)
 	_hint_button.pressed.connect(_on_hint_pressed)
 	header.add_child(_hint_button)
 
-	_story_label = _make_label(16, SandboxThemeTokens.SUBTITLE_TEXT, false)
+	_story_label = _make_label(18, SandboxThemeTokens.PRIMARY_TEXT, false)
 	_story_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	root.add_child(_story_label)
 
 	_rows_box = VBoxContainer.new()
-	_rows_box.add_theme_constant_override("separation", 3)
+	_rows_box.add_theme_constant_override("separation", 5)
 	root.add_child(_rows_box)
 
-	_hint_label = _make_label(17, SandboxThemeTokens.GOLD_TITLE, false)
+	_hint_label = _make_label(18, SandboxThemeTokens.GOLD_TITLE, false)
 	_hint_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_hint_label.visible = false
 	root.add_child(_hint_label)
 
-	_feedback_label = _make_label(17, DONE_COLOR, false)
+	_feedback_label = _make_label(18, DONE_COLOR, false)
 	_feedback_label.visible = false
 	_feedback_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	root.add_child(_feedback_label)
@@ -186,12 +197,12 @@ func _build_row(text: String, done: bool, is_current: bool) -> Control:
 	row.add_theme_constant_override("separation", 12)
 	var check := _CheckBox.new()
 	check.done = done
-	check.custom_minimum_size = Vector2(20, 20)
+	check.custom_minimum_size = Vector2(22, 22)
 	check.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	row.add_child(check)
 	var color := SandboxThemeTokens.TEXT_SECONDARY if done \
 			else (SandboxThemeTokens.PRIMARY_TEXT if is_current else SandboxThemeTokens.TEXT_SECONDARY)
-	var label := _make_label(16, color, is_current)
+	var label := _make_label(18, color, is_current)
 	label.text = text
 	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
