@@ -11,6 +11,9 @@ signal login_succeeded(session: Dictionary, remember_me: bool)
 
 const EYE_ICON := preload("res://assets/icons/eye.svg")
 const EYE_OFF_ICON := preload("res://assets/icons/eye_off.svg")
+# รูปพื้นหลังหน้าเข้าสู่ระบบ / สมัคร: ตอนนี้ยังไม่มีไฟล์ใน repo (ตั้งใจ) หน้าจอจึงใช้พื้นสีเข้มของ Backdrop ไปก่อน
+# อยากใส่รูป: วางไฟล์ตาม path นี้ หรือแก้ path ตรงนี้ให้ชี้ไปที่รูปที่มี (ไม่ต้องแก้โค้ดส่วนอื่น _apply_background โหลดให้เอง)
+# ถ้าไม่มีไฟล์ตาม path ก็ไม่ error แค่ไม่แสดงรูป
 const LOGIN_BG_PATH := "res://assets/art/auth/login_bg.png"
 const REGISTER_BG_PATH := "res://assets/art/auth/register_bg.png"
 # ชื่อ guest ที่โชว์บนลิงก์ยาวได้สุดกี่ตัวอักษร (ชื่อยาวกว่านี้ตัดแล้วต่อด้วย …) กันลิงก์ดันการ์ดจนกว้างเกิน
