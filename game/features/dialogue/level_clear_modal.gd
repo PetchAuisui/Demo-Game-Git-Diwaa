@@ -30,7 +30,7 @@ var _star_idle_tweens: Array[Tween] = []
 @onready var reward_label: Label = $WindowPanel/VBoxMain/Margin/VBox/ScorePanel/VBoxScore/Row4/Value
 
 @onready var keyword_header_label: Label = $WindowPanel/VBoxMain/Margin/VBox/KeywordPanel/VBoxKW/Header
-@onready var keyword_body_label: Label = $WindowPanel/VBoxMain/Margin/VBox/KeywordPanel/VBoxKW/Body
+@onready var keyword_body_label: Control = $WindowPanel/VBoxMain/Margin/VBox/KeywordPanel/VBoxKW/Body
 
 func _ready() -> void:
 	_apply_level_info()
@@ -54,9 +54,13 @@ func _apply_level_info() -> void:
 	if level_title_label:
 		level_title_label.text = "ด่านที่ %d : %s" % [level_number, level_command]
 	if keyword_header_label:
-		keyword_header_label.text = "[คีย์เวิร์ดประจำด่านที่ %d]" % level_number
+		keyword_header_label.text = "💡 สรุปสิ่งสำคัญประจำด่านที่ %d" % level_number
 	if keyword_body_label:
-		keyword_body_label.text = level_keyword
+		var formatted := _format_keyword_text(level_keyword)
+		if keyword_body_label is RichTextLabel:
+			keyword_body_label.text = "[center]%s[/center]" % formatted
+		elif "text" in keyword_body_label:
+			keyword_body_label.text = level_keyword
 
 	var last_run := GameProgressManager.get_last_run_result()
 	var current_score: int = int(last_run.get("score", 100))
@@ -159,3 +163,13 @@ func _start_star_idle(star: TextureRect, index: int) -> void:
 	idle_tw.parallel().tween_property(star, "rotation_degrees", rot_target, 0.55).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 	idle_tw.tween_property(star, "scale", Vector2.ONE, 0.55).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 	idle_tw.parallel().tween_property(star, "rotation_degrees", 0.0, 0.55).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+
+
+func _format_keyword_text(raw_text: String) -> String:
+	if "git --version" in raw_text and "git config" in raw_text:
+		return "[color=#241708]• [color=#8f3800][b]git --version[/b][/color] : เช็กความพร้อมของ Git\n• [color=#8f3800][b]git config[/b][/color] : ตั้งชื่อและอีเมลของผู้สร้างงาน[/color]"
+	var text := raw_text
+	for cmd in ["git --version", "git config", "git init", "git status", "git add", "git commit", "git push", "git pull", "git branch"]:
+		if cmd in text:
+			text = text.replace(cmd, "[color=#8f3800][b]%s[/b][/color]" % cmd)
+	return "[color=#241708]%s[/color]" % text

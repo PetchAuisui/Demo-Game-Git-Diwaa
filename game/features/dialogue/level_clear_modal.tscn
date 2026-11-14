@@ -58,20 +58,23 @@ content_margin_right = 18.0
 content_margin_bottom = 10.0
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_keyword_panel"]
-bg_color = Color(1, 0.90, 0.68, 1)
+bg_color = Color(1, 0.94, 0.82, 1)
 border_width_left = 2
 border_width_top = 2
 border_width_right = 2
-border_width_bottom = 2
-border_color = Color(0.98, 0.76, 0.30, 1)
-corner_radius_top_left = 8
-corner_radius_top_right = 8
-corner_radius_bottom_left = 8
-corner_radius_bottom_right = 8
-content_margin_left = 12.0
-content_margin_top = 8.0
-content_margin_right = 12.0
-content_margin_bottom = 8.0
+border_width_bottom = 3
+border_color = Color(0.92, 0.65, 0.20, 1)
+corner_radius_top_left = 12
+corner_radius_top_right = 12
+corner_radius_bottom_left = 12
+corner_radius_bottom_right = 12
+content_margin_left = 20.0
+content_margin_top = 12.0
+content_margin_right = 20.0
+content_margin_bottom = 14.0
+shadow_color = Color(0.65, 0.40, 0.10, 0.15)
+shadow_size = 6
+shadow_offset = Vector2(0, 3)
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_btn_beige"]
 bg_color = Color(0.88, 0.84, 0.77, 1)
@@ -333,23 +336,28 @@ theme_override_styles/panel = SubResource("StyleBoxFlat_keyword_panel")
 
 [node name="VBoxKW" type="VBoxContainer" parent="WindowPanel/VBoxMain/Margin/VBox/KeywordPanel"]
 layout_mode = 2
-theme_override_constants/separation = 2
+theme_override_constants/separation = 6
 
 [node name="Header" type="Label" parent="WindowPanel/VBoxMain/Margin/VBox/KeywordPanel/VBoxKW"]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.46, 0.28, 0.02, 1)
+theme_override_colors/font_color = Color(0.48, 0.26, 0.04, 1)
 theme_override_fonts/font = SubResource("FontVariation_modal_bold")
-theme_override_font_sizes/font_size = 20
-text = "[คีย์เวิร์ดประจำด่านที่ 1]"
+theme_override_font_sizes/font_size = 22
+text = "💡 สรุปสิ่งสำคัญประจำด่านที่ 1"
 horizontal_alignment = 1
 
-[node name="Body" type="Label" parent="WindowPanel/VBoxMain/Margin/VBox/KeywordPanel/VBoxKW"]
+[node name="Body" type="RichTextLabel" parent="WindowPanel/VBoxMain/Margin/VBox/KeywordPanel/VBoxKW"]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.25, 0.16, 0.02, 1)
-theme_override_fonts/font = SubResource("FontVariation_modal_reg")
-theme_override_font_sizes/font_size = 20
-text = "git --version เพื่อเช็กความพร้อมของ Git และ git config เพื่อตั้งชื่อกับอีเมลผู้สร้างงาน"
-horizontal_alignment = 1
+theme_override_colors/default_color = Color(0.2, 0.12, 0.03, 1)
+theme_override_fonts/normal_font = ExtResource("3_chakra_reg")
+theme_override_fonts/bold_font = ExtResource("2_chakra_bold")
+theme_override_font_sizes/normal_font_size = 20
+theme_override_font_sizes/bold_font_size = 20
+bbcode_enabled = true
+text = "[center]• [color=#8f3800][b]git --version[/b][/color] : เช็กความพร้อมของ Git
+• [color=#8f3800][b]git config[/b][/color] : ตั้งชื่อและอีเมลของผู้สร้างงาน[/center]"
+fit_content = true
+scroll_active = false
 autowrap_mode = 2
 
 [node name="HBoxButtons" type="HBoxContainer" parent="WindowPanel/VBoxMain/Margin/VBox"]
