@@ -60,14 +60,6 @@ static func is_valid(session: Dictionary) -> bool:
 	return true
 
 
-## เช็คว่าหมดอายุหรือยัง (ใช้นาฬิกาในเครื่อง จึงใช้แค่ตัดสินว่าควรลองต่ออายุไหม server เป็นผู้ตัดสินจริงเสมอ)
-static func is_expired(session: Dictionary) -> bool:
-	var expires: Variant = session.get("expires_unix")
-	if not (expires is int):
-		return true
-	return int(Time.get_unix_time_from_system()) >= expires
-
-
 ## บันทึก session ลงเครื่อง คืนค่า true ถ้าสำเร็จ
 static func save(session: Dictionary) -> bool:
 	if not is_valid(session):

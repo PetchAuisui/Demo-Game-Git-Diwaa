@@ -90,10 +90,6 @@ func get_display_name() -> String:
 	return _profile_value("display_name")
 
 
-func get_username() -> String:
-	return _profile_value("username")
-
-
 func get_user_id() -> String:
 	return _profile_value("id")
 

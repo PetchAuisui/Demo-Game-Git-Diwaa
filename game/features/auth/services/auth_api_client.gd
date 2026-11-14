@@ -34,10 +34,6 @@ func _ready() -> void:
 	add_child(_http)
 
 
-func is_busy() -> bool:
-	return _busy
-
-
 func health() -> AuthApiResult:
 	return await _send(HTTPClient.METHOD_GET, "/health", null, "", AuthConfig.HEALTH_TIMEOUT_SEC)
 
