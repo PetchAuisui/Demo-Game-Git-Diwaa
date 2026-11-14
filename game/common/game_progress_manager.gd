@@ -197,13 +197,16 @@ static var _last_run_score_diff: int = 10
 
 
 static func record_level_clear(level_num: int, time_remaining: float, time_limit: float, max_score: int = 100) -> Dictionary:
-	var score: int = 70
+	var score: int = 80
 	if time_limit > 0.0:
-		# คิดคะแนนตามสัดส่วนเวลาที่เหลือ (ช่วง 70 - 100 คะแนน)
+		# คิดคะแนนตามสัดส่วนเวลาที่เหลือ (ช่วง 80 - 100 คะแนนหากผ่านทันเวลา เพื่อการันตี 3 ดาว ให้ผู้เล่นพิมพ์ผิดแก้ตัวได้โดยไม่เสียดาว)
 		var ratio := clampf(time_remaining / time_limit, 0.0, 1.0)
-		score = 70 + int(30.0 * ratio)
+		if time_remaining > 0.0:
+			score = 80 + int(20.0 * ratio)
+		else:
+			score = 65
 	else:
-		score = 80
+		score = 85
 
 	# เกณฑ์ดาวตามคะแนน:
 	# >= 80 คะแนน: 3 ดาว
