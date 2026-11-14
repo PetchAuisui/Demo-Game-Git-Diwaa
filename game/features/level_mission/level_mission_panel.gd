@@ -133,9 +133,9 @@ func _build() -> void:
 	var header := HBoxContainer.new()
 	root.add_child(header)
 	header.add_theme_constant_override("separation", 10)
-	_badge_label = _make_label(16, SandboxThemeTokens.GOLD_TITLE, true)
+	_badge_label = _make_label(18, SandboxThemeTokens.GOLD_TITLE, true)
 	header.add_child(_badge_label)
-	_title_label = _make_label(22, SandboxThemeTokens.BRAND_TEXT, true)
+	_title_label = _make_label(26, SandboxThemeTokens.BRAND_TEXT, true)
 	_title_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_title_label.clip_text = true
 	header.add_child(_title_label)
@@ -151,11 +151,11 @@ func _build() -> void:
 	_hint_button.add_theme_stylebox_override("normal", hint_btn_style)
 	_hint_button.add_theme_stylebox_override("hover", hint_btn_style)
 	_hint_button.add_theme_stylebox_override("pressed", hint_btn_style)
-	_hint_button.add_theme_font_size_override("font_size", 15)
+	_hint_button.add_theme_font_size_override("font_size", 16)
 	_hint_button.pressed.connect(_on_hint_pressed)
 	header.add_child(_hint_button)
 
-	_story_label = _make_label(18, SandboxThemeTokens.PRIMARY_TEXT, false)
+	_story_label = _make_label(20, SandboxThemeTokens.PRIMARY_TEXT, false)
 	_story_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	root.add_child(_story_label)
 
@@ -163,12 +163,12 @@ func _build() -> void:
 	_rows_box.add_theme_constant_override("separation", 5)
 	root.add_child(_rows_box)
 
-	_hint_label = _make_label(18, SandboxThemeTokens.GOLD_TITLE, false)
+	_hint_label = _make_label(20, SandboxThemeTokens.GOLD_TITLE, false)
 	_hint_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_hint_label.visible = false
 	root.add_child(_hint_label)
 
-	_feedback_label = _make_label(18, DONE_COLOR, false)
+	_feedback_label = _make_label(20, DONE_COLOR, false)
 	_feedback_label.visible = false
 	_feedback_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	root.add_child(_feedback_label)
@@ -197,12 +197,12 @@ func _build_row(text: String, done: bool, is_current: bool) -> Control:
 	row.add_theme_constant_override("separation", 12)
 	var check := _CheckBox.new()
 	check.done = done
-	check.custom_minimum_size = Vector2(22, 22)
+	check.custom_minimum_size = Vector2(24, 24)
 	check.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	row.add_child(check)
 	var color := SandboxThemeTokens.TEXT_SECONDARY if done \
 			else (SandboxThemeTokens.PRIMARY_TEXT if is_current else SandboxThemeTokens.TEXT_SECONDARY)
-	var label := _make_label(18, color, is_current)
+	var label := _make_label(20, color, is_current)
 	label.text = text
 	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
