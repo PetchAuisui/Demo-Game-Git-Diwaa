@@ -158,20 +158,21 @@ static func get_level_stars(level_num: int) -> int:
 	var cfg := _get_config()
 	if cfg.has_section_key(SECTION_STARS, "level_%d" % level_num):
 		var saved_stars := int(cfg.get_value(SECTION_STARS, "level_%d" % level_num, 0))
-		var saved_score := get_level_score(level_num)
-		if saved_score >= 80 and saved_stars < 3:
-			set_level_stars(level_num, 3)
-			return 3
+		var saved_score := int(cfg.get_value(SECTION_SCORES, "level_%d" % level_num, 0))
+		if saved_score >= 80:
+			return maxi(saved_stars, 3)
+		elif saved_score >= 65:
+			return maxi(saved_stars, 2)
 		return saved_stars
 	if is_level_cleared(level_num):
-		var saved_score := get_level_score(level_num)
-		return 3 if saved_score >= 80 else 2
+		var saved_score := int(cfg.get_value(SECTION_SCORES, "level_%d" % level_num, 0))
+		return 3 if saved_score >= 80 else (2 if saved_score >= 65 else 1)
 	return 0
 
 
 static func set_level_stars(level_num: int, stars: int) -> void:
 	var cfg := _get_config()
-	var current := get_level_stars(level_num)
+	var current := int(cfg.get_value(SECTION_STARS, "level_%d" % level_num, 0))
 	if stars > current:
 		cfg.set_value(SECTION_STARS, "level_%d" % level_num, stars)
 		_save_config()
@@ -183,7 +184,7 @@ static func get_level_score(level_num: int) -> int:
 
 static func set_level_score(level_num: int, score: int) -> void:
 	var cfg := _get_config()
-	var current := get_level_score(level_num)
+	var current := int(cfg.get_value(SECTION_SCORES, "level_%d" % level_num, 0))
 	if score > current:
 		cfg.set_value(SECTION_SCORES, "level_%d" % level_num, score)
 		_save_config()
