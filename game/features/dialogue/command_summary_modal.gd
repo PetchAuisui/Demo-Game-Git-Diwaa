@@ -1,9 +1,9 @@
 class_name CommandSummaryModal
 extends Control
 
-## หน้าต่างสรุปคำสั่งและสาธิตการร่ายมนตร์ Git (Command Summary & Demonstration Modal)
+## หน้าต่างคัมภีร์บันทึกมนตรา: สรุปคาถาประจำด่าน (Grimoire Spell Summary Modal)
 ## แสดงผลหลังจบบทสนทนาก่อนเข้าสู่เทอร์มินัลพิมพ์คำสั่งใน Sandbox
-## อิงตามสไตล์ Learn Git Branching แต่ปรับแต่งให้เข้ากับธีมคัมภีร์เวทมนตร์ของเกม
+## ออกแบบในธีมหนังสือคัมภีร์เวทมนตร์ (Open Grimoire Book) แสดงผลเฉพาะเนื้อหาที่เกี่ยวข้องกับคำสั่งจริง
 
 const CommandDemonstrationCanvas = preload("res://features/dialogue/command_demonstration_canvas.gd")
 
@@ -13,13 +13,14 @@ signal modal_closed
 @export var level_number: int = 1
 @export var current_step: int = 1
 
-# โหนด UI ภายในหน้าต่าง
+# โหนด UI
 @onready var dim_overlay: ColorRect = $DimOverlay
 @onready var modal_panel: PanelContainer = $CenterContainer/ModalPanel
 @onready var title_label: Label = %TitleLabel
+@onready var subtitle_label: Label = %SubtitleLabel
 @onready var close_btn: Button = %CloseButton
 
-# ฝั่งซ้าย: เนื้อหาคำอธิบายและการทดลองร่ายคาถา
+# ฝั่งซ้าย (หน้าซ้ายของคัมภีร์): คำอธิบายและสูตรการร่ายคาถา
 @onready var step_badge: Label = %StepBadge
 @onready var guide_rich_label: RichTextLabel = %GuideRichLabel
 @onready var cast_command_btn: Button = %CastCommandButton
@@ -33,10 +34,9 @@ signal modal_closed
 @onready var page_indicator: Label = %PageIndicator
 @onready var start_terminal_btn: Button = %StartTerminalButton
 
-# ฝั่งขวา: ผ้าใบจำลองกราฟ Git
+# ฝั่งขวา (หน้าขวาของคัมภีร์): ผ้าใบแสดงผลภาพเวทมนตร์
 @onready var demo_canvas: CommandDemonstrationCanvas = %DemoCanvas
 
-# ข้อมูลสไลด์การสาธิต
 var slides: Array[Dictionary] = []
 var current_slide_index: int = 0
 var has_executed_current_slide: bool = false
@@ -66,33 +66,39 @@ func _setup_slides() -> void:
 				slides.append(s)
 		return
 
-	# สไลด์มาตรฐานอิงตาม Reference (Git Commit Demonstration)
-	slides.append({
-		"title": "⚙ การจำลองการจารึก: บันทึกคัมภีร์เวท (Git Demonstration)",
-		"badge": "✦ บทเรียนการจารึก: Git Commit",
-		"guide_text": "มาดูการทำงานจริงของพลังเวท Git ในคัมภีร์ส่วนตัวกันเถอะ\n\nทางด้านขวาคือภาพจำลองสายธารคัมภีร์เวท (Git Repository) ในขณะนี้มีจุดจารึกอยู่ 2 จุด นั่นคือจุดเริ่มต้นแรกสุด [b][color=#73BFF2]c0[/color][/b] และจุดจารึกถัดมา [b][color=#73BFF2]c1[/color][/b] ที่บันทึกการเปลี่ยนแปลงสำคัญไว้\n\nกดปุ่ม [b][color=#52e0ac]git commit[/color][/b] ด้านล่าง เพื่อร่ายคาถาและสร้างจุดจารึกใหม่!",
-		"command": "git commit",
-		"button_icon": "✨",
-		"outcome_text": "[color=#52e0ac]ยอดเยี่ยมมาก![/color] เราเพิ่งจารึกการเปลี่ยนแปลงลงในคัมภีร์เวทและบันทึกเป็น Commit ใหม่ [b][color=#73BFF2]c2[/color][/b]\nสายธารเวทมนตร์ขยายตัว และกิ่งเวท [b][color=#52e0ac]main*[/color][/b] ได้เลื่อนมาปกป้องจุดจารึกล่าสุดเรียบร้อย!",
-		"mode": CommandDemonstrationCanvas.DemoMode.COMMIT
-	})
-	
-	# สไลด์ที่ 2: สรุปคาถาประจำด่านที่ 1 (git --version & git config)
-	if level_number == 1:
+	# ข้อมูลเริ่มต้นสำหรับด่านที่ยังไม่มีการนิยามสไลด์เฉพาะ
+	if level_number == 1 and current_step == 1:
 		slides.append({
-			"title": "🔮 สรุปคาถาประจำด่าน: ตรวจสอบพลังและประกาศนาม",
-			"badge": "✦ คาถาที่ต้องร่ายในเทอร์มินัล",
-			"guide_text": "ก่อนเข้าสู่สนามฝึกฝนจริง ตรวจสอบความถูกต้องของคาถาเหล่านี้:\n\n" +
-				"1. [b][color=#73BFF2]git --version[/color][/b]\n" +
-				"   • ใช้ตรวจสอบว่าพลัง Git ตื่นขึ้นมาแล้วหรือไม่ (ระวัง: หน้า version ต้องเป็นขีดคู่ [b]--[/b])\n\n" +
-				"2. [b][color=#73BFF2]git config --global user.name \"Vel\"[/color][/b]\n" +
-				"   • ประกาศนามของนักเวทให้สำนักเวทจดจำ\n\n" +
-				"3. [b][color=#73BFF2]git config --global user.email \"vel@...\"[/color][/b]\n" +
-				"   • ผูกตราประทับวิญญาณเชื่อมกับตัวตนของเจ้า",
-			"command": "ร่ายคาถาตรวจสอบตราประทับ",
+			"title": "📖 คัมภีร์บันทึกมนตรา: ตรวจสอบระดับพลังเวท",
+			"subtitle": "ด่านที่ 1 ขั้นที่ 1: git --version",
+			"badge": "✦ คาถาบทที่ 1: ตรวจสอบระดับพลังเวท",
+			"guide_text": "ก่อนจะเริ่มร่ายเวทมนตร์ใดๆ นักเวทจำเป็นต้องตรวจสอบเสียก่อนว่า [b]พลังแห่ง Git[/b] ภายในหอคอยนี้ตื่นขึ้นมาพร้อมตอบสนองต่อเจ้าหรือไม่\n\nร่ายคาถานี้เพื่อเรียกดูระดับพลังของ Git:\n[center][b][color=#73BFF2]git --version[/color][/b][/center]\n\n[b]⚠️ คำแนะนำอักขระเวท:[/b]\n• หน้าคำว่า [b]version[/b] ต้องเป็นขีดคู่ [b]--[/b] (ไม่ใช่ขีดเดียว)\n• ต้องเว้นวรรคระหว่างคำว่า [b]git[/b] กับ [b]--version[/b]",
+			"command": "ทดสอบจำลองการร่ายคาถา",
+			"button_icon": "✨",
+			"outcome_text": "[color=#52e0ac]สัมผัสพลังเวทสำเร็จ![/color] พลัง Git ภายในหอคอยตอบสนองอย่างสมบูรณ์\nกดปุ่ม [b]'เข้าสู่การฝึกฝนจริง'[/b] ด้านล่าง เพื่อเริ่มพิมพ์คาถานี้ในเทอร์มินัล",
+			"mode": CommandDemonstrationCanvas.DisplayMode.VERSION_CHECK
+		})
+	elif level_number == 1 and current_step == 2:
+		slides.append({
+			"title": "📖 คัมภีร์บันทึกมนตรา: ประกาศนามและผูกตราประทับ",
+			"subtitle": "ด่านที่ 1 ขั้นที่ 2: git config",
+			"badge": "✦ คาถาบทที่ 2: ลงทะเบียนตัวตนของนักเวท",
+			"guide_text": "ทุกครั้งที่นายจารึกการเปลี่ยนแปลงลงในคัมภีร์เวท สำนักเวทต้องรู้ก่อนว่าเจ้าของการจารึกคือใคร เจ้าต้องประกาศตัวตนด้วยคาถา 2 บทนี้:\n\n1. [b]ประกาศนามนักเวท:[/b]\n   [color=#73BFF2]`git config --global user.name \"Vel\"`[/color]\n\n2. [b]ผูกตราประทับวิญญาณ:[/b]\n   [color=#73BFF2]`git config --global user.email \"vel@magic-tower.local\"`[/color]\n\n[b]⚠️ ข้อควรระวัง:[/b] อักขระ [b]--global[/b] ต้องเป็นขีดคู่",
+			"command": "ทดสอบประทับตราวิญญาณ",
 			"button_icon": "🔮",
-			"outcome_text": "[color=#FFE680]ตราประทับวิญญาณพร้อมแล้ว![/color]\nเมื่อเข้าไปในเทอร์มินัล ให้พิมพ์คาถาเหล่านี้อย่างแม่นยำทีละขั้นตอนเพื่อปลดล็อกพลังของหอคอย",
-			"mode": CommandDemonstrationCanvas.DemoMode.CONFIG
+			"outcome_text": "[color=#FFE680]ตราประทับวิญญาณพร้อมแล้ว![/color] หอคอยพร้อมจดจำตัวตนของเจ้า\nเข้าสู่เทอร์มินัลเพื่อร่ายคาถาประกาศนามและผูกตราประทับจริง",
+			"mode": CommandDemonstrationCanvas.DisplayMode.CONFIG_REGISTRY
+		})
+	else:
+		slides.append({
+			"title": "📖 คัมภีร์บันทึกมนตรา: สรุปภารกิจ",
+			"subtitle": "ด่านที่ %d ขั้นที่ %d" % [level_number, current_step],
+			"badge": "✦ สรุปคาถาประจำขั้น",
+			"guide_text": "ตรวจสอบคำสั่งที่จำเป็นต้องใช้ก่อนเริ่มร่ายคาถาจริงในเทอร์มินัล",
+			"command": "ทดสอบร่ายคาถา",
+			"button_icon": "✨",
+			"outcome_text": "พร้อมสำหรับการฝึกฝนจริง",
+			"mode": CommandDemonstrationCanvas.DisplayMode.VERSION_CHECK
 		})
 
 
@@ -116,11 +122,17 @@ func _show_slide(index: int) -> void:
 	has_executed_current_slide = false
 	var slide: Dictionary = slides[index]
 	
-	title_label.text = slide.get("title", "⚙ Git Demonstration")
+	title_label.text = slide.get("title", "📖 คัมภีร์บันทึกมนตรา: สรุปคาถาประจำด่าน")
+	if subtitle_label != null:
+		var sub: String = slide.get("subtitle", "")
+		if sub == "":
+			sub = "ด่านที่ %d ขั้นที่ %d" % [level_number, current_step]
+		subtitle_label.text = sub
+		
 	step_badge.text = slide.get("badge", "")
 	guide_rich_label.text = slide.get("guide_text", "")
 	
-	var cmd: String = slide.get("command", "git commit")
+	var cmd: String = slide.get("command", "ทดสอบร่ายคาถา")
 	var icon: String = slide.get("button_icon", "✨")
 	cast_command_btn.text = "%s %s" % [icon, cmd]
 	cast_command_btn.disabled = false
@@ -129,16 +141,29 @@ func _show_slide(index: int) -> void:
 	outcome_panel.visible = false
 	outcome_panel.modulate.a = 0.0
 	
-	# อัปเดตการแสดงผลปุ่มนำทาง
+	# อัปเดตปุ่มนำทาง
 	page_indicator.text = "%d / %d" % [current_slide_index + 1, slides.size()]
 	nav_prev_btn.disabled = (current_slide_index == 0)
 	
 	var is_last_slide: bool = (current_slide_index == slides.size() - 1)
 	nav_next_btn.visible = not is_last_slide
-	start_terminal_btn.visible = is_last_slide
+	nav_next_btn.disabled = is_last_slide
+	
+	# ซ่อนปุ่มย้อน/ถัดไปถ้ามีแค่สไลด์เดียว
+	if slides.size() <= 1:
+		nav_prev_btn.visible = false
+		nav_next_btn.visible = false
+		page_indicator.visible = false
+	else:
+		nav_prev_btn.visible = true
+		nav_next_btn.visible = true
+		page_indicator.visible = true
+	
+	start_terminal_btn.visible = true
 	
 	# อัปเดตโหมดของผ้าใบกราฟ
-	var mode: CommandDemonstrationCanvas.DemoMode = slide.get("mode", CommandDemonstrationCanvas.DemoMode.COMMIT)
+	var mode_val = slide.get("mode", CommandDemonstrationCanvas.DisplayMode.VERSION_CHECK)
+	var mode: CommandDemonstrationCanvas.DisplayMode = mode_val if mode_val is CommandDemonstrationCanvas.DisplayMode else CommandDemonstrationCanvas.DisplayMode.VERSION_CHECK
 	demo_canvas.set_mode(mode)
 
 
@@ -146,20 +171,11 @@ func _on_cast_command_pressed() -> void:
 	_play_sfx(SFX_COMMAND_PATH)
 	cast_command_btn.disabled = true
 	has_executed_current_slide = true
-	
-	var slide: Dictionary = slides[current_slide_index]
-	var mode: CommandDemonstrationCanvas.DemoMode = slide.get("mode", CommandDemonstrationCanvas.DemoMode.COMMIT)
-	
-	if mode == CommandDemonstrationCanvas.DemoMode.COMMIT:
-		demo_canvas.play_commit_animation()
-	else:
-		demo_canvas.play_config_animation()
+	demo_canvas.play_test_animation()
 
 
 func _on_canvas_animation_finished() -> void:
 	_play_sfx(SFX_SUCCESS_PATH)
-	
-	# แสดงกล่องข้อความผลลัพธ์ด้วย Fade in Tween
 	outcome_panel.visible = true
 	var tw := create_tween()
 	tw.tween_property(outcome_panel, "modulate:a", 1.0, 0.35)
