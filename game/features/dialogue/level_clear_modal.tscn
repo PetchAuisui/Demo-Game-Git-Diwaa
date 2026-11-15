@@ -6,7 +6,9 @@
 [ext_resource type="Texture2D" uid="uid://du0ercqi3soo0" path="res://assets/icons/modal_replay.png" id="4_icon_replay"]
 [ext_resource type="Texture2D" uid="uid://djq5ryhi6kfpq" path="res://assets/icons/modal_level_select.png" id="5_icon_level_select"]
 [ext_resource type="Texture2D" uid="uid://cl45eqkow7pi3" path="res://assets/icons/modal_next_level.png" id="6_icon_next_level"]
-[ext_resource type="Texture2D" uid="uid://c8jitpw7labdd" path="res://assets/icons/ui_star.svg" id="icon_star"]
+[ext_resource type="Texture2D" uid="uid://p6na6sntr7tm" path="res://assets/icons/star_gold.png" id="icon_star_gold"]
+[ext_resource type="Texture2D" uid="uid://bjin7rwxld024" path="res://assets/icons/star_gray.png" id="icon_star_gray"]
+[ext_resource type="Texture2D" uid="uid://p31u7mvk2kxx" path="res://assets/icons/ui_grimoire.svg" id="icon_grimoire"]
 
 [sub_resource type="FontVariation" id="FontVariation_modal_bold"]
 base_font = ExtResource("2_chakra_bold")
@@ -57,20 +59,23 @@ content_margin_right = 18.0
 content_margin_bottom = 10.0
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_keyword_panel"]
-bg_color = Color(1, 0.90, 0.68, 1)
+bg_color = Color(1, 0.94, 0.82, 1)
 border_width_left = 2
 border_width_top = 2
 border_width_right = 2
-border_width_bottom = 2
-border_color = Color(0.98, 0.76, 0.30, 1)
-corner_radius_top_left = 8
-corner_radius_top_right = 8
-corner_radius_bottom_left = 8
-corner_radius_bottom_right = 8
-content_margin_left = 12.0
-content_margin_top = 8.0
-content_margin_right = 12.0
-content_margin_bottom = 8.0
+border_width_bottom = 3
+border_color = Color(0.92, 0.65, 0.20, 1)
+corner_radius_top_left = 12
+corner_radius_top_right = 12
+corner_radius_bottom_left = 12
+corner_radius_bottom_right = 12
+content_margin_left = 20.0
+content_margin_top = 12.0
+content_margin_right = 20.0
+content_margin_bottom = 14.0
+shadow_color = Color(0.65, 0.40, 0.10, 0.15)
+shadow_size = 6
+shadow_offset = Vector2(0, 3)
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_btn_beige"]
 bg_color = Color(0.88, 0.84, 0.77, 1)
@@ -168,7 +173,7 @@ layout_mode = 2
 theme_override_colors/font_color = Color(0.96, 0.96, 0.96, 1)
 theme_override_fonts/font = SubResource("FontVariation_modal_bold")
 theme_override_font_sizes/font_size = 20
-text = "Success"
+text = "ผ่านด่านสำเร็จ"
 
 [node name="Margin" type="MarginContainer" parent="WindowPanel/VBoxMain"]
 layout_mode = 2
@@ -192,33 +197,30 @@ horizontal_alignment = 1
 
 [node name="StarsHBox" type="HBoxContainer" parent="WindowPanel/VBoxMain/Margin/VBox"]
 layout_mode = 2
-theme_override_constants/separation = 16
+theme_override_constants/separation = 0
 alignment = 1
 
 [node name="Star1" type="TextureRect" parent="WindowPanel/VBoxMain/Margin/VBox/StarsHBox"]
 layout_mode = 2
-custom_minimum_size = Vector2(60, 60)
+custom_minimum_size = Vector2(96, 96)
 texture_filter = 2
-self_modulate = Color(1, 0.85, 0.1, 1)
-texture = ExtResource("icon_star")
+texture = ExtResource("icon_star_gold")
 expand_mode = 1
 stretch_mode = 5
 
 [node name="Star2" type="TextureRect" parent="WindowPanel/VBoxMain/Margin/VBox/StarsHBox"]
 layout_mode = 2
-custom_minimum_size = Vector2(60, 60)
+custom_minimum_size = Vector2(96, 96)
 texture_filter = 2
-self_modulate = Color(1, 0.85, 0.1, 1)
-texture = ExtResource("icon_star")
+texture = ExtResource("icon_star_gold")
 expand_mode = 1
 stretch_mode = 5
 
 [node name="Star3" type="TextureRect" parent="WindowPanel/VBoxMain/Margin/VBox/StarsHBox"]
 layout_mode = 2
-custom_minimum_size = Vector2(60, 60)
+custom_minimum_size = Vector2(96, 96)
 texture_filter = 2
-self_modulate = Color(0.42, 0.42, 0.42, 1)
-texture = ExtResource("icon_star")
+texture = ExtResource("icon_star_gray")
 expand_mode = 1
 stretch_mode = 5
 
@@ -327,7 +329,7 @@ layout_mode = 2
 theme_override_colors/font_color = Color(0.76, 0.52, 0.10, 1)
 theme_override_fonts/font = SubResource("FontVariation_modal_bold")
 theme_override_font_sizes/font_size = 20
-text = "15 COINS"
+text = "15 เหรียญ"
 
 [node name="KeywordPanel" type="PanelContainer" parent="WindowPanel/VBoxMain/Margin/VBox"]
 layout_mode = 2
@@ -335,23 +337,43 @@ theme_override_styles/panel = SubResource("StyleBoxFlat_keyword_panel")
 
 [node name="VBoxKW" type="VBoxContainer" parent="WindowPanel/VBoxMain/Margin/VBox/KeywordPanel"]
 layout_mode = 2
-theme_override_constants/separation = 2
+theme_override_constants/separation = 8
 
-[node name="Header" type="Label" parent="WindowPanel/VBoxMain/Margin/VBox/KeywordPanel/VBoxKW"]
+[node name="HeaderHBox" type="HBoxContainer" parent="WindowPanel/VBoxMain/Margin/VBox/KeywordPanel/VBoxKW"]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.46, 0.28, 0.02, 1)
+theme_override_constants/separation = 8
+alignment = 1
+
+[node name="Icon" type="TextureRect" parent="WindowPanel/VBoxMain/Margin/VBox/KeywordPanel/VBoxKW/HeaderHBox"]
+custom_minimum_size = Vector2(26, 26)
+layout_mode = 2
+size_flags_vertical = 4
+texture = ExtResource("icon_grimoire")
+expand_mode = 1
+stretch_mode = 5
+self_modulate = Color(0.82, 0.45, 0.08, 1)
+
+[node name="Header" type="Label" parent="WindowPanel/VBoxMain/Margin/VBox/KeywordPanel/VBoxKW/HeaderHBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.48, 0.26, 0.04, 1)
 theme_override_fonts/font = SubResource("FontVariation_modal_bold")
-theme_override_font_sizes/font_size = 20
-text = "[คีย์เวิร์ดประจำด่านที่ 1]"
+theme_override_font_sizes/font_size = 22
+text = "บันทึกคัมภีร์เวทประจำด่านที่ 1"
 horizontal_alignment = 1
 
-[node name="Body" type="Label" parent="WindowPanel/VBoxMain/Margin/VBox/KeywordPanel/VBoxKW"]
+[node name="Body" type="RichTextLabel" parent="WindowPanel/VBoxMain/Margin/VBox/KeywordPanel/VBoxKW"]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.25, 0.16, 0.02, 1)
-theme_override_fonts/font = SubResource("FontVariation_modal_reg")
-theme_override_font_sizes/font_size = 20
-text = "การตรวจสอบพลัง หมายถึง git --version"
-horizontal_alignment = 1
+theme_override_colors/default_color = Color(0.2, 0.12, 0.03, 1)
+theme_override_fonts/normal_font = ExtResource("3_chakra_reg")
+theme_override_fonts/bold_font = ExtResource("2_chakra_bold")
+theme_override_font_sizes/normal_font_size = 20
+theme_override_font_sizes/bold_font_size = 20
+bbcode_enabled = true
+text = "[center]• [color=#8f3800][b]git --version[/b][/color] : เช็กความพร้อมของ Git
+• [color=#8f3800][b]git config[/b][/color] : ตั้งชื่อและอีเมลของผู้สร้างงาน[/center]"
+fit_content = true
+scroll_active = false
+autowrap_mode = 2
 
 [node name="HBoxButtons" type="HBoxContainer" parent="WindowPanel/VBoxMain/Margin/VBox"]
 layout_mode = 2

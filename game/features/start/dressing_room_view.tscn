@@ -1,6 +1,7 @@
 [gd_scene format=3 uid="uid://b7qm4kvl1dr01"]
 
 [ext_resource type="Script" uid="uid://bi4mmo3m201yb" path="res://features/start/dressing_room_view_controller.gd" id="1_controller"]
+[ext_resource type="PackedScene" path="res://features/auth/account_menu.tscn" id="90_account_menu"]
 [ext_resource type="FontFile" uid="uid://deedcfbkojx6k" path="res://assets/fonts/ChakraPetch-Bold.ttf" id="2_font_bold"]
 [ext_resource type="FontFile" uid="uid://c82lda4ldw0ve" path="res://assets/fonts/ChakraPetch-Regular.ttf" id="3_font_reg"]
 [ext_resource type="Texture2D" uid="uid://don4qpk4c43rc" path="res://assets/cutscene/characters/vel/vel_Hblue_Sredyellow_idle.png" id="5_vel_front"]
@@ -253,14 +254,17 @@ color = Color(0.239, 0.153, 0.098, 1)
 [node name="RoomTag" type="Label" parent="TopBar/TopHBox/BrandHBox"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.604, 0.467, 0.341, 1)
-theme_override_fonts/font = ExtResource("23_font_ta8bit")
-theme_override_font_sizes/font_size = 20
-text = "DRESSING ROOM"
+theme_override_fonts/font = ExtResource("2_font_bold")
+theme_override_font_sizes/font_size = 22
+text = "ห้องแต่งตัว"
 vertical_alignment = 1
 
 [node name="Spacer" type="Control" parent="TopBar/TopHBox"]
 layout_mode = 2
 size_flags_horizontal = 3
+
+[node name="AccountMenu" parent="TopBar/TopHBox" instance=ExtResource("90_account_menu")]
+layout_mode = 2
 
 [node name="MainMargin" type="MarginContainer" parent="."]
 layout_mode = 1
@@ -369,7 +373,7 @@ theme_override_font_sizes/font_size = 16
 theme_override_styles/normal = SubResource("Style_rotate_btn_normal")
 theme_override_styles/hover = SubResource("Style_rotate_btn_hover")
 theme_override_styles/pressed = SubResource("Style_rotate_btn_hover")
-text = "⟲ หมุนซ้าย (Rotate L)"
+text = "⟲ หมุนซ้าย"
 
 [node name="RotateRightBtn" type="Button" parent="MainMargin/MainHBox/LeftShowcase/RotationRow"]
 unique_name_in_owner = true
@@ -383,7 +387,7 @@ theme_override_font_sizes/font_size = 16
 theme_override_styles/normal = SubResource("Style_rotate_btn_normal")
 theme_override_styles/hover = SubResource("Style_rotate_btn_hover")
 theme_override_styles/pressed = SubResource("Style_rotate_btn_hover")
-text = "หมุนขวา (Rotate R) ⟳"
+text = "หมุนขวา ⟳"
 
 [node name="RightWardrobePanel" type="PanelContainer" parent="MainMargin/MainHBox"]
 custom_minimum_size = Vector2(760, 0)
@@ -445,7 +449,7 @@ focus_mode = 0
 mouse_default_cursor_shape = 2
 theme_override_fonts/font = SubResource("FontVariation_ui_bold")
 theme_override_font_sizes/font_size = 14
-text = "ทั้งหมด (All)"
+text = "ทั้งหมด"
 
 [node name="TabHood" type="Button" parent="MainMargin/MainHBox/RightWardrobePanel/CardVBox/FilterTabsRow"]
 unique_name_in_owner = true

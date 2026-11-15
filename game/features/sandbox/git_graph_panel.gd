@@ -5,7 +5,7 @@ extends PanelContainer
 
 signal commit_selected(commit_id: String)
 
-@export var panel_title: String = "GIT GRAPH"
+@export var panel_title: String = "แผนผัง GIT GRAPH"
 @export var empty_text: String = "ยังไม่มี Commit\nสร้าง repository และ commit แล้วประวัติจะแสดงที่นี่"
 
 var _title_label: Label
@@ -84,7 +84,7 @@ func set_commits(commits: Array[CommitGraphDisplayNode]) -> void:
 	_scroll.visible = true
 	_details.visible = true
 	_canvas.set_layout(CommitGraphLayout.new(commits))
-	_title_label.text = "%s  ·  %d commits" % [panel_title, commits.size()]
+	_title_label.text = "%s  ·  %d คอมมิต" % [panel_title, commits.size()]
 
 
 func set_snapshot(snapshot: GitRepositorySnapshot) -> void:

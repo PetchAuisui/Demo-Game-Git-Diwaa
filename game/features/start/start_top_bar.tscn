@@ -1,7 +1,8 @@
-[gd_scene load_steps=4 format=3]
+[gd_scene load_steps=5 format=3]
 
 [ext_resource type="FontFile" path="res://assets/fonts/TA-8-bit.ttf" id="4_font_ta8bit"]
 [ext_resource type="PackedScene" path="res://common/brand_button.tscn" id="5_brand_btn"]
+[ext_resource type="PackedScene" path="res://features/auth/account_menu.tscn" id="2_account_menu"]
 
 [sub_resource type="StyleBoxFlat" id="Style_topbar_bg"]
 bg_color = Color(0.078, 0.063, 0.047, 1)
@@ -49,9 +50,12 @@ layout_mode = 2
 theme_override_colors/font_color = Color(0.604, 0.467, 0.341, 1)
 theme_override_fonts/font = ExtResource("4_font_ta8bit")
 theme_override_font_sizes/font_size = 20
-text = "MAIN CONSOLE"
+text = "คอนโซลหลัก"
 vertical_alignment = 1
 
 [node name="Spacer" type="Control" parent="Margin/HBox"]
 layout_mode = 2
 size_flags_horizontal = 3
+
+[node name="AccountMenu" parent="Margin/HBox" instance=ExtResource("2_account_menu")]
+layout_mode = 2

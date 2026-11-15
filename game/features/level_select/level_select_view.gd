@@ -141,6 +141,8 @@ const VEL_ANGRY_DURATION: float = 0.70
 const NAV_COLOR_ACTIVE := Color(0.722, 0.604, 0.404, 1.0)     # #B89A67 Antique gold
 const NAV_COLOR_COMPLETED := Color(0.510, 0.604, 0.569, 1.0)  # #829A91 Muted sage green
 const NAV_COLOR_LOCKED := Color(0.467, 0.459, 0.553, 1.0)     # #77758D Muted lavender-gray
+const NAV_COLOR_PROGRESS_TEXT := Color(0.85, 0.78, 0.68, 1.0)
+const NAV_PILL_RADIUS := 6
 
 ## ด่านที่ยังพัฒนาไม่เสร็จ: ล็อกไว้เสมอแม้ผ่านด่านก่อนหน้าแล้ว (เอา id ออกเมื่อด่านพร้อมเล่น)
 const IN_DEVELOPMENT_STAGE_IDS: Array[int] = [2]
@@ -151,7 +153,8 @@ const ICON_VOLUME_ON := preload("res://assets/icons/ui_volume_on.svg")
 const ICON_VOLUME_OFF := preload("res://assets/icons/ui_volume_off.svg")
 const ICON_LOCK := preload("res://assets/icons/ui_lock.svg")
 const ICON_CONSTRUCTION := preload("res://assets/icons/ui_construction.svg")
-const ICON_STAR := preload("res://assets/icons/ui_star.svg")
+const ICON_STAR_GOLD := preload("res://assets/icons/star_gold.png")
+const ICON_STAR_GRAY := preload("res://assets/icons/star_gray.png")
 const NAV_COLOR_PRIMARY := Color(0.894, 0.875, 0.835, 1.0)    # #E4DFD5 Primary text
 const NAV_COLOR_SECONDARY := Color(0.604, 0.588, 0.667, 1.0)  # #9A96AA Secondary text
 
@@ -184,7 +187,9 @@ var _torch_flames: Array[ColorRect] = []
 var _torch_timer := 0.0
 var _path_glow_timer: float = 0.0
 var _view_act_num: int = 1
-var _act_tab_empty_sb: StyleBoxEmpty = null
+var _act_tab_empty_sb: StyleBoxFlat = null
+var _act_tab_hover_sb: StyleBoxFlat = null
+var _act_tab_pressed_sb: StyleBoxFlat = null
 var _act_tab_active_sb: StyleBoxFlat = null
 var _last_act_tabs_state: Array = []
 
@@ -479,23 +484,28 @@ func _wire_navbar() -> void:
 	if btn_act3:
 		btn_act3.pressed.connect(func(): _on_act_button_pressed(3))
 	if act_progress_panel:
-		act_progress_panel.custom_minimum_size = Vector2(200, 44)
+		act_progress_panel.custom_minimum_size = Vector2(210, 40)
+		var prog_sb := _make_pill_stylebox(Color(0.09, 0.07, 0.05, 0.85), Color(0.28, 0.21, 0.14, 0.9), 1, 14.0, 4.0, 4.0)
+		act_progress_panel.add_theme_stylebox_override("panel", prog_sb)
 	if act_progress_label:
-		act_progress_label.add_theme_color_override("font_color", NAV_COLOR_SECONDARY)
+		act_progress_label.add_theme_color_override("font_color", NAV_COLOR_PROGRESS_TEXT)
 	if btn_focus_current:
 		btn_focus_current.pressed.connect(_on_continue_pressed)
-		btn_focus_current.custom_minimum_size = Vector2(116, 44)
+		btn_focus_current.custom_minimum_size = Vector2(116, 40)
 		btn_focus_current.text = "เล่นต่อ →"
 		btn_focus_current.alignment = HORIZONTAL_ALIGNMENT_CENTER
-		btn_focus_current.add_theme_color_override("font_color", NAV_COLOR_ACTIVE)
-		btn_focus_current.add_theme_color_override("font_hover_color", NAV_COLOR_PRIMARY)
-		btn_focus_current.add_theme_color_override("font_pressed_color", NAV_COLOR_SECONDARY)
-		btn_focus_current.add_theme_color_override("font_focus_color", NAV_COLOR_ACTIVE)
-		var empty_continue_sb := StyleBoxEmpty.new()
-		btn_focus_current.add_theme_stylebox_override("normal", empty_continue_sb)
-		btn_focus_current.add_theme_stylebox_override("hover", empty_continue_sb)
-		btn_focus_current.add_theme_stylebox_override("pressed", empty_continue_sb)
-		btn_focus_current.add_theme_stylebox_override("focus", empty_continue_sb)
+		var cta_normal := _make_pill_stylebox(Color(0.26, 0.18, 0.08, 0.95), NAV_COLOR_ACTIVE, 2, 14.0, 4.0, 4.0)
+		var cta_hover := _make_pill_stylebox(Color(0.38, 0.27, 0.11, 1.0), Color(0.96, 0.82, 0.45, 1.0), 2, 14.0, 4.0, 4.0)
+		var cta_pressed := _make_pill_stylebox(Color(0.18, 0.12, 0.05, 1.0), Color(0.55, 0.42, 0.20, 1.0), 1, 14.0, 5.0, 3.0)
+
+		btn_focus_current.add_theme_stylebox_override("normal", cta_normal)
+		btn_focus_current.add_theme_stylebox_override("hover", cta_hover)
+		btn_focus_current.add_theme_stylebox_override("pressed", cta_pressed)
+		btn_focus_current.add_theme_stylebox_override("focus", cta_hover)
+		btn_focus_current.add_theme_color_override("font_color", Color(1.0, 0.94, 0.82, 1.0))
+		btn_focus_current.add_theme_color_override("font_hover_color", Color(1.0, 1.0, 1.0, 1.0))
+		btn_focus_current.add_theme_color_override("font_pressed_color", Color(0.85, 0.75, 0.58, 1.0))
+		btn_focus_current.add_theme_color_override("font_focus_color", Color(1.0, 0.94, 0.82, 1.0))
 	if btn_sound:
 		btn_sound.icon = ICON_VOLUME_OFF if _is_muted else ICON_VOLUME_ON
 		btn_sound.pressed.connect(_on_toggle_sound)
@@ -565,27 +575,30 @@ func _get_act_progress(act_num: int) -> Dictionary:
 	}
 
 
+## สร้าง StyleBoxFlat ทรงแคปซูลสำหรับ navbar (border_bottom > 1 = ขอบล่างหนากว่า)
+func _make_pill_stylebox(bg: Color, border: Color, border_bottom: int, margin_h: float, margin_top: float, margin_bottom: float) -> StyleBoxFlat:
+	var sb := StyleBoxFlat.new()
+	sb.bg_color = bg
+	sb.border_color = border
+	sb.set_border_width_all(1)
+	sb.border_width_bottom = border_bottom
+	sb.set_corner_radius_all(NAV_PILL_RADIUS)
+	sb.content_margin_left = margin_h
+	sb.content_margin_right = margin_h
+	sb.content_margin_top = margin_top
+	sb.content_margin_bottom = margin_bottom
+	return sb
+
+
 func _ensure_act_tab_styleboxes() -> void:
 	if _act_tab_empty_sb == null:
-		_act_tab_empty_sb = StyleBoxEmpty.new()
-		_act_tab_empty_sb.content_margin_left = 0.0
-		_act_tab_empty_sb.content_margin_right = 0.0
-		_act_tab_empty_sb.content_margin_top = 0.0
-		_act_tab_empty_sb.content_margin_bottom = 2.0
-
+		_act_tab_empty_sb = _make_pill_stylebox(Color(0.12, 0.09, 0.06, 0.55), Color(0.28, 0.20, 0.14, 0.7), 1, 12.0, 4.0, 4.0)
+	if _act_tab_hover_sb == null:
+		_act_tab_hover_sb = _make_pill_stylebox(Color(0.20, 0.15, 0.10, 0.85), Color(0.48, 0.36, 0.22, 0.9), 1, 12.0, 4.0, 4.0)
+	if _act_tab_pressed_sb == null:
+		_act_tab_pressed_sb = _make_pill_stylebox(Color(0.16, 0.11, 0.07, 0.95), Color(0.40, 0.30, 0.18, 0.9), 1, 12.0, 5.0, 3.0)
 	if _act_tab_active_sb == null:
-		_act_tab_active_sb = StyleBoxFlat.new()
-		_act_tab_active_sb.bg_color = Color(0, 0, 0, 0)
-		_act_tab_active_sb.draw_center = false
-		_act_tab_active_sb.border_width_left = 0
-		_act_tab_active_sb.border_width_top = 0
-		_act_tab_active_sb.border_width_right = 0
-		_act_tab_active_sb.border_width_bottom = 2
-		_act_tab_active_sb.border_color = NAV_COLOR_ACTIVE
-		_act_tab_active_sb.content_margin_left = 0.0
-		_act_tab_active_sb.content_margin_right = 0.0
-		_act_tab_active_sb.content_margin_top = 0.0
-		_act_tab_active_sb.content_margin_bottom = 2.0
+		_act_tab_active_sb = _make_pill_stylebox(Color(0.28, 0.20, 0.10, 0.95), NAV_COLOR_ACTIVE, 2, 12.0, 4.0, 4.0)
 
 
 func _refresh_act_tabs(active_act: int) -> void:
@@ -677,7 +690,7 @@ func _style_act_button(btn: Button, act_num: int, is_active: bool, prog: Diction
 
 	_ensure_act_tab_styleboxes()
 
-	btn.custom_minimum_size = Vector2(96, 44)
+	btn.custom_minimum_size = Vector2(88, 40)
 	var text_base := "ACT %d" % act_num
 	if prog["is_completed"]:
 		btn.text = "%s ✓" % text_base
@@ -685,7 +698,7 @@ func _style_act_button(btn: Button, act_num: int, is_active: bool, prog: Diction
 		btn.text = text_base
 
 	if is_active:
-		# Active Act: Antique gold text, subtle 2px bottom underline, flat transparent background
+		# Active Act: Antique gold text, rich amber-gold pill background
 		btn.add_theme_color_override("font_color", NAV_COLOR_ACTIVE)
 		btn.add_theme_color_override("font_hover_color", NAV_COLOR_PRIMARY)
 		btn.add_theme_color_override("font_pressed_color", NAV_COLOR_ACTIVE)
@@ -696,18 +709,18 @@ func _style_act_button(btn: Button, act_num: int, is_active: bool, prog: Diction
 		btn.add_theme_stylebox_override("focus", _act_tab_active_sb)
 		btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	elif prog["is_completed"]:
-		# Completed Act: Muted sage green text, subtle checkmark, flat tab
+		# Completed Act: Muted sage green text, subtle checkmark
 		btn.add_theme_color_override("font_color", NAV_COLOR_COMPLETED)
 		btn.add_theme_color_override("font_hover_color", NAV_COLOR_PRIMARY)
 		btn.add_theme_color_override("font_pressed_color", NAV_COLOR_COMPLETED)
 		btn.add_theme_color_override("font_focus_color", NAV_COLOR_COMPLETED)
 		btn.add_theme_stylebox_override("normal", _act_tab_empty_sb)
-		btn.add_theme_stylebox_override("hover", _act_tab_empty_sb)
-		btn.add_theme_stylebox_override("pressed", _act_tab_empty_sb)
+		btn.add_theme_stylebox_override("hover", _act_tab_hover_sb)
+		btn.add_theme_stylebox_override("pressed", _act_tab_pressed_sb)
 		btn.add_theme_stylebox_override("focus", _act_tab_empty_sb)
 		btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	elif not prog["is_unlocked"]:
-		# Locked Act: Muted lavender-gray text, reduced visual emphasis
+		# Locked Act: Muted lavender-gray text
 		btn.add_theme_color_override("font_color", NAV_COLOR_LOCKED)
 		btn.add_theme_color_override("font_hover_color", NAV_COLOR_LOCKED)
 		btn.add_theme_color_override("font_pressed_color", NAV_COLOR_LOCKED)
@@ -718,14 +731,14 @@ func _style_act_button(btn: Button, act_num: int, is_active: bool, prog: Diction
 		btn.add_theme_stylebox_override("focus", _act_tab_empty_sb)
 		btn.mouse_default_cursor_shape = Control.CURSOR_ARROW
 	else:
-		# Unlocked, Inactive Act: Secondary muted text, clean flat tab
+		# Unlocked, Inactive Act: Secondary muted text
 		btn.add_theme_color_override("font_color", NAV_COLOR_SECONDARY)
 		btn.add_theme_color_override("font_hover_color", NAV_COLOR_PRIMARY)
 		btn.add_theme_color_override("font_pressed_color", NAV_COLOR_SECONDARY)
 		btn.add_theme_color_override("font_focus_color", NAV_COLOR_SECONDARY)
 		btn.add_theme_stylebox_override("normal", _act_tab_empty_sb)
-		btn.add_theme_stylebox_override("hover", _act_tab_empty_sb)
-		btn.add_theme_stylebox_override("pressed", _act_tab_empty_sb)
+		btn.add_theme_stylebox_override("hover", _act_tab_hover_sb)
+		btn.add_theme_stylebox_override("pressed", _act_tab_pressed_sb)
 		btn.add_theme_stylebox_override("focus", _act_tab_empty_sb)
 		btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 
@@ -776,7 +789,7 @@ func _init_game_progression() -> void:
 	for stg in TOWER_STAGES:
 		var stg_id: int = stg["id"]
 		if GameProgressManager.is_level_cleared(stg_id):
-			total_stars += 3
+			total_stars += GameProgressManager.get_level_stars(stg_id)
 			if stg_id > highest_cleared_id:
 				highest_cleared_id = stg_id
 
@@ -808,6 +821,7 @@ func _spawn_tower_platforms() -> void:
 		var stg_id: int = stg["id"]
 		var is_cleared := GameProgressManager.is_level_cleared(stg_id)
 		var is_unlocked := _is_stage_unlocked(stg_id)
+		var is_reachable := _is_stage_reachable(stg_id)
 		var is_current := (i == _current_stage_idx)
 		var act_num: int = int(stg["act"])
 
@@ -972,7 +986,7 @@ func _spawn_tower_platforms() -> void:
 			_update_hud_display(TOWER_STAGES[_current_stage_idx])
 		)
 
-		if is_unlocked:
+		if is_reachable:
 			slab_btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 			slab_btn.pressed.connect(func():
 				_on_platform_selected(current_idx)
@@ -1163,8 +1177,8 @@ func _on_platform_selected(idx: int) -> void:
 
 	var target_stg: Dictionary = TOWER_STAGES[idx]
 	var target_id: int = target_stg["id"]
-	var is_unlocked: bool = _is_stage_unlocked(target_id)
-	if not is_unlocked:
+	var is_reachable: bool = _is_stage_reachable(target_id)
+	if not is_reachable:
 		_on_locked_platform_clicked(idx)
 		return
 
@@ -1194,8 +1208,8 @@ func _perform_direct_leap(to_idx: int) -> void:
 
 	var target_stg: Dictionary = TOWER_STAGES[to_idx]
 	var target_id: int = target_stg["id"]
-	var is_unlocked: bool = _is_stage_unlocked(target_id)
-	if not is_unlocked:
+	var is_reachable: bool = _is_stage_reachable(target_id)
+	if not is_reachable:
 		_on_locked_platform_clicked(to_idx)
 		return
 
@@ -1301,20 +1315,20 @@ func _perform_direct_leap(to_idx: int) -> void:
 	)
 
 
-## แถวดาว 3 ดวงจากไอคอน SVG (สีถูกตั้งผ่าน modulate ใน _apply_platform_style)
+## แถวดาว 3 ดวงจากไอคอนพิกเซล (สลับ texture ระหว่าง star_gold กับ star_gray ใน _apply_platform_style)
 func _create_star_row(star_size: int) -> HBoxContainer:
 	var row := HBoxContainer.new()
 	row.name = "StarIcon"
 	row.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	row.add_theme_constant_override("separation", 1)
+	row.add_theme_constant_override("separation", 2)
 	for i in 3:
 		var star := TextureRect.new()
-		star.texture = ICON_STAR
+		star.texture = ICON_STAR_GOLD
 		star.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
 		star.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		star.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-		star.custom_minimum_size = Vector2(star_size, star_size) * 0.8
+		star.custom_minimum_size = Vector2(star_size, star_size) * 0.95
 		star.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		row.add_child(star)
 	return row
@@ -1331,15 +1345,31 @@ static func _is_stage_unlocked(stg_id: int) -> bool:
 	return stg_id == 1 or GameProgressManager.is_level_cleared(stg_id - 1)
 
 
+## ด่านที่ตัวละครยืนบนแท่นได้ = ด่านที่เล่นได้ หรือด่านที่อยู่ระหว่างพัฒนาซึ่งต่อจากด่านที่เล่นได้ (ยืนดูได้ แต่เข้าเล่นไม่ได้)
+static func _is_stage_reachable(stg_id: int) -> bool:
+	if _is_stage_unlocked(stg_id):
+		return true
+	return stg_id > 1 and _is_stage_in_development(stg_id) and _is_stage_unlocked(stg_id - 1)
+
+
+## ข้อความแจ้งเตือนของด่านที่ยังเข้าเล่นไม่ได้
+static func _locked_message(stg: Dictionary) -> String:
+	if _is_stage_in_development(int(stg["id"])):
+		return "ด่าน %s อยู่ระหว่างพัฒนา เร็วๆ นี้!" % stg["no"]
+	return "แท่นหินด่าน %s ยังถูกผนึก! ต้องผ่านด่านก่อนหน้าเพื่อปลดล็อก" % stg["no"]
+
+
 func _on_locked_platform_clicked(idx: int) -> void:
 	if idx < 0 or idx >= TOWER_STAGES.size():
 		return
 	_play_sfx(sfx_click)
+	_show_locked_notice(idx)
+
+
+func _show_locked_notice(idx: int) -> void:
 	var stg := TOWER_STAGES[idx]
-	if _is_stage_in_development(int(stg["id"])):
-		_show_locked_hud_notice("ด่าน %s อยู่ระหว่างพัฒนา เร็วๆ นี้!" % stg["no"], ICON_CONSTRUCTION)
-	else:
-		_show_locked_hud_notice("แท่นหินด่าน %s ยังถูกผนึก! ต้องผ่านด่านก่อนหน้าเพื่อปลดล็อก" % stg["no"], ICON_LOCK)
+	var icon := ICON_CONSTRUCTION if _is_stage_in_development(int(stg["id"])) else ICON_LOCK
+	_show_locked_hud_notice(_locked_message(stg), icon)
 
 
 func _show_locked_hud_notice(message: String, icon: Texture2D = null) -> void:
@@ -1376,9 +1406,9 @@ func _try_navigate_stage(target_idx: int) -> void:
 
 	var target_stg: Dictionary = TOWER_STAGES[target_idx]
 	var target_id: int = target_stg["id"]
-	var is_unlocked: bool = _is_stage_unlocked(target_id)
+	var is_reachable: bool = _is_stage_reachable(target_id)
 
-	if not is_unlocked:
+	if not is_reachable:
 		_on_locked_platform_clicked(target_idx)
 		return
 
@@ -1414,12 +1444,13 @@ func _step_towards_queued_target() -> void:
 
 	var next_stg: Dictionary = TOWER_STAGES[next_step_idx]
 	var next_id: int = next_stg["id"]
-	var is_unlocked: bool = _is_stage_unlocked(next_id)
-	if not is_unlocked:
+	var is_reachable: bool = _is_stage_reachable(next_id)
+	if not is_reachable:
 		_target_queue_idx = _current_stage_idx
 		_is_jumping = false
 		if vel_anim:
 			vel_anim.play("breathe")
+		_show_locked_notice(next_step_idx)
 		return
 
 	_perform_jump_step(next_step_idx)
@@ -1742,7 +1773,16 @@ func _apply_platform_style(plat: Control, stg_id: int, is_active: bool) -> void:
 
 	var star_icon := plat.find_child("StarIcon", true, false) as Control
 	if star_icon:
-		star_icon.modulate = colors["star_color"]
+		star_icon.modulate = Color.WHITE
+		var earned_stars := GameProgressManager.get_level_stars(stg_id)
+		for i in range(star_icon.get_child_count()):
+			var star_node := star_icon.get_child(i) as TextureRect
+			if star_node != null:
+				star_node.modulate = Color.WHITE
+				if i < earned_stars:
+					star_node.texture = ICON_STAR_GOLD
+				else:
+					star_node.texture = ICON_STAR_GRAY
 
 
 func _update_platform_highlight(idx: int, is_active: bool) -> void:
@@ -1759,9 +1799,9 @@ func _update_hud_display(stg: Dictionary) -> void:
 	var is_unlocked := _is_stage_unlocked(stg_id)
 
 	if hud_no_badge:
-		hud_no_badge.text = "LV %s" % stg["no"]
+		hud_no_badge.text = "ด่าน %s" % stg["no"]
 	if hud_title:
-		hud_title.text = "ด่าน %s — %s" % [stg["no"], stg["title"]]
+		hud_title.text = str(stg["title"])
 	if hud_act_tag:
 		var act_num: int = stg["act"]
 		hud_act_tag.text = "ACT %d" % act_num
@@ -1782,9 +1822,11 @@ func _update_hud_display(stg: Dictionary) -> void:
 		if is_unlocked:
 			btn_launch.disabled = false
 			btn_launch.text = "เข้าสู่ด่าน" if not is_cleared else "ทบทวนด่าน"
+			btn_launch.tooltip_text = ""
 		else:
 			btn_launch.disabled = true
 			btn_launch.text = "อยู่ระหว่างพัฒนา" if _is_stage_in_development(stg_id) else "ยังไม่ปลดล็อก"
+			btn_launch.tooltip_text = _locked_message(stg)
 
 
 func _scroll_to_stage_idx(stage_idx: int, animate: bool = true, update_hud: bool = false, duration: float = 0.48) -> void:
@@ -1930,7 +1972,7 @@ func _draw_path_pass(target: CanvasItem, pass_mode: int) -> void:
 		var is_loop_back := id_b < id_a
 		var is_segment_cleared := (is_cleared_a and is_cleared_b) if is_loop_back else is_cleared_b
 		var is_unlocked_b := _is_stage_unlocked(id_b)
-		var is_current_segment := false if is_loop_back else ((idx_b == _current_stage_idx) or (idx_a == _current_stage_idx and not is_cleared_b))
+		var is_current_segment := false if is_loop_back else ((idx_b == _current_stage_idx or (idx_a == _current_stage_idx and not is_cleared_b)) and _is_stage_reachable(id_b))
 		var is_segment_active := false if is_loop_back else (is_current_segment or is_unlocked_b)
 
 		var p1 := Vector2(s_a["x"], s_a["y"])
@@ -2077,6 +2119,9 @@ func _on_launch_stage_pressed() -> void:
 	var stg_id: int = stg["id"]
 	var is_unlocked := _is_stage_unlocked(stg_id)
 	if not is_unlocked:
+		if _is_stage_in_development(stg_id):
+			_trigger_vel_angry()
+		_on_locked_platform_clicked(_current_stage_idx)
 		return
 
 	_is_leaving = true

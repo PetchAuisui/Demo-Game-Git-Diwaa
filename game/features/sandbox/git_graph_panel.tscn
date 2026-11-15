@@ -57,7 +57,7 @@ size_flags_horizontal = 3
 theme_override_colors/font_color = Color(1, 0.79, 0.35, 1)
 theme_override_fonts/font = SubResource("FontVariation_bold")
 theme_override_font_sizes/font_size = 22
-text = "GIT GRAPH"
+text = "แผนผัง GIT GRAPH"
 vertical_alignment = 1
 
 [node name="HeaderActions" type="HBoxContainer" parent="Margin/Layout/Header"]

@@ -1197,7 +1197,7 @@ layout_mode = 2
 theme_override_colors/font_color = Color(0.980392, 0.976471, 0.964706, 1)
 theme_override_fonts/font = SubResource("FontVariation_speaker_bold")
 theme_override_font_sizes/font_size = 32
-text = "Thank You for Playing"
+text = "ขอบคุณสำหรับการร่วมเล่นเกม"
 
 [node name="GratitudeLabel" type="Label" parent="MagicStoryUI/CreditsContainer/LeftContent" unique_id=1892837102]
 layout_mode = 2
@@ -1331,7 +1331,7 @@ grow_vertical = 2
 theme_override_colors/font_color = Color(0.980392, 0.976471, 0.964706, 0.9)
 theme_override_fonts/font = SubResource("FontVariation_summary_reg")
 theme_override_font_sizes/font_size = 20
-text = "Developed by Git Di Waa Team"
+text = "พัฒนาโดย ทีมงาน Git Di Waa"
 vertical_alignment = 1
 
 [node name="ReturnMenuBtn" type="Button" parent="MagicStoryUI/CreditsContainer/BottomBar" unique_id=1587123478]

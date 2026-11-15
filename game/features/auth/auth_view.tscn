@@ -1,0 +1,612 @@
+[gd_scene format=3 uid="uid://dtnbqmcn5w3ls"]
+
+[ext_resource type="PackedScene" path="res://features/start/start_top_bar.tscn" id="1_topbar"]
+[ext_resource type="FontFile" uid="uid://deedcfbkojx6k" path="res://assets/fonts/ChakraPetch-Bold.ttf" id="2_bold"]
+[ext_resource type="Script" uid="uid://bbf08w6n83ld" path="res://features/auth/auth_view_controller.gd" id="3_m4sxs"]
+[ext_resource type="FontFile" uid="uid://boe0mfjepayat" path="res://assets/fonts/ChakraPetch-SemiBold.ttf" id="3_semibold"]
+[ext_resource type="FontFile" uid="uid://c82lda4ldw0ve" path="res://assets/fonts/ChakraPetch-Regular.ttf" id="4_regular"]
+[ext_resource type="Texture2D" uid="uid://dutgqecfjaxku" path="res://assets/icons/eye.svg" id="6_mnmf1"]
+
+[sub_resource type="ButtonGroup" id="ButtonGroup_uxd15"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_card"]
+bg_color = Color(0.890196, 0.8, 0.643137, 1)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(0.713726, 0.627451, 0.498039, 1)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+shadow_color = Color(0, 0, 0, 0.4)
+shadow_size = 16
+
+[node name="AuthView" type="Control" unique_id=411548007]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("3_m4sxs")
+
+[node name="Backdrop" type="ColorRect" parent="." unique_id=978174626]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.0705882, 0.0784314, 0.101961, 1)
+
+[node name="BackgroundImage" type="TextureRect" parent="." unique_id=52993680]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 6
+
+[node name="TopBar" parent="." unique_id=2090612846 instance=ExtResource("1_topbar")]
+layout_mode = 1
+
+[node name="TabStrip" type="Control" parent="." unique_id=2125638877]
+unique_name_in_owner = true
+z_index = 6
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_bottom = 72.0
+grow_horizontal = 2
+mouse_filter = 2
+
+[node name="CenterContainer" type="CenterContainer" parent="TabStrip" unique_id=1379960749]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="TabHBox" type="HBoxContainer" parent="TabStrip/CenterContainer" unique_id=1277193042]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="LoginTabBtn" type="Button" parent="TabStrip/CenterContainer/TabHBox" unique_id=736644171]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(180, 48)
+layout_mode = 2
+theme_override_fonts/font = ExtResource("2_bold")
+theme_override_font_sizes/font_size = 22
+toggle_mode = true
+button_pressed = true
+button_group = SubResource("ButtonGroup_uxd15")
+text = "เข้าสู่ระบบ"
+
+[node name="RegisterTabBtn" type="Button" parent="TabStrip/CenterContainer/TabHBox" unique_id=1202034148]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(240, 48)
+layout_mode = 2
+theme_override_fonts/font = ExtResource("2_bold")
+theme_override_font_sizes/font_size = 22
+toggle_mode = true
+button_group = SubResource("ButtonGroup_uxd15")
+text = "สมัครสมาชิก"
+
+[node name="CenterArea" type="CenterContainer" parent="." unique_id=374103426]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = 72.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Card" type="PanelContainer" parent="CenterArea" unique_id=1543007325]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(760, 0)
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_card")
+
+[node name="MarginContainer" type="MarginContainer" parent="CenterArea/Card" unique_id=1840818049]
+layout_mode = 2
+theme_override_constants/margin_left = 40
+theme_override_constants/margin_top = 32
+theme_override_constants/margin_right = 40
+theme_override_constants/margin_bottom = 32
+
+[node name="CardVBox" type="VBoxContainer" parent="CenterArea/Card/MarginContainer" unique_id=578544380]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="QuestTag" type="Label" parent="CenterArea/Card/MarginContainer/CardVBox" unique_id=1102983490]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.439216, 0.32549, 0.207843, 1)
+theme_override_fonts/font = ExtResource("2_bold")
+theme_override_font_sizes/font_size = 16
+text = "QUEST: AUTHENTICATE HERO"
+horizontal_alignment = 1
+
+[node name="LoginForm" type="VBoxContainer" parent="CenterArea/Card/MarginContainer/CardVBox" unique_id=1264587230]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="Title" type="Label" parent="CenterArea/Card/MarginContainer/CardVBox/LoginForm" unique_id=1665548610]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.172549, 0.141176, 0.113725, 1)
+theme_override_fonts/font = ExtResource("2_bold")
+theme_override_font_sizes/font_size = 34
+text = "เข้าสู่ระบบผู้กล้า"
+horizontal_alignment = 1
+
+[node name="Subtitle" type="Label" parent="CenterArea/Card/MarginContainer/CardVBox/LoginForm" unique_id=104980037]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.478431, 0.431373, 0.376471, 1)
+theme_override_fonts/font = ExtResource("4_regular")
+theme_override_font_sizes/font_size = 20
+text = "ยินดีต้อนรับกลับสู่อาณาจักร กรุณาระบุข้อมูลเพื่อเข้าสู่การเดินทาง"
+horizontal_alignment = 1
+autowrap_mode = 2
+
+[node name="IdentifierLabel" type="Label" parent="CenterArea/Card/MarginContainer/CardVBox/LoginForm" unique_id=836447225]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.172549, 0.141176, 0.113725, 1)
+theme_override_fonts/font = ExtResource("3_semibold")
+theme_override_font_sizes/font_size = 20
+text = "อีเมล หรือ ชื่อผู้ใช้งาน"
+
+[node name="IdentifierInput" type="LineEdit" parent="CenterArea/Card/MarginContainer/CardVBox/LoginForm" unique_id=1774289725]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 52)
+layout_mode = 2
+theme_override_fonts/font = ExtResource("4_regular")
+theme_override_font_sizes/font_size = 20
+max_length = 254
+virtual_keyboard_enabled = false
+
+[node name="IdentifierError" type="Label" parent="CenterArea/Card/MarginContainer/CardVBox/LoginForm" unique_id=1793090803]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+theme_override_colors/font_color = Color(0.658824, 0.156863, 0.156863, 1)
+theme_override_fonts/font = ExtResource("4_regular")
+theme_override_font_sizes/font_size = 16
+
+[node name="PasswordRow" type="HBoxContainer" parent="CenterArea/Card/MarginContainer/CardVBox/LoginForm" unique_id=310204504]
+layout_mode = 2
+
+[node name="PasswordLabel" type="Label" parent="CenterArea/Card/MarginContainer/CardVBox/LoginForm/PasswordRow" unique_id=1321113023]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.172549, 0.141176, 0.113725, 1)
+theme_override_fonts/font = ExtResource("3_semibold")
+theme_override_font_sizes/font_size = 20
+text = "รหัสผ่าน"
+
+[node name="ForgotPasswordBtn" type="LinkButton" parent="CenterArea/Card/MarginContainer/CardVBox/LoginForm/PasswordRow" unique_id=731211635]
+unique_name_in_owner = true
+layout_mode = 2
+tooltip_text = "ยังไม่เปิดใช้งาน"
+theme_override_colors/font_color = Color(0.478431, 0.431373, 0.376471, 1)
+theme_override_fonts/font = ExtResource("4_regular")
+theme_override_font_sizes/font_size = 16
+disabled = true
+text = "ลืมรหัสผ่าน?"
+
+[node name="PasswordInputRow" type="HBoxContainer" parent="CenterArea/Card/MarginContainer/CardVBox/LoginForm" unique_id=415321895]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="LoginPasswordInput" type="LineEdit" parent="CenterArea/Card/MarginContainer/CardVBox/LoginForm/PasswordInputRow" unique_id=2082152930]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 52)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_fonts/font = ExtResource("4_regular")
+theme_override_font_sizes/font_size = 20
+max_length = 128
+context_menu_enabled = false
+secret = true
+
+[node name="LoginPasswordToggle" type="Button" parent="CenterArea/Card/MarginContainer/CardVBox/LoginForm/PasswordInputRow" unique_id=869772880]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(64, 52)
+layout_mode = 2
+theme_override_fonts/font = ExtResource("2_bold")
+theme_override_font_sizes/font_size = 18
+toggle_mode = true
+icon = ExtResource("6_mnmf1")
+icon_alignment = 1
+
+[node name="LoginPasswordError" type="Label" parent="CenterArea/Card/MarginContainer/CardVBox/LoginForm" unique_id=1761826788]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+theme_override_colors/font_color = Color(0.658824, 0.156863, 0.156863, 1)
+theme_override_fonts/font = ExtResource("4_regular")
+theme_override_font_sizes/font_size = 16
+
+[node name="RememberMeCheck" type="CheckBox" parent="CenterArea/Card/MarginContainer/CardVBox/LoginForm" unique_id=751400887]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.172549, 0.141176, 0.113725, 1)
+theme_override_colors/font_focus_color = Color(0.172549, 0.141176, 0.113725, 1)
+theme_override_colors/font_pressed_color = Color(0.172549, 0.141176, 0.113725, 1)
+theme_override_colors/font_hover_color = Color(0.172549, 0.141176, 0.113725, 1)
+theme_override_colors/font_hover_pressed_color = Color(0.172549, 0.141176, 0.113725, 1)
+theme_override_fonts/font = ExtResource("4_regular")
+theme_override_font_sizes/font_size = 18
+text = "จดจำการเข้าสู่ระบบ"
+
+[node name="ConnectionPanel" type="HBoxContainer" parent="CenterArea/Card/MarginContainer/CardVBox/LoginForm" unique_id=2094408318]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+theme_override_constants/separation = 8
+alignment = 1
+
+[node name="ConnectionLabel" type="Label" parent="CenterArea/Card/MarginContainer/CardVBox/LoginForm/ConnectionPanel" unique_id=1211407980]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.658824, 0.156863, 0.156863, 1)
+theme_override_fonts/font = ExtResource("4_regular")
+theme_override_font_sizes/font_size = 16
+
+[node name="RetryConnectionBtn" type="LinkButton" parent="CenterArea/Card/MarginContainer/CardVBox/LoginForm/ConnectionPanel" unique_id=961097779]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.737255, 0.490196, 0.278431, 1)
+theme_override_fonts/font = ExtResource("3_semibold")
+theme_override_font_sizes/font_size = 16
+text = "ลองใหม่"
+
+[node name="LoginStatus" type="Label" parent="CenterArea/Card/MarginContainer/CardVBox/LoginForm" unique_id=204415795]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+theme_override_colors/font_color = Color(0.658824, 0.156863, 0.156863, 1)
+theme_override_fonts/font = ExtResource("4_regular")
+theme_override_font_sizes/font_size = 18
+horizontal_alignment = 1
+autowrap_mode = 2
+
+[node name="LoginSubmitBtn" type="Button" parent="CenterArea/Card/MarginContainer/CardVBox/LoginForm" unique_id=1165414387]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 56)
+layout_mode = 2
+theme_override_fonts/font = ExtResource("2_bold")
+theme_override_font_sizes/font_size = 22
+text = "เข้าสู่ระบบ / Enter Realm"
+
+[node name="SwitchToRegisterRow" type="HBoxContainer" parent="CenterArea/Card/MarginContainer/CardVBox/LoginForm" unique_id=686693258]
+layout_mode = 2
+theme_override_constants/separation = 8
+alignment = 1
+
+[node name="NoAccountLabel" type="Label" parent="CenterArea/Card/MarginContainer/CardVBox/LoginForm/SwitchToRegisterRow" unique_id=1783539360]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.478431, 0.431373, 0.376471, 1)
+theme_override_fonts/font = ExtResource("4_regular")
+theme_override_font_sizes/font_size = 18
+text = "ยังไม่มีบัญชี?"
+
+[node name="GoRegisterLink" type="LinkButton" parent="CenterArea/Card/MarginContainer/CardVBox/LoginForm/SwitchToRegisterRow" unique_id=755818233]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.737255, 0.490196, 0.278431, 1)
+theme_override_fonts/font = ExtResource("3_semibold")
+theme_override_font_sizes/font_size = 18
+text = "สมัครสมาชิกที่นี่"
+
+[node name="OrDivider" type="HBoxContainer" parent="CenterArea/Card/MarginContainer/CardVBox/LoginForm" unique_id=309920809]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="LeftLine" type="HSeparator" parent="CenterArea/Card/MarginContainer/CardVBox/LoginForm/OrDivider" unique_id=1654588838]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 4
+
+[node name="OrLabel" type="Label" parent="CenterArea/Card/MarginContainer/CardVBox/LoginForm/OrDivider" unique_id=1671958549]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.478431, 0.431373, 0.376471, 1)
+theme_override_fonts/font = ExtResource("4_regular")
+theme_override_font_sizes/font_size = 16
+text = "หรือ"
+
+[node name="RightLine" type="HSeparator" parent="CenterArea/Card/MarginContainer/CardVBox/LoginForm/OrDivider" unique_id=2029034381]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 4
+
+[node name="OfflinePlayBtn" type="LinkButton" parent="CenterArea/Card/MarginContainer/CardVBox/LoginForm" unique_id=1587340261]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+size_flags_horizontal = 4
+theme_override_colors/font_color = Color(0.737255, 0.490196, 0.278431, 1)
+theme_override_fonts/font = ExtResource("3_semibold")
+theme_override_font_sizes/font_size = 18
+text = "เล่นด้วยบัญชีแบบออฟไลน์"
+
+[node name="GuestRow" type="HBoxContainer" parent="CenterArea/Card/MarginContainer/CardVBox/LoginForm" unique_id=632962146]
+layout_mode = 2
+alignment = 1
+
+[node name="GoGuestLink" type="LinkButton" parent="CenterArea/Card/MarginContainer/CardVBox/LoginForm/GuestRow" unique_id=867504918]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.737255, 0.490196, 0.278431, 1)
+theme_override_fonts/font = ExtResource("3_semibold")
+theme_override_font_sizes/font_size = 18
+text = "เล่นโดยไม่ต้องสมัคร"
+
+[node name="ChangeGuestNameLink" type="LinkButton" parent="CenterArea/Card/MarginContainer/CardVBox/LoginForm/GuestRow" unique_id=1738204517]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+theme_override_colors/font_color = Color(0.478431, 0.431373, 0.376471, 1)
+theme_override_fonts/font = ExtResource("4_regular")
+theme_override_font_sizes/font_size = 16
+text = "เปลี่ยนชื่อ"
+
+[node name="RegisterForm" type="VBoxContainer" parent="CenterArea/Card/MarginContainer/CardVBox" unique_id=314743291]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="RegTitle" type="Label" parent="CenterArea/Card/MarginContainer/CardVBox/RegisterForm" unique_id=885593042]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.172549, 0.141176, 0.113725, 1)
+theme_override_fonts/font = ExtResource("2_bold")
+theme_override_font_sizes/font_size = 34
+text = "ลงทะเบียนผู้กล้าใหม่"
+horizontal_alignment = 1
+
+[node name="RegSubtitle" type="Label" parent="CenterArea/Card/MarginContainer/CardVBox/RegisterForm" unique_id=632678213]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.478431, 0.431373, 0.376471, 1)
+theme_override_fonts/font = ExtResource("4_regular")
+theme_override_font_sizes/font_size = 20
+text = "สร้างบัญชีเพื่อบันทึกการเดินทางและจัดอันดับในตารางกิลด์"
+horizontal_alignment = 1
+autowrap_mode = 2
+
+[node name="UsernameLabel" type="Label" parent="CenterArea/Card/MarginContainer/CardVBox/RegisterForm" unique_id=1903506840]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.172549, 0.141176, 0.113725, 1)
+theme_override_fonts/font = ExtResource("3_semibold")
+theme_override_font_sizes/font_size = 20
+text = "ชื่อผู้ใช้งาน (Username)"
+
+[node name="UsernameInput" type="LineEdit" parent="CenterArea/Card/MarginContainer/CardVBox/RegisterForm" unique_id=428333152]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 52)
+layout_mode = 2
+theme_override_fonts/font = ExtResource("4_regular")
+theme_override_font_sizes/font_size = 20
+max_length = 20
+virtual_keyboard_enabled = false
+
+[node name="UsernameHint" type="Label" parent="CenterArea/Card/MarginContainer/CardVBox/RegisterForm" unique_id=119779792]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.478431, 0.431373, 0.376471, 1)
+theme_override_fonts/font = ExtResource("4_regular")
+theme_override_font_sizes/font_size = 16
+text = "ใช้สำหรับเข้าสู่ระบบ ไม่แสดงให้ผู้อื่นเห็น"
+
+[node name="UsernameError" type="Label" parent="CenterArea/Card/MarginContainer/CardVBox/RegisterForm" unique_id=1244362759]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+theme_override_colors/font_color = Color(0.658824, 0.156863, 0.156863, 1)
+theme_override_fonts/font = ExtResource("4_regular")
+theme_override_font_sizes/font_size = 16
+
+[node name="EmailLabel" type="Label" parent="CenterArea/Card/MarginContainer/CardVBox/RegisterForm" unique_id=1371858140]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.172549, 0.141176, 0.113725, 1)
+theme_override_fonts/font = ExtResource("3_semibold")
+theme_override_font_sizes/font_size = 20
+text = "อีเมล (Email)"
+
+[node name="EmailInput" type="LineEdit" parent="CenterArea/Card/MarginContainer/CardVBox/RegisterForm" unique_id=524301946]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 52)
+layout_mode = 2
+theme_override_fonts/font = ExtResource("4_regular")
+theme_override_font_sizes/font_size = 20
+max_length = 254
+virtual_keyboard_enabled = false
+
+[node name="EmailError" type="Label" parent="CenterArea/Card/MarginContainer/CardVBox/RegisterForm" unique_id=1970850039]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+theme_override_colors/font_color = Color(0.658824, 0.156863, 0.156863, 1)
+theme_override_fonts/font = ExtResource("4_regular")
+theme_override_font_sizes/font_size = 16
+
+[node name="RegPasswordLabel" type="Label" parent="CenterArea/Card/MarginContainer/CardVBox/RegisterForm" unique_id=463433913]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.172549, 0.141176, 0.113725, 1)
+theme_override_fonts/font = ExtResource("3_semibold")
+theme_override_font_sizes/font_size = 20
+text = "รหัสผ่าน"
+
+[node name="RegPasswordInputRow" type="HBoxContainer" parent="CenterArea/Card/MarginContainer/CardVBox/RegisterForm" unique_id=13258051]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="RegisterPasswordInput" type="LineEdit" parent="CenterArea/Card/MarginContainer/CardVBox/RegisterForm/RegPasswordInputRow" unique_id=1528433945]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 52)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_fonts/font = ExtResource("4_regular")
+theme_override_font_sizes/font_size = 20
+max_length = 128
+context_menu_enabled = false
+secret = true
+
+[node name="RegisterPasswordToggle" type="Button" parent="CenterArea/Card/MarginContainer/CardVBox/RegisterForm/RegPasswordInputRow" unique_id=1636253905]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(64, 52)
+layout_mode = 2
+theme_override_fonts/font = ExtResource("2_bold")
+theme_override_font_sizes/font_size = 18
+toggle_mode = true
+icon = ExtResource("6_mnmf1")
+icon_alignment = 1
+
+[node name="RegisterPasswordError" type="Label" parent="CenterArea/Card/MarginContainer/CardVBox/RegisterForm" unique_id=353290881]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+theme_override_colors/font_color = Color(0.658824, 0.156863, 0.156863, 1)
+theme_override_fonts/font = ExtResource("4_regular")
+theme_override_font_sizes/font_size = 16
+
+[node name="ConfirmPasswordLabel" type="Label" parent="CenterArea/Card/MarginContainer/CardVBox/RegisterForm" unique_id=752307679]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.172549, 0.141176, 0.113725, 1)
+theme_override_fonts/font = ExtResource("3_semibold")
+theme_override_font_sizes/font_size = 20
+text = "ยืนยันรหัสผ่าน"
+
+[node name="ConfirmPasswordInput" type="LineEdit" parent="CenterArea/Card/MarginContainer/CardVBox/RegisterForm" unique_id=1711654372]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 52)
+layout_mode = 2
+theme_override_fonts/font = ExtResource("4_regular")
+theme_override_font_sizes/font_size = 20
+max_length = 128
+context_menu_enabled = false
+secret = true
+
+[node name="ConfirmPasswordError" type="Label" parent="CenterArea/Card/MarginContainer/CardVBox/RegisterForm" unique_id=317048591]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+theme_override_colors/font_color = Color(0.658824, 0.156863, 0.156863, 1)
+theme_override_fonts/font = ExtResource("4_regular")
+theme_override_font_sizes/font_size = 16
+
+[node name="RegisterStatus" type="Label" parent="CenterArea/Card/MarginContainer/CardVBox/RegisterForm" unique_id=2147260056]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+theme_override_colors/font_color = Color(0.658824, 0.156863, 0.156863, 1)
+theme_override_fonts/font = ExtResource("4_regular")
+theme_override_font_sizes/font_size = 18
+horizontal_alignment = 1
+autowrap_mode = 2
+
+[node name="RegisterSubmitBtn" type="Button" parent="CenterArea/Card/MarginContainer/CardVBox/RegisterForm" unique_id=846126475]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 56)
+layout_mode = 2
+theme_override_fonts/font = ExtResource("2_bold")
+theme_override_font_sizes/font_size = 22
+text = "สร้างบัญชีผู้ใช้งาน / สมัครสมาชิก"
+
+[node name="SwitchToLoginRow" type="HBoxContainer" parent="CenterArea/Card/MarginContainer/CardVBox/RegisterForm" unique_id=1391777101]
+layout_mode = 2
+theme_override_constants/separation = 8
+alignment = 1
+
+[node name="HaveAccountLabel" type="Label" parent="CenterArea/Card/MarginContainer/CardVBox/RegisterForm/SwitchToLoginRow" unique_id=1555180195]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.478431, 0.431373, 0.376471, 1)
+theme_override_fonts/font = ExtResource("4_regular")
+theme_override_font_sizes/font_size = 18
+text = "มีบัญชีอยู่แล้ว?"
+
+[node name="GoLoginLink" type="LinkButton" parent="CenterArea/Card/MarginContainer/CardVBox/RegisterForm/SwitchToLoginRow" unique_id=104715492]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.737255, 0.490196, 0.278431, 1)
+theme_override_fonts/font = ExtResource("3_semibold")
+theme_override_font_sizes/font_size = 18
+text = "เข้าสู่ระบบ"
+
+[node name="GuestForm" type="VBoxContainer" parent="CenterArea/Card/MarginContainer/CardVBox" unique_id=1272897033]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="GuestTitle" type="Label" parent="CenterArea/Card/MarginContainer/CardVBox/GuestForm" unique_id=1330391347]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.172549, 0.141176, 0.113725, 1)
+theme_override_fonts/font = ExtResource("2_bold")
+theme_override_font_sizes/font_size = 34
+text = "เล่นแบบไม่ล็อกอิน"
+horizontal_alignment = 1
+
+[node name="GuestSubtitle" type="Label" parent="CenterArea/Card/MarginContainer/CardVBox/GuestForm" unique_id=2058245067]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.478431, 0.431373, 0.376471, 1)
+theme_override_fonts/font = ExtResource("4_regular")
+theme_override_font_sizes/font_size = 20
+text = "ความคืบหน้าจะเก็บไว้ในเครื่องนี้เท่านั้น ใช้ฟีเจอร์ออนไลน์และตารางอันดับไม่ได้"
+horizontal_alignment = 1
+autowrap_mode = 2
+
+[node name="GuestNameLabel" type="Label" parent="CenterArea/Card/MarginContainer/CardVBox/GuestForm" unique_id=2097330199]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.172549, 0.141176, 0.113725, 1)
+theme_override_fonts/font = ExtResource("3_semibold")
+theme_override_font_sizes/font_size = 20
+text = "ชื่อในเกม"
+
+[node name="GuestNameInput" type="LineEdit" parent="CenterArea/Card/MarginContainer/CardVBox/GuestForm" unique_id=266897585]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 52)
+layout_mode = 2
+theme_override_fonts/font = ExtResource("4_regular")
+theme_override_font_sizes/font_size = 20
+max_length = 50
+
+[node name="GuestNameHint" type="Label" parent="CenterArea/Card/MarginContainer/CardVBox/GuestForm" unique_id=2047469578]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.478431, 0.431373, 0.376471, 1)
+theme_override_fonts/font = ExtResource("4_regular")
+text = "ชื่อนี้ใช้ในเครื่องนี้เท่านั้น ไม่ถูกส่งไปที่ server"
+
+[node name="GuestNameError" type="Label" parent="CenterArea/Card/MarginContainer/CardVBox/GuestForm" unique_id=251752058]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+theme_override_colors/font_color = Color(0.658824, 0.156863, 0.156863, 1)
+theme_override_fonts/font = ExtResource("4_regular")
+theme_override_font_sizes/font_size = 16
+
+[node name="GuestStartBtn" type="Button" parent="CenterArea/Card/MarginContainer/CardVBox/GuestForm" unique_id=406932795]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 56)
+layout_mode = 2
+theme_override_fonts/font = ExtResource("2_bold")
+theme_override_font_sizes/font_size = 22
+text = "เริ่มเล่น"
+
+[node name="GuestBackRow" type="HBoxContainer" parent="CenterArea/Card/MarginContainer/CardVBox/GuestForm" unique_id=431417252]
+layout_mode = 2
+alignment = 1
+
+[node name="GuestBackLink" type="LinkButton" parent="CenterArea/Card/MarginContainer/CardVBox/GuestForm/GuestBackRow" unique_id=580028785]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.737255, 0.490196, 0.278431, 1)
+theme_override_fonts/font = ExtResource("3_semibold")
+theme_override_font_sizes/font_size = 18
+text = "กลับไปหน้าเข้าสู่ระบบ"
