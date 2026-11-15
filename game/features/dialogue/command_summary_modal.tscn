@@ -7,12 +7,12 @@
 
 [sub_resource type="FontVariation" id="FontVariation_modal_bold"]
 base_font = ExtResource("3_chakra_bold")
-spacing_top = 4
+spacing_top = 6
 spacing_bottom = 2
 
 [sub_resource type="FontVariation" id="FontVariation_modal_reg"]
 base_font = ExtResource("4_chakra_reg")
-spacing_top = 4
+spacing_top = 6
 spacing_bottom = 2
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_book_cover"]
@@ -296,7 +296,7 @@ unique_name_in_owner = true
 layout_mode = 2
 theme_override_colors/font_color = Color(0.95, 0.82, 0.45, 1)
 theme_override_fonts/font = SubResource("FontVariation_modal_bold")
-theme_override_font_sizes/font_size = 20
+theme_override_font_sizes/font_size = 22
 text = "📖 คัมภีร์บันทึกมนตรา: สรุปคาถาประจำด่าน"
 vertical_alignment = 1
 
@@ -305,7 +305,7 @@ unique_name_in_owner = true
 layout_mode = 2
 theme_override_colors/font_color = Color(0.78, 0.82, 0.9, 0.9)
 theme_override_fonts/font = SubResource("FontVariation_modal_reg")
-theme_override_font_sizes/font_size = 14
+theme_override_font_sizes/font_size = 15
 text = "ด่านที่ 1 ขั้นที่ 1: git version / git --version"
 vertical_alignment = 1
 
@@ -349,7 +349,7 @@ unique_name_in_owner = true
 layout_mode = 2
 theme_override_colors/font_color = Color(0.95, 0.82, 0.45, 1)
 theme_override_fonts/font = SubResource("FontVariation_modal_bold")
-theme_override_font_sizes/font_size = 17
+theme_override_font_sizes/font_size = 18
 text = "✦ คาถาบทที่ 1: ตรวจสอบระดับพลังเวท"
 
 [node name="GuideRichLabel" type="RichTextLabel" parent="CenterContainer/ModalPanel/VBox/PagesHBox/LeftPageMargin/LeftPagePanel/LeftVBox"]
@@ -359,15 +359,15 @@ size_flags_vertical = 3
 theme_override_colors/default_color = Color(0.88, 0.89, 0.92, 1)
 theme_override_fonts/normal_font = SubResource("FontVariation_modal_reg")
 theme_override_fonts/bold_font = SubResource("FontVariation_modal_bold")
-theme_override_font_sizes/normal_font_size = 15
-theme_override_font_sizes/bold_font_size = 15
-theme_override_constants/line_separation = 6
+theme_override_font_sizes/normal_font_size = 16
+theme_override_font_sizes/bold_font_size = 16
+theme_override_constants/line_separation = 8
 bbcode_enabled = true
 text = "ก่อนจะเริ่มร่ายเวทมนตร์ใดๆ นักเวทจำเป็นต้องตรวจสอบเสียก่อน..."
 
 [node name="ActionVBox" type="VBoxContainer" parent="CenterContainer/ModalPanel/VBox/PagesHBox/LeftPageMargin/LeftPagePanel/LeftVBox"]
 layout_mode = 2
-theme_override_constants/separation = 6
+theme_override_constants/separation = 8
 
 [node name="ButtonsHBox" type="HBoxContainer" parent="CenterContainer/ModalPanel/VBox/PagesHBox/LeftPageMargin/LeftPagePanel/LeftVBox/ActionVBox"]
 layout_mode = 2
@@ -375,7 +375,7 @@ theme_override_constants/separation = 10
 
 [node name="CastCommandButton" type="Button" parent="CenterContainer/ModalPanel/VBox/PagesHBox/LeftPageMargin/LeftPagePanel/LeftVBox/ActionVBox/ButtonsHBox"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 42)
+custom_minimum_size = Vector2(0, 44)
 layout_mode = 2
 size_flags_horizontal = 3
 mouse_default_cursor_shape = 2
@@ -390,7 +390,7 @@ text = "✨ ทดสอบ git version"
 
 [node name="AltCommandButton" type="Button" parent="CenterContainer/ModalPanel/VBox/PagesHBox/LeftPageMargin/LeftPagePanel/LeftVBox/ActionVBox/ButtonsHBox"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 42)
+custom_minimum_size = Vector2(0, 44)
 layout_mode = 2
 size_flags_horizontal = 3
 mouse_default_cursor_shape = 2
@@ -406,16 +406,16 @@ text = "✨ ทดสอบ git --version"
 unique_name_in_owner = true
 layout_mode = 2
 mouse_default_cursor_shape = 2
-theme_override_colors/font_color = Color(0.68, 0.72, 0.82, 0.8)
+theme_override_colors/font_color = Color(0.68, 0.72, 0.82, 0.85)
 theme_override_colors/font_hover_color = Color(0.95, 0.82, 0.45, 1)
 theme_override_fonts/font = SubResource("FontVariation_modal_reg")
 theme_override_font_sizes/font_size = 14
-text = "↺ เคลียร์หน้าจอ Terminal จำลอง"
+text = "↺ รีเซ็ตวงแหวนเวท (ร่ายใหม่)"
 flat = true
 
 [node name="OutcomePanel" type="PanelContainer" parent="CenterContainer/ModalPanel/VBox/PagesHBox/LeftPageMargin/LeftPagePanel/LeftVBox"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 64)
+custom_minimum_size = Vector2(0, 68)
 layout_mode = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_outcome")
 
@@ -424,11 +424,11 @@ unique_name_in_owner = true
 layout_mode = 2
 theme_override_fonts/normal_font = SubResource("FontVariation_modal_reg")
 theme_override_fonts/bold_font = SubResource("FontVariation_modal_bold")
-theme_override_font_sizes/normal_font_size = 14
-theme_override_font_sizes/bold_font_size = 14
-theme_override_constants/line_separation = 4
+theme_override_font_sizes/normal_font_size = 15
+theme_override_font_sizes/bold_font_size = 15
+theme_override_constants/line_separation = 6
 bbcode_enabled = true
-text = "สัมผัสพลังเวทสำเร็จ! Terminal ตอบกลับว่า git version 2.40.1"
+text = "สัมผัสพลังเวทสำเร็จ! คัมภีร์เวทเปล่งแสงตอบรับ Git Version 2.40.1 พร้อมใช้งาน"
 
 [node name="BottomNav" type="HBoxContainer" parent="CenterContainer/ModalPanel/VBox/PagesHBox/LeftPageMargin/LeftPagePanel/LeftVBox"]
 layout_mode = 2
@@ -468,12 +468,13 @@ text = "▶"
 
 [node name="StartTerminalButton" type="Button" parent="CenterContainer/ModalPanel/VBox/PagesHBox/LeftPageMargin/LeftPagePanel/LeftVBox/BottomNav"]
 unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 44)
 layout_mode = 2
 size_flags_horizontal = 3
 mouse_default_cursor_shape = 2
 theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_fonts/font = SubResource("FontVariation_modal_bold")
-theme_override_font_sizes/font_size = 15
+theme_override_font_sizes/font_size = 16
 theme_override_styles/normal = SubResource("StyleBoxFlat_terminal_btn")
 theme_override_styles/hover = SubResource("StyleBoxFlat_terminal_btn_hover")
 theme_override_styles/pressed = SubResource("StyleBoxFlat_terminal_btn")
