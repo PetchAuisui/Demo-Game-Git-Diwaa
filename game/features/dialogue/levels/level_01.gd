@@ -207,7 +207,7 @@ static func get_data() -> Dictionary:
 						"text": "ร่ายคาถา git version หรือ git --version",
 						"type": "command",
 						"commands": ["git --version", "git version"],
-						"hint": "พิมพ์ git แล้วตามด้วย version ได้ 2 แบบ: git version (ไม่มีขีด) หรือ git --version (ขีดคู่) — ผลลัพธ์เหมือนกันทุกประการ",
+						"hint": "พิมพ์ได้ทั้ง 2 แบบ: git version หรือ git --version ในเทอร์มินัล",
 						"near_miss": [
 							{"pattern": "^git\\s+-version", "message": "ขีดหน้า version ต้องเป็นขีดคู่ --version"},
 							{"pattern": "^git--", "message": "ต้องเว้นวรรคระหว่าง git กับ --version"},

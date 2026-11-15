@@ -141,27 +141,27 @@ func _build_ui() -> void:
 
 	# 2.1 ห้องเวทมนตร์ (Magic Chamber) แสดงวงแหวนและคัมภีร์ลอย
 	_magic_chamber = Control.new()
-	_magic_chamber.custom_minimum_size = Vector2(0, 210)
+	_magic_chamber.custom_minimum_size = Vector2(0, 150)
 	_magic_chamber.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_magic_chamber.clip_contents = true
 	chamber_vbox.add_child(_magic_chamber)
 
-	# วงแหวนเวทหมุนวน (Magic Reticle)
+	# วงแหวนเวทหมุนวน (Magic Reticle) ขนาดกะทัดรัด
 	_reticle_rect = TextureRect.new()
 	if ResourceLoader.exists("res://assets/art/dressing_room/magic_reticle.png"):
 		_reticle_rect.texture = load("res://assets/art/dressing_room/magic_reticle.png")
-	_reticle_rect.custom_minimum_size = Vector2(260, 260)
-	_reticle_rect.pivot_offset = Vector2(130, 130)
+	_reticle_rect.custom_minimum_size = Vector2(180, 180)
+	_reticle_rect.pivot_offset = Vector2(90, 90)
 	_reticle_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	_reticle_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	_reticle_rect.modulate = Color(0.45, 0.75, 1.0, 0.45)
 	_magic_chamber.add_child(_reticle_rect)
 
-	# คัมภีร์เวทมนตร์ลอยอยู่ตรงกลาง (Khampri Book)
+	# คัมภีร์เวทมนตร์ลอยอยู่ตรงกลาง (Khampri Book) ขนาดพอดีสายตา
 	_book_rect = TextureRect.new()
 	if ResourceLoader.exists("res://assets/cutscene/props/khampri/Khampri.png"):
 		_book_rect.texture = load("res://assets/cutscene/props/khampri/Khampri.png")
-	_book_rect.custom_minimum_size = Vector2(110, 110)
+	_book_rect.custom_minimum_size = Vector2(80, 80)
 	_book_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	_book_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	_magic_chamber.add_child(_book_rect)
@@ -272,13 +272,13 @@ func reset_animation() -> void:
 	match current_mode:
 		DisplayMode.VERSION_CHECK:
 			active_command = "git version"
-			_header_title.text = "🔮 แท่นหยั่งรู้มนตรา: สัมผัสพลังคัมภีร์เวท (Git Version)"
+			_header_title.text = "📖 ภาพจำลองมนตรา: ตรวจสอบระดับพลังคัมภีร์เวท (Git Version)"
 		DisplayMode.CONFIG_REGISTRY:
 			active_command = "git config --global user.name \"Vel\""
-			_header_title.text = "📜 ศิลาจารึกวิญญาณ: ประกาศนามและผูกตราประทับ (Git Config)"
+			_header_title.text = "📖 ภาพจำลองมนตรา: ประกาศนามและผูกตราประทับ (Git Config)"
 		DisplayMode.GIT_GRAPH:
 			active_command = "git commit"
-			_header_title.text = "✨ สายธารดวงดาวแห่งกาลเวลา: ประวัติการจารึก (Git Graph)"
+			_header_title.text = "📖 ภาพจำลองมนตรา: สายธารประวัติการจารึก (Git Graph)"
 
 	_refresh_tablet_ui()
 	_refresh_note_ui()
@@ -347,20 +347,20 @@ func _refresh_tablet_ui() -> void:
 	elif anim_phase == 2:
 		# ผลลัพธ์สำเร็จ (Locked)
 		if current_mode == DisplayMode.VERSION_CHECK:
-			_status_title.text = "✨ ตรวจพบแกนพลังเวทมนตร์ Git สำเร็จ! ✨"
+			_status_title.text = "✨ ตัวอย่างผลลัพธ์: ตรวจพบระดับพลัง Git 2.40.1 ✨"
 			_status_title.add_theme_color_override("font_color", COLOR_MAGIC_GREEN)
 
 			var res_grid := VBoxContainer.new()
 			res_grid.add_theme_constant_override("separation", 6)
 			_details_vbox.add_child(res_grid)
 
-			res_grid.add_child(_make_attribute_row("🔮 แกนกลางคัมภีร์:", "Git Core Engine (หอคอยเวทมนตร์)", COLOR_TEXT_WHITE))
-			res_grid.add_child(_make_attribute_row("⚡ ระดับพลังเวท (Version):", "Git Version 2.40.1", Color(1.0, 0.88, 0.45, 1.0), true, 17))
-			res_grid.add_child(_make_attribute_row("🛡️ สถานะการตอบรับ:", "สมบูรณ์ พร้อมร่ายคาถาในเทอร์มินัล", COLOR_MAGIC_GREEN))
-			res_grid.add_child(_make_attribute_row("📜 คาถาที่ใช้ทดสอบ:", active_command, COLOR_MAGIC_CYAN))
+			res_grid.add_child(_make_attribute_row("🔮 คัมภีร์ที่ตอบสนอง:", "Git Core Engine (หอคอยเวทมนตร์)", COLOR_TEXT_WHITE))
+			res_grid.add_child(_make_attribute_row("⚡ ระดับพลังเวท (Version):", "Git Version 2.40.1", Color(1.0, 0.88, 0.45, 1.0), true, 16))
+			res_grid.add_child(_make_attribute_row("📜 คาถาที่รองรับ:", active_command, COLOR_MAGIC_CYAN))
+			res_grid.add_child(_make_attribute_row("🎯 ขั้นตอนถัดไป:", "กดปุ่มด้านล่างเพื่อเริ่มพิมพ์ร่ายจริงในเทอร์มินัล ➔", COLOR_MAGIC_GREEN, true, 15))
 
 		elif current_mode == DisplayMode.CONFIG_REGISTRY:
-			_status_title.text = "✨ ตราประทับวิญญาณได้รับการจารึกเรียบร้อย! ✨"
+			_status_title.text = "✨ ตัวอย่างผลลัพธ์: ตราประทับวิญญาณพร้อมจารึก ✨"
 			_status_title.add_theme_color_override("font_color", COLOR_MAGIC_GREEN)
 
 			var res_grid := VBoxContainer.new()
@@ -370,6 +370,7 @@ func _refresh_tablet_ui() -> void:
 			res_grid.add_child(_make_attribute_row("👤 นามผู้จารึก (user.name):", "\"Vel\"", Color(1.0, 0.88, 0.45, 1.0), true, 16))
 			res_grid.add_child(_make_attribute_row("✉️ ตราประทับวิญญาณ (user.email):", "\"vel@magic-tower.local\"", COLOR_MAGIC_CYAN))
 			res_grid.add_child(_make_attribute_row("🏛️ ขอบเขตการจารึก:", "ทั่วทั้งหอคอยเวท (--global)", COLOR_TEXT_WHITE))
+			res_grid.add_child(_make_attribute_row("🎯 ขั้นตอนถัดไป:", "กดปุ่มด้านล่างเพื่อเข้าสู่เทอร์มินัลและจารึกจริง ➔", COLOR_MAGIC_GREEN, true, 15))
 
 
 func _make_attribute_row(label_text: String, value_text: String, val_color: Color, bold_val: bool = false, val_size: int = 15) -> HBoxContainer:
