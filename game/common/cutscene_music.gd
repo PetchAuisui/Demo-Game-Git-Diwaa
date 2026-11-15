@@ -9,15 +9,23 @@ extends RefCounted
 const BGM_AUDIO_PATH: String = "res://assets/audio/gitdiwa-sound+effect.MP3"
 const PLAYER_NODE_NAME: String = "CutscenePersistentBGM"
 const DEFAULT_TARGET_DB: float = 2.0
-const DEFAULT_START_DB: float = -24.0
+const DEFAULT_START_DB: float = -12.0
 
 static var _player: AudioStreamPlayer = null
 static var _fade_tween: Tween = null
 static var _is_fading_out: bool = false
 
 
+## ลงทะเบียน AudioStreamPlayer ที่มีอยู่แล้ว (เช่น จากฉากหมู่บ้าน)
+static func register_player(player: AudioStreamPlayer) -> void:
+	if player == null or not is_instance_valid(player):
+		return
+	_player = player
+	_is_fading_out = false
+
+
 ## เริ่มเล่นเพลง Cutscene (หากเล่นอยู่แล้วจะไม่เริ่มใหม่ เล่นต่อเนื่องอย่างไร้รอยต่อ)
-static func play(fade_in_duration: float = 1.2, start_db: float = DEFAULT_START_DB, target_db: float = DEFAULT_TARGET_DB) -> void:
+static func play(fade_in_duration: float = 1.0, start_db: float = DEFAULT_START_DB, target_db: float = DEFAULT_TARGET_DB) -> void:
 	var player := _get_or_create_player()
 	if player == null:
 		return
@@ -50,12 +58,14 @@ static func play(fade_in_duration: float = 1.2, start_db: float = DEFAULT_START_
 
 ## ตรวจสอบว่าเพลงกำลังเล่นอยู่หรือไม่
 static func is_playing() -> bool:
-	return _player != null and is_instance_valid(_player) and _player.playing
+	var player := _get_or_create_player()
+	return player != null and is_instance_valid(player) and player.playing
 
 
 ## ค่อย ๆ เฟดเสียงออกตอนท้าย (Fade-out)
 static func fade_out(duration: float = 1.0, min_db: float = -40.0) -> void:
-	if _player == null or not is_instance_valid(_player) or not _player.playing:
+	var player := _get_or_create_player()
+	if player == null or not is_instance_valid(player) or not player.playing:
 		_is_fading_out = false
 		return
 	if _is_fading_out:
@@ -66,11 +76,16 @@ static func fade_out(duration: float = 1.0, min_db: float = -40.0) -> void:
 		_fade_tween.kill()
 		_fade_tween = null
 	
-	_fade_tween = _player.create_tween()
-	_fade_tween.tween_property(_player, "volume_db", min_db, duration).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN)
+	_fade_tween = player.create_tween()
+	_fade_tween.tween_property(player, "volume_db", min_db, duration).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN)
 	_fade_tween.tween_callback(func():
-		if _player and is_instance_valid(_player) and _player.playing:
-			_player.stop()
+		if player and is_instance_valid(player):
+			if player.playing:
+				player.stop()
+			var tree := Engine.get_main_loop() as SceneTree
+			if tree and tree.root and player.get_parent() == tree.root:
+				player.queue_free()
+		_player = null
 		_is_fading_out = false
 		print("[CutsceneMusic] 🎵 เพลง Cutscene เฟดจบเรียบร้อย")
 	)
@@ -83,6 +98,10 @@ static func stop_immediate() -> void:
 		_fade_tween = null
 	if _player and is_instance_valid(_player):
 		_player.stop()
+		var tree := Engine.get_main_loop() as SceneTree
+		if tree and tree.root and _player.get_parent() == tree.root:
+			_player.queue_free()
+		_player = null
 	_is_fading_out = false
 
 
@@ -95,6 +114,8 @@ static func _get_or_create_player() -> AudioStreamPlayer:
 		return _player
 	
 	var existing := tree.root.get_node_or_null(PLAYER_NODE_NAME) as AudioStreamPlayer
+	if existing == null:
+		existing = tree.root.get_node_or_null("BGM") as AudioStreamPlayer
 	if existing != null:
 		_player = existing
 		return _player

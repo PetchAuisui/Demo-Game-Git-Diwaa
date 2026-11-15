@@ -2,10 +2,10 @@ extends Node2D
 
 ## การควบคุม Cutscene ปกติ (Cutscene Normal)
 ## ลำดับเหตุการณ์:
-## 1. หมู่บ้านปกติ (village-normal เฟรม 0 ถึง 23)
+## 1. หมู่บ้านปกติ (แสดงเฉพาะเฟรมแรก ค้างไว้ 3.0 วินาที ตามเวลาเดิม)
 ## 2. ท้องฟ้าสงบสุข (peaceful-landscape เล่นทั้งหมด 66 เฟรม)
 ## 3. ตัดเข้าสู่ฉากหอสมุด (intro_cutscene.tscn)
-## เสียง Cutscene (gitdiwa-sound+effect.MP3) จะเล่นต่อเนื่องข้ามไปยังฉากหอสมุดโดยไม่หยุด
+## เสียง Cutscene (gitdiwa-sound+effect.MP3) เริ่มเล่นตั้งแต่ฉากหมู่บ้าน และเล่นต่อเนื่องข้ามไปยังฉากหอสมุดโดยไม่สะดุด
 
 const CutsceneMusic = preload("res://common/cutscene_music.gd")
 
@@ -13,9 +13,11 @@ const CutsceneMusic = preload("res://common/cutscene_music.gd")
 @onready var sky: AnimatedSprite2D = $Sky
 @onready var camera: Camera2D = $Camera2D
 @onready var fade_overlay: ColorRect = $UI/FadeOverlay
+@onready var bgm: AudioStreamPlayer = $BGM
 
 @export_group("การแสดงผลหมู่บ้าน (Village Settings)")
 @export var village_frame_index: int = 0
+@export var village_duration: float = 3.0
 
 var is_transitioning: bool = false
 var is_fast_forwarding: bool = false
@@ -120,24 +122,31 @@ func play_normal_sequence() -> void:
 	current_stage = 1
 	village.visible = true
 	village.frame = village_frame_index
-	if village.sprite_frames:
-		village.sprite_frames.set_animation_loop("village_normal", true)
-	village.play("village_normal", 1.0)
+	village.stop() # เล่นเฉพาะเฟรมแรก ค้างไว้ ไม่เล่น Animation
 	
-	# เริ่มเล่นเสียงเพลง Cutscene ต่อเนื่องพร้อมเฟดเข้า
-	CutsceneMusic.play(1.5)
+	# เริ่มเล่นเสียงเพลง Cutscene ต่อเนื่องตั้งแต่ฉากหมู่บ้านพร้อม Fade-in ทันที
+	if is_instance_valid(bgm):
+		bgm.volume_db = -12.0
+		bgm.play()
+		CutsceneMusic.register_player(bgm)
+		var tw_audio = create_tween()
+		tw_audio.tween_property(bgm, "volume_db", 2.0, 0.8).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	else:
+		CutsceneMusic.play(0.8, -12.0, 2.0)
 	
-	# เฟดเข้าจากจอดำอย่างนุ่มนวล เพิ่มระยะเวลาเข้าฉากให้เห็นบรรยากาศหมู่บ้านชัดเจน (1.2 วินาที)
+	# เฟดภาพเข้าจากจอดำอย่างนุ่มนวล (0.8 วินาที)
 	if tw_intro_fade and tw_intro_fade.is_valid():
 		tw_intro_fade.kill()
+	fade_overlay.color = Color(0, 0, 0, 1)
+	fade_overlay.visible = true
 	tw_intro_fade = create_tween()
-	tw_intro_fade.tween_property(fade_overlay, "color:a", 0.0, 1.2).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	tw_intro_fade.tween_property(fade_overlay, "color:a", 0.0, 0.8).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
 	
-	# เพิ่มระยะเวลาฉากบ้านเมืองปกติอีก 2 วินาที (จากเดิม 3.0s รวมเป็น 5.0 วินาที)
+	# แสดงภาพหมู่บ้านเฟรมแรก ค้างไว้ตามเวลาเดิม (3.0 วินาที)
 	if tw_village_timer and tw_village_timer.is_valid():
 		tw_village_timer.kill()
 	tw_village_timer = create_tween()
-	tw_village_timer.tween_interval(5.0)
+	tw_village_timer.tween_interval(village_duration)
 	tw_village_timer.tween_callback(_on_village_finished)
 
 func _on_village_finished() -> void:
@@ -180,7 +189,15 @@ func _go_to_intro_cutscene() -> void:
 		tw_sky_fade.kill()
 		tw_sky_fade = null
 	
-	# ไม่หยุดเพลง เพื่อให้เสียงเล่นต่อเนื่องลอดเข้าไปยังฉากห้องสมุด
+	# ย้ายโหนดเพลง BGM ไปไว้ที่ root ก่อนสลับฉาก เพื่อให้เพลงเล่นต่อเนื่องไปยังฉากหอสมุดโดยไม่ขาดตอน
+	if is_instance_valid(bgm) and bgm.get_parent() == self:
+		var cur_pos: float = bgm.get_playback_position()
+		bgm.reparent(get_tree().root)
+		if not bgm.playing:
+			bgm.play(cur_pos)
+		CutsceneMusic.register_player(bgm)
+	
+	# เฟดภาพจอดำก่อนสลับฉาก
 	var tw_fade_out = create_tween()
 	tw_fade_out.tween_property(fade_overlay, "color:a", 1.0, 0.6)
 	tw_fade_out.tween_callback(func():

@@ -3,6 +3,7 @@
 [ext_resource type="Script" uid="uid://cw4jnne7p2x86" path="res://features/cutscene/cut_scence_normal.gd" id="1_script"]
 [ext_resource type="Texture2D" uid="uid://dcvd3t5deskx3" path="res://assets/cutscene/backgrounds/village-normal-to-chaos-Sheet.png" id="2_village"]
 [ext_resource type="Texture2D" uid="uid://ldg2myveluut" path="res://assets/cutscene/backgrounds/peaceful-landscape-preview-Sheet.png" id="3_peaceful"]
+[ext_resource type="AudioStream" uid="uid://cbhw3rtsg2snx" path="res://assets/audio/gitdiwa-sound+effect.MP3" id="4_audio"]
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_vil_0"]
 atlas = ExtResource("2_village")
@@ -680,3 +681,6 @@ grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
 color = Color(0, 0, 0, 1)
+
+[node name="BGM" type="AudioStreamPlayer" parent="." unique_id=987123456]
+stream = ExtResource("4_audio")
