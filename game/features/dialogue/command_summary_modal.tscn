@@ -1,0 +1,482 @@
+[gd_scene format=3 uid="uid://b0x1y2z3a4b5c"]
+
+[ext_resource type="Script" path="res://features/dialogue/command_summary_modal.gd" id="1_script"]
+[ext_resource type="Script" path="res://features/dialogue/command_demonstration_canvas.gd" id="2_canvas_script"]
+[ext_resource type="FontFile" uid="uid://deedcfbkojx6k" path="res://assets/fonts/ChakraPetch-Bold.ttf" id="3_chakra_bold"]
+[ext_resource type="FontFile" path="res://assets/fonts/ChakraPetch-Regular.ttf" id="4_chakra_reg"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_modal"]
+bg_color = Color(0.0823529, 0.0705882, 0.14902, 0.980392)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(0.580392, 0.435294, 0.819608, 0.9)
+corner_radius_top_left = 14
+corner_radius_top_right = 14
+corner_radius_bottom_left = 14
+corner_radius_bottom_right = 14
+shadow_color = Color(0.380392, 0.207843, 0.658824, 0.35)
+shadow_size = 24
+shadow_offset = Vector2(0, 8)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_titlebar"]
+bg_color = Color(0.141176, 0.109804, 0.239216, 1)
+corner_radius_top_left = 12
+corner_radius_top_right = 12
+content_margin_left = 16.0
+content_margin_top = 8.0
+content_margin_right = 16.0
+content_margin_bottom = 8.0
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_gem_red"]
+bg_color = Color(0.960784, 0.352941, 0.352941, 1)
+corner_radius_top_left = 7
+corner_radius_top_right = 7
+corner_radius_bottom_left = 7
+corner_radius_bottom_right = 7
+shadow_color = Color(1, 0.2, 0.2, 0.4)
+shadow_size = 4
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_gem_yellow"]
+bg_color = Color(1, 0.741176, 0.2, 1)
+corner_radius_top_left = 7
+corner_radius_top_right = 7
+corner_radius_bottom_left = 7
+corner_radius_bottom_right = 7
+shadow_color = Color(1, 0.8, 0.2, 0.4)
+shadow_size = 4
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_gem_green"]
+bg_color = Color(0.2, 0.85098, 0.45098, 1)
+corner_radius_top_left = 7
+corner_radius_top_right = 7
+corner_radius_bottom_left = 7
+corner_radius_bottom_right = 7
+shadow_color = Color(0.2, 0.9, 0.5, 0.4)
+shadow_size = 4
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_cast_btn"]
+bg_color = Color(0.160784, 0.482353, 0.301961, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.42, 0.88, 0.62, 1)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_left = 8
+corner_radius_bottom_right = 8
+content_margin_left = 16.0
+content_margin_top = 10.0
+content_margin_right = 16.0
+content_margin_bottom = 10.0
+shadow_color = Color(0.2, 0.8, 0.4, 0.25)
+shadow_size = 8
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_cast_btn_hover"]
+bg_color = Color(0.219608, 0.611765, 0.380392, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.65, 1, 0.8, 1)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_left = 8
+corner_radius_bottom_right = 8
+content_margin_left = 16.0
+content_margin_top = 10.0
+content_margin_right = 16.0
+content_margin_bottom = 10.0
+shadow_color = Color(0.3, 0.95, 0.55, 0.45)
+shadow_size = 12
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_cast_btn_disabled"]
+bg_color = Color(0.12, 0.22, 0.16, 0.6)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.25, 0.45, 0.35, 0.4)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_left = 8
+corner_radius_bottom_right = 8
+content_margin_left = 16.0
+content_margin_top = 10.0
+content_margin_right = 16.0
+content_margin_bottom = 10.0
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_outcome"]
+bg_color = Color(0.0823529, 0.180392, 0.14902, 0.9)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.298039, 0.760784, 0.541176, 0.8)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_left = 8
+corner_radius_bottom_right = 8
+content_margin_left = 14.0
+content_margin_top = 10.0
+content_margin_right = 14.0
+content_margin_bottom = 10.0
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_circle_red"]
+bg_color = Color(0.768627, 0.231373, 0.231373, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(1, 0.521569, 0.521569, 1)
+corner_radius_top_left = 20
+corner_radius_top_right = 20
+corner_radius_bottom_left = 20
+corner_radius_bottom_right = 20
+shadow_color = Color(0.9, 0.2, 0.2, 0.35)
+shadow_size = 6
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_circle_red_hover"]
+bg_color = Color(0.88, 0.3, 0.3, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(1, 0.75, 0.75, 1)
+corner_radius_top_left = 20
+corner_radius_top_right = 20
+corner_radius_bottom_left = 20
+corner_radius_bottom_right = 20
+shadow_color = Color(1, 0.3, 0.3, 0.55)
+shadow_size = 10
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_circle_green"]
+bg_color = Color(0.188235, 0.690196, 0.368627, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.478431, 0.94902, 0.65098, 1)
+corner_radius_top_left = 20
+corner_radius_top_right = 20
+corner_radius_bottom_left = 20
+corner_radius_bottom_right = 20
+shadow_color = Color(0.2, 0.85, 0.45, 0.35)
+shadow_size = 6
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_circle_green_hover"]
+bg_color = Color(0.24, 0.8, 0.44, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.7, 1, 0.8, 1)
+corner_radius_top_left = 20
+corner_radius_top_right = 20
+corner_radius_bottom_left = 20
+corner_radius_bottom_right = 20
+shadow_color = Color(0.25, 0.95, 0.55, 0.55)
+shadow_size = 10
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_terminal_btn"]
+bg_color = Color(0.211765, 0.439216, 0.831373, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.560784, 0.772549, 1, 1)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_left = 8
+corner_radius_bottom_right = 8
+content_margin_left = 18.0
+content_margin_top = 8.0
+content_margin_right = 18.0
+content_margin_bottom = 8.0
+shadow_color = Color(0.25, 0.5, 0.9, 0.35)
+shadow_size = 8
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_terminal_btn_hover"]
+bg_color = Color(0.270588, 0.529412, 0.960784, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.8, 0.9, 1, 1)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_left = 8
+corner_radius_bottom_right = 8
+content_margin_left = 18.0
+content_margin_top = 8.0
+content_margin_right = 18.0
+content_margin_bottom = 8.0
+shadow_color = Color(0.35, 0.65, 1, 0.55)
+shadow_size = 12
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_canvas_border"]
+bg_color = Color(0.0627451, 0.0901961, 0.176471, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.231373, 0.329412, 0.521569, 0.8)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_left = 10
+corner_radius_bottom_right = 10
+content_margin_left = 4.0
+content_margin_top = 4.0
+content_margin_right = 4.0
+content_margin_bottom = 4.0
+
+[node name="CommandSummaryModal" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 0
+script = ExtResource("1_script")
+
+[node name="DimOverlay" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.0392157, 0.0509804, 0.117647, 0.823529)
+
+[node name="CenterContainer" type="CenterContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="ModalPanel" type="PanelContainer" parent="CenterContainer"]
+custom_minimum_size = Vector2(1280, 720)
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_modal")
+
+[node name="VBox" type="VBoxContainer" parent="CenterContainer/ModalPanel"]
+layout_mode = 2
+theme_override_constants/separation = 0
+
+[node name="TitleBar" type="PanelContainer" parent="CenterContainer/ModalPanel/VBox"]
+custom_minimum_size = Vector2(0, 48)
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_titlebar")
+
+[node name="HBox" type="HBoxContainer" parent="CenterContainer/ModalPanel/VBox/TitleBar"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="WindowGems" type="HBoxContainer" parent="CenterContainer/ModalPanel/VBox/TitleBar/HBox"]
+custom_minimum_size = Vector2(60, 0)
+layout_mode = 2
+theme_override_constants/separation = 8
+alignment = 1
+
+[node name="GemRed" type="Panel" parent="CenterContainer/ModalPanel/VBox/TitleBar/HBox/WindowGems"]
+custom_minimum_size = Vector2(14, 14)
+layout_mode = 2
+size_flags_vertical = 4
+theme_override_styles/panel = SubResource("StyleBoxFlat_gem_red")
+
+[node name="GemYellow" type="Panel" parent="CenterContainer/ModalPanel/VBox/TitleBar/HBox/WindowGems"]
+custom_minimum_size = Vector2(14, 14)
+layout_mode = 2
+size_flags_vertical = 4
+theme_override_styles/panel = SubResource("StyleBoxFlat_gem_yellow")
+
+[node name="GemGreen" type="Panel" parent="CenterContainer/ModalPanel/VBox/TitleBar/HBox/WindowGems"]
+custom_minimum_size = Vector2(14, 14)
+layout_mode = 2
+size_flags_vertical = 4
+theme_override_styles/panel = SubResource("StyleBoxFlat_gem_green")
+
+[node name="TitleLabel" type="Label" parent="CenterContainer/ModalPanel/VBox/TitleBar/HBox"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.980392, 0.980392, 0.980392, 1)
+theme_override_fonts/font = ExtResource("3_chakra_bold")
+theme_override_font_sizes/font_size = 20
+text = "⚙ บันทึกมนตรา: สาธิตคำสั่ง Git (Git Demonstration)"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="CloseButton" type="Button" parent="CenterContainer/ModalPanel/VBox/TitleBar/HBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(32, 32)
+layout_mode = 2
+size_flags_vertical = 4
+theme_override_colors/font_color = Color(0.8, 0.8, 0.8, 1)
+theme_override_colors/font_hover_color = Color(1, 0.4, 0.4, 1)
+theme_override_fonts/font = ExtResource("3_chakra_bold")
+theme_override_font_sizes/font_size = 18
+text = "✕"
+flat = true
+
+[node name="ContentHBox" type="HBoxContainer" parent="CenterContainer/ModalPanel/VBox"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 16
+
+[node name="LeftMargin" type="MarginContainer" parent="CenterContainer/ModalPanel/VBox/ContentHBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_stretch_ratio = 0.95
+theme_override_constants/margin_left = 24
+theme_override_constants/margin_top = 20
+theme_override_constants/margin_right = 12
+theme_override_constants/margin_bottom = 20
+
+[node name="LeftVBox" type="VBoxContainer" parent="CenterContainer/ModalPanel/VBox/ContentHBox/LeftMargin"]
+layout_mode = 2
+theme_override_constants/separation = 14
+
+[node name="StepBadge" type="Label" parent="CenterContainer/ModalPanel/VBox/ContentHBox/LeftMargin/LeftVBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.921569, 0.8, 0.443137, 1)
+theme_override_fonts/font = ExtResource("3_chakra_bold")
+theme_override_font_sizes/font_size = 18
+text = "✦ บทเรียนการจารึก: Git Commit"
+
+[node name="GuideRichLabel" type="RichTextLabel" parent="CenterContainer/ModalPanel/VBox/ContentHBox/LeftMargin/LeftVBox"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_colors/default_color = Color(0.88, 0.89, 0.92, 1)
+theme_override_fonts/normal_font = ExtResource("4_chakra_reg")
+theme_override_fonts/bold_font = ExtResource("3_chakra_bold")
+theme_override_font_sizes/normal_font_size = 17
+theme_override_font_sizes/bold_font_size = 17
+theme_override_constants/line_separation = 6
+bbcode_enabled = true
+text = "มาดูการทำงานจริงของพลังเวท Git ในคัมภีร์ส่วนตัวกันเถอะ..."
+
+[node name="ActionVBox" type="VBoxContainer" parent="CenterContainer/ModalPanel/VBox/ContentHBox/LeftMargin/LeftVBox"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="CastCommandButton" type="Button" parent="CenterContainer/ModalPanel/VBox/ContentHBox/LeftMargin/LeftVBox/ActionVBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 46)
+layout_mode = 2
+mouse_default_cursor_shape = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_fonts/font = ExtResource("3_chakra_bold")
+theme_override_font_sizes/font_size = 20
+theme_override_styles/normal = SubResource("StyleBoxFlat_cast_btn")
+theme_override_styles/hover = SubResource("StyleBoxFlat_cast_btn_hover")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_cast_btn")
+theme_override_styles/disabled = SubResource("StyleBoxFlat_cast_btn_disabled")
+text = "✨ git commit"
+
+[node name="ResetAnimationButton" type="Button" parent="CenterContainer/ModalPanel/VBox/ContentHBox/LeftMargin/LeftVBox/ActionVBox"]
+unique_name_in_owner = true
+layout_mode = 2
+mouse_default_cursor_shape = 2
+theme_override_colors/font_color = Color(0.68, 0.72, 0.82, 0.85)
+theme_override_colors/font_hover_color = Color(0.92, 0.8, 0.44, 1)
+theme_override_fonts/font = ExtResource("4_chakra_reg")
+theme_override_font_sizes/font_size = 15
+text = "↺ Reset Animation (ร่ายใหม่)"
+flat = true
+
+[node name="OutcomePanel" type="PanelContainer" parent="CenterContainer/ModalPanel/VBox/ContentHBox/LeftMargin/LeftVBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 80)
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_outcome")
+
+[node name="OutcomeLabel" type="RichTextLabel" parent="CenterContainer/ModalPanel/VBox/ContentHBox/LeftMargin/LeftVBox/OutcomePanel"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_fonts/normal_font = ExtResource("4_chakra_reg")
+theme_override_fonts/bold_font = ExtResource("3_chakra_bold")
+theme_override_font_sizes/normal_font_size = 15
+theme_override_font_sizes/bold_font_size = 15
+theme_override_constants/line_separation = 4
+bbcode_enabled = true
+text = "ยอดเยี่ยมมาก! เราเพิ่งจารึกการเปลี่ยนแปลงลงในคัมภีร์เวท..."
+
+[node name="BottomNav" type="HBoxContainer" parent="CenterContainer/ModalPanel/VBox/ContentHBox/LeftMargin/LeftVBox"]
+layout_mode = 2
+theme_override_constants/separation = 16
+alignment = 1
+
+[node name="NavPrevButton" type="Button" parent="CenterContainer/ModalPanel/VBox/ContentHBox/LeftMargin/LeftVBox/BottomNav"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(40, 40)
+layout_mode = 2
+mouse_default_cursor_shape = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_fonts/font = ExtResource("3_chakra_bold")
+theme_override_font_sizes/font_size = 18
+theme_override_styles/normal = SubResource("StyleBoxFlat_circle_red")
+theme_override_styles/hover = SubResource("StyleBoxFlat_circle_red_hover")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_circle_red")
+text = "◀"
+
+[node name="PageIndicator" type="Label" parent="CenterContainer/ModalPanel/VBox/ContentHBox/LeftMargin/LeftVBox/BottomNav"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.75, 0.78, 0.85, 1)
+theme_override_fonts/font = ExtResource("3_chakra_bold")
+theme_override_font_sizes/font_size = 16
+text = "1 / 2"
+horizontal_alignment = 1
+
+[node name="NavNextButton" type="Button" parent="CenterContainer/ModalPanel/VBox/ContentHBox/LeftMargin/LeftVBox/BottomNav"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(40, 40)
+layout_mode = 2
+mouse_default_cursor_shape = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_fonts/font = ExtResource("3_chakra_bold")
+theme_override_font_sizes/font_size = 18
+theme_override_styles/normal = SubResource("StyleBoxFlat_circle_green")
+theme_override_styles/hover = SubResource("StyleBoxFlat_circle_green_hover")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_circle_green")
+text = "▶"
+
+[node name="StartTerminalButton" type="Button" parent="CenterContainer/ModalPanel/VBox/ContentHBox/LeftMargin/LeftVBox/BottomNav"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+size_flags_horizontal = 3
+mouse_default_cursor_shape = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_fonts/font = ExtResource("3_chakra_bold")
+theme_override_font_sizes/font_size = 16
+theme_override_styles/normal = SubResource("StyleBoxFlat_terminal_btn")
+theme_override_styles/hover = SubResource("StyleBoxFlat_terminal_btn_hover")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_terminal_btn")
+text = "เข้าสู่เทอร์มินัล (เริ่มร่ายคาถา) ➔"
+
+[node name="RightMargin" type="MarginContainer" parent="CenterContainer/ModalPanel/VBox/ContentHBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_stretch_ratio = 1.05
+theme_override_constants/margin_left = 12
+theme_override_constants/margin_top = 20
+theme_override_constants/margin_right = 24
+theme_override_constants/margin_bottom = 20
+
+[node name="CanvasPanel" type="PanelContainer" parent="CenterContainer/ModalPanel/VBox/ContentHBox/RightMargin"]
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_canvas_border")
+
+[node name="DemoCanvas" type="Control" parent="CenterContainer/ModalPanel/VBox/ContentHBox/RightMargin/CanvasPanel"]
+unique_name_in_owner = true
+layout_mode = 2
+script = ExtResource("2_canvas_script")
