@@ -50,11 +50,14 @@ func _ready() -> void:
 	container.offset_bottom = 60.0
 	container.add_theme_constant_override("separation", 10)
 	container.alignment = BoxContainer.ALIGNMENT_END
+	# นำปุ่มบนหน้าจอออกไปชั่วคราวตาม requirement (คงพฤติกรรม Esc / Shift / Fast-Forward / Skip ไว้ทั้งหมด)
+	container.visible = false
 	add_child(container)
 	
 	# 1. ปุ่มเร่งความเร็ว (Fast-Forward: ลูกศร 1 ตัว 1.0x <-> ลูกศร 2 ตัว 2.5x)
 	if show_fast_forward:
 		ff_button = Button.new()
+		ff_button.visible = false
 		ff_button.focus_mode = Control.FOCUS_NONE
 		ff_button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 		ff_button.custom_minimum_size = Vector2(100, 40)
@@ -104,6 +107,7 @@ func _ready() -> void:
 	# 2. ปุ่มข้าม (Skip: ข้าม)
 	if show_skip:
 		dev_skip_button = Button.new()
+		dev_skip_button.visible = false
 		dev_skip_button.text = "ข้าม"
 		dev_skip_button.focus_mode = Control.FOCUS_NONE
 		dev_skip_button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
@@ -117,13 +121,13 @@ func _ready() -> void:
 
 func set_fast_forward_visible(p_visible: bool) -> void:
 	if ff_button:
-		ff_button.visible = p_visible
+		ff_button.visible = false
 		if not p_visible and is_fast_forward:
 			_toggle_fast_forward()
 
-func set_skip_visible(p_visible: bool) -> void:
+func set_skip_visible(_p_visible: bool) -> void:
 	if dev_skip_button:
-		dev_skip_button.visible = p_visible
+		dev_skip_button.visible = false
 
 func _exit_tree() -> void:
 	_stop_bounce_animation()
@@ -277,7 +281,7 @@ func _toggle_fast_forward() -> void:
 	_apply_ff_style(is_fast_forward)
 
 func _unhandled_key_input(event: InputEvent) -> void:
-	if not visible or not show_skip:
+	if not visible:
 		return
 	if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_ESCAPE:
 		get_viewport().set_input_as_handled()
