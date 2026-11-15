@@ -1,96 +1,124 @@
-# สถาปัตยกรรมระบบ Git สำหรับเกม Git-Diwaa
+# สถาปัตยกรรมเชิงแนวคิดระบบ Git (System Conceptual Architecture)
 
-## เป้าหมาย
+เอกสารฉบับนี้อธิบายแนวคิดการออกแบบสถาปัตยกรรม (Conceptual Architecture) ของระบบจำลองการทำงาน Git ในเกม Git-Diwaa โดยเน้นหลักการออกแบบ ความปลอดภัย และการไหลของข้อมูลระหว่างระบบ
 
-ระบบนี้ให้ผู้เล่นใช้คำสั่ง Git จริงในพื้นที่ฝึกที่เกมสร้างขึ้น รองรับการทดสอบผ่าน Terminal ในรอบแรก และเปิดทางให้ Godot C# เรียก API ชุดเดียวกันในภายหลัง
+---
 
-อ้างอิงจากเอกสารโปรเจกต์ใน Notion ณ วันที่ 1 ตุลาคม 2026 เกมต้องครอบคลุมการตั้งค่าและเริ่ม repository, status/add/commit, log/diff/restore/reset, branch/switch/merge และ local remote workflow เช่น clone/fetch/pull/push โดย repository ต้องเปลี่ยนตามผลคำสั่งจริง
+## 1. ที่มาและปรัชญาของแนวคิด (Design Philosophy)
 
-## ขอบเขตรอบนี้
+### ปัญหาของการเรียนรู้ Git ทั่วไป
+* **การจำลองด้วย Hardcode / Mockup:** ผู้เรียนไม่ได้สัมผัสข้อความ Error, Warning หรือพฤติกรรม Corner Case ที่เกิดขึ้นจริงบน Git
+* **ความเสี่ยงหากใช้ Git ของระบบโดยตรง:** อาจเผลอลบไฟล์ระบบ, กระทบ `.git` ของโปรเจกต์จริง หรือเปิดช่องโหว่ความปลอดภัย (เช่น Command Injection)
 
-- เรียก executable `git` จริงโดยไม่ผ่าน shell
-- สร้าง repository ผู้เล่นแยกต่อ session
-- ใช้ global config และ hooks แยกจากเครื่องผู้ใช้
-- จำกัดคำสั่งและ options ตามบทเรียน
-- สร้าง local bare repository เพื่อจำลอง remote โดยไม่ใช้เครือข่าย
-- ส่งคืนผลคำสั่งและ snapshot แบบ typed object สำหรับ Terminal และ UI
-- มี integration tests ที่ตรวจการเปลี่ยนแปลง repository จริง
-- ยังไม่รวม Godot scene, scoring, dialogue, save game และ online Git hosting
+### แนวคิดการแก้ไขปัญหาของ Git-Diwaa
+ออกแบบระบบสถาปัตยกรรมแบบ **"Real Git in a Controlled Sandbox"** โดยให้มีตัวกลางทำหน้าที่ควบคุม ตรวจสอบ และตัดขาดสภาพแวดล้อมออกจากระบบปฏิบัติการภายนอก
 
-## Component diagram
+---
 
-```text
-┌───────────────────┐       ┌──────────────────────┐
-│ Terminal CLI      │       │ Godot C# (รอบถัดไป) │
-└─────────┬─────────┘       └──────────┬───────────┘
-          └──────────────┬─────────────┘
-                         ▼
-              ┌─────────────────────┐
-              │ GitDiwaa.Core       │
-              │ contracts + models  │
-              └──────────┬──────────┘
-                         ▼
-              ┌─────────────────────┐
-              │ GitDiwaa.RealGit    │
-              │ session / policy /  │
-              │ process / snapshot  │
-              └──────────┬──────────┘
-                         ▼
-              ┌─────────────────────┐
-              │ isolated workspace  │
-              │ player repo + bare  │
-              │ remote + git config │
-              └─────────────────────┘
+## 2. โครงสร้างสถาปัตยกรรมเชิงแนวคิด (Conceptual Architecture)
+
+ระบบแบ่งออกเป็น 4 ขอบเขตแนวคิด (Conceptual Boundaries) ดังแผนภาพ:
+
+```mermaid
+flowchart TD
+    subgraph Boundary_Presentation["1. Presentation Boundary (ส่วนปฏิสัมพันธ์ผู้เล่น)"]
+        UI_Input["User Actions & CLI Commands\n(การพิมพ์คำสั่ง / ปฏิสัมพันธ์กับไฟล์)"]
+        UI_Display["State Visualization\n(การแสดงผล Terminal, กราฟ Commit และสถานะไฟล์)"]
+    end
+
+    subgraph Boundary_Core["2. Control & Security Boundary (ตัวกลางควบคุม)"]
+        Policy["Command Policy & Sanitization\n(ตรวจสอบ Whitelist, Flag และป้องกัน Injection)"]
+        SessionMgr["Session Management\n(จัดการรอบการเล่นและ Lifecycle ของ Sandbox)"]
+        Inspector["State Inspector\n(สกัดสถานะ Git และสร้าง Typed Snapshot)"]
+        Runner["Process Runner\n(เรียกใช้งาน Git CLI จริงโดยไม่ผ่าน Shell)"]
+    end
+
+    subgraph Boundary_Sandbox["3. Sandbox Storage Boundary (พื้นที่ปิดเสมือนจริง)"]
+        Workspace["Player Working Tree\n(พื้นที่จัดเก็บไฟล์จำลองสำหรับผู้เล่น)"]
+        BareRemote["Simulated Bare Remote\n(จำลอง Remote Repository โดยไม่ต้องต่อเน็ต)"]
+        SafeEnv["Sandboxed Environment\n(ตัดขาด Git Config และปิด Hooks ทั้งหมด)"]
+    end
+
+    UI_Input -->|"1. Command Line"| Policy
+    Policy -->|"2. Validated Arguments"| Runner
+    SessionMgr -->|"เตรียมพื้นที่"| Sandbox_Boundary
+    Runner -->|"3. Execute CLI"| Workspace
+    Runner -.->|"4. Push / Fetch / Clone"| BareRemote
+    Workspace -->|"5. Raw Git State"| Inspector
+    Inspector -->|"6. State Snapshot"| UI_Display
 ```
 
-## Object responsibilities
+---
 
-| Object | Responsibility |
-|---|---|
-| `IGitGameSessionFactory` | สร้าง attempt ใหม่ให้แต่ละภารกิจ |
-| `IGitGameSession` | API หลักสำหรับสั่ง Git และอ่าน state |
-| `IPlayerFileSystem` | จัดการไฟล์เฉพาะใน working tree โดยห้ามแตะ `.git` |
-| `GitCommandResult` | ผลลัพธ์ที่ UI แสดงได้โดยไม่รู้จัก process |
-| `GitRepositorySnapshot` | branch, files และ commit graph สำหรับ UI |
-| Real Git adapter | ตรวจ policy และเรียก Git จริงใน sandbox |
+## 3. แนวคิดการไหลของข้อมูล (Conceptual Data Flow)
 
-## Data flow
+การประมวลผลคำสั่งในระบบจะเดินทางผ่านวงจรชีวิตที่เป็นลำดับขั้นเพื่อรับรองความปลอดภัย:
 
-1. Host ขอสร้าง session ด้วย mission ID และ attempt ID
-2. Factory สร้าง working tree, config, disabled hooks และ local bare remote
-3. ผู้เล่นส่ง command line ผ่าน `IGitGameSession.ExecuteAsync`
-4. Adapter tokenize และตรวจ command policy
-5. Process runner เรียก Git ด้วย argument list และ environment ที่แยกไว้
-6. Host แสดง `GitCommandResult` และขอ `InspectAsync` เพื่อ refresh panels/graph
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Player as ผู้เล่น (Player / UI)
+    participant Policy as Security & Policy Layer
+    participant Engine as Real Git Engine
+    participant Sandbox as Isolated Sandbox
+    participant Inspector as State Inspector
 
-## Security boundary
+    Player->>Policy: ส่งข้อความคำสั่ง (Input String)
+    Note over Policy: ตัดแบ่ง Token & ตรวจสอบความปลอดภัย
+    
+    alt คำสั่งไม่ปลอดภัย หรือไม่อยู่ในขอบเขตบทเรียน
+        Policy-->>Player: ปฏิเสธคำสั่ง (Reject with Safety Warning)
+    else คำสั่งผ่านการตรวจสอบ
+        Policy->>Engine: ส่ง Argument List ที่ปลอดภัย
+        Engine->>Sandbox: รันคำสั่งบน Git CLI จริงใน Workspace
+        Sandbox-->>Engine: คืนค่า stdout, stderr, exit code
+        
+        Engine->>Inspector: สั่งตรวจสอบสถานะล่าสุด (Inspect Trigger)
+        Inspector->>Sandbox: ดึงข้อมูล branch, graph, status ปัจจุบัน
+        Sandbox-->>Inspector: Raw Metadata
+        Inspector-->>Player: ส่ง Snapshot สำหรับอัปเดตหน้าจอและการแสดงผล
+    end
+```
 
-- ไม่ส่งข้อความผู้เล่นเข้า shell
-- ไม่อนุญาต `-C`, `--git-dir`, `--work-tree`, aliases หรือ paths ที่ออกนอก workspace
-- ปิด credential prompt และ interactive editor
-- redirect global config, ปิด system config และกำหนด hooks path ว่าง
-- remote ในเกมชี้ได้เฉพาะ alias/local repository ที่ factory ลงทะเบียน
-- destructive Git เช่น `reset --hard` กระทบได้เฉพาะ repository ของ session
+---
 
-Sandbox ลดความเสี่ยงแต่ไม่ถือเป็น OS-level security boundary หากภายหลังรองรับ mod หรือ input ที่ไม่น่าเชื่อถือ ควรเพิ่ม process sandbox ของระบบปฏิบัติการ
+## 4. แนวคิดโมเดลความปลอดภัยของ Sandbox (Sandbox Security Concept)
 
-## Trade-offs
+```mermaid
+flowchart LR
+    subgraph Host_System["ระบบปฏิบัติการหลัก (Host OS)"]
+        Host_FS["ไฟล์ส่วนตัวของผู้ใช้ (~ / Documents / Projects)"]
+        Host_Config["การตั้งค่า Git ประจำเครื่อง (~/.gitconfig)"]
+        
+        subgraph Safe_Zone["พื้นที่ปลอดภัย (Sandbox Isolation)"]
+            Session_FS["Isolated Workspace (/tmp/session_id/workspace)"]
+            Isolated_Config["Sandboxed Config (core.hooksPath = /dev/null)"]
+            Bare_Repo["Local Bare Remote (/tmp/session_id/remote.git)"]
+        end
+    end
 
-- ใช้ Git CLI แทน library: พฤติกรรมตรงกับงานจริงและบทเรียน แต่ต้องจัดการความต่างของเวอร์ชัน/ข้อความ output
-- ใช้ local bare remote: ทดสอบซ้ำได้และไม่ต้องมี network แต่ยังไม่จำลอง authentication/hosting provider
-- ใช้ console test harness: ไม่มี dependency ภายนอกและเหมาะกับ repo เริ่มต้น แต่เมื่อระบบโตควรย้ายไป test framework พร้อมรายงานที่ละเอียดขึ้น
-- snapshot แยกจาก raw output: UI ใช้ง่ายและไม่ parse เอง แต่ต้องดูแล parser เมื่อเพิ่มข้อมูล Git รูปแบบใหม่
+    Git_Engine["Real Git Engine"] -->|"ทำงานได้เฉพาะในพื้นที่นี้"| Safe_Zone
+    Git_Engine x--x|"ห้ามเข้าถึงเด็ดขาด (Blocked)"| Host_FS
+    Git_Engine x--x|"ตัดขาดจากการตั้งค่าจริง"| Host_Config
+```
 
-## สิ่งที่ควรทบทวนเมื่อระบบโต
+### เสาหลักความปลอดภัย (Core Security Pillars):
+1. **Non-Shell Invocation:** สั่งการ process ตรงไปยัง executable `git` โดยไม่ใช้ command shell (`sh`, `bash`, `cmd`) ทำให้ไม่สามารถฝังคำสั่งพ่วง (Command Chaining เช่น `;`, `&&`, `|`) ได้
+2. **Directory Jail:** ตรวจสอบ Argument ทุกตัว ห้ามใช้ parameter ที่อ้างอิงเส้นทางออกนอก workspace (เช่น `../` หรือ absolute path)
+3. **Zero Configuration Leak:** บังคับให้ Git มองเห็นเฉพาะ config ชั่วคราวที่สร้างขึ้นใหม่ และปิดระบบ Git Hook ทั้งหมดเพื่อป้องกันการรัน Script ที่ไม่พึงประสงค์
+4. **Networkless Remote Simulation:** จำลอง Remote ด้วย Local Bare Repository ภายในเครื่อง ทำให้ไม่ต้องเปิดพอร์ตหรือเชื่อมต่ออินเทอร์เน็ต
 
-- แยก policy ราย Act/ด่านแทน allowlist กลาง
-- เพิ่ม multi-step mission state และ event stream
-- เพิ่ม OS sandbox หากเปิดรับ repository/remote ภายนอก
-- เพิ่ม persistence และ migration สำหรับ save game
-- เพิ่ม telemetry ของ command, latency และ failure โดยไม่เก็บข้อมูลลับ
+---
 
-## แหล่งอ้างอิง
+## 5. แนวคิดการแปลงสถานะ (State Snapshot Concept)
 
-- [Final Project: พัฒนา Unity Terminal และ Git Branching Graph](https://app.notion.com/p/531af1a8af7744d2a6c1a8c23c572208)
-- เอกสารและต้นแบบเดิมใน `/Users/petchauisui/Desktop/Dev/Git-Diwaa-Desktop`
+การแสดงผลในเกมจะไม่พึ่งพาการอ่าน stdout ของคำสั่ง Git โดยตรง เพราะข้อความ CLI ออกแบบมาให้อ่านด้วยตามนุษย์ ไม่เหมาะกับการนำไปประมวลผลต่อ
 
+ระบบจึงใช้แนวคิด **State Extraction**:
+* หลังจากการรันคำสั่งสำเร็จ ระบบจะสั่งคำสั่งตรวจสอบแบบเจาะจง (เช่น `git status --porcelain`, `git log --format=...`)
+* นำข้อมูลดิบมาประกอบเป็น **Snapshot Data Structure**:
+  * โครงสร้างกิ่ง (Branches) และจุดที่ HEAD ชี้อยู่
+  * สถานะไฟล์ (Untracked, Modified, Staged)
+  * โหนดของ Commit Tree สำหรับนำไปสร้างภาพกราฟิก
+
+แนวคิดนี้ทำให้ส่วนติดต่อผู้ใช้ (UI) สามารถเปลี่ยนแปลงหรือพัฒนาใหม่ได้อิสระ โดยไม่ต้องแก้ไขตรรกะของระบบ Git ด้านหลัง

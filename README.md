@@ -1,31 +1,35 @@
-# Git-Diwaa Game
+# Git-Diwaa
 
-ระบบแกนกลางสำหรับเกมจำลองการทำงานของ Git ด้วย Git จริง ออกแบบให้ทดสอบผ่าน Terminal ได้ก่อน และเชื่อมกับ Godot C# ในรอบถัดไปโดยไม่ผูก domain logic เข้ากับ UI
+แนวคิดระบบเกมจำลองการเรียนรู้ Git ด้วยคำสั่ง Git จริง ภายใต้สภาพแวดล้อมที่ปลอดภัยและแยกขาดจากระบบปฏิบัติการ
 
-## สถานะปัจจุบัน
+---
 
-- `main` เก็บโครงสร้าง solution, contracts และเอกสารสถาปัตยกรรม
-- ระบบ Real Git จะพัฒนาบน feature branch แยกจาก `main`
-- ยังไม่พัฒนา Godot UI ตามขอบเขตงานรอบนี้
+## 💡 แนวคิดหลักของระบบ (Core Concept)
 
-## โครงสร้าง
+การเรียนรู้ Git ที่มีประสิทธิภาพจำเป็นต้องให้ผู้เรียนได้สัมผัสและฝึกใช้ **Git CLI จริง** แต่การเปิดให้รันคำสั่งโดยตรงมีความเสี่ยงต่อระบบและความซับซ้อนในการตรวจสอบสถานะ 
 
-```text
-src/
-├── GitDiwaa.Core/       contracts และ models ที่ CLI/Godot ใช้ร่วมกัน
-├── GitDiwaa.RealGit/    adapter สำหรับ Git จริงและ sandbox ของผู้เล่น
-└── GitDiwaa.Cli/        โปรแกรมทดสอบผ่าน Terminal
-tests/
-└── GitDiwaa.RealGit.Tests/  integration tests กับ Git จริง
-docs/
-└── architecture.md      ข้อกำหนด ขอบเขต และ data flow
+Git-Diwaa จึงถูกออกแบบขึ้นภายใต้ 3 แนวคิดหลัก:
+
+1. **Real Git Engine:** ใช้ Git จริงประมวลผล เพื่อให้ได้พฤติกรรมและข้อความที่ตรงตามมาตรฐานจริง 100%
+2. **Safe & Isolated Sandbox:** กักบริเวณการทำงานทั้งหมดไว้ในพื้นที่ทดลองแยกเฉพาะ ตัดขาดจากระบบไฟล์ของเครื่องและเครือข่ายภายนอก
+3. **Decoupled Architecture:** แยก Domain Logic (ระบบความปลอดภัยและสั่งการ Git) ออกจาก Presentation (ส่วนแสดงผลและเกม) อย่างเด็ดขาด
+
+---
+
+## 🧭 แผนภาพภาพรวมแนวคิด (Conceptual Overview)
+
+```mermaid
+flowchart LR
+    User["ผู้เล่น (User / UI)"] -->|"ส่งคำสั่ง / จัดการไฟล์"| Policy["Security & Policy Layer\n(ตรวจสอบความปลอดภัย)"]
+    Policy -->|"คำสั่งปลอดภัย"| Engine["Real Git Engine\n(สั่งการ Git จริง)"]
+    Engine -->|"ประมวลผลในพื้นที่ปิด"| Sandbox["Isolated Sandbox\n(Workspace + Bare Remote)"]
+    Sandbox -->|"สกัดสถานะ (State Inspection)"| Snapshot["State Snapshot\n(โครงสร้าง Graph & File Status)"]
+    Snapshot -->|"ส่งข้อมูลกลับไปแสดงผล"| User
 ```
 
-## ตรวจสอบโครงสร้าง
+---
 
-```sh
-dotnet build GitDiwaa.slnx
-```
+## 📖 รายละเอียดสถาปัตยกรรมเชิงลึก
 
-อ่านรายละเอียดที่ [docs/architecture.md](docs/architecture.md)
-
+อ่านรายละเอียดของแนวคิด สถาปัตยกรรมระบบ วงจรข้อมูล และโมเดลความปลอดภัยฉบับเต็มได้ที่:
+👉 **[docs/architecture.md](docs/architecture.md)**
