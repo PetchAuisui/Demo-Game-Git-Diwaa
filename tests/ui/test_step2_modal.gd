@@ -20,7 +20,7 @@ func _run_tests() -> void:
 	
 	# Test casting step 2 command
 	modal._on_cast_command_pressed()
-	modal._on_canvas_animation_finished()
+	modal._on_canvas_animation_finished("git config --global user.name \"Vel\"")
 	assert(modal.outcome_panel.visible == true, "Outcome panel should be visible")
 	print("Step 2 Tested successfully")
 	

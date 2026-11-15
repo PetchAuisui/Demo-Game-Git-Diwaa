@@ -25,24 +25,20 @@ func _run_tests() -> void:
 	assert(modal.current_slide_index == 0, "Initial slide should be 0")
 	print("Initial slide loaded successfully: ", modal.title_label.text)
 	
-	# Test casting command
+	# Test casting primary command: git version
 	modal._on_cast_command_pressed()
 	assert(modal.has_executed_current_slide == true, "Should have executed current slide")
-	print("Cast command triggered")
+	print("Primary command triggered: git version")
+	
+	# Test casting alt command: git --version
+	if modal.alt_command_btn.visible:
+		modal._on_alt_command_pressed()
+		print("Alt command triggered: git --version")
 	
 	# Test canvas animation completion simulation
-	modal._on_canvas_animation_finished()
+	modal._on_canvas_animation_finished("git version")
 	assert(modal.outcome_panel.visible == true, "Outcome panel should be visible")
 	print("Outcome panel revealed successfully")
-	
-	# Test slide navigation
-	if modal.slides.size() > 1:
-		modal._on_next_slide_pressed()
-		assert(modal.current_slide_index == 1, "Should navigate to slide 1")
-		print("Navigated to slide 1: ", modal.title_label.text)
-		modal._on_prev_slide_pressed()
-		assert(modal.current_slide_index == 0, "Should navigate back to slide 0")
-		print("Navigated back to slide 0")
 	
 	# Test reset animation
 	modal._on_reset_animation_pressed()

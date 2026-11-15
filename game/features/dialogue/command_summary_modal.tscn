@@ -5,6 +5,16 @@
 [ext_resource type="FontFile" uid="uid://deedcfbkojx6k" path="res://assets/fonts/ChakraPetch-Bold.ttf" id="3_chakra_bold"]
 [ext_resource type="FontFile" path="res://assets/fonts/ChakraPetch-Regular.ttf" id="4_chakra_reg"]
 
+[sub_resource type="FontVariation" id="FontVariation_modal_bold"]
+base_font = ExtResource("3_chakra_bold")
+spacing_top = 4
+spacing_bottom = 2
+
+[sub_resource type="FontVariation" id="FontVariation_modal_reg"]
+base_font = ExtResource("4_chakra_reg")
+spacing_top = 4
+spacing_bottom = 2
+
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_book_cover"]
 bg_color = Color(0.12549, 0.0901961, 0.2, 0.980392)
 border_width_left = 3
@@ -67,10 +77,10 @@ border_width_bottom = 2
 border_color = Color(0.65098, 0.521569, 0.278431, 0.6)
 corner_radius_top_right = 10
 corner_radius_bottom_right = 10
-content_margin_left = 10.0
-content_margin_top = 10.0
-content_margin_right = 10.0
-content_margin_bottom = 10.0
+content_margin_left = 8.0
+content_margin_top = 8.0
+content_margin_right = 8.0
+content_margin_bottom = 8.0
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_cast_btn"]
 bg_color = Color(0.180392, 0.521569, 0.34902, 1)
@@ -83,12 +93,12 @@ corner_radius_top_left = 8
 corner_radius_top_right = 8
 corner_radius_bottom_left = 8
 corner_radius_bottom_right = 8
-content_margin_left = 16.0
-content_margin_top = 10.0
-content_margin_right = 16.0
-content_margin_bottom = 10.0
+content_margin_left = 14.0
+content_margin_top = 8.0
+content_margin_right = 14.0
+content_margin_bottom = 8.0
 shadow_color = Color(0.2, 0.8, 0.4, 0.3)
-shadow_size = 8
+shadow_size = 6
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_cast_btn_hover"]
 bg_color = Color(0.239216, 0.639216, 0.431373, 1)
@@ -101,12 +111,12 @@ corner_radius_top_left = 8
 corner_radius_top_right = 8
 corner_radius_bottom_left = 8
 corner_radius_bottom_right = 8
-content_margin_left = 16.0
-content_margin_top = 10.0
-content_margin_right = 16.0
-content_margin_bottom = 10.0
-shadow_color = Color(0.3, 0.95, 0.55, 0.5)
-shadow_size = 12
+content_margin_left = 14.0
+content_margin_top = 8.0
+content_margin_right = 14.0
+content_margin_bottom = 8.0
+shadow_color = Color(0.3, 0.95, 0.55, 0.45)
+shadow_size = 10
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_cast_btn_disabled"]
 bg_color = Color(0.12, 0.22, 0.16, 0.6)
@@ -119,10 +129,46 @@ corner_radius_top_left = 8
 corner_radius_top_right = 8
 corner_radius_bottom_left = 8
 corner_radius_bottom_right = 8
-content_margin_left = 16.0
-content_margin_top = 10.0
-content_margin_right = 16.0
-content_margin_bottom = 10.0
+content_margin_left = 14.0
+content_margin_top = 8.0
+content_margin_right = 14.0
+content_margin_bottom = 8.0
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_alt_btn"]
+bg_color = Color(0.18, 0.35, 0.55, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.55, 0.78, 1, 1)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_left = 8
+corner_radius_bottom_right = 8
+content_margin_left = 14.0
+content_margin_top = 8.0
+content_margin_right = 14.0
+content_margin_bottom = 8.0
+shadow_color = Color(0.2, 0.5, 0.9, 0.3)
+shadow_size = 6
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_alt_btn_hover"]
+bg_color = Color(0.24, 0.44, 0.68, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.8, 0.92, 1, 1)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_left = 8
+corner_radius_bottom_right = 8
+content_margin_left = 14.0
+content_margin_top = 8.0
+content_margin_right = 14.0
+content_margin_bottom = 8.0
+shadow_color = Color(0.3, 0.6, 1, 0.45)
+shadow_size = 10
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_outcome"]
 bg_color = Color(0.0823529, 0.180392, 0.14902, 0.92)
@@ -136,9 +182,9 @@ corner_radius_top_right = 8
 corner_radius_bottom_left = 8
 corner_radius_bottom_right = 8
 content_margin_left = 14.0
-content_margin_top = 10.0
+content_margin_top = 8.0
 content_margin_right = 14.0
-content_margin_bottom = 10.0
+content_margin_bottom = 8.0
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_nav_arrow"]
 bg_color = Color(0.24, 0.2, 0.35, 1)
@@ -216,7 +262,7 @@ grow_horizontal = 2
 grow_vertical = 2
 
 [node name="ModalPanel" type="PanelContainer" parent="CenterContainer"]
-custom_minimum_size = Vector2(1280, 720)
+custom_minimum_size = Vector2(1300, 720)
 layout_mode = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_book_cover")
 
@@ -249,7 +295,7 @@ alignment = 1
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_colors/font_color = Color(0.95, 0.82, 0.45, 1)
-theme_override_fonts/font = ExtResource("3_chakra_bold")
+theme_override_fonts/font = SubResource("FontVariation_modal_bold")
 theme_override_font_sizes/font_size = 20
 text = "📖 คัมภีร์บันทึกมนตรา: สรุปคาถาประจำด่าน"
 vertical_alignment = 1
@@ -258,9 +304,9 @@ vertical_alignment = 1
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_colors/font_color = Color(0.78, 0.82, 0.9, 0.9)
-theme_override_fonts/font = ExtResource("4_chakra_reg")
+theme_override_fonts/font = SubResource("FontVariation_modal_reg")
 theme_override_font_sizes/font_size = 14
-text = "ด่านที่ 1 ขั้นที่ 1: git --version"
+text = "ด่านที่ 1 ขั้นที่ 1: git version / git --version"
 vertical_alignment = 1
 
 [node name="CloseButton" type="Button" parent="CenterContainer/ModalPanel/VBox/HeaderBar/HBox"]
@@ -271,7 +317,7 @@ size_flags_vertical = 4
 mouse_default_cursor_shape = 2
 theme_override_colors/font_color = Color(0.85, 0.7, 0.38, 1)
 theme_override_colors/font_hover_color = Color(1, 0.4, 0.4, 1)
-theme_override_fonts/font = ExtResource("3_chakra_bold")
+theme_override_fonts/font = SubResource("FontVariation_modal_bold")
 theme_override_font_sizes/font_size = 20
 text = "✕"
 flat = true
@@ -296,13 +342,13 @@ theme_override_styles/panel = SubResource("StyleBoxFlat_page_left")
 
 [node name="LeftVBox" type="VBoxContainer" parent="CenterContainer/ModalPanel/VBox/PagesHBox/LeftPageMargin/LeftPagePanel"]
 layout_mode = 2
-theme_override_constants/separation = 12
+theme_override_constants/separation = 10
 
 [node name="StepBadge" type="Label" parent="CenterContainer/ModalPanel/VBox/PagesHBox/LeftPageMargin/LeftPagePanel/LeftVBox"]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_colors/font_color = Color(0.95, 0.82, 0.45, 1)
-theme_override_fonts/font = ExtResource("3_chakra_bold")
+theme_override_fonts/font = SubResource("FontVariation_modal_bold")
 theme_override_font_sizes/font_size = 17
 text = "✦ คาถาบทที่ 1: ตรวจสอบระดับพลังเวท"
 
@@ -311,10 +357,10 @@ unique_name_in_owner = true
 layout_mode = 2
 size_flags_vertical = 3
 theme_override_colors/default_color = Color(0.88, 0.89, 0.92, 1)
-theme_override_fonts/normal_font = ExtResource("4_chakra_reg")
-theme_override_fonts/bold_font = ExtResource("3_chakra_bold")
-theme_override_font_sizes/normal_font_size = 16
-theme_override_font_sizes/bold_font_size = 16
+theme_override_fonts/normal_font = SubResource("FontVariation_modal_reg")
+theme_override_fonts/bold_font = SubResource("FontVariation_modal_bold")
+theme_override_font_sizes/normal_font_size = 15
+theme_override_font_sizes/bold_font_size = 15
 theme_override_constants/line_separation = 6
 bbcode_enabled = true
 text = "ก่อนจะเริ่มร่ายเวทมนตร์ใดๆ นักเวทจำเป็นต้องตรวจสอบเสียก่อน..."
@@ -323,19 +369,38 @@ text = "ก่อนจะเริ่มร่ายเวทมนตร์ใ
 layout_mode = 2
 theme_override_constants/separation = 6
 
-[node name="CastCommandButton" type="Button" parent="CenterContainer/ModalPanel/VBox/PagesHBox/LeftPageMargin/LeftPagePanel/LeftVBox/ActionVBox"]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 44)
+[node name="ButtonsHBox" type="HBoxContainer" parent="CenterContainer/ModalPanel/VBox/PagesHBox/LeftPageMargin/LeftPagePanel/LeftVBox/ActionVBox"]
 layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="CastCommandButton" type="Button" parent="CenterContainer/ModalPanel/VBox/PagesHBox/LeftPageMargin/LeftPagePanel/LeftVBox/ActionVBox/ButtonsHBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 42)
+layout_mode = 2
+size_flags_horizontal = 3
 mouse_default_cursor_shape = 2
 theme_override_colors/font_color = Color(1, 1, 1, 1)
-theme_override_fonts/font = ExtResource("3_chakra_bold")
-theme_override_font_sizes/font_size = 18
+theme_override_fonts/font = SubResource("FontVariation_modal_bold")
+theme_override_font_sizes/font_size = 16
 theme_override_styles/normal = SubResource("StyleBoxFlat_cast_btn")
 theme_override_styles/hover = SubResource("StyleBoxFlat_cast_btn_hover")
 theme_override_styles/pressed = SubResource("StyleBoxFlat_cast_btn")
 theme_override_styles/disabled = SubResource("StyleBoxFlat_cast_btn_disabled")
-text = "✨ ทดสอบจำลองการร่ายคาถา"
+text = "✨ ทดสอบ git version"
+
+[node name="AltCommandButton" type="Button" parent="CenterContainer/ModalPanel/VBox/PagesHBox/LeftPageMargin/LeftPagePanel/LeftVBox/ActionVBox/ButtonsHBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 42)
+layout_mode = 2
+size_flags_horizontal = 3
+mouse_default_cursor_shape = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_fonts/font = SubResource("FontVariation_modal_bold")
+theme_override_font_sizes/font_size = 16
+theme_override_styles/normal = SubResource("StyleBoxFlat_alt_btn")
+theme_override_styles/hover = SubResource("StyleBoxFlat_alt_btn_hover")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_alt_btn")
+text = "✨ ทดสอบ git --version"
 
 [node name="ResetAnimationButton" type="Button" parent="CenterContainer/ModalPanel/VBox/PagesHBox/LeftPageMargin/LeftPagePanel/LeftVBox/ActionVBox"]
 unique_name_in_owner = true
@@ -343,27 +408,27 @@ layout_mode = 2
 mouse_default_cursor_shape = 2
 theme_override_colors/font_color = Color(0.68, 0.72, 0.82, 0.8)
 theme_override_colors/font_hover_color = Color(0.95, 0.82, 0.45, 1)
-theme_override_fonts/font = ExtResource("4_chakra_reg")
+theme_override_fonts/font = SubResource("FontVariation_modal_reg")
 theme_override_font_sizes/font_size = 14
-text = "↺ รีเซ็ตการทดสอบ"
+text = "↺ เคลียร์หน้าจอ Terminal จำลอง"
 flat = true
 
 [node name="OutcomePanel" type="PanelContainer" parent="CenterContainer/ModalPanel/VBox/PagesHBox/LeftPageMargin/LeftPagePanel/LeftVBox"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 68)
+custom_minimum_size = Vector2(0, 64)
 layout_mode = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_outcome")
 
 [node name="OutcomeLabel" type="RichTextLabel" parent="CenterContainer/ModalPanel/VBox/PagesHBox/LeftPageMargin/LeftPagePanel/LeftVBox/OutcomePanel"]
 unique_name_in_owner = true
 layout_mode = 2
-theme_override_fonts/normal_font = ExtResource("4_chakra_reg")
-theme_override_fonts/bold_font = ExtResource("3_chakra_bold")
+theme_override_fonts/normal_font = SubResource("FontVariation_modal_reg")
+theme_override_fonts/bold_font = SubResource("FontVariation_modal_bold")
 theme_override_font_sizes/normal_font_size = 14
 theme_override_font_sizes/bold_font_size = 14
 theme_override_constants/line_separation = 4
 bbcode_enabled = true
-text = "สัมผัสพลังเวทสำเร็จ! พลัง Git ภายในหอคอยตอบสนองอย่างสมบูรณ์"
+text = "สัมผัสพลังเวทสำเร็จ! Terminal ตอบกลับว่า git version 2.40.1"
 
 [node name="BottomNav" type="HBoxContainer" parent="CenterContainer/ModalPanel/VBox/PagesHBox/LeftPageMargin/LeftPagePanel/LeftVBox"]
 layout_mode = 2
@@ -376,7 +441,7 @@ custom_minimum_size = Vector2(36, 36)
 layout_mode = 2
 mouse_default_cursor_shape = 2
 theme_override_colors/font_color = Color(1, 1, 1, 1)
-theme_override_fonts/font = ExtResource("3_chakra_bold")
+theme_override_fonts/font = SubResource("FontVariation_modal_bold")
 theme_override_font_sizes/font_size = 16
 theme_override_styles/normal = SubResource("StyleBoxFlat_nav_arrow")
 text = "◀"
@@ -385,7 +450,7 @@ text = "◀"
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_colors/font_color = Color(0.75, 0.78, 0.85, 1)
-theme_override_fonts/font = ExtResource("3_chakra_bold")
+theme_override_fonts/font = SubResource("FontVariation_modal_bold")
 theme_override_font_sizes/font_size = 15
 text = "1 / 1"
 horizontal_alignment = 1
@@ -396,7 +461,7 @@ custom_minimum_size = Vector2(36, 36)
 layout_mode = 2
 mouse_default_cursor_shape = 2
 theme_override_colors/font_color = Color(1, 1, 1, 1)
-theme_override_fonts/font = ExtResource("3_chakra_bold")
+theme_override_fonts/font = SubResource("FontVariation_modal_bold")
 theme_override_font_sizes/font_size = 16
 theme_override_styles/normal = SubResource("StyleBoxFlat_nav_arrow")
 text = "▶"
@@ -407,7 +472,7 @@ layout_mode = 2
 size_flags_horizontal = 3
 mouse_default_cursor_shape = 2
 theme_override_colors/font_color = Color(1, 1, 1, 1)
-theme_override_fonts/font = ExtResource("3_chakra_bold")
+theme_override_fonts/font = SubResource("FontVariation_modal_bold")
 theme_override_font_sizes/font_size = 15
 theme_override_styles/normal = SubResource("StyleBoxFlat_terminal_btn")
 theme_override_styles/hover = SubResource("StyleBoxFlat_terminal_btn_hover")
