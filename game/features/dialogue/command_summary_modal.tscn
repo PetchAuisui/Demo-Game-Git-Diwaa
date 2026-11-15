@@ -499,4 +499,6 @@ theme_override_styles/panel = SubResource("StyleBoxFlat_page_right")
 [node name="DemoCanvas" type="Control" parent="CenterContainer/ModalPanel/VBox/PagesHBox/RightPageMargin/RightPagePanel"]
 unique_name_in_owner = true
 layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
 script = ExtResource("2_canvas_script")
