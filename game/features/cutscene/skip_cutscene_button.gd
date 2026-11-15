@@ -292,6 +292,8 @@ func skip() -> void:
 	_skipping = true
 	_stop_bounce_animation()
 	Engine.time_scale = 1.0
+	if next_scene_path.contains("start_view") or next_scene_path.contains("menu"):
+		CutsceneMusic.stop_immediate()
 	if next_scene_path != "" and ResourceLoader.exists(next_scene_path):
 		if not SceneLoader.change_scene(get_tree(), next_scene_path):
 			get_tree().change_scene_to_file(next_scene_path)

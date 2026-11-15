@@ -42,7 +42,6 @@ func _ready() -> void:
 
 func _exit_tree() -> void:
 	Engine.time_scale = 1.0
-	SceneLoader.flush_preloads()
 	if tw_intro_fade and tw_intro_fade.is_valid():
 		tw_intro_fade.kill()
 		tw_intro_fade = null
@@ -126,13 +125,8 @@ func play_normal_sequence() -> void:
 	
 	# เริ่มเล่นเสียงเพลง Cutscene ต่อเนื่องตั้งแต่ฉากหมู่บ้านพร้อม Fade-in ทันที
 	if is_instance_valid(bgm):
-		bgm.volume_db = -12.0
-		bgm.play()
 		CutsceneMusic.register_player(bgm)
-		var tw_audio = create_tween()
-		tw_audio.tween_property(bgm, "volume_db", 2.0, 0.8).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
-	else:
-		CutsceneMusic.play(0.8, -12.0, 2.0)
+	CutsceneMusic.play(0.8, -12.0, 2.0)
 	
 	# เฟดภาพเข้าจากจอดำอย่างนุ่มนวล (0.8 วินาที)
 	if tw_intro_fade and tw_intro_fade.is_valid():

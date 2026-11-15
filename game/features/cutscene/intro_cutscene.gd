@@ -191,7 +191,6 @@ func _prewarm_cutscene_textures() -> void:
 
 func _exit_tree() -> void:
 	Engine.time_scale = 1.0
-	SceneLoader.flush_preloads()
 	if tw_ex_bob and tw_ex_bob.is_valid():
 		tw_ex_bob.kill()
 		tw_ex_bob = null

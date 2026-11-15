@@ -252,7 +252,6 @@ func _init_scene_state() -> void:
 
 func _exit_tree() -> void:
 	Engine.time_scale = 1.0
-	SceneLoader.flush_preloads()
 	if typewriter_tween and typewriter_tween.is_valid():
 		typewriter_tween.kill()
 		typewriter_tween = null

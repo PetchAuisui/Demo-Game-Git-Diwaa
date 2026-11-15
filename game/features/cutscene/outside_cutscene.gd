@@ -51,7 +51,8 @@ func _ready() -> void:
 
 func _exit_tree() -> void:
 	Engine.time_scale = 1.0
-	SceneLoader.flush_preloads()
+	if not is_starting:
+		CutsceneMusic.stop_immediate()
 	if tw_stage1_fade and tw_stage1_fade.is_valid():
 		tw_stage1_fade.kill()
 		tw_stage1_fade = null
