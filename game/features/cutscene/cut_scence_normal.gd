@@ -5,6 +5,9 @@ extends Node2D
 ## 1. หมู่บ้านปกติ (village-normal เฟรม 0 ถึง 23)
 ## 2. ท้องฟ้าสงบสุข (peaceful-landscape เล่นทั้งหมด 66 เฟรม)
 ## 3. ตัดเข้าสู่ฉากหอสมุด (intro_cutscene.tscn)
+## เสียง Cutscene (gitdiwa-sound+effect.MP3) จะเล่นต่อเนื่องข้ามไปยังฉากหอสมุดโดยไม่หยุด
+
+const CutsceneMusic = preload("res://common/cutscene_music.gd")
 
 @onready var village: AnimatedSprite2D = $Village
 @onready var sky: AnimatedSprite2D = $Sky
@@ -20,6 +23,7 @@ var can_fast_forward: bool = true
 var skip_ctrl = null
 var current_stage: int = 1 # 1 = village, 2 = sky, 3 = transitioning
 var tw_intro_fade: Tween = null
+var tw_village_timer: Tween = null
 var tw_sky_fade: Tween = null
 
 signal cutscene_finished
@@ -27,7 +31,7 @@ signal cutscene_finished
 func _ready() -> void:
 	Engine.time_scale = 1.0
 	SceneLoader.request_preload("res://features/cutscene/intro_cutscene.tscn")
-	SceneLoader.request_preload("res://assets/audio/gitdiwa-sound+effect.MP3")
+	SceneLoader.request_preload(CutsceneMusic.BGM_AUDIO_PATH)
 	skip_ctrl = preload("res://features/cutscene/skip_cutscene_button.gd").new()
 	skip_ctrl.next_scene_path = "res://features/cutscene/intro_cutscene.tscn"
 	skip_ctrl.custom_skip_action = _on_skip_step
@@ -37,6 +41,15 @@ func _ready() -> void:
 
 func _exit_tree() -> void:
 	Engine.time_scale = 1.0
+	if tw_intro_fade and tw_intro_fade.is_valid():
+		tw_intro_fade.kill()
+		tw_intro_fade = null
+	if tw_village_timer and tw_village_timer.is_valid():
+		tw_village_timer.kill()
+		tw_village_timer = null
+	if tw_sky_fade and tw_sky_fade.is_valid():
+		tw_sky_fade.kill()
+		tw_sky_fade = null
 
 func _process(_delta: float) -> void:
 	if not can_fast_forward or is_transitioning:
@@ -62,6 +75,16 @@ func _init_scene() -> void:
 	current_stage = 1
 	Engine.time_scale = 1.0
 	
+	if tw_intro_fade and tw_intro_fade.is_valid():
+		tw_intro_fade.kill()
+		tw_intro_fade = null
+	if tw_village_timer and tw_village_timer.is_valid():
+		tw_village_timer.kill()
+		tw_village_timer = null
+	if tw_sky_fade and tw_sky_fade.is_valid():
+		tw_sky_fade.kill()
+		tw_sky_fade = null
+	
 	village.visible = true
 	village.frame = village_frame_index
 	village.stop()
@@ -84,31 +107,47 @@ func _on_skip_step() -> void:
 		if tw_intro_fade and tw_intro_fade.is_valid():
 			tw_intro_fade.kill()
 			tw_intro_fade = null
-		if village.animation_finished.is_connected(_on_village_finished):
-			village.animation_finished.disconnect(_on_village_finished)
-		village.stop()
+		if tw_village_timer and tw_village_timer.is_valid():
+			tw_village_timer.kill()
+			tw_village_timer = null
 		fade_overlay.color.a = 0.0
 		_on_village_finished()
 	elif current_stage == 2:
-		# ข้ามฉากท้องฟ้า ไปยังฉากห้องสมุดทันที
+		# ข้ามฉากท้องฟ้า ไปยังฉากห้องสมุดทันที (เสียงเพลงเล่นต่อเนื่อง)
 		_go_to_intro_cutscene()
 
 func play_normal_sequence() -> void:
 	current_stage = 1
+	village.visible = true
 	village.frame = village_frame_index
+	if village.sprite_frames:
+		village.sprite_frames.set_animation_loop("village_normal", true)
 	village.play("village_normal", 1.0)
-	if not village.animation_finished.is_connected(_on_village_finished):
-		village.animation_finished.connect(_on_village_finished, CONNECT_ONE_SHOT)
 	
+	# เริ่มเล่นเสียงเพลง Cutscene ต่อเนื่องพร้อมเฟดเข้า
+	CutsceneMusic.play(1.5)
+	
+	# เฟดเข้าจากจอดำอย่างนุ่มนวล เพิ่มระยะเวลาเข้าฉากให้เห็นบรรยากาศหมู่บ้านชัดเจน (1.2 วินาที)
 	if tw_intro_fade and tw_intro_fade.is_valid():
 		tw_intro_fade.kill()
 	tw_intro_fade = create_tween()
-	tw_intro_fade.tween_property(fade_overlay, "color:a", 0.0, 0.5)
+	tw_intro_fade.tween_property(fade_overlay, "color:a", 0.0, 1.2).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	
+	# เพิ่มระยะเวลาฉากบ้านเมืองปกติอีก 2 วินาที (จากเดิม 3.0s รวมเป็น 5.0 วินาที)
+	if tw_village_timer and tw_village_timer.is_valid():
+		tw_village_timer.kill()
+	tw_village_timer = create_tween()
+	tw_village_timer.tween_interval(5.0)
+	tw_village_timer.tween_callback(_on_village_finished)
 
 func _on_village_finished() -> void:
 	if current_stage >= 2 or is_transitioning:
 		return
 	current_stage = 2
+	if tw_village_timer and tw_village_timer.is_valid():
+		tw_village_timer.kill()
+		tw_village_timer = null
+	
 	sky.visible = true
 	sky.frame = 0
 	sky.modulate = Color(1, 1, 1, 0)
@@ -116,7 +155,7 @@ func _on_village_finished() -> void:
 	if tw_sky_fade and tw_sky_fade.is_valid():
 		tw_sky_fade.kill()
 	tw_sky_fade = create_tween()
-	tw_sky_fade.tween_property(sky, "modulate:a", 1.0, 0.35)
+	tw_sky_fade.tween_property(sky, "modulate:a", 1.0, 0.45).set_trans(Tween.TRANS_SINE)
 	tw_sky_fade.chain().tween_callback(func():
 		village.visible = false
 	)
@@ -141,8 +180,9 @@ func _go_to_intro_cutscene() -> void:
 		tw_sky_fade.kill()
 		tw_sky_fade = null
 	
+	# ไม่หยุดเพลง เพื่อให้เสียงเล่นต่อเนื่องลอดเข้าไปยังฉากห้องสมุด
 	var tw_fade_out = create_tween()
-	tw_fade_out.tween_property(fade_overlay, "color:a", 1.0, 0.5)
+	tw_fade_out.tween_property(fade_overlay, "color:a", 1.0, 0.6)
 	tw_fade_out.tween_callback(func():
 		Engine.time_scale = 1.0
 		emit_signal("cutscene_finished")

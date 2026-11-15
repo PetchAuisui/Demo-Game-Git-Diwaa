@@ -6,7 +6,7 @@ extends Node2D
 ## 2. บ้านเมืองไม่ปกติ (village-normal เริ่มเล่นตั้งแต่เฟรมที่ 20 ถึงจบ 58)
 ## 3. หอคอยทมิฬ (เมฆลอยไป-กลับ Ping-pong) + เวลยืนมอง + ไตเติลเกม Git Di Waa
 
-const TITLE_AUDIO_PATH: String = "res://assets/audio/gitdiwa-sound+effect.MP3"
+const CutsceneMusic = preload("res://common/cutscene_music.gd")
 
 @onready var storm_sky: AnimatedSprite2D = $StormSky
 @onready var village: AnimatedSprite2D = $Village
@@ -14,7 +14,6 @@ const TITLE_AUDIO_PATH: String = "res://assets/audio/gitdiwa-sound+effect.MP3"
 @onready var vel_shadow: Sprite2D = $VelShadow
 @onready var vel: Sprite2D = $Vel
 @onready var camera: Camera2D = $Camera2D
-@onready var title_audio: AudioStreamPlayer = $TitleBGM
 
 @onready var fade_overlay: ColorRect = $UI/FadeOverlay
 @onready var title_container: Control = $UI/TitleContainer
@@ -36,53 +35,27 @@ var tw_stage1_fade: Tween = null
 var tw_stage2_fade: Tween = null
 var tw_stage3_wait: Tween = null
 var tw_title: Tween = null
-var tw_audio_fade: Tween = null
-var is_audio_playing: bool = false
-var is_audio_fading_out: bool = false
 
 signal cutscene_finished
 
 func _ready() -> void:
 	Engine.time_scale = 1.0
+	CutsceneMusic.play()
 	skip_ctrl = preload("res://features/cutscene/skip_cutscene_button.gd").new()
 	skip_ctrl.next_scene_path = _get_resolved_next_scene()
 	skip_ctrl.custom_skip_action = _on_skip_step
 	add_child(skip_ctrl)
-	
-	if not is_instance_valid(title_audio):
-		title_audio = get_node_or_null("TitleBGM") as AudioStreamPlayer
-	if not is_instance_valid(title_audio):
-		title_audio = AudioStreamPlayer.new()
-		title_audio.name = "TitleBGM"
-		add_child(title_audio)
-	if title_audio.stream == null and ResourceLoader.exists(TITLE_AUDIO_PATH):
-		title_audio.stream = load(TITLE_AUDIO_PATH)
-	if not title_audio.finished.is_connected(_on_title_audio_finished):
-		title_audio.finished.connect(_on_title_audio_finished)
 	
 	_init_scene()
 	play_chaos_sequence()
 
 func _exit_tree() -> void:
 	Engine.time_scale = 1.0
-	if tw_audio_fade and tw_audio_fade.is_valid():
-		tw_audio_fade.kill()
-		tw_audio_fade = null
 	if tw_title and tw_title.is_valid():
 		tw_title.kill()
 		tw_title = null
-	if is_instance_valid(title_audio):
-		title_audio.stop()
 
 func _process(_delta: float) -> void:
-	# ตรวจสอบช่วงท้ายของเสียงเพลงเพื่อค่อย ๆ เฟดออกอย่างนุ่มนวล
-	if is_audio_playing and not is_audio_fading_out and is_instance_valid(title_audio) and title_audio.playing:
-		if title_audio.stream != null:
-			var stream_len := title_audio.stream.get_length()
-			if stream_len > 0.0:
-				var pos := title_audio.get_playback_position()
-				if pos >= stream_len - 3.5:
-					_fade_out_title_bgm(3.5)
 	
 	if not can_fast_forward or is_starting:
 		if is_fast_forwarding:
@@ -135,17 +108,9 @@ func _init_scene() -> void:
 	Engine.time_scale = 1.0
 	is_tower_forward = true
 	
-	if tw_audio_fade and tw_audio_fade.is_valid():
-		tw_audio_fade.kill()
-		tw_audio_fade = null
 	if tw_title and tw_title.is_valid():
 		tw_title.kill()
 		tw_title = null
-	is_audio_playing = false
-	is_audio_fading_out = false
-	if is_instance_valid(title_audio):
-		title_audio.stop()
-		title_audio.volume_db = -80.0
 	
 	if skip_ctrl:
 		skip_ctrl.visible = true
@@ -368,8 +333,11 @@ func _reveal_game_title() -> void:
 		tw_title.kill()
 	tw_title = create_tween()
 	tw_title.tween_property(title_container, "modulate:a", 1.0, 0.8).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-	# เมื่อไตเติลหอคอยขึ้นเสร็จสมบูรณ์ ให้เริ่มเล่นเสียง gitdiwa-sound+effect พร้อมเฟดเข้า
-	tw_title.chain().tween_callback(_play_title_bgm)
+	# เมื่อไตเติลหอคอยขึ้นเสร็จสมบูรณ์ หากเสียงยังคงเล่นอยู่ ให้ค่อย ๆ เฟดเสียงตอนท้าย
+	tw_title.chain().tween_callback(func():
+		if CutsceneMusic.is_playing():
+			CutsceneMusic.fade_out(2.5)
+	)
 	
 	var tw_title_aura = create_tween().set_loops()
 	tw_title_aura.tween_property(title_label_aura, "modulate:a", 0.75, 1.6).set_trans(Tween.TRANS_SINE)
@@ -381,43 +349,6 @@ func _reveal_game_title() -> void:
 	
 	can_start = true
 
-func _play_title_bgm() -> void:
-	if is_starting or not is_inside_tree() or is_audio_playing:
-		return
-	if not is_instance_valid(title_audio) or title_audio.stream == null:
-		return
-	
-	is_audio_playing = true
-	is_audio_fading_out = false
-	title_audio.volume_db = -80.0
-	title_audio.play()
-	
-	if tw_audio_fade and tw_audio_fade.is_valid():
-		tw_audio_fade.kill()
-	tw_audio_fade = create_tween()
-	tw_audio_fade.tween_property(title_audio, "volume_db", 0.0, 1.5).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
-
-func _fade_out_title_bgm(duration: float = 1.0) -> void:
-	if not is_instance_valid(title_audio) or not title_audio.playing:
-		is_audio_playing = false
-		is_audio_fading_out = false
-		return
-	is_audio_fading_out = true
-	if tw_audio_fade and tw_audio_fade.is_valid():
-		tw_audio_fade.kill()
-	tw_audio_fade = create_tween()
-	tw_audio_fade.tween_property(title_audio, "volume_db", -80.0, duration).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN)
-	tw_audio_fade.tween_callback(func():
-		if is_instance_valid(title_audio) and title_audio.playing:
-			title_audio.stop()
-		is_audio_playing = false
-		is_audio_fading_out = false
-	)
-
-func _on_title_audio_finished() -> void:
-	is_audio_playing = false
-	is_audio_fading_out = false
-
 func _trigger_start_level() -> void:
 	if is_starting:
 		return
@@ -428,7 +359,7 @@ func _trigger_start_level() -> void:
 	Engine.time_scale = 1.0
 	
 	# ค่อย ๆ เฟดเสียงเพลงออกตอนท้ายพร้อมหน้าจอมืด
-	_fade_out_title_bgm(0.6)
+	CutsceneMusic.fade_out(0.6)
 	
 	var tw_out = create_tween()
 	tw_out.tween_property(fade_overlay, "color", Color(0, 0, 0, 1), 0.6)

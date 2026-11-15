@@ -42,6 +42,14 @@ const LEVEL_CLEAR_SCENE_PATH := "res://features/cutscene/level_clear_scene.tscn"
 @onready var arrow_wrapper: Control = $MagicStoryUI/DialogueBox/ArrowOverlay/ArrowWrapper
 
 # Choice System Elements (Floating Slots with Active Glow)
+const DBOX_NORMAL_WIDTH: float = 1160.0
+const DBOX_NORMAL_OFFSET_RIGHT: float = 580.0
+const DBOX_SHRUNK_WIDTH: float = 960.0
+const DBOX_SHRUNK_OFFSET_RIGHT: float = 380.0
+
+var dbox_shrink_tween: Tween = null
+var is_dbox_shrunk: bool = false
+
 var choice_slots_container: VBoxContainer = null
 var choice_buttons: Array[Button] = []
 var active_choices: Array = []
@@ -266,6 +274,9 @@ func _exit_tree() -> void:
 	if choice_slide_tween and choice_slide_tween.is_valid():
 		choice_slide_tween.kill()
 		choice_slide_tween = null
+	if dbox_shrink_tween and dbox_shrink_tween.is_valid():
+		dbox_shrink_tween.kill()
+		dbox_shrink_tween = null
 	if entrance_tween and entrance_tween.is_valid():
 		entrance_tween.kill()
 		entrance_tween = null
@@ -572,6 +583,10 @@ func _trigger_vel_shock_jump() -> void:
 func _open_dialogue_box_for_intro() -> void:
 	if is_transitioning:
 		return
+	if is_instance_valid(dialogue_box):
+		dialogue_box.offset_right = DBOX_NORMAL_OFFSET_RIGHT
+		dialogue_box.custom_minimum_size.x = DBOX_NORMAL_WIDTH
+		is_dbox_shrunk = false
 	dialogue_box.visible = true
 	dialogue_box.modulate.a = 0.0
 	
@@ -690,6 +705,10 @@ func _on_skip_step() -> void:
 func _open_dialogue_box() -> void:
 	if is_transitioning:
 		return
+	if is_instance_valid(dialogue_box):
+		dialogue_box.offset_right = DBOX_NORMAL_OFFSET_RIGHT
+		dialogue_box.custom_minimum_size.x = DBOX_NORMAL_WIDTH
+		is_dbox_shrunk = false
 	dialogue_box.visible = true
 	dialogue_box.modulate.a = 0.0
 	var box_tween = create_tween()
@@ -767,6 +786,8 @@ func _show_single_dialogue(data: Dictionary, skip_typewriter: bool = false) -> v
 	if active_choice_id.is_empty():
 		if is_instance_valid(choice_slots_container) and not is_choice_sliding_out:
 			choice_slots_container.visible = false
+		if is_dbox_shrunk:
+			_expand_dialogue_box()
 	else:
 		if is_instance_valid(choice_slots_container):
 			choice_slots_container.visible = true
@@ -875,6 +896,8 @@ func _update_speaker_dim(speaker: String, immediate: bool = false) -> void:
 			char_dim_tween_mewla.tween_property(mewla, "self_modulate", target_mewla_color, 0.2).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
 
 func _on_player_advance() -> void:
+	if is_choice_sliding_out:
+		return
 	if is_typing:
 		if typewriter_tween and typewriter_tween.is_valid():
 			typewriter_tween.kill()
@@ -1105,11 +1128,94 @@ func _setup_slot_button_styles(btn: Button, is_disabled: bool = false) -> void:
 	btn.add_theme_color_override("font_focus_color", Color(1.0, 1.0, 1.0, 1.0))
 	btn.add_theme_color_override("font_pressed_color", Color(1.0, 1.0, 1.0, 1.0))
 
+func _shrink_dialogue_box() -> void:
+	if not is_instance_valid(dialogue_box):
+		return
+	if is_dbox_shrunk and dialogue_box.offset_right == DBOX_SHRUNK_OFFSET_RIGHT:
+		return
+	is_dbox_shrunk = true
+	if dbox_shrink_tween and dbox_shrink_tween.is_valid():
+		dbox_shrink_tween.kill()
+	dialogue_box.custom_minimum_size.x = 0.0
+	dbox_shrink_tween = create_tween()
+	dbox_shrink_tween.tween_property(dialogue_box, "offset_right", DBOX_SHRUNK_OFFSET_RIGHT, 0.35).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	dbox_shrink_tween.chain().tween_callback(func():
+		if is_instance_valid(dialogue_box):
+			dialogue_box.custom_minimum_size.x = DBOX_SHRUNK_WIDTH
+	)
+
+func _expand_dialogue_box() -> void:
+	if not is_instance_valid(dialogue_box):
+		return
+	if not is_dbox_shrunk and dialogue_box.offset_right == DBOX_NORMAL_OFFSET_RIGHT:
+		return
+	is_dbox_shrunk = false
+	if dbox_shrink_tween and dbox_shrink_tween.is_valid():
+		dbox_shrink_tween.kill()
+	dialogue_box.custom_minimum_size.x = 0.0
+	dbox_shrink_tween = create_tween()
+	dbox_shrink_tween.tween_property(dialogue_box, "offset_right", DBOX_NORMAL_OFFSET_RIGHT, 0.30).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	dbox_shrink_tween.chain().tween_callback(func():
+		if is_instance_valid(dialogue_box):
+			dialogue_box.custom_minimum_size.x = DBOX_NORMAL_WIDTH
+	)
+
+func _animate_choices_exit(on_finished: Callable = Callable()) -> void:
+	_stop_active_slot_glow()
+	if slot_pop_tween and slot_pop_tween.is_valid():
+		slot_pop_tween.kill()
+		slot_pop_tween = null
+	if choice_slide_tween and choice_slide_tween.is_valid():
+		choice_slide_tween.kill()
+		choice_slide_tween = null
+		
+	is_choice_sliding_out = true
+	
+	var valid_buttons: Array[Button] = []
+	for b in choice_buttons:
+		if is_instance_valid(b) and b.is_inside_tree() and b.visible:
+			b.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			b.focus_mode = Control.FOCUS_NONE
+			valid_buttons.append(b)
+			
+	if valid_buttons.is_empty():
+		is_choice_sliding_out = false
+		if is_instance_valid(choice_slots_container):
+			choice_slots_container.visible = false
+		if on_finished.is_valid():
+			on_finished.call()
+		return
+		
+	# ทุกช้อยส์สไลด์ออกพร้อมกันจากซ้ายไปขวา (X: 0.0 -> 160.0) พร้อมเฟดจางหายไป
+	choice_slide_tween = create_tween().set_parallel(true)
+	for b in valid_buttons:
+		choice_slide_tween.tween_property(b, "position:x", 160.0, 0.24).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+		choice_slide_tween.tween_property(b, "modulate:a", 0.0, 0.20).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+		
+	choice_slide_tween.chain().tween_callback(func():
+		is_choice_sliding_out = false
+		if is_instance_valid(choice_slots_container):
+			choice_slots_container.visible = false
+		if on_finished.is_valid():
+			on_finished.call()
+	)
+
 func _display_choice_menu(menu_id: String, animate_entrance: bool = true) -> void:
 	if choice_slide_tween and choice_slide_tween.is_valid():
 		choice_slide_tween.kill()
 		choice_slide_tween = null
 	is_choice_sliding_out = false
+
+	# หากมีช้อยส์เดิมแสดงอยู่ และเปลี่ยนเป็นเมนูใหม่ (เช่น เปลี่ยนเป็น ใช่ / ไม่)
+	# ให้สไลด์ช้อยส์เดิมออกพร้อมกันจากซ้ายไปขวาก่อน แล้วจึงโหลดช้อยส์ใหม่สไลด์เข้าจากขวาไปซ้าย
+	if current_menu_id != "" and current_menu_id != menu_id and is_instance_valid(choice_slots_container) and choice_slots_container.visible and choice_buttons.size() > 0:
+		_animate_choices_exit(func():
+			_display_choice_menu(menu_id, true)
+		)
+		return
+
+	# ย่อกรอบบทสนทนาเข้ามารับกับช้อยส์
+	_shrink_dialogue_box()
 
 	var can_reuse_existing_slots: bool = (
 		current_menu_id == menu_id
@@ -1393,28 +1499,11 @@ func _on_choice_selected(index: int) -> void:
 			choice_slots_container.visible = true
 	else:
 		# กรณีที่เป็น "ใช่ / ไม่" หรือ "ฉันจะลองดู":
-		# ให้สไลด์ออกและซ่อนไปทันที ไม่ค้างอยู่บนจอระหว่างอ่านบทสนทนาถัดไป
-		_stop_active_slot_glow()
+		# ให้สไลด์ออกพร้อมกันจากซ้ายไปขวา และขยายกรอบบทสนทนากลับคืนทันที
 		active_choice_id = ""
 		is_showing_choices = false
-		is_choice_sliding_out = true
-		
-		for b in choice_buttons:
-			b.mouse_filter = Control.MOUSE_FILTER_IGNORE
-			b.focus_mode = Control.FOCUS_NONE
-			
-		if is_instance_valid(choice_slots_container):
-			var start_x = choice_slots_container.position.x
-			choice_slide_tween = create_tween().set_parallel(true)
-			choice_slide_tween.tween_property(choice_slots_container, "position:x", start_x + 280.0, 0.28).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
-			choice_slide_tween.tween_property(choice_slots_container, "modulate:a", 0.0, 0.25).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
-			choice_slide_tween.chain().tween_callback(func():
-				is_choice_sliding_out = false
-				if is_instance_valid(choice_slots_container):
-					choice_slots_container.visible = false
-			)
-		else:
-			is_choice_sliding_out = false
+		_animate_choices_exit()
+		_expand_dialogue_box()
 		
 	if seq.size() > 0:
 		_load_sequence(seq)
@@ -1442,6 +1531,7 @@ func _open_gameplay_step(step: int) -> void:
 	is_choice_sliding_out = false
 	if is_instance_valid(choice_slots_container):
 		choice_slots_container.visible = false
+	_expand_dialogue_box()
 	_hide_continue_arrow()
 	_hide_question_mark()
 		
@@ -1464,6 +1554,7 @@ func _finish_dialogue_stage(mark_cleared: bool = true) -> void:
 	is_choice_sliding_out = false
 	if is_instance_valid(choice_slots_container):
 		choice_slots_container.visible = false
+	_expand_dialogue_box()
 	
 	if char_dim_tween_vel and char_dim_tween_vel.is_valid(): char_dim_tween_vel.kill()
 	if char_dim_tween_mewla and char_dim_tween_mewla.is_valid(): char_dim_tween_mewla.kill()
@@ -1942,7 +2033,7 @@ func _update_nav_arrows() -> void:
 		btn_arrow_back.modulate = Color(1.0, 1.0, 1.0, 0.25)
 	
 	# ลูกศรขวา (ไปต่อ)
-	var can_next = (is_dialogue_active or is_typing) and not is_showing_choices
+	var can_next = (is_dialogue_active or is_typing) and not is_showing_choices and not is_choice_sliding_out
 	btn_arrow_next.disabled = not can_next
 	btn_arrow_next.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND if can_next else Control.CURSOR_ARROW
 	if can_next:
@@ -1962,7 +2053,7 @@ func _update_back_button_state() -> void:
 func _can_go_back() -> bool:
 	if not is_instance_valid(dialogue_box) or not dialogue_box.visible:
 		return false
-	if is_transitioning:
+	if is_transitioning or is_choice_sliding_out:
 		return false
 	if not is_dialogue_active and not is_showing_choices:
 		return false
@@ -1996,39 +2087,17 @@ func _on_player_back() -> void:
 				queue_index = parent_state.get("index", queue_index)
 				if parent_state.has("is_in_entrance_cutscene"):
 					is_in_entrance_cutscene = parent_state["is_in_entrance_cutscene"]
-			_display_choice_menu("part1_main")
+			_animate_choices_exit(func():
+				_display_choice_menu("part1_main", true)
+			)
 			_update_nav_arrows()
 			return
 			
 		is_showing_choices = false
 		_stop_active_slot_glow()
 		active_choice_id = ""
-		if slot_pop_tween and slot_pop_tween.is_valid():
-			slot_pop_tween.kill()
-			slot_pop_tween = null
-		if choice_slide_tween and choice_slide_tween.is_valid():
-			choice_slide_tween.kill()
-			choice_slide_tween = null
-		is_choice_sliding_out = true
-		for b in choice_buttons:
-			if is_instance_valid(b):
-				b.position.x = 0.0
-				b.modulate.a = 1.0
-				b.mouse_filter = Control.MOUSE_FILTER_IGNORE
-				b.focus_mode = Control.FOCUS_NONE
-		if is_instance_valid(choice_slots_container):
-			var start_x = choice_slots_container.position.x
-			choice_slide_tween = create_tween().set_parallel(true)
-			# สไลด์จากขวาไปซ้าย (เลื่อนถอยกลับไปทางซ้าย -X) พร้อมเฟดจางหายไป
-			choice_slide_tween.tween_property(choice_slots_container, "position:x", start_x - 240.0, 0.28).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
-			choice_slide_tween.tween_property(choice_slots_container, "modulate:a", 0.0, 0.25).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
-			choice_slide_tween.chain().tween_callback(func():
-				is_choice_sliding_out = false
-				if is_instance_valid(choice_slots_container):
-					choice_slots_container.visible = false
-			)
-		else:
-			is_choice_sliding_out = false
+		_animate_choices_exit()
+		_expand_dialogue_box()
 		dialogue_label.visible = true
 		
 		# ถอยกลับไปประโยคก่อนหน้าช้อยส์

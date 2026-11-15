@@ -17,6 +17,8 @@ extends Sprite2D
 ##     พิมพ์ขึ้นมาแบบ Typewriter Effect เรียงจากซ้ายไปขวา (ความเร็ว ~0.032s/ตัวอักษร) พร้อมลอยพริ้วไหวด้วย wave
 ## 13. เมื่อพิมพ์เสร็จสิ้น ค้างไว้ประมาณ 0.85 วินาที แล้วกระดาษจะสลายหายไปและตัดเข้าสู่ฉากถัดไปโดยอัตโนมัติ
 
+const CutsceneMusic = preload("res://common/cutscene_music.gd")
+
 @export_enum("AnimationPlayer", "ScriptTween") var playback_mode: String = "AnimationPlayer"
 
 @export_group("ตำแหน่งตัวละคร (Positions)")
@@ -105,6 +107,7 @@ const SHARD_LANDING_POSITIONS: Array[Vector2] = [
 
 func _ready() -> void:
 	Engine.time_scale = 1.0
+	CutsceneMusic.play()
 	var vp := get_viewport()
 	if vp:
 		_saved_snap_transforms = vp.snap_2d_transforms_to_pixel
