@@ -47,6 +47,12 @@ const DBOX_NORMAL_OFFSET_RIGHT: float = 580.0
 const DBOX_SHRUNK_WIDTH: float = 960.0
 const DBOX_SHRUNK_OFFSET_RIGHT: float = 380.0
 
+const CHOICE_CONTAINER_X: float = 1352.0
+const CHOICE_CONTAINER_WIDTH: float = 528.0
+const CHOICE_SLOT_HEIGHT: float = 56.0
+const CHOICE_SLOT_SEPARATION: int = 8
+const CHOICE_BOTTOM_Y: float = 1044.0
+
 var dbox_shrink_tween: Tween = null
 var is_dbox_shrunk: bool = false
 
@@ -170,20 +176,12 @@ func _ready() -> void:
 		choice_font_var.spacing_bottom = 2
 		font_choice_regular = choice_font_var
 		
-	# สร้าง Floating Choice Slots Container บน MagicStoryUI อยู่ทางขวาเหนือกรอบ DialogueBox ตามตำแหน่งที่ผู้เล่นกำหนด
+	# สร้าง Choice Slots Container บน MagicStoryUI อยู่ทางขวาข้างกรอบ DialogueBox
 	choice_slots_container = VBoxContainer.new()
 	choice_slots_container.name = "ChoiceSlotsContainer"
 	choice_slots_container.visible = false
-	choice_slots_container.anchor_left = 0.5
-	choice_slots_container.anchor_right = 0.5
-	choice_slots_container.anchor_top = 1.0
-	choice_slots_container.anchor_bottom = 1.0
-	choice_slots_container.offset_left = -56.0
-	choice_slots_container.offset_right = 544.0
-	choice_slots_container.offset_bottom = -304.0
-	choice_slots_container.grow_horizontal = Control.GROW_DIRECTION_BOTH
-	choice_slots_container.grow_vertical = Control.GROW_DIRECTION_BEGIN
-	choice_slots_container.add_theme_constant_override("separation", 8)
+	choice_slots_container.set_anchors_preset(Control.PRESET_TOP_LEFT)
+	choice_slots_container.add_theme_constant_override("separation", CHOICE_SLOT_SEPARATION)
 	choice_slots_container.z_index = 5
 	magic_ui.add_child(choice_slots_container)
 		
@@ -781,6 +779,23 @@ func _show_current_queue_item(skip_typewriter: bool = false) -> void:
 			
 	_show_single_dialogue(item, skip_typewriter)
 
+func _update_choice_slots_layout(choice_count: int) -> void:
+	if not is_instance_valid(choice_slots_container):
+		return
+	var count = maxi(1, choice_count)
+	var total_h: float = float(count) * CHOICE_SLOT_HEIGHT + float(count - 1) * float(CHOICE_SLOT_SEPARATION)
+	var bottom_y: float = CHOICE_BOTTOM_Y
+	if is_instance_valid(dialogue_box) and dialogue_box.visible:
+		var dbox_bottom: float = dialogue_box.position.y + dialogue_box.size.y
+		if dbox_bottom > 500.0:
+			bottom_y = dbox_bottom
+	var target_y: float = bottom_y - total_h
+	
+	choice_slots_container.set_anchors_preset(Control.PRESET_TOP_LEFT)
+	choice_slots_container.custom_minimum_size = Vector2(CHOICE_CONTAINER_WIDTH, total_h)
+	choice_slots_container.size = Vector2(CHOICE_CONTAINER_WIDTH, total_h)
+	choice_slots_container.position = Vector2(CHOICE_CONTAINER_X, target_y)
+
 func _show_single_dialogue(data: Dictionary, skip_typewriter: bool = false) -> void:
 	is_showing_choices = false
 	if active_choice_id.is_empty():
@@ -791,15 +806,7 @@ func _show_single_dialogue(data: Dictionary, skip_typewriter: bool = false) -> v
 	else:
 		if is_instance_valid(choice_slots_container):
 			choice_slots_container.visible = true
-			# ปรับตำแหน่ง Y เพื่อรับประกันว่าขอบล่างของช้อยส์จะไม่ทับกับ DialogueBox ด้านล่าง
-			var vp_size = get_viewport_rect().size if is_inside_tree() else Vector2(1920, 1080)
-			var total_h = choice_slots_container.size.y
-			var safe_bottom = vp_size.y - 304.0
-			if is_instance_valid(dialogue_box) and dialogue_box.visible:
-				var dbox_top = dialogue_box.position.y
-				if dbox_top > 400.0 and dbox_top < vp_size.y:
-					safe_bottom = minf(safe_bottom, dbox_top - 20.0)
-			choice_slots_container.position.y = safe_bottom - total_h
+			_update_choice_slots_layout(choice_buttons.size())
 	dialogue_label.visible = true
 	speaker_label.visible = true
 	is_dialogue_active = true
@@ -1263,18 +1270,7 @@ func _display_choice_menu(menu_id: String, animate_entrance: bool = true) -> voi
 				var tw = create_tween()
 				tw.tween_property(b, "modulate", Color.WHITE, 0.20)
 				
-		var vp_size_reuse = get_viewport_rect().size if is_inside_tree() else Vector2(1920, 1080)
-		var choice_count_reuse: int = choice_buttons.size()
-		var total_h_reuse: float = float(choice_count_reuse) * 58.0 + float(maxi(0, choice_count_reuse - 1)) * 8.0
-		var max_bottom_reuse: float = vp_size_reuse.y - 304.0
-		if is_instance_valid(dialogue_box) and dialogue_box.visible:
-			var dbox_top_reuse: float = dialogue_box.position.y
-			if dbox_top_reuse > 400.0 and dbox_top_reuse < vp_size_reuse.y:
-				max_bottom_reuse = minf(max_bottom_reuse, dbox_top_reuse - 20.0)
-		var target_y_reuse: float = max_bottom_reuse - total_h_reuse
-		var target_x_reuse: float = (vp_size_reuse.x * 0.5) - 56.0
-		choice_slots_container.position = Vector2(target_x_reuse, target_y_reuse)
-		
+		_update_choice_slots_layout(choice_buttons.size())
 		_update_nav_arrows()
 		return
 
@@ -1319,27 +1315,8 @@ func _display_choice_menu(menu_id: String, animate_entrance: bool = true) -> voi
 	dialogue_label.visible_ratio = 1.0
 	_update_speaker_dim(speaker_label.text if speaker_label.visible else "", false)
 	
-	# คำนวณความสูงตามจำนวนช้อยส์จริง เพื่อให้ช้อยส์ข้อล่างสุดอยู่ติดเหนือ DialogueBox ในระดับเดียวกันเสมอ
-	var vp_size = get_viewport_rect().size if is_inside_tree() else Vector2(1920, 1080)
-	var choice_count: int = active_choices.size()
-	var total_h: float = float(choice_count) * 58.0 + float(maxi(0, choice_count - 1)) * 8.0
-	var target_x: float = (vp_size.x * 0.5) - 56.0
-	var max_bottom_y: float = vp_size.y - 304.0
-	if is_instance_valid(dialogue_box) and dialogue_box.visible:
-		var dbox_top: float = dialogue_box.position.y
-		if dbox_top > 400.0 and dbox_top < vp_size.y:
-			max_bottom_y = minf(max_bottom_y, dbox_top - 20.0)
-			
-	var target_y: float = max_bottom_y - total_h
-	var bottom_offset: float = max_bottom_y - vp_size.y
-	
-	choice_slots_container.offset_left = -56.0
-	choice_slots_container.offset_right = 544.0
-	choice_slots_container.offset_bottom = bottom_offset
-	choice_slots_container.offset_top = bottom_offset - total_h
-	choice_slots_container.custom_minimum_size = Vector2(600, total_h)
-	choice_slots_container.size = Vector2(600, total_h)
-	choice_slots_container.position = Vector2(target_x, target_y)
+	# วางตำแหน่งช้อยส์ที่มุมล่างขวา ข้างกรอบ DialogueBox
+	_update_choice_slots_layout(active_choices.size())
 	choice_slots_container.modulate.a = 1.0
 	choice_slots_container.visible = true
 	
@@ -1364,8 +1341,8 @@ func _display_choice_menu(menu_id: String, animate_entrance: bool = true) -> voi
 		
 		# Slot Item Wrapper Control เพื่อให้สามารถสไลด์ position.x ได้อิสระโดยไม่ถูก VBoxContainer บังคับพิกัด
 		var slot_wrapper = Control.new()
-		slot_wrapper.custom_minimum_size = Vector2(600, 58)
-		slot_wrapper.size = Vector2(600, 58)
+		slot_wrapper.custom_minimum_size = Vector2(CHOICE_CONTAINER_WIDTH, CHOICE_SLOT_HEIGHT)
+		slot_wrapper.size = Vector2(CHOICE_CONTAINER_WIDTH, CHOICE_SLOT_HEIGHT)
 		slot_wrapper.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		
 		var btn = Button.new()
@@ -1373,8 +1350,8 @@ func _display_choice_menu(menu_id: String, animate_entrance: bool = true) -> voi
 		btn.disabled = is_disabled
 		btn.mouse_default_cursor_shape = Control.CURSOR_ARROW if is_disabled else Control.CURSOR_POINTING_HAND
 		btn.alignment = HORIZONTAL_ALIGNMENT_LEFT
-		btn.custom_minimum_size = Vector2(600, 58)
-		btn.size = Vector2(600, 58)
+		btn.custom_minimum_size = Vector2(CHOICE_CONTAINER_WIDTH, CHOICE_SLOT_HEIGHT)
+		btn.size = Vector2(CHOICE_CONTAINER_WIDTH, CHOICE_SLOT_HEIGHT)
 		
 		# ข้อความบนปุ่ม (ทุกปุ่มรวมถึง "ฉันจะลองดู" ใช้ข้อความรูปแบบเดียวกัน ไม่อิงประวัติเคยอ่าน)
 		btn.text = clean_text
@@ -1384,16 +1361,16 @@ func _display_choice_menu(menu_id: String, animate_entrance: bool = true) -> voi
 		
 		if font_choice_regular:
 			btn.add_theme_font_override("font", font_choice_regular)
-			btn.add_theme_font_size_override("font_size", 21)
+			btn.add_theme_font_size_override("font_size", 20)
 		elif font_chakra_regular:
 			btn.add_theme_font_override("font", font_chakra_regular)
-			btn.add_theme_font_size_override("font_size", 21)
+			btn.add_theme_font_size_override("font_size", 20)
 		elif font_chakra_bold:
 			btn.add_theme_font_override("font", font_chakra_bold)
-			btn.add_theme_font_size_override("font_size", 21)
+			btn.add_theme_font_size_override("font_size", 20)
 		elif font_ta8bit:
 			btn.add_theme_font_override("font", font_ta8bit)
-			btn.add_theme_font_size_override("font_size", 20)
+			btn.add_theme_font_size_override("font_size", 19)
 			
 		# กำหนด StyleBox ตาม Texture กรอบที่คุณวาด
 		_setup_slot_button_styles(btn, is_disabled)
