@@ -54,9 +54,19 @@ var _active_tween: Tween
 
 func _ready() -> void:
 	if ResourceLoader.exists("res://assets/fonts/ChakraPetch-Bold.ttf"):
-		_font_bold = load("res://assets/fonts/ChakraPetch-Bold.ttf")
+		var base_bold: Font = load("res://assets/fonts/ChakraPetch-Bold.ttf")
+		var fv_bold := FontVariation.new()
+		fv_bold.base_font = base_bold
+		fv_bold.spacing_top = 4
+		fv_bold.spacing_bottom = 2
+		_font_bold = fv_bold
 	if ResourceLoader.exists("res://assets/fonts/ChakraPetch-Regular.ttf"):
-		_font_reg = load("res://assets/fonts/ChakraPetch-Regular.ttf")
+		var base_reg: Font = load("res://assets/fonts/ChakraPetch-Regular.ttf")
+		var fv_reg := FontVariation.new()
+		fv_reg.base_font = base_reg
+		fv_reg.spacing_top = 4
+		fv_reg.spacing_bottom = 2
+		_font_reg = fv_reg
 
 	_build_ui()
 	reset_animation()
@@ -151,7 +161,7 @@ func _build_ui() -> void:
 	icon_rel_holder.add_child(_book_rect)
 
 	# หัวข้อสถานะ
-	_status_header = _make_label("✦ รอการร่ายคาถาตัวอย่าง ✦", COLOR_GOLD, true, 16)
+	_status_header = _make_label("✦ รอการร่ายคาถาตัวอย่าง ✦", COLOR_GOLD, true, 15)
 	_status_header.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_card_vbox.add_child(_status_header)
 
@@ -235,7 +245,7 @@ func _refresh_content_ui() -> void:
 		_status_header.text = "✦ รอการทดสอบคาถา ✦"
 		_status_header.add_theme_color_override("font_color", COLOR_MUTED)
 
-		var empty_lbl := _make_label("กดปุ่ม 'ทดสอบ' ทางด้านซ้าย\nเพื่อดูตัวอย่างผลลัพธ์ที่คำสั่งนี้จะแสดงออกมา", COLOR_MUTED, false, 15)
+		var empty_lbl := _make_label("กดปุ่ม 'ทดสอบ' ทางด้านซ้าย\nเพื่อดูตัวอย่างผลลัพธ์ที่คำสั่งนี้จะแสดงออกมา", COLOR_MUTED, false, 14)
 		empty_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		empty_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		_content_box.add_child(empty_lbl)
@@ -245,7 +255,7 @@ func _refresh_content_ui() -> void:
 		_status_header.text = "⚡ กำลังทดสอบคำสั่ง..."
 		_status_header.add_theme_color_override("font_color", COLOR_CYAN)
 
-		var casting_lbl := _make_label("ร่ายคาถา: %s" % active_command, COLOR_CYAN, true, 16)
+		var casting_lbl := _make_label("ร่ายคาถา: %s" % active_command, COLOR_CYAN, true, 15)
 		casting_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		_content_box.add_child(casting_lbl)
 
@@ -280,7 +290,7 @@ func _refresh_content_ui() -> void:
 		cta_box.add_theme_stylebox_override("panel", cta_style)
 		_content_box.add_child(cta_box)
 
-		var cta_lbl := _make_label("👉 พร้อมแล้ว เข้าสู่เทอร์มินัลเพื่อลองพิมพ์จริง", COLOR_WHITE, false, 14)
+		var cta_lbl := _make_label("👉 พร้อมแล้ว เข้าสู่เทอร์มินัลเพื่อลองพิมพ์จริง", COLOR_WHITE, false, 13)
 		cta_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		cta_box.add_child(cta_lbl)
 
@@ -289,11 +299,11 @@ func _add_preview_row(label_text: String, value_text: String, val_color: Color, 
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 10)
 
-	var lbl := _make_label(label_text, COLOR_MUTED, false, 15)
-	lbl.custom_minimum_size = Vector2(105, 0)
+	var lbl := _make_label(label_text, COLOR_MUTED, false, 14)
+	lbl.custom_minimum_size = Vector2(100, 0)
 	row.add_child(lbl)
 
-	var val := _make_label(value_text, val_color, bold_val, 15)
+	var val := _make_label(value_text, val_color, bold_val, 15 if bold_val else 14)
 	val.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	val.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	row.add_child(val)
