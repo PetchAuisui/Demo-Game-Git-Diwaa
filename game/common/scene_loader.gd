@@ -36,12 +36,19 @@ static func change_scene(tree: SceneTree, path: String) -> bool:
 	return tree.change_scene_to_file(path) == OK
 
 
-static func flush_preloads() -> void:
+## เก็บกวาด resource ที่ preload ค้างไว้ ป้องกัน ObjectDB leak
+## - wait = false (ค่าเริ่มต้น): เก็บกวาดเฉพาะที่โหลดเสร็จแล้วทันที ไม่บล็อก Main Thread เพื่อป้องกันอาการกระตุกตอนเปลี่ยนฉาก
+## - wait = true: รอจนกว่าโหลดเสร็จทั้งหมด (ใช้ตอนปิดหน้าต่างเกม)
+static func flush_preloads(wait: bool = false) -> void:
 	var paths := _pending_preloads.keys()
-	_pending_preloads.clear()
 	for path_var: Variant in paths:
 		var path := str(path_var)
-		while ResourceLoader.load_threaded_get_status(path) == ResourceLoader.THREAD_LOAD_IN_PROGRESS:
-			OS.delay_msec(5)
-		if ResourceLoader.load_threaded_get_status(path) == ResourceLoader.THREAD_LOAD_LOADED:
+		var status := ResourceLoader.load_threaded_get_status(path)
+		if wait and status == ResourceLoader.THREAD_LOAD_IN_PROGRESS:
 			ResourceLoader.load_threaded_get(path)
+			_pending_preloads.erase(path)
+		elif status == ResourceLoader.THREAD_LOAD_LOADED:
+			ResourceLoader.load_threaded_get(path)
+			_pending_preloads.erase(path)
+		elif status != ResourceLoader.THREAD_LOAD_IN_PROGRESS:
+			_pending_preloads.erase(path)

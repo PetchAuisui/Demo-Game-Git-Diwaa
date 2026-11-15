@@ -157,7 +157,7 @@ func _exit_tree() -> void:
 		_watcher.queue_free()
 	_watcher = null
 	_hovered_control_override = null
-	SceneLoader.flush_preloads()
+	SceneLoader.flush_preloads(true)
 
 
 func _process(delta: float) -> void:

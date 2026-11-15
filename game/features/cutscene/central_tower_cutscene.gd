@@ -252,10 +252,31 @@ func _init_scene_state() -> void:
 
 func _exit_tree() -> void:
 	Engine.time_scale = 1.0
+	SceneLoader.flush_preloads()
+	if typewriter_tween and typewriter_tween.is_valid():
+		typewriter_tween.kill()
+		typewriter_tween = null
+	if exclamation_tween and exclamation_tween.is_valid():
+		exclamation_tween.kill()
+		exclamation_tween = null
+	if question_tween and question_tween.is_valid():
+		question_tween.kill()
+		question_tween = null
+	if arrow_tween and arrow_tween.is_valid():
+		arrow_tween.kill()
+		arrow_tween = null
+	if entrance_tween and entrance_tween.is_valid():
+		entrance_tween.kill()
+		entrance_tween = null
+	if wait_tween and wait_tween.is_valid():
+		wait_tween.kill()
+		wait_tween = null
 	if press_tween_back and press_tween_back.is_valid():
 		press_tween_back.kill()
+		press_tween_back = null
 	if press_tween_next and press_tween_next.is_valid():
 		press_tween_next.kill()
+		press_tween_next = null
 	if char_dim_tween_vel and char_dim_tween_vel.is_valid():
 		char_dim_tween_vel.kill()
 		char_dim_tween_vel = null

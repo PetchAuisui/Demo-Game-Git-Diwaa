@@ -273,6 +273,7 @@ func _ready() -> void:
 
 func _exit_tree() -> void:
 	Engine.time_scale = 1.0
+	SceneLoader.flush_preloads()
 	is_bad_ending_typing = false
 	is_bad_ending_waiting = false
 	_stop_active_slot_glow()
@@ -770,14 +771,15 @@ func _show_current_queue_item(skip_typewriter: bool = false) -> void:
 			var part2_q = level_data.get("part2_intro_sequence", [])
 			var is_returning_from_sub = (current_queue != intro_q and current_queue != part2_q)
 			
-			if is_returning_from_sub and sequence_history.size() > 0 and (target_menu == "part1_main" or target_menu == "part2_main"):
+			var is_main_target: bool = (target_menu == "part1_main" or target_menu == "part2_main" or target_menu.ends_with("_main"))
+			if is_returning_from_sub and sequence_history.size() > 0 and is_main_target:
 				while sequence_history.size() > 0 and current_queue != intro_q and current_queue != part2_q:
 					var parent_state = sequence_history.pop_back()
 					current_queue = parent_state.get("queue", current_queue)
 					queue_index = parent_state.get("index", queue_index)
 					if parent_state.has("is_in_entrance_cutscene"):
 						is_in_entrance_cutscene = parent_state["is_in_entrance_cutscene"]
-			var is_returning_to_main = is_returning_from_sub and (target_menu == "part1_main" or target_menu == "part2_main")
+			var is_returning_to_main = is_returning_from_sub and is_main_target
 			_display_choice_menu(target_menu, not is_returning_to_main)
 			return
 		elif type == "goto":
@@ -1247,8 +1249,8 @@ func _display_choice_menu(menu_id: String, animate_entrance: bool = true) -> voi
 		and choice_buttons.size() > 0
 	)
 
-	# กรณีวนกลับมาคำถามเดิมหลังจากอ่านคำตอบจบ: ไม่ต้องสร้างปุ่มใหม่และไม่ต้องเล่นอนิเมชั่น ให้คืนค่าปุ่มเดิมที่มีอยู่บนจอทันที
-	if not animate_entrance and can_reuse_existing_slots:
+	# กรณีวนกลับมาคำถามเดิมหลังจากอ่านคำตอบจบ หรือกดย้อนกลับมาจากคำถามเดิม: ไม่ต้องสร้างปุ่มใหม่และไม่ต้องเล่นอนิเมชั่น ให้คืนค่าปุ่มเดิมที่มีอยู่บนจอทันที
+	if can_reuse_existing_slots:
 		_stop_active_slot_glow()
 		active_choice_id = ""
 		is_showing_choices = true
@@ -1516,8 +1518,6 @@ func _on_choice_selected(index: int) -> void:
 func _open_gameplay_step(step: int) -> void:
 	if is_transitioning:
 		return
-	if LevelDataLoader.has_gameplay(level_number, step) and _go_to_gameplay_scene(step):
-		return
 	_stop_active_slot_glow()
 	if slot_pop_tween and slot_pop_tween.is_valid():
 		slot_pop_tween.kill()
@@ -1529,6 +1529,10 @@ func _open_gameplay_step(step: int) -> void:
 	_expand_dialogue_box()
 	_hide_continue_arrow()
 	_hide_question_mark()
+
+	if LevelDataLoader.has_gameplay(level_number, step) and _go_to_gameplay_scene(step):
+		return
+
 	# เริ่มช่วงใหม่โดยไม่มีประวัติ: ไม่ให้ปุ่มย้อนกลับพากลับไปที่รายการ open_gameplay แล้ววนกลับมาที่เดิม
 	sequence_history.clear()
 	current_queue = []
@@ -2118,9 +2122,12 @@ func _on_player_back() -> void:
 		
 	# 3. หากกำลังแสดงเมนูช้อยส์อยู่
 	if is_showing_choices:
-		if current_menu_id == "part1_purpose_sub":
+		if current_menu_id.ends_with("_sub"):
 			_stop_active_slot_glow()
 			active_choice_id = ""
+			var target_parent_menu := "part1_main"
+			if current_menu_id.begins_with("part2_") or debug_phase == 1:
+				target_parent_menu = "part2_main"
 			if sequence_history.size() > 0:
 				var parent_state = sequence_history.pop_back()
 				current_queue = parent_state.get("queue", current_queue)
@@ -2128,7 +2135,7 @@ func _on_player_back() -> void:
 				if parent_state.has("is_in_entrance_cutscene"):
 					is_in_entrance_cutscene = parent_state["is_in_entrance_cutscene"]
 			_animate_choices_exit(func():
-				_display_choice_menu("part1_main", true)
+				_display_choice_menu(target_parent_menu, true)
 			)
 			_update_nav_arrows()
 			return

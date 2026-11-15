@@ -17,7 +17,7 @@ const CutsceneMusic = preload("res://common/cutscene_music.gd")
 
 @export_group("การแสดงผลหมู่บ้าน (Village Settings)")
 @export var village_frame_index: int = 0
-@export var village_duration: float = 3.0
+@export var village_duration: float = 6.0
 
 var is_transitioning: bool = false
 var is_fast_forwarding: bool = false
@@ -33,7 +33,6 @@ signal cutscene_finished
 func _ready() -> void:
 	Engine.time_scale = 1.0
 	SceneLoader.request_preload("res://features/cutscene/intro_cutscene.tscn")
-	SceneLoader.request_preload(CutsceneMusic.BGM_AUDIO_PATH)
 	skip_ctrl = preload("res://features/cutscene/skip_cutscene_button.gd").new()
 	skip_ctrl.next_scene_path = "res://features/cutscene/intro_cutscene.tscn"
 	skip_ctrl.custom_skip_action = _on_skip_step
@@ -43,6 +42,7 @@ func _ready() -> void:
 
 func _exit_tree() -> void:
 	Engine.time_scale = 1.0
+	SceneLoader.flush_preloads()
 	if tw_intro_fade and tw_intro_fade.is_valid():
 		tw_intro_fade.kill()
 		tw_intro_fade = null

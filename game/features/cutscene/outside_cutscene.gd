@@ -51,6 +51,16 @@ func _ready() -> void:
 
 func _exit_tree() -> void:
 	Engine.time_scale = 1.0
+	SceneLoader.flush_preloads()
+	if tw_stage1_fade and tw_stage1_fade.is_valid():
+		tw_stage1_fade.kill()
+		tw_stage1_fade = null
+	if tw_stage2_fade and tw_stage2_fade.is_valid():
+		tw_stage2_fade.kill()
+		tw_stage2_fade = null
+	if tw_stage3_wait and tw_stage3_wait.is_valid():
+		tw_stage3_wait.kill()
+		tw_stage3_wait = null
 	if tw_title and tw_title.is_valid():
 		tw_title.kill()
 		tw_title = null
@@ -356,13 +366,14 @@ func _trigger_start_level() -> void:
 	var tw_out = create_tween()
 	tw_out.tween_property(fade_overlay, "color", Color(0, 0, 0, 1), 0.6)
 	tw_out.tween_callback(func():
+		GameProgressManager.set_intro_cutscene_seen(true)
 		CutsceneMusic.stop_immediate()
 		Engine.time_scale = 1.0
 		emit_signal("cutscene_finished")
 		print("[CutsceneChaos] เข้าสู่ด่านแรกเรียบร้อย!")
 		var target_scene := _get_resolved_next_scene()
 		if target_scene != "" and ResourceLoader.exists(target_scene):
-			get_tree().change_scene_to_file(target_scene)
+			SceneLoader.change_scene(get_tree(), target_scene)
 		else:
 			push_warning("[OutsideCutscene] target scene not found: '%s'" % target_scene)
 			var tw_recover = create_tween()

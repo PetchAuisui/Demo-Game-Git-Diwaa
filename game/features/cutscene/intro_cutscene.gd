@@ -191,6 +191,28 @@ func _prewarm_cutscene_textures() -> void:
 
 func _exit_tree() -> void:
 	Engine.time_scale = 1.0
+	SceneLoader.flush_preloads()
+	if tw_ex_bob and tw_ex_bob.is_valid():
+		tw_ex_bob.kill()
+		tw_ex_bob = null
+	if tw_paper_glow and tw_paper_glow.is_valid():
+		tw_paper_glow.kill()
+		tw_paper_glow = null
+	if tw_rune_aura and tw_rune_aura.is_valid():
+		tw_rune_aura.kill()
+		tw_rune_aura = null
+	if tw_typing and tw_typing.is_valid():
+		tw_typing.kill()
+		tw_typing = null
+	if tw_auto_continue and tw_auto_continue.is_valid():
+		tw_auto_continue.kill()
+		tw_auto_continue = null
+	if tw_cp_fade and tw_cp_fade.is_valid():
+		tw_cp_fade.kill()
+		tw_cp_fade = null
+	if tw_cp_pulse and tw_cp_pulse.is_valid():
+		tw_cp_pulse.kill()
+		tw_cp_pulse = null
 	if _has_saved_snap:
 		var vp := get_viewport()
 		if vp:
@@ -945,7 +967,10 @@ func play_with_tween() -> void:
 			exclamation_mark.scale = Vector2.ZERO
 			exclamation_mark.position = Vector2(0, -52)
 			exclamation_mark.modulate.a = 1.0
-			var tw_ex = create_tween()
+			if tw_ex_bob and tw_ex_bob.is_valid():
+				tw_ex_bob.kill()
+			tw_ex_bob = create_tween()
+			var tw_ex := tw_ex_bob
 			# กระโดดขึ้นพร้อมกับเวล (0.22s)
 			tw_ex.tween_property(exclamation_mark, "scale", Vector2(1.15, 1.15), 0.15).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 			tw_ex.parallel().tween_property(exclamation_mark, "position:y", -58.0, 0.22).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)

@@ -138,13 +138,15 @@ func _on_replay_pressed() -> void:
 	var target = replay_scene_path
 	if target == "" or not ResourceLoader.exists(target):
 		target = "res://features/dialogue/level_dialogue_view.tscn"
-	get_tree().change_scene_to_file(target)
+	if not SceneLoader.change_scene(get_tree(), target):
+		get_tree().change_scene_to_file(target)
 
 func _on_level_select_pressed() -> void:
 	var target = level_select_scene_path
 	if target == "" or not ResourceLoader.exists(target):
 		target = "res://features/level_select/level_select_view.tscn"
-	get_tree().change_scene_to_file(target)
+	if not SceneLoader.change_scene(get_tree(), target):
+		get_tree().change_scene_to_file(target)
 
 func _on_next_level_pressed() -> void:
 	# ปัจจุบันด่านถัดไปยังเป็นโครง จึงเปิดหน้าเลือกด่าน
