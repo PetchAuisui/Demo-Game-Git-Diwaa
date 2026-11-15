@@ -99,6 +99,8 @@ static var _cached_empty_cursor_tex: ImageTexture = null
 var level_data: Dictionary = {}
 var current_queue: Array = []
 var queue_index: int = 0
+var current_sequence_name: String = ""
+var is_in_sub_sequence: bool = false
 
 var is_dialogue_active: bool = false
 var is_typing: bool = false
@@ -271,74 +273,36 @@ func _ready() -> void:
 		
 		_start_dialogue_scene()
 
+func _kill_tween(tw: Tween) -> Tween:
+	if tw and tw.is_valid():
+		tw.kill()
+	return null
+
 func _exit_tree() -> void:
 	Engine.time_scale = 1.0
-	SceneLoader.flush_preloads()
 	is_bad_ending_typing = false
 	is_bad_ending_waiting = false
 	_stop_active_slot_glow()
-	if slot_pop_tween and slot_pop_tween.is_valid():
-		slot_pop_tween.kill()
-		slot_pop_tween = null
-	if bad_ending_tween and bad_ending_tween.is_valid():
-		bad_ending_tween.kill()
-		bad_ending_tween = null
-	if bad_ending_pulse_tween and bad_ending_pulse_tween.is_valid():
-		bad_ending_pulse_tween.kill()
-		bad_ending_pulse_tween = null
-	if choice_slide_tween and choice_slide_tween.is_valid():
-		choice_slide_tween.kill()
-		choice_slide_tween = null
-	if dbox_shrink_tween and dbox_shrink_tween.is_valid():
-		dbox_shrink_tween.kill()
-		dbox_shrink_tween = null
-	if entrance_tween and entrance_tween.is_valid():
-		entrance_tween.kill()
-		entrance_tween = null
-	if stand_tween and stand_tween.is_valid():
-		stand_tween.kill()
-		stand_tween = null
-	if warp_tween and warp_tween.is_valid():
-		warp_tween.kill()
-		warp_tween = null
-	if reaction_tween and reaction_tween.is_valid():
-		reaction_tween.kill()
-		reaction_tween = null
-	if hop_tween and hop_tween.is_valid():
-		hop_tween.kill()
-		hop_tween = null
-	if open_box_tween and open_box_tween.is_valid():
-		open_box_tween.kill()
-		open_box_tween = null
-	if intro_box_tween and intro_box_tween.is_valid():
-		intro_box_tween.kill()
-		intro_box_tween = null
-	if typewriter_tween and typewriter_tween.is_valid():
-		typewriter_tween.kill()
-		typewriter_tween = null
-	if question_tween and question_tween.is_valid():
-		question_tween.kill()
-		question_tween = null
-	if exclamation_tween and exclamation_tween.is_valid():
-		exclamation_tween.kill()
-		exclamation_tween = null
-	if arrow_tween and arrow_tween.is_valid():
-		arrow_tween.kill()
-		arrow_tween = null
-	if press_tween_back and press_tween_back.is_valid():
-		press_tween_back.kill()
-		press_tween_back = null
-	if press_tween_next and press_tween_next.is_valid():
-		press_tween_next.kill()
-		press_tween_next = null
-	if char_dim_tween_vel and char_dim_tween_vel.is_valid():
-		char_dim_tween_vel.kill()
-		char_dim_tween_vel = null
-	if char_dim_tween_mewla and char_dim_tween_mewla.is_valid():
-		char_dim_tween_mewla.kill()
-		char_dim_tween_mewla = null
-	_clear_cached_textures()
-	SceneLoader.flush_preloads()
+	slot_pop_tween = _kill_tween(slot_pop_tween)
+	bad_ending_tween = _kill_tween(bad_ending_tween)
+	bad_ending_pulse_tween = _kill_tween(bad_ending_pulse_tween)
+	choice_slide_tween = _kill_tween(choice_slide_tween)
+	dbox_shrink_tween = _kill_tween(dbox_shrink_tween)
+	entrance_tween = _kill_tween(entrance_tween)
+	stand_tween = _kill_tween(stand_tween)
+	warp_tween = _kill_tween(warp_tween)
+	reaction_tween = _kill_tween(reaction_tween)
+	hop_tween = _kill_tween(hop_tween)
+	open_box_tween = _kill_tween(open_box_tween)
+	intro_box_tween = _kill_tween(intro_box_tween)
+	typewriter_tween = _kill_tween(typewriter_tween)
+	question_tween = _kill_tween(question_tween)
+	exclamation_tween = _kill_tween(exclamation_tween)
+	arrow_tween = _kill_tween(arrow_tween)
+	press_tween_back = _kill_tween(press_tween_back)
+	press_tween_next = _kill_tween(press_tween_next)
+	char_dim_tween_vel = _kill_tween(char_dim_tween_vel)
+	char_dim_tween_mewla = _kill_tween(char_dim_tween_mewla)
 
 static func _clear_cached_textures() -> void:
 	_cached_arrow_left_tex = null
@@ -496,11 +460,11 @@ func _begin_dialogue_phase(phase: int = -1) -> void:
 	dialogue_box.visible = true
 	dialogue_box.modulate.a = 1.0
 	if debug_phase == 1:
-		_load_sequence(level_data.get("part2_intro_sequence", []))
+		_load_sequence(level_data.get("part2_intro_sequence", []), true, false, "part2_intro")
 	elif debug_phase == 2:
-		_load_sequence(level_data.get("outro_sequence", []))
+		_load_sequence(level_data.get("outro_sequence", []), true, false, "outro")
 	else:
-		_load_sequence(level_data.get("intro_sequence", []))
+		_load_sequence(level_data.get("intro_sequence", []), true, false, "intro")
 
 # ==============================================================================
 # ENTRANCE CUTSCENE (เดินเข้าห้องโถง & พบมิวราก่อนเริ่มบทเรียน)
@@ -613,7 +577,7 @@ func _open_dialogue_box_for_intro() -> void:
 		# ถ้าผู้เล่นกดข้ามระหว่างกล่องข้อความกำลังเฟดเข้า จะไม่โหลดบทนำทับบทเรียน
 		if is_transitioning or not is_in_entrance_cutscene:
 			return
-		_load_sequence(INTRO_DIALOGUES)
+		_load_sequence(INTRO_DIALOGUES, true, false, "entrance")
 	)
 
 func _start_exclamation_jump() -> void:
@@ -729,17 +693,21 @@ func _open_dialogue_box() -> void:
 	var box_tween = create_tween()
 	box_tween.tween_property(dialogue_box, "modulate:a", 1.0, 0.25)
 
-func _load_sequence(seq: Array, record_history: bool = true) -> void:
+func _load_sequence(seq: Array, record_history: bool = true, is_sub: bool = false, seq_name: String = "") -> void:
 	if record_history and current_queue.size() > 0:
 		var last_idx = mini(queue_index, current_queue.size() - 1)
 		sequence_history.append({
 			"queue": current_queue,
 			"index": last_idx,
 			"is_showing_choices": is_showing_choices,
-			"is_in_entrance_cutscene": is_in_entrance_cutscene
+			"is_in_entrance_cutscene": is_in_entrance_cutscene,
+			"is_in_sub_sequence": is_in_sub_sequence,
+			"sequence_name": current_sequence_name
 		})
 	current_queue = seq
 	queue_index = 0
+	is_in_sub_sequence = is_sub
+	current_sequence_name = seq_name
 	_show_current_queue_item()
 
 func _show_current_queue_item(skip_typewriter: bool = false) -> void:
@@ -751,14 +719,16 @@ func _show_current_queue_item(skip_typewriter: bool = false) -> void:
 				"queue": current_queue,
 				"index": current_queue.size() - 1,
 				"is_showing_choices": false,
-				"is_in_entrance_cutscene": true
+				"is_in_entrance_cutscene": true,
+				"is_in_sub_sequence": false,
+				"sequence_name": current_sequence_name
 			})
 			is_in_entrance_cutscene = false
-			_load_sequence(level_data.get("intro_sequence", []), false)
+			_load_sequence(level_data.get("intro_sequence", []), false, false, "intro")
 			return
 		# บันทึกผ่านด่านเฉพาะเมื่อเล่น outro_sequence จบสมบูรณ์ (หรือ debug_phase == 2) และไม่ใช่ข้อมูล fallback
 		var is_fallback: bool = level_data.get("is_fallback", false)
-		var is_outro: bool = not is_fallback and ((current_queue == level_data.get("outro_sequence", [])) or (debug_phase == 2))
+		var is_outro: bool = not is_fallback and ((current_sequence_name == "outro") or (debug_phase == 2))
 		_finish_dialogue_stage(is_outro)
 		return
 		
@@ -767,25 +737,26 @@ func _show_current_queue_item(skip_typewriter: bool = false) -> void:
 		var type = item["type"]
 		if type == "choice_menu":
 			var target_menu = item.get("menu", "")
-			var intro_q = level_data.get("intro_sequence", [])
-			var part2_q = level_data.get("part2_intro_sequence", [])
-			var is_returning_from_sub = (current_queue != intro_q and current_queue != part2_q)
+			var is_returning_from_sub = is_in_sub_sequence
 			
 			var is_main_target: bool = (target_menu == "part1_main" or target_menu == "part2_main" or target_menu.ends_with("_main"))
 			if is_returning_from_sub and sequence_history.size() > 0 and is_main_target:
-				while sequence_history.size() > 0 and current_queue != intro_q and current_queue != part2_q:
+				while sequence_history.size() > 0 and is_in_sub_sequence:
 					var parent_state = sequence_history.pop_back()
 					current_queue = parent_state.get("queue", current_queue)
 					queue_index = parent_state.get("index", queue_index)
+					is_in_sub_sequence = parent_state.get("is_in_sub_sequence", false)
+					current_sequence_name = parent_state.get("sequence_name", "")
 					if parent_state.has("is_in_entrance_cutscene"):
 						is_in_entrance_cutscene = parent_state["is_in_entrance_cutscene"]
+			is_in_sub_sequence = false
 			var is_returning_to_main = is_returning_from_sub and is_main_target
 			_display_choice_menu(target_menu, not is_returning_to_main)
 			return
 		elif type == "goto":
 			var target_seq = item.get("target", "")
 			if target_seq != "" and level_data.has(target_seq):
-				_load_sequence(level_data[target_seq])
+				_load_sequence(level_data[target_seq], true, true, target_seq)
 			return
 		elif type == "open_gameplay":
 			var step = item.get("step", 1)
@@ -991,20 +962,24 @@ static func _get_empty_arrow_texture() -> ImageTexture:
 	_cached_empty_cursor_tex = ImageTexture.create_from_image(img)
 	return _cached_empty_cursor_tex
 
+static func _load_texture_with_fallback(res_path: String) -> Texture2D:
+	if ResourceLoader.exists(res_path):
+		var tex = load(res_path)
+		if tex != null:
+			return tex
+	var global_path = ProjectSettings.globalize_path(res_path)
+	if FileAccess.file_exists(global_path):
+		var img = Image.new()
+		if img.load(global_path) == OK:
+			return ImageTexture.create_from_image(img)
+	return null
+
 static var _cached_question_frame_tex: Texture2D = null
 
 static func _get_question_frame_texture() -> Texture2D:
 	if _cached_question_frame_tex != null:
 		return _cached_question_frame_tex
-	const PATH = "res://assets/cutscene/frame dialog text/dialog-question1.png"
-	if ResourceLoader.exists(PATH):
-		_cached_question_frame_tex = load(PATH)
-	if not _cached_question_frame_tex:
-		var global_path = ProjectSettings.globalize_path(PATH)
-		if FileAccess.file_exists(global_path):
-			var img = Image.new()
-			if img.load(global_path) == OK:
-				_cached_question_frame_tex = ImageTexture.create_from_image(img)
+	_cached_question_frame_tex = _load_texture_with_fallback("res://assets/cutscene/frame dialog text/dialog-question1.png")
 	return _cached_question_frame_tex
 
 static var _cached_question_frame_active_tex: Texture2D = null
@@ -1012,15 +987,7 @@ static var _cached_question_frame_active_tex: Texture2D = null
 static func _get_question_frame_active_texture() -> Texture2D:
 	if _cached_question_frame_active_tex != null:
 		return _cached_question_frame_active_tex
-	const PATH = "res://assets/cutscene/frame dialog text/dialog-question1-active.png"
-	if ResourceLoader.exists(PATH):
-		_cached_question_frame_active_tex = load(PATH)
-	if not _cached_question_frame_active_tex:
-		var global_path = ProjectSettings.globalize_path(PATH)
-		if FileAccess.file_exists(global_path):
-			var img = Image.new()
-			if img.load(global_path) == OK:
-				_cached_question_frame_active_tex = ImageTexture.create_from_image(img)
+	_cached_question_frame_active_tex = _load_texture_with_fallback("res://assets/cutscene/frame dialog text/dialog-question1-active.png")
 	if not _cached_question_frame_active_tex:
 		var base_tex = _get_question_frame_texture()
 		if base_tex:
@@ -1034,8 +1001,7 @@ static func _get_question_frame_active_texture() -> Texture2D:
 			_cached_question_frame_active_tex = ImageTexture.create_from_image(img)
 	return _cached_question_frame_active_tex
 
-func _create_slot_texture_stylebox(mod_color: Color = Color.WHITE) -> StyleBox:
-	var tex = _get_question_frame_texture()
+func _create_slot_stylebox(tex: Texture2D, mod_color: Color = Color.WHITE) -> StyleBox:
 	if tex:
 		var sb = StyleBoxTexture.new()
 		sb.texture = tex
@@ -1067,24 +1033,13 @@ func _create_slot_texture_stylebox(mod_color: Color = Color.WHITE) -> StyleBox:
 	fallback_sb.content_margin_bottom = 8.0
 	return fallback_sb
 
+func _create_slot_texture_stylebox(mod_color: Color = Color.WHITE) -> StyleBox:
+	return _create_slot_stylebox(_get_question_frame_texture(), mod_color)
+
 func _create_slot_active_stylebox(mod_color: Color = Color.WHITE) -> StyleBox:
 	var tex = _get_question_frame_active_texture()
 	if tex:
-		var sb = StyleBoxTexture.new()
-		sb.texture = tex
-		sb.region_rect = Rect2(5, 17, 468, 81)
-		sb.texture_margin_left = 32.0
-		sb.texture_margin_right = 32.0
-		sb.texture_margin_top = 18.0
-		sb.texture_margin_bottom = 18.0
-		sb.axis_stretch_horizontal = StyleBoxTexture.AXIS_STRETCH_MODE_STRETCH
-		sb.axis_stretch_vertical = StyleBoxTexture.AXIS_STRETCH_MODE_STRETCH
-		sb.content_margin_left = 32.0
-		sb.content_margin_right = 24.0
-		sb.content_margin_top = 8.0
-		sb.content_margin_bottom = 8.0
-		sb.modulate_color = mod_color
-		return sb
+		return _create_slot_stylebox(tex, mod_color)
 	return _create_slot_texture_stylebox(Color(1.3, 1.3, 1.35, 1.0))
 
 func _on_choice_hover(btn: Button, is_hover: bool) -> void:
@@ -1207,8 +1162,9 @@ func _animate_choices_exit(on_finished: Callable = Callable()) -> void:
 		is_choice_sliding_out = false
 		if is_instance_valid(choice_slots_container):
 			choice_slots_container.visible = false
+		choice_buttons.clear()
 		if on_finished.is_valid():
-			on_finished.call()
+			on_finished.call_deferred()
 		return
 		
 	# ทุกช้อยส์สไลด์ออกพร้อมกันจากซ้ายไปขวา (X: 0.0 -> 160.0) พร้อมเฟดจางหายไป
@@ -1221,6 +1177,7 @@ func _animate_choices_exit(on_finished: Callable = Callable()) -> void:
 		is_choice_sliding_out = false
 		if is_instance_valid(choice_slots_container):
 			choice_slots_container.visible = false
+		choice_buttons.clear()
 		if on_finished.is_valid():
 			on_finished.call()
 	)
@@ -1234,6 +1191,7 @@ func _display_choice_menu(menu_id: String, animate_entrance: bool = true) -> voi
 	# หากมีช้อยส์เดิมแสดงอยู่ และเปลี่ยนเป็นเมนูใหม่ (เช่น เปลี่ยนเป็น ใช่ / ไม่)
 	# ให้สไลด์ช้อยส์เดิมออกพร้อมกันจากซ้ายไปขวาก่อน แล้วจึงโหลดช้อยส์ใหม่สไลด์เข้าจากขวาไปซ้าย
 	if current_menu_id != "" and current_menu_id != menu_id and is_instance_valid(choice_slots_container) and choice_slots_container.visible and choice_buttons.size() > 0:
+		current_menu_id = menu_id
 		_animate_choices_exit(func():
 			_display_choice_menu(menu_id, true)
 		)
@@ -1344,7 +1302,7 @@ func _display_choice_menu(menu_id: String, animate_entrance: bool = true) -> voi
 	if slot_pop_tween and slot_pop_tween.is_valid():
 		slot_pop_tween.kill()
 	slot_pop_tween = null
-	if animate_entrance:
+	if animate_entrance and active_choices.size() > 0:
 		slot_pop_tween = create_tween()
 	
 	var num_strip_regex = RegEx.new()
@@ -1501,10 +1459,11 @@ func _on_choice_selected(index: int) -> void:
 		_expand_dialogue_box()
 		
 	if seq.size() > 0:
-		_load_sequence(seq)
+		_load_sequence(seq, true, true, choice_id)
 	else:
 		if is_action_choice:
-			_open_gameplay_step(1)
+			var fallback_step: int = 2 if (choice_id.begins_with("part2_") or current_menu_id.begins_with("part2_") or debug_phase >= 1) else 1
+			_open_gameplay_step(fallback_step)
 		else:
 			push_error("[LevelDialogueView] No sequence found for choice: %s" % choice_id)
 			var fallback_menu = current_menu_id if current_menu_id != "" else ("part2_main" if debug_phase == 1 else "part1_main")
@@ -2132,8 +2091,12 @@ func _on_player_back() -> void:
 				var parent_state = sequence_history.pop_back()
 				current_queue = parent_state.get("queue", current_queue)
 				queue_index = parent_state.get("index", queue_index)
+				is_in_sub_sequence = parent_state.get("is_in_sub_sequence", false)
+				current_sequence_name = parent_state.get("sequence_name", "")
 				if parent_state.has("is_in_entrance_cutscene"):
 					is_in_entrance_cutscene = parent_state["is_in_entrance_cutscene"]
+				if current_queue.size() > 0:
+					queue_index = clamp(queue_index, 0, current_queue.size() - 1)
 			_animate_choices_exit(func():
 				_display_choice_menu(target_parent_menu, true)
 			)
@@ -2148,18 +2111,20 @@ func _on_player_back() -> void:
 		dialogue_label.visible = true
 		
 		# ถอยกลับไปประโยคก่อนหน้าช้อยส์
-		if queue_index > 0 and queue_index < current_queue.size() and current_queue[queue_index].get("type") == "choice_menu":
-			queue_index -= 1
-		elif queue_index > 0:
+		if queue_index > 0:
 			queue_index -= 1
 		elif sequence_history.size() > 0:
 			var prev_state = sequence_history.pop_back()
 			current_queue = prev_state.get("queue", [])
 			queue_index = prev_state.get("index", 0)
+			is_in_sub_sequence = prev_state.get("is_in_sub_sequence", false)
+			current_sequence_name = prev_state.get("sequence_name", "")
 			if prev_state.has("is_in_entrance_cutscene"):
 				is_in_entrance_cutscene = prev_state["is_in_entrance_cutscene"]
 			if queue_index > 0 and queue_index < current_queue.size() and current_queue[queue_index].get("type") == "choice_menu":
 				queue_index -= 1
+		if current_queue.size() > 0:
+			queue_index = clamp(queue_index, 0, current_queue.size() - 1)
 				
 		_show_current_queue_item(true)
 		_update_nav_arrows()
@@ -2173,8 +2138,12 @@ func _on_player_back() -> void:
 		var prev_state = sequence_history.pop_back()
 		current_queue = prev_state.get("queue", [])
 		queue_index = prev_state.get("index", 0)
+		is_in_sub_sequence = prev_state.get("is_in_sub_sequence", false)
+		current_sequence_name = prev_state.get("sequence_name", "")
 		if prev_state.has("is_in_entrance_cutscene"):
 			is_in_entrance_cutscene = prev_state["is_in_entrance_cutscene"]
+		if current_queue.size() > 0:
+			queue_index = clamp(queue_index, 0, current_queue.size() - 1)
 		_show_current_queue_item(true)
 		
 	_update_nav_arrows()
