@@ -174,8 +174,7 @@ static func get_data() -> Dictionary:
 					"command": "git version",
 					"alt_command": "git --version",
 					"button_icon": "✨",
-					"outcome_text": "[color=#52e0ac]สัมผัสพลังเวทสำเร็จ![/color] คัมภีร์เวทเปล่งแสงตอบรับ [b]Git Version 2.40.1[/b] พร้อมใช้งาน!
-กดปุ่ม [b]'เข้าสู่การฝึกฝนจริง'[/b] ด้านล่าง เพื่อเริ่มร่ายคาถาในเทอร์มินัล",
+					"outcome_text": "[color=#52e0ac]✓ สัมผัสพลังเวทสำเร็จ:[/color] Git Version 2.40.1 พร้อมใช้งานในหอคอย",
 					"mode": 0
 				}
 			],
