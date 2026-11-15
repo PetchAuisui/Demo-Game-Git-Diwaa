@@ -131,19 +131,4 @@ static func _get_or_create_player() -> AudioStreamPlayer:
 	tree.root.add_child.call_deferred(player)
 	_player = player
 	
-	# ตัวตรวจจับตำแหน่งเพลง ถ้าใกล้จบแทร็ก (เหลือ 3.5s) ให้ค่อย ๆ เฟดออกอัตโนมัติ
-	var timer := Timer.new()
-	timer.name = "TrackMonitor"
-	timer.wait_time = 0.5
-	timer.autostart = true
-	timer.timeout.connect(func():
-		if _player and is_instance_valid(_player) and _player.playing and not _is_fading_out:
-			var stream_len: float = _player.stream.get_length() if _player.stream else 0.0
-			if stream_len > 0.0:
-				var pos: float = _player.get_playback_position()
-				if pos >= stream_len - 3.5:
-					fade_out(3.5)
-	)
-	player.add_child(timer)
-	
 	return _player

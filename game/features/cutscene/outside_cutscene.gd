@@ -333,11 +333,6 @@ func _reveal_game_title() -> void:
 		tw_title.kill()
 	tw_title = create_tween()
 	tw_title.tween_property(title_container, "modulate:a", 1.0, 0.8).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-	# เมื่อไตเติลหอคอยขึ้นเสร็จสมบูรณ์ หากเสียงยังคงเล่นอยู่ ให้ค่อย ๆ เฟดเสียงตอนท้าย
-	tw_title.chain().tween_callback(func():
-		if CutsceneMusic.is_playing():
-			CutsceneMusic.fade_out(2.5)
-	)
 	
 	var tw_title_aura = create_tween().set_loops()
 	tw_title_aura.tween_property(title_label_aura, "modulate:a", 0.75, 1.6).set_trans(Tween.TRANS_SINE)
@@ -358,12 +353,10 @@ func _trigger_start_level() -> void:
 	is_fast_forwarding = false
 	Engine.time_scale = 1.0
 	
-	# ค่อย ๆ เฟดเสียงเพลงออกตอนท้ายพร้อมหน้าจอมืด
-	CutsceneMusic.fade_out(0.6)
-	
 	var tw_out = create_tween()
 	tw_out.tween_property(fade_overlay, "color", Color(0, 0, 0, 1), 0.6)
 	tw_out.tween_callback(func():
+		CutsceneMusic.stop_immediate()
 		Engine.time_scale = 1.0
 		emit_signal("cutscene_finished")
 		print("[CutsceneChaos] เข้าสู่ด่านแรกเรียบร้อย!")
