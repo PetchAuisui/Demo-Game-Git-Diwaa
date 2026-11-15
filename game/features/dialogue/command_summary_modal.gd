@@ -56,10 +56,17 @@ func _ready() -> void:
 
 
 func _setup_slides() -> void:
-	# ดึงข้อมูลจากไฟล์ด่านถ้ามี หรือใช้สไลด์มาตรฐานอิงตาม Reference
 	slides.clear()
 	
-	# สไลด์ที่ 1: การจำลองการจารึก (Git Commit Demonstration) ตามภาพ Reference
+	# โหลดสไลด์จากข้อมูลด่านถ้ามีนิยามไว้
+	var custom_slides: Array = LevelDataLoader.get_demonstration_slides(level_number, current_step)
+	if custom_slides.size() > 0:
+		for s in custom_slides:
+			if s is Dictionary:
+				slides.append(s)
+		return
+
+	# สไลด์มาตรฐานอิงตาม Reference (Git Commit Demonstration)
 	slides.append({
 		"title": "⚙ การจำลองการจารึก: บันทึกคัมภีร์เวท (Git Demonstration)",
 		"badge": "✦ บทเรียนการจารึก: Git Commit",
