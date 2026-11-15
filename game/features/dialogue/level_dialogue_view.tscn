@@ -1,7 +1,7 @@
 [gd_scene format=3 uid="uid://dmv8ab8q4lx0y"]
 
 [ext_resource type="Script" uid="uid://caopnm7k1tqhe" path="res://features/dialogue/level_dialogue_view.gd" id="1_script"]
-[ext_resource type="Texture2D" uid="uid://4ah0urajpkpe" path="res://assets/cutscene/backgrounds/inside-tower-Sheet.png" id="2_bg"]
+[ext_resource type="Texture2D" uid="uid://dl5tboxtoj7v1" path="res://assets/cutscene/backgrounds/inside-tower-loop-Sheet.png" id="2_bg"]
 [ext_resource type="Texture2D" uid="uid://don4qpk4c43rc" path="res://assets/cutscene/characters/vel/vel_Hblue_Sredyellow_idle.png" id="3_vel_idle"]
 [ext_resource type="Texture2D" uid="uid://bwv0pcja8aiqd" path="res://assets/cutscene/characters/vel/vel_shockpng.png" id="4_vel_shock"]
 [ext_resource type="Texture2D" uid="uid://cnyp8l2pk7uln" path="res://assets/cutscene/characters/vel/vel_breathe_blink-Sheet.png" id="5_vel_blink"]
@@ -21,6 +21,32 @@
 [ext_resource type="Texture2D" uid="uid://dokdfulrf0b81" path="res://assets/cutscene/frame dialog text/arrow.png" id="17_dialog_arrow"]
 [ext_resource type="Texture2D" uid="uid://dmykeg4jphdb0" path="res://assets/cutscene/props/khampri/drop_shadow.png" id="18_shadow"]
 [ext_resource type="Texture2D" uid="uid://cgl7a5ytds8rh" path="res://assets/cutscene/backgrounds/central-tower-Sheet.png" id="19_central_bg"]
+[ext_resource type="Texture2D" uid="uid://di2t2ymk1v7vy" path="res://assets/cutscene/backgrounds/cloud1.png" id="20_cloud"]
+[ext_resource type="Shader" uid="uid://bs6f2587plgrs" path="res://features/sandbox/sandbox_cloud_scroll.gdshader" id="21_cloud_scroll"]
+[ext_resource type="Shader" uid="uid://b31eepd6k30wl" path="res://features/sandbox/sandbox_tower_windows.gdshader" id="22_tower_windows"]
+
+[sub_resource type="Gradient" id="Gradient_sky"]
+offsets = PackedFloat32Array(0, 0.437, 0.4407, 0.4444, 0.4481, 0.5519, 0.5556, 0.563, 1)
+colors = PackedColorArray(0.133333, 0.137255, 0.356863, 1, 0.133333, 0.137255, 0.356863, 1, 0.196078, 0.223529, 0.431373, 1, 0.196078, 0.223529, 0.431373, 1, 0.203922, 0.141176, 0.384314, 1, 0.203922, 0.141176, 0.384314, 1, 0.231373, 0.141176, 0.388235, 1, 0.286275, 0.145098, 0.396078, 1, 0.286275, 0.145098, 0.396078, 1)
+
+[sub_resource type="GradientTexture2D" id="GradientTexture2D_sky"]
+gradient = SubResource("Gradient_sky")
+width = 480
+height = 270
+fill_from = Vector2(0, 0)
+fill_to = Vector2(0, 1)
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_cloud_scroll"]
+shader = ExtResource("21_cloud_scroll")
+shader_parameter/scroll_speed = 0.025
+shader_parameter/time_offset = 0.0
+shader_parameter/tex_pixel_size = Vector2(480, 270)
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_tower_windows"]
+shader = ExtResource("22_tower_windows")
+shader_parameter/sheet_grid = Vector2(11, 12)
+shader_parameter/min_blue = 0.33
+shader_parameter/min_blue_green_diff = 0.095
 
 [sub_resource type="Animation" id="Animation_reset"]
 length = 0.001
@@ -438,8 +464,22 @@ autoplay = &"background_loop"
 [node name="Camera2D" type="Camera2D" parent="." unique_id=485032344]
 position = Vector2(960, 540)
 
+[node name="SkyBackdrop" type="Sprite2D" parent="." unique_id=1890421101]
+texture_filter = 1
+position = Vector2(960, 540)
+scale = Vector2(4, 4)
+texture = SubResource("GradientTexture2D_sky")
+
+[node name="CloudBackdrop" type="Sprite2D" parent="." unique_id=1890421102]
+texture_filter = 1
+material = SubResource("ShaderMaterial_cloud_scroll")
+position = Vector2(960, 540)
+scale = Vector2(4, 4)
+texture = ExtResource("20_cloud")
+
 [node name="Background" type="Sprite2D" parent="." unique_id=1189459420]
 texture_filter = 1
+material = SubResource("ShaderMaterial_tower_windows")
 position = Vector2(960, 540)
 scale = Vector2(4, 4)
 texture = ExtResource("2_bg")

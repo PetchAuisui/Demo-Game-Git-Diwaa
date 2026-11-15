@@ -17,7 +17,7 @@ flowchart LR
 
 * **เมื่อเข้าสู่ฉาก:** จอค่อยๆ สว่างขึ้น เวลเดินเข้ามาจากทางซ้ายหยุดยืนประจันหน้ากับผู้พิทักษ์ที่ยืนรออยู่ทางขวา
 * **การพูดคุย:** กล่องข้อความสไตล์ Retro Fantasy ปรากฏขึ้น ตัวอักษรค่อยๆ พิมพ์ทีละตัว (Typewriter Effect)
-* **การควบคุม:** ผู้เล่นคลิกหน้าจอ หรือกด Space / Enter เพื่ออ่านบทสนทนาประโยคถัดไป
+* **การควบคุม:** ผู้เล่นคลิกซ้ายที่ไหนก็ได้บนหน้าจอ *(นอกปุ่ม UI)*, คลิกปุ่ม `▶`, หรือกด `Space` / `Enter` / `Numpad Enter` / `Right Arrow (→)` เพื่อเร่งข้อความให้เต็มหรืออ่านประโยคถัดไป และกด `Left Arrow (←)` / `Backspace` / คลิกปุ่ม `◀` เพื่อย้อนกลับบทสนทนาก่อนหน้า (รวมถึงกด `Shift` ค้าง หรือคลิกปุ่ม `FF` มุมขวาบนเพื่อเร่งความเร็ว `2.5x`)
 * **การข้ามฉาก:** สามารถกดปุ่ม **"ข้าม"** บนหน้าจอ หรือกดปุ่ม `Esc` บนคีย์บอร์ดได้ตลอดเวลา เพื่อตัดเข้าสู่เกมเพลย์ทันที (สร้างโดย `skip_cutscene_button.gd` ที่มุมขวาบน พร้อมปุ่มเร่งความเร็ว)
 * **เมื่อจบคัตซีน:** หน้าจอจะค่อยๆ เฟดมืดลง พร้อมปรับระดับเสียง BGM ลงอย่างนุ่มนวล แล้วเปลี่ยน Scene ไปยังด่านเกมเพลย์ที่ระบุใน `@export var next_scene_path`
 
@@ -33,7 +33,7 @@ flowchart LR
 | **เอฟเฟกต์ประกอบ** | `res://assets/cutscene/exclamation_mark.png` | ไอคอนตกใจ (!) สีแดงเด้งขึ้นเหนือศีรษะเวล |
 | **กรอบข้อความ** | `res://assets/cutscene/frame dialog text/text dialog.png` | กรอบข้อความดีไซน์พิเศษ ขอบมนโทนม่วงเข้มตัดลาเวนเดอร์ (9-slice StyleBoxTexture) |
 | **ลูกศรไปต่อ** | `res://assets/cutscene/frame dialog text/arrow.png` | ไอคอนลูกศรพิกเซลชี้ลงโทนลาเวนเดอร์ ลอยเด้งดึ๋งบอกให้คลิกไปต่อ |
-| **ฟอนต์ข้อความ** | `res://assets/fonts/TA-8-bit.ttf` | ฟอนต์พิกเซล 8-bit มาตรฐานดั้งเดิมของโปรเจกต์ (ปรับขยายขนาดเป็น 26 px สีขาวจั๊ว สระคมชัดพอดีกล่อง ดูรายละเอียดใน [คู่มือฟอนต์](fonts.md)) |
+| **ฟอนต์ข้อความ** | `res://assets/fonts/ChakraPetch-Bold.ttf`<br>`res://assets/fonts/ChakraPetch-Regular.ttf`<br>`res://assets/fonts/TA-8-bit.ttf` | ชื่อผู้พูด `ChakraPetch-Bold` 26 px และบทพูด `ChakraPetch-Regular` 23 px ตามมาตรฐานใหม่ (ส่วนไอคอน `?` ใช้ `TA-8-bit` 20 px ดูรายละเอียดใน [คู่มือฟอนต์](fonts.md)) |
 
 ---
 
@@ -57,13 +57,14 @@ CentralTowerCutscene (Node2D) [Script: central_tower_cutscene.gd]
 │       └── DropShadow (Sprite2D) [drop_shadow.png, Scale (0.65, 0.45), Position: (0, 38.5)]
 └── MagicStoryUI (CanvasLayer: Layer 10)
     ├── DialogueBox (PanelContainer) [StyleBoxTexture: text dialog.png (Hand-drawn pixel frame 9-slice, Margin 24px, Region: Rect2(43, 191, 2086, 332), Filter: Linear, Modulate: Color(0.78, 0.74, 0.82) ลดความสว่างเส้นม่วงลงไม่ให้แย่งสายตา), Offset: L:-580, R:580, T:-216, B:-36]
-    │   ├── Margin (MarginContainer) [Margin: L:36, T:24, R:48, B:16]
+    │   ├── Margin (MarginContainer) [Margin: L:36, T:24, R:48 (ปรับเป็น R:96 เมื่อสร้างปุ่ม ◀ ▶), B:16]
     │   │   └── VBox (VBoxContainer) [Separation: 12]
-    │   │       ├── SpeakerLabel (Label) [ชื่อผู้พูด ตัวหนา TA-8-bit ขนาด 30 px (FontVariation: variation_embolden = 0.6) สีทองหม่น #F0D273 / สีฟ้าอ่อน #7AC7FF, Outline 3px]
-    │   │       └── DialogueLabel (Label) [ข้อความคำพูด ฟอนต์ TA-8-bit ขนาด 26 px (ขยายเพิ่ม 15% จากเดิม) สีขาวจั๊ว #FFFFFF คมชัด, Outline 2px, Line Spacing 8px]
+    │   │       ├── SpeakerLabel (Label) [ชื่อผู้พูด ChakraPetch-Bold ขนาด 26 px (FontVariation: spacing_top = 6, bottom = 2) สีทองอบอุ่น #EBCB70 / สีฟ้าอ่อน #73BFF2, ไม่มี Outline]
+    │   │       └── DialogueLabel (Label) [ข้อความคำพูด ChakraPetch-Regular ขนาด 23 px (FontVariation: spacing_top = 8, bottom = 4) สีขาวนวล #E0E3EB, Line Spacing 10px, ไม่มี Outline]
     │   └── ArrowOverlay (Control) [Overlay ป้องกันกระทบข้อความ]
-    │       └── ArrowWrapper (Control) [Anchors: Bottom-Right (offset: -48, -34, -22, -16)]
-    │           └── ContinueArrow (TextureRect) [arrow.png ลอยเด้งดึ๋ง แสดงเฉพาะเมื่อพิมพ์ข้อความเสร็จสิ้น]
+    │       ├── ArrowWrapper (Control) [ซ่อนเมื่อเปิดใช้ NavArrowsContainer]
+    │       │   └── ContinueArrow (TextureRect)
+    │       └── NavArrowsContainer (HBoxContainer) [สร้างแบบไดนามิกที่มุมขวาล่าง: ปุ่มลูกศร ◀ ย้อนกลับ / ▶ ไปต่อ จาก arrow.png]
     └── FadeOverlay (ColorRect) [ม่านจอดำสำหรับเฟดเข้า-ออก]
 ```
 
@@ -71,7 +72,7 @@ CentralTowerCutscene (Node2D) [Script: central_tower_cutscene.gd]
 
 ## 3.1 มาตรฐานตำแหน่งการยืน สัดส่วน และการเดินเข้าฉากของตัวละคร (Positioning & Proportion Standard)
 
-เพื่อแก้ปัญหาตัวละครยืนเอียง ไม่สมส่วน หรือถูกกล่องข้อความบดบังเหลือเพียงศีรษะ (Puppet/Drowning Effect) มาตรฐานการจัดวางองค์ประกอบสำหรับฉากสนทนาหน้าจอ 1920×1080 (จุดกึ่งกลาง x = 960) ถูกกำหนดขึ้นดังนี้:
+เพื่อแก้ปัญหาตัวละครยืนเอียง ไม่สมส่วน หรือถูกกล่องข้อความบดบังเหลือเพียงศีรษะ (Puppet/Drowning Effect) การจัดวางองค์ประกอบสำหรับฉากหอคอยกลางนี้ (หน้าจอ 1920×1080, จุดกึ่งกลาง x = 960) ถูกกำหนดขึ้นดังนี้:
 
 1. **การสมมาตรซ้าย-ขวาบนแกน X (Symmetrical Alignment):**
    - ระยะห่างจากกึ่งกลางจอ: กำหนด `d = 260px` จาก `x = 960`
@@ -88,8 +89,8 @@ CentralTowerCutscene (Node2D) [Script: central_tower_cutscene.gd]
    - ปรับกล่องข้อความ `DialogueBox` ให้มีสัดส่วนกะทัดรัดใกล้เคียงฉากหอสมุด: ขนาด `1160 × 180 px`, จัดวางกึ่งกลางแนวนอน (`offset_left = -580`, `offset_right = 580`), ห่างขอบล่าง 36 px (`offset_top = -216`, `offset_bottom = -36`)
    - ใช้ภาพกรอบที่ผู้ใช้วาดเองแท้จริง (`text dialog.png`) ผ่าน `StyleBoxTexture` (Region: `Rect2(43, 191, 2086, 332)`) โดยกำหนด 9-slice Margins แบบสมมาตร `24 px` ทุกด้าน เปิด `texture_filter = Linear` และปรับ `modulate_color = Color(0.78, 0.74, 0.82)` เพื่อลดความสว่างของเส้นม่วงลงเล็กน้อย ไม่ให้เด่นแย่งสายตาจากบทสนทนา
    - การจัดแนว: ชื่อผู้พูดและบทสนทนาชิดซ้ายแนวเดียวกัน ห่างขอบซ้าย 36 px, เว้นชื่อจากขอบบน 24 px, เว้นระหว่างชื่อกับบทพูด 12 px
-   - Typography Hierarchy: ชื่อผู้พูดใช้แบบ**ตัวหนา (Bold)** ขนาด **30 px** (สร้างผ่าน `FontVariation: variation_embolden = 0.6` และขอบดำ 3 px) โดยแยกสีตามบทบาท: ผู้พิทักษ์ใช้สีทองหม่น `#F0D273` (`Color(0.941, 0.824, 0.451, 1.0)`) และเวล/ผู้เล่นใช้สีฟ้าอ่อน `#7AC7FF` (`Color(0.48, 0.78, 1.0, 1.0)`) เด่นชัดกว่าบทพูด, บทพูดใช้ฟอนต์ **TA-8-bit.ttf** ขยายขนาดเป็น **26 px** (เพิ่มขึ้น 15% จากเดิม 22 px เพื่อให้อ่านง่าย สระไม่จม) สีขาวจั๊ว `#FFFFFF` ขอบดำ 2 px เว้นระยะบรรทัด 8 px คงบทสนทนาแบบเดิม 16 บท พร้อมใช้ Non-breaking Space สำหรับคำเฉพาะอย่าง "Git Flow" / "GitHub Flow" เพื่อไม่ให้ถูกตัดแยกคนละบรรทัด
-   - ลูกศรไปต่อ (Continue Arrow): จัดวางที่มุมขวาล่าง (`ArrowOverlay`) ซ่อนระหว่างข้อความกำลังพิมพ์ และจะแสดงขึ้นพร้อมอนิเมชันลอยเบาๆ ทันทีที่ข้อความขึ้นครบ 100%
+   - Typography Hierarchy: ชื่อผู้พูดใช้ฟอนต์ **ChakraPetch-Bold.ttf** ขนาด **26 px** (ผ่าน `FontVariation`: `spacing_top = 6`, `spacing_bottom = 2`, ไม่มี Outline) โดยแยกสีตามบทบาท: ผู้พิทักษ์ใช้สีทองอบอุ่น `#EBCB70` (`Color(0.92, 0.80, 0.44, 1.0)`) และเวล/ผู้เล่นใช้สีฟ้าอ่อนสดใส `#73BFF2` (`Color(0.45, 0.75, 0.95, 1.0)`), ส่วนบทพูดใช้ฟอนต์ **ChakraPetch-Regular.ttf** ขนาด **23 px** (`spacing_top = 8`, `spacing_bottom = 4`) สีขาวนวล `#E0E3EB` (`Color(0.88, 0.89, 0.92, 1.0)`) ไม่มี Outline เว้นระยะบรรทัด 10 px (ดู [คู่มือฟอนต์](fonts.md)) คงบทสนทนาแบบเดิม 16 บท พร้อมใช้ Non-breaking Space สำหรับคำเฉพาะอย่าง "Git Flow" / "GitHub Flow" เพื่อไม่ให้ถูกตัดแยกคนละบรรทัด
+   - ปุ่มลูกศรควบคุมบทสนทนา (`◀ ▶`): สร้างแบบไดนามิกที่มุมขวาล่าง (`ArrowOverlay/NavArrowsContainer`) แทนลูกศรเดี่ยวเดิม พร้อมเพิ่ม `margin_right` ของกล่องเป็น `96 px` โดยปุ่ม `▶` ใช้เร่งข้อความ/ไปต่อ และปุ่ม `◀` ใช้ย้อนกลับบทสนทนาก่อนหน้าพร้อมแสดงข้อความเต็มทันที (ปิดใช้งานและลดความโปร่งใสเป็น 25% เมื่ออยู่ที่ประโยคแรก)
    - ผลลัพธ์: ระดับขอบบนของกล่องข้อความอยู่ที่ `y = 864` วางทับเฉพาะส่วนรองเท้า (ประมาณ 40 px) โดยมองเห็นลำตัว เสื้อผ้า และใบหน้าของตัวละครครบถ้วนชัดเจนในระดับสายตา
 
 4. **การเดินเข้าฉากจากนอกจอ (Walk-in Entrance):**
@@ -103,8 +104,8 @@ CentralTowerCutscene (Node2D) [Script: central_tower_cutscene.gd]
    - ระหว่างการเปลี่ยนสถานะ (พูด vs ฟัง) ตัวละครจะส่งต่อ `frame` และ `frame_progress` เข้าหากัน ทำให้จังหวะการยกอกหายใจและการกระพริบตาเป็นไปอย่างพร้อมเพรียง ไม่คลาดเคลื่อนหลุดเฟส
 
 > [!NOTE]
-> **การแยกส่วนมาตรฐาน (Documentation Scope):**
-> มาตรฐานตำแหน่งการยืนและการจัดสัดส่วนนี้ได้รับการบันทึกไว้ในเอกสารเพื่อเป็นเกณฑ์กลางสำหรับการสร้างฉากสนทนาทั่วไป โดย**ไม่มีการนำไปดัดแปลงหรือกระทบกับฉาก `intro_cutscene` หรือ `ending_cutscene` เดิมของโปรเจกต์** ตามข้อกำหนดที่ตกลงไว้
+> **ขอบเขตค่าเฉพาะของฉากหอคอยกลาง (Scene-Specific Scope):**
+> ค่าพิกัดยืน `y = 750`, ขอบบนกล่องข้อความ `y = 864` (ทับปลายเท้า ~40 px), และการใช้รูป `exclamation_mark.png` บน `Sprite2D` รวมถึงคีย์ตัวอย่าง `"exclamation"` / `"vel_anim"` ในหัวข้อที่ 5 เป็น **ค่าเฉพาะของฉาก `central_tower_cutscene.tscn`** เท่านั้น โดย**ไม่มีผลกับมาตรฐานกลางของฉากด่านทั่วไป (`inside_tower_cutscene` / `level_dialogue_view` ใน [คู่มือแอนิเมชัน](character-animation-system.md)) รวมถึงฉาก `intro_cutscene` และ `ending_cutscene`**
 
 ---
 
@@ -151,7 +152,7 @@ get_tree().change_scene_to_file("res://features/cutscene/central_tower_cutscene.
 
 ### การ Transition เข้าสู่ Sandbox แบบ Background Threaded Loading:
 * **ปัญหา:** การสลับฉากไปยัง `sandbox_game_view.tscn` จะมีช่วงเวลาที่ Godot โหลดเอนจิน Git จำลองและทรัพยากรขนาดใหญ่ ซึ่งทำให้เอนจินชะงักเกิดอาการค้าง
-* **โซลูชัน:** ใน `_ready()` ระบบจะเรียก `ResourceLoader.load_threaded_request(next_scene_path)` เพื่อแอบโหลดซีนไว้ใน Background Thread ล่วงหน้าระหว่างที่ผู้เล่นอ่านบทสนทนา เมื่อถึงเวลาเปลี่ยนฉากหรือกดข้าม จะใช้ `get_tree().change_scene_to_packed()` เพื่อสลับฉากได้ทันทีใน 0 ms ไร้อาการจอดำค้าง 100%
+* **โซลูชัน:** ใน `_ready()` ระบบจะเรียก `SceneLoader.request_preload(next_scene_path)` เพื่อแอบโหลดซีนไว้ใน Background Thread ล่วงหน้าระหว่างที่ผู้เล่นอ่านบทสนทนา เมื่อถึงเวลาเปลี่ยนฉากหรือกดข้าม จะเรียก `SceneLoader.change_scene(get_tree(), next_scene_path)` (ซึ่งดึงซีนที่โหลดล่วงหน้าไว้มาใช้ผ่าน `change_scene_to_packed()`) เพื่อสลับฉากได้ทันทีใน 0 ms ไร้อาการจอดำค้าง 100%
 
 ### วิธีเพิ่มหรือแก้ไขบทสนทนา:
 เปิดไฟล์ [`game/features/cutscene/central_tower_cutscene.gd`](../game/features/cutscene/central_tower_cutscene.gd) และแก้ไขในอาร์เรย์ `DIALOGUES`:

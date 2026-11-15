@@ -50,7 +50,7 @@
 | :--- | :--- | :--- |
 | **ตำแหน่ง (Position)** | มุมขวาบน (`PRESET_TOP_RIGHT`) | ห่างจากขอบขวา 20px, ขอบบน 20px (`y: 20px - 60px`) |
 | **ขนาดปุ่ม (Size)** | ปุ่มเร่ง: กว้าง 100px / ปุ่มข้าม: กว้าง 90px (สูง 40px) | ขนาดสมดุล จัดกึ่งกลางพอดีทั้งโหมด 1.0x และ 2.5x |
-| **ฟอนต์ (Font)** | `res://assets/fonts/TA-8-bit.ttf` | ฟอนต์พิกเซล 8-bit คมชัด รองรับภาษาไทยสมบูรณ์ |
+| **ฟอนต์ (Font)** | `res://assets/fonts/ChakraPetch-Bold.ttf` (สำรอง: `TA-8-bit.ttf`) | ฟอนต์มาตรฐานเดียวกับระบบบทสนทนา อ่านง่าย คมชัด (ดู [คู่มือฟอนต์](fonts.md)) |
 | **ขนาดฟอนต์ (Font Size)** | `20px` | คมชัด อ่านง่ายบนหน้าจอความละเอียดสูง |
 | **ข้อความบนปุ่ม (Text)** | `ข้าม` | ปรับข้อความเรียบง่าย สไตล์มินิมอลเรโทรตามคำขอ |
 | **สีกรอบปุ่ม (Border Color)** | สีขาวนวล `Color(0.98, 0.976, 0.965, 0.85)` (`#FAF9F6`) | ขอบเส้นเด่นชัดสไตล์เกมเรโทร ตัดกับฉากหลังมืด |
@@ -70,7 +70,7 @@
 3. **`outside_cutscene`:**
    * **Stage 1 (เมฆพายุ):** กดข้าม -> ข้ามไปฉากบ้านเมืองโกลาหล (Stage 2)
    * **Stage 2 (บ้านเมืองโกลาหล):** กดข้าม -> ข้ามไปฉากหอคอยทมิฬและไตเติลเกม (Stage 3)
-   * **Stage 3 (หอคอยทมิฬ/ไตเติลเกม Git Di Waa):** **ไม่มีปุ่มเร่งและปุ่มข้าม** ผู้เล่นคลิกหน้าจอ หรือกด Space/Enter/Esc เพื่อเข้าสู่เกมเพลย์ด่านแรก (`_trigger_start_level()`)
+   * **Stage 3 (หอคอยทมิฬ/ไตเติลเกม Git Di Waa):** **ไม่มีปุ่มเร่งและปุ่มข้าม** ผู้เล่นคลิกหน้าจอ หรือกด Space/Enter เพื่อเข้าสู่เกมเพลย์ด่านแรก (`_trigger_start_level()`) *(ไม่ใช้ Esc เพราะสงวนไว้สำหรับการข้ามฉากเท่านั้น)*
 
 ### 2.4 การป้องกันการดักจับคลิกชนปุ่มควบคุม (Click Passthrough Fix)
 * **ปัญหาเดิม:** ในฉากที่มีการกดหน้าจอเพื่อไปต่อ (`_input(event)`) มีคำสั่ง `get_viewport().set_input_as_handled()` ดักจับเมาส์คลิกซ้ายก่อนที่ระบบ GUI ของ Godot จะส่ง event ไปถึงปุ่ม ส่งผลให้เมื่อผู้เล่นคลิกปุ่ม "ข้าม" หรือปุ่ม "เร่งความเร็ว" ระบบเข้าใจผิดคิดว่าผู้เล่นคลิกเพื่ออ่านต่อ และปุ่มกดไม่ติด
@@ -84,7 +84,8 @@
 | :--- | :--- | :--- |
 | **เร่งความเร็ว (Fast-Forward 2.5x)** | • **ปุ่ม Shift** (ซ้าย/ขวา กดค้าง)<br>• **คลิกปุ่ม FF บนหน้าจอ** (`⏵ 1.0x` / `⏵ ⏵ 2.5x`) | ปรับ `Engine.time_scale = 2.5` ทำให้ภาพเคลื่อนไหวและบทสนทนาวิ่งเร็วขึ้น |
 | **ข้ามคัตซีน (Skip Stage)** | • **ปุ่ม Esc (Escape)**<br>• **คลิกปุ่ม `ข้าม`** บนหน้าจอ | ข้ามลำดับเหตุการณ์ปัจจุบันไปยังฉากย่อยถัดไปทันที (Stage-by-Stage Skip) |
-| **ไปต่อ / เร่งข้อความขึ้นครบ (Advance & Finish Text)** | • **ปุ่ม Spacebar**<br>• **ปุ่ม Enter**<br>• **คลิกซ้ายที่ไหนก็ได้บนหน้าจอ** (นอกปุ่ม UI) | 1. หากข้อความ Typewriter กำลังพิมพ์: เร่งแสดงข้อความเต็มประโยคทันที<br>2. หากข้อความขึ้นครบแล้ว: เลื่อนไปประโยคถัดไปหรือเริ่มฉากใหม่ |
+| **ไปต่อ / เร่งข้อความขึ้นครบ (Advance & Finish Text)** | • **ปุ่ม Spacebar** / **Enter** / **Numpad Enter** / **Right Arrow (`→`)**<br>• **คลิกซ้ายที่ไหนก็ได้บนหน้าจอ** (นอกปุ่ม UI)<br>• **คลิกปุ่ม `▶`** มุมขวาล่างกล่องข้อความ *(ในฉากบทสนทนา)* | 1. หากข้อความ Typewriter กำลังพิมพ์: เร่งแสดงข้อความเต็มประโยคทันที<br>2. หากข้อความขึ้นครบแล้ว: เลื่อนไปประโยคถัดไปหรือเริ่มฉากใหม่ |
+| **ย้อนกลับบทสนทนา (Previous Dialogue)** | • **ปุ่ม Left Arrow (`←`)** / **Backspace**<br>• **คลิกปุ่ม `◀`** มุมขวาล่างกล่องข้อความ *(ในฉากบทสนทนา)* | ย้อนกลับไปยังข้อความก่อนหน้า และแสดงข้อความเต็มประโยคทันทีโดยไม่เล่น Typewriter ซ้ำ |
 
 ---
 
@@ -100,16 +101,20 @@ flowchart TD
     Intro -->|"เล่นจบ / กดข้าม"| Outside["4. outside_cutscene.tscn (วิกฤตนอกหอคอย)"]
     Outside -->|"เล่นจบ / กดข้าม"| InsideTower["5. inside_tower_cutscene.tscn (พบมิวราในหอคอย)\n[บันทึก: ดูคัตซีนแล้ว = true]"]
     
-    CheckProgress -->|"เคยดูแล้ว (true)"| LevelSelect["🗺️ level_select_view.tscn (หน้ารวมด่าน)"]
-    LevelSelect -->|"เลือกด่าน / เล่นอีกครั้ง"| LevelDialogue["level_dialogue_view.tscn (บทสนทนาประจำด่าน ไม่เล่นคัตซีนเดินเข้าซ้ำ)"]
-    LevelDialogue -->|"จบบทสนทนา"| ClearModal
+    CheckProgress -->|"เคยดูแล้ว (true)"| LevelSelect["🗺️ level_select_view.tscn (แผนที่หอคอย 40 ด่าน / Act 1-3)"]
+    LevelSelect -->|"ด่านที่มีบทสนทนา (เช่น ด่าน 1)"| LevelDialogue["level_dialogue_view.tscn (บทสนทนาประจำด่าน ไม่เล่นคัตซีนเดินเข้าซ้ำ)"]
+    LevelSelect -->|"ด่านที่ 16"| CentralTower["7. central_tower_cutscene.tscn (พบผู้พิทักษ์หอคอยกลาง)"]
+    LevelSelect -->|"ด่านอื่นที่ยังไม่มีบทสนทนา"| Sandbox
+    LevelDialogue -->|"จบบทสนทนา (Outro)"| LevelClearScene
+    LevelDialogue -.->|"เข้าเล่นภารกิจ (Step 1/2)"| Sandbox
     
-    InsideTower -->|"จบบทสนทนา"| ClearModal["⭐ level_clear_modal.tscn (สรุปดาวหลังจบด่าน)"]
+    InsideTower -->|"จบบทสนทนา (Outro)"| LevelClearScene["🚶 level_clear_scene.tscn (คัตซีนเดินขึ้นบันไดผ่านด่าน)"]
+    LevelClearScene -->|"วินาทีที่ 3.0 ของ walk-stair"| ClearModal["⭐ level_clear_modal.tscn (สรุปดาวหลังจบด่าน)"]
     ClearModal -->|"กลับไปหน้าเลือกด่าน / ด่านต่อไป"| LevelSelect
     
-    InsideTower -.->|"โหมดฝึกฝน Sandbox"| Sandbox["6. sandbox_game_view.tscn (ด่านฝึกสอน Git 1-15)"]
-    Sandbox -.->|"ด่านที่ 16 / คำสั่ง cutscene central"| CentralTower["7. central_tower_cutscene.tscn (พบผู้พิทักษ์หอคอยกลาง)"]
-    CentralTower -.->|"เล่นด่านต่อ"| Sandbox
+    InsideTower -.->|"เข้าเล่นภารกิจ Step 1/2"| Sandbox["6. sandbox_game_view.tscn (ด่านฝึกสอน Git 1-40)"]
+    Sandbox -.->|"คำสั่ง cutscene central / level 16"| CentralTower
+    CentralTower -.->|"จบคัตซีน / กดข้าม"| Sandbox
     
     Sandbox -.->|"เคลียร์ครบทุกด่าน / คำสั่ง cutscene ending"| Ending["8. ending_cutscene.tscn (ฉากจบ & เครดิตทีมพัฒนา)"]
     Ending -->|"คลิกกลับสู่เมนูหลัก"| Start
@@ -139,7 +144,7 @@ flowchart TD
     
     N2 -->|"กดข้าม / เล่นจบ"| I1
     I2 -->|"กดข้าม / คลิกไปต่อ"| O1
-    O3 -->|"คลิกหน้าจอ / Space / Enter / Esc"| Inside["5. inside_tower_cutscene.tscn"]
+    O3 -->|"คลิกหน้าจอ / Space / Enter"| Inside["5. inside_tower_cutscene.tscn"]
 ```
 
 ### 4.2 สถานะการใช้งานในปัจจุบัน (Current Development Mode)

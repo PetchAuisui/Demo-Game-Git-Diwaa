@@ -6,6 +6,8 @@ extends Node2D
 ## 2. บ้านเมืองไม่ปกติ (village-normal เริ่มเล่นตั้งแต่เฟรมที่ 20 ถึงจบ 58)
 ## 3. หอคอยทมิฬ (เมฆลอยไป-กลับ Ping-pong) + เวลยืนมอง + ไตเติลเกม Git Di Waa
 
+const CutsceneMusic = preload("res://common/cutscene_music.gd")
+
 @onready var storm_sky: AnimatedSprite2D = $StormSky
 @onready var village: AnimatedSprite2D = $Village
 @onready var tower: AnimatedSprite2D = $Tower
@@ -29,22 +31,42 @@ var is_fast_forwarding: bool = false
 var can_fast_forward: bool = true
 var skip_ctrl = null
 var current_stage: int = 1 # 1 = storm sky, 2 = chaos village, 3 = tower & title
+var tw_stage1_fade: Tween = null
+var tw_stage2_fade: Tween = null
+var tw_stage3_wait: Tween = null
+var tw_title: Tween = null
 
 signal cutscene_finished
 
 func _ready() -> void:
 	Engine.time_scale = 1.0
+	CutsceneMusic.play()
 	skip_ctrl = preload("res://features/cutscene/skip_cutscene_button.gd").new()
 	skip_ctrl.next_scene_path = _get_resolved_next_scene()
 	skip_ctrl.custom_skip_action = _on_skip_step
 	add_child(skip_ctrl)
+	
 	_init_scene()
 	play_chaos_sequence()
 
 func _exit_tree() -> void:
 	Engine.time_scale = 1.0
+	SceneLoader.flush_preloads()
+	if tw_stage1_fade and tw_stage1_fade.is_valid():
+		tw_stage1_fade.kill()
+		tw_stage1_fade = null
+	if tw_stage2_fade and tw_stage2_fade.is_valid():
+		tw_stage2_fade.kill()
+		tw_stage2_fade = null
+	if tw_stage3_wait and tw_stage3_wait.is_valid():
+		tw_stage3_wait.kill()
+		tw_stage3_wait = null
+	if tw_title and tw_title.is_valid():
+		tw_title.kill()
+		tw_title = null
 
 func _process(_delta: float) -> void:
+	
 	if not can_fast_forward or is_starting:
 		if is_fast_forwarding:
 			is_fast_forwarding = false
@@ -72,9 +94,18 @@ func _input(event: InputEvent) -> void:
 	if not can_start or is_starting:
 		return
 	
-	if event.is_action_pressed("ui_accept") or \
-	   (event is InputEventKey and event.pressed and not event.echo and (event.keycode == KEY_SPACE or event.keycode == KEY_ENTER or event.keycode == KEY_ESCAPE)) or \
-	   (event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT):
+	var wants_start: bool = false
+	if event.is_action_pressed("ui_accept"):
+		wants_start = true
+	elif event is InputEventKey and event.pressed and not event.echo and (event.keycode == KEY_SPACE or event.keycode == KEY_ENTER or event.keycode == KEY_KP_ENTER or event.keycode == KEY_RIGHT):
+		wants_start = true
+	elif event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+		# ป้องกันการคลิกโดนปุ่ม UI ถูกกลืนเป็นการกดเริ่มด่าน
+		var hovered := get_viewport().gui_get_hovered_control()
+		if not (hovered is BaseButton):
+			wants_start = true
+	
+	if wants_start:
 		get_viewport().set_input_as_handled()
 		_trigger_start_level()
 
@@ -86,6 +117,10 @@ func _init_scene() -> void:
 	current_stage = 1
 	Engine.time_scale = 1.0
 	is_tower_forward = true
+	
+	if tw_title and tw_title.is_valid():
+		tw_title.kill()
+		tw_title = null
 	
 	if skip_ctrl:
 		skip_ctrl.visible = true
@@ -142,6 +177,9 @@ func _skip_to_stage_2() -> void:
 	if current_stage >= 2 or is_starting:
 		return
 	current_stage = 2
+	if tw_stage1_fade and tw_stage1_fade.is_valid():
+		tw_stage1_fade.kill()
+		tw_stage1_fade = null
 	if storm_sky.animation_finished.is_connected(_on_storm_sky_finished):
 		storm_sky.animation_finished.disconnect(_on_storm_sky_finished)
 	storm_sky.stop()
@@ -159,6 +197,18 @@ func _skip_to_stage_3() -> void:
 	if is_starting:
 		return
 	current_stage = 3
+	if tw_stage1_fade and tw_stage1_fade.is_valid():
+		tw_stage1_fade.kill()
+		tw_stage1_fade = null
+	if tw_stage2_fade and tw_stage2_fade.is_valid():
+		tw_stage2_fade.kill()
+		tw_stage2_fade = null
+	if tw_stage3_wait and tw_stage3_wait.is_valid():
+		tw_stage3_wait.kill()
+		tw_stage3_wait = null
+	if storm_sky.animation_finished.is_connected(_on_storm_sky_finished):
+		storm_sky.animation_finished.disconnect(_on_storm_sky_finished)
+	storm_sky.stop()
 	if village.animation_finished.is_connected(_on_village_chaos_finished):
 		village.animation_finished.disconnect(_on_village_chaos_finished)
 	village.stop()
@@ -184,15 +234,20 @@ func _skip_to_stage_3() -> void:
 func play_chaos_sequence() -> void:
 	current_stage = 1
 	# 1. ค่อย ๆ สว่างขึ้นจากจอดำสู่ท้องฟ้าพายุ 0.5 วินาที
-	var tw = create_tween()
-	tw.tween_property(fade_overlay, "color:a", 0.0, 0.5)
-	tw.tween_callback(func():
+	if tw_stage1_fade and tw_stage1_fade.is_valid():
+		tw_stage1_fade.kill()
+	tw_stage1_fade = create_tween()
+	tw_stage1_fade.tween_property(fade_overlay, "color:a", 0.0, 0.5)
+	tw_stage1_fade.tween_callback(func():
+		if current_stage != 1 or is_starting:
+			return
 		storm_sky.play("storm_sky", 1.0)
-		storm_sky.animation_finished.connect(_on_storm_sky_finished, CONNECT_ONE_SHOT)
+		if not storm_sky.animation_finished.is_connected(_on_storm_sky_finished):
+			storm_sky.animation_finished.connect(_on_storm_sky_finished, CONNECT_ONE_SHOT)
 	)
 
 func _on_storm_sky_finished() -> void:
-	if current_stage >= 2 and village.visible:
+	if current_stage >= 2 or is_starting:
 		return
 	current_stage = 2
 	# 2. สลับภาพสู่บ้านเมืองโกลาหล (เล่นแอนิเมชันตั้งแต่เฟรมที่ 20 ถึงจบ 58)
@@ -200,9 +255,11 @@ func _on_storm_sky_finished() -> void:
 	village.frame = 0
 	village.modulate = Color(1, 1, 1, 0)
 	
-	var tw_vil_in = create_tween()
-	tw_vil_in.tween_property(village, "modulate:a", 1.0, 0.35)
-	tw_vil_in.chain().tween_callback(func():
+	if tw_stage2_fade and tw_stage2_fade.is_valid():
+		tw_stage2_fade.kill()
+	tw_stage2_fade = create_tween()
+	tw_stage2_fade.tween_property(village, "modulate:a", 1.0, 0.35)
+	tw_stage2_fade.chain().tween_callback(func():
 		storm_sky.visible = false
 	)
 	
@@ -211,7 +268,7 @@ func _on_storm_sky_finished() -> void:
 		village.animation_finished.connect(_on_village_chaos_finished, CONNECT_ONE_SHOT)
 
 func _on_village_chaos_finished() -> void:
-	if current_stage >= 3 and tower.visible:
+	if current_stage >= 3 or is_starting:
 		return
 	current_stage = 3
 	# 3. สลับภาพสู่หอคอยทมิฬ
@@ -243,9 +300,11 @@ func _on_village_chaos_finished() -> void:
 				skip_ctrl.visible = false
 		)
 	
-	var tw_wait = create_tween()
-	tw_wait.tween_interval(1.5)
-	tw_wait.tween_callback(func():
+	if tw_stage3_wait and tw_stage3_wait.is_valid():
+		tw_stage3_wait.kill()
+	tw_stage3_wait = create_tween()
+	tw_stage3_wait.tween_interval(1.5)
+	tw_stage3_wait.tween_callback(func():
 		if current_stage == 3 and not can_start and not is_starting:
 			_reveal_game_title()
 	)
@@ -280,7 +339,9 @@ func _reveal_game_title() -> void:
 			skip_ctrl._toggle_fast_forward()
 		skip_ctrl.visible = false
 	
-	var tw_title = create_tween()
+	if tw_title and tw_title.is_valid():
+		tw_title.kill()
+	tw_title = create_tween()
 	tw_title.tween_property(title_container, "modulate:a", 1.0, 0.8).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 	
 	var tw_title_aura = create_tween().set_loops()
@@ -303,14 +364,16 @@ func _trigger_start_level() -> void:
 	Engine.time_scale = 1.0
 	
 	var tw_out = create_tween()
-	tw_out.tween_property(fade_overlay, "color", Color(0, 0, 0, 1), 0.5)
+	tw_out.tween_property(fade_overlay, "color", Color(0, 0, 0, 1), 0.6)
 	tw_out.tween_callback(func():
+		GameProgressManager.set_intro_cutscene_seen(true)
+		CutsceneMusic.stop_immediate()
 		Engine.time_scale = 1.0
 		emit_signal("cutscene_finished")
 		print("[CutsceneChaos] เข้าสู่ด่านแรกเรียบร้อย!")
 		var target_scene := _get_resolved_next_scene()
 		if target_scene != "" and ResourceLoader.exists(target_scene):
-			get_tree().change_scene_to_file(target_scene)
+			SceneLoader.change_scene(get_tree(), target_scene)
 		else:
 			push_warning("[OutsideCutscene] target scene not found: '%s'" % target_scene)
 			var tw_recover = create_tween()

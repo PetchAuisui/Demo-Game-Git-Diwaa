@@ -53,6 +53,10 @@
 [ext_resource type="Texture2D" uid="uid://d2uwr2jusv421" path="res://assets/cutscene/characters/guardian/guardian-breathe-Sheet.png" id="49_guardian"]
 [ext_resource type="Texture2D" uid="uid://bg5ggrsq2t05d" path="res://assets/cutscene/frame dialog text/text dialog.png" id="50_dialog_frame"]
 [ext_resource type="Texture2D" uid="uid://dokdfulrf0b81" path="res://assets/cutscene/frame dialog text/arrow.png" id="51_dialog_arrow"]
+[ext_resource type="Texture2D" uid="uid://bvtq4aeontxra" path="res://assets/cutscene/props/khampri/minikhampri17.png" id="52_m17"]
+[ext_resource type="Texture2D" uid="uid://bqkhouckfvbcp" path="res://assets/cutscene/props/khampri/minikhampri18.png" id="53_m18"]
+[ext_resource type="Texture2D" uid="uid://di3uyrprm4rma" path="res://assets/cutscene/props/khampri/minikhampri19.png" id="54_m19"]
+[ext_resource type="Texture2D" uid="uid://du7l6oy362lqv" path="res://assets/cutscene/props/khampri/minikhampri20.png" id="55_m20"]
 
 [sub_resource type="Gradient" id="Gradient_ring"]
 offsets = PackedFloat32Array(0.55, 0.72, 0.88, 1)
@@ -598,72 +602,127 @@ scale = Vector2(2.2, 2.2)
 texture = ExtResource("21_khampri")
 
 [node name="ShardsContainer" type="Node2D" parent="Stage1_BookRestoration" unique_id=714128173]
-visible = false
 position = Vector2(960, 540)
 
 [node name="Shard1" type="Sprite2D" parent="Stage1_BookRestoration/ShardsContainer" unique_id=468601452]
 scale = Vector2(1.4, 1.4)
 texture = ExtResource("23_m1")
+region_enabled = true
+region_rect = Rect2(6, 7, 38, 23)
 
 [node name="Shard2" type="Sprite2D" parent="Stage1_BookRestoration/ShardsContainer" unique_id=149642461]
 scale = Vector2(1.4, 1.4)
 texture = ExtResource("24_m2")
+region_enabled = true
+region_rect = Rect2(52, 6, 36, 30)
 
 [node name="Shard3" type="Sprite2D" parent="Stage1_BookRestoration/ShardsContainer" unique_id=499178280]
 scale = Vector2(1.4, 1.4)
 texture = ExtResource("25_m3")
+region_enabled = true
+region_rect = Rect2(99, 5, 33, 34)
 
 [node name="Shard4" type="Sprite2D" parent="Stage1_BookRestoration/ShardsContainer" unique_id=267025857]
 scale = Vector2(1.4, 1.4)
 texture = ExtResource("26_m4")
+region_enabled = true
+region_rect = Rect2(151, 6, 25, 34)
 
 [node name="Shard5" type="Sprite2D" parent="Stage1_BookRestoration/ShardsContainer" unique_id=1396513331]
 scale = Vector2(1.4, 1.4)
 texture = ExtResource("27_m5")
+region_enabled = true
+region_rect = Rect2(192, 6, 27, 35)
 
 [node name="Shard6" type="Sprite2D" parent="Stage1_BookRestoration/ShardsContainer" unique_id=662413120]
 scale = Vector2(1.4, 1.4)
 texture = ExtResource("28_m6")
+region_enabled = true
+region_rect = Rect2(4, 43, 33, 29)
 
 [node name="Shard7" type="Sprite2D" parent="Stage1_BookRestoration/ShardsContainer" unique_id=486169204]
 scale = Vector2(1.4, 1.4)
 texture = ExtResource("29_m7")
+region_enabled = true
+region_rect = Rect2(51, 47, 29, 33)
 
 [node name="Shard8" type="Sprite2D" parent="Stage1_BookRestoration/ShardsContainer" unique_id=297680122]
 scale = Vector2(1.4, 1.4)
 texture = ExtResource("30_m8")
+region_enabled = true
+region_rect = Rect2(102, 50, 24, 29)
 
 [node name="Shard9" type="Sprite2D" parent="Stage1_BookRestoration/ShardsContainer" unique_id=1471429257]
 scale = Vector2(1.4, 1.4)
 texture = ExtResource("31_m9")
+region_enabled = true
+region_rect = Rect2(145, 51, 26, 26)
 
 [node name="Shard10" type="Sprite2D" parent="Stage1_BookRestoration/ShardsContainer" unique_id=1471476513]
 scale = Vector2(1.4, 1.4)
 texture = ExtResource("32_m10")
+region_enabled = true
+region_rect = Rect2(191, 49, 22, 31)
 
 [node name="Shard11" type="Sprite2D" parent="Stage1_BookRestoration/ShardsContainer" unique_id=1879407160]
 scale = Vector2(1.4, 1.4)
 texture = ExtResource("33_m11")
+region_enabled = true
+region_rect = Rect2(5, 97, 25, 30)
 
 [node name="Shard12" type="Sprite2D" parent="Stage1_BookRestoration/ShardsContainer" unique_id=2000880641]
 scale = Vector2(1.4, 1.4)
 texture = ExtResource("34_m12")
+region_enabled = true
+region_rect = Rect2(46, 101, 33, 25)
 
 [node name="Shard13" type="Sprite2D" parent="Stage1_BookRestoration/ShardsContainer" unique_id=1308754401]
 scale = Vector2(1.4, 1.4)
 texture = ExtResource("35_m13")
+region_enabled = true
+region_rect = Rect2(105, 97, 22, 26)
 
 [node name="Shard14" type="Sprite2D" parent="Stage1_BookRestoration/ShardsContainer" unique_id=615020325]
 scale = Vector2(1.4, 1.4)
 texture = ExtResource("36_m14")
+region_enabled = true
+region_rect = Rect2(148, 92, 26, 32)
 
 [node name="Shard15" type="Sprite2D" parent="Stage1_BookRestoration/ShardsContainer" unique_id=442435916]
 scale = Vector2(1.4, 1.4)
 texture = ExtResource("37_m15")
+region_enabled = true
+region_rect = Rect2(194, 99, 25, 28)
 
 [node name="Shard16" type="Sprite2D" parent="Stage1_BookRestoration/ShardsContainer" unique_id=456207076]
 scale = Vector2(1.4, 1.4)
 texture = ExtResource("38_m16")
+region_enabled = true
+region_rect = Rect2(2, 149, 41, 33)
+
+[node name="Shard17" type="Sprite2D" parent="Stage1_BookRestoration/ShardsContainer" unique_id=456207077]
+scale = Vector2(1.4, 1.4)
+texture = ExtResource("52_m17")
+region_enabled = true
+region_rect = Rect2(53, 157, 39, 20)
+
+[node name="Shard18" type="Sprite2D" parent="Stage1_BookRestoration/ShardsContainer" unique_id=456207078]
+scale = Vector2(1.4, 1.4)
+texture = ExtResource("53_m18")
+region_enabled = true
+region_rect = Rect2(102, 155, 24, 28)
+
+[node name="Shard19" type="Sprite2D" parent="Stage1_BookRestoration/ShardsContainer" unique_id=456207079]
+scale = Vector2(1.4, 1.4)
+texture = ExtResource("54_m19")
+region_enabled = true
+region_rect = Rect2(145, 154, 24, 27)
+
+[node name="Shard20" type="Sprite2D" parent="Stage1_BookRestoration/ShardsContainer" unique_id=456207080]
+scale = Vector2(1.4, 1.4)
+texture = ExtResource("55_m20")
+region_enabled = true
+region_rect = Rect2(192, 147, 25, 39)
 
 [node name="Stage2_SkyRestoration" type="Node2D" parent="." unique_id=685658419]
 
@@ -744,6 +803,13 @@ position = Vector2(-40, 59)
 sprite_frames = SubResource("SpriteFrames_vel")
 animation = &"breathe_blink"
 
+[node name="DropShadow" type="Sprite2D" parent="Stage4_Library/Vel" unique_id=861410792]
+show_behind_parent = true
+texture_filter = 1
+position = Vector2(0, 38.5)
+scale = Vector2(0.65, 0.45)
+texture = ExtResource("42_shadow")
+
 [node name="ExclamationMark" type="Sprite2D" parent="Stage4_Library/Vel" unique_id=861410789]
 visible = false
 position = Vector2(0, -56)
@@ -767,6 +833,13 @@ visible = false
 position = Vector2(40, 59)
 sprite_frames = SubResource("SpriteFrames_master")
 animation = &"minishock"
+
+[node name="DropShadow" type="Sprite2D" parent="Stage4_Library/Master" unique_id=861410793]
+show_behind_parent = true
+texture_filter = 1
+position = Vector2(0, 38.5)
+scale = Vector2(0.65, 0.45)
+texture = ExtResource("42_shadow")
 
 [node name="ComicPanelContainer" type="Control" parent="." unique_id=1676039254]
 visible = false
@@ -820,6 +893,13 @@ position = Vector2(460, 345)
 scale = Vector2(2.8, 2.8)
 sprite_frames = SubResource("SpriteFrames_master")
 animation = &"breathe_blink"
+
+[node name="DropShadow" type="Sprite2D" parent="ComicPanelContainer/ComicPanelBg/FlashbackMaster" unique_id=861410794]
+show_behind_parent = true
+texture_filter = 1
+position = Vector2(0, 38.5)
+scale = Vector2(0.65, 0.45)
+texture = ExtResource("42_shadow")
 
 [node name="ComicVignette" type="ColorRect" parent="ComicPanelContainer/ComicPanelBg" unique_id=425073731]
 layout_mode = 1

@@ -1,7 +1,7 @@
 [gd_scene format=3 uid="uid://cme8yvnqa52pq"]
 
 [ext_resource type="Script" uid="uid://cfshiy0yhpl28" path="res://features/cutscene/inside_tower_cutscene.gd" id="1_script"]
-[ext_resource type="Texture2D" uid="uid://4ah0urajpkpe" path="res://assets/cutscene/backgrounds/inside-tower-Sheet.png" id="2_bg"]
+[ext_resource type="Texture2D" uid="uid://dl5tboxtoj7v1" path="res://assets/cutscene/backgrounds/inside-tower-loop-Sheet.png" id="2_bg"]
 [ext_resource type="Texture2D" uid="uid://don4qpk4c43rc" path="res://assets/cutscene/characters/vel/vel_Hblue_Sredyellow_idle.png" id="3_vel_idle"]
 [ext_resource type="Texture2D" uid="uid://bwv0pcja8aiqd" path="res://assets/cutscene/characters/vel/vel_shockpng.png" id="4_vel_shock"]
 [ext_resource type="Texture2D" uid="uid://cnyp8l2pk7uln" path="res://assets/cutscene/characters/vel/vel_breathe_blink-Sheet.png" id="5_vel_blink"]
@@ -18,6 +18,9 @@
 [ext_resource type="Texture2D" uid="uid://dokdfulrf0b81" path="res://assets/cutscene/frame dialog text/arrow.png" id="16_dialog_arrow"]
 [ext_resource type="Texture2D" uid="uid://dmykeg4jphdb0" path="res://assets/cutscene/props/khampri/drop_shadow.png" id="17_shadow"]
 [ext_resource type="Texture2D" uid="uid://ljih7ud8vr83" path="res://assets/cutscene/characters/vel/vel_back.png" id="18_vel_back"]
+[ext_resource type="Texture2D" uid="uid://di2t2ymk1v7vy" path="res://assets/cutscene/backgrounds/cloud1.png" id="19_cloud"]
+[ext_resource type="Shader" uid="uid://bs6f2587plgrs" path="res://features/sandbox/sandbox_cloud_scroll.gdshader" id="20_cloud_scroll"]
+[ext_resource type="Shader" uid="uid://b31eepd6k30wl" path="res://features/sandbox/sandbox_tower_windows.gdshader" id="21_tower_windows"]
 
 [sub_resource type="Animation" id="Animation_reset"]
 length = 0.001
@@ -45,7 +48,7 @@ tracks/0/path = NodePath("Background:frame")
 tracks/0/interp = 1
 tracks/0/loop_wrap = true
 tracks/0/keys = {
-"times": PackedFloat32Array(0, 0.06666667, 0.1667, 0.25, 0.3333, 0.4167, 0.5, 0.6, 0.6667, 0.75, 0.8666667, 0.9167, 1, 1.083, 1.167, 1.25, 1.333, 1.417, 1.5333333, 1.583, 1.667, 1.75, 1.833, 1.917, 2, 2.083, 2.167, 2.25, 2.333, 2.417, 2.5666666, 2.583, 2.667, 2.75, 2.833, 2.917, 3, 3.1, 3.167, 3.25, 3.333, 3.417, 3.5, 3.583, 3.667, 3.75, 3.833, 3.917, 4, 4.083, 4.167, 4.25, 4.333, 4.417, 4.5, 4.583, 4.667, 4.75, 4.833, 4.917, 5, 5.083, 5.167, 5.25, 5.333, 5.417, 5.5, 5.583, 5.667, 5.75, 5.833, 5.917, 6, 6.083, 6.167, 6.25, 6.333, 6.417, 6.5, 6.583, 6.7, 6.75, 6.833, 6.917, 7, 7.083, 7.167, 7.25, 7.333, 7.417, 7.5, 7.583, 7.667, 7.75, 7.833, 7.917, 8.033334, 8.083, 8.167, 8.25, 8.333, 8.417, 8.5, 8.583, 8.667, 8.75, 8.833, 8.917, 9, 9.083, 9.167, 9.25, 9.333, 9.417, 9.5, 9.583, 9.667, 9.75, 9.833, 9.917, 10, 10.08, 10.17, 10.25, 10.33, 10.42, 10.5, 10.58, 10.67, 10.75, 10.83, 10.92),
+"times": PackedFloat32Array(0, 0.06666667, 0.1667, 0.25, 0.3333, 0.4167, 0.5, 0.6, 0.6667, 0.75, 0.8666667, 0.9167, 1, 1.083, 1.167, 1.25, 1.333, 1.417, 1.5333333, 1.583, 1.667, 1.75, 1.833, 1.917, 2, 2.083, 2.167, 2.25, 2.333, 2.417, 2.5666666, 2.583, 2.667, 2.75, 2.833, 2.917, 3, 3.1, 3.167, 3.25, 3.333, 3.417, 3.5, 3.583, 3.667, 3.75, 3.833, 3.917, 4, 4.083, 4.167, 4.25, 4.333, 4.417, 4.5, 4.583, 4.7, 4.75, 4.833, 4.917, 5, 5.083, 5.167, 5.25, 5.333, 5.417, 5.5, 5.583, 5.667, 5.75, 5.833, 5.917, 6, 6.083, 6.167, 6.25, 6.333, 6.417, 6.5, 6.583, 6.7, 6.75, 6.833, 6.917, 7, 7.083, 7.167, 7.25, 7.333, 7.417, 7.5, 7.583, 7.667, 7.75, 7.833, 7.917, 8.033334, 8.083, 8.167, 8.25, 8.333, 8.417, 8.5, 8.583, 8.667, 8.75, 8.833, 8.917, 9, 9.083, 9.167, 9.25, 9.333, 9.417, 9.5, 9.583, 9.667, 9.75, 9.833, 9.917, 10, 10.08, 10.17, 10.25, 10.33, 10.42, 10.5, 10.58, 10.67, 10.75, 10.83, 10.92),
 "transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1),
 "update": 1,
 "values": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131]
@@ -56,6 +59,28 @@ _data = {
 &"RESET": SubResource("Animation_reset"),
 &"background_loop": SubResource("Animation_bg_loop")
 }
+
+[sub_resource type="Gradient" id="Gradient_sky"]
+offsets = PackedFloat32Array(0, 0.437, 0.4407, 0.4444, 0.4481, 0.5519, 0.5556, 0.563, 1)
+colors = PackedColorArray(0.133333, 0.137255, 0.356863, 1, 0.133333, 0.137255, 0.356863, 1, 0.196078, 0.223529, 0.431373, 1, 0.196078, 0.223529, 0.431373, 1, 0.203922, 0.141176, 0.384314, 1, 0.203922, 0.141176, 0.384314, 1, 0.231373, 0.141176, 0.388235, 1, 0.286275, 0.145098, 0.396078, 1, 0.286275, 0.145098, 0.396078, 1)
+
+[sub_resource type="GradientTexture2D" id="GradientTexture2D_sky"]
+gradient = SubResource("Gradient_sky")
+width = 480
+height = 270
+fill_to = Vector2(0, 1)
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_cloud_scroll"]
+shader = ExtResource("20_cloud_scroll")
+shader_parameter/scroll_speed = 0.025
+shader_parameter/time_offset = 0.0
+shader_parameter/tex_pixel_size = Vector2(480, 270)
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_tower_windows"]
+shader = ExtResource("21_tower_windows")
+shader_parameter/sheet_grid = Vector2(11, 12)
+shader_parameter/min_blue = 0.33
+shader_parameter/min_blue_green_diff = 0.095
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_vel_breathe_0"]
 atlas = ExtResource("6_vel_breathe")
@@ -435,8 +460,22 @@ autoplay = &"background_loop"
 [node name="Camera2D" type="Camera2D" parent="." unique_id=485032344]
 position = Vector2(960, 540)
 
+[node name="SkyBackdrop" type="Sprite2D" parent="." unique_id=1890421101]
+texture_filter = 1
+position = Vector2(960, 540)
+scale = Vector2(4, 4)
+texture = SubResource("GradientTexture2D_sky")
+
+[node name="CloudBackdrop" type="Sprite2D" parent="." unique_id=1890421102]
+texture_filter = 1
+material = SubResource("ShaderMaterial_cloud_scroll")
+position = Vector2(960, 540)
+scale = Vector2(4, 4)
+texture = ExtResource("19_cloud")
+
 [node name="Background" type="Sprite2D" parent="." unique_id=1189459420]
 texture_filter = 1
+material = SubResource("ShaderMaterial_tower_windows")
 position = Vector2(960, 540)
 scale = Vector2(4, 4)
 texture = ExtResource("2_bg")

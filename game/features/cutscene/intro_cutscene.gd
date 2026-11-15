@@ -12,10 +12,12 @@ extends Sprite2D
 ## 8. วงเวท/หลุมดำรอบสองเปิดขึ้นมาแบบวงเล็ก ค่อย ๆ ดูดเศษทั้ง 20 ชิ้นหายไป
 ## 9. หลังการดูดเสร็จสิ้น เศษคัมภีร์หน้าสุดท้าย (paper.png) ร่อนตกลงมาจากด้านบน ส่ายลงมาสัมผัสพื้นไม้ (16.6s -> 17.8s)
 ## 10. เมื่อกระดาษลงสู่พื้นแล้ว หลุมดำปิด เวลได้สติเดินเข้าไปหากระดาษ (18.0s -> 20.0s)
-## 11. เวลหยุดข้างกระดาษ กระดาษลอยขึ้นสู่มือเวล (20.3s)
-## 12. หน้าจอปรากฏกระดาษโบราณกึ่งกลางจอ พร้อมข้อความมนตราโบราณภาษาไทย (ฟอนต์ TA 8 BIT สไตล์ 8-bit เก่าขลัง)
-##     กึ่งกลางแผ่นกระดาษ ลอยพริ้วไหวอย่างสงบ
-## 13. เมื่อผู้เล่นกดไปต่อ (Space / คลิก) กระดาษในมือและตัวหนังสือจะสลายหายไปพร้อมกัน
+## 11. เวลหยุดข้างกระดาษ กระดาษลอยขึ้นสู่มือและหายไปพร้อมแผ่นกระดาษโบราณใบใหญ่ที่ปรากฏขึ้นมาทันที (20.35s)
+## 12. พื้นหลังเฟดมืดสนิท ข้อความมนตราโบราณภาษาไทย (ฟอนต์ ChakraPetch-Bold)
+##     พิมพ์ขึ้นมาแบบ Typewriter Effect เรียงจากซ้ายไปขวา (ความเร็ว ~0.032s/ตัวอักษร) พร้อมลอยพริ้วไหวด้วย wave
+## 13. เมื่อพิมพ์เสร็จสิ้น ค้างไว้ประมาณ 0.85 วินาที แล้วกระดาษจะสลายหายไปและตัดเข้าสู่ฉากถัดไปโดยอัตโนมัติ
+
+const CutsceneMusic = preload("res://common/cutscene_music.gd")
 
 @export_enum("AnimationPlayer", "ScriptTween") var playback_mode: String = "AnimationPlayer"
 
@@ -27,7 +29,9 @@ extends Sprite2D
 
 @onready var anim_player: AnimationPlayer = $AnimationPlayer
 @onready var master: AnimatedSprite2D = $Master
+@onready var master_shadow: Sprite2D = $Master/DropShadow
 @onready var vel: AnimatedSprite2D = $Vel
+@onready var vel_shadow: Sprite2D = $Vel/DropShadow
 @onready var exclamation_mark: Node2D = $Vel/ExclamationMark
 @onready var black_hole: Sprite2D = $BlackHole
 @onready var room_lighting: CanvasModulate = $RoomLighting
@@ -35,6 +39,7 @@ extends Sprite2D
 @onready var khampri: Sprite2D = $Khampri
 @onready var khampri_shadow: Sprite2D = $KhampriShadow
 @onready var paper_shadow: Sprite2D = $PaperShadow
+@onready var shard_shadows_container: Node2D = $ShardShadows
 @onready var shards_container: Node2D = $Shards
 @onready var paper_on_floor: Sprite2D = $PaperOnFloor
 
@@ -47,21 +52,36 @@ extends Sprite2D
 @onready var rune_label: RichTextLabel = $MagicStoryUI/RuneContainer/RuneRichLabel
 @onready var continue_prompt: Label = $MagicStoryUI/RuneContainer/ContinuePrompt
 
+const DROP_SHADOW_TEX: Texture2D = preload("res://assets/cutscene/props/khampri/drop_shadow.png")
+
 var shards: Array[Sprite2D] = []
+var shard_shadows: Array[Sprite2D] = []
+var _shard_target_positions: Array[Vector2] = []
+var _shard_ground_y: Array[float] = []
+var _shard_base_shadow_scale: Array[Vector2] = []
 var can_continue: bool = false
 var is_continuing: bool = false
+var is_typing: bool = false
 var is_fast_forwarding: bool = false
 var can_fast_forward: bool = true
 var tw_ex_bob: Tween = null
 var tw_paper_glow: Tween = null
+var tw_rune_aura: Tween = null
+var tw_typing: Tween = null
+var tw_auto_continue: Tween = null
+var tw_cp_fade: Tween = null
+var tw_cp_pulse: Tween = null
 var skip_ctrl = null
+var _has_saved_snap: bool = false
+var _saved_snap_transforms: bool = true
+var _saved_snap_vertices: bool = true
 
 signal cutscene_finished
 
 # โทนสีฟิลเตอร์คัมภีร์และเศษคัมภีร์ให้กลมกลืนกับห้องสมุด (ไม่เด่น/สว่างจ้าเกินไป)
 const BOOK_TINT: Color = Color(0.70, 0.63, 0.55, 1.0)
 
-# พิกัดปลายทางที่เศษทั้ง 16 ชิ้นจะกระจายตกบนพื้นห้องทางด้านขวา (ศูนย์กลางที่คัมภีร์ตก 64, 96 ไม่ลามไปใกล้ตัวเวลที่ -40)
+# พิกัดปลายทางที่เศษทั้ง 20 ชิ้นจะกระจายตกบนพื้นห้องทางด้านขวา (ศูนย์กลางที่คัมภีร์ตก 64, 96 ไม่ลามไปใกล้ตัวเวลที่ -40)
 const SHARD_LANDING_POSITIONS: Array[Vector2] = [
 	Vector2(40.0, 92.0),   # Shard 1 (ปานกลาง - ซ้ายบน)
 	Vector2(54.0, 95.0),   # Shard 2 (ชิ้นใหญ่ หนัก - ตกใกล้ซ้าย)
@@ -79,20 +99,39 @@ const SHARD_LANDING_POSITIONS: Array[Vector2] = [
 	Vector2(88.0, 98.0),   # Shard 14 (ปานกลาง - ขวาล่าง)
 	Vector2(26.0, 102.0),  # Shard 15 (ชิ้นเล็ก - กระเด็นไกล ซ้ายล่าง)
 	Vector2(65.0, 98.0),   # Shard 16 (ชิ้นใหญ่สุด หนักมาก - ตกกระแทกจุดแตก)
+	Vector2(76.0, 86.0),   # Shard 17 (ปานกลาง - บนขวา)
+	Vector2(114.0, 96.0),  # Shard 18 (ชิ้นเล็ก - ปลิวไกล ขวาสุด)
+	Vector2(89.0, 84.0),   # Shard 19 (ชิ้นเล็ก - ปลิวขวาบน)
+	Vector2(62.0, 104.0),  # Shard 20 (ชิ้นใหญ่ หนัก - ตกใกล้ล่าง)
 ]
 
 func _ready() -> void:
 	Engine.time_scale = 1.0
+	CutsceneMusic.play()
+	var vp := get_viewport()
+	if vp:
+		_saved_snap_transforms = vp.snap_2d_transforms_to_pixel
+		_saved_snap_vertices = vp.snap_2d_vertices_to_pixel
+		_has_saved_snap = true
+		vp.snap_2d_transforms_to_pixel = false
+		vp.snap_2d_vertices_to_pixel = false
 	skip_ctrl = preload("res://features/cutscene/skip_cutscene_button.gd").new()
 	skip_ctrl.next_scene_path = "res://features/cutscene/outside_cutscene.tscn"
 	skip_ctrl.custom_skip_action = _on_skip_step
 	add_child(skip_ctrl)
 	_init_shards()
+	if vel:
+		vel.visible = false
+	if master:
+		master.visible = false
+	await _prewarm_cutscene_textures()
+	if not is_inside_tree() or is_continuing or can_continue:
+		return
 	_reset_cutscene_state()
 	
 	if playback_mode == "AnimationPlayer":
-		if not anim_player.is_playing() or anim_player.current_animation != "walk_in":
-			anim_player.play("walk_in")
+		anim_player.play("walk_in")
+		anim_player.seek(0.0, true)
 		anim_player.animation_finished.connect(func(_anim_name):
 			if not is_continuing:
 				vel.play("breathe_blink")
@@ -102,10 +141,105 @@ func _ready() -> void:
 			anim_player.stop()
 		play_with_tween()
 
+## บังคับให้ OpenGL อัปโหลดเทกซ์เจอร์ที่ซ่อนไว้ (เศษคัมภีร์ 20 ชิ้น, กระดาษ, คัมภีร์, หลุมดำ)
+## ตั้งแต่อยู่หลังฉากในเฟรมแรก เพื่อไม่ให้กระตุกกลางคันตอนแสดงผลจริง
+func _prewarm_cutscene_textures() -> void:
+	var targets: Array[CanvasItem] = []
+	if black_hole:
+		targets.append(black_hole)
+	if khampri:
+		targets.append(khampri)
+	if khampri_shadow:
+		targets.append(khampri_shadow)
+	if paper_shadow:
+		targets.append(paper_shadow)
+	if paper_on_floor:
+		targets.append(paper_on_floor)
+	for s in shards:
+		if is_instance_valid(s):
+			targets.append(s)
+	
+	var saved_states: Array[Dictionary] = []
+	for node in targets:
+		saved_states.append({
+			"node": node,
+			"z": node.z_index,
+			"pos": node.position,
+			"scale": node.scale,
+			"modulate": node.modulate,
+			"visible": node.visible,
+		})
+		node.z_index = -1
+		node.position = Vector2.ZERO
+		node.scale = Vector2(0.01, 0.01)
+		node.modulate = Color(1, 1, 1, 1)
+		node.visible = true
+	
+	await get_tree().process_frame
+	if not is_inside_tree():
+		return
+	
+	for st in saved_states:
+		var node: CanvasItem = st["node"]
+		if is_instance_valid(node):
+			node.z_index = st["z"]
+			node.modulate = st["modulate"]
+			if not is_continuing and not can_continue:
+				node.position = st["pos"]
+				node.scale = st["scale"]
+				node.visible = st["visible"]
+
 func _exit_tree() -> void:
 	Engine.time_scale = 1.0
+	SceneLoader.flush_preloads()
+	if tw_ex_bob and tw_ex_bob.is_valid():
+		tw_ex_bob.kill()
+		tw_ex_bob = null
+	if tw_paper_glow and tw_paper_glow.is_valid():
+		tw_paper_glow.kill()
+		tw_paper_glow = null
+	if tw_rune_aura and tw_rune_aura.is_valid():
+		tw_rune_aura.kill()
+		tw_rune_aura = null
+	if tw_typing and tw_typing.is_valid():
+		tw_typing.kill()
+		tw_typing = null
+	if tw_auto_continue and tw_auto_continue.is_valid():
+		tw_auto_continue.kill()
+		tw_auto_continue = null
+	if tw_cp_fade and tw_cp_fade.is_valid():
+		tw_cp_fade.kill()
+		tw_cp_fade = null
+	if tw_cp_pulse and tw_cp_pulse.is_valid():
+		tw_cp_pulse.kill()
+		tw_cp_pulse = null
+	if _has_saved_snap:
+		var vp := get_viewport()
+		if vp:
+			vp.snap_2d_transforms_to_pixel = _saved_snap_transforms
+			vp.snap_2d_vertices_to_pixel = _saved_snap_vertices
+		_has_saved_snap = false
 
 func _process(_delta: float) -> void:
+	# ตรึงเงาที่เท้าของเวลและปรมาจารย์ให้อยู่บนพื้นตลอดเวลา (แม้ตอนกระโดดตกใจ)
+	if vel and vel.visible and is_instance_valid(vel_shadow):
+		var air_height := maxf(0.0, character_y - vel.position.y)
+		vel_shadow.position = Vector2(0.0, 38.5 + air_height)
+		var height_factor := clampf(1.0 - air_height / 60.0, 0.45, 1.0)
+		vel_shadow.scale = Vector2(0.65 * height_factor, 0.45 * height_factor)
+
+	if master and master.visible and is_instance_valid(master_shadow):
+		if master.scale.x < 0.98 or master.position.y > character_y + 1.0:
+			master_shadow.visible = false
+		else:
+			master_shadow.visible = true
+			var m_air := maxf(0.0, character_y - master.position.y)
+			master_shadow.position = Vector2(0.0, 38.5 + m_air)
+			var m_factor := clampf(1.0 - m_air / 60.0, 0.45, 1.0)
+			master_shadow.scale = Vector2(0.65 * m_factor, 0.45 * m_factor)
+
+	_sync_shard_shadows()
+
 	if not can_fast_forward or is_continuing:
 		if is_fast_forwarding:
 			is_fast_forwarding = false
@@ -140,7 +274,31 @@ func _input(event: InputEvent) -> void:
 	
 	if wants_continue:
 		get_viewport().set_input_as_handled()
-		_trigger_continue()
+		if is_typing:
+			_skip_typing()
+		else:
+			_trigger_continue()
+
+func _skip_typing() -> void:
+	if not is_typing:
+		return
+	is_typing = false
+	if tw_typing and tw_typing.is_valid():
+		tw_typing.kill()
+		tw_typing = null
+	if rune_label:
+		rune_label.visible_ratio = 1.0
+	if rune_aura_label:
+		rune_aura_label.visible_ratio = 1.0
+	
+	if tw_auto_continue and tw_auto_continue.is_valid():
+		tw_auto_continue.kill()
+	tw_auto_continue = create_tween()
+	tw_auto_continue.tween_interval(0.85)
+	tw_auto_continue.tween_callback(func():
+		if not is_continuing:
+			_trigger_continue()
+	)
 
 func _on_skip_step() -> void:
 	if is_continuing:
@@ -168,14 +326,28 @@ func _skip_to_magic_text() -> void:
 	
 	for s in shards:
 		if is_instance_valid(s):
+			s.z_index = 0
 			s.visible = false
+	for sh in shard_shadows:
+		if is_instance_valid(sh):
+			sh.visible = false
 	
-	paper_on_floor.visible = true
-	paper_on_floor.position = Vector2(vel.position.x + 8.0, character_y - 28.0)
-	paper_on_floor.scale = Vector2(0.12, 0.12)
-	paper_on_floor.modulate = Color(2.0, 1.8, 1.2, 1.0)
+	paper_on_floor.visible = false
 	if paper_shadow:
 		paper_shadow.visible = false
+	if backdrop:
+		backdrop.visible = true
+		backdrop.color = Color(0, 0, 0, 0.98)
+	if parchment_shadow:
+		parchment_shadow.visible = true
+		parchment_shadow.modulate = Color(0, 0, 0, 0.65)
+	if parchment_frame:
+		parchment_frame.visible = true
+		parchment_frame.modulate = Color(1, 1, 1, 1)
+	if rune_container:
+		rune_container.visible = true
+		rune_container.scale = Vector2.ONE
+		rune_container.modulate = Color(1, 1, 1, 1)
 	
 	_on_reveal_magic_text()
 
@@ -186,27 +358,99 @@ func _trigger_continue_instant() -> void:
 	can_continue = false
 	can_fast_forward = false
 	is_fast_forwarding = false
+	is_typing = false
+	if tw_typing and tw_typing.is_valid():
+		tw_typing.kill()
+		tw_typing = null
+	if tw_auto_continue and tw_auto_continue.is_valid():
+		tw_auto_continue.kill()
+		tw_auto_continue = null
 	Engine.time_scale = 1.0
-	get_tree().change_scene_to_file("res://features/cutscene/outside_cutscene.tscn")
+	SceneLoader.change_scene(get_tree(), "res://features/cutscene/outside_cutscene.tscn")
 
 func _init_shards() -> void:
 	shards.clear()
+	shard_shadows.clear()
+	_shard_target_positions.clear()
+	_shard_ground_y.clear()
+	_shard_base_shadow_scale.clear()
+	if shard_shadows_container:
+		for old in shard_shadows_container.get_children():
+			old.queue_free()
 	if shards_container:
 		for child in shards_container.get_children():
 			if child is Sprite2D:
-				if shards.size() < 16:
+				if shards.size() < 20:
 					shards.append(child)
 				else:
 					child.visible = false
+	for i in range(shards.size()):
+		var s: Sprite2D = shards[i]
+		var target := SHARD_LANDING_POSITIONS[i] if i < SHARD_LANDING_POSITIONS.size() else Vector2(64.0, 96.0)
+		var half_h := s.region_rect.size.y * 0.2 * 0.5
+		var w := s.region_rect.size.x * 0.2
+		_shard_target_positions.append(target)
+		_shard_ground_y.append(target.y + half_h + 0.5)
+		_shard_base_shadow_scale.append(Vector2(maxf(0.16, w / 36.0), 0.12))
+		if shard_shadows_container:
+			var sh := Sprite2D.new()
+			sh.name = "ShardShadow%d" % (i + 1)
+			sh.texture = DROP_SHADOW_TEX
+			sh.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+			sh.visible = false
+			sh.modulate = Color(1, 1, 1, 0.55)
+			sh.scale = _shard_base_shadow_scale[i]
+			shard_shadows_container.add_child(sh)
+			shard_shadows.append(sh)
+
+
+func _sync_shard_shadows() -> void:
+	for i in range(mini(shards.size(), shard_shadows.size())):
+		var s: Sprite2D = shards[i]
+		var sh: Sprite2D = shard_shadows[i]
+		if not is_instance_valid(s) or not is_instance_valid(sh):
+			continue
+		if not s.visible:
+			sh.visible = false
+			continue
+		sh.visible = true
+		var target_pos: Vector2 = _shard_target_positions[i]
+		var ground_y: float = _shard_ground_y[i]
+		var base_scale: Vector2 = _shard_base_shadow_scale[i]
+		var scale_ratio := clampf(s.scale.x / 0.2, 0.0, 1.0)
+		if scale_ratio < 0.97:
+			# ระหว่างถูกดูดเข้าหลุมดำ ให้เงาหดตามและตามแนวเศษเข้าไปในหลุมดำ
+			sh.position = Vector2(s.position.x, s.position.y + s.region_rect.size.y * s.scale.y * 0.5 + 0.5)
+			sh.scale = base_scale * scale_ratio
+			sh.modulate = Color(1, 1, 1, 0.55 * scale_ratio * s.modulate.a)
+		else:
+			var lift := maxf(0.0, target_pos.y - s.position.y)
+			var h_factor := clampf(1.0 - lift / 45.0, 0.45, 1.0)
+			sh.position = Vector2(s.position.x, ground_y)
+			sh.scale = base_scale * h_factor
+			sh.modulate = Color(1, 1, 1, 0.55 * h_factor * s.modulate.a)
 
 func _reset_cutscene_state() -> void:
 	can_continue = false
 	is_continuing = false
+	is_typing = false
+	if tw_typing and tw_typing.is_valid():
+		tw_typing.kill()
+		tw_typing = null
+	if tw_auto_continue and tw_auto_continue.is_valid():
+		tw_auto_continue.kill()
+		tw_auto_continue = null
 	
 	# แสงห้องปกติ ไม่มืด กล้องนิ่ง
 	if room_lighting:
 		room_lighting.color = Color(1, 1, 1, 1)
 	position = Vector2(960, 540)
+	
+	if black_hole:
+		black_hole.visible = false
+		black_hole.position = Vector2(master_target_x, 97)
+		black_hole.scale = Vector2.ZERO
+		black_hole.modulate = Color(1, 1, 1, 1)
 	
 	if khampri:
 		khampri.visible = false
@@ -217,13 +461,13 @@ func _reset_cutscene_state() -> void:
 	
 	if khampri_shadow:
 		khampri_shadow.visible = false
-		khampri_shadow.position = Vector2(64, 98)
+		khampri_shadow.position = Vector2(64, 111.5)
 		khampri_shadow.scale = Vector2(1.1, 0.7)
 		khampri_shadow.modulate = Color(1, 1, 1, 0)
 	
 	if paper_shadow:
 		paper_shadow.visible = false
-		paper_shadow.position = Vector2(64, 98)
+		paper_shadow.position = Vector2(64, 105.5)
 		paper_shadow.scale = Vector2(0.55, 0.35)
 		paper_shadow.modulate = Color(1, 1, 1, 0)
 	
@@ -232,6 +476,9 @@ func _reset_cutscene_state() -> void:
 		s.scale = Vector2(0.2, 0.2)
 		s.modulate = BOOK_TINT
 		s.rotation = 0.0
+	for sh in shard_shadows:
+		if is_instance_valid(sh):
+			sh.visible = false
 	
 	if paper_on_floor:
 		paper_on_floor.visible = false
@@ -241,17 +488,25 @@ func _reset_cutscene_state() -> void:
 		paper_on_floor.modulate = Color(1, 1, 1, 1)
 	
 	if backdrop:
+		backdrop.visible = false
 		backdrop.color = Color(0, 0, 0, 0)
 	if parchment_shadow:
+		parchment_shadow.visible = false
 		parchment_shadow.modulate = Color(0, 0, 0, 0)
 	if parchment_frame:
+		parchment_frame.visible = false
 		parchment_frame.modulate = Color(1, 1, 1, 0)
 	if rune_container:
+		rune_container.visible = false
 		rune_container.scale = Vector2(0.01, 0.01)
 		rune_container.modulate = Color(1, 1, 1, 0)
 	if rune_aura_label:
+		rune_aura_label.visible_ratio = 0.0
 		rune_aura_label.modulate = Color(1, 1, 1, 1)
+	if rune_label:
+		rune_label.visible_ratio = 0.0
 	if continue_prompt:
+		continue_prompt.visible = false
 		continue_prompt.modulate = Color(1, 1, 1, 0)
 	
 	if tw_ex_bob and tw_ex_bob.is_valid():
@@ -292,12 +547,12 @@ func _on_shatter_khampri() -> void:
 	if paper_on_floor:
 		paper_on_floor.visible = false
 	
-	# เศษคัมภีร์ทั้ง 16 ชิ้นแตกกระจายตามมวลจริง: ชิ้นใหญ่เคลื่อนช้าตกใกล้ ชิ้นเล็กกระเด็นไกลบินเร็ว ดีเลย์เหลื่อมล้ำกัน
+	# เศษคัมภีร์ทั้ง 20 ชิ้นแตกกระจายตามมวลจริง: ชิ้นใหญ่เคลื่อนช้าตกใกล้ ชิ้นเล็กกระเด็นไกลบินเร็ว ดีเลย์เหลื่อมล้ำกัน
 	for i in range(shards.size()):
 		var s: Sprite2D = shards[i]
 		s.position = origin
 		s.scale = Vector2(0.2, 0.2)
-		s.visible = true
+		s.visible = false
 		s.rotation = 0.0 # สไตล์ Pixel Art
 		
 		# คำนวณขนาดพื้นที่ของเศษชิ้นนี้
@@ -333,6 +588,7 @@ func _on_shatter_khampri() -> void:
 		tw_launch.tween_callback(func():
 			if not is_instance_valid(s):
 				return
+			s.visible = true
 			s.modulate = Color(1.15, 1.05, 0.90, 1.0)
 			var tw_move = create_tween().set_parallel(true)
 			tw_move.tween_property(s, "position:x", target.x, duration).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
@@ -357,7 +613,7 @@ func _on_paper_flutter_down() -> void:
 	
 	if paper_shadow:
 		paper_shadow.visible = true
-		paper_shadow.position = Vector2(68.0, 98.0)
+		paper_shadow.position = Vector2(68.0, 105.5)
 		paper_shadow.scale = Vector2(0.25, 0.15)
 		paper_shadow.modulate = Color(1, 1, 1, 0.0)
 		var tw_ps_x = create_tween()
@@ -413,7 +669,7 @@ func _on_paper_flutter_down() -> void:
 func _on_suck_shards() -> void:
 	var vortex_center: Vector2 = black_hole.position # (35, 96)
 	
-	# ค่อย ๆ ดูดเศษทั้ง 16 ชิ้นหมุนวนเข้าไปในวงเวททีละชิ้นอย่างนุ่มนวล
+	# ค่อย ๆ ดูดเศษทั้ง 20 ชิ้นหมุนวนเข้าไปในวงเวททีละชิ้นอย่างนุ่มนวล
 	for i in range(shards.size()):
 		var s: Sprite2D = shards[i]
 		var delay: float = randf_range(0.0, 1.0)
@@ -431,27 +687,53 @@ func _on_suck_shards() -> void:
 			tw_suck.chain().tween_callback(func(): s.visible = false)
 		)
 
-## เรียกเมื่อเวลเดินมาหยุดข้างกระดาษ แล้วกระดาษลอยขึ้นสู่มือเวล (20.3s)
+## เรียกเมื่อเวลเดินมาหยุดข้างกระดาษ แล้วกระดาษลอยขึ้นสู่มือเวล (20.0s)
 func _on_pickup_shard() -> void:
 	if not paper_on_floor:
 		return
 	if tw_paper_glow and tw_paper_glow.is_valid():
 		tw_paper_glow.kill()
 		tw_paper_glow = null
+	if playback_mode == "AnimationPlayer":
+		return
 	if paper_shadow:
 		var tw_ps = create_tween()
-		tw_ps.tween_property(paper_shadow, "modulate:a", 0.0, 0.5)
+		tw_ps.tween_property(paper_shadow, "modulate:a", 0.0, 0.35)
 		tw_ps.chain().tween_callback(func(): paper_shadow.visible = false)
 	var hand_pos: Vector2 = vel.position + Vector2(6.0, 0.0)
 	var tw = create_tween().set_parallel(true)
-	tw.tween_property(paper_on_floor, "position", hand_pos, 0.6).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-	tw.tween_property(paper_on_floor, "scale", Vector2(0.12, 0.12), 0.6)
-	tw.tween_property(paper_on_floor, "modulate", Color(2.0, 1.8, 1.2, 1.0), 0.6)
+	tw.tween_property(paper_on_floor, "position", hand_pos, 0.35).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	tw.tween_property(paper_on_floor, "scale", Vector2(0.12, 0.12), 0.35)
+	tw.tween_property(paper_on_floor, "modulate", Color(2.0, 1.8, 1.2, 1.0), 0.35)
+	tw.chain().tween_callback(func():
+		if paper_on_floor:
+			paper_on_floor.visible = false
+	)
 
-## แสดงตัวอักษรเวทมนตร์เด้งขึ้นมาพร้อมพื้นหลังกระดาษจาง ๆ และปุ่มกดไปต่อ (21.0s)
+## แสดงตัวอักษรเวทมนตร์ค่อย ๆ พิมพ์ขึ้นมา (Typewriter) พร้อมพื้นหลังกระดาษโบราณ และค้างไว้ก่อนเฟดหายไปอัตโนมัติ (20.35s)
 func _on_reveal_magic_text() -> void:
 	if not rune_container:
 		return
+	SceneLoader.request_preload("res://features/cutscene/outside_cutscene.tscn")
+	
+	# เมื่อกระดาษใบใหญ่ขึ้นมา ใบเล็กบนพื้น/ในมือจะหายไปทันที
+	if paper_on_floor:
+		paper_on_floor.visible = false
+	if paper_shadow:
+		paper_shadow.visible = false
+	
+	# ฉากหลังเฟดมืดสนิทตามรูปแรก (98% black)
+	if backdrop:
+		backdrop.visible = true
+		backdrop.color = Color(0, 0, 0, 0.98)
+	if parchment_shadow:
+		parchment_shadow.visible = true
+		parchment_shadow.modulate = Color(0, 0, 0, 0.65)
+	if parchment_frame:
+		parchment_frame.visible = true
+		parchment_frame.modulate = Color(1, 1, 1, 1)
+	rune_container.visible = true
+	
 	if skip_ctrl:
 		skip_ctrl.set_fast_forward_visible(false)
 	can_fast_forward = false
@@ -459,28 +741,58 @@ func _on_reveal_magic_text() -> void:
 	Engine.time_scale = 1.0
 	can_continue = true
 	is_continuing = false
+	is_typing = true
+	
+	# ไม่แสดงปุ่มคลิกเพื่อไปต่อ
+	if continue_prompt:
+		continue_prompt.visible = false
+		continue_prompt.modulate = Color(1, 1, 1, 0)
+	
+	# เตรียมสถานะเริ่มต้นของข้อความมนตรา (ซ่อนตัวอักษรเพื่อรอพิมพ์)
+	if rune_label:
+		rune_label.visible_ratio = 0.0
+		rune_label.modulate = Color(1.0, 1.0, 1.0, 1.0)
 	
 	# ลูปแสงออร่าเวทมนตร์เรืองรองอ่อน ๆ นุ่มนวล ไม่สว่างจ้าเกินไป
 	if rune_aura_label:
+		rune_aura_label.visible_ratio = 0.0
+		if tw_rune_aura and tw_rune_aura.is_valid():
+			tw_rune_aura.kill()
 		rune_aura_label.modulate = Color(1.0, 0.95, 0.85, 0.35)
-		var tw_aura = create_tween().set_loops()
-		tw_aura.tween_property(rune_aura_label, "modulate:a", 0.55, 1.5).set_trans(Tween.TRANS_SINE)
-		tw_aura.tween_property(rune_aura_label, "modulate:a", 0.20, 1.5).set_trans(Tween.TRANS_SINE)
+		tw_rune_aura = create_tween().set_loops()
+		tw_rune_aura.tween_property(rune_aura_label, "modulate:a", 0.55, 1.5).set_trans(Tween.TRANS_SINE)
+		tw_rune_aura.tween_property(rune_aura_label, "modulate:a", 0.20, 1.5).set_trans(Tween.TRANS_SINE)
 	
-	# ตัวอักษรหลักคงความสว่างนวลตา คมชัด อ่านง่าย สบายตา
+	# Typewriter Effect: พิมพ์จากซ้ายไปขวาด้วยความเร็วอิงรูปแรก (~0.032s/ตัวอักษร, รวม 2.2 วินาที)
+	if tw_typing and tw_typing.is_valid():
+		tw_typing.kill()
+		tw_typing = null
+	if tw_auto_continue and tw_auto_continue.is_valid():
+		tw_auto_continue.kill()
+		tw_auto_continue = null
+	
+	tw_typing = create_tween()
+	# ดีเลย์สั้น ๆ 0.2 วินาที ให้กระดาษโบราณกางออกชัดเจนก่อนเริ่มพิมพ์
+	tw_typing.tween_interval(0.2)
+	
+	var typing_duration: float = 2.2
+	var tw_type_parallel := tw_typing.parallel()
 	if rune_label:
-		rune_label.modulate = Color(1.0, 1.0, 1.0, 1.0)
+		tw_type_parallel.tween_property(rune_label, "visible_ratio", 1.0, typing_duration).set_trans(Tween.TRANS_LINEAR)
+	if rune_aura_label:
+		tw_type_parallel.tween_property(rune_aura_label, "visible_ratio", 1.0, typing_duration).set_trans(Tween.TRANS_LINEAR)
 	
-	# แสงกระพริบแนะนำให้กดไปต่อ
-	if continue_prompt:
-		continue_prompt.modulate = Color(1, 1, 1, 0)
-		var tw_cp = create_tween()
-		tw_cp.tween_property(continue_prompt, "modulate:a", 0.9, 0.6)
-		var tw_pulse = create_tween().set_loops()
-		tw_pulse.tween_property(continue_prompt, "modulate:a", 0.35, 0.8).set_trans(Tween.TRANS_SINE)
-		tw_pulse.tween_property(continue_prompt, "modulate:a", 0.95, 0.8).set_trans(Tween.TRANS_SINE)
+	# เมื่อพิมพ์ครบทุกตัวแล้ว ค้างไว้สั้น ๆ 0.85 วินาที (ไม่อยู่นานเกินไป) แล้วเฟดหายไปตามเดิมโดยอัตโนมัติ
+	tw_typing.chain().tween_callback(func():
+		is_typing = false
+	)
+	tw_typing.tween_interval(0.85)
+	tw_typing.tween_callback(func():
+		if not is_continuing:
+			_trigger_continue()
+	)
 
-## สลายกระดาษและตัวหนังสือหายไปพร้อมกันเมื่อผู้เล่นกดไปต่อ
+## สลายกระดาษและตัวหนังสือหายไปพร้อมกัน
 func _trigger_continue() -> void:
 	if is_continuing:
 		return
@@ -488,10 +800,26 @@ func _trigger_continue() -> void:
 	can_continue = false
 	can_fast_forward = false
 	is_fast_forwarding = false
+	is_typing = false
 	Engine.time_scale = 1.0
+	if tw_typing and tw_typing.is_valid():
+		tw_typing.kill()
+		tw_typing = null
+	if tw_auto_continue and tw_auto_continue.is_valid():
+		tw_auto_continue.kill()
+		tw_auto_continue = null
 	if tw_paper_glow and tw_paper_glow.is_valid():
 		tw_paper_glow.kill()
 		tw_paper_glow = null
+	if tw_rune_aura and tw_rune_aura.is_valid():
+		tw_rune_aura.kill()
+		tw_rune_aura = null
+	if tw_cp_fade and tw_cp_fade.is_valid():
+		tw_cp_fade.kill()
+		tw_cp_fade = null
+	if tw_cp_pulse and tw_cp_pulse.is_valid():
+		tw_cp_pulse.kill()
+		tw_cp_pulse = null
 	
 	# หยุด AnimationPlayer โดยคงสถานะปัจจุบันไว้ (pause + active = false)
 	# ป้องกันไม่ให้ Godot รีเซ็ตค่าตำแหน่งของเวลกลับไปที่เฟรม 0 (-250)
@@ -530,8 +858,8 @@ func _trigger_continue() -> void:
 	if paper_shadow:
 		tw_dissolve.tween_property(paper_shadow, "modulate:a", 0.0, 0.4)
 	
-	# แผ่นกระดาษบนมือเวลสลายหายไปพร้อมตัวหนังสือ
-	if paper_on_floor:
+	# แผ่นกระดาษบนมือเวลสลายหายไปพร้อมตัวหนังสือ (หากยังแสดงอยู่)
+	if paper_on_floor and paper_on_floor.visible:
 		tw_dissolve.tween_property(paper_on_floor, "modulate", Color(3.0, 2.5, 1.5, 0.0), 0.6)
 		tw_dissolve.tween_property(paper_on_floor, "scale", Vector2(0.16, 0.16), 0.6)
 		tw_dissolve.tween_property(paper_on_floor, "position:y", paper_on_floor.position.y - 10.0, 0.6)
@@ -559,7 +887,7 @@ func _trigger_continue() -> void:
 		Engine.time_scale = 1.0
 		emit_signal("cutscene_finished")
 		print("[IntroCutscene] Transitioning to OutsideCutscene...")
-		get_tree().change_scene_to_file("res://features/cutscene/outside_cutscene.tscn")
+		SceneLoader.change_scene(get_tree(), "res://features/cutscene/outside_cutscene.tscn")
 	)
 
 ## โหมดสำรอง: เล่นด้วย GDScript Tween ล้วน ๆ
@@ -639,7 +967,10 @@ func play_with_tween() -> void:
 			exclamation_mark.scale = Vector2.ZERO
 			exclamation_mark.position = Vector2(0, -52)
 			exclamation_mark.modulate.a = 1.0
-			var tw_ex = create_tween()
+			if tw_ex_bob and tw_ex_bob.is_valid():
+				tw_ex_bob.kill()
+			tw_ex_bob = create_tween()
+			var tw_ex := tw_ex_bob
 			# กระโดดขึ้นพร้อมกับเวล (0.22s)
 			tw_ex.tween_property(exclamation_mark, "scale", Vector2(1.15, 1.15), 0.15).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 			tw_ex.parallel().tween_property(exclamation_mark, "position:y", -58.0, 0.22).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
@@ -665,7 +996,7 @@ func play_with_tween() -> void:
 		khampri.rotation = 0.0
 		if khampri_shadow:
 			khampri_shadow.visible = true
-			khampri_shadow.position = Vector2(42, 98)
+			khampri_shadow.position = Vector2(42, 111.5)
 			khampri_shadow.scale = Vector2(0.3, 0.2)
 			khampri_shadow.modulate = Color(1, 1, 1, 0.15)
 		
@@ -722,7 +1053,7 @@ func play_with_tween() -> void:
 		tw_shake.tween_property(khampri, "position:x", 62.5, 0.05)
 	)
 	
-	# 7. คัมภีร์แตกเป็น 16 ชิ้น (11.8s)
+	# 7. คัมภีร์แตกเป็น 20 ชิ้น (11.8s)
 	var tw_shatter = create_tween()
 	tw_shatter.tween_interval(11.8)
 	tw_shatter.tween_callback(_on_shatter_khampri)
@@ -764,25 +1095,33 @@ func play_with_tween() -> void:
 		vel.play("breathe_blink")
 	)
 	
-	# 10. เวลหยิบกระดาษลอยขึ้น (20.3s)
+	# 10. เวลหยิบกระดาษลอยขึ้นทันทีเมื่อเดินถึง (20.0s)
 	var tw_pickup = create_tween()
-	tw_pickup.tween_interval(20.3)
+	tw_pickup.tween_interval(20.0)
 	tw_pickup.tween_callback(_on_pickup_shard)
 	
-	# 11. ตัวอักษรเวทมนตร์เด้งขึ้นมาพร้อมพื้นหลังกระดาษจาง ๆ กึ่งกลางจอ (21.0s)
+	# 11. ตัวอักษรเวทมนตร์และกระดาษใบใหญ่ขึ้นมาทันที (20.35s)
 	var tw_ui = create_tween()
-	tw_ui.tween_interval(21.0)
+	tw_ui.tween_interval(20.35)
 	tw_ui.tween_callback(func():
-		var tw_t = create_tween().set_parallel(true)
-		tw_t.tween_property(backdrop, "color", Color(0, 0, 0, 0.85), 0.5)
-		tw_t.tween_property(parchment_frame, "modulate", Color(1, 1, 1, 1.0), 0.5)
+		if backdrop:
+			backdrop.visible = true
+		if parchment_frame:
+			parchment_frame.visible = true
 		if parchment_shadow:
-			tw_t.tween_property(parchment_shadow, "modulate", Color(0, 0, 0, 0.55), 0.5)
+			parchment_shadow.visible = true
+		if rune_container:
+			rune_container.visible = true
+		var tw_t = create_tween().set_parallel(true)
+		tw_t.tween_property(backdrop, "color", Color(0, 0, 0, 0.98), 0.35)
+		tw_t.tween_property(parchment_frame, "modulate", Color(1, 1, 1, 1.0), 0.35)
+		if parchment_shadow:
+			tw_t.tween_property(parchment_shadow, "modulate", Color(0, 0, 0, 0.65), 0.35)
 		
-		rune_container.scale = Vector2(0.2, 0.2)
+		rune_container.scale = Vector2(0.3, 0.3)
 		rune_container.modulate = Color(1, 1, 1, 0)
 		var tw_pop = create_tween().set_parallel(true)
-		tw_pop.tween_property(rune_container, "scale", Vector2(1.0, 1.0), 0.5).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-		tw_pop.tween_property(rune_container, "modulate", Color(1, 1, 1, 1), 0.4)
+		tw_pop.tween_property(rune_container, "scale", Vector2(1.0, 1.0), 0.35).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+		tw_pop.tween_property(rune_container, "modulate", Color(1, 1, 1, 1), 0.3)
 		_on_reveal_magic_text()
 	)
