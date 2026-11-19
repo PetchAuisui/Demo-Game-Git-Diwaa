@@ -26,7 +26,8 @@ extends RefCounted
 ##   phantoms      ["ghost"] ชื่อ branch ผีที่ดูดหัวใจทุกคลื่นจนกว่าจะถูกลบ
 ##   wrong_say     หัวใจที่เสียเมื่อเอ่ยรหัสผิด (ค่าเริ่มต้น 1)
 ##   blind         true = ห้องไม่บอกสถานะของเศษคัมภีร์จนกว่าผู้เล่นจะร่าย git status (ใช้ในด่านหยั่งสถานะ)
-##   needs_tome    true = คลื่นทำร้ายผู้เล่นถ้ายังไม่มีคัมภีร์ (git init)
+##   needs_tome    true = คลื่นทำร้ายผู้เล่นถ้ายังไม่มีคัมภีร์ (git init / git clone)
+##   sync_required true = คลื่นทำร้ายถ้าคัมภีร์ไม่ตรงกับคลังเวทกลาง (ยังไม่ผูก / ตามหลัง / นำหน้า) → pull / push
 ##   cursed        [paths] ของที่ถูกสาปไว้ตั้งแต่เริ่ม (ให้ห้องแสดงว่าถูกสาป)
 ##   essential     [paths] ของที่ห้ามหาย — ถ้าหายไปจากพื้นที่ทำงาน (เช่น reset --hard) แพ้ทันที
 ## คำสาปบนแท่นเตรียมตอนคลื่นมา: โล่แท่นแตกและเสียหัวใจ (สอนให้เลือกของขึ้นแท่นเอง)
@@ -49,6 +50,7 @@ var blind := false
 var revealed := false
 var wrong_say_damage := 1
 var needs_tome := false
+var sync_required := false
 var essential: Array[String] = []
 var _seen_essential: Dictionary = {}
 var items: Dictionary = {}
@@ -73,6 +75,7 @@ static func from_config(config: Dictionary) -> RoomGame:
 	game.blind = bool(config.get("blind", false))
 	game.wrong_say_damage = int(config.get("wrong_say", 1))
 	game.needs_tome = bool(config.get("needs_tome", false))
+	game.sync_required = bool(config.get("sync_required", false))
 	for path in config.get("cursed", []):
 		game._corrupted[str(path)] = true
 	for path in config.get("essential", []):
@@ -201,6 +204,10 @@ func _resolve_wave(snapshot: GitRepositorySnapshot, actions: Array[Dictionary], 
 	events.append({"type": "wave", "text": "คลื่นโกลาหลซัดเข้ามา!"})
 	if needs_tome and (snapshot == null or not snapshot.is_initialized):
 		_damage(1, events, "ไม่มีคัมภีร์รองรับพลัง คลื่นซัดเข้าใส่นายเต็ม ๆ!")
+	if sync_required and snapshot != null and snapshot.is_initialized:
+		var drift := sync_drift(snapshot)
+		if not drift.is_empty():
+			_damage(1, events, drift)
 	var statuses := {}
 	if snapshot != null:
 		for file in snapshot.files:
@@ -249,6 +256,27 @@ func _resolve_wave(snapshot: GitRepositorySnapshot, actions: Array[Dictionary], 
 		for phantom in phantoms:
 			if snapshot.branches.any(func(branch: GitBranchInfo) -> bool: return branch.name == phantom):
 				_damage(1, events, "มิติผี '%s' ดูดพลังของนาย!" % phantom)
+
+
+## คำอธิบายว่าคัมภีร์ไม่ตรงกับคลังเวทอย่างไร ("" = ตรงกันแล้ว)
+static func sync_drift(snapshot: GitRepositorySnapshot) -> String:
+	for branch in snapshot.branches:
+		if not branch.is_current:
+			continue
+		if branch.upstream == null:
+			return "คัมภีร์ยังไม่ได้ผูกกับคลังเวทกลาง — พลังของมันรั่วไหล!"
+		for other in snapshot.branches:
+			if other.name != str(branch.upstream):
+				continue
+			if other.commit_id == branch.commit_id:
+				return ""
+			var local := str(branch.commit_id)
+			var remote := str(other.commit_id)
+			if SpellEffectDetector.is_ancestor([snapshot], local, remote):
+				return "คัมภีร์ของนายล้าหลังคลังเวท — ความรู้เก่ากัดกินพลังนาย!"
+			return "คลังเวทยังไม่ได้รับการจารึกใหม่ของนาย — ประตูคลังดูดพลังกลับ!"
+		return "สายเชื่อมชี้ไปยังเส้นทางที่ไม่มีอยู่ในคลัง!"
+	return ""
 
 
 func _is_tracked_clean(snapshot: GitRepositorySnapshot, statuses: Dictionary, path: String) -> bool:
