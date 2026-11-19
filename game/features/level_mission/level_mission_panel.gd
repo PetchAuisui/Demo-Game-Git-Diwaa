@@ -6,6 +6,8 @@ extends PanelContainer
 ## ไม่ตรวจคำสั่งเอง: รับ LevelMission มาแสดงและเรียก refresh() เมื่อสถานะเปลี่ยน
 
 signal continue_pressed
+## ผู้เล่นแพ้ในมินิเกมห้อง (หัวใจหมด) แล้วกดเริ่มชั้นนี้ใหม่
+signal retry_pressed
 
 const FONT_REGULAR_PATH := "res://assets/fonts/ChakraPetch-Regular.ttf"
 const FONT_BOLD_PATH := "res://assets/fonts/ChakraPetch-Bold.ttf"
@@ -28,6 +30,7 @@ var _complete_label: Label
 var _continue_button: Button
 var _feedback_tween: Tween
 var _hint_visible := false
+var _retry_mode := false
 
 
 func _init() -> void:
@@ -56,6 +59,7 @@ func setup(mission: LevelMission) -> void:
 	_title_label.text = mission.title
 	_story_label.text = mission.story
 	_hint_visible = false
+	_retry_mode = false
 	_complete_box.visible = false
 	_feedback_label.text = ""
 	_feedback_label.visible = false
@@ -105,6 +109,8 @@ func show_feedback(text: String, is_error: bool = false) -> void:
 
 
 func show_complete(message: String, button_text: String) -> void:
+	_retry_mode = false
+	_complete_label.add_theme_color_override("font_color", DONE_COLOR)
 	_hint_visible = false
 	_complete_label.text = message
 	_continue_button.text = button_text
@@ -116,6 +122,13 @@ func show_complete(message: String, button_text: String) -> void:
 	_complete_box.modulate.a = 0.0
 	create_tween().tween_property(_complete_box, "modulate:a", 1.0, 0.35)
 	_continue_button.grab_focus.call_deferred()
+
+
+## แพ้ในมินิเกมห้อง: แสดงข้อความสีแดงและปุ่มเริ่มชั้นนี้ใหม่ (ใช้กล่องเดียวกับตอนสำเร็จ)
+func show_failed(message: String, button_text: String = "ลองชั้นนี้ใหม่") -> void:
+	show_complete(message, button_text)
+	_retry_mode = true
+	_complete_label.add_theme_color_override("font_color", SandboxThemeTokens.ERROR_TEXT)
 
 
 func _build() -> void:
@@ -234,7 +247,11 @@ func _build() -> void:
 	_continue_button.add_theme_stylebox_override("pressed", _flat(Color(0.1, 0.34, 0.24, 1.0), 8))
 	if _font_bold != null:
 		_continue_button.add_theme_font_override("font", _font_bold)
-	_continue_button.pressed.connect(func() -> void: continue_pressed.emit())
+	_continue_button.pressed.connect(func() -> void:
+		if _retry_mode:
+			retry_pressed.emit()
+		else:
+			continue_pressed.emit())
 	_complete_box.add_child(_continue_button)
 
 

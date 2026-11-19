@@ -8,6 +8,7 @@ extends RefCounted
 ##   command     commands: [..]        พิมพ์คำสั่งตรงตัว (เว้นวรรคซ้ำถูกยุบ) และคำสั่งสำเร็จ
 ##   config_set  key, validator        git config --global <key> "<ค่า>" (validator: non_empty | email)
 ##   config_get  key                   git config --global <key> แล้วมีค่าตอบกลับ
+##   say         words: [..]           เอ่ยคำ (say <คำ>) ที่ต้องหาจากโลกเอง เช่น รหัสผนึกในประวัติ (ไม่สนตัวพิมพ์เล็ก/ใหญ่)
 ##   read        path                  อ่านเศษคัมภีร์ด้วย cat <path> หรือเปิดไฟล์ในแผง Files (ตรวจตามลำดับเรื่องเหมือน state)
 ##   state       check, ...            ตรวจจาก "สถานะ Repository" หลังคำสั่ง ไม่ใช่ข้อความคำสั่ง (Game Design v2 §4.3)
 ##                                     ผู้เล่นใช้คาถารูปแบบไหนก็ได้ ขอแค่โลก (repo) เป็นไปตามเป้าหมาย
@@ -25,6 +26,7 @@ extends RefCounted
 ##
 ## คีย์เสริมทุกชนิด:
 ##   world       ข้อความ "โลกตอบสนอง" สั้น ๆ ที่แสดงเมื่อสำเร็จ (แทนบทสนทนายาว)
+##   spawn       [{"write": path, "content": ...}] ของที่ปรากฏในโลกเมื่อเป้าหมายนี้สำเร็จ (เช่น ประตูเปิดแล้วเศษคัมภีร์ร่วงออกมา)
 
 signal objective_completed(objective_id: String)
 signal mission_completed
@@ -48,6 +50,8 @@ var panels: Array[String] = []
 ## โลกตั้งต้นก่อนผู้เล่นเริ่ม (Game Design v2 §5: เริ่มจาก "ปัญหาในโลก")
 ## รายการเรียงลำดับ: {"run": "git ..."} หรือ {"write": "<path>", "content": "..."} — ทำแบบเงียบ ไม่นับเป็นคำสั่งของผู้เล่น
 var setup: Array[Dictionary] = []
+## กฎมินิเกมห้อง (ดู RoomGame) — ว่าง = ไม่มีมินิเกม
+var room: Dictionary = {}
 
 var _done: Dictionary = {}
 
@@ -73,6 +77,7 @@ static func create(level_num: int, step_num: int) -> LevelMission:
 		mission.panels.append(str(panel))
 	for action in definition.get("setup", []):
 		mission.setup.append(action)
+	mission.room = definition.get("room", {})
 	return mission
 
 
@@ -102,6 +107,19 @@ func current_objective() -> Dictionary:
 
 
 ## ข้อความ "โลกตอบสนอง" ของภารกิจ ("" = ไม่มี)
+## ของที่ต้องปรากฏเมื่อเป้าหมายนี้สำเร็จ
+func spawn_actions(objective_id: String) -> Array:
+	for objective in objectives:
+		if str(objective["id"]) == objective_id:
+			return objective.get("spawn", [])
+	return []
+
+
+## true เมื่อภารกิจปัจจุบัน (ที่ยังไม่สำเร็จ) รอให้เอ่ยคำ — ใช้ตัดสินว่าเอ่ยผิดหรือไม่
+func expects_say() -> bool:
+	return str(current_objective().get("type", "")) == "say"
+
+
 func world_text(objective_id: String) -> String:
 	for objective in objectives:
 		if str(objective["id"]) == objective_id:
@@ -123,6 +141,10 @@ func on_command(command: String, success: bool, output: String, snapshot: GitRep
 		var type := str(objective.get("type", ""))
 		if type == "state":
 			matched = _previous_done(index) and _matches_state(objective, tokens, success, snapshot)
+		elif type == "say":
+			matched = _previous_done(index) and tokens.size() >= 2 and tokens[0] == "say" \
+					and objective.get("words", []).any(func(word: Variant) -> bool:
+						return " ".join(tokens.slice(1)).to_lower() == str(word).to_lower())
 		elif type == "read":
 			# การอ่านเป็นการสังเกตตามลำดับเรื่อง: ต้องผ่านเป้าหมายก่อนหน้าก่อน (เช่น หยั่งสถานะก่อนรู้ว่าแผ่นไหนไร้ตรา)
 			matched = _previous_done(index) and _matches(objective, tokens, success, output)

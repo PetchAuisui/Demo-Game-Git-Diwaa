@@ -35,6 +35,9 @@ const SUBTLE_KINDS := [SpellEffectDetector.Kind.REVEALED, SpellEffectDetector.Ki
 
 signal effect_started(effect: Dictionary)
 
+## โหมดกะทัดรัด: ใช้เมื่อมีห้องมินิเกมอยู่กลางฉาก — วงเวทเล็กลง และไม่เล่นผลรอง (สำรวจ/ล้มเหลว) ที่ห้องแสดงอยู่แล้ว
+var compact := false
+
 var _queue: Array[Dictionary] = []
 var _playing := false
 
@@ -45,7 +48,10 @@ func _ready() -> void:
 
 
 func play_all(effects: Array[Dictionary]) -> void:
-	_queue.append_array(effects)
+	for effect in effects:
+		if compact and effect["kind"] in SUBTLE_KINDS:
+			continue
+		_queue.append(effect)
 	if not _playing:
 		_play_next()
 
@@ -65,8 +71,8 @@ func _spawn(effect: Dictionary) -> void:
 	var kind: int = effect["kind"]
 	var subtle: bool = kind in SUBTLE_KINDS
 	var color: Color = COLORS.get(kind, Color.WHITE)
-	var stage := Vector2(size.x * STAGE_CENTER.x, size.y * STAGE_CENTER.y)
-	var radius := minf(size.x, size.y) * STAGE_RADIUS_RATIO * (0.6 if subtle else 1.0)
+	var stage := Vector2(size.x * STAGE_CENTER.x, size.y * (0.3 if compact else STAGE_CENTER.y))
+	var radius := minf(size.x, size.y) * STAGE_RADIUS_RATIO * (0.6 if subtle else 1.0) * (0.6 if compact else 1.0)
 
 	var circle := MagicCircle.new()
 	circle.color = color
