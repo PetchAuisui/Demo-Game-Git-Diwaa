@@ -66,6 +66,7 @@ func _run() -> void:
 	await _test("levels 2-5: the wrong spell does not clear state goals", _t_levels_wrong_spells)
 	await _test("room: chaos waves destroy uninscribed scrolls, inscriptions are safe", _t_room_waves)
 	await _test("room: altar shield, cursed inscriptions, restore and phantom dimensions", _t_room_rules)
+	await _test("room v2: tome needed, cursed altar, essential scrolls and exclusion checks", _t_room_rules_v2)
 
 	FsUtil.delete_recursive(_test_root)
 	if not _failures.is_empty():
@@ -972,4 +973,44 @@ func _t_room_rules() -> void:
 	_check(session.files.read_all_text("old.txt").value == "เดิม\n", "restore brings the inscribed text back")
 	_equal(0, room.on_wrong_say().size() - 1) # one damage event
 	_equal(5, room.hearts)
+	session.dispose()
+
+
+func _t_room_rules_v2() -> void:
+	var session := await _fresh_session("room-rules-v2")
+	await session.execute("git config --global user.name \"Vel\"")
+	await session.execute("git config --global user.email \"vel@magic-tower.local\"")
+	var room := RoomGame.from_config({"hearts": 5, "wave_every": 1, "needs_tome": true, "safe": "staged",
+		"essential": ["six.txt"],
+		"items": {"curse.txt": {"kind": "curse", "name": "คำสาป"}, "a.txt": {"kind": "fragment", "name": "A"}}})
+	await _room_turn(session, room, "git status")
+	_equal(4, room.hearts) # no tome yet
+
+	await session.execute("git init")
+	session.files.write_all_text("six.txt", "6\n")
+	await session.execute("git add six.txt")
+	await session.execute("git commit -m \"หก\"")
+	session.files.write_all_text("a.txt", "a\n")
+	session.files.write_all_text("curse.txt", "x\n")
+	await session.execute("git add .")
+	var snapshot := await session.inspect()
+	_check(not LevelMission.evaluate_state({"check": "staged", "paths": ["a.txt"], "exclude": ["curse.txt"]}, snapshot), "curse on altar breaks exclusion")
+	await _room_turn(session, room, "git status")
+	_equal(3, room.hearts) # the cursed scroll on the altar explodes
+
+	await session.execute("git restore --staged curse.txt")
+	snapshot = await session.inspect()
+	_check(LevelMission.evaluate_state({"check": "staged", "paths": ["a.txt"], "exclude": ["curse.txt"]}, snapshot))
+	_check(LevelMission.evaluate_state({"check": "not_staged", "paths": ["curse.txt"]}, snapshot))
+	_check(LevelMission.evaluate_state({"check": "not_committed", "paths": ["curse.txt", "a.txt"]}, snapshot))
+	await session.execute("git commit -m \"เก็บ\"")
+	snapshot = await session.inspect()
+	_check(LevelMission.evaluate_state({"check": "committed", "paths": ["a.txt", "six.txt"], "exclude": ["curse.txt"]}, snapshot))
+	await session.execute("git branch phantom")
+	await session.execute("git branch -d phantom")
+	_check(LevelMission.evaluate_state({"check": "branch_absent", "branch": "phantom"}, await session.inspect()))
+
+	session.files.delete("six.txt")
+	await _room_turn(session, room, "git status")
+	_check(room.is_failed(), "losing an essential scroll is a defeat")
 	session.dispose()

@@ -15,6 +15,11 @@ extends RefCounted
 ##       check = repo_initialized                     มีคัมภีร์ (git init แล้ว)
 ##             | staged          paths: [..]          ทุกไฟล์ใน paths อยู่บนแท่นเตรียม (staged)
 ##             | committed       paths: [..], count   ทุกไฟล์ใน paths ถูกจารึกแล้ว (ไม่เหลือสถานะค้าง) และมี commit ≥ count
+##             | not_staged      paths: [..]          ไม่มีไฟล์ใดใน paths อยู่บนแท่นเตรียม
+##             | not_committed   paths: [..]          ไฟล์ใน paths ไม่ได้อยู่ในคัมภีร์ (ยังไร้ตรา / แค่อยู่บนแท่น / ไม่มีอยู่)
+##             | branch_absent   branch               ไม่มี branch ชื่อนี้แล้ว
+##             | has_conflict                         มีไฟล์ที่มิติปะทะ (merge conflict) อยู่
+##       exclude (ใช้กับ staged / committed) = ไฟล์เหล่านี้ต้องไม่อยู่บนแท่นและไม่ถูกจารึก (เช่น ม้วนคำสาป)
 ##             | commits_at_least count               มี commit อย่างน้อย count ครั้ง
 ##             | clean                                working tree และ stage ว่าง
 ##             | branch_exists   branch               มี branch ชื่อนี้
@@ -26,7 +31,7 @@ extends RefCounted
 ##
 ## คีย์เสริมทุกชนิด:
 ##   world       ข้อความ "โลกตอบสนอง" สั้น ๆ ที่แสดงเมื่อสำเร็จ (แทนบทสนทนายาว)
-##   spawn       [{"write": path, "content": ...}] ของที่ปรากฏในโลกเมื่อเป้าหมายนี้สำเร็จ (เช่น ประตูเปิดแล้วเศษคัมภีร์ร่วงออกมา)
+##   spawn       [{"write": path, "content": ...} | {"run": "git ..."}] ของที่ปรากฏในโลกเมื่อเป้าหมายนี้สำเร็จ (เช่น ประตูเปิดแล้วเศษคัมภีร์ร่วงออกมา)
 
 signal objective_completed(objective_id: String)
 signal mission_completed
@@ -216,6 +221,11 @@ static func evaluate_state(objective: Dictionary, snapshot: GitRepositorySnapsho
 	if snapshot == null:
 		return false
 	var paths: Array = objective.get("paths", [])
+	var exclude: Array = objective.get("exclude", [])
+	if not exclude.is_empty() and not exclude.all(func(path: Variant) -> bool:
+			var status := _status_of(snapshot, str(path))
+			return status != null and not _is_staged_state(status.index_state)):
+		return false
 	match str(objective.get("check", "")):
 		"repo_initialized":
 			return snapshot.is_initialized
@@ -231,6 +241,20 @@ static func evaluate_state(objective: Dictionary, snapshot: GitRepositorySnapsho
 			return snapshot.commits.size() >= int(objective.get("count", 1))
 		"clean":
 			return snapshot.is_initialized and snapshot.files.is_empty()
+		"not_staged":
+			return paths.all(func(path: Variant) -> bool:
+				var status := _status_of(snapshot, str(path))
+				return status == null or not _is_staged_state(status.index_state))
+		"not_committed":
+			return paths.all(func(path: Variant) -> bool:
+				var status := _status_of(snapshot, str(path))
+				return status != null and (status.index_state == GitFileState.UNTRACKED or status.index_state == GitFileState.ADDED))
+		"branch_absent":
+			var gone := str(objective.get("branch", ""))
+			return snapshot.is_initialized and not snapshot.branches.any(func(branch: GitBranchInfo) -> bool: return branch.name == gone)
+		"has_conflict":
+			return snapshot.files.any(func(file: GitFileStatus) -> bool:
+				return file.index_state == GitFileState.UNMERGED or file.working_tree_state == GitFileState.UNMERGED)
 		"branch_exists":
 			var wanted := str(objective.get("branch", ""))
 			return snapshot.branches.any(func(branch: GitBranchInfo) -> bool: return branch.name == wanted)

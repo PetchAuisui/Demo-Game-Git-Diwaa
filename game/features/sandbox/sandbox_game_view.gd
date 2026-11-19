@@ -305,6 +305,8 @@ func _apply_world_actions(actions: Array) -> void:
 			await _sandbox_service.write_file(str(action["write"]), str(action.get("content", "")))
 			if _room != null:
 				_room.remember_content(str(action["write"]), str(action.get("content", "")))
+		elif action.has("run"):
+			await _sandbox_service.execute(str(action["run"]))
 
 
 func _check_room_defeat() -> void:
