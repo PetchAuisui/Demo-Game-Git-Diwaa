@@ -800,7 +800,8 @@ func _read_scroll_action(path: String) -> void:
 		_scroll_reader.name = "ScrollReader"
 		add_child(_scroll_reader)
 		_scroll_reader.closed.connect(_terminal_panel.focus_input)
-	_scroll_reader.show_scroll(name, path, str(result.value))
+	var style := str((_room.items.get(path, {}) as Dictionary).get("style", "")) if _room != null else ""
+	_scroll_reader.show_scroll(name, path, str(result.value), style)
 	_terminal_panel.set_executing(true)
 	await _report_scroll_read(path)
 	_unlock_terminal()

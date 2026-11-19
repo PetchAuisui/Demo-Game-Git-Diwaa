@@ -26,10 +26,10 @@ static func get_data() -> Dictionary:
 	setup.append_array(_master_page("เริ่มศึกษาคัมภีร์เวทต้นกำเนิด", "journal.txt", "วันแรกของการศึกษา\n"))
 	setup.append_array(_master_page("รับศิษย์ฝึกหัดคนใหม่ชื่อเวล", "apprentices.txt", "ศิษย์: เวล\n"))
 	setup.append_array(_master_page("พบรอยร้าวบนคัมภีร์ต้นกำเนิด", "journal.txt", "วันแรกของการศึกษา\nรอยร้าวลามเร็วผิดปกติ\n"))
-	setup.append_array(_master_page("ผนึกประตูชั้นเจ็ด รหัสผนึก: aurora", "seal.txt", "ประตูชั้นเจ็ด: ผนึกแล้ว\n(รหัสไม่ได้อยู่ในกระดาษแผ่นนี้ — ผู้จารึกย่อมจำได้ว่าจารึกอะไรไว้)\n"))
+	setup.append_array(_master_page("ผนึกห้องเก็บตำราชั้นเจ็ดกันพลังโกลาหล รหัสผนึก: aurora", "seal.txt", "ประตูชั้นเจ็ด: ผนึกแล้ว\n(รหัสไม่ได้อยู่ในกระดาษแผ่นนี้ — ผู้จารึกย่อมจำได้ว่าจารึกอะไรไว้)\n"))
 	setup.append_array(_master_page("พลังโกลาหลรุนแรงขึ้นทุกคืน", "journal.txt", "วันแรกของการศึกษา\nรอยร้าวลามเร็วผิดปกติ\nได้ยินเสียงจากใต้หอคอย\n"))
-	setup.append_array(_master_page("ซ่อนเศษคัมภีร์ไว้หลังประตูที่ผนึก", "journal.txt", "…\n"))
-	setup.append_array(_master_page("ถ้ามีใครอ่านอยู่… จงตามเศษคัมภีร์ขึ้นไป", "farewell.txt", "ข้าไปก่อนนะ\n"))
+	setup.append_array(_master_page("ซ่อมแท่นเตรียมชั้นสี่", "repairs.txt", "แท่นเตรียม: ซ่อมแล้ว\n"))
+	setup.append_array(_master_page("พรุ่งนี้จะสอนเวลเรื่องการจารึก", "lesson-plan.txt", "บทเรียนพรุ่งนี้: การจารึก\n"))
 	setup.append_array([
 		{"run": "git config --global user.name \"Vel\""},
 		{"run": "git config --global user.email \"vel@magic-tower.local\""},
@@ -73,7 +73,7 @@ static func get_data() -> Dictionary:
 						"short": "เปิดประตูผนึก",
 						"type": "say",
 						"words": ["aurora"],
-						"world": "ประตูหินสั่นสะเทือน แล้วเลื่อนเปิด… กระดาษแผ่นหนึ่งปลิวออกมาตกบนโต๊ะ",
+						"world": "ประตูหินสั่นสะเทือน แล้วเลื่อนเปิด… เศษคัมภีร์ที่ร่วงเข้าไปในห้องผนึกตอนคัมภีร์ต้นกำเนิดแตก ปลิวออกมาตกบนโต๊ะ",
 						"hint": "รหัสไม่อยู่ในไฟล์ใดเลย อยู่ใน \"คำจารึก\" ของการจารึกครั้งหนึ่ง — git log --oneline แล้วมองหาคำว่ารหัสผนึก",
 						"spawn": [{"write": "fragment-3.txt", "content": "ย่อมสูญหายไปกับกาลเวลา\n"}]
 					},
@@ -94,7 +94,7 @@ static func get_data() -> Dictionary:
 		},
 
 		"outro_sequence": [
-			{"speaker": "เวล", "text": "\"ถ้ามีใครอ่านอยู่… จงตามเศษคัมภีร์ขึ้นไป\" — อาจารย์รู้ว่าจะมีคนตามมา", "mewla_anim": "idle"},
+			{"speaker": "เวล", "text": "\"พรุ่งนี้จะสอนเวลเรื่องการจารึก\" … นี่คือคำจารึกสุดท้ายก่อนอาจารย์หายไป", "mewla_anim": "idle"},
 			{"speaker": "มิวรา", "text": "คำจารึกที่ดีช่วยให้คนรุ่นหลังหาเจอ… นายเองก็จารึกให้ดีแบบท่านนะ", "mewla_anim": "talk"}
 		]
 	}

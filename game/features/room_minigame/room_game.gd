@@ -20,7 +20,7 @@ extends RefCounted
 ##   wave_every    มีคลื่นทุกกี่การกระทำ (0 = ไม่มีคลื่น)
 ##   first_wave    คลื่นแรกที่การกระทำที่เท่าไร (ค่าเริ่มต้น = wave_every)
 ##   safe          "committed" (ค่าเริ่มต้น: ปลอดภัยเมื่อจารึกแล้วเท่านั้น) | "staged" (แท่นเตรียมมีโล่ป้องกัน)
-##   items         {path: {"kind": "fragment|curse|key|note", "name": "ชื่อในโลก"}}
+##   items         {path: {"kind": "fragment|curse|key|note", "name": "ชื่อในโลก", "style": "proclamation" (ไม่บังคับ: หน้าตาตอนหยิบอ่าน)}}
 ##   spawns        [{"turn": n, "path", "content", "kind", "name"}] ปรากฏเมื่อถึงการกระทำที่ n
 ##   respawn       true = เศษที่สลายจะก่อตัวใหม่ในการกระทำถัดไป (เสียหัวใจแทนการแพ้ทันที)
 ##   phantoms      ["ghost"] ชื่อ branch ผีที่ดูดหัวใจทุกคลื่นจนกว่าจะถูกลบ
