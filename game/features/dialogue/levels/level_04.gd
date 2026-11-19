@@ -1,9 +1,10 @@
 class_name Level04Dialogue
 extends RefCounted
 
-## ด่านที่ 4: แท่นเตรียม (git add) — Game Design v2
-## ปัญหาในโลก: เศษคัมภีร์ชิ้นที่ 1 แตกเป็นสามส่วน ต้องวางบนแท่นเตรียมให้ครบจึงจะหลอมกลับ
-## ตรวจจากสถานะ stage จริง และต้องใช้คาถา add
+## ด่านที่ 4: แท่นเตรียม (git add) — มินิเกม "แท่นที่ต้องเลือก"
+## เศษคัมภีร์ชิ้นที่ 1 แตกสามส่วนอยู่บนโต๊ะพร้อม "ม้วนคำสาป"
+## มิวรากางโล่ป้องกันแท่นเตรียมไว้ (safe = staged): ของบนแท่นรอดคลื่น ของบนโต๊ะสลาย
+## แต่ถ้าม้วนคำสาปอยู่บนแท่นตอนคลื่นมา มันจะระเบิด → git add . แบบไม่ดูคือกับดัก ต้องเลือกขึ้นแท่นเอง
 
 
 static func get_data() -> Dictionary:
@@ -13,19 +14,20 @@ static func get_data() -> Dictionary:
 		"time_limit": 100.0,
 		"max_score": 130,
 		"commands": ["git add"],
-		"clear_keyword": "git add <ไฟล์> หรือ git add . เพื่อนำการเปลี่ยนแปลงขึ้น staging area ก่อนจารึก",
+		"clear_keyword": "git add <ไฟล์> เลือกเฉพาะสิ่งที่จะจารึกขึ้น staging area — git add . เอาทุกอย่าง รวมถึงของที่ไม่ต้องการ",
 
 		"intro_sequence": [
-			{"speaker": "เวล", "text": "นั่นไง! กระดาษสามแผ่นเรืองแสงอยู่บนโต๊ะ", "mewla_anim": "idle"},
-			{"speaker": "มิวรา", "text": "เศษคัมภีร์ชิ้นที่ 1 ที่แตกเป็นสามส่วน… วางมันบนแท่นเตรียมให้ครบ แล้วมันจะหลอมกลับ", "mewla_anim": "talk"},
-			{"speaker": "มิวรา", "text": "แท่นเตรียมให้นายเลือกได้ว่าจะจารึกชิ้นไหน ลองวางทีละชิ้นก่อน", "mewla_anim": "success"},
+			{"speaker": "เวล", "text": "นั่นไง! กระดาษสามแผ่นเรืองแสงอยู่บนโต๊ะ… แล้วม้วนสีดำนั่นอะไร?", "mewla_anim": "idle"},
+			{"speaker": "มิวรา", "text": "ม้วนคำสาป อย่าแตะมัน! ส่วนสามแผ่นนั่นคือเศษคัมภีร์ชิ้นที่ 1 ที่แตกออก", "mewla_anim": "talk"},
+			{"speaker": "มิวรา", "text": "ฉันจะกางโล่ไว้ที่แท่นเตรียม ของบนแท่นจะรอดจากคลื่น แต่ของบนโต๊ะไม่รอด", "mewla_anim": "talk"},
+			{"speaker": "มิวรา", "text": "วางเศษทั้งสามขึ้นแท่นให้ได้ — และอย่าเผลอเอาม้วนคำสาปขึ้นไปด้วยล่ะ มันจะระเบิด", "mewla_anim": "success"},
 			{"type": "open_gameplay", "step": 1}
 		],
 
 		"gameplay": {
 			1: {
-				"title": "แท่นเตรียม",
-				"story": "เศษคัมภีร์ชิ้นที่ 1 แตกเป็นสามส่วนบนโต๊ะ วางขึ้นแท่นเตรียมให้ครบเพื่อหลอมกลับ",
+				"title": "แท่นที่ต้องเลือก",
+				"story": "เศษคัมภีร์สามส่วนกับม้วนคำสาปอยู่บนโต๊ะ — วางเฉพาะเศษคัมภีร์ขึ้นแท่นที่มีโล่ป้องกัน",
 				"panels": ["terminal", "files"],
 				"setup": [
 					{"run": "git config --global user.name \"Vel\""},
@@ -36,30 +38,46 @@ static func get_data() -> Dictionary:
 					{"run": "git commit -m \"บันทึกของมิวรา\""},
 					{"write": "fragment-1a.txt", "content": "ศิษย์\n"},
 					{"write": "fragment-1b.txt", "content": "ของ\n"},
-					{"write": "fragment-1c.txt", "content": "ข้า…\n"}
+					{"write": "fragment-1c.txt", "content": "ข้า…\n"},
+					{"write": "curse.txt", "content": "☠ ผู้ใดวางม้วนนี้บนแท่น แท่นจะแตกสลาย ☠\n"}
 				],
+				"room": {
+					"hearts": 3, "wave_every": 3, "safe": "staged", "respawn": true,
+					"items": {
+						"fragment-1a.txt": {"kind": "fragment", "name": "เศษชิ้นที่ 1 · ส่วนแรก"},
+						"fragment-1b.txt": {"kind": "fragment", "name": "เศษชิ้นที่ 1 · ส่วนกลาง"},
+						"fragment-1c.txt": {"kind": "fragment", "name": "เศษชิ้นที่ 1 · ส่วนท้าย"},
+						"curse.txt": {"kind": "curse", "name": "ม้วนคำสาป"},
+						"miura-note.txt": {"kind": "note", "name": "บันทึกมิวรา"}
+					}
+				},
 				"objectives": [
 					{
 						"id": "first",
-						"text": "วางส่วนแรก fragment-1a.txt ขึ้นแท่นเตรียม (git add <ไฟล์>)",
-						"short": "วางส่วนแรกขึ้นแท่น",
+						"text": "ช่วยส่วนแรกขึ้นไปอยู่ใต้โล่ก่อนคลื่นแรกมา",
+						"short": "ส่วนแรกขึ้นแท่น",
 						"type": "state",
 						"check": "staged",
 						"paths": ["fragment-1a.txt"],
+						"exclude": ["curse.txt"],
 						"spell": "add",
-						"world": "กระดาษแผ่นแรกลอยขึ้นจากโต๊ะ ไปหมุนวนเหนือแท่นเตรียม",
-						"hint": "git add ตามด้วยชื่อไฟล์ เช่น git add fragment-1a.txt"
+						"world": "กระดาษแผ่นแรกลอยขึ้นไปหมุนวนใต้โล่ของมิวรา",
+						"hint": "คาถาวางขึ้นแท่นคือ add ระบุชื่อไฟล์ต่อท้าย: git add fragment-1a.txt"
 					},
 					{
 						"id": "rest",
-						"text": "วางส่วนที่เหลือทั้งหมดขึ้นแท่นในคาถาเดียว (git add .)",
-						"short": "วางที่เหลือทั้งหมด",
+						"text": "วางอีกสองส่วนให้ครบ โดยไม่ให้ม้วนคำสาปขึ้นแท่น",
+						"short": "ครบสามส่วน ไม่มีคำสาป",
 						"type": "state",
 						"check": "staged",
 						"paths": ["fragment-1a.txt", "fragment-1b.txt", "fragment-1c.txt"],
+						"exclude": ["curse.txt"],
 						"spell": "add",
 						"world": "สามส่วนหมุนวนเร็วขึ้น… แล้วหลอมรวมเป็นเศษคัมภีร์ชิ้นที่ 1!",
-						"hint": "จุด (.) แปลว่า 'ทุกอย่างในโฟลเดอร์นี้' — git add ."
+						"hint": "git add . จะลากม้วนคำสาปขึ้นไปด้วย — ระบุชื่อทีละไฟล์ (ใส่หลายไฟล์ในคาถาเดียวได้)",
+						"near_miss": [
+							{"pattern": "^git\\s+add\\s+(\\.|-A|--all)\\s*$", "message": "ระวัง! คาถานี้ลากม้วนคำสาปขึ้นแท่นด้วย"}
+						]
 					}
 				],
 				"success_text": "ได้รับเศษคัมภีร์ชิ้นที่ 1: \"ศิษย์ของข้า…\""
@@ -67,8 +85,9 @@ static func get_data() -> Dictionary:
 		},
 
 		"outro_sequence": [
-			{"speaker": "มิวรา", "text": "ได้ชิ้นแรกแล้ว! แต่จำไว้ มันยังอยู่แค่บนแท่นเตรียม ยังไม่ถูกจารึก", "mewla_anim": "talk"},
-			{"speaker": "เวล", "text": "ถ้าไม่จารึกจะเป็นยังไง?", "emote": "question", "mewla_anim": "idle"},
-			{"speaker": "มิวรา", "text": "ไปดูชั้นถัดไปก็รู้", "mewla_anim": "success"}
+			{"speaker": "มิวรา", "text": "เลือกได้ดี — แท่นเตรียมมีไว้ให้นายเลือกว่าอะไรควรถูกจารึก ไม่ใช่โกยทุกอย่างขึ้นไป", "mewla_anim": "success"},
+			{"speaker": "มิวรา", "text": "แต่โล่ของฉันอยู่ได้แค่ชั้นนี้… ชั้นหน้าแท่นเตรียมจะไม่ปลอดภัยอีกแล้ว", "mewla_anim": "talk"},
+			{"speaker": "เวล", "text": "แล้วอะไรถึงจะปลอดภัย?", "emote": "question", "mewla_anim": "idle"},
+			{"speaker": "มิวรา", "text": "สิ่งที่ถูกจารึกลงคัมภีร์แล้วเท่านั้น", "mewla_anim": "talk"}
 		]
 	}

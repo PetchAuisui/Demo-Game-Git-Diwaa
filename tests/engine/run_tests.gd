@@ -817,59 +817,107 @@ func _t_spell_effects() -> void:
 	session.dispose()
 
 
-## เล่นขั้นหนึ่งของด่านแบบเดียวกับ SandboxGameView: ทำ setup เงียบ ๆ แล้วส่งคำสั่งผู้เล่นทีละคำสั่ง
-func _play_step(level: int, step: int, commands: Array[String]) -> LevelMission:
+## เล่นขั้นหนึ่งของด่านแบบเดียวกับ SandboxGameView: setup เงียบ ๆ → ห้องตั้งต้น → ทุกการกระทำเดินโลกหนึ่งจังหวะ
+## คืน {"mission", "room"} (room = null เมื่อด่านไม่มีมินิเกม)
+func _play_level(level: int, step: int, commands: Array[String]) -> Dictionary:
 	var mission := LevelMission.create(level, step)
 	if not _check(mission != null, "level %d step %d should exist" % [level, step]):
-		return null
+		return {}
 	var session := await _fresh_session("level-%02d-%d" % [level, step])
 	for action in mission.setup:
-		if action.has("write"):
-			_check(session.files.write_all_text(str(action["write"]), str(action.get("content", ""))).ok, "setup write")
-		else:
-			var result := await session.execute(str(action["run"]))
-			_check(result.success, "L%d setup '%s' failed: %s" % [level, action["run"], result.output])
+		await _world_action(session, action, level)
+	var room: RoomGame = RoomGame.from_config(mission.room) if not mission.room.is_empty() else null
+	if room != null:
+		for action in room.initial_actions():
+			await _world_action(session, action, level)
+		for path in room.items.keys():
+			var read := session.files.read_all_text(str(path))
+			if read.ok and read.value != null:
+				room.remember_content(str(path), str(read.value))
 	for command in commands:
 		var output := ""
 		var success := true
 		if command.begins_with("cat "):
 			var read := session.files.read_all_text(command.substr(4))
 			success = read.ok and read.value != null
+		elif command.begins_with("write "):
+			var parts := command.split(" ", false, 2)
+			session.files.write_all_text(parts[1], parts[2].replace("\\n", "\n") + "\n")
+		elif command.begins_with("say "):
+			pass
 		else:
 			var result := await session.execute(command)
 			success = result.success
 			output = result.standard_output
-		mission.on_command(command, success, output, await session.inspect())
+		var expected_say := mission.expects_say()
+		var before := mission.done_count()
+		var done := mission.on_command(command, success, output, await session.inspect())
+		for done_id in done:
+			for action in mission.spawn_actions(done_id):
+				await _world_action(session, action, level)
+		if room != null and not mission.is_complete():
+			if command.begins_with("say ") and expected_say and mission.done_count() == before:
+				room.on_wrong_say()
+			else:
+				await _room_turn(session, room, "")
+		if room != null and room.is_failed():
+			break
 	session.dispose()
-	return mission
+	return {"mission": mission, "room": room}
+
+
+func _world_action(session: GitGameSession, action: Dictionary, level: int) -> void:
+	if action.has("write"):
+		_check(session.files.write_all_text(str(action["write"]), str(action.get("content", ""))).ok, "L%d write %s" % [level, action["write"]])
+	elif action.has("delete"):
+		session.files.delete(str(action["delete"]))
+	else:
+		var result := await session.execute(str(action["run"]))
+		_check(result.success, "L%d '%s' failed: %s" % [level, action["run"], result.output])
+
+
+## เส้นทางที่ตั้งใจของแต่ละขั้น (ใช้ทั้งในเทสต์และเป็นเฉลยอ้างอิงของทีม)
+const SOLUTIONS := [
+	[2, 1, ["git init"]],
+	[3, 1, ["git status", "cat scroll-d.txt", "cat scroll-b.txt"]],
+	[4, 1, ["git add fragment-1a.txt", "git add fragment-1b.txt fragment-1c.txt"]],
+	[5, 1, ["git commit -m \"จารึกเศษคัมภีร์ชิ้นที่ 1\""]],
+	[5, 2, ["git commit -am \"เศษคัมภีร์ชิ้นที่ 2\""]],
+]
 
 
 func _t_levels_2_to_5() -> void:
-	var plays := [
-		[2, 1, ["git init"]],
-		[3, 1, ["git status", "cat whisper.txt", "cat tower-rules.txt"]],
-		[4, 1, ["git add fragment-1a.txt", "git add ."]],
-		[5, 1, ["git commit -m \"จารึกเศษคัมภีร์ชิ้นที่ 1\""]],
-		[5, 2, ["git commit -am \"เศษคัมภีร์ชิ้นที่ 2\""]],
-	]
-	for play in plays:
+	for play in SOLUTIONS:
 		var commands: Array[String] = []
 		commands.assign(play[2])
-		var mission := await _play_step(play[0], play[1], commands)
-		if mission != null:
-			_check(mission.is_complete(), "level %d step %d not cleared; stuck at '%s'" % [play[0], play[1], mission.current_objective().get("id", "")])
-			_check(mission.objectives.all(func(o: Dictionary) -> bool: return not str(o.get("world", "")).is_empty()),
-					"level %d step %d: every goal should have a world reaction" % [play[0], play[1]])
+		var outcome := await _play_level(play[0], play[1], commands)
+		if outcome.is_empty():
+			continue
+		var mission: LevelMission = outcome["mission"]
+		var room: RoomGame = outcome["room"]
+		_check(mission.is_complete(), "level %d step %d not cleared; stuck at '%s'" % [play[0], play[1], mission.current_objective().get("id", "")])
+		_check(room == null or room.hearts == room.max_hearts, "level %d step %d: the intended play should not lose hearts" % [play[0], play[1]])
+		_check(mission.objectives.all(func(o: Dictionary) -> bool: return not str(o.get("world", "")).is_empty()),
+				"level %d step %d: every goal should have a world reaction" % [play[0], play[1]])
 
 
 func _t_levels_wrong_spells() -> void:
-	# ด่าน 3: อ่านก่อนหยั่งสถานะไม่นับข้ามลำดับ (เป้าหมายแรกต้องเป็น git status)
-	var level3 := await _play_step(3, 1, ["cat tower-rules.txt"])
-	_check(level3 != null and level3.done_count() == 0, "level 3 needs status first")
-	# ด่าน 5 ขั้น 2: add แล้ว commit ธรรมดา ไม่ใช่การจารึกข้ามแท่น (-a)
-	var level5 := await _play_step(5, 2, ["git add .", "git commit -m \"ปกติ\""])
-	_check(level5 != null and not level5.is_complete(), "level 5 step 2 requires commit -a")
-
+	# ด่าน 2: พิมพ์ผิดจนคลื่นมาถึงก่อนมีคัมภีร์ = เสียหัวใจ
+	var level2 := await _play_level(2, 1, ["git inti", "git int", "git init"])
+	_check(level2["room"].hearts == 2 and level2["mission"].is_complete(), "level 2: the wave hits before the tome exists")
+	# ด่าน 3: อ่านก่อนหยั่งสถานะไม่นับข้ามลำดับ
+	var level3 := await _play_level(3, 1, ["cat scroll-b.txt"])
+	_check(level3["mission"].done_count() == 0, "level 3 needs status first")
+	# ด่าน 4: git add . ลากม้วนคำสาปขึ้นแท่น → ไม่ผ่าน และระเบิดเมื่อคลื่นมา
+	var level4 := await _play_level(4, 1, ["git add .", "git status", "git status"])
+	_check(not level4["mission"].is_complete(), "level 4: add . must not clear")
+	_check(level4["room"].hearts < level4["room"].max_hearts, "level 4: the cursed altar explodes")
+	# ด่าน 5 ขั้น 1: ลังเลจนคลื่นกวาดแท่นเตรียม
+	var level5 := await _play_level(5, 1, ["git status", "git status"])
+	_check(level5["room"].hearts < 3, "level 5: the altar is not safe any more")
+	# ด่าน 5 ขั้น 2: add . แล้ว commit = ลากคำสาปเข้าคัมภีร์
+	var level5b := await _play_level(5, 2, ["git add .", "git commit -m \"ทุกอย่าง\""])
+	_check(not level5b["mission"].is_complete(), "level 5 step 2: the curse must stay out of the tome")
 
 ## ทำ actions ของ RoomGame กับ session จริง แล้วคืน path ที่อยู่ในพื้นที่ทำงาน
 func _apply_room(session: GitGameSession, room: RoomGame, outcome: Dictionary) -> void:

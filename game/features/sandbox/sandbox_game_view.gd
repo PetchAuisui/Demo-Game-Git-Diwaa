@@ -286,12 +286,18 @@ func _advance_room(command: String) -> void:
 		return
 	_room.set_present(paths)
 	var outcome := _room.on_turn(snapshot, command)
-	await _apply_world_actions(outcome["actions"])
+	var actions: Array = outcome["actions"]
 	_room_view.play_events(outcome["events"])
 	for event in outcome["events"]:
 		_terminal_panel.append_info("✦ " + str(event["text"]))
-	await _refresh_state()
-	await _update_room_view()
+	if actions.is_empty():
+		# โลกไม่เปลี่ยน: ใช้สถานะที่เพิ่งอ่านมาวาดห้องเลย ไม่ต้องตรวจ repo ซ้ำ (ห้องตอบสนองไวขึ้น)
+		var branch := str(snapshot.current_branch) if snapshot.is_initialized and snapshot.current_branch != null else ""
+		_room_view.update_room(_room, _room.describe(snapshot, paths), branch)
+	else:
+		await _apply_world_actions(actions)
+		await _refresh_state()
+		await _update_room_view()
 	_check_room_defeat()
 
 

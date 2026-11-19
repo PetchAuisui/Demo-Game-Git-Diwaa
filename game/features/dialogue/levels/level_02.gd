@@ -20,28 +20,30 @@ static func get_data() -> Dictionary:
 		"clear_keyword": "git init เพื่อสร้างคัมภีร์ (repository) ใหม่ที่จดจำทุกการเปลี่ยนแปลงในโฟลเดอร์",
 
 		"intro_sequence": [
-			{"speaker": "มิวรา", "text": "ชั้นสองคือห้องจารึก… แต่โต๊ะตัวนี้ว่างเปล่า", "mewla_anim": "talk"},
-			{"speaker": "มิวรา", "text": "เศษคัมภีร์ที่นายจะเจอต้องมีที่จารึก ไม่งั้นมันจะสลายไปกับลม", "mewla_anim": "talk"},
-			{"speaker": "เวล", "text": "งั้นฉันต้องมีคัมภีร์ของตัวเอง?", "emote": "question", "mewla_anim": "idle"},
-			{"speaker": "มิวรา", "text": "ใช่ ร่ายคาถากำเนิดคัมภีร์บนโต๊ะนี้เลย", "mewla_anim": "success"},
+			{"speaker": "มิวรา", "text": "ได้ยินเสียงนั่นไหม… คลื่นโกลาหลกำลังไหลลงมาตามบันได!", "mewla_anim": "talk"},
+			{"speaker": "มิวรา", "text": "นักเวทที่ไม่มีคัมภีร์รองรับพลังจะโดนมันซัดเต็ม ๆ", "mewla_anim": "talk"},
+			{"speaker": "เวล", "text": "แล้วฉันมีเวลาแค่ไหน?", "emote": "question", "mewla_anim": "idle"},
+			{"speaker": "มิวรา", "text": "ไม่กี่อึดใจ — ดูมาตรวัดสีม่วงไว้ แล้วทำให้คัมภีร์ถือกำเนิดก่อนมันมาถึง", "mewla_anim": "success"},
 			{"type": "open_gameplay", "step": 1}
 		],
 
 		"gameplay": {
 			1: {
 				"title": "คัมภีร์เล่มแรก",
-				"story": "บนโต๊ะยังไม่มีคัมภีร์ ร่ายคาถากำเนิดคัมภีร์เวทส่วนตัว",
+				"story": "คลื่นโกลาหลกำลังมา และนายยังไม่มีคัมภีร์รองรับพลัง",
 				"panels": ["terminal"],
 				"setup": IDENTITY,
+				# คลื่นแรกมาหลังการกระทำที่ 2: ถ้ายังไม่มีคัมภีร์จะเสียหัวใจ (พิมพ์ผิดก็กินเวลา)
+				"room": {"hearts": 3, "wave_every": 2, "needs_tome": true},
 				"objectives": [
 					{
 						"id": "tome",
-						"text": "ให้คัมภีร์เวทส่วนตัวถือกำเนิดบนโต๊ะนี้ (git init)",
+						"text": "ทำให้คัมภีร์เวทส่วนตัวถือกำเนิดก่อนคลื่นโกลาหลมาถึง",
 						"short": "คัมภีร์ถือกำเนิด",
 						"type": "state",
 						"check": "repo_initialized",
 						"world": "แสงรวมตัวเหนือโต๊ะ ก่อตัวเป็นหนังสือ — มันซ่อนตัวอยู่ในห้องลับชื่อ .git",
-						"hint": "คาถากำเนิดคัมภีร์สั้นมาก: git ตามด้วยคำว่า init (initialize)",
+						"hint": "คาถากำเนิดคัมภีร์สั้นมาก: git ตามด้วยคำว่า init (initialize — เริ่มต้น)",
 						"near_miss": [
 							{"pattern": "^git\\s+inti", "message": "สะกดผิดนิดเดียว — init (i-n-i-t)"},
 							{"pattern": "^git\\s+create", "message": "Git ใช้คำว่า init ไม่ใช่ create"}
