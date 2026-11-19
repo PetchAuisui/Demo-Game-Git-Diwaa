@@ -236,6 +236,7 @@ func _setup_room() -> void:
 	if _mission == null or _mission.room.is_empty():
 		return
 	_room = RoomGame.from_config(_mission.room)
+	_spell_overlay.compact = true
 	if _room_view == null:
 		_room_view = RoomView.new()
 		_room_view.name = "RoomView"
