@@ -221,7 +221,8 @@ func _make_card(spell: Dictionary) -> Control:
 	box.add_child(does)
 
 	var real := _label(16, INK_SOFT, false)
-	real.text = "ใน Git: " + str(spell["real"])
+	var is_tool: bool = spell.get("tool", false)
+	real.text = ("เครื่องมือของเกม (ไม่ใช่คำสั่ง Git): " if is_tool else "ใน Git: ") + str(spell["real"])
 	real.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	box.add_child(real)
 
