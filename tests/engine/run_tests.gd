@@ -859,7 +859,10 @@ func _play_level(level: int, step: int, commands: Array[String]) -> Dictionary:
 		elif command.begins_with("say "):
 			pass
 		else:
-			var result := await session.execute(command)
+			# commit ที่ไม่มี -m: ในเกมเปิดหน้าจารึก (editor) — เทสต์จำลองการเขียนคำจารึกหลายบรรทัด
+			var executed := CommitEditor.to_command(command, "จารึกผ่านหน้าคัมภีร์\n\nรายละเอียดของการจารึก") \
+					if CommitEditor.needs_editor(command) else command
+			var result := await session.execute(executed)
 			success = result.success
 			output = result.standard_output
 		var expected_say := mission.expects_say()
@@ -872,7 +875,7 @@ func _play_level(level: int, step: int, commands: Array[String]) -> Dictionary:
 			if command.begins_with("say ") and expected_say and mission.done_count() == before:
 				room.on_wrong_say()
 			else:
-				await _room_turn(session, room, "")
+				await _room_turn(session, room, command, false)
 		if room != null and room.is_failed():
 			break
 	session.dispose()
@@ -909,6 +912,16 @@ const SOLUTIONS := [
 	[14, 1, ["git pull", "cat fragment-11.txt"]],
 	[14, 1, ["git fetch", "git pull", "cat fragment-11.txt"]],
 	[15, 1, ["git remote add origin https://magic-vault.com/user/apprentice-tome.git", "git push -u origin main"]],
+	[5, 3, ["git commit"]],
+	[5, 4, ["git add fragment-2-seal.txt", "git commit --amend --no-edit"]],
+	[5, 4, ["git add fragment-2-seal.txt", "git commit --amend"]],
+	[6, 2, ["git log -n 3 --oneline", "say lumen"]],
+	[6, 3, ["git log --graph --all --oneline", "say nyx"]],
+	[7, 2, ["git diff HEAD", "say solaris"]],
+	[12, 2, ["git merge echo", "cat key-whole.txt", "git merge --abort"]],
+	[13, 2, ["git remote -v", "git remote set-url origin https://magic-vault.com/user/light-tome.git", "git remote remove shadow"]],
+	[13, 2, ["git remote -v", "git remote remove shadow", "git remote set-url origin https://magic-vault.com/user/light-tome.git"]],
+	[15, 2, ["git push origin main"]],
 ]
 
 
@@ -959,8 +972,8 @@ func _apply_room(session: GitGameSession, room: RoomGame, outcome: Dictionary) -
 			session.files.write_all_text(str(action["write"]), str(action["content"]))
 
 
-func _room_turn(session: GitGameSession, room: RoomGame, command: String) -> Dictionary:
-	if command.begins_with("git "):
+func _room_turn(session: GitGameSession, room: RoomGame, command: String, execute := true) -> Dictionary:
+	if execute and command.begins_with("git "):
 		await session.execute(command)
 	var paths: Array[String] = []
 	for entry in session.files.list_entries():
@@ -1102,6 +1115,20 @@ func _t_levels_6_to_9_wrong() -> void:
 	_check(level7["room"].hearts == 2 and level7["mission"].done_count() == 0, "level 7: the forged rune backfires")
 	var level8 := await _play_level(8, 1, ["git add .", "git commit -m \"ทับคำสาป\""])
 	_check(not level8["mission"].is_complete(), "level 8: inscribing over the curse is not a cure")
+	# ด่าน 6 ขั้น 2: คลี่ม้วนประวัติทั้งม้วน = ฝุ่นโกลาหลฟุ้ง
+	var level6b := await _play_level(6, 2, ["git log --oneline", "git log -n 3"])
+	_check(level6b["room"].hearts == 2 and level6b["mission"].done_count() == 1, "level 6 step 2: unrolling the whole scroll costs a heart")
+	# ด่าน 6 ขั้น 3: log ธรรมดาไม่เห็นมิติที่ซ่อน
+	var level6c := await _play_level(6, 3, ["git log --oneline"])
+	_check(level6c["mission"].done_count() == 0, "level 6 step 3: a plain log does not map other dimensions")
+	# ด่าน 7 ขั้น 2: เทียบรอยทีละครึ่ง = เสียพลัง
+	var level7b := await _play_level(7, 2, ["git diff", "git diff --staged"])
+	_check(level7b["room"].hearts == 1 and level7b["mission"].done_count() == 0, "level 7 step 2: half comparisons backfire")
+	# ด่าน 5 ขั้น 3: -m บรรทัดเดียวไม่ผ่านม้วนพิธี / ขั้น 4: จารึกหน้าใหม่ = เกินกำลังคัมภีร์
+	var level5c := await _play_level(5, 3, ["git commit -m \"สั้น ๆ\""])
+	_check(not level5c["mission"].is_complete(), "level 5 step 3: a one-line -m does not satisfy the ritual scroll")
+	var level5d := await _play_level(5, 4, ["git add fragment-2-seal.txt", "git commit -m \"ตรา\""])
+	_check(not level5d["mission"].is_complete() and level5d["room"].hearts == 2, "level 5 step 4: a new page overloads the tome")
 	var level9 := await _play_level(9, 1, ["git reset --hard HEAD~1"])
 	_check(level9["room"].is_failed(), "level 9: --hard destroys fragment 6 and loses the floor")
 
@@ -1113,6 +1140,9 @@ func _t_levels_10_to_12_wrong() -> void:
 	_check(level11["mission"].done_count() == 1, "level 11: entering the dimension does not also inscribe the key")
 	var level11b := await _play_level(11, 1, ["git switch experiment", "git status", "git status"])
 	_check(level11b["room"].hearts == 2, "level 11: an uninscribed key is swept away by the wave")
+	# ด่าน 12 ขั้น 2: จารึกผลการหลอมกับมิติเงา = รับคำสาปเข้าคัมภีร์
+	var level12b := await _play_level(12, 2, ["git merge echo", "git add .", "git commit -m \"หลอม\""])
+	_check(not level12b["mission"].is_complete() and level12b["room"].hearts == 2, "level 12 step 2: sealing the shadow merge is a trap")
 	var level12 := await _play_level(12, 1, ["git merge experiment", "git add altar-core.txt"])
 	_check(level12["mission"].done_count() == 2 and not level12["mission"].is_complete(), "level 12: the ritual is not sealed until it is inscribed")
 
@@ -1156,6 +1186,12 @@ func _t_levels_13_to_15_wrong() -> void:
 	_check(level13["room"].hearts == 2, "level 13: waves hit while there is no tome")
 	var level14 := await _play_level(14, 1, ["git fetch", "git status"])
 	_check(level14["room"].hearts == 2 and level14["mission"].done_count() == 0, "level 14: fetch alone leaves the tome stale")
+	# ด่าน 13 ขั้น 2: ที่อยู่เก่าร้างแล้ว ส่องคลังไม่ได้ / สายเงาดูดพลังทุกคลื่น
+	var level13b := await _play_level(13, 2, ["git fetch origin", "git status", "git status"])
+	_check(level13b["room"].hearts == 2 and level13b["mission"].done_count() == 0, "level 13 step 2: the old address is a ruin and the shadow drains")
+	# ด่าน 15 ขั้น 2: ประตูต้องการปลายทางชัด ๆ
+	var level15b := await _play_level(15, 2, ["git push"])
+	_check(not level15b["mission"].is_complete(), "level 15 step 2: the gate wants origin main spelled out")
 	var level15 := await _play_level(15, 1, ["git remote add origin https://magic-vault.com/user/apprentice-tome.git", "git push origin main", "git status"])
 	_check(not level15["mission"].is_complete() and level15["room"].hearts == 2, "level 15: a push without -u leaves the path unbound")
 
@@ -1164,6 +1200,9 @@ func _t_resume_phase() -> void:
 	_equal(2, LevelMission.resume_phase_after(1, 1)) # ด่านขั้นเดียว (เช่น ด่าน 2) → outro
 	_equal(1, LevelMission.resume_phase_after(1, 2)) # ด่านสองขั้น → part 2 ก่อน
 	_equal(2, LevelMission.resume_phase_after(2, 2))
+	_equal(3, LevelMission.resume_phase_after(2, 4)) # ด่านสี่ขั้น: หลังขั้น 2 → part3_intro
+	_equal(4, LevelMission.resume_phase_after(3, 4))
+	_equal(2, LevelMission.resume_phase_after(4, 4))
 	for level in range(1, 16):
 		var data := LevelDataLoader.load_data(level)
 		_check(not data.is_empty(), "level %d data" % level)
@@ -1171,6 +1210,8 @@ func _t_resume_phase() -> void:
 		var steps := LevelDataLoader.get_gameplay_step_count(level)
 		if steps >= 2:
 			_check(not (data.get("part2_intro_sequence", []) as Array).is_empty(), "level %d has step 2 but no part 2 dialogue" % level)
+		for step in range(3, steps + 1):
+			_check(not (data.get("part%d_intro_sequence" % step, []) as Array).is_empty(), "level %d has step %d but no part %d dialogue" % [level, step, step])
 
 
 func _t_spellbook() -> void:
@@ -1180,7 +1221,7 @@ func _t_spellbook() -> void:
 			_check(not taught.is_empty(), "level %d step %d should hand out a spell scroll" % [level, step])
 			for id in taught:
 				_check(SpellCatalog.has_spell(id), "level %d step %d teaches unknown spell '%s'" % [level, step, id])
-	var learned := SpellCatalog.learned_until(15, 1)
+	var learned := SpellCatalog.learned_until(15, LevelDataLoader.get_gameplay_step_count(15))
 	_equal(SpellCatalog.SPELLS.size(), learned.size())
 	_check(SpellCatalog.learned_until(4, 1).has("add") and not SpellCatalog.learned_until(4, 1).has("commit"), "spells unlock in story order")
 	# เฉลยทุกขั้นใช้เฉพาะคาถาที่ได้เรียนมาแล้ว (ไม่มีด่านที่ต้องรู้คำสั่งที่เกมยังไม่สอน)
@@ -1211,6 +1252,24 @@ func _t_spellbook() -> void:
 					id = "switch_create"
 				elif tokens[1] == "remote" and tokens.has("add"):
 					id = "remote_add"
+				elif tokens[1] == "remote" and tokens.has("set-url"):
+					id = "remote_set_url"
+				elif tokens[1] == "remote" and tokens.has("remove"):
+					id = "remote_remove"
+				elif tokens[1] == "commit" and tokens.has("--amend"):
+					id = "amend"
+				elif tokens[1] == "commit" and CommitEditor.needs_editor(command):
+					id = "commit_editor"
+				elif tokens[1] == "log" and LevelMission.has_flag(tokens, "-n*"):
+					id = "log_n"
+				elif tokens[1] == "log" and tokens.has("--graph"):
+					id = "log_graph"
+				elif tokens[1] == "diff" and tokens.has("HEAD"):
+					id = "diff_head"
+				elif tokens[1] == "merge" and tokens.has("--abort"):
+					id = "merge_abort"
+				elif tokens[1] == "push" and not tokens.has("-u"):
+					id = "push_named"
 			else:
 				id = tokens[0]
 			_check(known.has(id), "level %d step %d uses '%s' before it is taught" % [play[0], play[1], command])
