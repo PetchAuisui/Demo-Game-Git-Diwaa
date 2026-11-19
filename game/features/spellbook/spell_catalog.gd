@@ -6,6 +6,7 @@ extends RefCounted
 ## ปริศนายังอยู่ที่ "จะใช้คาถาไหน เมื่อไร" ไม่ใช่การเดาว่าคำสั่งสะกดอย่างไร
 ##
 ## แต่ละคาถา: name (ชื่อในโลกเวท), command (คำสั่งจริง), does (ผลในโลก), real (ความหมายใน Git), example
+## tool = true → เครื่องมือของเกม ไม่ใช่คำสั่ง Git (การ์ดจะบอกชัดเพื่อไม่ให้ผู้เล่นสับสน)
 
 const SPELLS := {
 	"version": {"name": "คาถาวัดพลัง", "command": "git --version",
@@ -20,9 +21,10 @@ const SPELLS := {
 	"status": {"name": "คาถาหยั่งสถานะ", "command": "git status",
 		"does": "ให้คัมภีร์บอกว่าแผ่นไหนไร้ตรา (untracked) ถูกแก้ (modified) หรืออยู่บนแท่นเตรียม", "real": "ดูสถานะไฟล์ใน working tree และ staging area",
 		"example": "git status"},
-	"cat": {"name": "หยิบอ่าน", "command": "cat <ไฟล์>",
-		"does": "อ่านกระดาษบนโต๊ะ (หรือเปิดไฟล์ในแผง Files)", "real": "แสดงเนื้อหาไฟล์ (คำสั่งของเกม ไม่ใช่ Git)",
-		"example": "cat scroll-a.txt"},
+	"cat": {"name": "หยิบอ่าน", "command": "cat ชื่อไฟล์", "tool": true,
+		"does": "อ่านข้อความบนกระดาษ — พิมพ์ cat เว้นวรรค แล้วตามด้วยชื่อไฟล์ให้ครบ (รวม .txt) ตามที่เห็นในห้องหรือในผลของ git status · หรือคลิกกระดาษในห้องเพื่ออ่านได้เลย",
+		"real": "ใช้ดูเนื้อหาไฟล์ (มาจากคำสั่ง cat ของ Terminal ทั่วไป)",
+		"example": "cat note.txt"},
 	"add": {"name": "คาถาวางขึ้นแท่น", "command": "git add <ไฟล์>",
 		"does": "ยกของจากโต๊ะขึ้นแท่นเตรียม เลือกได้ทีละชิ้นหรือหลายชิ้น — git add . ยกทุกอย่าง (รวมของที่ไม่อยากได้!)", "real": "เพิ่มการเปลี่ยนแปลงเข้า staging area",
 		"example": "git add fragment-1a.txt fragment-1b.txt"},
@@ -35,8 +37,8 @@ const SPELLS := {
 	"log": {"name": "คาถาคลี่ม้วนประวัติ", "command": "git log --oneline",
 		"does": "อ่านการจารึกทั้งหมดย้อนหลัง — ใคร จารึกอะไร (คำจารึกมักมีความลับซ่อนอยู่)", "real": "ดูประวัติ commit (--oneline = บรรทัดละ commit)",
 		"example": "git log --oneline"},
-	"say": {"name": "เอ่ยคำ", "command": "say <คำ>",
-		"does": "เอ่ยรหัสหรืออักขระต่อหน้าประตู/วงเวท — เอ่ยผิดพลังจะสะท้อนกลับ", "real": "คำสั่งของเกม ใช้ตอบปริศนา",
+	"say": {"name": "เอ่ยคำ", "command": "say คำ", "tool": true,
+		"does": "เอ่ยรหัสหรืออักขระต่อหน้าประตู/วงเวท — เอ่ยผิดพลังจะสะท้อนกลับ", "real": "ใช้ตอบปริศนาในห้อง",
 		"example": "say lumos"},
 	"diff": {"name": "คาถาเทียบรอย", "command": "git diff",
 		"does": "เทียบโต๊ะกับคัมภีร์: บรรทัด - คืออักขระเดิม + คืออักขระใหม่", "real": "ดูความต่างระหว่าง working tree กับ staging area",
@@ -68,8 +70,8 @@ const SPELLS := {
 	"merge": {"name": "พิธีหลอมมิติ", "command": "git merge <มิติ>",
 		"does": "หลอมอีกมิติเข้ามาในมิติที่ยืนอยู่ — ถ้าเขียนจุดเดียวกันต่างกันจะเกิดการปะทะ ต้องแก้ไฟล์ → add → commit", "real": "รวม branch (conflict: แก้ไฟล์ แล้ว git add และ git commit)",
 		"example": "git merge experiment"},
-	"write": {"name": "เขียนทับ", "command": "write <ไฟล์> <ข้อความ>",
-		"does": "เขียนเนื้อหาใหม่ลงกระดาษ (หรือแก้ในแผง Files แล้วบันทึก)", "real": "คำสั่งของเกม ใช้แก้ไฟล์",
+	"write": {"name": "เขียนทับ", "command": "write ชื่อไฟล์ ข้อความ", "tool": true,
+		"does": "เขียนเนื้อหาใหม่ทับทั้งไฟล์ (หรือแก้ในแผง Files แล้วบันทึก)", "real": "ใช้แก้ไฟล์ในพื้นที่ทดลอง",
 		"example": "write altar-core.txt แกนแท่นบูชา: ไอน้ำ"},
 	"clone": {"name": "คาถาคัดลอกคัมภีร์", "command": "git clone <ที่อยู่>",
 		"does": "คัดลอกคัมภีร์ทั้งเล่มพร้อมประวัติจากคลังเวทกลาง", "real": "คัดลอก remote repository มาเป็น repo ในเครื่อง",

@@ -290,6 +290,9 @@ func _setup_room() -> void:
 		_room_view.name = "RoomView"
 		add_child(_room_view)
 		_room_view.place_in_stage()
+		_room_view.item_pressed.connect(func(path: String) -> void:
+			if _is_initialized and not _room.is_failed():
+				_terminal_panel.submit_command("cat " + path))
 		move_child(_room_view, _spell_overlay.get_index())
 
 
@@ -753,18 +756,33 @@ func _handle_write_command(command: String) -> void:
 
 func _handle_cat_command(command: String) -> void:
 	var parts := TerminalApp.split_command(command, 2)
+	var files := await _workspace_paths()
 	if parts.size() < 2:
-		_terminal_panel.append_error("วิธีใช้: cat <path>")
+		_terminal_panel.append_error("พิมพ์ cat เว้นวรรค แล้วตามด้วยชื่อไฟล์ เช่น cat %s" % (files[0] if not files.is_empty() else "note.txt"))
 		return
 
-	var result := _sandbox_service.read_file(parts[1])
+	var path := _resolve_scroll_name(parts[1], files)
+	var result := _sandbox_service.read_file(path)
 	if not result.ok:
 		_terminal_panel.append_error("อ่านไฟล์ไม่สำเร็จ: " + result.message)
 	elif result.value == null:
-		_terminal_panel.append_error("ไม่พบไฟล์ '%s'" % parts[1])
+		var listing := ", ".join(PackedStringArray(files)) if not files.is_empty() else "(ว่างเปล่า)"
+		_terminal_panel.append_error("ไม่พบไฟล์ '%s' — ในห้องนี้มี: %s" % [parts[1], listing])
+		_terminal_panel.append_info("พิมพ์ชื่อให้ตรงทั้งหมด (รวม .txt) หรือคลิกกระดาษในห้องเพื่ออ่าน")
 	else:
 		_terminal_panel.append_output(result.value)
-		_report_scroll_read(parts[1])
+		_report_scroll_read(path)
+
+
+## ช่วยผู้เล่นที่พิมพ์ชื่อไม่ครบ: ตัด <> และเครื่องหมายคำพูด, เติม .txt ให้ถ้ามีไฟล์ชื่อนั้นอยู่จริง
+static func _resolve_scroll_name(typed: String, files: Array[String]) -> String:
+	var name := typed.strip_edges().trim_prefix("<").trim_suffix(">").trim_prefix("\"").trim_suffix("\"")
+	if files.has(name):
+		return name
+	for extension in [".txt", ".md"]:
+		if files.has(name + extension):
+			return name + extension
+	return name
 
 
 ## การอ่านเศษคัมภีร์ (cat หรือเปิดในแผง Files) นับเป็นการสังเกตโลกสำหรับภารกิจชนิด read
