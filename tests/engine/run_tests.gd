@@ -66,6 +66,7 @@ func _run() -> void:
 	await _test("levels 2-5: the wrong spell does not clear state goals", _t_levels_wrong_spells)
 	await _test("levels 6-9: guessing, fake runes, inscribing curses and --hard are punished", _t_levels_6_to_9_wrong)
 	await _test("levels 10-12: phantoms drain, keys need committing, merges need judging", _t_levels_10_to_12_wrong)
+	await _test("vault: seeded remote, behind/ahead drift and in_sync after pull and push", _t_vault_sync)
 	await _test("room: chaos waves destroy uninscribed scrolls, inscriptions are safe", _t_room_waves)
 	await _test("room: altar shield, cursed inscriptions, restore and phantom dimensions", _t_room_rules)
 	await _test("room v2: tome needed, cursed altar, essential scrolls and exclusion checks", _t_room_rules_v2)
@@ -717,8 +718,8 @@ func _t_clear_scoring() -> void:
 	_check(GameProgressManager.calculate_score(130.0, 130.0) == 100)
 
 
-func _fresh_session(mission_id: String) -> GitGameSession:
-	var created: OpResult = await _factory.create(mission_id, "attempt-%d" % Time.get_ticks_usec())
+func _fresh_session(mission_id: String, remote_seed: RemoteSeed = null) -> GitGameSession:
+	var created: OpResult = await _factory.create(mission_id, "attempt-%d" % Time.get_ticks_usec(), remote_seed)
 	return created.value if created.ok else null
 
 
@@ -825,7 +826,7 @@ func _play_level(level: int, step: int, commands: Array[String]) -> Dictionary:
 	var mission := LevelMission.create(level, step)
 	if not _check(mission != null, "level %d step %d should exist" % [level, step]):
 		return {}
-	var session := await _fresh_session("level-%02d-%d" % [level, step])
+	var session := await _fresh_session("level-%02d-%d" % [level, step], LevelMission.build_remote_seed(mission.remote))
 	for action in mission.setup:
 		await _world_action(session, action, level)
 	var room: RoomGame = RoomGame.from_config(mission.room) if not mission.room.is_empty() else null
@@ -1099,3 +1100,37 @@ func _t_levels_10_to_12_wrong() -> void:
 	_check(level11b["room"].hearts == 2, "level 11: an uninscribed key is swept away by the wave")
 	var level12 := await _play_level(12, 1, ["git merge experiment", "git add altar-core.txt"])
 	_check(level12["mission"].done_count() == 2 and not level12["mission"].is_complete(), "level 12: the ritual is not sealed until it is inscribed")
+
+
+func _t_vault_sync() -> void:
+	var seed := LevelMission.build_remote_seed({"name": "light-tome", "commits": [
+		{"author": "Guardian", "message": "หนึ่ง", "files": {"a.txt": "1\n"}},
+		{"author": "Guardian", "message": "สอง", "files": {"b.txt": "2\n"}},
+	]})
+	_equal("https://magic-vault.com/user/light-tome.git", seed.clone_url)
+	var session := await _fresh_session("vault-sync", seed)
+	await session.execute("git config --global user.name \"Vel\"")
+	await session.execute("git config --global user.email \"vel@magic-tower.local\"")
+	var cloned := await session.execute("git clone " + seed.clone_url)
+	_check(cloned.success, "clone: " + cloned.output)
+	var in_sync := {"check": "in_sync", "upstream": "origin/main"}
+	var snapshot := await session.inspect()
+	_check(LevelMission.evaluate_state(in_sync, snapshot), "fresh clone is in sync")
+	_equal("", RoomGame.sync_drift(snapshot))
+
+	await session.execute("git reset --hard HEAD~1")
+	snapshot = await session.inspect()
+	_check(not LevelMission.evaluate_state(in_sync, snapshot))
+	_check(RoomGame.sync_drift(snapshot).contains("ล้าหลัง"), "behind the vault")
+	await session.execute("git pull")
+	_check(LevelMission.evaluate_state(in_sync, await session.inspect()), "pull brings it back in sync")
+
+	session.files.write_all_text("c.txt", "3\n")
+	await session.execute("git add c.txt")
+	await session.execute("git commit -m \"สาม\"")
+	snapshot = await session.inspect()
+	_check(RoomGame.sync_drift(snapshot).contains("ยังไม่ได้รับ"), "ahead of the vault")
+	var pushed := await session.execute("git push")
+	_check(pushed.success, "push: " + pushed.output)
+	_check(LevelMission.evaluate_state(in_sync, await session.inspect()), "push brings it back in sync")
+	session.dispose()

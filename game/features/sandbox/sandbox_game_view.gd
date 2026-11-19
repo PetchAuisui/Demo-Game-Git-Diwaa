@@ -485,7 +485,8 @@ func _initialize_sandbox() -> void:
 
 	if _sandbox_service == null:
 		var real_service := RealGitSandboxService.new()
-		var started := await real_service.initialize("checkpoint-01")
+		var remote_seed := LevelMission.build_remote_seed(_mission.remote) if _mission != null else null
+		var started := await real_service.initialize("checkpoint-01", "", remote_seed)
 		if _is_leaving or not is_inside_tree():
 			real_service.dispose()
 			return

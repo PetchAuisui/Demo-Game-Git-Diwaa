@@ -52,7 +52,7 @@ func _seed_sample_data() -> void:
 			"feat: Add core mechanics and files", "learner <learner@diwaa.dev>", base_date + 15.0 * 60.0))
 
 
-func initialize(_mission_id: String = "checkpoint-01", _attempt_id: String = "") -> OpResult:
+func initialize(_mission_id: String = "checkpoint-01", _attempt_id: String = "", _remote_seed: RemoteSeed = null) -> OpResult:
 	_is_initialized_value = true
 	_seed_sample_data()
 	return OpResult.success()

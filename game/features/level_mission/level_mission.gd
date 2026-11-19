@@ -19,6 +19,7 @@ extends RefCounted
 ##             | not_committed   paths: [..]          ไฟล์ใน paths ไม่ได้อยู่ในคัมภีร์ (ยังไร้ตรา / แค่อยู่บนแท่น / ไม่มีอยู่)
 ##             | branch_absent   branch               ไม่มี branch ชื่อนี้แล้ว
 ##             | has_conflict                         มีไฟล์ที่มิติปะทะ (merge conflict) อยู่
+##             | in_sync         upstream (ไม่บังคับ)   branch ปัจจุบันผูกกับคลังเวทและตรงกับฝั่งคลังพอดี
 ##       max_count (ใช้ได้ทุก check) = มี commit ได้ไม่เกินจำนวนนี้ (กันการ "แก้" ด้วยการจารึกของที่ถูกสาปทับ)
 ##       exclude (ใช้กับ staged / committed) = ไฟล์เหล่านี้ต้องไม่อยู่บนแท่นและไม่ถูกจารึก (เช่น ม้วนคำสาป)
 ##             | commits_at_least count               มี commit อย่างน้อย count ครั้ง
@@ -58,6 +59,9 @@ var panels: Array[String] = []
 var setup: Array[Dictionary] = []
 ## กฎมินิเกมห้อง (ดู RoomGame) — ว่าง = ไม่มีมินิเกม
 var room: Dictionary = {}
+## คลังเวทกลาง (GitHub จำลอง) ของด่าน: {"name", "description", "commits": [{"author", "message", "files"}], "empty": bool}
+## ว่าง = บัญชีที่ยังไม่มี repo (ค่าเริ่มต้นของ sandbox)
+var remote: Dictionary = {}
 
 var _done: Dictionary = {}
 var _done_before: Dictionary = {}
@@ -85,6 +89,7 @@ static func create(level_num: int, step_num: int) -> LevelMission:
 	for action in definition.get("setup", []):
 		mission.setup.append(action)
 	mission.room = definition.get("room", {})
+	mission.remote = definition.get("remote", {})
 	return mission
 
 
@@ -114,6 +119,20 @@ func current_objective() -> Dictionary:
 
 
 ## ข้อความ "โลกตอบสนอง" ของภารกิจ ("" = ไม่มี)
+## สร้าง RemoteSeed ของคลังเวทตามนิยามด่าน (null = บัญชีว่าง) — owner คือเจ้าของบัญชีผู้เล่น
+static func build_remote_seed(remote_config: Dictionary, owner: String = RemoteSeed.DEFAULT_OWNER) -> RemoteSeed:
+	if remote_config.is_empty():
+		return null
+	var commits: Array[SeedCommit] = []
+	var date := 1735693200.0 # 2025-01-01
+	for commit in remote_config.get("commits", []):
+		date += 86400.0
+		commits.append(SeedCommit.new(str(commit.get("branch", "main")), str(commit.get("author", "Guardian")),
+				str(commit["message"]), date, commit.get("files", {})))
+	return RemoteSeed.new(owner, str(remote_config.get("name", RemoteSeed.DEFAULT_NAME)),
+			str(remote_config.get("description", "")), commits)
+
+
 ## ของที่ต้องปรากฏเมื่อเป้าหมายนี้สำเร็จ
 func spawn_actions(objective_id: String) -> Array:
 	for objective in objectives:
@@ -259,6 +278,18 @@ static func evaluate_state(objective: Dictionary, snapshot: GitRepositorySnapsho
 		"branch_absent":
 			var gone := str(objective.get("branch", ""))
 			return snapshot.is_initialized and not snapshot.branches.any(func(branch: GitBranchInfo) -> bool: return branch.name == gone)
+		"in_sync":
+			# branch ปัจจุบันผูกกับคลังเวทแล้ว และชี้ commit เดียวกับฝั่งคลัง (ไม่นำหน้า ไม่ตามหลัง)
+			for branch in snapshot.branches:
+				if not branch.is_current or branch.upstream == null:
+					continue
+				var wanted := str(objective.get("upstream", ""))
+				if not wanted.is_empty() and str(branch.upstream) != wanted:
+					return false
+				for other in snapshot.branches:
+					if other.name == str(branch.upstream):
+						return other.commit_id == branch.commit_id
+			return false
 		"has_conflict":
 			return snapshot.files.any(func(file: GitFileStatus) -> bool:
 				return file.index_state == GitFileState.UNMERGED or file.working_tree_state == GitFileState.UNMERGED)
