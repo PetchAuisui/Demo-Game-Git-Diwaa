@@ -696,7 +696,7 @@ func _on_command_submitted(command: String) -> void:
 				else "✗ คำสั่งล้มเหลว (exit %d)" % result.exit_code
 		_terminal_panel.append_error(error_message)
 
-	_terminal_panel.set_executing(false)
+	# ช่องพิมพ์ยังล็อกอยู่จนกว่าโลกจะเดินจังหวะนี้เสร็จ (คลื่น/ของที่ปรากฏ) — กันคำสั่งถัดไปแทรกกลางทาง
 	var after := await _sandbox_service.inspect()
 	if _is_leaving or not is_inside_tree():
 		return
@@ -705,6 +705,7 @@ func _on_command_submitted(command: String) -> void:
 		_on_mission_progress(trimmed, result, after)
 	await _refresh_state()
 	await _advance_room(trimmed)
+	_unlock_terminal()
 
 
 ## เอ่ยคำในโลก (รหัสผนึก, อักขระกุญแจ) — เอ่ยผิดตอนที่ประตูรอคำตอบจะเสียพลัง
@@ -771,7 +772,9 @@ func _handle_cat_command(command: String) -> void:
 		_terminal_panel.append_info("พิมพ์ชื่อให้ตรงทั้งหมด (รวม .txt) หรือคลิกกระดาษในห้องเพื่ออ่าน")
 	else:
 		_terminal_panel.append_output(result.value)
-		_report_scroll_read(path)
+		_terminal_panel.set_executing(true)
+		await _report_scroll_read(path)
+		_unlock_terminal()
 
 
 ## ช่วยผู้เล่นที่พิมพ์ชื่อไม่ครบ: ตัด <> และเครื่องหมายคำพูด, เติม .txt ให้ถ้ามีไฟล์ชื่อนั้นอยู่จริง
@@ -786,6 +789,13 @@ static func _resolve_scroll_name(typed: String, files: Array[String]) -> String:
 
 
 ## การอ่านเศษคัมภีร์ (cat หรือเปิดในแผง Files) นับเป็นการสังเกตโลกสำหรับภารกิจชนิด read
+## ปลดล็อกช่องพิมพ์ — ยกเว้นตอนแพ้ (ต้องกดลองใหม่ก่อน)
+func _unlock_terminal() -> void:
+	if _room != null and _room.is_failed():
+		return
+	_terminal_panel.set_executing(false)
+
+
 func _report_scroll_read(path: String) -> void:
 	if _mission == null or _is_leaving:
 		return
