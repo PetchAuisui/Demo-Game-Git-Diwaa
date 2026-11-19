@@ -92,6 +92,12 @@ func _on_commit_dialog_confirmed() -> void:
 	submit_command("git commit -m \"%s\"" % message.replace("\\", "\\\\").replace("\"", "\\\""))
 
 
+## คืนโฟกัสให้ช่องพิมพ์คาถา (เช่น หลังปิดม้วนคาถา)
+func focus_input() -> void:
+	if _input_edit != null:
+		_input_edit.grab_focus.call_deferred()
+
+
 func submit_command(command: String) -> void:
 	append_command(command)
 

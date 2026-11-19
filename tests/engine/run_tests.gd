@@ -68,6 +68,7 @@ func _run() -> void:
 	await _test("levels 10-12: phantoms drain, keys need committing, merges need judging", _t_levels_10_to_12_wrong)
 	await _test("vault: seeded remote, behind/ahead drift and in_sync after pull and push", _t_vault_sync)
 	await _test("finishing a level's last step resumes the outro so the level is cleared", _t_resume_phase)
+	await _test("spellbook: every step teaches known spells and every level's solution only uses learned spells", _t_spellbook)
 	await _test("levels 13-15: no tome, a stale tome and an unpublished tome all drain hearts", _t_levels_13_to_15_wrong)
 	await _test("room: chaos waves destroy uninscribed scrolls, inscriptions are safe", _t_room_waves)
 	await _test("room: altar shield, cursed inscriptions, restore and phantom dimensions", _t_room_rules)
@@ -1162,3 +1163,41 @@ func _t_resume_phase() -> void:
 		var steps := LevelDataLoader.get_gameplay_step_count(level)
 		if steps >= 2:
 			_check(not (data.get("part2_intro_sequence", []) as Array).is_empty(), "level %d has step 2 but no part 2 dialogue" % level)
+
+
+func _t_spellbook() -> void:
+	for level in range(1, 16):
+		for step in range(1, LevelDataLoader.get_gameplay_step_count(level) + 1):
+			var taught := SpellCatalog.taught_in(level, step)
+			_check(not taught.is_empty(), "level %d step %d should hand out a spell scroll" % [level, step])
+			for id in taught:
+				_check(SpellCatalog.has_spell(id), "level %d step %d teaches unknown spell '%s'" % [level, step, id])
+	var learned := SpellCatalog.learned_until(15, 1)
+	_equal(SpellCatalog.SPELLS.size(), learned.size())
+	_check(SpellCatalog.learned_until(4, 1).has("add") and not SpellCatalog.learned_until(4, 1).has("commit"), "spells unlock in story order")
+	# เฉลยทุกขั้นใช้เฉพาะคาถาที่ได้เรียนมาแล้ว (ไม่มีด่านที่ต้องรู้คำสั่งที่เกมยังไม่สอน)
+	var spell_of := {"--version": "version", "config": "config", "init": "init", "status": "status", "add": "add",
+		"log": "log", "restore": "restore", "reset": "reset", "branch": "branch", "switch": "switch", "merge": "merge",
+		"clone": "clone", "remote": "remote", "fetch": "fetch", "pull": "pull", "push": "push", "diff": "diff", "commit": "commit"}
+	for play in SOLUTIONS:
+		var known := SpellCatalog.learned_until(play[0], play[1])
+		for command: String in play[2]:
+			var tokens := LevelMission.tokenize(command)
+			var id := ""
+			if tokens[0] == "git":
+				id = spell_of.get(tokens[1], "")
+				if tokens[1] == "commit" and (tokens.has("-am") or tokens.has("-a")):
+					id = "commit_all"
+				elif tokens[1] == "diff" and tokens.has("--staged"):
+					id = "diff_staged"
+				elif tokens[1] == "restore" and tokens.has("--staged"):
+					id = "restore_staged"
+				elif tokens[1] == "branch" and tokens.has("-d"):
+					id = "branch_delete"
+				elif tokens[1] == "switch" and tokens.has("-c"):
+					id = "switch_create"
+				elif tokens[1] == "remote" and tokens.has("add"):
+					id = "remote_add"
+			else:
+				id = tokens[0]
+			_check(known.has(id), "level %d step %d uses '%s' before it is taught" % [play[0], play[1], command])

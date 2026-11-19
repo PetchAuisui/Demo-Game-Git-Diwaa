@@ -32,6 +32,8 @@ static func get_data() -> Dictionary:
 				"title": "คัมภีร์เล่มแรก",
 				"story": "คลื่นโกลาหลกำลังมา และนายยังไม่มีคัมภีร์รองรับพลัง",
 				"panels": ["terminal"],
+				# ม้วนคาถาที่แจกตอนเริ่มขั้นนี้ (SpellCatalog)
+				"teaches": ["init"],
 				"setup": IDENTITY,
 				# คลื่นแรกมาหลังการกระทำที่ 2: ถ้ายังไม่มีคัมภีร์จะเสียหัวใจ (พิมพ์ผิดก็กินเวลา)
 				"room": {"hearts": 3, "wave_every": 2, "needs_tome": true},

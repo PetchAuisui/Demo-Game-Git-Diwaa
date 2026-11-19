@@ -33,6 +33,8 @@ static func get_data() -> Dictionary:
 				"title": "หน้ากระดาษต้องสาป",
 				"story": "การจารึกล่าสุดมีคำสาปติดมา — ย้อนกาลเอามันออกจากคัมภีร์ แล้วจารึกเฉพาะเศษคัมภีร์ชิ้นที่ 6",
 				"panels": ["terminal", "files", "graph"],
+				# ม้วนคาถาที่แจกตอนเริ่มขั้นนี้ (SpellCatalog)
+				"teaches": ["reset"],
 				"setup": [
 					{"run": "git config --global user.name \"Vel\""},
 					{"run": "git config --global user.email \"vel@magic-tower.local\""},

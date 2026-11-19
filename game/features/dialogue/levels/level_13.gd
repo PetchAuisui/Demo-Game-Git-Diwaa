@@ -42,6 +42,8 @@ static func get_data() -> Dictionary:
 				"title": "คัมภีร์จากคลังเวท",
 				"story": "ชั้นนี้ไม่มีคัมภีร์รองรับคลื่น — คัดลอกคัมภีร์แสงสว่างจากคลังเวทกลาง: " + URL,
 				"panels": ["terminal", "files", "graph"],
+				# ม้วนคาถาที่แจกตอนเริ่มขั้นนี้ (SpellCatalog)
+				"teaches": ["clone", "remote"],
 				"setup": IDENTITY,
 				"remote": LIGHT_TOME,
 				"room": {"hearts": 3, "wave_every": 3, "needs_tome": true,

@@ -39,6 +39,8 @@ static func get_data() -> Dictionary:
 				"title": "มิติผี",
 				"story": "มิติผีดูดพลังทุกคลื่น — สำรวจมิติทั้งหมด ปิดมิติผี แล้วเปิดมิติทดลองชื่อ experiment",
 				"panels": ["terminal", "files", "graph"],
+				# ม้วนคาถาที่แจกตอนเริ่มขั้นนี้ (SpellCatalog)
+				"teaches": ["branch", "branch_delete"],
 				"setup": BASE + [{"run": "git branch phantom"}],
 				"room": {"hearts": 3, "wave_every": 2, "phantoms": ["phantom"],
 					"items": {

@@ -55,6 +55,8 @@ static func get_data() -> Dictionary:
 				"title": "พายุโกลาหล",
 				"story": "ไม่มีโล่แล้ว คลื่นจะกวาดทั้งโต๊ะและแท่นเตรียม จารึกเศษคัมภีร์ชิ้นที่ 1 ให้ทัน",
 				"panels": ["terminal", "files", "graph"],
+				# ม้วนคาถาที่แจกตอนเริ่มขั้นนี้ (SpellCatalog)
+				"teaches": ["commit"],
 				"setup": ALTAR_READY,
 				"room": {"hearts": 3, "wave_every": 2, "respawn": true, "items": ITEMS},
 				"objectives": [
@@ -81,6 +83,8 @@ static func get_data() -> Dictionary:
 				"title": "เศษที่ซ่อนอยู่",
 				"story": "fragment-1c เผยอักขระใหม่ และม้วนคำสาปร่วงลงบนโต๊ะ — จารึกการแก้ไขโดยไม่ลากคำสาปเข้าคัมภีร์",
 				"panels": ["terminal", "files", "graph"],
+				# ม้วนคาถาที่แจกตอนเริ่มขั้นนี้ (SpellCatalog)
+				"teaches": ["commit_all"],
 				"setup": ALTAR_READY + [
 					{"run": "git commit -m \"จารึกเศษคัมภีร์ชิ้นที่ 1\""},
 					{"write": "fragment-1c.txt", "content": "ข้า…\nความรู้ที่ไม่ถูกจารึก\n"},

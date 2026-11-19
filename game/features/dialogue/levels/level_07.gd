@@ -31,6 +31,8 @@ static func get_data() -> Dictionary:
 				"title": "อักขระกุญแจ",
 				"story": "อักขระกุญแจบน fragment-4 ถูกเขียนทับ — หาอักขระดั้งเดิมแล้วเอ่ยเพื่อปลุกเศษคัมภีร์",
 				"panels": ["terminal", "files", "graph"],
+				# ม้วนคาถาที่แจกตอนเริ่มขั้นนี้ (SpellCatalog)
+				"teaches": ["diff", "diff_staged"],
 				"setup": [
 					{"run": "git config --global user.name \"Vel\""},
 					{"run": "git config --global user.email \"vel@magic-tower.local\""},

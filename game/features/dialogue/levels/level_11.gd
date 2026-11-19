@@ -27,6 +27,8 @@ static func get_data() -> Dictionary:
 				"title": "ครึ่งกุญแจจันทรา",
 				"story": "ครึ่งกุญแจจันทราอยู่ในมิติ experiment เท่านั้น — ข้ามมิติไปจารึกมันไว้",
 				"panels": ["terminal", "files", "graph"],
+				# ม้วนคาถาที่แจกตอนเริ่มขั้นนี้ (SpellCatalog)
+				"teaches": ["switch", "switch_create"],
 				"setup": Level10Dialogue.BASE + [
 					{"write": "fragment-7.txt", "content": "เส้นทางมีมากกว่าหนึ่งเสมอ\n"},
 					{"run": "git add ."},
