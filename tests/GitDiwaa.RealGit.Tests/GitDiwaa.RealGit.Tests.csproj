@@ -4,6 +4,5 @@
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="../../src/GitDiwaa.RealGit/GitDiwaa.RealGit.csproj" />
-    <ProjectReference Include="../../src/GitDiwaa.Story/GitDiwaa.Story.csproj" />
   </ItemGroup>
 </Project>
