@@ -14,6 +14,7 @@ public sealed record FragmentObtained(Fragment Fragment) : GameEvent;
 public sealed record FloorCleared(ScoreCard Score, string Reflection) : GameEvent;
 public sealed record FloorFailed(string Reason) : GameEvent;
 public sealed record Notice(string Text) : GameEvent;
+public sealed record PanelUnlocked(UiPanel Panels) : GameEvent;
 
 /// <summary>Translates common real git messages into one in-world line from Miura (the real text is still shown).</summary>
 public static class MiuraInterpreter
