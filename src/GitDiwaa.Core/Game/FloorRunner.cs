@@ -32,9 +32,13 @@ public sealed class FloorRunner : IAsyncDisposable
     public bool IsOver => IsCleared || IsFailed;
     public TimeSpan Elapsed => _clock.Elapsed;
 
+    /// <summary>Panels currently visible: the floor's base panels plus those unlocked by completed goals.</summary>
+    public UiPanel Panels { get; private set; }
+
     public async Task<IReadOnlyList<GameEvent>> StartAsync(CancellationToken ct = default)
     {
         await _floor.Setup(_ctx);
+        Panels = _floor.Panels | UiPanel.Terminal;
         Snapshot = await Session.InspectAsync(ct);
         var events = _floor.Intro.Select(l => (GameEvent)new SpokenLine(Personalize(l))).ToList();
         events.Add(new ObjectiveStarted(0, _floor.Objectives[0], _floor.Guided));
@@ -178,6 +182,11 @@ public sealed class FloorRunner : IAsyncDisposable
         while (CurrentObjective is { } objective && objective.IsComplete(context))
         {
             events.Add(new ObjectiveDone(_current, objective.Goal));
+            if (objective.Unlocks != UiPanel.None && (Panels & objective.Unlocks) != objective.Unlocks)
+            {
+                Panels |= objective.Unlocks;
+                events.Add(new PanelUnlocked(objective.Unlocks));
+            }
             events.AddRange(objective.OnComplete.Select(l => (GameEvent)new SpokenLine(Personalize(l))));
             _current++;
             _hintLevel = 0;

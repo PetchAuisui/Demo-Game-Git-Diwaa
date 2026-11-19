@@ -60,6 +60,9 @@ public sealed class Objective
     public required Func<ObjectiveContext, bool> IsComplete { get; init; }
     public IReadOnlyList<Line> OnComplete { get; init; } = [];
 
+    /// <summary>Panels revealed once this goal is reached (the UI grows with the player's knowledge).</summary>
+    public UiPanel Unlocks { get; init; } = UiPanel.None;
+
     /// <summary>World event fired when the goal completes (e.g. chaos corrupts a scroll).</summary>
     public Func<FloorContext, Task>? WorldEvent { get; init; }
 }
