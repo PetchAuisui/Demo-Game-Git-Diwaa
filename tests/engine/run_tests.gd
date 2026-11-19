@@ -1181,9 +1181,12 @@ func _t_spellbook() -> void:
 	var spell_of := {"--version": "version", "config": "config", "init": "init", "status": "status", "add": "add",
 		"log": "log", "restore": "restore", "reset": "reset", "branch": "branch", "switch": "switch", "merge": "merge",
 		"clone": "clone", "remote": "remote", "fetch": "fetch", "pull": "pull", "push": "push", "diff": "diff", "commit": "commit"}
+	_check(not SpellCatalog.has_spell("cat"), "reading is an in-world action (click), not a spell to learn")
 	for play in SOLUTIONS:
 		var known := SpellCatalog.learned_until(play[0], play[1])
 		for command: String in play[2]:
+			if command.begins_with("cat "):
+				continue # ในเทสต์จำลองการคลิกกระดาษด้วย cat — ในเกมผู้เล่นคลิกอ่าน ไม่ต้องรู้คำสั่ง
 			var tokens := LevelMission.tokenize(command)
 			var id := ""
 			if tokens[0] == "git":

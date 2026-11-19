@@ -14,7 +14,8 @@ const MEANING := {
 
 
 ## names = path -> ชื่อในโลกเวท (จากห้องมินิเกม) ใช้แทนชื่อไฟล์ให้อ่านง่าย
-static func explain(snapshot: GitRepositorySnapshot, names: Dictionary = {}) -> PackedStringArray:
+## compact = true → บรรทัดสั้นสำหรับแสดงในห้อง (ไม่มีบรรทัดอธิบาย เพราะป้ายบนกระดาษบอกอยู่แล้ว)
+static func explain(snapshot: GitRepositorySnapshot, names: Dictionary = {}, compact: bool = false) -> PackedStringArray:
 	var lines := PackedStringArray()
 	if snapshot == null or not snapshot.is_initialized:
 		lines.append("มิวรา: ที่นี่ยังไม่มีคัมภีร์ (not a git repository) — ต้องกำเนิดคัมภีร์ก่อน")
@@ -35,5 +36,6 @@ static func explain(snapshot: GitRepositorySnapshot, names: Dictionary = {}) -> 
 	for state in ORDER:
 		if groups.has(state):
 			lines.append("  • %s: %s" % [RoomGame.GIT_LABELS[state], ", ".join(groups[state])])
-			lines.append("      → %s" % MEANING[state])
+			if not compact:
+				lines.append("      → %s" % MEANING[state])
 	return lines

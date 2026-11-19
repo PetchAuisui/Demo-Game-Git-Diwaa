@@ -3,7 +3,7 @@ extends Control
 ## ภาพห้องในหอคอยกลางฉาก Sandbox: โต๊ะ (working tree) · แท่นเตรียม (stage) · คัมภีร์ (commit)
 ## พร้อมหัวใจ มาตรวัดคลื่นโกลาหล มิติที่ยืนอยู่ และข้อความเหตุการณ์ในโลก
 ## ข้อมูลทั้งหมดมาจาก RoomGame.describe() — ห้องสะท้อน repo จริงเสมอ
-## คลิกของในห้อง = หยิบอ่าน (เท่ากับพิมพ์ cat <ไฟล์>) ส่วนอื่นของห้องไม่รับเมาส์
+## คลิกของในห้อง = หยิบขึ้นมาอ่าน (การกระทำในโลก ไม่ต้องพิมพ์คำสั่ง) ส่วนอื่นของห้องไม่รับเมาส์
 
 signal item_pressed(path: String)
 
@@ -35,6 +35,8 @@ const STATE_TAG_COLORS := {
 	"conflict": Color("ff7b7b"),
 }
 const HEART_COLOR := Color("ff5a7a")
+const IDLE_HINT := "คลิกกระดาษในห้องเพื่อหยิบขึ้นมาอ่าน"
+const IDLE_ALPHA := 0.55
 
 static var _shard_cache: Array[Texture2D] = []
 
@@ -99,6 +101,21 @@ func update_room(game: RoomGame, items: Array[Dictionary], branch: String) -> vo
 		index += 1
 
 
+## โน้ตของมิวรา (เช่น คำแปลผล git status) แสดงในห้องนานกว่าเหตุการณ์ปกติ — วงร่ายเวทเหลือไว้ให้ Git
+func show_note(lines: PackedStringArray, seconds: float = 9.0) -> void:
+	if lines.is_empty():
+		return
+	_event_label.text = "\n".join(lines)
+	_event_label.add_theme_color_override("font_color", Color("c9f2ff"))
+	if _event_tween != null and _event_tween.is_valid():
+		_event_tween.kill()
+	_event_label.modulate.a = 1.0
+	_event_tween = create_tween()
+	_event_tween.tween_interval(seconds)
+	_event_tween.tween_property(_event_label, "modulate:a", 0.0, 0.8)
+	_event_tween.tween_callback(_show_idle_hint)
+
+
 ## แสดงเหตุการณ์ในโลก (คลื่น, สลาย, ก่อตัวใหม่) — คลื่นทำให้ห้องสั่นและเรืองม่วง
 func play_events(events: Array[Dictionary]) -> void:
 	if events.is_empty():
@@ -118,6 +135,7 @@ func play_events(events: Array[Dictionary]) -> void:
 	_event_tween = create_tween()
 	_event_tween.tween_interval(4.5)
 	_event_tween.tween_property(_event_label, "modulate:a", 0.0, 0.8)
+	_event_tween.tween_callback(_show_idle_hint)
 	if has_wave or has_damage:
 		_flash.color = Color(CHAOS_COLOR, 0.0) if has_wave else Color(HEART_COLOR, 0.0)
 		var flash := create_tween()
@@ -127,6 +145,12 @@ func play_events(events: Array[Dictionary]) -> void:
 		for i in 6:
 			shake.tween_property(_frame, "position:x", 8.0 * (1 if i % 2 == 0 else -1), 0.04)
 		shake.tween_property(_frame, "position:x", 0.0, 0.04)
+
+
+func _show_idle_hint() -> void:
+	_event_label.text = IDLE_HINT
+	_event_label.add_theme_color_override("font_color", Color("e8dcc0"))
+	_event_label.modulate.a = IDLE_ALPHA
 
 
 func _build() -> void:
@@ -193,6 +217,7 @@ func _build() -> void:
 	_event_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_event_label.custom_minimum_size = Vector2(0, 54)
 	root.add_child(_event_label)
+	_show_idle_hint()
 
 	_flash = ColorRect.new()
 	_flash.mouse_filter = Control.MOUSE_FILTER_IGNORE

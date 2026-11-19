@@ -40,6 +40,8 @@ var _room: RoomGame
 var _room_view: RoomView
 ## ม้วนคาถาใหม่ / สมุดคาถา (สอนคำสั่งตอนที่ต้องใช้จริง)
 var _spell_view: SpellScrollView
+## หน้ากระดาษที่หยิบขึ้นมาอ่าน
+var _scroll_reader: ScrollReaderView
 ## จำนวนครั้งที่ผู้เล่นร่ายพลาดติดกันในเป้าหมายปัจจุบัน (ครบ 2 ครั้ง มิวราช่วยใบ้เอง)
 var _mistakes := 0
 const MIURA_HINT_AFTER := 2
@@ -254,7 +256,6 @@ func _show_new_spells() -> void:
 	if ids.is_empty():
 		return
 	_ensure_spell_view().show_new_spells(ids, _mission.level_number)
-	_terminal_panel.append_info("✦ ได้รับม้วนคาถาใหม่ — เปิดดูอีกครั้งได้จากปุ่ม \"คาถา\" หรือพิมพ์ spells")
 
 
 func _open_spellbook() -> void:
@@ -276,7 +277,6 @@ func _miura_hint(reason: String) -> void:
 		return
 	_mistakes = 0
 	_mission_panel.show_feedback("มิวรา: %s — %s" % [reason, hint], false)
-	_terminal_panel.append_info("✦ มิวรา: " + hint)
 
 
 ## มินิเกมห้อง: ห้องในหอคอยกลางฉาก ของในห้องคือไฟล์จริง คลื่นโกลาหลทำลายสิ่งที่ยังไม่จารึก
@@ -290,9 +290,7 @@ func _setup_room() -> void:
 		_room_view.name = "RoomView"
 		add_child(_room_view)
 		_room_view.place_in_stage()
-		_room_view.item_pressed.connect(func(path: String) -> void:
-			if _is_initialized and not _room.is_failed():
-				_terminal_panel.submit_command("cat " + path))
+		_room_view.item_pressed.connect(_read_scroll_action)
 		move_child(_room_view, _spell_overlay.get_index())
 
 
@@ -340,8 +338,6 @@ func _advance_room(command: String) -> void:
 	var outcome := _room.on_turn(snapshot, command)
 	var actions: Array = outcome["actions"]
 	_room_view.play_events(outcome["events"])
-	for event in outcome["events"]:
-		_terminal_panel.append_info("✦ " + str(event["text"]))
 	if outcome["events"].any(func(e: Dictionary) -> bool: return e["type"] == "damage") and not _room.is_failed():
 		_miura_hint("ระวัง! พลังลดลงแล้ว")
 	if actions.is_empty():
@@ -702,8 +698,8 @@ func _on_command_submitted(command: String) -> void:
 		return
 	_spell_overlay.play_all(SpellEffectDetector.detect(before, after, trimmed, result.success))
 	if result.success and LevelMission.tokenize(trimmed).slice(0, 2) == PackedStringArray(["git", "status"]):
-		for line in StatusTranslator.explain(after, _room.items if _room != null else {}):
-			_terminal_panel.append_info(line)
+		if _room_view != null:
+			_room_view.show_note(StatusTranslator.explain(after, _room.items if _room != null else {}, true))
 	if _mission != null:
 		_on_mission_progress(trimmed, result, after)
 	await _refresh_state()
@@ -714,7 +710,6 @@ func _on_command_submitted(command: String) -> void:
 ## เอ่ยคำในโลก (รหัสผนึก, อักขระกุญแจ) — เอ่ยผิดตอนที่ประตูรอคำตอบจะเสียพลัง
 func _handle_say_command(command: String) -> void:
 	var word := command.substr(4).strip_edges()
-	_terminal_panel.append_info("เวล: \"%s\"" % word)
 	if _mission == null:
 		return
 	var expected := _mission.expects_say()
@@ -724,8 +719,6 @@ func _handle_say_command(command: String) -> void:
 	if expected and _mission.done_count() == before and _room != null:
 		var events := _room.on_wrong_say()
 		_room_view.play_events(events)
-		for event in events:
-			_terminal_panel.append_info("✦ " + str(event["text"]))
 		await _update_room_view()
 		_check_room_defeat()
 		return
@@ -792,6 +785,27 @@ static func _resolve_scroll_name(typed: String, files: Array[String]) -> String:
 
 
 ## การอ่านเศษคัมภีร์ (cat หรือเปิดในแผง Files) นับเป็นการสังเกตโลกสำหรับภารกิจชนิด read
+## หยิบกระดาษขึ้นมาอ่าน (คลิกของในห้อง) — การกระทำในโลกเกม ไม่ต้องพิมพ์คำสั่ง
+## นับเป็นหนึ่งการกระทำเหมือนร่ายคาถา (โลกเดินหนึ่งจังหวะ และนับเป็นการอ่านสำหรับภารกิจ)
+func _read_scroll_action(path: String) -> void:
+	if not _is_initialized or _terminal_panel.is_executing() or (_room != null and _room.is_failed()):
+		return
+	var result := _sandbox_service.read_file(path)
+	if not result.ok or result.value == null:
+		_terminal_panel.append_error("กระดาษแผ่นนี้หายไปแล้ว")
+		return
+	var name := str((_room.items.get(path, {}) as Dictionary).get("name", path)) if _room != null else path
+	if _scroll_reader == null:
+		_scroll_reader = ScrollReaderView.new()
+		_scroll_reader.name = "ScrollReader"
+		add_child(_scroll_reader)
+		_scroll_reader.closed.connect(_terminal_panel.focus_input)
+	_scroll_reader.show_scroll(name, path, str(result.value))
+	_terminal_panel.set_executing(true)
+	await _report_scroll_read(path)
+	_unlock_terminal()
+
+
 ## ปลดล็อกช่องพิมพ์ — ยกเว้นตอนแพ้ (ต้องกดลองใหม่ก่อน)
 func _unlock_terminal() -> void:
 	if _room != null and _room.is_failed():
@@ -849,7 +863,6 @@ func _on_save_file_requested(file_path: String, content: String) -> void:
 	if result.ok:
 		_files_panel.mark_saved(file_path)
 		_files_panel.show_feedback("บันทึก %s แล้ว — Git status อัปเดตแล้ว" % file_path)
-		_terminal_panel.append_info("✓ บันทึกไฟล์ '%s' แล้ว" % file_path)
 		await _refresh_state()
 		await _advance_room("save")
 	else:
@@ -872,7 +885,6 @@ func _on_create_file_requested(file_path: String, content: String) -> void:
 	if failure.is_empty():
 		_files_panel.show_file(file_path, content)
 		_files_panel.show_feedback("สร้าง %s แล้ว" % file_path)
-		_terminal_panel.append_info("✓ สร้างไฟล์ใหม่แล้ว: " + file_path)
 		await _refresh_state()
 	else:
 		_files_panel.show_feedback("สร้างไฟล์ไม่สำเร็จ: " + failure, true)
@@ -885,7 +897,6 @@ func _on_create_folder_requested(folder_path: String) -> void:
 	var result := _sandbox_service.create_directory(folder_path)
 	if result.ok:
 		_files_panel.show_feedback("สร้างโฟลเดอร์ %s แล้ว" % folder_path)
-		_terminal_panel.append_info("✓ สร้างโฟลเดอร์ใหม่แล้ว: " + folder_path)
 		await _refresh_state()
 	else:
 		_files_panel.show_feedback("สร้างโฟลเดอร์ไม่สำเร็จ: " + result.message, true)
@@ -912,7 +923,6 @@ func _relocate_entry(source_path: String, destination_path: String, verb: String
 	if result.ok:
 		_files_panel.notify_entry_renamed(source_path, destination_path)
 		_files_panel.show_feedback(success_feedback)
-		_terminal_panel.append_info("✓ %s '%s' → '%s'" % [verb, source_path, destination_path])
 		await _refresh_state()
 	else:
 		_files_panel.show_feedback("%sไม่สำเร็จ: %s" % [verb, result.message], true)
@@ -932,7 +942,6 @@ func _on_delete_entry_requested(entry_path: String, is_directory: bool) -> void:
 	if failure.is_empty():
 		_files_panel.notify_entry_deleted(entry_path)
 		_files_panel.show_feedback("ลบ %s แล้ว — ตรวจสอบได้ด้วย git status" % entry_path)
-		_terminal_panel.append_info("✓ ลบ '%s' แล้ว" % entry_path)
 		await _refresh_state()
 	else:
 		_files_panel.show_feedback("ลบไม่สำเร็จ: " + failure, true)
