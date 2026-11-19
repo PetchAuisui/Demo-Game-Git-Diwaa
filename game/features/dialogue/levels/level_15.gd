@@ -8,6 +8,22 @@ extends RefCounted
 const URL := "https://magic-vault.com/user/apprentice-tome.git"
 
 
+
+## สภาพหลังขั้นที่ 1: คัมภีร์ผูก origin และส่งเข้าคลังพร้อมผูกเส้นทางแล้ว
+static func _sent_tome() -> Array:
+	return Level13Dialogue.IDENTITY + [
+		{"run": "git init"},
+		{"write": "fragment-10.txt", "content": "ความรู้ที่ไม่ถูกแบ่งปัน\n"},
+		{"run": "git add ."},
+		{"run": "git commit -m \"จารึกเศษคัมภีร์ชิ้นที่ 10\""},
+		{"write": "fragment-11.txt", "content": "ย่อมดับไปพร้อมผู้ครอบครอง\n"},
+		{"run": "git add ."},
+		{"run": "git commit -m \"จารึกเศษคัมภีร์ชิ้นที่ 11\""},
+		{"run": "git remote add origin " + URL},
+		{"run": "git push -u origin main"},
+	]
+
+
 static func get_data() -> Dictionary:
 	return {
 		"level_id": 15,
@@ -15,13 +31,20 @@ static func get_data() -> Dictionary:
 		"time_limit": 110.0,
 		"max_score": 240,
 		"commands": ["git push"],
-		"clear_keyword": "git remote add origin <url> ผูกสายเชื่อม · git push -u origin main ส่งครั้งแรกพร้อมผูกเส้นทาง ครั้งต่อไปใช้ git push",
+		"clear_keyword": "git remote add origin <url> ผูกสายเชื่อม · git push -u origin main ส่งครั้งแรกพร้อมผูกเส้นทาง · git push origin main ส่งระบุปลายทาง (หรือ git push เมื่อผูกแล้ว)",
 
 		"intro_sequence": [
 			{"speaker": "เวล", "text": "ยอดหอคอยแล้ว… ประตูเวทวงกลมหมุนอยู่กลางอากาศ แต่มันดูดพลังฉันอยู่!", "mewla_anim": "idle"},
 			{"speaker": "มิวรา", "text": "ประตูนี้เปิดให้เฉพาะผู้ที่ส่งคัมภีร์ของตนเข้าคลังแล้ว ที่อยู่ในคลังของนายเตรียมไว้แล้ว: " + URL, "mewla_anim": "talk"},
 			{"speaker": "มิวรา", "text": "ผูกสายเชื่อมชื่อ origin แล้วส่งคัมภีร์ผ่านประตูไป — เร็วเข้า ก่อนพลังจะหมด", "mewla_anim": "success"},
 			{"type": "open_gameplay", "step": 1}
+		],
+
+		"part2_intro_sequence": [
+			{"speaker": "เวล", "text": "ประตูเปิดแล้ว… มีกระดาษแผ่นหนึ่งปลิวออกมา ฉันจารึกมันไว้แล้ว!", "mewla_anim": "idle"},
+			{"speaker": "มิวรา", "text": "ประตูยังหมุนอยู่ มันอยากได้การจารึกใหม่นั้นด้วย และคราวนี้ต้องเอ่ยชื่อปลายทางให้ชัด", "mewla_anim": "talk"},
+			{"speaker": "มิวรา", "text": "git push origin main — origin คือสายเชื่อม main คือมิติที่จะส่งไป ไม่ต้องใส่ -u เพราะผูกไว้แล้ว", "mewla_anim": "success"},
+			{"type": "open_gameplay", "step": 2}
 		],
 
 		"gameplay": {
@@ -69,12 +92,49 @@ static func get_data() -> Dictionary:
 						"hint": "คาถาส่งผ่านประตูคือ push ครั้งแรกต้องผูกเส้นทางด้วย -u: git push -u origin main"
 					}
 				],
+				"success_text": "ประตูสู่คลังเวทกลางเปิดแล้ว!"
+			},
+			2: {
+				"title": "ส่งระบุปลายทาง",
+				"story": "เศษคัมภีร์ชิ้นที่ 12 หลุดออกมาจากประตูและถูกจารึกแล้ว — ประตูขอให้ส่งโดยเอ่ยชื่อปลายทางให้ชัด: สายเชื่อมไหน มิติไหน",
+				"panels": ["terminal", "files", "graph"],
+				# ม้วนคาถาใหม่: ส่งระบุปลายทาง (git push origin main)
+				"teaches": ["push_named"],
+				"remote": {"name": "apprentice-tome", "description": "คัมภีร์ของเวล ศิษย์ของปรมาจารย์"},
+				"setup": _sent_tome() + [
+					{"write": "fragment-12.txt", "content": "ข้ารอเจ้าอยู่ที่คลังเวทกลาง\n"},
+					{"run": "git add ."},
+					{"run": "git commit -m \"จารึกเศษคัมภีร์ชิ้นที่ 12\""}
+				],
+				"room": {"hearts": 3, "wave_every": 3, "sync_required": true,
+					"items": {
+						"fragment-10.txt": {"kind": "fragment", "name": "เศษคัมภีร์ชิ้นที่ 10"},
+						"fragment-11.txt": {"kind": "fragment", "name": "เศษคัมภีร์ชิ้นที่ 11"},
+						"fragment-12.txt": {"kind": "fragment", "name": "เศษคัมภีร์ชิ้นที่ 12"}
+					}},
+				"objectives": [
+					{
+						"id": "send_named",
+						"text": "ส่งการจารึกใหม่เข้าคลัง โดยระบุชัดว่าส่งผ่านสายเชื่อม origin ไปยังมิติ main",
+						"short": "ส่งเข้าคลังโดยระบุ origin main",
+						"type": "state",
+						"check": "in_sync",
+						"upstream": "origin/main",
+						"spell": "push",
+						"all_flags": ["origin", "main"],
+						"world": "เศษคัมภีร์ชิ้นที่ 12 พุ่งตรงเข้าประตูตามเส้นทางที่นายเอ่ยชื่อ",
+						"hint": "git push <สายเชื่อม> <มิติ> — git push origin main (ไม่ต้องใส่ -u อีก เพราะผูกเส้นทางไว้แล้ว)",
+						"near_miss": [
+							{"pattern": "^git\\s+push\\s*$", "message": "git push เฉย ๆ ก็ใช้ได้เพราะผูกเส้นทางไว้แล้ว แต่ประตูนี้ต้องการให้เอ่ยชื่อปลายทาง: git push origin main"}
+						]
+					}
+				],
 				"success_text": "ได้รับเศษคัมภีร์ชิ้นที่ 12: \"ข้ารอเจ้าอยู่ที่คลังเวทกลาง\""
 			}
 		},
 
 		"outro_sequence": [
-			{"speaker": "มิวรา", "text": "ครั้งต่อไปแค่ git push ก็พอ เพราะเส้นทางผูกไว้แล้ว", "mewla_anim": "talk"},
+			{"speaker": "มิวรา", "text": "ครั้งแรกใส่ -u ผูกเส้นทาง หลังจากนั้นจะ git push origin main หรือแค่ git push ก็ได้", "mewla_anim": "talk"},
 			{"speaker": "เวล", "text": "\"ข้ารอเจ้าอยู่ที่คลังเวทกลาง\"… อาจารย์อยู่ที่นั่น!", "mewla_anim": "idle"},
 			{"speaker": "มิวรา", "text": "ฉันไปได้แค่ตรงนี้ หลังประตูคือคลังเวทกลาง ผู้พิทักษ์จะดูแลนายต่อ", "mewla_anim": "talk"},
 			{"speaker": "เวล", "text": "มิวรา… ขอบคุณนะ", "mewla_anim": "idle"},

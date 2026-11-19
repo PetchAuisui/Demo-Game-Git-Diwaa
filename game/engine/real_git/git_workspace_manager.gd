@@ -71,6 +71,11 @@ func create_bare_remote(sandbox: GitSandbox, runner: GitProcessRunner, name: Str
 	return OpResult.success(remote)
 
 
+## ที่อยู่เก่าของคลัง (RemoteSeed.retired_url) ชี้ไปยัง bare repo ที่ไม่มีอยู่ → fetch/push ล้มเหลวทันที ไม่ออกเน็ต
+static func retired_remote(sandbox: GitSandbox, url: String) -> LocalRemote:
+	return LocalRemote.new("ruins", url, sandbox.remotes_root.path_join("ruins.git"))
+
+
 ## ผูก URL จำลอง (alias) กับ bare repository ใน gitconfig ของ sandbox (insteadOf)
 func register_remote(sandbox: GitSandbox, runner: GitProcessRunner, remote: LocalRemote) -> OpResult:
 	var inside := ensure_inside_root(sandbox.attempt_root)

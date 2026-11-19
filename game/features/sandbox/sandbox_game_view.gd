@@ -593,6 +593,8 @@ func _apply_mission_setup() -> void:
 			var written := await _sandbox_service.write_file(str(action["write"]), str(action.get("content", "")))
 			if not written.ok:
 				push_error("mission setup write failed: %s" % written.message)
+		elif action.has("delete"):
+			_sandbox_service.delete_file(str(action["delete"]))
 		elif action.has("run"):
 			var result := await _sandbox_service.execute(str(action["run"]))
 			if not result.success:
@@ -680,7 +682,18 @@ func _on_command_submitted(command: String) -> void:
 	var before := await _sandbox_service.inspect()
 	if _is_leaving or not is_inside_tree():
 		return
-	var result := await _sandbox_service.execute(trimmed)
+	var executed := trimmed
+	if CommitEditor.needs_editor(trimmed):
+		# commit ที่ไม่มี -m: Git เปิด editor → ในเกมคือหน้าจารึกของคัมภีร์
+		var previous := ""
+		var head := LevelMission.head_commit(before) if before.is_initialized and not before.commits.is_empty() else null
+		if LevelMission.tokenize(trimmed).has("--amend") and head != null:
+			previous = head.subject
+		var message: String = await _open_commit_editor(trimmed, CommitEditor.template(previous))
+		if _is_leaving or not is_inside_tree():
+			return
+		executed = CommitEditor.to_command(trimmed, message)
+	var result := await _sandbox_service.execute(executed)
 
 	if result.success:
 		if not result.standard_output.strip_edges().is_empty():
@@ -709,6 +722,16 @@ func _on_command_submitted(command: String) -> void:
 	await _refresh_state()
 	await _advance_room(trimmed)
 	_unlock_terminal()
+
+
+## เปิดหน้าจารึก (editor ของ git commit) แล้วรอจนผู้เล่นบันทึก/ยกเลิก คืนข้อความที่เขียน ("" = ยกเลิก)
+func _open_commit_editor(command: String, text: String) -> String:
+	var view := CommitEditorView.new()
+	view.name = "CommitEditor"
+	add_child(view)
+	view.open(command, text)
+	var message: String = await view.finished
+	return message
 
 
 ## เอ่ยคำในโลก (รหัสผนึก, อักขระกุญแจ) — เอ่ยผิดตอนที่ประตูรอคำตอบจะเสียพลัง

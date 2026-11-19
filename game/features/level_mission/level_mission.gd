@@ -27,8 +27,12 @@ extends RefCounted
 ##             | branch_exists   branch               มี branch ชื่อนี้
 ##             | current_branch  branch               ยืนอยู่บน branch นี้
 ##             | merge_commit                         HEAD เป็น merge commit (มีสอง parent)
+##             | cast                                 แค่ร่ายคาถาสำเร็จ (ใช้คู่กับ spell/flags เมื่อคาถาคือการ "ดู" ไม่ได้เปลี่ยนโลก เช่น log -n)
 ##       spell (ไม่บังคับ) = ต้องสำเร็จด้วยคาถานี้ เช่น "add" / "commit" (ใช้เมื่ออยากให้ฝึกคาถาเฉพาะ)
 ##       flags (ไม่บังคับ) = คาถาต้องมีตัวเลือกอย่างน้อยหนึ่งตัวในรายการ เช่น ["-a", "-am"]
+##                           ลงท้ายด้วย * = ขึ้นต้นด้วย เช่น "-n*" รับทั้ง -n 3 และ -n3
+##       all_flags (ไม่บังคับ) = ต้องมีครบทุกตัว เช่น ["--graph", "--all"]
+##       without_flags (ไม่บังคับ) = ห้ามมีตัวใดเลย เช่น ["-m", "-am"] (จารึกผ่านหน้าคัมภีร์/editor)
 ##       objective แบบ state จะถูกตรวจเมื่อ objective ก่อนหน้าทั้งหมดสำเร็จแล้วเท่านั้น (เป็นลำดับเหตุการณ์ในเรื่อง)
 ##
 ## คีย์เสริมทุกชนิด:
@@ -120,10 +124,13 @@ func current_objective() -> Dictionary:
 
 
 ## ข้อความ "โลกตอบสนอง" ของภารกิจ ("" = ไม่มี)
-## ช่วงบทสนทนาที่ต้องเล่นต่อหลังจบขั้นเล่นจริง: 1 = part2_intro_sequence, 2 = outro_sequence
+## ช่วงบทสนทนาที่ต้องเล่นต่อหลังจบขั้นเล่นจริง: 1 = part2_intro_sequence, 2 = outro_sequence,
+## n ≥ 3 = part<n>_intro_sequence (ด่านที่มีสามขั้นขึ้นไป — เลข 2 ถูกจองให้ outro ไว้แต่แรก)
 ## ขั้นสุดท้ายของด่านต้องไป outro เสมอ (ด่านที่มีขั้นเดียวไม่มี part 2 ถ้าไป phase 1 ด่านจะไม่ถูกบันทึกว่าผ่าน)
 static func resume_phase_after(step: int, total_steps: int) -> int:
-	return 2 if step >= total_steps else step
+	if step >= total_steps:
+		return 2
+	return 1 if step == 1 else step + 1
 
 
 ## สร้าง RemoteSeed ของคลังเวทตามนิยามด่าน (null = บัญชีว่าง) — owner คือเจ้าของบัญชีผู้เล่น
@@ -136,8 +143,10 @@ static func build_remote_seed(remote_config: Dictionary, owner: String = RemoteS
 		date += 86400.0
 		commits.append(SeedCommit.new(str(commit.get("branch", "main")), str(commit.get("author", "Guardian")),
 				str(commit["message"]), date, commit.get("files", {})))
-	return RemoteSeed.new(owner, str(remote_config.get("name", RemoteSeed.DEFAULT_NAME)),
+	var remote_seed := RemoteSeed.new(owner, str(remote_config.get("name", RemoteSeed.DEFAULT_NAME)),
 			str(remote_config.get("description", "")), commits)
+	remote_seed.retired_url = str(remote_config.get("retired_url", ""))
+	return remote_seed
 
 
 ## ของที่ต้องปรากฏเมื่อเป้าหมายนี้สำเร็จ
@@ -247,9 +256,26 @@ func _matches_state(objective: Dictionary, tokens: PackedStringArray, success: b
 	if not spell.is_empty() and (not success or tokens.size() < 2 or tokens[0] != "git" or tokens[1] != spell):
 		return false
 	var flags: Array = objective.get("flags", [])
-	if not flags.is_empty() and not flags.any(func(flag: Variant) -> bool: return tokens.has(str(flag))):
+	if not flags.is_empty() and not flags.any(func(flag: Variant) -> bool: return has_flag(tokens, str(flag))):
+		return false
+	var all_flags: Array = objective.get("all_flags", [])
+	if not all_flags.all(func(flag: Variant) -> bool: return has_flag(tokens, str(flag))):
+		return false
+	var without: Array = objective.get("without_flags", [])
+	if without.any(func(flag: Variant) -> bool: return has_flag(tokens, str(flag))):
 		return false
 	return evaluate_state(objective, snapshot)
+
+
+## คำสั่งมีตัวเลือกนี้ไหม ("-n*" = token ใดขึ้นต้นด้วย -n)
+static func has_flag(tokens: PackedStringArray, flag: String) -> bool:
+	if flag.ends_with("*"):
+		var prefix := flag.trim_suffix("*")
+		for token in tokens.slice(2):
+			if token.begins_with(prefix):
+				return true
+		return false
+	return tokens.slice(2).has(flag)
 
 
 ## ตรวจเงื่อนไขสถานะ (static เพื่อใช้ซ้ำและทดสอบได้โดยไม่ต้องมี mission)
@@ -265,6 +291,8 @@ static func evaluate_state(objective: Dictionary, snapshot: GitRepositorySnapsho
 			return status != null and not _is_staged_state(status.index_state)):
 		return false
 	match str(objective.get("check", "")):
+		"cast":
+			return true
 		"repo_initialized":
 			return snapshot.is_initialized
 		"staged":
@@ -311,7 +339,7 @@ static func evaluate_state(objective: Dictionary, snapshot: GitRepositorySnapsho
 		"current_branch":
 			return snapshot.current_branch != null and str(snapshot.current_branch) == str(objective.get("branch", ""))
 		"merge_commit":
-			return not snapshot.commits.is_empty() and _head_commit(snapshot) != null and _head_commit(snapshot).parent_ids.size() > 1
+			return not snapshot.commits.is_empty() and head_commit(snapshot) != null and head_commit(snapshot).parent_ids.size() > 1
 	return false
 
 
@@ -326,7 +354,7 @@ static func _is_staged_state(state: int) -> bool:
 	return state in [GitFileState.ADDED, GitFileState.MODIFIED, GitFileState.DELETED, GitFileState.RENAMED, GitFileState.COPIED]
 
 
-static func _head_commit(snapshot: GitRepositorySnapshot) -> GitCommitNode:
+static func head_commit(snapshot: GitRepositorySnapshot) -> GitCommitNode:
 	for branch in snapshot.branches:
 		if branch.is_current and branch.commit_id != null:
 			for commit in snapshot.commits:
