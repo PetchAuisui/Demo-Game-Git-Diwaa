@@ -34,6 +34,7 @@ var _terminal_panel: TerminalPanel
 var _remote_repo_button: RemoteRepoButton
 var _mission: LevelMission
 var _mission_panel: LevelMissionPanel
+var _spell_overlay: SpellEffectOverlay
 var _leave_confirm_dialog: ConfirmationDialog
 var _leave_confirm_message: Label
 
@@ -50,6 +51,7 @@ func _ready() -> void:
 	_setup_animated_background()
 	_setup_leave_confirm_dialog()
 	_wire_events()
+	_setup_spell_overlay()
 	_setup_mission()
 	SceneLoader.request_preload(_return_scene_path())
 	_initialize_sandbox()
@@ -160,6 +162,32 @@ func _wire_events() -> void:
 
 
 ## เปิดจากขั้นเล่นจริงของด่าน (หน้าบทสนทนาตั้งขั้นไว้ใน GameProgressManager) -> แสดงแผงภารกิจกลางจอ
+## เวทีเอฟเฟกต์คาถากลางฉาก (Game Design v2 §4.1): วางเหนือพื้นหลัง ใต้แผงต่าง ๆ จึงไม่บังข้อความ
+func _setup_spell_overlay() -> void:
+	_spell_overlay = SpellEffectOverlay.new()
+	_spell_overlay.name = "SpellEffectOverlay"
+	add_child(_spell_overlay)
+	move_child(_spell_overlay, _top_bar.get_index())
+	_spell_overlay.effect_started.connect(_on_spell_effect_started)
+
+
+func _on_spell_effect_started(effect: Dictionary) -> void:
+	var target: Control = null
+	match str(effect.get("panel", "")):
+		"files":
+			target = _files_panel
+		"graph":
+			target = _git_graph_panel
+		"terminal":
+			target = _terminal_panel
+	if target == null or not target.is_visible_in_tree():
+		return
+	var color: Color = SpellEffectOverlay.COLORS.get(effect["kind"], Color.WHITE)
+	var tw := create_tween()
+	tw.tween_property(target, "self_modulate", color.lightened(0.55), 0.15)
+	tw.tween_property(target, "self_modulate", Color.WHITE, 0.6).set_trans(Tween.TRANS_SINE)
+
+
 func _setup_mission() -> void:
 	var step := GameProgressManager.get_pending_mission_step()
 	GameProgressManager.set_pending_mission_step(0)
@@ -426,6 +454,9 @@ func _on_command_submitted(command: String) -> void:
 
 	# Execute via Git sandbox service
 	_terminal_panel.set_executing(true)
+	var before := await _sandbox_service.inspect()
+	if _is_leaving or not is_inside_tree():
+		return
 	var result := await _sandbox_service.execute(trimmed)
 
 	if result.success:
@@ -440,11 +471,12 @@ func _on_command_submitted(command: String) -> void:
 		_terminal_panel.append_error(error_message)
 
 	_terminal_panel.set_executing(false)
-	if _mission != null and not _is_leaving:
-		var snapshot := await _sandbox_service.inspect()
-		if _is_leaving or not is_inside_tree():
-			return
-		_on_mission_progress(trimmed, result, snapshot)
+	var after := await _sandbox_service.inspect()
+	if _is_leaving or not is_inside_tree():
+		return
+	_spell_overlay.play_all(SpellEffectDetector.detect(before, after, trimmed, result.success))
+	if _mission != null:
+		_on_mission_progress(trimmed, result, after)
 	await _refresh_state()
 
 
