@@ -35,6 +35,9 @@ var _remote_repo_button: RemoteRepoButton
 var _mission: LevelMission
 var _mission_panel: LevelMissionPanel
 var _spell_overlay: SpellEffectOverlay
+## มินิเกมห้อง (null = ด่านนี้ไม่มีมินิเกม)
+var _room: RoomGame
+var _room_view: RoomView
 var _leave_confirm_dialog: ConfirmationDialog
 var _leave_confirm_message: Label
 
@@ -206,6 +209,8 @@ func _setup_mission() -> void:
 	_mission_panel.setup(_mission)
 	_apply_contextual_panels()
 	_mission_panel.continue_pressed.connect(_on_mission_continue)
+	_mission_panel.retry_pressed.connect(_on_room_retry)
+	_setup_room()
 	_update_mission_prompt()
 
 	if _mission.time_limit > 0.0:
@@ -224,6 +229,112 @@ func _setup_mission() -> void:
 	else:
 		if _top_bar != null:
 			_top_bar.set_timer_visible(false)
+
+
+## มินิเกมห้อง: ห้องในหอคอยกลางฉาก ของในห้องคือไฟล์จริง คลื่นโกลาหลทำลายสิ่งที่ยังไม่จารึก
+func _setup_room() -> void:
+	if _mission == null or _mission.room.is_empty():
+		return
+	_room = RoomGame.from_config(_mission.room)
+	if _room_view == null:
+		_room_view = RoomView.new()
+		_room_view.name = "RoomView"
+		add_child(_room_view)
+		_room_view.place_in_stage()
+		move_child(_room_view, _spell_overlay.get_index())
+
+
+func _workspace_paths() -> Array[String]:
+	var paths: Array[String] = []
+	for entry in await _sandbox_service.get_workspace_entries():
+		if not entry.is_directory:
+			paths.append(entry.path)
+	return paths
+
+
+func _update_room_view() -> void:
+	if _room == null or _room_view == null:
+		return
+	var snapshot := await _sandbox_service.inspect()
+	var paths := await _workspace_paths()
+	if _is_leaving or not is_inside_tree():
+		return
+	var branch := str(snapshot.current_branch) if snapshot.is_initialized and snapshot.current_branch != null else ""
+	_room_view.update_room(_room, _room.describe(snapshot, paths), branch)
+
+
+## ของตั้งต้นของห้อง (turn 0) และจดจำเนื้อหาเศษคัมภีร์ที่มีอยู่ เพื่อให้เศษที่สลายก่อตัวใหม่ได้
+func _start_room() -> void:
+	if _room == null:
+		return
+	await _apply_world_actions(_room.initial_actions())
+	for path in _room.items.keys():
+		var read := _sandbox_service.read_file(str(path))
+		if read.ok and read.value != null:
+			_room.remember_content(str(path), str(read.value))
+	await _update_room_view()
+
+
+## หนึ่งการกระทำของผู้เล่นผ่านไป → โลกเดินหนึ่งจังหวะ (คลื่นโกลาหล, ของที่ปรากฏ)
+func _advance_room(command: String) -> void:
+	if _room == null or _room.is_failed() or (_mission != null and _mission.is_complete()):
+		return
+	var snapshot := await _sandbox_service.inspect()
+	var paths := await _workspace_paths()
+	if _is_leaving or not is_inside_tree():
+		return
+	_room.set_present(paths)
+	var outcome := _room.on_turn(snapshot, command)
+	await _apply_world_actions(outcome["actions"])
+	_room_view.play_events(outcome["events"])
+	for event in outcome["events"]:
+		_terminal_panel.append_info("✦ " + str(event["text"]))
+	await _refresh_state()
+	await _update_room_view()
+	_check_room_defeat()
+
+
+func _apply_world_actions(actions: Array) -> void:
+	for action in actions:
+		if _is_leaving or not is_inside_tree():
+			return
+		if action.has("delete"):
+			_sandbox_service.delete_file(str(action["delete"]))
+		elif action.has("write"):
+			await _sandbox_service.write_file(str(action["write"]), str(action.get("content", "")))
+			if _room != null:
+				_room.remember_content(str(action["write"]), str(action.get("content", "")))
+
+
+func _check_room_defeat() -> void:
+	if _room == null or not _room.is_failed() or _mission_panel == null:
+		return
+	_level_timer_active = false
+	_terminal_panel.set_executing(true)
+	_mission_panel.show_failed("พลังของนายหมดลง… หอคอยส่งนายกลับไปเริ่มชั้นนี้ใหม่")
+
+
+## แพ้แล้วกดลองใหม่: สร้างพื้นที่ใหม่ ทำ setup ซ้ำ และเริ่มภารกิจกับห้องตั้งแต่ต้น
+func _on_room_retry() -> void:
+	if _mission == null:
+		return
+	_terminal_panel.clear_output()
+	_terminal_panel.append_info("หอคอยสร้างชั้นนี้ขึ้นใหม่...")
+	var result := await _sandbox_service.reset()
+	if _is_leaving or not is_inside_tree():
+		return
+	if not result.ok:
+		_terminal_panel.append_error("เริ่มใหม่ไม่สำเร็จ: " + result.message)
+		return
+	_mission = LevelMission.create(_mission.level_number, _mission.step)
+	_mission_panel.setup(_mission)
+	_update_mission_prompt()
+	_setup_room()
+	await _apply_mission_setup()
+	await _start_room()
+	_level_timer_active = _mission.time_limit > 0.0 and _level_time_remaining > 0.0
+	_terminal_panel.set_executing(false)
+	await _refresh_state()
 
 
 ## แผงภารกิจอยู่บนสุดของคอลัมน์ซ้าย ส่วนแผง Files อยู่ใต้ลงมา (ใช้พื้นที่เดิมของแผง Files)
@@ -266,6 +377,8 @@ func _on_mission_progress(command: String, result: GitCommandResult, snapshot: G
 		_level_timer_active = false
 		_mission_panel.show_complete(_mission.success_text, _mission_continue_label())
 		return
+	for done_id in newly_done:
+		_apply_world_actions(_mission.spawn_actions(done_id))
 	if not newly_done.is_empty():
 		var world := _mission.world_text(newly_done[-1])
 		_mission_panel.show_feedback(world if not world.is_empty() else "ถูกต้อง! ภารกิจสำเร็จ", false)
@@ -389,6 +502,9 @@ func _initialize_sandbox() -> void:
 	await _apply_mission_setup()
 	if _is_leaving or not is_inside_tree():
 		return
+	await _start_room()
+	if _is_leaving or not is_inside_tree():
+		return
 	_terminal_panel.append_info("พร้อมใช้งาน — พิมพ์ help หรือเริ่มด้วย git --version\n")
 
 	await _refresh_state()
@@ -452,6 +568,10 @@ func _on_command_submitted(command: String) -> void:
 		_handle_delete_command(trimmed)
 		return
 
+	if lower.begins_with("say "):
+		await _handle_say_command(trimmed)
+		return
+
 	if lower == "sandbox-reset":
 		_on_reset_requested()
 		return
@@ -505,6 +625,28 @@ func _on_command_submitted(command: String) -> void:
 	if _mission != null:
 		_on_mission_progress(trimmed, result, after)
 	await _refresh_state()
+	await _advance_room(trimmed)
+
+
+## เอ่ยคำในโลก (รหัสผนึก, อักขระกุญแจ) — เอ่ยผิดตอนที่ประตูรอคำตอบจะเสียพลัง
+func _handle_say_command(command: String) -> void:
+	var word := command.substr(4).strip_edges()
+	_terminal_panel.append_info("เวล: \"%s\"" % word)
+	if _mission == null:
+		return
+	var expected := _mission.expects_say()
+	var snapshot := await _sandbox_service.inspect()
+	var before := _mission.done_count()
+	_on_mission_progress("say %s" % word, GitCommandResult.new(true, 0, "", ""), snapshot)
+	if expected and _mission.done_count() == before and _room != null:
+		var events := _room.on_wrong_say()
+		_room_view.play_events(events)
+		for event in events:
+			_terminal_panel.append_info("✦ " + str(event["text"]))
+		await _update_room_view()
+		_check_room_defeat()
+		return
+	await _advance_room("say")
 
 
 func _handle_files_command() -> void:
@@ -530,6 +672,7 @@ func _handle_write_command(command: String) -> void:
 		return
 	_terminal_panel.append_info("✓ เขียนไฟล์ '%s' แล้ว" % parts[1])
 	await _refresh_state()
+	await _advance_room("write")
 
 
 func _handle_cat_command(command: String) -> void:
@@ -556,6 +699,11 @@ func _report_scroll_read(path: String) -> void:
 	if _is_leaving or not is_inside_tree():
 		return
 	_on_mission_progress("cat %s" % path, GitCommandResult.new(true, 0, "", ""), snapshot)
+	if _room != null:
+		var read := _sandbox_service.read_file(path)
+		if read.ok and read.value != null:
+			_room.remember_content(path, str(read.value))
+	await _advance_room("cat %s" % path)
 
 
 func _handle_delete_command(command: String) -> void:
@@ -596,6 +744,7 @@ func _on_save_file_requested(file_path: String, content: String) -> void:
 		_files_panel.show_feedback("บันทึก %s แล้ว — Git status อัปเดตแล้ว" % file_path)
 		_terminal_panel.append_info("✓ บันทึกไฟล์ '%s' แล้ว" % file_path)
 		await _refresh_state()
+		await _advance_room("save")
 	else:
 		_files_panel.show_feedback("บันทึกไม่สำเร็จ: " + result.message, true)
 		_terminal_panel.append_error("บันทึกไฟล์ไม่สำเร็จ: " + result.message)
