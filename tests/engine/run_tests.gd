@@ -62,9 +62,10 @@ func _run() -> void:
 	await _test("state objectives follow the real repository, not the command text", _t_state_objectives)
 	await _test("state objectives are judged in story order and can require a spell", _t_state_objective_order)
 	await _test("spell effects follow what git really did to the repository", _t_spell_effects)
-	await _test("levels 2-9: every step's setup builds its world and the intended play clears it", _t_levels_2_to_5)
+	await _test("levels 2-12: every step's setup builds its world and the intended play clears it", _t_levels_2_to_5)
 	await _test("levels 2-5: the wrong spell does not clear state goals", _t_levels_wrong_spells)
 	await _test("levels 6-9: guessing, fake runes, inscribing curses and --hard are punished", _t_levels_6_to_9_wrong)
+	await _test("levels 10-12: phantoms drain, keys need committing, merges need judging", _t_levels_10_to_12_wrong)
 	await _test("room: chaos waves destroy uninscribed scrolls, inscriptions are safe", _t_room_waves)
 	await _test("room: altar shield, cursed inscriptions, restore and phantom dimensions", _t_room_rules)
 	await _test("room v2: tome needed, cursed altar, essential scrolls and exclusion checks", _t_room_rules_v2)
@@ -894,6 +895,9 @@ const SOLUTIONS := [
 	[8, 1, ["git restore fragment-5.txt", "git restore --staged curse.txt"]],
 	[9, 1, ["git reset --mixed HEAD~1", "git add fragment-6.txt", "git commit -m \"เศษคัมภีร์ชิ้นที่ 6\""]],
 	[9, 1, ["git reset --soft HEAD~1", "git restore --staged curse.txt", "git commit -m \"เศษคัมภีร์ชิ้นที่ 6\""]],
+	[10, 1, ["git branch", "git branch -d phantom", "git branch experiment"]],
+	[11, 1, ["git switch experiment", "git add key-moon.txt", "git commit -m \"ครึ่งกุญแจจันทรา\"", "git switch main", "git switch -c trial"]],
+	[12, 1, ["git merge experiment", "write altar-core.txt แกนแท่นบูชา: ไอน้ำ", "git add altar-core.txt", "git commit -m \"หลอมมิติ\""]],
 ]
 
 
@@ -1084,3 +1088,14 @@ func _t_levels_6_to_9_wrong() -> void:
 	_check(not level8["mission"].is_complete(), "level 8: inscribing over the curse is not a cure")
 	var level9 := await _play_level(9, 1, ["git reset --hard HEAD~1"])
 	_check(level9["room"].is_failed(), "level 9: --hard destroys fragment 6 and loses the floor")
+
+
+func _t_levels_10_to_12_wrong() -> void:
+	var level10 := await _play_level(10, 1, ["git status", "git branch", "git status", "git status"])
+	_check(level10["room"].hearts == 1, "level 10: the phantom dimension drains every wave")
+	var level11 := await _play_level(11, 1, ["git switch experiment"])
+	_check(level11["mission"].done_count() == 1, "level 11: entering the dimension does not also inscribe the key")
+	var level11b := await _play_level(11, 1, ["git switch experiment", "git status", "git status"])
+	_check(level11b["room"].hearts == 2, "level 11: an uninscribed key is swept away by the wave")
+	var level12 := await _play_level(12, 1, ["git merge experiment", "git add altar-core.txt"])
+	_check(level12["mission"].done_count() == 2 and not level12["mission"].is_complete(), "level 12: the ritual is not sealed until it is inscribed")
