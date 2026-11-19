@@ -2,6 +2,7 @@ class_name ScrollReaderView
 extends Control
 ## หยิบกระดาษขึ้นมาอ่าน: การกระทำในโลกเกม (คลิกกระดาษในห้อง) แทนการพิมพ์คำสั่งอ่านไฟล์
 ## แสดงชื่อในโลกเวท + ชื่อไฟล์ และเนื้อหาบนกระดาษ ปิดด้วยปุ่ม / Enter / Esc
+## style "proclamation" = แผ่นประกาศของหอคอย: หัวประกาศ ข้อความกึ่งกลาง ขอบแดง-ทอง และตราประทับ
 
 signal closed
 
@@ -18,6 +19,11 @@ var _title: Label
 var _file_label: Label
 var _content: Label
 var _button: Button
+var _style_box: StyleBoxFlat
+var _herald: Label
+var _ornament: Label
+var _seal: PanelContainer
+var _icon: TextureRect
 
 
 func _ready() -> void:
@@ -27,7 +33,8 @@ func _ready() -> void:
 	visible = false
 
 
-func show_scroll(title: String, path: String, content: String) -> void:
+func show_scroll(title: String, path: String, content: String, style: String = "") -> void:
+	_apply_style(style == "proclamation")
 	_title.text = title
 	_file_label.text = "ไฟล์: " + path
 	_content.text = content.strip_edges() if not content.strip_edges().is_empty() else "(กระดาษว่างเปล่า)"
@@ -39,6 +46,23 @@ func show_scroll(title: String, path: String, content: String) -> void:
 	tw.tween_property(self, "modulate:a", 1.0, 0.18)
 	tw.tween_property(_panel, "scale", Vector2.ONE, 0.25).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	_button.grab_focus.call_deferred()
+
+
+func _apply_style(proclamation: bool) -> void:
+	_herald.visible = proclamation
+	_ornament.visible = proclamation
+	_seal.visible = proclamation
+	_icon.visible = not proclamation
+	_style_box.border_color = Color("8c1f1f") if proclamation else PARCHMENT_EDGE
+	_style_box.set_border_width_all(8 if proclamation else 6)
+	_style_box.bg_color = Color("f4e4bf") if proclamation else PARCHMENT
+	var align := HORIZONTAL_ALIGNMENT_CENTER if proclamation else HORIZONTAL_ALIGNMENT_LEFT
+	_title.horizontal_alignment = align
+	_file_label.horizontal_alignment = align
+	_content.horizontal_alignment = align
+	_content.add_theme_font_size_override("font_size", 27 if proclamation else 24)
+	_content.add_theme_constant_override("line_spacing", 10 if proclamation else 2)
+	_title.add_theme_color_override("font_color", Color("8c1f1f") if proclamation else INK)
 
 
 func close() -> void:
@@ -75,6 +99,7 @@ func _build() -> void:
 	_panel = PanelContainer.new()
 	_panel.custom_minimum_size = Vector2(760, 0)
 	var style := StyleBoxFlat.new()
+	_style_box = style
 	style.bg_color = PARCHMENT
 	style.border_color = PARCHMENT_EDGE
 	style.set_border_width_all(6)
@@ -89,10 +114,17 @@ func _build() -> void:
 	root.add_theme_constant_override("separation", 12)
 	_panel.add_child(root)
 
+	_herald = _label(18, Color("a07a2c"), true)
+	_herald.text = "✦  ประกาศแห่งหอคอยเวท  ✦"
+	_herald.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	root.add_child(_herald)
+
 	var header := HBoxContainer.new()
 	header.add_theme_constant_override("separation", 14)
+	header.alignment = BoxContainer.ALIGNMENT_CENTER
 	root.add_child(header)
 	var icon := TextureRect.new()
+	_icon = icon
 	icon.texture = load(PAPER) if ResourceLoader.exists(PAPER) else null
 	icon.custom_minimum_size = Vector2(56, 56)
 	icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
@@ -100,6 +132,7 @@ func _build() -> void:
 	icon.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	header.add_child(icon)
 	var titles := VBoxContainer.new()
+	titles.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	header.add_child(titles)
 	_title = _label(30, INK, true)
 	titles.add_child(_title)
@@ -115,6 +148,29 @@ func _build() -> void:
 	_content.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_content.custom_minimum_size = Vector2(700, 80)
 	root.add_child(_content)
+
+	_ornament = _label(18, Color("a07a2c"), false)
+	_ornament.text = "—  ✦  —"
+	_ornament.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	root.add_child(_ornament)
+
+	# ตราประทับขี้ผึ้งสีแดงมุมขวาล่างของประกาศ
+	_seal = PanelContainer.new()
+	_seal.size_flags_horizontal = Control.SIZE_SHRINK_END
+	_seal.custom_minimum_size = Vector2(92, 92)
+	var seal_style := StyleBoxFlat.new()
+	seal_style.bg_color = Color("9e1d1d")
+	seal_style.border_color = Color("6e1010")
+	seal_style.set_border_width_all(4)
+	seal_style.set_corner_radius_all(46)
+	_seal.add_theme_stylebox_override("panel", seal_style)
+	var seal_text := _label(17, Color("ffe2b0"), true)
+	seal_text.text = "ตรา\nหอคอย"
+	seal_text.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	seal_text.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	_seal.add_child(seal_text)
+	_seal.rotation_degrees = -8.0
+	root.add_child(_seal)
 
 	_button = Button.new()
 	_button.text = "วางกระดาษลง"
