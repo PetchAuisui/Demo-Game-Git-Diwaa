@@ -204,6 +204,7 @@ func _setup_mission() -> void:
 	_mission_panel.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 	_dock_mission_panel_above_files()
 	_mission_panel.setup(_mission)
+	_apply_contextual_panels()
 	_mission_panel.continue_pressed.connect(_on_mission_continue)
 	_update_mission_prompt()
 
@@ -226,6 +227,12 @@ func _setup_mission() -> void:
 
 
 ## แผงภารกิจอยู่บนสุดของคอลัมน์ซ้าย ส่วนแผง Files อยู่ใต้ลงมา (ใช้พื้นที่เดิมของแผง Files)
+## ซ่อนแผงที่ด่านนี้ยังไม่ถึงเนื้อหา เพื่อลดความสับสน (เช่น ด่าน 1 ใช้แค่ Terminal)
+func _apply_contextual_panels() -> void:
+	_files_panel.visible = _mission.shows_panel("files")
+	_git_graph_panel.visible = _mission.shows_panel("graph")
+
+
 func _dock_mission_panel_above_files() -> void:
 	var column := VBoxContainer.new()
 	column.name = "LeftColumn"

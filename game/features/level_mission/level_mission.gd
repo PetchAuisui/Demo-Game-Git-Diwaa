@@ -40,6 +40,9 @@ var success_text: String
 var objectives: Array[Dictionary] = []
 var total_steps: int
 var time_limit: float = 0.0
+## แผงที่แสดงในขั้นนี้ (Contextual UI, Game Design v2 §4.2): "files", "graph" — Terminal แสดงเสมอ
+## ว่าง = แสดงทุกแผง (พฤติกรรมเดิม)
+var panels: Array[String] = []
 
 var _done: Dictionary = {}
 
@@ -61,7 +64,14 @@ static func create(level_num: int, step_num: int) -> LevelMission:
 	mission.time_limit = float(definition.get("time_limit", level_data.get("time_limit", 0.0)))
 	for objective in definition.get("objectives", []):
 		mission.objectives.append(objective)
+	for panel in definition.get("panels", []):
+		mission.panels.append(str(panel))
 	return mission
+
+
+## true เมื่อขั้นนี้ควรแสดงแผงนี้
+func shows_panel(panel: String) -> bool:
+	return panels.is_empty() or panels.has(panel)
 
 
 func is_done(objective_id: String) -> bool:
