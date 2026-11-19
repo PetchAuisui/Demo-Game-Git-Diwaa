@@ -145,9 +145,9 @@ const NAV_COLOR_PROGRESS_TEXT := Color(0.85, 0.78, 0.68, 1.0)
 const NAV_PILL_RADIUS := 6
 
 ## ด่านที่ยังพัฒนาไม่เสร็จ: ล็อกไว้เสมอแม้ผ่านด่านก่อนหน้าแล้ว (เอา id ออกเมื่อด่านพร้อมเล่น)
-const IN_DEVELOPMENT_STAGE_IDS: Array[int] = [2]
-## ด่านที่มีเลขมากกว่านี้ถูกล็อกเสมอ ไม่ว่าเซฟจะผ่านด่านไปแล้วหรือไม่ (ตอนนี้เปิดให้เล่นแค่ด่าน 1)
-const MAX_OPEN_STAGE_ID := 1
+const IN_DEVELOPMENT_STAGE_IDS: Array[int] = [16]
+## ด่านที่มีเลขมากกว่านี้ถูกล็อกเสมอ ไม่ว่าเซฟจะผ่านด่านไปแล้วหรือไม่ (เปิดครบ Act 1: ด่าน 1–15)
+const MAX_OPEN_STAGE_ID := 15
 
 const ICON_VOLUME_ON := preload("res://assets/icons/ui_volume_on.svg")
 const ICON_VOLUME_OFF := preload("res://assets/icons/ui_volume_off.svg")

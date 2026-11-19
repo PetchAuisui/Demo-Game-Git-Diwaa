@@ -67,6 +67,7 @@ func _run() -> void:
 	await _test("levels 6-9: guessing, fake runes, inscribing curses and --hard are punished", _t_levels_6_to_9_wrong)
 	await _test("levels 10-12: phantoms drain, keys need committing, merges need judging", _t_levels_10_to_12_wrong)
 	await _test("vault: seeded remote, behind/ahead drift and in_sync after pull and push", _t_vault_sync)
+	await _test("finishing a level's last step resumes the outro so the level is cleared", _t_resume_phase)
 	await _test("levels 13-15: no tome, a stale tome and an unpublished tome all drain hearts", _t_levels_13_to_15_wrong)
 	await _test("room: chaos waves destroy uninscribed scrolls, inscriptions are safe", _t_room_waves)
 	await _test("room: altar shield, cursed inscriptions, restore and phantom dimensions", _t_room_rules)
@@ -1148,3 +1149,16 @@ func _t_levels_13_to_15_wrong() -> void:
 	_check(level14["room"].hearts == 2 and level14["mission"].done_count() == 0, "level 14: fetch alone leaves the tome stale")
 	var level15 := await _play_level(15, 1, ["git remote add origin https://magic-vault.com/user/apprentice-tome.git", "git push origin main", "git status"])
 	_check(not level15["mission"].is_complete() and level15["room"].hearts == 2, "level 15: a push without -u leaves the path unbound")
+
+
+func _t_resume_phase() -> void:
+	_equal(2, LevelMission.resume_phase_after(1, 1)) # ด่านขั้นเดียว (เช่น ด่าน 2) → outro
+	_equal(1, LevelMission.resume_phase_after(1, 2)) # ด่านสองขั้น → part 2 ก่อน
+	_equal(2, LevelMission.resume_phase_after(2, 2))
+	for level in range(1, 16):
+		var data := LevelDataLoader.load_data(level)
+		_check(not data.is_empty(), "level %d data" % level)
+		_check(not (data.get("outro_sequence", []) as Array).is_empty(), "level %d needs an outro to be cleared" % level)
+		var steps := LevelDataLoader.get_gameplay_step_count(level)
+		if steps >= 2:
+			_check(not (data.get("part2_intro_sequence", []) as Array).is_empty(), "level %d has step 2 but no part 2 dialogue" % level)

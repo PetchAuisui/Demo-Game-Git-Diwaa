@@ -119,6 +119,12 @@ func current_objective() -> Dictionary:
 
 
 ## ข้อความ "โลกตอบสนอง" ของภารกิจ ("" = ไม่มี)
+## ช่วงบทสนทนาที่ต้องเล่นต่อหลังจบขั้นเล่นจริง: 1 = part2_intro_sequence, 2 = outro_sequence
+## ขั้นสุดท้ายของด่านต้องไป outro เสมอ (ด่านที่มีขั้นเดียวไม่มี part 2 ถ้าไป phase 1 ด่านจะไม่ถูกบันทึกว่าผ่าน)
+static func resume_phase_after(step: int, total_steps: int) -> int:
+	return 2 if step >= total_steps else step
+
+
 ## สร้าง RemoteSeed ของคลังเวทตามนิยามด่าน (null = บัญชีว่าง) — owner คือเจ้าของบัญชีผู้เล่น
 static func build_remote_seed(remote_config: Dictionary, owner: String = RemoteSeed.DEFAULT_OWNER) -> RemoteSeed:
 	if remote_config.is_empty():
