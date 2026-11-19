@@ -44,7 +44,8 @@ func _get_current_branch() -> String:
 
 
 ## (coroutine) คืน OpResult
-func initialize(_mission_id: String = "checkpoint-01", _attempt_id: String = "") -> OpResult:
+## remote_seed = สถานะเริ่มต้นของคลังเวท (GitHub จำลอง) ของด่าน หรือ null = บัญชีว่าง
+func initialize(_mission_id: String = "checkpoint-01", _attempt_id: String = "", _remote_seed: RemoteSeed = null) -> OpResult:
 	push_error("GitSandboxService.initialize ยังไม่ได้ implement")
 	return OpResult.failure("not implemented")
 

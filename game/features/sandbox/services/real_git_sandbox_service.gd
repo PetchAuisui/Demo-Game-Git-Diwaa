@@ -8,6 +8,9 @@ var _player_name: String
 var _factory: RealGitGameSessionFactory
 var _session: GitGameSession
 var _last_snapshot: GitRepositorySnapshot
+## จำไว้เพื่อให้ reset() สร้างคลังเวทแบบเดิมของด่านซ้ำ
+var _mission_id := "checkpoint-01"
+var _remote_seed: RemoteSeed
 
 
 ## custom_workspace_root = โฟลเดอร์เก็บ workspace (ค่าเริ่มต้น user://git-workspaces)
@@ -62,7 +65,9 @@ func _get_current_branch() -> String:
 	return "main"
 
 
-func initialize(mission_id: String = "checkpoint-01", attempt_id: String = "") -> OpResult:
+func initialize(mission_id: String = "checkpoint-01", attempt_id: String = "", remote_seed: RemoteSeed = null) -> OpResult:
+	_mission_id = mission_id
+	_remote_seed = remote_seed
 	if attempt_id.is_empty():
 		attempt_id = "attempt-%d" % int(Time.get_unix_time_from_system() * 1000.0)
 	_factory = RealGitGameSessionFactory.new(_workspace_root, _player_name)
@@ -71,7 +76,8 @@ func initialize(mission_id: String = "checkpoint-01", attempt_id: String = "") -
 		_session.dispose()
 		_session = null
 
-	var created: OpResult = await _factory.create(mission_id, attempt_id)
+	var created: OpResult = await _factory.create(mission_id, attempt_id,
+			remote_seed.copy() if remote_seed != null else null)
 	if not created.ok:
 		return created
 	_session = created.value
@@ -174,7 +180,7 @@ func delete_entry(relative_path: String, is_directory: bool) -> OpResult:
 
 
 func reset() -> OpResult:
-	return await initialize()
+	return await initialize(_mission_id, "", _remote_seed)
 
 
 func dispose() -> void:
