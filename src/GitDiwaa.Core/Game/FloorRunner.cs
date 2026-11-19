@@ -85,10 +85,13 @@ public sealed class FloorRunner : IAsyncDisposable
         }
 
         events.Add(new SpellOutput(result.DisplayCommand, result.Output, result.Success));
-        if (result.Success) EffectiveCommands++;
+        var after = await Session.InspectAsync(ct);
+
+        // A merge/pull that stops on a conflict did real work — it is part of the lesson, not a mistake.
+        var conflictStarted = !result.Success && after.UnmergedFiles.Any() && !before.UnmergedFiles.Any();
+        if (result.Success || conflictStarted) EffectiveCommands++;
         else Errors++;
 
-        var after = await Session.InspectAsync(ct);
         foreach (var e in EffectDetector.Detect(before, after, input, result))
             events.Add(new EffectPlayed(e));
 
