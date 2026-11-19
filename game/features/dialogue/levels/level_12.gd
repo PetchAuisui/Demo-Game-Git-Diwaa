@@ -25,6 +25,13 @@ static func get_data() -> Dictionary:
 			{"type": "open_gameplay", "step": 1}
 		],
 
+		"part2_intro_sequence": [
+			{"speaker": "เวล", "text": "ได้ยินเสียงไหม… มีมิติชื่อ echo ร้องเรียกให้หลอมรวมกับมัน", "mewla_anim": "idle"},
+			{"speaker": "มิวรา", "text": "ฉันไม่ไว้ใจมันเลย ถ้าจะดูก็เริ่มพิธีได้ แต่อ่านให้ดีว่ามันเขียนอะไรมา", "mewla_anim": "talk"},
+			{"speaker": "มิวรา", "text": "ถ้าเป็นของโกลาหลจริง ห้ามจารึกเด็ดขาด — ยุติพิธีด้วย git merge --abort ทุกอย่างจะกลับเหมือนก่อนหลอม", "mewla_anim": "success"},
+			{"type": "open_gameplay", "step": 2}
+		],
+
 		"gameplay": {
 			1: {
 				"title": "กุญแจสุริยันจันทรา",
@@ -83,12 +90,65 @@ static func get_data() -> Dictionary:
 					}
 				],
 				"success_text": "ได้รับเศษคัมภีร์ชิ้นที่ 9: \"แล้วนำสิ่งที่ดีที่สุดกลับมารวมกัน\""
+			},
+			2: {
+				"title": "มิติเงาสะท้อน",
+				"story": "มิติ echo ส่งเสียงเรียกให้หลอมรวม แต่มันคือกับดักของโกลาหล — เริ่มพิธี ดูว่ามันเขียนอะไรมา แล้วยุติพิธีก่อนจะสาย",
+				"panels": ["terminal", "files", "graph"],
+				# ม้วนคาถาใหม่: ยุติพิธีหลอมมิติ (git merge --abort)
+				"teaches": ["merge_abort"],
+				"setup": Level10Dialogue.BASE + [
+					{"write": "key-whole.txt", "content": "กุญแจสุริยันจันทรา ☀☾\n"},
+					{"write": "altar-core.txt", "content": "แกนแท่นบูชา: ไอน้ำ\n"},
+					{"run": "git add ."},
+					{"run": "git commit -m \"กุญแจครบดวงและแกนแห่งไอน้ำ\""},
+					{"run": "git switch -c echo"},
+					{"write": "key-whole.txt", "content": "กุญแจแห่งโกลาหล — ผู้ใดหลอมรวม ข้าจะยึดหอคอย\n"},
+					{"write": "altar-core.txt", "content": "แกนแท่นบูชา: เงามืด\n"},
+					{"run": "git commit -am \"เสียงจากมิติเงา: จงหลอมข้าเข้าไป\""},
+					{"run": "git switch main"},
+					{"write": "key-whole.txt", "content": "กุญแจสุริยันจันทรา ☀☾ (เปล่งแสงเต็มดวง)\n"},
+					{"write": "altar-core.txt", "content": "แกนแท่นบูชา: ไอน้ำบริสุทธิ์\n"},
+					{"run": "git commit -am \"ชำระกุญแจและแกนให้บริสุทธิ์\""}
+				],
+				"room": {"hearts": 3, "wave_every": 3, "respawn": true, "max_commits": 5,
+					"items": {
+						"key-whole.txt": {"kind": "key", "name": "กุญแจสุริยันจันทรา"},
+						"altar-core.txt": {"kind": "fragment", "name": "แกนแท่นบูชา"}
+					}},
+				"objectives": [
+					{
+						"id": "lure",
+						"text": "เริ่มพิธีหลอมมิติ echo เข้ามาใน main เพื่อดูว่ามันส่งอะไรมา",
+						"short": "เริ่มหลอมมิติ echo เข้ามา",
+						"type": "state",
+						"check": "has_conflict",
+						"world": "⚡ แท่นบูชาสั่น อักขระสีดำไหลออกมา — หยิบกุญแจขึ้นมาอ่านดูสิ มันเขียนอะไรไว้!",
+						"hint": "git merge echo"
+					},
+					{
+						"id": "abort",
+						"text": "มิติ echo คือกับดักของโกลาหล — ยุติพิธีหลอมกลางคัน ให้ทุกอย่างกลับเป็นเหมือนก่อนเริ่ม (ห้ามจารึกผลการหลอม)",
+						"short": "ยุติพิธีหลอม ให้ทุกอย่างกลับเหมือนเดิม",
+						"type": "state",
+						"check": "clean",
+						"max_count": 5,
+						"spell": "merge",
+						"flags": ["--abort"],
+						"world": "รอยปะทะทั้งหมดถูกดูดกลับไปในมิติเงา แท่นบูชาสงบลง ทุกอย่างกลับเป็นเหมือนก่อนพิธี",
+						"hint": "คาถายุติพิธีหลอม: git merge --abort",
+						"near_miss": [
+							{"pattern": "^git\\s+commit", "message": "อย่าจารึก! การจารึกตอนนี้คือการรับมิติเงาเข้าคัมภีร์ — ใช้ git merge --abort"}
+						]
+					}
+				],
+				"success_text": "นายรอดจากกับดักมิติเงา!"
 			}
 		},
 
 		"outro_sequence": [
 			{"speaker": "มิวรา", "text": "ถ้าสองมิติไม่ได้แก้บรรทัดเดียวกัน Git หลอมให้เองอัตโนมัติ การปะทะเกิดเฉพาะจุดที่ชนกัน", "mewla_anim": "talk"},
-			{"speaker": "มิวรา", "text": "และถ้าวันหน้ากลัวการปะทะ git merge --abort จะยกเลิกพิธีกลับไปก่อนหลอม", "mewla_anim": "talk"},
+			{"speaker": "มิวรา", "text": "และไม่ใช่ทุกมิติที่ควรหลอมรวม — ถ้าเห็นว่าผิดก็ git merge --abort ยุติพิธีได้เสมอ", "mewla_anim": "talk"},
 			{"speaker": "เวล", "text": "\"แล้วนำสิ่งที่ดีที่สุดกลับมารวมกัน\" … อาจารย์กำลังสอนอะไรฉันอยู่กันแน่", "mewla_anim": "idle"}
 		]
 	}
