@@ -221,10 +221,10 @@ func _update_mission_prompt() -> void:
 	_terminal_panel.set_input_placeholder(str(_mission.current_objective().get("text", "")))
 
 
-func _on_mission_progress(command: String, result: GitCommandResult) -> void:
+func _on_mission_progress(command: String, result: GitCommandResult, snapshot: GitRepositorySnapshot = null) -> void:
 	if _mission.is_complete():
 		return
-	var newly_done := _mission.on_command(command, result.success, result.standard_output)
+	var newly_done := _mission.on_command(command, result.success, result.standard_output, snapshot)
 	_mission_panel.refresh()
 	_update_mission_prompt()
 	if _mission.is_complete():
@@ -232,7 +232,8 @@ func _on_mission_progress(command: String, result: GitCommandResult) -> void:
 		_mission_panel.show_complete(_mission.success_text, _mission_continue_label())
 		return
 	if not newly_done.is_empty():
-		_mission_panel.show_feedback("ถูกต้อง! ภารกิจสำเร็จ", false)
+		var world := _mission.world_text(newly_done[-1])
+		_mission_panel.show_feedback(world if not world.is_empty() else "ถูกต้อง! ภารกิจสำเร็จ", false)
 		return
 	var mistake := _mission.mistake_message(command)
 	if not mistake.is_empty():
@@ -440,7 +441,10 @@ func _on_command_submitted(command: String) -> void:
 
 	_terminal_panel.set_executing(false)
 	if _mission != null and not _is_leaving:
-		_on_mission_progress(trimmed, result)
+		var snapshot := await _sandbox_service.inspect()
+		if _is_leaving or not is_inside_tree():
+			return
+		_on_mission_progress(trimmed, result, snapshot)
 	await _refresh_state()
 
 
