@@ -227,7 +227,7 @@ public sealed class FloorRunner : IAsyncDisposable
         var hints = objective.Hints.Count > 0 ? objective.Hints : [objective.Goal];
         var level = Math.Min(_hintLevel, hints.Count - 1);
         _hintLevel = Math.Min(_hintLevel + 1, hints.Count - 1);
-        return new HintGiven(level + 1, hints.Count, hints[level]);
+        return new HintGiven(level + 1, hints.Count, hints[level].Replace("{player}", _ctx.PlayerName));
     }
 
     private IReadOnlyList<GameEvent> Ask(string arg)
