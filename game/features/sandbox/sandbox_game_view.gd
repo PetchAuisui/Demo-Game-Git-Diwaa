@@ -328,7 +328,11 @@ func _start_room() -> void:
 
 ## หนึ่งการกระทำของผู้เล่นผ่านไป → โลกเดินหนึ่งจังหวะ (คลื่นโกลาหล, ของที่ปรากฏ)
 func _advance_room(command: String) -> void:
-	if _room == null or _room.is_failed() or (_mission != null and _mission.is_complete()):
+	if _room == null:
+		return
+	if _room.is_failed() or (_mission != null and _mission.is_complete()):
+		# จบด่านแล้ว (หรือแพ้): โลกหยุดเดิน แต่ห้องยังต้องแสดงสถานะสุดท้าย เช่น ของที่เพิ่งขึ้นแท่น
+		await _update_room_view()
 		return
 	var snapshot := await _sandbox_service.inspect()
 	var paths := await _workspace_paths()
