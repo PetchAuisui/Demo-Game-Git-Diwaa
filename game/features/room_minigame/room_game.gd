@@ -39,6 +39,17 @@ const STATE_TOME := "tome"         # จารึกแล้วและไม�
 const STATE_CURSED := "cursed"     # ถูกจารึกแล้วแต่เนื้อหาถูกแก้ (รอฟื้นคืน)
 const STATE_CONFLICT := "conflict" # มิติปะทะ
 
+## ป้ายสถานะในห้อง: ภาษาโลกเวท + คำใน Git จริง (เชื่อมสิ่งที่ห้องแสดงกับผลของ git status)
+const GIT_LABELS := {
+	"untracked": "ไร้ตรา (untracked)",
+	"modified": "ถูกแก้ (modified)",
+	"staged": "บนแท่น (staged)",
+	"staged_modified": "บนแท่นแต่ถูกแก้ต่อ (staged + modified)",
+	"cursed": "ถูกสาป (modified)",
+	"conflict": "มิติปะทะ (conflict)",
+	"committed": "จารึกแล้ว",
+}
+
 var hearts := 3
 var max_hearts := 3
 var turn := 0
@@ -179,15 +190,32 @@ func describe(snapshot: GitRepositorySnapshot, workspace_paths: Array[String]) -
 		if blind and not revealed:
 			result.append({"path": path, "kind": "note", "name": path, "state": STATE_DESK, "hidden": true})
 			continue
+		var git := "untracked"
 		if statuses.has(path):
 			state = classify(statuses[path])
+			git = git_state(statuses[path])
 			if _corrupted.has(path) and state == STATE_DESK:
 				state = STATE_CURSED
+				git = "cursed"
 		elif snapshot != null and snapshot.is_initialized and not snapshot.commits.is_empty():
 			state = STATE_TOME
+			git = "committed"
 		result.append({"path": path, "kind": kind, "name": _name(path), "state": state,
-				"hidden": blind and not revealed})
+				"git": git, "label": GIT_LABELS[git], "hidden": blind and not revealed})
 	return result
+
+
+## สถานะ Git ของไฟล์แบบที่ git status ใช้ (untracked / modified / staged / staged_modified / conflict)
+static func git_state(status: GitFileStatus) -> String:
+	if status.index_state == GitFileState.UNMERGED or status.working_tree_state == GitFileState.UNMERGED:
+		return "conflict"
+	if status.index_state == GitFileState.UNTRACKED:
+		return "untracked"
+	var staged := status.index_state != GitFileState.UNCHANGED
+	var changed := status.working_tree_state == GitFileState.MODIFIED or status.working_tree_state == GitFileState.DELETED
+	if staged and changed:
+		return "staged_modified"
+	return "staged" if staged else "modified"
 
 
 static func classify(status: GitFileStatus) -> String:
