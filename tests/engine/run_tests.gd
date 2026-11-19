@@ -894,6 +894,7 @@ const SOLUTIONS := [
 	[2, 1, ["git init"]],
 	[3, 1, ["git status", "cat scroll-d.txt", "cat scroll-b.txt"]],
 	[4, 1, ["git add fragment-1a.txt", "git add fragment-1b.txt fragment-1c.txt"]],
+	[4, 2, ["git add ."]],
 	[5, 1, ["git commit -m \"จารึกเศษคัมภีร์ชิ้นที่ 1\""]],
 	[5, 2, ["git commit -am \"เศษคัมภีร์ชิ้นที่ 2\""]],
 	[6, 1, ["git log --oneline", "say aurora", "git add fragment-3.txt", "git commit -m \"เศษคัมภีร์ชิ้นที่ 3\""]],
@@ -936,6 +937,9 @@ func _t_levels_wrong_spells() -> void:
 	var level3_swapped := await _play_level(3, 1, ["git status", "cat scroll-b.txt", "cat scroll-d.txt"])
 	_check(level3_swapped["mission"].is_complete(), "level 3: the two scrolls can be read in either order")
 	# ด่าน 4: git add . ลากม้วนคำสาปขึ้นแท่น → ไม่ผ่าน และระเบิดเมื่อคลื่นมา
+	# ด่าน 4 ขั้น 2: วางประกายทีละดวง ไม่ทันคลื่น — ต้องยกทั้งโต๊ะในคาถาเดียว
+	var level4_slow := await _play_level(4, 2, ["git add spark-1.txt", "git add spark-2.txt"])
+	_check(level4_slow["room"].is_failed(), "level 4 step 2: one spark at a time loses to the wave")
 	var level4 := await _play_level(4, 1, ["git add .", "git status", "git status"])
 	_check(not level4["mission"].is_complete(), "level 4: add . must not clear")
 	_check(level4["room"].hearts < level4["room"].max_hearts, "level 4: the cursed altar explodes")
@@ -1193,7 +1197,9 @@ func _t_spellbook() -> void:
 			var id := ""
 			if tokens[0] == "git":
 				id = spell_of.get(tokens[1], "")
-				if tokens[1] == "commit" and (tokens.has("-am") or tokens.has("-a")):
+				if tokens[1] == "add" and (tokens.has(".") or tokens.has("-A") or tokens.has("--all")):
+					id = "add_all"
+				elif tokens[1] == "commit" and (tokens.has("-am") or tokens.has("-a")):
 					id = "commit_all"
 				elif tokens[1] == "diff" and tokens.has("--staged"):
 					id = "diff_staged"
