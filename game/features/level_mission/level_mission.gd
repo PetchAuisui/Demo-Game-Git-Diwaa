@@ -33,6 +33,7 @@ extends RefCounted
 ##
 ## คีย์เสริมทุกชนิด:
 ##   world       ข้อความ "โลกตอบสนอง" สั้น ๆ ที่แสดงเมื่อสำเร็จ (แทนบทสนทนายาว)
+##   unordered   true = ทำสลับลำดับกับเป้าหมาย unordered ข้างเคียงได้ (แต่ยังต้องรอเป้าหมายก่อนหน้าที่ไม่ใช่ unordered)
 ##   spawn       [{"write": path, "content": ...} | {"run": "git ..."}] ของที่ปรากฏในโลกเมื่อเป้าหมายนี้สำเร็จ (เช่น ประตูเปิดแล้วเศษคัมภีร์ร่วงออกมา)
 
 signal objective_completed(objective_id: String)
@@ -228,9 +229,14 @@ func _matches(objective: Dictionary, tokens: PackedStringArray, success: bool, o
 
 
 func _previous_done(index: int) -> bool:
+	var unordered: bool = objectives[index].get("unordered", false)
 	for previous in index:
-		if not _done_before.has(str(objectives[previous]["id"])):
-			return false
+		if _done_before.has(str(objectives[previous]["id"])):
+			continue
+		# เป้าหมายที่ติด unordered ด้วยกันทำสลับลำดับกันได้ (เช่น อ่านกระดาษสองแผ่นแผ่นไหนก่อนก็ได้)
+		if unordered and objectives[previous].get("unordered", false):
+			continue
+		return false
 	return true
 
 
