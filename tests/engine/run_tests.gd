@@ -59,6 +59,8 @@ func _run() -> void:
 	await _test("level 1 mission step 1 accepts only the exact version spell", _t_level1_step1)
 	await _test("clear scoring: no timer is not a timeout, expiry gives 2 stars", _t_clear_scoring)
 	await _test("level 1 mission step 2 needs name, email and a non-empty name check", _t_level1_step2)
+	await _test("state objectives follow the real repository, not the command text", _t_state_objectives)
+	await _test("state objectives are judged in story order and can require a spell", _t_state_objective_order)
 
 	FsUtil.delete_recursive(_test_root)
 	if not _failures.is_empty():
@@ -705,3 +707,70 @@ func _t_clear_scoring() -> void:
 	_check(GameProgressManager.calculate_score(-1.0, 130.0) == 85, "missing timer (-1) must not count as a timeout")
 	_check(GameProgressManager.calculate_score(0.0, 130.0) == 65, "expired timer gives 2 stars")
 	_check(GameProgressManager.calculate_score(130.0, 130.0) == 100)
+
+
+func _fresh_session(mission_id: String) -> GitGameSession:
+	var created: OpResult = await _factory.create(mission_id, "attempt-%d" % Time.get_ticks_usec())
+	return created.value if created.ok else null
+
+
+func _t_state_objectives() -> void:
+	var session := await _fresh_session("state-check")
+	if not _check(session != null, "session should start"):
+		return
+	await session.execute("git config --global user.name \"Vel\"")
+	await session.execute("git config --global user.email \"vel@magic-tower.local\"")
+	_check(not LevelMission.evaluate_state({"check": "repo_initialized"}, await session.inspect()))
+	await session.execute("git init")
+	_check(LevelMission.evaluate_state({"check": "repo_initialized"}, await session.inspect()))
+
+	session.files.write_all_text("a.txt", "a\n")
+	session.files.write_all_text("b.txt", "b\n")
+	var both := {"check": "staged", "paths": ["a.txt", "b.txt"]}
+	await session.execute("git add a.txt")
+	_check(not LevelMission.evaluate_state(both, await session.inspect()), "only one file is staged")
+	await session.execute("git add .")
+	_check(LevelMission.evaluate_state(both, await session.inspect()), "both files staged")
+
+	await session.execute("git commit -m \"first\"")
+	var snapshot := await session.inspect()
+	_check(LevelMission.evaluate_state({"check": "committed", "paths": ["a.txt", "b.txt"], "count": 1}, snapshot))
+	_check(LevelMission.evaluate_state({"check": "clean"}, snapshot))
+	_check(LevelMission.evaluate_state({"check": "current_branch", "branch": "main"}, snapshot))
+
+	await session.execute("git switch -c experiment")
+	session.files.write_all_text("a.txt", "fire\n")
+	await session.execute("git commit -am \"fire\"")
+	await session.execute("git switch main")
+	session.files.write_all_text("b.txt", "ice\n")
+	await session.execute("git commit -am \"ice\"")
+	_check(not LevelMission.evaluate_state({"check": "merge_commit"}, await session.inspect()))
+	var merged := await session.execute("git merge experiment")
+	_check(merged.success, "merge failed: " + merged.output)
+	snapshot = await session.inspect()
+	_check(LevelMission.evaluate_state({"check": "branch_exists", "branch": "experiment"}, snapshot))
+	_check(LevelMission.evaluate_state({"check": "merge_commit"}, snapshot), "HEAD should be the merge commit")
+	session.dispose()
+
+
+func _t_state_objective_order() -> void:
+	var session := await _fresh_session("state-order")
+	if not _check(session != null, "session should start"):
+		return
+	var mission := LevelMission.new()
+	mission.objectives.append({"id": "tome", "type": "state", "check": "repo_initialized", "world": "คัมภีร์ถือกำเนิด"})
+	mission.objectives.append({"id": "altar", "type": "state", "check": "staged", "paths": ["f.txt"], "spell": "add"})
+	session.files.write_all_text("f.txt", "rune\n")
+
+	var result := await session.execute("git status")
+	_check(mission.on_command("git status", result.success, result.standard_output, await session.inspect()).is_empty())
+	result = await session.execute("git init")
+	_equal(["tome"], Array(mission.on_command("git init", result.success, result.standard_output, await session.inspect())))
+	_equal("คัมภีร์ถือกำเนิด", mission.world_text("tome"))
+
+	# Staging via a non-add command must not satisfy a goal that requires the add spell.
+	await session.execute("git add f.txt")
+	_check(mission.on_command("git status", true, "", await session.inspect()).is_empty(), "spell add is required")
+	_check(not mission.on_command("git add f.txt", true, "", await session.inspect()).is_empty())
+	_check(mission.is_complete())
+	session.dispose()

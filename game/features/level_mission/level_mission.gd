@@ -8,6 +8,21 @@ extends RefCounted
 ##   command     commands: [..]        พิมพ์คำสั่งตรงตัว (เว้นวรรคซ้ำถูกยุบ) และคำสั่งสำเร็จ
 ##   config_set  key, validator        git config --global <key> "<ค่า>" (validator: non_empty | email)
 ##   config_get  key                   git config --global <key> แล้วมีค่าตอบกลับ
+##   state       check, ...            ตรวจจาก "สถานะ Repository" หลังคำสั่ง ไม่ใช่ข้อความคำสั่ง (Game Design v2 §4.3)
+##                                     ผู้เล่นใช้คาถารูปแบบไหนก็ได้ ขอแค่โลก (repo) เป็นไปตามเป้าหมาย
+##       check = repo_initialized                     มีคัมภีร์ (git init แล้ว)
+##             | staged          paths: [..]          ทุกไฟล์ใน paths อยู่บนแท่นเตรียม (staged)
+##             | committed       paths: [..], count   ทุกไฟล์ใน paths ถูกจารึกแล้ว (ไม่เหลือสถานะค้าง) และมี commit ≥ count
+##             | commits_at_least count               มี commit อย่างน้อย count ครั้ง
+##             | clean                                working tree และ stage ว่าง
+##             | branch_exists   branch               มี branch ชื่อนี้
+##             | current_branch  branch               ยืนอยู่บน branch นี้
+##             | merge_commit                         HEAD เป็น merge commit (มีสอง parent)
+##       spell (ไม่บังคับ) = ต้องสำเร็จด้วยคาถานี้ เช่น "add" / "commit" (ใช้เมื่ออยากให้ฝึกคาถาเฉพาะ)
+##       objective แบบ state จะถูกตรวจเมื่อ objective ก่อนหน้าทั้งหมดสำเร็จแล้วเท่านั้น (เป็นลำดับเหตุการณ์ในเรื่อง)
+##
+## คีย์เสริมทุกชนิด:
+##   world       ข้อความ "โลกตอบสนอง" สั้น ๆ ที่แสดงเมื่อสำเร็จ (แทนบทสนทนายาว)
 
 signal objective_completed(objective_id: String)
 signal mission_completed
@@ -69,15 +84,30 @@ func current_objective() -> Dictionary:
 	return {}
 
 
+## ข้อความ "โลกตอบสนอง" ของภารกิจ ("" = ไม่มี)
+func world_text(objective_id: String) -> String:
+	for objective in objectives:
+		if str(objective["id"]) == objective_id:
+			return str(objective.get("world", ""))
+	return ""
+
+
 ## ตรวจคำสั่งที่เพิ่งรันเสร็จ คืน id ของภารกิจที่เพิ่งสำเร็จ
-func on_command(command: String, success: bool, output: String) -> Array[String]:
+## snapshot = สถานะ Repository หลังคำสั่ง (จำเป็นสำหรับ objective ชนิด state)
+func on_command(command: String, success: bool, output: String, snapshot: GitRepositorySnapshot = null) -> Array[String]:
 	var newly_done: Array[String] = []
 	var tokens := tokenize(command)
-	for objective in objectives:
+	for index in objectives.size():
+		var objective := objectives[index]
 		var objective_id := str(objective["id"])
 		if is_done(objective_id):
 			continue
-		if _matches(objective, tokens, success, output):
+		var matched := false
+		if str(objective.get("type", "")) == "state":
+			matched = _previous_done(index) and _matches_state(objective, tokens, success, snapshot)
+		else:
+			matched = _matches(objective, tokens, success, output)
+		if matched:
 			_done[objective_id] = true
 			newly_done.append(objective_id)
 			objective_completed.emit(objective_id)
@@ -115,6 +145,75 @@ func _matches(objective: Dictionary, tokens: PackedStringArray, success: bool, o
 				return false
 			return tokens[3] == str(objective["key"]) and not output.strip_edges().is_empty()
 	return false
+
+
+func _previous_done(index: int) -> bool:
+	for previous in index:
+		if not is_done(str(objectives[previous]["id"])):
+			return false
+	return true
+
+
+func _matches_state(objective: Dictionary, tokens: PackedStringArray, success: bool, snapshot: GitRepositorySnapshot) -> bool:
+	if snapshot == null:
+		return false
+	var spell := str(objective.get("spell", ""))
+	if not spell.is_empty() and (not success or tokens.size() < 2 or tokens[0] != "git" or tokens[1] != spell):
+		return false
+	return evaluate_state(objective, snapshot)
+
+
+## ตรวจเงื่อนไขสถานะ (static เพื่อใช้ซ้ำและทดสอบได้โดยไม่ต้องมี mission)
+static func evaluate_state(objective: Dictionary, snapshot: GitRepositorySnapshot) -> bool:
+	if snapshot == null:
+		return false
+	var paths: Array = objective.get("paths", [])
+	match str(objective.get("check", "")):
+		"repo_initialized":
+			return snapshot.is_initialized
+		"staged":
+			return snapshot.is_initialized and not paths.is_empty() and paths.all(func(path: Variant) -> bool:
+				var status := _status_of(snapshot, str(path))
+				return status != null and _is_staged_state(status.index_state))
+		"committed":
+			if not snapshot.is_initialized or snapshot.commits.size() < int(objective.get("count", 1)):
+				return false
+			return paths.all(func(path: Variant) -> bool: return _status_of(snapshot, str(path)) == null)
+		"commits_at_least":
+			return snapshot.commits.size() >= int(objective.get("count", 1))
+		"clean":
+			return snapshot.is_initialized and snapshot.files.is_empty()
+		"branch_exists":
+			var wanted := str(objective.get("branch", ""))
+			return snapshot.branches.any(func(branch: GitBranchInfo) -> bool: return branch.name == wanted)
+		"current_branch":
+			return snapshot.current_branch != null and str(snapshot.current_branch) == str(objective.get("branch", ""))
+		"merge_commit":
+			return not snapshot.commits.is_empty() and _head_commit(snapshot) != null and _head_commit(snapshot).parent_ids.size() > 1
+	return false
+
+
+static func _status_of(snapshot: GitRepositorySnapshot, path: String) -> GitFileStatus:
+	for file in snapshot.files:
+		if file.path == path:
+			return file
+	return null
+
+
+static func _is_staged_state(state: int) -> bool:
+	return state in [GitFileState.ADDED, GitFileState.MODIFIED, GitFileState.DELETED, GitFileState.RENAMED, GitFileState.COPIED]
+
+
+static func _head_commit(snapshot: GitRepositorySnapshot) -> GitCommitNode:
+	for branch in snapshot.branches:
+		if branch.is_current and branch.commit_id != null:
+			for commit in snapshot.commits:
+				if commit.id == str(branch.commit_id):
+					return commit
+	for commit in snapshot.commits:
+		if commit.references.any(func(ref: String) -> bool: return ref.begins_with("HEAD")):
+			return commit
+	return snapshot.commits[0] if not snapshot.commits.is_empty() else null
 
 
 static func _get_regex(pattern: String) -> RegEx:
