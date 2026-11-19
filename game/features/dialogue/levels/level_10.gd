@@ -51,8 +51,8 @@ static func get_data() -> Dictionary:
 				"objectives": [
 					{
 						"id": "survey",
-						"text": "สำรวจว่าคัมภีร์นี้มีมิติอะไรอยู่บ้าง",
-						"short": "สำรวจมิติ",
+						"text": "ดูว่าคัมภีร์นี้มีมิติ (branch) อะไรอยู่บ้าง",
+						"short": "ดูรายชื่อมิติทั้งหมด",
 						"type": "command",
 						"commands": ["git branch", "git branch -a", "git branch --all"],
 						"world": "ดอกจัน * คือมิติที่นายยืนอยู่… และนั่นไง phantom มิติผีที่ไม่มีใครใช้แล้ว",
@@ -61,7 +61,7 @@ static func get_data() -> Dictionary:
 					{
 						"id": "close",
 						"text": "ปิดมิติผี phantom ก่อนมันดูดพลังนายจนหมด",
-						"short": "ปิดมิติผี",
+						"short": "ปิดมิติผี phantom",
 						"type": "state",
 						"check": "branch_absent",
 						"branch": "phantom",
@@ -71,7 +71,7 @@ static func get_data() -> Dictionary:
 					{
 						"id": "open",
 						"text": "เปิดมิติทดลองของนายเองชื่อ experiment",
-						"short": "เปิดมิติ experiment",
+						"short": "เปิดมิติใหม่ชื่อ experiment",
 						"type": "state",
 						"check": "branch_exists",
 						"branch": "experiment",

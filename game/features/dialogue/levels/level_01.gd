@@ -103,7 +103,7 @@ static func get_data() -> Dictionary:
 					{
 						"id": "verify",
 						"text": "ตรวจชื่อที่จดไว้ด้วย git config --global user.name",
-						"short": "ให้ประตูขานนามกลับมา",
+						"short": "ตรวจว่าประตูจำนามได้ (user.name)",
 						"world": "ประตูขานนามของนายกลับมา แล้วค่อย ๆ เปิดออก",
 						"type": "config_get",
 						"key": "user.name",

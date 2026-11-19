@@ -55,8 +55,8 @@ static func get_data() -> Dictionary:
 				"objectives": [
 					{
 						"id": "ritual",
-						"text": "เริ่มพิธีหลอมมิติ experiment เข้ากับ main",
-						"short": "เริ่มพิธีหลอมมิติ",
+						"text": "หลอมมิติ experiment เข้ามาในมิติหลัก main ที่นายยืนอยู่",
+						"short": "หลอมมิติ experiment เข้ามาใน main",
 						"type": "state",
 						"check": "has_conflict",
 						"world": "⚡ ไฟกับน้ำแข็งปะทะกันกลางแท่นบูชา! — เปิด altar-core.txt ดูรอย <<<<<<< ======= >>>>>>>",
@@ -64,8 +64,8 @@ static func get_data() -> Dictionary:
 					},
 					{
 						"id": "judge",
-						"text": "ตัดสินแกนแท่นบูชา (แก้ altar-core.txt ให้เหลือแบบที่นายเลือก) แล้ววางขึ้นแท่น",
-						"short": "ตัดสินการปะทะ",
+						"text": "แก้ altar-core.txt ให้เหลือแกนที่นายเลือก (ลบรอย <<<<<<< ======= >>>>>>> ออก) แล้ววางขึ้นแท่น",
+						"short": "แก้แกนแท่นบูชา แล้ววางขึ้นแท่น",
 						"type": "state",
 						"check": "staged",
 						"paths": ["altar-core.txt"],
@@ -75,7 +75,7 @@ static func get_data() -> Dictionary:
 					{
 						"id": "seal",
 						"text": "จารึกผลการหลอม ให้กุญแจครบดวงในมิติหลัก",
-						"short": "จารึกผลการหลอม",
+						"short": "จารึกผลการหลอมให้พิธีจบ",
 						"type": "state",
 						"check": "merge_commit",
 						"world": "สองแสงหลอมรวม กุญแจสุริยันจันทราครบดวง ประตูชั้นบนคลายล็อก — ได้รับเศษคัมภีร์ชิ้นที่ 9",

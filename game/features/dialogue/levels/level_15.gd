@@ -49,8 +49,8 @@ static func get_data() -> Dictionary:
 				"objectives": [
 					{
 						"id": "bond",
-						"text": "ผูกสายเชื่อมชื่อ origin ไปยังที่อยู่ในคลังของนาย",
-						"short": "ผูกสายเชื่อม origin",
+						"text": "ผูกสายเชื่อมชื่อ origin ไปยังคลังของนาย (apprentice-tome)",
+						"short": "ผูกสายเชื่อมชื่อ origin",
 						"type": "command",
 						"commands": ["git remote add origin " + URL],
 						"world": "สายใยแสงพุ่งจากคัมภีร์ของนายไปจรดประตูเวท",
@@ -59,7 +59,7 @@ static func get_data() -> Dictionary:
 					{
 						"id": "send",
 						"text": "ส่งคัมภีร์เข้าคลังเป็นครั้งแรก พร้อมผูก main เข้ากับ origin/main",
-						"short": "ส่งคัมภีร์ผ่านประตู",
+						"short": "ส่งคัมภีร์เข้าคลังครั้งแรก (ผูกเส้นทาง)",
 						"type": "state",
 						"check": "in_sync",
 						"upstream": "origin/main",
