@@ -407,7 +407,7 @@ func _on_mission_continue() -> void:
 	if _is_leaving:
 		return
 	_is_leaving = true
-	GameProgressManager.set_resume_dialogue_phase(_mission.step)
+	GameProgressManager.set_resume_dialogue_phase(LevelMission.resume_phase_after(_mission.step, _mission.total_steps))
 	var tree := get_tree() if is_inside_tree() else null
 	if SceneLoader.change_scene(tree, LEVEL_DIALOGUE_PATH):
 		Engine.time_scale = 1.0
