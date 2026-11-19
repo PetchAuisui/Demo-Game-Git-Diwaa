@@ -38,6 +38,11 @@ var _spell_overlay: SpellEffectOverlay
 ## มินิเกมห้อง (null = ด่านนี้ไม่มีมินิเกม)
 var _room: RoomGame
 var _room_view: RoomView
+## ม้วนคาถาใหม่ / สมุดคาถา (สอนคำสั่งตอนที่ต้องใช้จริง)
+var _spell_view: SpellScrollView
+## จำนวนครั้งที่ผู้เล่นร่ายพลาดติดกันในเป้าหมายปัจจุบัน (ครบ 2 ครั้ง มิวราช่วยใบ้เอง)
+var _mistakes := 0
+const MIURA_HINT_AFTER := 2
 var _leave_confirm_dialog: ConfirmationDialog
 var _leave_confirm_message: Label
 
@@ -210,6 +215,7 @@ func _setup_mission() -> void:
 	_apply_contextual_panels()
 	_mission_panel.continue_pressed.connect(_on_mission_continue)
 	_mission_panel.retry_pressed.connect(_on_room_retry)
+	_mission_panel.spellbook_pressed.connect(_open_spellbook)
 	_setup_room()
 	_update_mission_prompt()
 
@@ -229,6 +235,48 @@ func _setup_mission() -> void:
 	else:
 		if _top_bar != null:
 			_top_bar.set_timer_visible(false)
+
+
+## สอนคาถาตอนที่ต้องใช้จริง: ขั้นที่มีคีย์ "teaches" แจกม้วนคาถาใหม่ตอนเริ่ม
+func _ensure_spell_view() -> SpellScrollView:
+	if _spell_view == null:
+		_spell_view = SpellScrollView.new()
+		_spell_view.name = "SpellScrollView"
+		add_child(_spell_view)
+		_spell_view.closed.connect(_terminal_panel.focus_input)
+	return _spell_view
+
+
+func _show_new_spells() -> void:
+	if _mission == null:
+		return
+	var ids := SpellCatalog.taught_in(_mission.level_number, _mission.step)
+	if ids.is_empty():
+		return
+	_ensure_spell_view().show_new_spells(ids, _mission.level_number)
+	_terminal_panel.append_info("✦ ได้รับม้วนคาถาใหม่ — เปิดดูอีกครั้งได้จากปุ่ม \"คาถา\" หรือพิมพ์ spells")
+
+
+func _open_spellbook() -> void:
+	var ids: Array[String] = []
+	if _mission != null:
+		ids = SpellCatalog.learned_until(_mission.level_number, _mission.step)
+	else:
+		for id in SpellCatalog.SPELLS.keys():
+			ids.append(str(id))
+	_ensure_spell_view().show_spellbook(ids)
+
+
+## มิวราช่วยเมื่อผู้เล่นติด: ร่ายพลาดซ้ำ หรือเพิ่งเสียหัวใจ → บอกคำใบ้ของเป้าหมายปัจจุบันเอง
+func _miura_hint(reason: String) -> void:
+	if _mission == null or _mission_panel == null or _mission.is_complete():
+		return
+	var hint := str(_mission.current_objective().get("hint", ""))
+	if hint.is_empty():
+		return
+	_mistakes = 0
+	_mission_panel.show_feedback("มิวรา: %s — %s" % [reason, hint], false)
+	_terminal_panel.append_info("✦ มิวรา: " + hint)
 
 
 ## มินิเกมห้อง: ห้องในหอคอยกลางฉาก ของในห้องคือไฟล์จริง คลื่นโกลาหลทำลายสิ่งที่ยังไม่จารึก
@@ -291,6 +339,8 @@ func _advance_room(command: String) -> void:
 	_room_view.play_events(outcome["events"])
 	for event in outcome["events"]:
 		_terminal_panel.append_info("✦ " + str(event["text"]))
+	if outcome["events"].any(func(e: Dictionary) -> bool: return e["type"] == "damage") and not _room.is_failed():
+		_miura_hint("ระวัง! พลังลดลงแล้ว")
 	if actions.is_empty():
 		# โลกไม่เปลี่ยน: ใช้สถานะที่เพิ่งอ่านมาวาดห้องเลย ไม่ต้องตรวจ repo ซ้ำ (ห้องตอบสนองไวขึ้น)
 		var branch := str(snapshot.current_branch) if snapshot.is_initialized and snapshot.current_branch != null else ""
@@ -390,10 +440,17 @@ func _on_mission_progress(command: String, result: GitCommandResult, snapshot: G
 	for done_id in newly_done:
 		_apply_world_actions(_mission.spawn_actions(done_id))
 	if not newly_done.is_empty():
+		_mistakes = 0
+	elif not result.success or command.begins_with("say "):
+		_mistakes += 1
+	if not newly_done.is_empty():
 		var world := _mission.world_text(newly_done[-1])
 		_mission_panel.show_feedback(world if not world.is_empty() else "ถูกต้อง! ภารกิจสำเร็จ", false)
 		return
 	var mistake := _mission.mistake_message(command)
+	if _mistakes >= MIURA_HINT_AFTER:
+		_miura_hint("ดูเหมือนนายจะติดอยู่")
+		return
 	if not mistake.is_empty():
 		_mission_panel.show_feedback(mistake, true)
 
@@ -516,6 +573,7 @@ func _initialize_sandbox() -> void:
 	await _start_room()
 	if _is_leaving or not is_inside_tree():
 		return
+	_show_new_spells()
 	_terminal_panel.append_info("พร้อมใช้งาน — พิมพ์ help หรือเริ่มด้วย git --version\n")
 
 	await _refresh_state()
@@ -577,6 +635,10 @@ func _on_command_submitted(command: String) -> void:
 
 	if lower.begins_with("delete "):
 		_handle_delete_command(trimmed)
+		return
+
+	if lower in ["spells", "spellbook", "สมุดคาถา"]:
+		_open_spellbook()
 		return
 
 	if lower.begins_with("say "):

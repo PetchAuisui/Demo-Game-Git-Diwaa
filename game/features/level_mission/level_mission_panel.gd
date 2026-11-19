@@ -8,6 +8,8 @@ extends PanelContainer
 signal continue_pressed
 ## ผู้เล่นแพ้ในมินิเกมห้อง (หัวใจหมด) แล้วกดเริ่มชั้นนี้ใหม่
 signal retry_pressed
+## เปิดสมุดคาถา (คาถาที่เรียนมาแล้ว)
+signal spellbook_pressed
 
 const FONT_REGULAR_PATH := "res://assets/fonts/ChakraPetch-Regular.ttf"
 const FONT_BOLD_PATH := "res://assets/fonts/ChakraPetch-Bold.ttf"
@@ -213,6 +215,26 @@ func _build() -> void:
 
 	_hint_button.pressed.connect(_on_hint_pressed)
 	header.add_child(_hint_button)
+
+	var book_button := Button.new()
+	book_button.text = "คาถา"
+	book_button.tooltip_text = "สมุดคาถา: เปิดดูคาถาที่เรียนมาแล้ว (หรือพิมพ์ spells ในวงร่ายเวท)"
+	book_button.custom_minimum_size = Vector2(0, 32)
+	book_button.focus_mode = Control.FOCUS_NONE
+	book_button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	var book_style := SandboxThemeTokens.create_button_style()
+	book_style.content_margin_left = 12
+	book_style.content_margin_right = 12
+	book_style.content_margin_top = 4
+	book_style.content_margin_bottom = 4
+	for state in ["normal", "hover", "pressed"]:
+		book_button.add_theme_stylebox_override(state, book_style)
+	book_button.add_theme_font_size_override("font_size", 18)
+	if _font_bold != null:
+		book_button.add_theme_font_override("font", _font_bold)
+	book_button.add_theme_color_override("font_color", SandboxThemeTokens.GOLD_TITLE)
+	book_button.pressed.connect(func() -> void: spellbook_pressed.emit())
+	header.add_child(book_button)
 
 	_story_label = _make_label(20, SandboxThemeTokens.PRIMARY_TEXT, false)
 	_story_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
