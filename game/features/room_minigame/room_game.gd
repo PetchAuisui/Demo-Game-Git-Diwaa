@@ -26,6 +26,10 @@ extends RefCounted
 ##   phantoms      ["ghost"] ชื่อ branch ผีที่ดูดหัวใจทุกคลื่นจนกว่าจะถูกลบ
 ##   wrong_say     หัวใจที่เสียเมื่อเอ่ยรหัสผิด (ค่าเริ่มต้น 1)
 ##   blind         true = ห้องไม่บอกสถานะของเศษคัมภีร์จนกว่าผู้เล่นจะร่าย git status (ใช้ในด่านหยั่งสถานะ)
+##   needs_tome    true = คลื่นทำร้ายผู้เล่นถ้ายังไม่มีคัมภีร์ (git init)
+##   cursed        [paths] ของที่ถูกสาปไว้ตั้งแต่เริ่ม (ให้ห้องแสดงว่าถูกสาป)
+##   essential     [paths] ของที่ห้ามหาย — ถ้าหายไปจากพื้นที่ทำงาน (เช่น reset --hard) แพ้ทันที
+## คำสาปบนแท่นเตรียมตอนคลื่นมา: โล่แท่นแตกและเสียหัวใจ (สอนให้เลือกของขึ้นแท่นเอง)
 
 const CORRUPTED_TEXT := "ค̷͓ว̷า̴ม̸โ̷ก̵ล̸า̴ห̷ล̷ ̸ก̵ั̶ด̶ก̷ิ̸น̷อ̸ั̷ก̸ข̷ร̶ะ̵\n"
 const STATE_DESK := "desk"         # untracked หรือแก้ไขแต่ยังไม่ขึ้นแท่น
@@ -44,6 +48,9 @@ var respawn := false
 var blind := false
 var revealed := false
 var wrong_say_damage := 1
+var needs_tome := false
+var essential: Array[String] = []
+var _seen_essential: Dictionary = {}
 var items: Dictionary = {}
 var spawns: Array[Dictionary] = []
 var phantoms: Array[String] = []
@@ -65,6 +72,11 @@ static func from_config(config: Dictionary) -> RoomGame:
 	game.respawn = bool(config.get("respawn", false))
 	game.blind = bool(config.get("blind", false))
 	game.wrong_say_damage = int(config.get("wrong_say", 1))
+	game.needs_tome = bool(config.get("needs_tome", false))
+	for path in config.get("cursed", []):
+		game._corrupted[str(path)] = true
+	for path in config.get("essential", []):
+		game.essential.append(str(path))
 	game.items = (config.get("items", {}) as Dictionary).duplicate(true)
 	for spawn in config.get("spawns", []):
 		game.spawns.append(spawn)
@@ -120,6 +132,13 @@ func on_turn(snapshot: GitRepositorySnapshot, command: String = "") -> Dictionar
 		actions.append(action)
 		events.append({"type": "spawn", "path": action["write"], "text": "%s ร่วงลงมาบนโต๊ะ!" % _name(action["write"])})
 
+	for path in essential:
+		if _present.has(path):
+			_seen_essential[path] = true
+		elif _seen_essential.has(path):
+			_damage(hearts, events, "%s หายไปจากโลกแล้ว — ไม่มีทางนำกลับมา!" % _name(path), path)
+			return {"actions": actions, "events": events, "wave": false}
+
 	var is_wave := has_waves() and turn >= first_wave and (turn - first_wave) % wave_every == 0
 	if is_wave:
 		_resolve_wave(snapshot, actions, events)
@@ -152,6 +171,9 @@ func describe(snapshot: GitRepositorySnapshot, workspace_paths: Array[String]) -
 		var item: Dictionary = items.get(path, {})
 		var kind := str(item.get("kind", "note"))
 		var state := STATE_DESK
+		if blind and not revealed:
+			result.append({"path": path, "kind": "note", "name": path, "state": STATE_DESK, "hidden": true})
+			continue
 		if statuses.has(path):
 			state = classify(statuses[path])
 			if _corrupted.has(path) and state == STATE_DESK:
@@ -175,6 +197,8 @@ static func classify(status: GitFileStatus) -> String:
 
 func _resolve_wave(snapshot: GitRepositorySnapshot, actions: Array[Dictionary], events: Array[Dictionary]) -> void:
 	events.append({"type": "wave", "text": "คลื่นโกลาหลซัดเข้ามา!"})
+	if needs_tome and (snapshot == null or not snapshot.is_initialized):
+		_damage(1, events, "ไม่มีคัมภีร์รองรับพลัง คลื่นซัดเข้าใส่นายเต็ม ๆ!")
 	var statuses := {}
 	if snapshot != null:
 		for file in snapshot.files:
@@ -186,6 +210,8 @@ func _resolve_wave(snapshot: GitRepositorySnapshot, actions: Array[Dictionary], 
 	for path in items.keys():
 		var item: Dictionary = items[path]
 		if str(item.get("kind", "")) == "curse":
+			if statuses.has(path) and classify(statuses[path]) == STATE_ALTAR:
+				_damage(1, events, "%s บนแท่นเตรียมระเบิด! โล่แท่นแตก" % _name(path), path)
 			continue
 		if not statuses.has(path):
 			continue # จารึกแล้วและสะอาด หรือยังไม่ปรากฏ → ปลอดภัย
