@@ -41,8 +41,8 @@ static func get_data() -> Dictionary:
 					{"write": "fragment-5.txt", "content": "ความผิดพลาดแก้ไขได้เสมอ\n"},
 					{"run": "git add ."},
 					{"run": "git commit -m \"จารึกเศษคัมภีร์ชิ้นที่ 5\""},
-					{"write": "fragment-5.txt", "content": "ค̷ว̷า̷ม̷ผ̷ิ̷ด̷พ̷ล̷า̷ด̷ ̷ค̷ื̷อ̷จ̷̷ุด̷จ̷บ̷\n"},
-					{"write": "curse.txt", "content": "☠ ผู้ใดจารึกม้วนนี้ คัมภีร์จะเป็นของโกลาหล ☠\n"},
+					{"write": "fragment-5.txt", "content": RoomGame.CORRUPTED_TEXT},
+					{"write": "curse.txt", "content": "[ม้วนคำสาป] ผู้ใดจารึกม้วนนี้ คัมภีร์จะเป็นของโกลาหล\n"},
 					{"run": "git add curse.txt"}
 				],
 				"room": {

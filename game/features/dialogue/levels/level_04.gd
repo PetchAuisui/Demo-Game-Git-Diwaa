@@ -41,7 +41,7 @@ static func get_data() -> Dictionary:
 					{"write": "fragment-1a.txt", "content": "ศิษย์\n"},
 					{"write": "fragment-1b.txt", "content": "ของ\n"},
 					{"write": "fragment-1c.txt", "content": "ข้า…\n"},
-					{"write": "curse.txt", "content": "☠ ผู้ใดวางม้วนนี้บนแท่น แท่นจะแตกสลาย ☠\n"}
+					{"write": "curse.txt", "content": "[ม้วนคำสาป] ผู้ใดวางม้วนนี้บนแท่น แท่นจะแตกสลาย\n"}
 				],
 				"room": {
 					"hearts": 3, "wave_every": 3, "safe": "staged", "respawn": true,
