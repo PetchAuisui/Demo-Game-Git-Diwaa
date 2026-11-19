@@ -61,6 +61,7 @@ func _run() -> void:
 	await _test("level 1 mission step 2 needs name, email and a non-empty name check", _t_level1_step2)
 	await _test("state objectives follow the real repository, not the command text", _t_state_objectives)
 	await _test("state objectives are judged in story order and can require a spell", _t_state_objective_order)
+	await _test("spell effects follow what git really did to the repository", _t_spell_effects)
 
 	FsUtil.delete_recursive(_test_root)
 	if not _failures.is_empty():
@@ -773,4 +774,39 @@ func _t_state_objective_order() -> void:
 	_check(mission.on_command("git status", true, "", await session.inspect()).is_empty(), "spell add is required")
 	_check(not mission.on_command("git add f.txt", true, "", await session.inspect()).is_empty())
 	_check(mission.is_complete())
+	session.dispose()
+
+
+func _t_spell_effects() -> void:
+	var session := await _fresh_session("spell-effects")
+	if not _check(session != null, "session should start"):
+		return
+	await session.execute("git config --global user.name \"Vel\"")
+	await session.execute("git config --global user.email \"vel@magic-tower.local\"")
+	var cast := func(command: String) -> Array:
+		var before := await session.inspect()
+		var result := await session.execute(command)
+		var effects := SpellEffectDetector.detect(before, await session.inspect(), command, result.success)
+		return effects.map(func(effect: Dictionary) -> int: return effect["kind"])
+
+	_check((await cast.call("git init")).has(SpellEffectDetector.Kind.TOME_CREATED), "init")
+	session.files.write_all_text("scroll.txt", "rune\n")
+	_check((await cast.call("git status")).has(SpellEffectDetector.Kind.REVEALED), "status reveals")
+	_check((await cast.call("git add scroll.txt")).has(SpellEffectDetector.Kind.TO_ALTAR), "add")
+	_check((await cast.call("git commit -m \"one\"")).has(SpellEffectDetector.Kind.INSCRIBED), "commit")
+	session.files.write_all_text("scroll.txt", "rune 2\n")
+	await session.execute("git commit -am \"two\"")
+	_check((await cast.call("git reset --soft HEAD~1")).has(SpellEffectDetector.Kind.TIME_REWIND), "reset rewinds time")
+	_check((await cast.call("git restore --staged scroll.txt")).has(SpellEffectDetector.Kind.FROM_ALTAR), "unstage")
+	_check((await cast.call("git restore scroll.txt")).has(SpellEffectDetector.Kind.CURSE_LIFTED), "restore")
+	_check((await cast.call("git branch experiment")).has(SpellEffectDetector.Kind.DIMENSION_SPLIT), "branch")
+	_check((await cast.call("git switch experiment")).has(SpellEffectDetector.Kind.DIMENSION_STEP), "switch")
+	_check((await cast.call("git frobnicate")).has(SpellEffectDetector.Kind.FIZZLE), "bad spell fizzles")
+
+	session.files.write_all_text("scroll.txt", "fire\n")
+	await session.execute("git commit -am \"fire\"")
+	await session.execute("git switch main")
+	session.files.write_all_text("scroll.txt", "ice\n")
+	await session.execute("git commit -am \"ice\"")
+	_check((await cast.call("git merge experiment")).has(SpellEffectDetector.Kind.DIMENSION_CLASH), "conflict clashes")
 	session.dispose()
