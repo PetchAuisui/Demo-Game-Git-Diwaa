@@ -701,6 +701,9 @@ func _on_command_submitted(command: String) -> void:
 	if _is_leaving or not is_inside_tree():
 		return
 	_spell_overlay.play_all(SpellEffectDetector.detect(before, after, trimmed, result.success))
+	if result.success and LevelMission.tokenize(trimmed).slice(0, 2) == PackedStringArray(["git", "status"]):
+		for line in StatusTranslator.explain(after, _room.items if _room != null else {}):
+			_terminal_panel.append_info(line)
 	if _mission != null:
 		_on_mission_progress(trimmed, result, after)
 	await _refresh_state()
