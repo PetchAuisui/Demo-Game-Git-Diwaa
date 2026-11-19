@@ -2,7 +2,10 @@ class_name RoomView
 extends Control
 ## ภาพห้องในหอคอยกลางฉาก Sandbox: โต๊ะ (working tree) · แท่นเตรียม (stage) · คัมภีร์ (commit)
 ## พร้อมหัวใจ มาตรวัดคลื่นโกลาหล มิติที่ยืนอยู่ และข้อความเหตุการณ์ในโลก
-## ไม่รับเมาส์ ข้อมูลทั้งหมดมาจาก RoomGame.describe() — ห้องสะท้อน repo จริงเสมอ
+## ข้อมูลทั้งหมดมาจาก RoomGame.describe() — ห้องสะท้อน repo จริงเสมอ
+## คลิกของในห้อง = หยิบอ่าน (เท่ากับพิมพ์ cat <ไฟล์>) ส่วนอื่นของห้องไม่รับเมาส์
+
+signal item_pressed(path: String)
 
 const TOME_TEXTURE := "res://assets/cutscene/props/khampri/Khampri.png"
 const PAPER_TEXTURE := "res://assets/cutscene/props/khampri/paper.png"
@@ -234,7 +237,15 @@ func _make_zone(zone: Dictionary) -> Control:
 
 func _make_item(item: Dictionary, index: int) -> Control:
 	var row := HBoxContainer.new()
-	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	row.mouse_filter = Control.MOUSE_FILTER_STOP
+	row.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	row.tooltip_text = "คลิกเพื่ออ่าน %s" % item["path"]
+	var path := str(item["path"])
+	row.gui_input.connect(func(event: InputEvent) -> void:
+		if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+			item_pressed.emit(path))
+	row.mouse_entered.connect(func() -> void: row.modulate = Color(1.25, 1.2, 1.0))
+	row.mouse_exited.connect(func() -> void: row.modulate = Color.WHITE)
 	row.add_theme_constant_override("separation", 6)
 	var kind := str(item["kind"])
 	var state := str(item["state"])
@@ -270,7 +281,6 @@ func _make_item(item: Dictionary, index: int) -> Control:
 		label.text = "%s%s" % [item["name"], tag]
 		if kind == "curse":
 			label.add_theme_color_override("font_color", Color("d6a8ff"))
-	label.tooltip_text = str(item["path"])
 	row.add_child(label)
 
 	if state == RoomGame.STATE_CURSED or state == RoomGame.STATE_CONFLICT:
