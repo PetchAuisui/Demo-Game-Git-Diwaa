@@ -64,6 +64,8 @@ func _run() -> void:
 	await _test("spell effects follow what git really did to the repository", _t_spell_effects)
 	await _test("levels 2-5: every step's setup builds its world and the intended play clears it", _t_levels_2_to_5)
 	await _test("levels 2-5: the wrong spell does not clear state goals", _t_levels_wrong_spells)
+	await _test("room: chaos waves destroy uninscribed scrolls, inscriptions are safe", _t_room_waves)
+	await _test("room: altar shield, cursed inscriptions, restore and phantom dimensions", _t_room_rules)
 
 	FsUtil.delete_recursive(_test_root)
 	if not _failures.is_empty():
@@ -866,3 +868,108 @@ func _t_levels_wrong_spells() -> void:
 	# ด่าน 5 ขั้น 2: add แล้ว commit ธรรมดา ไม่ใช่การจารึกข้ามแท่น (-a)
 	var level5 := await _play_step(5, 2, ["git add .", "git commit -m \"ปกติ\""])
 	_check(level5 != null and not level5.is_complete(), "level 5 step 2 requires commit -a")
+
+
+## ทำ actions ของ RoomGame กับ session จริง แล้วคืน path ที่อยู่ในพื้นที่ทำงาน
+func _apply_room(session: GitGameSession, room: RoomGame, outcome: Dictionary) -> void:
+	for action in outcome["actions"]:
+		if action.has("delete"):
+			session.files.delete(str(action["delete"]))
+		else:
+			session.files.write_all_text(str(action["write"]), str(action["content"]))
+
+
+func _room_turn(session: GitGameSession, room: RoomGame, command: String) -> Dictionary:
+	if command.begins_with("git "):
+		await session.execute(command)
+	var paths: Array[String] = []
+	for entry in session.files.list_entries():
+		if not entry.is_directory:
+			paths.append(entry.path)
+	room.set_present(paths)
+	var outcome := room.on_turn(await session.inspect(), command)
+	_apply_room(session, room, outcome)
+	return outcome
+
+
+func _t_room_waves() -> void:
+	var session := await _fresh_session("room-waves")
+	await session.execute("git config --global user.name \"Vel\"")
+	await session.execute("git config --global user.email \"vel@magic-tower.local\"")
+	await session.execute("git init")
+	var room := RoomGame.from_config({
+		"hearts": 3, "wave_every": 3,
+		"spawns": [
+			{"turn": 0, "path": "safe.txt", "content": "A\n", "kind": "fragment", "name": "เศษ A"},
+			{"turn": 0, "path": "lost.txt", "content": "B\n", "kind": "fragment", "name": "เศษ B"},
+			{"turn": 2, "path": "late.txt", "content": "C\n", "kind": "fragment", "name": "เศษ C"},
+		],
+	})
+	_apply_room(session, room, {"actions": room.initial_actions()})
+	_equal(3, room.turns_until_wave())
+
+	await _room_turn(session, room, "git add safe.txt")
+	var spawned := await _room_turn(session, room, "git commit -m \"เก็บเศษ A\"")
+	_check(spawned["events"].any(func(e: Dictionary) -> bool: return e["type"] == "spawn"), "late.txt should spawn on turn 2")
+	_check(session.files.read_all_text("late.txt").value == "C\n")
+
+	var wave := await _room_turn(session, room, "git status")
+	_check(wave["wave"], "turn 3 is a wave")
+	_equal(1, room.hearts) # lost.txt + late.txt were never inscribed
+	_check(session.files.read_all_text("safe.txt").value == "A\n", "inscribed scroll survives")
+	_check(session.files.read_all_text("lost.txt").value == null, "uninscribed scroll is destroyed")
+	_equal(3, room.turns_until_wave())
+
+	room.wave_every = 1
+	var defeat := await _room_turn(session, room, "git status")
+	_check(defeat["events"].any(func(e: Dictionary) -> bool: return e["type"] == "defeat") == false, "nothing left to lose")
+	session.files.write_all_text("lost.txt", "B again\n")
+	defeat = await _room_turn(session, room, "git status")
+	_check(room.is_failed() and defeat["events"].any(func(e: Dictionary) -> bool: return e["type"] == "defeat"), "hearts reach zero")
+	session.dispose()
+
+
+func _t_room_rules() -> void:
+	var session := await _fresh_session("room-rules")
+	await session.execute("git config --global user.name \"Vel\"")
+	await session.execute("git config --global user.email \"vel@magic-tower.local\"")
+	await session.execute("git init")
+	session.files.write_all_text("old.txt", "เดิม\n")
+	session.files.write_all_text("curse.txt", "สาป\n")
+	session.files.write_all_text("shield.txt", "โล่\n")
+	await session.execute("git add old.txt curse.txt")
+	await session.execute("git commit -m \"เผลอจารึกคำสาป\"")
+	await session.execute("git branch ghost")
+	await session.execute("git add shield.txt")
+
+	var room := RoomGame.from_config({
+		"hearts": 9, "wave_every": 1, "safe": "staged", "phantoms": ["ghost"],
+		"items": {
+			"old.txt": {"kind": "fragment", "name": "เศษเก่า"},
+			"curse.txt": {"kind": "curse", "name": "ม้วนคำสาป"},
+			"shield.txt": {"kind": "fragment", "name": "เศษบนแท่น"},
+		},
+	})
+	session.files.write_all_text("old.txt", "แก้ไว้แต่ไม่จารึก\n")
+	var wave := await _room_turn(session, room, "git status")
+	_check(wave["events"].any(func(e: Dictionary) -> bool: return e["type"] == "shielded"), "altar shield protects staged scroll")
+	_check(session.files.read_all_text("old.txt").value == RoomGame.CORRUPTED_TEXT, "edited inscription gets cursed")
+	_equal(6, room.hearts) # cursed old.txt + committed curse + phantom dimension
+
+	var described := room.describe(await session.inspect(), ["old.txt", "curse.txt", "shield.txt"])
+	_equal(RoomGame.STATE_CURSED, described[0]["state"])
+	_equal(RoomGame.STATE_TOME, described[1]["state"])
+	_equal(RoomGame.STATE_ALTAR, described[2]["state"])
+
+	await session.execute("git restore old.txt")
+	await session.execute("git branch -d ghost")
+	await session.execute("git commit -m \"เก็บเศษบนแท่น\"")
+	session.files.delete("curse.txt")
+	await session.execute("git add curse.txt")
+	await session.execute("git commit -m \"ทิ้งคำสาป\"")
+	wave = await _room_turn(session, room, "git status")
+	_equal(6, room.hearts) # restored, phantom closed, curse gone: nothing hurts any more
+	_check(session.files.read_all_text("old.txt").value == "เดิม\n", "restore brings the inscribed text back")
+	_equal(0, room.on_wrong_say().size() - 1) # one damage event
+	_equal(5, room.hearts)
+	session.dispose()
