@@ -78,7 +78,7 @@ static func _validate_config(arguments: Array[String]) -> String:
 static func _validate_commit(arguments: Array[String]) -> String:
 	var index := 1
 	while index < arguments.size():
-		if arguments[index] == "-a" or arguments[index] == "--amend":
+		if arguments[index] == "-a" or arguments[index] == "--amend" or arguments[index] == "--no-edit":
 			index += 1
 			continue
 		# -am "ข้อความ" เป็นรูปแบบย่อที่ใช้กันทั่วไป (= -a -m)
@@ -86,7 +86,7 @@ static func _validate_commit(arguments: Array[String]) -> String:
 				and not arguments[index + 1].strip_edges().is_empty():
 			index += 2
 			continue
-		return "Git-Diwaa supports commit with -a, -m, -am and --amend only."
+		return "Git-Diwaa supports commit with -a, -m, -am, --amend and --no-edit only."
 	return ""
 
 
@@ -110,8 +110,8 @@ static func _validate_log(arguments: Array[String]) -> String:
 
 static func _validate_diff(arguments: Array[String]) -> String:
 	for index in range(1, arguments.size()):
-		if arguments[index] != "--staged":
-			return "Use: git diff [--staged]"
+		if arguments[index] != "--staged" and arguments[index] != "HEAD":
+			return "Use: git diff [--staged] or git diff HEAD"
 	return ""
 
 
@@ -219,6 +219,9 @@ static func _validate_path_command(arguments: Array[String], allowed_options: Ar
 
 
 func _validate_remote_url(url: String) -> String:
+	for remote in _remotes.retired:
+		if url == remote.alias_url:
+			return ""
 	for remote in _remotes.remotes:
 		if url == remote.alias_url:
 			return ""

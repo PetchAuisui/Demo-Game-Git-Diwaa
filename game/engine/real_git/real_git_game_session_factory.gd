@@ -45,4 +45,9 @@ func create(mission_id: String, attempt_id: String, remote_seed: RemoteSeed = nu
 	var seeded := await RemoteSeeder.seed_remote(sandbox, remote, _process_runner, remote_seed)
 	if not seeded.ok:
 		return seeded
+	if not remote_seed.retired_url.is_empty():
+		var retired := await _workspace_manager.register_remote(sandbox, _process_runner,
+				GitWorkspaceManager.retired_remote(sandbox, remote_seed.retired_url))
+		if not retired.ok:
+			return retired
 	return OpResult.success(RealGitGameSession.new(sandbox, _workspace_manager, remote, _process_runner, remote_seed))

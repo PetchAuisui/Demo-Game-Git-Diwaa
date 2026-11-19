@@ -12,6 +12,9 @@ var commits: Array[SeedCommit] = []
 var rules: RemoteRules = RemoteRules.new()
 ## true = บัญชีเริ่มต้นโดยไม่มี repo เลย ผู้เล่นต้องสร้างเองผ่านหน้า New repository
 var starts_without_repository: bool = false
+## ที่อยู่เก่าของคลังที่ย้ายไปแล้ว ("" = ไม่มี) — policy ยอมให้ผูกสายเชื่อมไปได้ แต่ไปถึงไม่ได้จริง
+## ใช้สอน git remote set-url (สายเชื่อมชี้ที่อยู่เก่า ต้องเปลี่ยนเป็นที่อยู่ใหม่)
+var retired_url: String = ""
 
 var clone_url: String:
 	get:
@@ -42,4 +45,5 @@ func copy() -> RemoteSeed:
 	var clone := RemoteSeed.new(owner, name, description, commits)
 	clone.rules = rules
 	clone.starts_without_repository = starts_without_repository
+	clone.retired_url = retired_url
 	return clone

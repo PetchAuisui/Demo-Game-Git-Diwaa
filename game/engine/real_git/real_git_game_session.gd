@@ -13,6 +13,8 @@ func _init(sandbox: GitSandbox, workspace: GitWorkspaceManager, remote: LocalRem
 		process_runner: GitProcessRunner, remote_seed: RemoteSeed) -> void:
 	_sandbox = sandbox
 	_remotes = RemoteRegistry.new(remote)
+	if remote_seed != null and not remote_seed.retired_url.is_empty():
+		_remotes.retired.append(GitWorkspaceManager.retired_remote(sandbox, remote_seed.retired_url))
 	_policy = GitCommandPolicy.new(sandbox, _remotes)
 	_process_runner = process_runner
 	_inspector = GitRepositoryInspector.new(sandbox, process_runner)
@@ -58,7 +60,7 @@ func inspect() -> GitRepositorySnapshot:
 func _hide_internal_remote_path(result: GitCommandResult) -> GitCommandResult:
 	var output := result.standard_output
 	var error := result.standard_error
-	for remote in _remotes.remotes:
+	for remote in _remotes.remotes + _remotes.retired:
 		output = output.replace(remote.bare_repository_path, remote.alias_url)
 		error = error.replace(remote.bare_repository_path, remote.alias_url)
 	return result.with_streams(output, error)
