@@ -29,6 +29,9 @@ extends RefCounted
 ##   needs_tome    true = คลื่นทำร้ายผู้เล่นถ้ายังไม่มีคัมภีร์ (git init / git clone)
 ##   sync_required true = คลื่นทำร้ายถ้าคัมภีร์ไม่ตรงกับคลังเวทกลาง (ยังไม่ผูก / ตามหลัง / นำหน้า) → pull / push
 ##   cursed        [paths] ของที่ถูกสาปไว้ตั้งแต่เริ่ม (ให้ห้องแสดงว่าถูกสาป)
+##   forbidden     [{"pattern": regex, "text": ..., "damage": 1}] คาถาที่โลกลงโทษทันทีเมื่อร่าย
+##                 (เช่น คลี่ม้วนประวัติทั้งม้วนแทนที่จะดูแค่ไม่กี่บันทึก) — สอนให้เลือกรูปแบบคาถาที่ใช่
+##   max_commits   คัมภีร์รับการจารึกได้ไม่เกินจำนวนนี้ ถ้าเกิน คลื่นทุกครั้งดูดพลัง (สอน commit --amend / merge --abort)
 ##   essential     [paths] ของที่ห้ามหาย — ถ้าหายไปจากพื้นที่ทำงาน (เช่น reset --hard) แพ้ทันที
 ## คำสาปบนแท่นเตรียมตอนคลื่นมา: โล่แท่นแตกและเสียหัวใจ (สอนให้เลือกของขึ้นแท่นเอง)
 
@@ -63,6 +66,8 @@ var wrong_say_damage := 1
 var needs_tome := false
 var sync_required := false
 var essential: Array[String] = []
+var forbidden: Array[Dictionary] = []
+var max_commits := 0
 var _seen_essential: Dictionary = {}
 var items: Dictionary = {}
 var spawns: Array[Dictionary] = []
@@ -97,6 +102,9 @@ static func from_config(config: Dictionary) -> RoomGame:
 		game.items[str(spawn["path"])] = {"kind": str(spawn.get("kind", "fragment")), "name": str(spawn.get("name", spawn["path"]))}
 	for phantom in config.get("phantoms", []):
 		game.phantoms.append(str(phantom))
+	for rule in config.get("forbidden", []):
+		game.forbidden.append(rule)
+	game.max_commits = int(config.get("max_commits", 0))
 	return game
 
 
@@ -135,6 +143,12 @@ func on_turn(snapshot: GitRepositorySnapshot, command: String = "") -> Dictionar
 	var tokens := LevelMission.tokenize(command)
 	if tokens.size() >= 2 and tokens[0] == "git" and tokens[1] == "status":
 		revealed = true
+	for rule in forbidden:
+		var regex := RegEx.create_from_string(str(rule["pattern"]))
+		if regex != null and regex.is_valid() and regex.search(command.strip_edges()) != null:
+			_damage(int(rule.get("damage", 1)), events, str(rule["text"]))
+			if is_failed():
+				return {"actions": actions, "events": events, "wave": false}
 
 	var respawning := {}
 	for pending in _pending_respawn:
@@ -283,6 +297,8 @@ func _resolve_wave(snapshot: GitRepositorySnapshot, actions: Array[Dictionary], 
 		if _is_tracked_clean(snapshot, statuses, path):
 			_damage(1, events, "คำสาปใน %s ที่ถูกจารึกลงคัมภีร์กัดกินพลังของนาย!" % _name(path), path)
 
+	if max_commits > 0 and snapshot != null and snapshot.commits.size() > max_commits:
+		_damage(1, events, "คัมภีร์รับการจารึกเกินกำลัง — หน้าที่เกินมาดูดพลังของนาย!")
 	if snapshot != null:
 		for phantom in phantoms:
 			if snapshot.branches.any(func(branch: GitBranchInfo) -> bool: return branch.name == phantom):

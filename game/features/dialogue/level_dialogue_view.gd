@@ -499,6 +499,8 @@ func _begin_dialogue_phase(phase: int = -1) -> void:
 		_load_sequence(level_data.get("part2_intro_sequence", []))
 	elif debug_phase == 2:
 		_load_sequence(level_data.get("outro_sequence", []))
+	elif debug_phase >= 3:
+		_load_sequence(level_data.get("part%d_intro_sequence" % debug_phase, []))
 	else:
 		_load_sequence(level_data.get("intro_sequence", []))
 
@@ -709,6 +711,9 @@ func _on_skip_step() -> void:
 		return
 	elif debug_phase == 1:
 		_open_gameplay_step(2)
+		return
+	elif debug_phase >= 3:
+		_open_gameplay_step(debug_phase)
 		return
 	elif debug_phase == 2:
 		var is_fallback: bool = level_data.get("is_fallback", false)
