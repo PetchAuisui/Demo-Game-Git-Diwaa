@@ -97,6 +97,7 @@ godot --headless --path game --script "$PWD/tests/engine/run_tests.gd"
 
 ## เอกสาร
 
+- [Game Design v2 — LM-GM, อุปมาโลกเวท, การออกแบบด่าน](docs/game-design.md)
 - [สถาปัตยกรรม](docs/architecture.md)
 - [สถานะระบบและงานถัดไป](docs/implementation-status.md)
 - [ทดสอบผ่าน Terminal](docs/testing-terminal.md)
