@@ -92,6 +92,10 @@ func _on_commit_dialog_confirmed() -> void:
 	submit_command("git commit -m \"%s\"" % message.replace("\\", "\\\\").replace("\"", "\\\""))
 
 
+func is_executing() -> bool:
+	return _is_executing
+
+
 ## คืนโฟกัสให้ช่องพิมพ์คาถา (เช่น หลังปิดม้วนคาถา)
 func focus_input() -> void:
 	if _input_edit != null:
