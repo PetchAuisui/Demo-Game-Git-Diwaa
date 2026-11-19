@@ -933,6 +933,8 @@ func _t_levels_wrong_spells() -> void:
 	# ด่าน 3: อ่านก่อนหยั่งสถานะไม่นับข้ามลำดับ
 	var level3 := await _play_level(3, 1, ["cat scroll-b.txt"])
 	_check(level3["mission"].done_count() == 0, "level 3 needs status first")
+	var level3_swapped := await _play_level(3, 1, ["git status", "cat scroll-b.txt", "cat scroll-d.txt"])
+	_check(level3_swapped["mission"].is_complete(), "level 3: the two scrolls can be read in either order")
 	# ด่าน 4: git add . ลากม้วนคำสาปขึ้นแท่น → ไม่ผ่าน และระเบิดเมื่อคลื่นมา
 	var level4 := await _play_level(4, 1, ["git add .", "git status", "git status"])
 	_check(not level4["mission"].is_complete(), "level 4: add . must not clear")
