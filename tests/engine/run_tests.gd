@@ -74,6 +74,7 @@ func _run() -> void:
 	await _test("room: altar shield, cursed inscriptions, restore and phantom dimensions", _t_room_rules)
 	await _test("room v2: tome needed, cursed altar, essential scrolls and exclusion checks", _t_room_rules_v2)
 	await _test("room: waves never corrupt clue notes, and cursed text stays readable", _t_room_notes_safe)
+	await _test("status labels: room tags and Miura's translation match git status", _t_status_labels)
 
 	FsUtil.delete_recursive(_test_root)
 	if not _failures.is_empty():
@@ -1223,4 +1224,36 @@ func _t_room_notes_safe() -> void:
 	for index in RoomGame.CORRUPTED_TEXT.length():
 		var code := RoomGame.CORRUPTED_TEXT.unicode_at(index)
 		_check(code < 0x0300 or code > 0x036F, "cursed text must not use combining diacritical marks")
+	session.dispose()
+
+
+func _t_status_labels() -> void:
+	var session := await _fresh_session("status-labels")
+	await session.execute("git config --global user.name \"Vel\"")
+	await session.execute("git config --global user.email \"vel@magic-tower.local\"")
+	_check(StatusTranslator.explain(await session.inspect())[0].contains("ยังไม่มีคัมภีร์"))
+	await session.execute("git init")
+	for path in ["rules.txt", "kept.txt", "altar.txt"]:
+		session.files.write_all_text(path, "a\n")
+	await session.execute("git add .")
+	await session.execute("git commit -m \"เริ่ม\"")
+	session.files.write_all_text("rules.txt", "แก้\n")
+	session.files.write_all_text("note.txt", "ใหม่\n")
+	session.files.write_all_text("altar.txt", "บนแท่น\n")
+	await session.execute("git add altar.txt")
+	var snapshot := await session.inspect()
+	var room := RoomGame.from_config({"items": {"note.txt": {"kind": "fragment", "name": "บันทึกของปรมาจารย์"}}})
+	var described := {}
+	for item in room.describe(snapshot, ["rules.txt", "kept.txt", "altar.txt", "note.txt"]):
+		described[item["path"]] = item
+	_equal("modified", described["rules.txt"]["git"])
+	_equal("committed", described["kept.txt"]["git"])
+	_equal("staged", described["altar.txt"]["git"])
+	_equal("untracked", described["note.txt"]["git"])
+	_equal("ไร้ตรา (untracked)", described["note.txt"]["label"])
+	var text := "\n".join(StatusTranslator.explain(snapshot, room.items))
+	_check(text.contains("ไร้ตรา (untracked): บันทึกของปรมาจารย์ [note.txt]"), text)
+	_check(text.contains("ถูกแก้ (modified): rules.txt"), text)
+	_check(text.contains("บนแท่น (staged): altar.txt"), text)
+	_check(not text.contains("kept.txt"), "inscribed scrolls are not listed")
 	session.dispose()
