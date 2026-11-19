@@ -1,12 +1,44 @@
 class_name Level03Dialogue
 extends RefCounted
 
-## ด่านที่ 3: เศษคัมภีร์ไร้ตรา (git status) — Game Design v2
-## ปัญหาในโลก: กระดาษร่วงลงบนโต๊ะ บางแผ่นคัมภีร์รู้จัก บางแผ่นไม่ และมีแผ่นหนึ่งถูกใครแอบแก้
-## ผู้เล่นต้องหยั่งสถานะ แล้ว "หยิบอ่าน" แผ่นที่ถูกต้องเอง (วัดผลด้วยการลงมือ ไม่ใช่ตัวเลือก)
+## ด่านที่ 3: เศษคัมภีร์ไร้ตรา (git status) — มินิเกม "โต๊ะที่มองไม่เห็น"
+## ห้องแสดงกระดาษ 6 แผ่นเป็น "?" ทั้งหมด ไม่รู้ว่าแผ่นไหนไร้ตรา/ถูกแก้ จนกว่าจะร่าย git status
+## คลื่นโกลาหลมาทุก 4 การกระทำ และกระดาษไร้ตรา (เสียงกระซิบ) จะสลายถ้าโดนคลื่น
+## → เดาสุ่มอ่านทีละแผ่นเสียเวลาและหัวใจ การหยั่งสถานะคือทางที่เร็วที่สุด
+
+const SCROLLS := {
+	"scroll-a.txt": "บันทึกการซ่อมแท่นเตรียม: เรียบร้อย\n",
+	"scroll-b.txt": "กฎหอคอย ข้อ 1: ห้ามวิ่งบนบันได\n",
+	"scroll-c.txt": "สูตรขนมปลาของมิวรา (ห้ามแตะ)\n",
+	"scroll-e.txt": "รายชื่อศิษย์ที่ยังค้างค่าน้ำหมึก\n",
+	"scroll-f.txt": "แผนที่ห้องเก็บไม้กวาด\n",
+}
 
 
 static func get_data() -> Dictionary:
+	var setup: Array = [
+		{"run": "git config --global user.name \"Miura\""},
+		{"run": "git config --global user.email \"miura@magic-tower.local\""},
+		{"run": "git init"},
+	]
+	for path in SCROLLS:
+		setup.append({"write": path, "content": SCROLLS[path]})
+	setup.append_array([
+		{"run": "git add ."},
+		{"run": "git commit -m \"เอกสารของกิลด์\""},
+		{"run": "git config --global user.name \"Vel\""},
+		{"run": "git config --global user.email \"vel@magic-tower.local\""},
+		# ใครบางคนแอบแก้กฎหอคอย และกระดาษไร้ตราหนึ่งแผ่นร่วงลงมา
+		{"write": "scroll-b.txt", "content": "กฎหอคอย ข้อ 1: ห้ามวิ่งบนบันได\nกฎหอคอย ข้อ 2: เศษคัมภีร์ที่ยังไม่จารึก ห้ามสะสมเกิน 3 ชิ้น!\n"},
+		{"write": "scroll-d.txt", "content": "…เศษคัมภีร์ชิ้นแรกถูกแบ่งเป็นสามส่วน ซ่อนอยู่บนชั้นถัดไป…\n"},
+	])
+
+	var items := {}
+	for path in ["scroll-a.txt", "scroll-b.txt", "scroll-c.txt", "scroll-e.txt", "scroll-f.txt"]:
+		items[path] = {"kind": "note", "name": "เอกสารกิลด์"}
+	items["scroll-b.txt"] = {"kind": "note", "name": "กฎหอคอย"}
+	items["scroll-d.txt"] = {"kind": "fragment", "name": "เสียงกระซิบ"}
+
 	return {
 		"level_id": 3,
 		"title": "ด่านที่ 3: เศษคัมภีร์ไร้ตรา",
@@ -16,66 +48,57 @@ static func get_data() -> Dictionary:
 		"clear_keyword": "git status บอกว่าไฟล์ไหนใหม่ (untracked) ถูกแก้ (modified) หรืออยู่บน stage แล้ว",
 
 		"intro_sequence": [
-			{"speaker": "มิวรา", "text": "ลมพัดกระดาษปลิวมาเต็มโต๊ะเลย…", "mewla_anim": "talk"},
-			{"speaker": "มิวรา", "text": "คัมภีร์ของนายรู้จักบางแผ่น แต่บางแผ่นไม่มีตราของมันเลย และมีแผ่นหนึ่งถูกใครแอบแก้", "mewla_anim": "talk"},
-			{"speaker": "เวล", "text": "แล้วจะรู้ได้ยังไงว่าแผ่นไหนเป็นแผ่นไหน?", "emote": "question", "mewla_anim": "idle"},
-			{"speaker": "มิวรา", "text": "ถามคัมภีร์สิ — คาถาหยั่งสถานะจะบอกว่ามันมองโต๊ะนี้ยังไง", "mewla_anim": "success"},
+			{"speaker": "มิวรา", "text": "ลมพัดกระดาษหกแผ่นปลิวมาเต็มโต๊ะ… หน้าตาเหมือนกันหมดเลย", "mewla_anim": "talk"},
+			{"speaker": "มิวรา", "text": "แผ่นหนึ่งไม่มีตราของคัมภีร์ — มันคือเสียงกระซิบที่บอกทางไปหาเศษคัมภีร์ แต่มันจะสลายเมื่อคลื่นโกลาหลมาถึง", "mewla_anim": "talk"},
+			{"speaker": "เวล", "text": "อ่านทีละแผ่นก็ไม่ทันแน่ ๆ", "emote": "question", "mewla_anim": "idle"},
+			{"speaker": "มิวรา", "text": "ถ้างั้นก็ถามคัมภีร์สิว่ามันมองโต๊ะนี้ยังไง", "mewla_anim": "success"},
 			{"type": "open_gameplay", "step": 1}
 		],
 
 		"gameplay": {
 			1: {
-				"title": "เศษคัมภีร์ไร้ตรา",
-				"story": "กระดาษหลายแผ่นอยู่บนโต๊ะ หาว่าแผ่นไหนไร้ตรา แผ่นไหนถูกแอบแก้ แล้วหยิบอ่าน",
-				"panels": ["terminal", "files"],
-				"setup": [
-					{"run": "git config --global user.name \"Miura\""},
-					{"run": "git config --global user.email \"miura@magic-tower.local\""},
-					{"run": "git init"},
-					{"write": "miura-note.txt", "content": "อย่าลืมให้อาหารแมว\n"},
-					{"write": "tower-rules.txt", "content": "กฎหอคอย ข้อ 1: ห้ามวิ่งบนบันได\n"},
-					{"run": "git add ."},
-					{"run": "git commit -m \"บันทึกของมิวรา\""},
-					{"run": "git config --global user.name \"Vel\""},
-					{"run": "git config --global user.email \"vel@magic-tower.local\""},
-					{"write": "tower-rules.txt", "content": "กฎหอคอย ข้อ 1: ห้ามวิ่งบนบันได\nกฎหอคอย ข้อ 2: เศษคัมภีร์ที่ยังไม่จารึก ห้ามสะสมเกิน 3 ชิ้น!\n"},
-					{"write": "whisper.txt", "content": "…เศษคัมภีร์ชิ้นแรกถูกแบ่งเป็นสามส่วน ซ่อนอยู่บนชั้นถัดไป…\n"}
-				],
+				"title": "โต๊ะที่มองไม่เห็น",
+				"story": "กระดาษ 6 แผ่นหน้าตาเหมือนกัน หาแผ่นที่ไร้ตราและแผ่นที่ถูกแอบแก้ แล้วอ่านก่อนคลื่นซัด",
+				# ซ่อนแผง Files เพราะมันบอกสถานะไฟล์ให้ฟรี — ด่านนี้ต้องหยั่งสถานะเอง
+				"panels": ["terminal"],
+				"setup": setup,
+				"room": {"hearts": 3, "wave_every": 4, "blind": true, "respawn": true, "items": items},
 				"objectives": [
 					{
 						"id": "status",
-						"text": "หยั่งสถานะของโต๊ะ ด้วย git status",
-						"short": "หยั่งสถานะ",
+						"text": "ทำให้คัมภีร์เผยว่ามันมองเห็นกระดาษแต่ละแผ่นอย่างไร",
+						"short": "หยั่งสถานะของโต๊ะ",
 						"type": "command",
 						"commands": ["git status"],
-						"world": "Untracked = ไร้ตรา (คัมภีร์ไม่รู้จัก) · modified = ถูกแก้ไปจากที่จารึกไว้",
-						"hint": "คาถาหยั่งสถานะ: git ตามด้วยคำว่า status"
+						"world": "หมอกจางลง — Untracked = ไร้ตรา (คัมภีร์ไม่รู้จัก) · modified = ถูกแก้ไปจากที่จารึกไว้",
+						"hint": "คาถาหยั่งสถานะ: git status"
 					},
 					{
 						"id": "whisper",
-						"text": "หยิบอ่านเศษคัมภีร์ที่ไร้ตรา (cat <ไฟล์> หรือเปิดในแผง Files)",
-						"short": "อ่านแผ่นที่ไร้ตรา",
+						"text": "อ่านกระดาษไร้ตราก่อนมันจะสลาย (cat <ไฟล์>)",
+						"short": "อ่านเสียงกระซิบ",
 						"type": "read",
-						"path": "whisper.txt",
+						"path": "scroll-d.txt",
 						"world": "\"…เศษคัมภีร์ชิ้นแรกถูกแบ่งเป็นสามส่วน ซ่อนอยู่บนชั้นถัดไป…\"",
-						"hint": "ดูหมวด Untracked files ในผลของ git status — มีแผ่นเดียว"
+						"hint": "ดูหมวด Untracked files ในผลของ git status แล้ว cat ไฟล์นั้น"
 					},
 					{
 						"id": "rules",
-						"text": "อ่านแผ่นที่ถูกใครแอบแก้ไข",
+						"text": "อ่านกระดาษที่ถูกใครบางคนแอบแก้",
 						"short": "อ่านแผ่นที่ถูกแก้",
 						"type": "read",
-						"path": "tower-rules.txt",
+						"path": "scroll-b.txt",
 						"world": "กฎข้อ 2 ถูกเพิ่มเข้ามา: เศษคัมภีร์ที่ยังไม่จารึก ห้ามสะสมเกิน 3 ชิ้น!",
-						"hint": "ดูหมวด Changes not staged (modified) ในผลของ git status"
+						"hint": "ดูบรรทัด modified: ในผลของ git status"
 					}
 				],
-				"success_text": "นายเริ่ม 'มองเห็น' สิ่งที่คัมภีร์เห็นแล้ว!"
+				"success_text": "นายมองเห็นสิ่งที่คัมภีร์เห็นแล้ว!"
 			}
 		},
 
 		"outro_sequence": [
-			{"speaker": "มิวรา", "text": "กฎข้อ 2… ใครแอบเพิ่มเข้ามานะ แต่มันก็จริง หอคอยไม่ชอบให้ใครเก็บของไว้โดยไม่จารึก", "mewla_anim": "talk"},
+			{"speaker": "มิวรา", "text": "เห็นไหม แทนที่จะเดาสุ่ม นายถามคัมภีร์ครั้งเดียวก็รู้หมด", "mewla_anim": "success"},
+			{"speaker": "มิวรา", "text": "กฎข้อ 2… ใครแอบเพิ่มนะ แต่มันก็จริง หอคอยไม่ชอบให้ใครเก็บของไว้โดยไม่จารึก", "mewla_anim": "talk"},
 			{"speaker": "เวล", "text": "เศษคัมภีร์ชิ้นแรกอยู่ชั้นบน! ไปกันเถอะ", "mewla_anim": "idle"}
 		]
 	}
