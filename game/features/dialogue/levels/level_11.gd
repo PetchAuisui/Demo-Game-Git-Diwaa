@@ -54,8 +54,8 @@ static func get_data() -> Dictionary:
 					},
 					{
 						"id": "keep_key",
-						"text": "จารึกครึ่งกุญแจไว้ในมิตินี้ก่อนคลื่นจะกวาดมันไป",
-						"short": "จารึกครึ่งกุญแจ",
+						"text": "จารึกครึ่งกุญแจจันทรา (key-moon.txt) ไว้ในมิติ experiment ก่อนคลื่นจะกวาดไป",
+						"short": "จารึกครึ่งกุญแจจันทรา (ในมิติ experiment)",
 						"type": "state",
 						"check": "committed",
 						"paths": ["key-moon.txt"],
@@ -65,7 +65,7 @@ static func get_data() -> Dictionary:
 					{
 						"id": "back",
 						"text": "กลับมิติหลัก main แล้วดูว่าเกิดอะไรกับครึ่งกุญแจ",
-						"short": "กลับ main",
+						"short": "กลับมิติหลัก main",
 						"type": "state",
 						"check": "current_branch",
 						"branch": "main",
@@ -75,7 +75,7 @@ static func get_data() -> Dictionary:
 					{
 						"id": "new_dimension",
 						"text": "เปิดมิติใหม่ชื่อ trial และก้าวเข้าไปในคาถาเดียว",
-						"short": "สร้างและเข้า trial",
+						"short": "เปิดและเข้ามิติ trial ในคาถาเดียว",
 						"type": "state",
 						"check": "current_branch",
 						"branch": "trial",

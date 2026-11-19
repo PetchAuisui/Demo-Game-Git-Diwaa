@@ -62,8 +62,8 @@ static func get_data() -> Dictionary:
 				"objectives": [
 					{
 						"id": "rewind",
-						"text": "ย้อนกาลจนคำสาปหลุดออกจากคัมภีร์ โดยเศษคัมภีร์ชิ้นที่ 6 ยังอยู่",
-						"short": "ย้อนกาลไล่คำสาป",
+						"text": "ย้อนเวลาไปก่อนการจารึกล่าสุดที่มีคำสาปติดมา โดยไม่ให้เศษคัมภีร์ชิ้นที่ 6 (fragment-6.txt) หายไป",
+						"short": "ย้อนกาลเอาจารึกต้องสาปออก (เก็บชิ้นที่ 6 ไว้)",
 						"type": "state",
 						"check": "not_committed",
 						"paths": ["curse.txt", "fragment-6.txt"],
@@ -75,8 +75,8 @@ static func get_data() -> Dictionary:
 					},
 					{
 						"id": "reinscribe",
-						"text": "จารึกเศษคัมภีร์ชิ้นที่ 6 อีกครั้ง — ให้ม้วนคำสาปอยู่นอกคัมภีร์",
-						"short": "จารึกเฉพาะชิ้นที่ 6",
+						"text": "จารึกเศษคัมภีร์ชิ้นที่ 6 (fragment-6.txt) อีกครั้ง โดยให้ม้วนคำสาป (curse.txt) อยู่นอกคัมภีร์",
+						"short": "จารึกชิ้นที่ 6 ใหม่ (ไม่เอาม้วนคำสาป)",
 						"type": "state",
 						"check": "committed",
 						"paths": ["fragment-6.txt"],

@@ -56,8 +56,8 @@ static func get_data() -> Dictionary:
 				"objectives": [
 					{
 						"id": "heal",
-						"text": "ฟื้นเศษคัมภีร์ชิ้นที่ 5 ให้กลับเป็นเหมือนที่จารึกไว้",
-						"short": "ฟื้นคืนเศษชิ้นที่ 5",
+						"text": "ฟื้นเศษคัมภีร์ชิ้นที่ 5 (fragment-5.txt) ที่ถูกสาป ให้กลับเป็นฉบับที่จารึกไว้ในคัมภีร์",
+						"short": "ฟื้นเศษชิ้นที่ 5 กลับเป็นฉบับที่จารึก",
 						"type": "state",
 						"check": "committed",
 						"paths": ["fragment-5.txt"],
@@ -70,8 +70,8 @@ static func get_data() -> Dictionary:
 					},
 					{
 						"id": "unstage_curse",
-						"text": "เอาม้วนคำสาปลงจากแท่นเตรียม (อย่าจารึกมัน!)",
-						"short": "คำสาปลงจากแท่น",
+						"text": "เอาม้วนคำสาป (curse.txt) ลงจากแท่นเตรียม — ห้ามจารึกมัน",
+						"short": "เอาม้วนคำสาปลงจากแท่น (ห้ามจารึก)",
 						"type": "state",
 						"check": "not_staged",
 						"paths": ["curse.txt"],

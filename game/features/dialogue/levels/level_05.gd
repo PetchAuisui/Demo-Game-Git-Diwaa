@@ -62,8 +62,8 @@ static func get_data() -> Dictionary:
 				"objectives": [
 					{
 						"id": "inscribe",
-						"text": "จารึกทั้งสามส่วนลงคัมภีร์พร้อมคำจารึก ก่อนคลื่นจะกวาดแท่น",
-						"short": "จารึกพร้อมคำจารึก",
+						"text": "จารึกทั้งสามส่วนที่อยู่บนแท่นลงคัมภีร์ พร้อมคำจารึก ก่อนคลื่นจะกวาดแท่น",
+						"short": "จารึกเศษชิ้นที่ 1 ทั้งสามส่วนลงคัมภีร์",
 						"type": "state",
 						"check": "committed",
 						"paths": ["fragment-1a.txt", "fragment-1b.txt", "fragment-1c.txt"],
@@ -94,8 +94,8 @@ static func get_data() -> Dictionary:
 				"objectives": [
 					{
 						"id": "skip_altar",
-						"text": "จารึกอักขระใหม่บน fragment-1c ในคาถาเดียว โดยไม่ให้ม้วนคำสาปเข้าคัมภีร์",
-						"short": "จารึกข้ามแท่นเตรียม",
+						"text": "ส่วนท้าย (fragment-1c.txt) มีอักขระใหม่ — จารึกมันในคาถาเดียวโดยไม่ต้องวางขึ้นแท่น และไม่ให้ม้วนคำสาปเข้าคัมภีร์",
+						"short": "จารึกส่วนท้ายที่ถูกแก้ (ไม่เอาม้วนคำสาป)",
 						"type": "state",
 						"check": "committed",
 						"paths": ["fragment-1c.txt"],
