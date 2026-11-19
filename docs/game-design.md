@@ -254,6 +254,19 @@ flowchart LR
 
 ---
 
+## 7. แผนที่การนำไปใช้ในเกม Godot (Implementation Map)
+
+| หลักการออกแบบ | ที่อยู่ในโค้ด | งานในรอบนี้ |
+|---|---|---|
+| ตรวจผ่านจาก **สถานะ Repository** | `game/features/level_mission/level_mission.gd` | เพิ่ม objective ชนิด `state` (เช่น `repo_initialized`, `staged`, `commits_at_least`, `tracked_clean`) ตรวจจาก `GitRepositorySnapshot` |
+| **Visual Feedback** จาก snapshot ก่อน/หลัง | `game/features/sandbox/spell_effects/` (ใหม่) | ตรวจชนิดเอฟเฟกต์ แล้วแสดงแบนเนอร์เวท + แสงที่แผงที่เกี่ยวข้อง |
+| **Contextual UI** | คีย์ `panels` ในขั้น gameplay ของไฟล์ด่าน | ซ่อน Files / Git Graph ในด่านที่ยังไม่ถึงเนื้อหา |
+| **โลกตอบสนองเมื่อสำเร็จ** | คีย์ `world` ใน objective | ข้อความเหตุการณ์สั้น ๆ ในแผงภารกิจ แทนบทสนทนายาว |
+| **ปัญหาในโลกตั้งต้น** | คีย์ `setup` ในขั้น gameplay | สร้างไฟล์/commit ตั้งต้นก่อนผู้เล่นเริ่ม (เศษคัมภีร์บนโต๊ะ ฯลฯ) |
+| **ลดบทพูด / ตัด Choice ที่ไม่จำเป็น** | `game/features/dialogue/levels/level_0N.gd` | บทนำ ≤ 4 บรรทัด, เข้าสู่การเล่นทันที, ไม่มีฉากจบร้าย |
+
+---
+
 ## อ้างอิง
 
 * Arnab, S. et al. (2015). Mapping learning and game mechanics for serious games analysis. *BJET*, 46(2), 391–411.
