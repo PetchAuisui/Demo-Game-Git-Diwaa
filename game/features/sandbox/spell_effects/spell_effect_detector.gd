@@ -124,7 +124,8 @@ static func _detect_repository_changes(before: GitRepositorySnapshot, after: Git
 	var head_moved := before_head != after_head
 	if head_moved and same_branch and not after_head.is_empty():
 		var head := _commit(after, after_head)
-		if not before_head.is_empty() and is_ancestor(after, after_head, before_head):
+		# commit ที่ถูกย้อนผ่านอาจหายจาก log --all หลัง reset จึงต้องใช้ประวัติจากทั้งสอง snapshot
+		if not before_head.is_empty() and is_ancestor([before, after], after_head, before_head):
 			effects.append(_make(Kind.TIME_REWIND, head.subject if head != null else "", "graph"))
 		elif spell in ["pull", "fetch"]:
 			effects.append(_make(Kind.PORTAL_RECEIVE, head.subject if head != null else "", "graph"))
@@ -174,11 +175,12 @@ static func head_id(snapshot: GitRepositorySnapshot) -> String:
 	return ""
 
 
-## true เมื่อ ancestor อยู่ในประวัติของ descendant (และไม่ใช่ตัวเดียวกัน)
-static func is_ancestor(snapshot: GitRepositorySnapshot, ancestor: String, descendant: String) -> bool:
+## true เมื่อ ancestor อยู่ในประวัติของ descendant (และไม่ใช่ตัวเดียวกัน) โดยรวม commit จากทุก snapshot ที่ส่งมา
+static func is_ancestor(snapshots: Array, ancestor: String, descendant: String) -> bool:
 	var parents := {}
-	for commit in snapshot.commits:
-		parents[commit.id] = commit.parent_ids
+	for snapshot: GitRepositorySnapshot in snapshots:
+		for commit in snapshot.commits:
+			parents[commit.id] = commit.parent_ids
 	var stack: Array[String] = [descendant]
 	var seen := {}
 	while not stack.is_empty():
