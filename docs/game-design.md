@@ -308,7 +308,7 @@ flowchart LR
 |---|---|---|---|
 | 1 | ปลุกวงเวท / ประตูไม่รู้จักนาม | `git --version` · `git config --global user.name/email` | — |
 | 2 | แข่งกับคลื่นแรก | `git init` | พิมพ์ผิดจนคลื่นมา |
-| 3 | โต๊ะที่มองไม่เห็น | `git status` · `cat scroll-d.txt` · `cat scroll-b.txt` | เดาอ่านทีละแผ่น |
+| 3 | โต๊ะที่มองไม่เห็น | `git status` · คลิกอ่าน `scroll-d.txt` (ไร้ตรา) · คลิกอ่าน `scroll-b.txt` (ถูกแก้) | เดาอ่านทีละแผ่น |
 | 4 | แท่นที่ต้องเลือก | `git add fragment-1a.txt` · `git add fragment-1b.txt fragment-1c.txt` | `git add .` |
 | 5 | พายุโกลาหล / เศษที่ซ่อนอยู่ | `git commit -m "..."` · `git commit -am "..."` | ลังเล, `add .` + commit |
 | 6 | ประตูผนึก | `git log --oneline` · `say aurora` · add + commit | เดารหัส |
@@ -318,8 +318,8 @@ flowchart LR
 | 10 | มิติผี | `git branch` · `git branch -d phantom` · `git branch experiment` | ชักช้า |
 | 11 | ครึ่งกุญแจจันทรา | `git switch experiment` · add + commit · `git switch main` · `git switch -c trial` | ไม่จารึกกุญแจ |
 | 12 | กุญแจสุริยันจันทรา | `git merge experiment` · แก้ altar-core.txt · add · commit | ไม่จารึกผลการหลอม |
-| 13 | คัมภีร์จากคลังเวท (ไม่มีคัมภีร์ = โดนคลื่น) | `git clone https://magic-vault.com/user/light-tome.git` · `git remote -v` · `cat fragment-10.txt` | ชักช้า |
-| 14 | คัมภีร์ล้าหลัง | `git pull` · `cat fragment-11.txt` | `fetch` อย่างเดียว |
+| 13 | คัมภีร์จากคลังเวท (ไม่มีคัมภีร์ = โดนคลื่น) | `git clone https://magic-vault.com/user/light-tome.git` · `git remote -v` · คลิกอ่าน `fragment-10.txt` | ชักช้า |
+| 14 | คัมภีร์ล้าหลัง | `git pull` · คลิกอ่าน `fragment-11.txt` | `fetch` อย่างเดียว |
 | 15 | ประตูสู่คลังเวทกลาง | `git remote add origin https://magic-vault.com/user/apprentice-tome.git` · `git push -u origin main` | push โดยไม่ `-u` |
 
 เฉลยเหล่านี้ถูกเล่นอัตโนมัติด้วย Git จริงพร้อมจำลองคลื่นใน `tests/engine/run_tests.gd` (`SOLUTIONS`) — ต้องจบโดยไม่เสียหัวใจ
@@ -333,6 +333,8 @@ flowchart LR
 | **ม้วนคาถาใหม่** | เริ่มขั้นที่มีคีย์ `teaches` | การ์ดคาถา: ชื่อในโลกเวท · คำสั่งจริง · ผลในโลก · ความหมายใน Git · ตัวอย่าง |
 | **สมุดคาถา** | ปุ่ม "คาถา" ในแผงภารกิจ หรือพิมพ์ `spells` | ทุกคาถาที่เรียนมาแล้ว (ล่าสุดอยู่บน) — ด่านหลัง ๆ ต้องเลือกเองว่าจะใช้บทไหน |
 | **มิวราช่วยเมื่อติด** | ร่ายพลาด 2 ครั้งติด หรือเพิ่งเสียหัวใจ | คำใบ้ของเป้าหมายปัจจุบันขึ้นเองในแผงภารกิจ |
+
+การอ่านกระดาษเป็น **การกระทำในโลก** (คลิกกระดาษในห้อง → หน้ากระดาษเปิดขึ้น นับเป็นหนึ่งการกระทำ) ไม่ใช่คาถาที่ต้องจำ — เกมสอนเฉพาะคำสั่ง Git
 
 ปริศนายังอยู่ที่ "จะใช้คาถาไหน เมื่อไร" (เช่น ด่าน 4 รู้จัก `git add .` แต่ต้องเลือกไม่ใช้) ไม่ใช่การเดาว่าคำสั่งสะกดอย่างไร
 ข้อมูลคาถาทั้งหมดอยู่ที่ `game/features/spellbook/spell_catalog.gd` และเทสต์ตรวจว่าเฉลยทุกด่านใช้เฉพาะคาถาที่สอนแล้ว
