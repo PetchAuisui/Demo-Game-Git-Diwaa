@@ -2,7 +2,6 @@
   <Folder Name="/src/">
     <Project Path="src/GitDiwaa.Core/GitDiwaa.Core.csproj" />
     <Project Path="src/GitDiwaa.RealGit/GitDiwaa.RealGit.csproj" />
-    <Project Path="src/GitDiwaa.Story/GitDiwaa.Story.csproj" />
     <Project Path="src/GitDiwaa.Cli/GitDiwaa.Cli.csproj" />
   </Folder>
   <Folder Name="/tests/">

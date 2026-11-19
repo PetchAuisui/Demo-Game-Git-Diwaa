@@ -33,6 +33,3 @@ flowchart LR
 
 อ่านรายละเอียดของแนวคิด สถาปัตยกรรมระบบ วงจรข้อมูล และโมเดลความปลอดภัยฉบับเต็มได้ที่:
 👉 **[docs/architecture.md](docs/architecture.md)**
-
-แนวคิดการออกแบบเกม (LM-GM, อุปมาโลกเวท, การออกแบบด่าน):
-👉 **[docs/game-design.md](docs/game-design.md)**
