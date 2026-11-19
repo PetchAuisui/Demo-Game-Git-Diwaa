@@ -26,6 +26,14 @@ const KIND_TINT := {
 	"note": Color(0.9, 0.88, 0.85),
 }
 const CHAOS_COLOR := Color("b06bff")
+const STATE_TAG_COLORS := {
+	"untracked": Color("7ee8a8"),
+	"modified": Color("ffb86b"),
+	"staged": Color("8fd3ff"),
+	"staged_modified": Color("ffd27a"),
+	"cursed": Color("d6a8ff"),
+	"conflict": Color("ff7b7b"),
+}
 const HEART_COLOR := Color("ff5a7a")
 
 static var _shard_cache: Array[Texture2D] = []
@@ -265,23 +273,30 @@ func _make_item(item: Dictionary, index: int) -> Control:
 		icon.modulate = Color(1.0, 0.4, 0.4)
 	row.add_child(icon)
 
+	var text_box := VBoxContainer.new()
+	text_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	text_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	text_box.add_theme_constant_override("separation", -2)
+	row.add_child(text_box)
+
 	var label := _label(15, Color.WHITE, false)
-	label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	label.clip_text = true
 	label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	text_box.add_child(label)
 	if hidden:
 		label.text = "%s · ?" % item["path"]
 	else:
-		var tag := ""
-		match state:
-			RoomGame.STATE_CURSED:
-				tag = " · ถูกสาป!"
-			RoomGame.STATE_CONFLICT:
-				tag = " · มิติปะทะ!"
-		label.text = "%s%s" % [item["name"], tag]
+		label.text = str(item["name"])
 		if kind == "curse":
 			label.add_theme_color_override("font_color", Color("d6a8ff"))
-	row.add_child(label)
+		# ป้ายสถานะ: บอกว่าแผ่นนี้คืออะไรในภาษา Git (ตรงกับหมวดในผลของ git status)
+		var git := str(item.get("git", ""))
+		if git != "committed" and not git.is_empty():
+			var tag := _label(15, STATE_TAG_COLORS.get(git, Color("cfd8e3")), true)
+			tag.text = str(item.get("label", ""))
+			tag.clip_text = true
+			tag.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+			text_box.add_child(tag)
 
 	if state == RoomGame.STATE_CURSED or state == RoomGame.STATE_CONFLICT:
 		var tw := row.create_tween().set_loops()
