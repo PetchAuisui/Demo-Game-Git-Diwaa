@@ -55,6 +55,8 @@ static func get_data() -> Dictionary:
 				"title": "ประตูผนึก",
 				"story": "ประตูชั้นเจ็ดต้องการรหัสผนึกที่ปรมาจารย์เคยจารึกไว้ เอ่ยรหัสด้วย say <รหัส>",
 				"panels": ["terminal", "files", "graph"],
+				# ม้วนคาถาที่แจกตอนเริ่มขั้นนี้ (SpellCatalog)
+				"teaches": ["log", "say"],
 				"setup": setup,
 				"room": {
 					"hearts": 3, "wave_every": 4, "wrong_say": 1, "respawn": true,

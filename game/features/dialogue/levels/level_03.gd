@@ -61,6 +61,8 @@ static func get_data() -> Dictionary:
 				"story": "กระดาษ 6 แผ่นหน้าตาเหมือนกัน หาแผ่นที่ไร้ตราและแผ่นที่ถูกแอบแก้ แล้วอ่านก่อนคลื่นซัด",
 				# ซ่อนแผง Files เพราะมันบอกสถานะไฟล์ให้ฟรี — ด่านนี้ต้องหยั่งสถานะเอง
 				"panels": ["terminal"],
+				# ม้วนคาถาที่แจกตอนเริ่มขั้นนี้ (SpellCatalog)
+				"teaches": ["status", "cat"],
 				"setup": setup,
 				"room": {"hearts": 3, "wave_every": 4, "blind": true, "respawn": true, "items": items},
 				"objectives": [

@@ -30,6 +30,8 @@ static func get_data() -> Dictionary:
 				"title": "กุญแจสุริยันจันทรา",
 				"story": "หลอมมิติ experiment เข้ากับ main ให้กุญแจครบดวง และตัดสินการปะทะที่แกนแท่นบูชา",
 				"panels": ["terminal", "files", "graph"],
+				# ม้วนคาถาที่แจกตอนเริ่มขั้นนี้ (SpellCatalog)
+				"teaches": ["merge", "write"],
 				"setup": Level10Dialogue.BASE + [
 					{"write": "key-sun.txt", "content": "ครึ่งกุญแจสุริยัน ☀\n"},
 					{"write": "altar-core.txt", "content": CORE_BASE},

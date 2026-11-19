@@ -29,6 +29,8 @@ static func get_data() -> Dictionary:
 				"title": "คำสาปสองทาง",
 				"story": "เศษคัมภีร์ชิ้นที่ 5 ถูกสาป และม้วนคำสาปอยู่บนแท่นเตรียม — แก้ทั้งสองอย่างก่อนคลื่นมา",
 				"panels": ["terminal", "files", "graph"],
+				# ม้วนคาถาที่แจกตอนเริ่มขั้นนี้ (SpellCatalog)
+				"teaches": ["restore", "restore_staged"],
 				"setup": [
 					{"run": "git config --global user.name \"Vel\""},
 					{"run": "git config --global user.email \"vel@magic-tower.local\""},

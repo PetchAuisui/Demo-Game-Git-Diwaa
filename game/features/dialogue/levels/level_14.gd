@@ -30,6 +30,8 @@ static func get_data() -> Dictionary:
 				"title": "คัมภีร์ล้าหลัง",
 				"story": "คลังเวทมีจารึกใหม่ที่คัมภีร์ของนายยังไม่มี — คัมภีร์ที่ล้าหลังจะถูกกัดกินทุกคลื่น",
 				"panels": ["terminal", "files", "graph"],
+				# ม้วนคาถาที่แจกตอนเริ่มขั้นนี้ (SpellCatalog)
+				"teaches": ["fetch", "pull"],
 				"remote": light_tome,
 				"setup": Level13Dialogue.IDENTITY + [
 					{"run": "git clone " + Level13Dialogue.URL},

@@ -29,6 +29,8 @@ static func get_data() -> Dictionary:
 				"title": "ประตูสู่คลังเวทกลาง",
 				"story": "ประตูดูดพลังผู้ที่ยังไม่ส่งคัมภีร์เข้าคลัง — ผูกสายเชื่อม origin แล้วส่งคัมภีร์ของนายไปที่ " + URL,
 				"panels": ["terminal", "files", "graph"],
+				# ม้วนคาถาที่แจกตอนเริ่มขั้นนี้ (SpellCatalog)
+				"teaches": ["remote_add", "push"],
 				"remote": {"name": "apprentice-tome", "description": "คัมภีร์ของเวล ศิษย์ของปรมาจารย์"},
 				"setup": Level13Dialogue.IDENTITY + [
 					{"run": "git init"},

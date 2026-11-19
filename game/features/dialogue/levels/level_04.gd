@@ -29,6 +29,8 @@ static func get_data() -> Dictionary:
 				"title": "แท่นที่ต้องเลือก",
 				"story": "เศษคัมภีร์สามส่วนกับม้วนคำสาปอยู่บนโต๊ะ — วางเฉพาะเศษคัมภีร์ขึ้นแท่นที่มีโล่ป้องกัน",
 				"panels": ["terminal", "files"],
+				# ม้วนคาถาที่แจกตอนเริ่มขั้นนี้ (SpellCatalog)
+				"teaches": ["add"],
 				"setup": [
 					{"run": "git config --global user.name \"Vel\""},
 					{"run": "git config --global user.email \"vel@magic-tower.local\""},

@@ -47,6 +47,8 @@ static func get_data() -> Dictionary:
 				"story": "วงเวทหน้าประตูมืดสนิท ร่ายคาถาวัดพลังในวงร่ายเวท (Terminal) ด้านล่าง",
 				# ด่านแรกใช้แค่วงร่ายเวท ยังไม่ต้องเห็นโต๊ะไฟล์หรือแผนที่ประวัติ
 				"panels": ["terminal"],
+				# ม้วนคาถาที่แจกตอนเริ่มขั้นนี้ (SpellCatalog)
+				"teaches": ["version"],
 				"objectives": [
 					{
 						"id": "version",
@@ -68,6 +70,8 @@ static func get_data() -> Dictionary:
 				"title": "ประตูที่ไม่รู้จักนาม",
 				"story": "ประตูหอคอยจะเปิดให้เฉพาะผู้ที่ประกาศนามและผูกตราประทับวิญญาณแล้วเท่านั้น",
 				"panels": ["terminal"],
+				# ม้วนคาถาที่แจกตอนเริ่มขั้นนี้ (SpellCatalog)
+				"teaches": ["config"],
 				"objectives": [
 					{
 						"id": "name",
