@@ -60,6 +60,7 @@ var setup: Array[Dictionary] = []
 var room: Dictionary = {}
 
 var _done: Dictionary = {}
+var _done_before: Dictionary = {}
 
 
 ## คืน null ถ้าด่านนี้ไม่มีขั้นเล่นจริงตามหมายเลขขั้นที่ระบุ
@@ -138,6 +139,9 @@ func world_text(objective_id: String) -> String:
 func on_command(command: String, success: bool, output: String, snapshot: GitRepositorySnapshot = null) -> Array[String]:
 	var newly_done: Array[String] = []
 	var tokens := tokenize(command)
+	# เป้าหมายตามลำดับเรื่อง (state / read / say) ดูเฉพาะเป้าหมายที่สำเร็จ "ก่อน" การกระทำนี้
+	# หนึ่งการกระทำจึงเดินเรื่องได้ทีละจังหวะ ไม่ไหลต่อไปยังเป้าหมายถัดไปที่โลกยังไม่พร้อม
+	_done_before = _done.duplicate()
 	for index in objectives.size():
 		var objective := objectives[index]
 		var objective_id := str(objective["id"])
@@ -200,7 +204,7 @@ func _matches(objective: Dictionary, tokens: PackedStringArray, success: bool, o
 
 func _previous_done(index: int) -> bool:
 	for previous in index:
-		if not is_done(str(objectives[previous]["id"])):
+		if not _done_before.has(str(objectives[previous]["id"])):
 			return false
 	return true
 
