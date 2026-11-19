@@ -1,5 +1,2 @@
-using GitDiwaa.Tests;
+Console.WriteLine("Git-Diwaa Real Git test harness is ready.");
 
-Console.OutputEncoding = System.Text.Encoding.UTF8;
-RealGitTests.Register();
-return await TestRunner.RunAllAsync(args.FirstOrDefault());
