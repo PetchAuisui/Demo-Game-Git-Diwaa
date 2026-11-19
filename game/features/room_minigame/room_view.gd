@@ -1,0 +1,318 @@
+class_name RoomView
+extends Control
+## ภาพห้องในหอคอยกลางฉาก Sandbox: โต๊ะ (working tree) · แท่นเตรียม (stage) · คัมภีร์ (commit)
+## พร้อมหัวใจ มาตรวัดคลื่นโกลาหล มิติที่ยืนอยู่ และข้อความเหตุการณ์ในโลก
+## ไม่รับเมาส์ ข้อมูลทั้งหมดมาจาก RoomGame.describe() — ห้องสะท้อน repo จริงเสมอ
+
+const TOME_TEXTURE := "res://assets/cutscene/props/khampri/Khampri.png"
+const PAPER_TEXTURE := "res://assets/cutscene/props/khampri/paper.png"
+const SHARD_TEXTURE_FORMAT := "res://assets/cutscene/props/khampri/minikhampri%d.png"
+const SHARD_COUNT := 20
+const FONT_BOLD := "res://assets/fonts/ChakraPetch-Bold.ttf"
+const FONT_REGULAR := "res://assets/fonts/ChakraPetch-Regular.ttf"
+
+const ZONES := [
+	{"state": RoomGame.STATE_DESK, "title": "โต๊ะเขียน", "sub": "ยังไม่ปลอดภัย"},
+	{"state": RoomGame.STATE_ALTAR, "title": "แท่นเตรียม", "sub": "รอการจารึก"},
+	{"state": RoomGame.STATE_TOME, "title": "คัมภีร์", "sub": "จารึกแล้ว · ปลอดภัย"},
+]
+const KIND_TINT := {
+	"fragment": Color(1, 0.95, 0.8),
+	"curse": Color(0.55, 0.3, 0.75),
+	"key": Color(1.0, 0.85, 0.35),
+	"note": Color(0.9, 0.88, 0.85),
+}
+const CHAOS_COLOR := Color("b06bff")
+const HEART_COLOR := Color("ff5a7a")
+
+static var _shard_cache: Array[Texture2D] = []
+
+var _font_bold: Font
+var _font_regular: Font
+var _frame: PanelContainer
+var _hearts_label: Label
+var _chaos_label: Label
+var _chaos_bar: ProgressBar
+var _dimension_label: Label
+var _zone_boxes: Dictionary = {}
+var _event_label: Label
+var _flash: ColorRect
+var _event_tween: Tween
+
+
+func _ready() -> void:
+	mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_font_bold = load(FONT_BOLD) if ResourceLoader.exists(FONT_BOLD) else null
+	_font_regular = load(FONT_REGULAR) if ResourceLoader.exists(FONT_REGULAR) else null
+	_build()
+
+
+## วางห้องในช่องว่างกลางฉาก (ระหว่างแผงซ้าย-ขวา เหนือ Terminal)
+func place_in_stage() -> void:
+	anchor_left = 0.285
+	anchor_right = 0.715
+	anchor_top = 0.12
+	anchor_bottom = 0.63
+	offset_left = 0
+	offset_right = 0
+	offset_top = 0
+	offset_bottom = 0
+
+
+func update_room(game: RoomGame, items: Array[Dictionary], branch: String) -> void:
+	_hearts_label.text = "♥ ".repeat(game.hearts) + "♡ ".repeat(maxi(0, game.max_hearts - game.hearts))
+	if game.has_waves():
+		var left := game.turns_until_wave()
+		_chaos_label.text = "คลื่นโกลาหลในอีก %d การกระทำ" % left if left > 1 else "คลื่นโกลาหลกำลังมา!"
+		_chaos_bar.max_value = game.wave_every
+		_chaos_bar.value = game.wave_every - left
+		_chaos_label.visible = true
+		_chaos_bar.visible = true
+	else:
+		_chaos_label.visible = false
+		_chaos_bar.visible = false
+	_dimension_label.text = "มิติ: %s" % branch if not branch.is_empty() else "ยังไม่มีคัมภีร์"
+
+	for zone in _zone_boxes.values():
+		for child in (zone as Container).get_children():
+			child.queue_free()
+	var index := 0
+	for item in items:
+		var state := str(item["state"])
+		var zone_state := state
+		if state == RoomGame.STATE_CURSED or state == RoomGame.STATE_CONFLICT:
+			zone_state = RoomGame.STATE_DESK
+		var box: Container = _zone_boxes.get(zone_state, null)
+		if box != null:
+			box.add_child(_make_item(item, index))
+		index += 1
+
+
+## แสดงเหตุการณ์ในโลก (คลื่น, สลาย, ก่อตัวใหม่) — คลื่นทำให้ห้องสั่นและเรืองม่วง
+func play_events(events: Array[Dictionary]) -> void:
+	if events.is_empty():
+		return
+	var lines: PackedStringArray = []
+	var has_wave := false
+	var has_damage := false
+	for event in events:
+		lines.append(str(event["text"]))
+		has_wave = has_wave or event["type"] == "wave"
+		has_damage = has_damage or event["type"] == "damage"
+	_event_label.text = "\n".join(lines)
+	_event_label.add_theme_color_override("font_color", Color("ffb3c4") if has_damage else Color("d8f7ff"))
+	if _event_tween != null and _event_tween.is_valid():
+		_event_tween.kill()
+	_event_label.modulate.a = 1.0
+	_event_tween = create_tween()
+	_event_tween.tween_interval(4.5)
+	_event_tween.tween_property(_event_label, "modulate:a", 0.0, 0.8)
+	if has_wave or has_damage:
+		_flash.color = Color(CHAOS_COLOR, 0.0) if has_wave else Color(HEART_COLOR, 0.0)
+		var flash := create_tween()
+		flash.tween_property(_flash, "color:a", 0.45, 0.12)
+		flash.tween_property(_flash, "color:a", 0.0, 0.7)
+		var shake := create_tween()
+		for i in 6:
+			shake.tween_property(_frame, "position:x", 8.0 * (1 if i % 2 == 0 else -1), 0.04)
+		shake.tween_property(_frame, "position:x", 0.0, 0.04)
+
+
+func _build() -> void:
+	_frame = PanelContainer.new()
+	_frame.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_frame.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color(0.05, 0.04, 0.1, 0.78)
+	style.border_color = Color(0.75, 0.6, 0.3, 0.9)
+	style.set_border_width_all(3)
+	style.set_corner_radius_all(14)
+	style.set_content_margin_all(16)
+	_frame.add_theme_stylebox_override("panel", style)
+	add_child(_frame)
+
+	var root := VBoxContainer.new()
+	root.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	root.add_theme_constant_override("separation", 8)
+	_frame.add_child(root)
+
+	var header := HBoxContainer.new()
+	header.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	header.add_theme_constant_override("separation", 16)
+	root.add_child(header)
+	_hearts_label = _label(26, HEART_COLOR, true)
+	header.add_child(_hearts_label)
+	_dimension_label = _label(18, Color("c9b6ff"), false)
+	header.add_child(_dimension_label)
+	var spacer := Control.new()
+	spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	spacer.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	header.add_child(spacer)
+	var chaos_box := VBoxContainer.new()
+	chaos_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	chaos_box.custom_minimum_size = Vector2(260, 0)
+	header.add_child(chaos_box)
+	_chaos_label = _label(17, CHAOS_COLOR.lightened(0.3), true)
+	_chaos_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	chaos_box.add_child(_chaos_label)
+	_chaos_bar = ProgressBar.new()
+	_chaos_bar.show_percentage = false
+	_chaos_bar.custom_minimum_size = Vector2(0, 10)
+	_chaos_bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var fill := StyleBoxFlat.new()
+	fill.bg_color = CHAOS_COLOR
+	fill.set_corner_radius_all(5)
+	var back := StyleBoxFlat.new()
+	back.bg_color = Color(1, 1, 1, 0.08)
+	back.set_corner_radius_all(5)
+	_chaos_bar.add_theme_stylebox_override("fill", fill)
+	_chaos_bar.add_theme_stylebox_override("background", back)
+	chaos_box.add_child(_chaos_bar)
+
+	var zones := HBoxContainer.new()
+	zones.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	zones.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	zones.add_theme_constant_override("separation", 10)
+	root.add_child(zones)
+	for zone in ZONES:
+		zones.add_child(_make_zone(zone))
+
+	_event_label = _label(19, Color("d8f7ff"), true)
+	_event_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_event_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_event_label.custom_minimum_size = Vector2(0, 54)
+	root.add_child(_event_label)
+
+	_flash = ColorRect.new()
+	_flash.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_flash.color = Color(CHAOS_COLOR, 0.0)
+	_flash.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	add_child(_flash)
+
+
+func _make_zone(zone: Dictionary) -> Control:
+	var panel := PanelContainer.new()
+	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	var style := StyleBoxFlat.new()
+	var is_tome: bool = zone["state"] == RoomGame.STATE_TOME
+	style.bg_color = Color(0.2, 0.16, 0.05, 0.55) if is_tome else Color(1, 1, 1, 0.05)
+	style.border_color = Color(0.95, 0.8, 0.4, 0.8) if is_tome else Color(1, 1, 1, 0.15)
+	style.set_border_width_all(2)
+	style.set_corner_radius_all(10)
+	style.set_content_margin_all(8)
+	panel.add_theme_stylebox_override("panel", style)
+
+	var box := VBoxContainer.new()
+	box.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	box.add_theme_constant_override("separation", 4)
+	panel.add_child(box)
+	var title := _label(20, Color("ebcb70") if is_tome else Color.WHITE, true)
+	title.text = zone["title"]
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	box.add_child(title)
+	var sub := _label(14, Color(1, 1, 1, 0.6), false)
+	sub.text = zone["sub"]
+	sub.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	box.add_child(sub)
+	if is_tome and ResourceLoader.exists(TOME_TEXTURE):
+		var tome := TextureRect.new()
+		tome.texture = load(TOME_TEXTURE)
+		tome.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		tome.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		tome.custom_minimum_size = Vector2(0, 56)
+		tome.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+		tome.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		box.add_child(tome)
+	var items := VBoxContainer.new()
+	items.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	items.add_theme_constant_override("separation", 3)
+	box.add_child(items)
+	_zone_boxes[zone["state"]] = items
+	return panel
+
+
+func _make_item(item: Dictionary, index: int) -> Control:
+	var row := HBoxContainer.new()
+	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	row.add_theme_constant_override("separation", 6)
+	var kind := str(item["kind"])
+	var state := str(item["state"])
+	var hidden: bool = item.get("hidden", false)
+
+	var icon := TextureRect.new()
+	icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	icon.custom_minimum_size = Vector2(30, 30)
+	icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	icon.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	icon.texture = _shard(index) if kind in ["fragment", "key"] and not hidden else _paper()
+	icon.modulate = Color(0.8, 0.8, 0.85) if hidden else KIND_TINT.get(kind, Color.WHITE)
+	if state == RoomGame.STATE_CURSED:
+		icon.modulate = Color(0.6, 0.35, 0.8)
+	elif state == RoomGame.STATE_CONFLICT:
+		icon.modulate = Color(1.0, 0.4, 0.4)
+	row.add_child(icon)
+
+	var label := _label(15, Color.WHITE, false)
+	label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	label.clip_text = true
+	label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	if hidden:
+		label.text = "%s · ?" % item["path"]
+	else:
+		var tag := ""
+		match state:
+			RoomGame.STATE_CURSED:
+				tag = " · ถูกสาป!"
+			RoomGame.STATE_CONFLICT:
+				tag = " · มิติปะทะ!"
+		label.text = "%s%s" % [item["name"], tag]
+		if kind == "curse":
+			label.add_theme_color_override("font_color", Color("d6a8ff"))
+	label.tooltip_text = str(item["path"])
+	row.add_child(label)
+
+	if state == RoomGame.STATE_CURSED or state == RoomGame.STATE_CONFLICT:
+		var tw := row.create_tween().set_loops()
+		tw.tween_property(row, "modulate:a", 0.55, 0.45)
+		tw.tween_property(row, "modulate:a", 1.0, 0.45)
+	return row
+
+
+func _paper() -> Texture2D:
+	return load(PAPER_TEXTURE) if ResourceLoader.exists(PAPER_TEXTURE) else null
+
+
+## เศษคัมภีร์จาก asset minikhampri (ภาพ 480x270 ที่มีเศษเล็ก ๆ หนึ่งชิ้น) ตัดเฉพาะส่วนที่มีภาพ
+func _shard(index: int) -> Texture2D:
+	if _shard_cache.is_empty():
+		for i in range(1, SHARD_COUNT + 1):
+			var path := SHARD_TEXTURE_FORMAT % i
+			if not ResourceLoader.exists(path):
+				continue
+			var texture: Texture2D = load(path)
+			var image := texture.get_image()
+			if image == null:
+				continue
+			var used := image.get_used_rect()
+			var atlas := AtlasTexture.new()
+			atlas.atlas = texture
+			atlas.region = Rect2(used)
+			_shard_cache.append(atlas)
+	if _shard_cache.is_empty():
+		return _paper()
+	return _shard_cache[index % _shard_cache.size()]
+
+
+func _label(font_size: int, color: Color, bold: bool) -> Label:
+	var label := Label.new()
+	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	label.add_theme_font_size_override("font_size", font_size)
+	label.add_theme_color_override("font_color", color)
+	label.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.8))
+	label.add_theme_constant_override("outline_size", 3)
+	var font := _font_bold if bold else _font_regular
+	if font != null:
+		label.add_theme_font_override("font", font)
+	return label
