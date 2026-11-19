@@ -73,6 +73,7 @@ func _run() -> void:
 	await _test("room: chaos waves destroy uninscribed scrolls, inscriptions are safe", _t_room_waves)
 	await _test("room: altar shield, cursed inscriptions, restore and phantom dimensions", _t_room_rules)
 	await _test("room v2: tome needed, cursed altar, essential scrolls and exclusion checks", _t_room_rules_v2)
+	await _test("room: waves never corrupt clue notes, and cursed text stays readable", _t_room_notes_safe)
 
 	FsUtil.delete_recursive(_test_root)
 	if not _failures.is_empty():
@@ -1201,3 +1202,25 @@ func _t_spellbook() -> void:
 			else:
 				id = tokens[0]
 			_check(known.has(id), "level %d step %d uses '%s' before it is taught" % [play[0], play[1], command])
+
+
+func _t_room_notes_safe() -> void:
+	var outcome := await _play_level(3, 1, ["git status", "git status", "git status", "git status", "cat scroll-b.txt"])
+	_check(outcome["mission"].done_count() >= 1, "status completes")
+	var session := await _fresh_session("notes-safe")
+	await session.execute("git config --global user.name \"Vel\"")
+	await session.execute("git config --global user.email \"vel@magic-tower.local\"")
+	await session.execute("git init")
+	session.files.write_all_text("clue.txt", "เบาะแส\n")
+	await session.execute("git add clue.txt")
+	await session.execute("git commit -m \"เบาะแส\"")
+	session.files.write_all_text("clue.txt", "เบาะแสที่ถูกแก้\n")
+	var room := RoomGame.from_config({"wave_every": 1, "items": {"clue.txt": {"kind": "note", "name": "เบาะแส"}}})
+	await _room_turn(session, room, "git status")
+	_equal("เบาะแสที่ถูกแก้\n", session.files.read_all_text("clue.txt").value)
+	_equal(room.max_hearts, room.hearts)
+	# ข้อความคำสาปต้องอ่านได้: ไม่มีอักขระประกอบซ้อน (combining marks) ที่ทำให้ภาษาไทยเพี้ยน
+	for index in RoomGame.CORRUPTED_TEXT.length():
+		var code := RoomGame.CORRUPTED_TEXT.unicode_at(index)
+		_check(code < 0x0300 or code > 0x036F, "cursed text must not use combining diacritical marks")
+	session.dispose()

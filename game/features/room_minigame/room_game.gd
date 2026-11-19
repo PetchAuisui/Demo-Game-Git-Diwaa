@@ -32,7 +32,7 @@ extends RefCounted
 ##   essential     [paths] ของที่ห้ามหาย — ถ้าหายไปจากพื้นที่ทำงาน (เช่น reset --hard) แพ้ทันที
 ## คำสาปบนแท่นเตรียมตอนคลื่นมา: โล่แท่นแตกและเสียหัวใจ (สอนให้เลือกของขึ้นแท่นเอง)
 
-const CORRUPTED_TEXT := "ค̷͓ว̷า̴ม̸โ̷ก̵ล̸า̴ห̷ล̷ ̸ก̵ั̶ด̶ก̷ิ̸น̷อ̸ั̷ก̸ข̷ร̶ะ̵\n"
+const CORRUPTED_TEXT := "[ถูกสาป] อักขระบนแผ่นนี้ถูกพลังโกลาหลกัดกินจนอ่านไม่ออก — คัมภีร์ยังจำฉบับเดิมไว้\n"
 const STATE_DESK := "desk"         # untracked หรือแก้ไขแต่ยังไม่ขึ้นแท่น
 const STATE_ALTAR := "altar"       # staged
 const STATE_TOME := "tome"         # จารึกแล้วและไม่มีการแก้ค้าง
@@ -218,10 +218,13 @@ func _resolve_wave(snapshot: GitRepositorySnapshot, actions: Array[Dictionary], 
 
 	for path in items.keys():
 		var item: Dictionary = items[path]
-		if str(item.get("kind", "")) == "curse":
+		var kind := str(item.get("kind", ""))
+		if kind == "curse":
 			if statuses.has(path) and classify(statuses[path]) == STATE_ALTAR:
 				_damage(1, events, "%s บนแท่นเตรียมระเบิด! โล่แท่นแตก" % _name(path), path)
 			continue
+		if kind not in ["fragment", "key"]:
+			continue # กระดาษบันทึก/เบาะแส (note) ไม่ใช่เป้าของคลื่น — ปริศนาต้องอ่านได้เสมอ
 		if not statuses.has(path):
 			continue # จารึกแล้วและสะอาด หรือยังไม่ปรากฏ → ปลอดภัย
 		var status: GitFileStatus = statuses[path]

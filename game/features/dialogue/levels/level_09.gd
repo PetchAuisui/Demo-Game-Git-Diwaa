@@ -46,7 +46,7 @@ static func get_data() -> Dictionary:
 					{"run": "git add ."},
 					{"run": "git commit -m \"%s\"" % SAFE},
 					{"write": "fragment-6.txt", "content": "หากเจ้ากล้าย้อนกลับไปมอง\n"},
-					{"write": "curse.txt", "content": "☠ ผู้ใดจารึกม้วนนี้ คัมภีร์จะเป็นของโกลาหล ☠\n"},
+					{"write": "curse.txt", "content": "[ม้วนคำสาป] ผู้ใดจารึกม้วนนี้ คัมภีร์จะเป็นของโกลาหล\n"},
 					{"run": "git add ."},
 					{"run": "git commit -m \"จารึกเศษคัมภีร์ชิ้นที่ 6\""}
 				],

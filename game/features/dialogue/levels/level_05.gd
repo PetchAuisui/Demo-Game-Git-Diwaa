@@ -88,7 +88,7 @@ static func get_data() -> Dictionary:
 				"setup": ALTAR_READY + [
 					{"run": "git commit -m \"จารึกเศษคัมภีร์ชิ้นที่ 1\""},
 					{"write": "fragment-1c.txt", "content": "ข้า…\nความรู้ที่ไม่ถูกจารึก\n"},
-					{"write": "curse.txt", "content": "☠ ผู้ใดจารึกม้วนนี้ คัมภีร์จะเป็นของโกลาหล ☠\n"}
+					{"write": "curse.txt", "content": "[ม้วนคำสาป] ผู้ใดจารึกม้วนนี้ คัมภีร์จะเป็นของโกลาหล\n"}
 				],
 				"room": {"hearts": 3, "wave_every": 2, "respawn": true, "items": ITEMS},
 				"objectives": [
