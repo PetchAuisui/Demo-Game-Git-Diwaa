@@ -622,6 +622,9 @@ func _on_command_submitted(command: String) -> void:
 		else:
 			_terminal_panel.append_info("✓ สำเร็จ")
 	else:
+		# บางคำสั่ง (เช่น merge ที่ปะทะ) เขียนข้อความจริงลง stdout — แสดงให้ผู้เล่นเห็นข้อความ Git จริงเสมอ
+		if not result.standard_output.strip_edges().is_empty():
+			_terminal_panel.append_output(result.standard_output.strip_edges(false, true))
 		var error_message := result.standard_error.strip_edges(false, true) \
 				if not result.standard_error.strip_edges().is_empty() \
 				else "✗ คำสั่งล้มเหลว (exit %d)" % result.exit_code
