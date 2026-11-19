@@ -27,7 +27,7 @@ static func get_data() -> Dictionary:
 		"gameplay": {
 			1: {
 				"title": "แท่นที่ต้องเลือก",
-				"story": "เศษคัมภีร์สามส่วนกับม้วนคำสาปอยู่บนโต๊ะ — วางเฉพาะเศษคัมภีร์ขึ้นแท่นที่มีโล่ป้องกัน",
+				"story": "เศษคัมภีร์ชิ้นที่ 1 แตกเป็นสามส่วนอยู่บนโต๊ะพร้อมม้วนคำสาป — วางเฉพาะเศษคัมภีร์ทั้งสามส่วนขึ้นแท่นเตรียม",
 				"panels": ["terminal", "files"],
 				# ม้วนคาถาที่แจกตอนเริ่มขั้นนี้ (SpellCatalog)
 				"teaches": ["add"],
@@ -56,8 +56,8 @@ static func get_data() -> Dictionary:
 				"objectives": [
 					{
 						"id": "first",
-						"text": "ช่วยส่วนแรกขึ้นไปอยู่ใต้โล่ก่อนคลื่นแรกมา",
-						"short": "ส่วนแรกขึ้นแท่น",
+						"text": "วางส่วนแรก (fragment-1a.txt) ขึ้นแท่นเตรียม ให้โล่ของมิวราปกป้องไว้ก่อนคลื่นมา",
+						"short": "วางส่วนแรกขึ้นแท่น (fragment-1a)",
 						"type": "state",
 						"check": "staged",
 						"paths": ["fragment-1a.txt"],
@@ -68,8 +68,8 @@ static func get_data() -> Dictionary:
 					},
 					{
 						"id": "rest",
-						"text": "วางอีกสองส่วนให้ครบ โดยไม่ให้ม้วนคำสาปขึ้นแท่น",
-						"short": "ครบสามส่วน ไม่มีคำสาป",
+						"text": "วางส่วนกลางและส่วนท้าย (fragment-1b.txt, fragment-1c.txt) ขึ้นแท่น — ห้ามเอาม้วนคำสาป (curse.txt) ขึ้นไปด้วย",
+						"short": "วางส่วนกลาง + ส่วนท้ายขึ้นแท่น (ไม่เอาม้วนคำสาป)",
 						"type": "state",
 						"check": "staged",
 						"paths": ["fragment-1a.txt", "fragment-1b.txt", "fragment-1c.txt"],
