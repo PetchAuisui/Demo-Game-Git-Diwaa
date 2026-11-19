@@ -62,11 +62,12 @@ func _run() -> void:
 	await _test("state objectives follow the real repository, not the command text", _t_state_objectives)
 	await _test("state objectives are judged in story order and can require a spell", _t_state_objective_order)
 	await _test("spell effects follow what git really did to the repository", _t_spell_effects)
-	await _test("levels 2-12: every step's setup builds its world and the intended play clears it", _t_levels_2_to_5)
+	await _test("levels 2-15: every step's setup builds its world and the intended play clears it", _t_levels_2_to_5)
 	await _test("levels 2-5: the wrong spell does not clear state goals", _t_levels_wrong_spells)
 	await _test("levels 6-9: guessing, fake runes, inscribing curses and --hard are punished", _t_levels_6_to_9_wrong)
 	await _test("levels 10-12: phantoms drain, keys need committing, merges need judging", _t_levels_10_to_12_wrong)
 	await _test("vault: seeded remote, behind/ahead drift and in_sync after pull and push", _t_vault_sync)
+	await _test("levels 13-15: no tome, a stale tome and an unpublished tome all drain hearts", _t_levels_13_to_15_wrong)
 	await _test("room: chaos waves destroy uninscribed scrolls, inscriptions are safe", _t_room_waves)
 	await _test("room: altar shield, cursed inscriptions, restore and phantom dimensions", _t_room_rules)
 	await _test("room v2: tome needed, cursed altar, essential scrolls and exclusion checks", _t_room_rules_v2)
@@ -899,6 +900,10 @@ const SOLUTIONS := [
 	[10, 1, ["git branch", "git branch -d phantom", "git branch experiment"]],
 	[11, 1, ["git switch experiment", "git add key-moon.txt", "git commit -m \"ครึ่งกุญแจจันทรา\"", "git switch main", "git switch -c trial"]],
 	[12, 1, ["git merge experiment", "write altar-core.txt แกนแท่นบูชา: ไอน้ำ", "git add altar-core.txt", "git commit -m \"หลอมมิติ\""]],
+	[13, 1, ["git clone https://magic-vault.com/user/light-tome.git", "git remote -v", "cat fragment-10.txt"]],
+	[14, 1, ["git pull", "cat fragment-11.txt"]],
+	[14, 1, ["git fetch", "git pull", "cat fragment-11.txt"]],
+	[15, 1, ["git remote add origin https://magic-vault.com/user/apprentice-tome.git", "git push -u origin main"]],
 ]
 
 
@@ -1134,3 +1139,12 @@ func _t_vault_sync() -> void:
 	_check(pushed.success, "push: " + pushed.output)
 	_check(LevelMission.evaluate_state(in_sync, await session.inspect()), "push brings it back in sync")
 	session.dispose()
+
+
+func _t_levels_13_to_15_wrong() -> void:
+	var level13 := await _play_level(13, 1, ["git status", "git status", "git status"])
+	_check(level13["room"].hearts == 2, "level 13: waves hit while there is no tome")
+	var level14 := await _play_level(14, 1, ["git fetch", "git status"])
+	_check(level14["room"].hearts == 2 and level14["mission"].done_count() == 0, "level 14: fetch alone leaves the tome stale")
+	var level15 := await _play_level(15, 1, ["git remote add origin https://magic-vault.com/user/apprentice-tome.git", "git push origin main", "git status"])
+	_check(not level15["mission"].is_complete() and level15["room"].hearts == 2, "level 15: a push without -u leaves the path unbound")
