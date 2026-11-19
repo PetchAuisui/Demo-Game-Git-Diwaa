@@ -105,6 +105,10 @@ func _show_page() -> void:
 	_file_label.visible = _page == 0
 	_body.text = _pages[_page]
 	_seal.visible = _proclamation and last
+	var single := _pages.size() <= 1
+	_prev.visible = not single
+	_next.visible = not single
+	_page_label.visible = not single
 	_prev.disabled = _page == 0
 	_next.disabled = last
 	_prev.modulate.a = 0.35 if _prev.disabled else 1.0
