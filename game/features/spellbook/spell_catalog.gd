@@ -7,6 +7,7 @@ extends RefCounted
 ##
 ## แต่ละคาถา: name (ชื่อในโลกเวท), command (คำสั่งจริง), does (ผลในโลก), real (ความหมายใน Git), example
 ## tool = true → เครื่องมือของเกม ไม่ใช่คำสั่ง Git (การ์ดจะบอกชัดเพื่อไม่ให้ผู้เล่นสับสน)
+## การอ่านกระดาษไม่ใช่คาถา: เป็นการกระทำในโลก (คลิกกระดาษในห้อง) จึงไม่อยู่ในสมุด
 
 const SPELLS := {
 	"version": {"name": "คาถาวัดพลัง", "command": "git --version",
@@ -21,10 +22,6 @@ const SPELLS := {
 	"status": {"name": "คาถาหยั่งสถานะ", "command": "git status",
 		"does": "ให้คัมภีร์บอกว่าแผ่นไหนไร้ตรา (untracked) ถูกแก้ (modified) หรืออยู่บนแท่นเตรียม", "real": "ดูสถานะไฟล์ใน working tree และ staging area",
 		"example": "git status"},
-	"cat": {"name": "หยิบอ่าน", "command": "cat ชื่อไฟล์", "tool": true,
-		"does": "อ่านข้อความบนกระดาษ — พิมพ์ cat เว้นวรรค แล้วตามด้วยชื่อไฟล์ให้ครบ (รวม .txt) ตามที่เห็นในห้องหรือในผลของ git status · หรือคลิกกระดาษในห้องเพื่ออ่านได้เลย",
-		"real": "ใช้ดูเนื้อหาไฟล์ (มาจากคำสั่ง cat ของ Terminal ทั่วไป)",
-		"example": "cat note.txt"},
 	"add": {"name": "คาถาวางขึ้นแท่น", "command": "git add <ไฟล์>",
 		"does": "ยกของจากโต๊ะขึ้นแท่นเตรียม เลือกได้ทีละชิ้นหรือหลายชิ้น — git add . ยกทุกอย่าง (รวมของที่ไม่อยากได้!)", "real": "เพิ่มการเปลี่ยนแปลงเข้า staging area",
 		"example": "git add fragment-1a.txt fragment-1b.txt"},

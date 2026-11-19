@@ -60,7 +60,7 @@ static func get_data() -> Dictionary:
 						"type": "say",
 						"words": ["lumina"],
 						"world": "lumina เปล่งแสงขับหมอกออกไป… แต่แท่นเตรียมสว่างขึ้นเอง มีบางอย่างแอบขึ้นไปบนแท่น!",
-						"hint": "cat เห็นแค่ของปลอม — คาถาเทียบรอย git diff จะแสดงบรรทัด - (ของเดิม) และ + (ของใหม่)",
+						"hint": "หยิบอ่านเห็นแค่ของปลอม — คาถาเทียบรอย git diff จะแสดงบรรทัด - (ของเดิม) และ + (ของใหม่)",
 						"spawn": [
 							{"write": "fragment-4.txt", "content": ORIGINAL + "นามแท้: ignis\n"},
 							{"run": "git add fragment-4.txt"}
