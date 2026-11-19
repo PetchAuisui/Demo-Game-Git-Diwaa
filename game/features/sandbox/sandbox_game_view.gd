@@ -386,9 +386,29 @@ func _initialize_sandbox() -> void:
 
 	if _sandbox_service.info != null:
 		_terminal_panel.set_window_title("●  ●  ●    TERMINAL — learner@diwaa:~/%s" % _sandbox_service.info.mission_id)
+	await _apply_mission_setup()
+	if _is_leaving or not is_inside_tree():
+		return
 	_terminal_panel.append_info("พร้อมใช้งาน — พิมพ์ help หรือเริ่มด้วย git --version\n")
 
 	await _refresh_state()
+
+
+## สร้าง "ปัญหาในโลก" ตั้งต้นของขั้นนี้ (ไฟล์บนโต๊ะ, การจารึกก่อนหน้า) แบบเงียบ ก่อนผู้เล่นเริ่ม
+func _apply_mission_setup() -> void:
+	if _mission == null or _mission.setup.is_empty():
+		return
+	for action in _mission.setup:
+		if _is_leaving or not is_inside_tree():
+			return
+		if action.has("write"):
+			var written := await _sandbox_service.write_file(str(action["write"]), str(action.get("content", "")))
+			if not written.ok:
+				push_error("mission setup write failed: %s" % written.message)
+		elif action.has("run"):
+			var result := await _sandbox_service.execute(str(action["run"]))
+			if not result.success:
+				push_error("mission setup '%s' failed: %s" % [action["run"], result.output])
 
 
 func _on_repo_pressed() -> void:
@@ -525,6 +545,17 @@ func _handle_cat_command(command: String) -> void:
 		_terminal_panel.append_error("ไม่พบไฟล์ '%s'" % parts[1])
 	else:
 		_terminal_panel.append_output(result.value)
+		_report_scroll_read(parts[1])
+
+
+## การอ่านเศษคัมภีร์ (cat หรือเปิดในแผง Files) นับเป็นการสังเกตโลกสำหรับภารกิจชนิด read
+func _report_scroll_read(path: String) -> void:
+	if _mission == null or _is_leaving:
+		return
+	var snapshot := await _sandbox_service.inspect()
+	if _is_leaving or not is_inside_tree():
+		return
+	_on_mission_progress("cat %s" % path, GitCommandResult.new(true, 0, "", ""), snapshot)
 
 
 func _handle_delete_command(command: String) -> void:
@@ -553,6 +584,7 @@ func _on_open_file_requested(file_path: String) -> void:
 	else:
 		_files_panel.show_file(file_path, result.value)
 		_files_panel.show_feedback("เปิด %s แล้ว" % file_path)
+		_report_scroll_read(file_path)
 	_files_panel.set_busy(false)
 
 

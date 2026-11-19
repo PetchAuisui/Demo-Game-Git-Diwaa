@@ -8,6 +8,7 @@ extends RefCounted
 ##   command     commands: [..]        พิมพ์คำสั่งตรงตัว (เว้นวรรคซ้ำถูกยุบ) และคำสั่งสำเร็จ
 ##   config_set  key, validator        git config --global <key> "<ค่า>" (validator: non_empty | email)
 ##   config_get  key                   git config --global <key> แล้วมีค่าตอบกลับ
+##   read        path                  อ่านเศษคัมภีร์ด้วย cat <path> หรือเปิดไฟล์ในแผง Files (ตรวจตามลำดับเรื่องเหมือน state)
 ##   state       check, ...            ตรวจจาก "สถานะ Repository" หลังคำสั่ง ไม่ใช่ข้อความคำสั่ง (Game Design v2 §4.3)
 ##                                     ผู้เล่นใช้คาถารูปแบบไหนก็ได้ ขอแค่โลก (repo) เป็นไปตามเป้าหมาย
 ##       check = repo_initialized                     มีคัมภีร์ (git init แล้ว)
@@ -19,6 +20,7 @@ extends RefCounted
 ##             | current_branch  branch               ยืนอยู่บน branch นี้
 ##             | merge_commit                         HEAD เป็น merge commit (มีสอง parent)
 ##       spell (ไม่บังคับ) = ต้องสำเร็จด้วยคาถานี้ เช่น "add" / "commit" (ใช้เมื่ออยากให้ฝึกคาถาเฉพาะ)
+##       flags (ไม่บังคับ) = คาถาต้องมีตัวเลือกอย่างน้อยหนึ่งตัวในรายการ เช่น ["-a", "-am"]
 ##       objective แบบ state จะถูกตรวจเมื่อ objective ก่อนหน้าทั้งหมดสำเร็จแล้วเท่านั้น (เป็นลำดับเหตุการณ์ในเรื่อง)
 ##
 ## คีย์เสริมทุกชนิด:
@@ -43,6 +45,9 @@ var time_limit: float = 0.0
 ## แผงที่แสดงในขั้นนี้ (Contextual UI, Game Design v2 §4.2): "files", "graph" — Terminal แสดงเสมอ
 ## ว่าง = แสดงทุกแผง (พฤติกรรมเดิม)
 var panels: Array[String] = []
+## โลกตั้งต้นก่อนผู้เล่นเริ่ม (Game Design v2 §5: เริ่มจาก "ปัญหาในโลก")
+## รายการเรียงลำดับ: {"run": "git ..."} หรือ {"write": "<path>", "content": "..."} — ทำแบบเงียบ ไม่นับเป็นคำสั่งของผู้เล่น
+var setup: Array[Dictionary] = []
 
 var _done: Dictionary = {}
 
@@ -66,6 +71,8 @@ static func create(level_num: int, step_num: int) -> LevelMission:
 		mission.objectives.append(objective)
 	for panel in definition.get("panels", []):
 		mission.panels.append(str(panel))
+	for action in definition.get("setup", []):
+		mission.setup.append(action)
 	return mission
 
 
@@ -113,8 +120,12 @@ func on_command(command: String, success: bool, output: String, snapshot: GitRep
 		if is_done(objective_id):
 			continue
 		var matched := false
-		if str(objective.get("type", "")) == "state":
+		var type := str(objective.get("type", ""))
+		if type == "state":
 			matched = _previous_done(index) and _matches_state(objective, tokens, success, snapshot)
+		elif type == "read":
+			# การอ่านเป็นการสังเกตตามลำดับเรื่อง: ต้องผ่านเป้าหมายก่อนหน้าก่อน (เช่น หยั่งสถานะก่อนรู้ว่าแผ่นไหนไร้ตรา)
+			matched = _previous_done(index) and _matches(objective, tokens, success, output)
 		else:
 			matched = _matches(objective, tokens, success, output)
 		if matched:
@@ -137,6 +148,8 @@ func mistake_message(command: String) -> String:
 
 
 func _matches(objective: Dictionary, tokens: PackedStringArray, success: bool, output: String) -> bool:
+	if str(objective.get("type", "")) == "read":
+		return success and tokens.size() == 2 and tokens[0] == "cat" and tokens[1] == str(objective.get("path", ""))
 	if not success or tokens.size() < 2 or tokens[0] != "git":
 		return false
 	match str(objective.get("type", "")):
@@ -169,6 +182,9 @@ func _matches_state(objective: Dictionary, tokens: PackedStringArray, success: b
 		return false
 	var spell := str(objective.get("spell", ""))
 	if not spell.is_empty() and (not success or tokens.size() < 2 or tokens[0] != "git" or tokens[1] != spell):
+		return false
+	var flags: Array = objective.get("flags", [])
+	if not flags.is_empty() and not flags.any(func(flag: Variant) -> bool: return tokens.has(str(flag))):
 		return false
 	return evaluate_state(objective, snapshot)
 
