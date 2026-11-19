@@ -81,11 +81,12 @@ static func _validate_commit(arguments: Array[String]) -> String:
 		if arguments[index] == "-a" or arguments[index] == "--amend":
 			index += 1
 			continue
-		if arguments[index] == "-m" and index + 1 < arguments.size() \
+		# -am "ข้อความ" เป็นรูปแบบย่อที่ใช้กันทั่วไป (= -a -m)
+		if (arguments[index] == "-m" or arguments[index] == "-am") and index + 1 < arguments.size() \
 				and not arguments[index + 1].strip_edges().is_empty():
 			index += 2
 			continue
-		return "Git-Diwaa supports commit with -a, -m and --amend only."
+		return "Git-Diwaa supports commit with -a, -m, -am and --amend only."
 	return ""
 
 
