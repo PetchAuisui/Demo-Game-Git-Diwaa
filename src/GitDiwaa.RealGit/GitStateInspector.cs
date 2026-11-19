@@ -88,10 +88,10 @@ public sealed class GitStateInspector
                 .ToList()
             : [];
 
-    internal static IReadOnlyList<string> SplitZ(string raw) =>
+    public static IReadOnlyList<string> SplitZ(string raw) =>
         raw.Split('\0', StringSplitOptions.RemoveEmptyEntries);
 
-    internal static IReadOnlyList<GitFileStatus> ParseStatus(string porcelainZ)
+    public static IReadOnlyList<GitFileStatus> ParseStatus(string porcelainZ)
     {
         var result = new List<GitFileStatus>();
         var entries = porcelainZ.Split('\0');
@@ -131,7 +131,7 @@ public sealed class GitStateInspector
         _ => GitFileState.Unknown,
     };
 
-    internal static IReadOnlyList<GitBranchInfo> ParseRefs(string raw)
+    public static IReadOnlyList<GitBranchInfo> ParseRefs(string raw)
     {
         var list = new List<GitBranchInfo>();
         foreach (var line in raw.Split('\n', StringSplitOptions.RemoveEmptyEntries))
@@ -151,7 +151,7 @@ public sealed class GitStateInspector
         return list;
     }
 
-    internal static IReadOnlyList<GitCommitNode> ParseLog(string raw)
+    public static IReadOnlyList<GitCommitNode> ParseLog(string raw)
     {
         var list = new List<GitCommitNode>();
         foreach (var record in raw.Split('\x1e', StringSplitOptions.RemoveEmptyEntries))
@@ -172,7 +172,7 @@ public sealed class GitStateInspector
         return list;
     }
 
-    internal static IReadOnlyList<GitRemoteInfo> ParseRemotes(string raw) =>
+    public static IReadOnlyList<GitRemoteInfo> ParseRemotes(string raw) =>
         raw.Split('\n', StringSplitOptions.RemoveEmptyEntries)
             .Select(l => l.Split(['\t', ' '], StringSplitOptions.RemoveEmptyEntries))
             .Where(p => p.Length >= 3 && p[2] == "(fetch)")
