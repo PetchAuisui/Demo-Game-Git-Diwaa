@@ -205,7 +205,7 @@ flowchart LR
 
 ### Act 1 — หอคอยเวทมนตร์ (ชั้น 1–15, เศษคัมภีร์ 1–12)
 
-> สถานะ: ด่าน 1–12 เล่นได้ในเกม Godot (`game/features/dialogue/levels/level_NN.gd`) ด่าน 2–12 เป็นมินิเกมห้อง (ดู §8) — ด่าน 13–15 (remote) เป็นแบบร่างสำหรับรอบถัดไป
+> สถานะ: Act 1 ครบ 15 ด่าน เล่นได้ในเกม Godot (`game/features/dialogue/levels/level_NN.gd`) ด่าน 2–15 เป็นมินิเกมห้อง (ดู §8)
 > ตารางนี้คือแบบร่างแรก ฉบับที่ใช้จริงสรุปไว้ใน §8.3
 
 | ชั้น | ชื่อตอน | ปัญหาในโลก (Hook) | สิ่งที่ผู้เล่นต้องทำให้เกิด | คาถา |
@@ -295,6 +295,7 @@ flowchart LR
 | คำสาปที่ถูกจารึกลงคัมภีร์ | กัดกินทุกคลื่น | `reset` ย้อน commit ที่ผิด |
 | ของสำคัญ (essential) หายไป | แพ้ทันที | ระดับของ `reset` (`--hard` ทิ้งงานจริง) |
 | มิติผี | ดูดพลังทุกคลื่น | `branch` / `branch -d` |
+| คัมภีร์ไม่ตรงกับคลังเวท (sync_required) | ล้าหลัง/ยังไม่ส่ง → ถูกกัดกินทุกคลื่น | `pull` / `push -u` (fetch อย่างเดียวไม่พอ) |
 | ของที่มีเฉพาะในอีกมิติ | หายเมื่อข้ามมิติกลับ | `switch` เปลี่ยนโลกของ working tree |
 | ประตูผนึก / อักขระปลอม | เอ่ยผิด −♥ | ข้อมูลจริงอยู่ใน `log` / `diff` เท่านั้น |
 | ห้องมองไม่เห็น (blind) | เดาสุ่มเสียเวลา | `status` คือการมองเห็นสถานะ |
@@ -317,6 +318,9 @@ flowchart LR
 | 10 | มิติผี | `git branch` · `git branch -d phantom` · `git branch experiment` | ชักช้า |
 | 11 | ครึ่งกุญแจจันทรา | `git switch experiment` · add + commit · `git switch main` · `git switch -c trial` | ไม่จารึกกุญแจ |
 | 12 | กุญแจสุริยันจันทรา | `git merge experiment` · แก้ altar-core.txt · add · commit | ไม่จารึกผลการหลอม |
+| 13 | คัมภีร์จากคลังเวท (ไม่มีคัมภีร์ = โดนคลื่น) | `git clone https://magic-vault.com/user/light-tome.git` · `git remote -v` · `cat fragment-10.txt` | ชักช้า |
+| 14 | คัมภีร์ล้าหลัง | `git pull` · `cat fragment-11.txt` | `fetch` อย่างเดียว |
+| 15 | ประตูสู่คลังเวทกลาง | `git remote add origin https://magic-vault.com/user/apprentice-tome.git` · `git push -u origin main` | push โดยไม่ `-u` |
 
 เฉลยเหล่านี้ถูกเล่นอัตโนมัติด้วย Git จริงพร้อมจำลองคลื่นใน `tests/engine/run_tests.gd` (`SOLUTIONS`) — ต้องจบโดยไม่เสียหัวใจ
 
@@ -326,6 +330,7 @@ flowchart LR
 "gameplay": { 1: {
     "panels": ["terminal", "files"],            # Contextual UI
     "setup": [{"run": "git init"}, {"write": "a.txt", "content": "..."}],   # โลกตั้งต้น
+    "remote": {"name": "light-tome", "commits": [{"author": "Guardian", "message": "...", "files": {...}}]},  # คลังเวท
     "room": {"hearts": 3, "wave_every": 3, "safe": "committed", "respawn": true,
              "items": {"a.txt": {"kind": "fragment", "name": "เศษชิ้นที่ 1"}}},
     "objectives": [{"type": "state", "check": "committed", "paths": ["a.txt"],
