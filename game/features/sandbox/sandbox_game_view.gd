@@ -269,6 +269,7 @@ func _start_room() -> void:
 	if _room == null:
 		return
 	await _apply_world_actions(_room.initial_actions())
+	_room.set_present(await _workspace_paths())
 	for path in _room.items.keys():
 		var read := _sandbox_service.read_file(str(path))
 		if read.ok and read.value != null:

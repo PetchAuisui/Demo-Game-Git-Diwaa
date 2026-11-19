@@ -19,6 +19,7 @@ extends RefCounted
 ##             | not_committed   paths: [..]          ไฟล์ใน paths ไม่ได้อยู่ในคัมภีร์ (ยังไร้ตรา / แค่อยู่บนแท่น / ไม่มีอยู่)
 ##             | branch_absent   branch               ไม่มี branch ชื่อนี้แล้ว
 ##             | has_conflict                         มีไฟล์ที่มิติปะทะ (merge conflict) อยู่
+##       max_count (ใช้ได้ทุก check) = มี commit ได้ไม่เกินจำนวนนี้ (กันการ "แก้" ด้วยการจารึกของที่ถูกสาปทับ)
 ##       exclude (ใช้กับ staged / committed) = ไฟล์เหล่านี้ต้องไม่อยู่บนแท่นและไม่ถูกจารึก (เช่น ม้วนคำสาป)
 ##             | commits_at_least count               มี commit อย่างน้อย count ครั้ง
 ##             | clean                                working tree และ stage ว่าง
@@ -221,6 +222,8 @@ static func evaluate_state(objective: Dictionary, snapshot: GitRepositorySnapsho
 	if snapshot == null:
 		return false
 	var paths: Array = objective.get("paths", [])
+	if objective.has("max_count") and snapshot.commits.size() > int(objective["max_count"]):
+		return false
 	var exclude: Array = objective.get("exclude", [])
 	if not exclude.is_empty() and not exclude.all(func(path: Variant) -> bool:
 			var status := _status_of(snapshot, str(path))

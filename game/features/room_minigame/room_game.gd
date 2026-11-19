@@ -122,7 +122,9 @@ func on_turn(snapshot: GitRepositorySnapshot, command: String = "") -> Dictionar
 	if tokens.size() >= 2 and tokens[0] == "git" and tokens[1] == "status":
 		revealed = true
 
+	var respawning := {}
 	for pending in _pending_respawn:
+		respawning[pending["path"]] = true
 		actions.append({"write": pending["path"], "content": pending["content"]})
 		_corrupted.erase(pending["path"])
 		events.append({"type": "respawn", "path": pending["path"], "text": "%s ก่อตัวขึ้นใหม่จากเศษแสง" % _name(pending["path"])})
@@ -135,7 +137,7 @@ func on_turn(snapshot: GitRepositorySnapshot, command: String = "") -> Dictionar
 	for path in essential:
 		if _present.has(path):
 			_seen_essential[path] = true
-		elif _seen_essential.has(path):
+		elif _seen_essential.has(path) and not respawning.has(path):
 			_damage(hearts, events, "%s หายไปจากโลกแล้ว — ไม่มีทางนำกลับมา!" % _name(path), path)
 			return {"actions": actions, "events": events, "wave": false}
 
@@ -261,6 +263,8 @@ func set_present(workspace_paths: Array[String]) -> void:
 	_present.clear()
 	for path in workspace_paths:
 		_present[path] = true
+		if essential.has(path):
+			_seen_essential[path] = true
 
 
 func _spawn_actions(at_turn: int) -> Array[Dictionary]:

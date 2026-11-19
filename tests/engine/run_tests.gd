@@ -62,8 +62,9 @@ func _run() -> void:
 	await _test("state objectives follow the real repository, not the command text", _t_state_objectives)
 	await _test("state objectives are judged in story order and can require a spell", _t_state_objective_order)
 	await _test("spell effects follow what git really did to the repository", _t_spell_effects)
-	await _test("levels 2-5: every step's setup builds its world and the intended play clears it", _t_levels_2_to_5)
+	await _test("levels 2-9: every step's setup builds its world and the intended play clears it", _t_levels_2_to_5)
 	await _test("levels 2-5: the wrong spell does not clear state goals", _t_levels_wrong_spells)
+	await _test("levels 6-9: guessing, fake runes, inscribing curses and --hard are punished", _t_levels_6_to_9_wrong)
 	await _test("room: chaos waves destroy uninscribed scrolls, inscriptions are safe", _t_room_waves)
 	await _test("room: altar shield, cursed inscriptions, restore and phantom dimensions", _t_room_rules)
 	await _test("room v2: tome needed, cursed altar, essential scrolls and exclusion checks", _t_room_rules_v2)
@@ -830,6 +831,11 @@ func _play_level(level: int, step: int, commands: Array[String]) -> Dictionary:
 	if room != null:
 		for action in room.initial_actions():
 			await _world_action(session, action, level)
+		var present: Array[String] = []
+		for entry in session.files.list_entries():
+			if not entry.is_directory:
+				present.append(entry.path)
+		room.set_present(present)
 		for path in room.items.keys():
 			var read := session.files.read_all_text(str(path))
 			if read.ok and read.value != null:
@@ -883,6 +889,11 @@ const SOLUTIONS := [
 	[4, 1, ["git add fragment-1a.txt", "git add fragment-1b.txt fragment-1c.txt"]],
 	[5, 1, ["git commit -m \"จารึกเศษคัมภีร์ชิ้นที่ 1\""]],
 	[5, 2, ["git commit -am \"เศษคัมภีร์ชิ้นที่ 2\""]],
+	[6, 1, ["git log --oneline", "say aurora", "git add fragment-3.txt", "git commit -m \"เศษคัมภีร์ชิ้นที่ 3\""]],
+	[7, 1, ["git diff", "say lumina", "git diff --staged", "say ignis"]],
+	[8, 1, ["git restore fragment-5.txt", "git restore --staged curse.txt"]],
+	[9, 1, ["git reset --mixed HEAD~1", "git add fragment-6.txt", "git commit -m \"เศษคัมภีร์ชิ้นที่ 6\""]],
+	[9, 1, ["git reset --soft HEAD~1", "git restore --staged curse.txt", "git commit -m \"เศษคัมภีร์ชิ้นที่ 6\""]],
 ]
 
 
@@ -1062,3 +1073,14 @@ func _t_room_rules_v2() -> void:
 	await _room_turn(session, room, "git status")
 	_check(room.is_failed(), "losing an essential scroll is a defeat")
 	session.dispose()
+
+
+func _t_levels_6_to_9_wrong() -> void:
+	var level6 := await _play_level(6, 1, ["say lumos", "say open", "git log"])
+	_check(level6["room"].hearts == 1 and level6["mission"].done_count() == 0, "level 6: guessing the seal costs hearts")
+	var level7 := await _play_level(7, 1, ["cat fragment-4.txt", "say umbra"])
+	_check(level7["room"].hearts == 2 and level7["mission"].done_count() == 0, "level 7: the forged rune backfires")
+	var level8 := await _play_level(8, 1, ["git add .", "git commit -m \"ทับคำสาป\""])
+	_check(not level8["mission"].is_complete(), "level 8: inscribing over the curse is not a cure")
+	var level9 := await _play_level(9, 1, ["git reset --hard HEAD~1"])
+	_check(level9["room"].is_failed(), "level 9: --hard destroys fragment 6 and loses the floor")
