@@ -166,6 +166,13 @@ func expects_say() -> bool:
 	return str(current_objective().get("type", "")) == "say"
 
 
+## ผู้ถามของเป้าหมายเอ่ยคำปัจจุบัน (เช่น มิวรามาถามระดับพลัง) — {} = ไม่มี
+func current_asker() -> Dictionary:
+	if not expects_say():
+		return {}
+	return current_objective().get("asker", {})
+
+
 func world_text(objective_id: String) -> String:
 	for objective in objectives:
 		if str(objective["id"]) == objective_id:
