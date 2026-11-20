@@ -6,6 +6,8 @@ extends Control
 ## คลิกของในห้อง = หยิบขึ้นมาอ่าน (การกระทำในโลก ไม่ต้องพิมพ์คำสั่ง) ส่วนอื่นของห้องไม่รับเมาส์
 
 signal item_pressed(path: String)
+## เอ่ยคำในโลก (รหัสผนึก อักขระ ระดับพลัง) — ทำในห้อง ไม่ใช่ในวงร่ายเวท (Terminal ไว้สำหรับ Git เท่านั้น)
+signal spoken(word: String)
 
 const TOME_TEXTURE := "res://assets/cutscene/props/khampri/Khampri.png"
 const PAPER_TEXTURE := "res://assets/cutscene/props/khampri/paper.png"
@@ -55,6 +57,8 @@ var _event_tween: Tween
 var _zones: HBoxContainer
 var _battle: BattleFieldView
 var _in_battle := false
+var _speak_bar: PanelContainer
+var _speak_input: LineEdit
 
 
 func _ready() -> void:
@@ -232,6 +236,8 @@ func _build() -> void:
 	_battle.visible = false
 	root.add_child(_battle)
 
+	_build_speak_bar(root)
+
 	_event_label = _label(19, Color("d8f7ff"), true)
 	_event_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_event_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -244,6 +250,74 @@ func _build() -> void:
 	_flash.color = Color(CHAOS_COLOR, 0.0)
 	_flash.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	add_child(_flash)
+
+
+## แสดง/ซ่อนช่องเอ่ยคำ (แสดงเฉพาะตอนที่โลกรอคำตอบอยู่)
+func set_speaking(active: bool) -> void:
+	if _speak_bar == null or _speak_bar.visible == active:
+		return
+	_speak_bar.visible = active
+	if active:
+		_speak_bar.modulate.a = 0.0
+		create_tween().tween_property(_speak_bar, "modulate:a", 1.0, 0.3)
+
+
+func _submit_speech(text: String = "") -> void:
+	var word := _speak_input.text.strip_edges()
+	if word.is_empty():
+		return
+	_speak_input.clear()
+	spoken.emit(word)
+
+
+func _build_speak_bar(root: Control) -> void:
+	_speak_bar = PanelContainer.new()
+	_speak_bar.visible = false
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color(0.16, 0.1, 0.24, 0.92)
+	style.border_color = Color("ffd36b")
+	style.set_border_width_all(2)
+	style.set_corner_radius_all(22)
+	style.content_margin_left = 16
+	style.content_margin_right = 8
+	style.content_margin_top = 4
+	style.content_margin_bottom = 4
+	_speak_bar.add_theme_stylebox_override("panel", style)
+	root.add_child(_speak_bar)
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 10)
+	_speak_bar.add_child(row)
+	var title := _label(18, Color("ffd36b"), true)
+	title.text = "✦ เอ่ยคำ"
+	title.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	row.add_child(title)
+	_speak_input = LineEdit.new()
+	_speak_input.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_speak_input.placeholder_text = "พิมพ์คำที่จะเอ่ยต่อหน้าวงเวท/ประตู แล้วกด Enter (เอ่ยผิดพลังจะสะท้อนกลับ)"
+	_speak_input.add_theme_font_size_override("font_size", 18)
+	if _font_regular != null:
+		_speak_input.add_theme_font_override("font", _font_regular)
+	_speak_input.add_theme_color_override("font_color", Color("fff3d6"))
+	_speak_input.add_theme_color_override("font_placeholder_color", Color(1, 1, 1, 0.4))
+	var empty := StyleBoxEmpty.new()
+	_speak_input.add_theme_stylebox_override("normal", empty)
+	_speak_input.add_theme_stylebox_override("focus", empty)
+	_speak_input.text_submitted.connect(_submit_speech)
+	row.add_child(_speak_input)
+	var button := Button.new()
+	button.text = "เอ่ย"
+	button.custom_minimum_size = Vector2(90, 38)
+	button.add_theme_font_size_override("font_size", 18)
+	if _font_bold != null:
+		button.add_theme_font_override("font", _font_bold)
+	button.add_theme_color_override("font_color", Color("2b1a0e"))
+	for state in ["normal", "hover", "pressed", "focus"]:
+		var sb := StyleBoxFlat.new()
+		sb.bg_color = Color("ffd36b") if state != "hover" else Color("ffe39a")
+		sb.set_corner_radius_all(18)
+		button.add_theme_stylebox_override(state, sb)
+	button.pressed.connect(func() -> void: _submit_speech())
+	row.add_child(button)
 
 
 func _make_zone(zone: Dictionary) -> Control:
