@@ -120,6 +120,13 @@ func is_complete() -> bool:
 
 
 ## ภารกิจแรกที่ยังไม่สำเร็จ (ใช้แสดงคำใบ้) หรือ {} เมื่อครบแล้ว
+func objective(objective_id: String) -> Dictionary:
+	for item in objectives:
+		if str(item["id"]) == objective_id:
+			return item
+	return {}
+
+
 func current_objective() -> Dictionary:
 	for objective in objectives:
 		if not is_done(str(objective["id"])):
