@@ -434,6 +434,12 @@ func _on_mission_progress(command: String, result: GitCommandResult, snapshot: G
 	if _mission.is_complete():
 		return
 	var newly_done := _mission.on_command(command, result.success, result.standard_output, snapshot)
+	if _room != null and _room_view != null and _room.has_battle():
+		# ทุกเป้าหมายที่สำเร็จ = คาถาฟาดบอส (ห้องวาดใหม่ตอนโลกเดินจังหวะนี้)
+		var hits: Array[Dictionary] = []
+		for done_id in newly_done:
+			hits.append_array(_room.on_objective_done())
+		_room_view.play_events(hits)
 	_mission_panel.refresh()
 	_update_mission_prompt()
 	if _mission.is_complete():
