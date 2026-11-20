@@ -318,7 +318,8 @@ func _update_room_view() -> void:
 ## ช่องเอ่ยคำในห้องโผล่เฉพาะตอนที่โลกรอคำตอบ (เป้าหมายปัจจุบันเป็นการเอ่ยคำ)
 func _sync_speak() -> void:
 	if _room_view != null:
-		_room_view.set_speaking(_mission != null and not _mission.is_complete() and _mission.expects_say())
+		var active := _mission != null and not _mission.is_complete() and _mission.expects_say()
+		_room_view.set_speaking(active, _mission.current_asker() if active else {})
 
 
 ## ของตั้งต้นของห้อง (turn 0) และจดจำเนื้อหาเศษคัมภีร์ที่มีอยู่ เพื่อให้เศษที่สลายก่อตัวใหม่ได้
@@ -760,6 +761,12 @@ func _handle_say_command(command: String) -> void:
 	var before := _mission.done_count()
 	_on_mission_progress("say %s" % word, GitCommandResult.new(true, 0, "", ""), snapshot)
 	if expected and _mission.done_count() == before and _room != null:
+		var asker := _mission.current_asker()
+		if not asker.is_empty():
+			# ตอบผู้ถาม (มิวรา) ผิด: เธอทักกลับ และเสียหนึ่งการกระทำ (ภูตคืบเข้ามา) แทนการโดนผนึกสะท้อน
+			_room_view.asker_reply(str(asker.get("wrong", "")))
+			await _advance_room("say")
+			return
 		var events := _room.on_wrong_say()
 		_room_view.play_events(events)
 		await _update_room_view()

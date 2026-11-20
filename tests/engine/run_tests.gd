@@ -689,6 +689,7 @@ func _t_level1_step1() -> void:
 	if not _check(mission != null, "level 1 step 1 should exist"):
 		return
 	_check(LevelMission.create(1, 3) == null)
+	_check(mission.current_asker().is_empty(), "nobody asks before the spell is cast")
 	mission.on_command("git -version", false, "")
 	_check(not mission.is_complete())
 	_check(not mission.mistake_message("git -version").is_empty())
@@ -696,6 +697,7 @@ func _t_level1_step1() -> void:
 	_check(not mission.is_complete(), "a failed command must not count")
 	mission.on_command("git   --version", true, "git version 2.39.5 (Apple Git-154)")
 	_check(mission.done_count() == 1 and not mission.is_complete(), "the circle then asks for the power level")
+	_check(str(mission.current_asker().get("name", "")) == "มิวรา", "Mewla asks for the power level in the room")
 	mission.on_command("say 9.9.9", true, "")
 	_check(not mission.is_complete(), "a made-up version must not count")
 	mission.on_command("say 2.39.5", true, "")

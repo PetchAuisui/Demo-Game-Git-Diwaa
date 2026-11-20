@@ -39,6 +39,12 @@ const STATE_TAG_COLORS := {
 const HEART_COLOR := Color("ff5a7a")
 const IDLE_HINT := "คลิกกระดาษในห้องเพื่อหยิบขึ้นมาอ่าน"
 const IDLE_ALPHA := 0.55
+const MEWLA_SHEETS := {
+	"idle": "res://assets/cutscene/characters/mewla/mewla_idle-Sheet.png",
+	"talk": "res://assets/cutscene/characters/mewla/mewla_talk-Sheet.png",
+}
+const MEWLA_FRAME := Vector2(47, 83)
+const MEWLA_FRAMES := 6
 const BATTLE_HINT := "ร่ายคาถาให้ถูกก่อนศัตรูจะถึงตัว — ทุกการกระทำ ศัตรูขยับเข้ามาหนึ่งก้าว"
 
 static var _shard_cache: Array[Texture2D] = []
@@ -59,6 +65,18 @@ var _battle: BattleFieldView
 var _in_battle := false
 var _speak_bar: PanelContainer
 var _speak_input: LineEdit
+var _speak_title: Label
+var _speak_button: Button
+## ผู้ถาม (เช่น มิวรา) ที่โผล่มาถามคำตอบในห้อง — ว่าง = เอ่ยต่อหน้าวงเวท/ประตูตรง ๆ
+var _ask_row: HBoxContainer
+var _ask_portrait: TextureRect
+var _ask_atlas: AtlasTexture
+var _ask_name: Label
+var _ask_line: Label
+var _ask_frame := 0
+var _ask_talk_left := 0.0
+var _ask_tick := 0.0
+var _asker: Dictionary = {}
 
 
 func _ready() -> void:
@@ -253,13 +271,70 @@ func _build() -> void:
 
 
 ## แสดง/ซ่อนช่องเอ่ยคำ (แสดงเฉพาะตอนที่โลกรอคำตอบอยู่)
-func set_speaking(active: bool) -> void:
-	if _speak_bar == null or _speak_bar.visible == active:
+## asker = {"name", "question", "placeholder"} — มีผู้ถาม (มิวรา) โผล่มาถาม แล้วผู้เล่นพิมพ์ตอบเธอ
+func set_speaking(active: bool, asker: Dictionary = {}) -> void:
+	if _speak_bar == null:
+		return
+	var changed := _speak_bar.visible != active or (active and asker != _asker)
+	_asker = asker if active else {}
+	_apply_asker()
+	if not changed:
 		return
 	_speak_bar.visible = active
 	if active:
 		_speak_bar.modulate.a = 0.0
 		create_tween().tween_property(_speak_bar, "modulate:a", 1.0, 0.3)
+		if not _asker.is_empty():
+			_asker_talk(str(_asker.get("question", "")))
+			_speak_input.grab_focus.call_deferred()
+
+
+## ผู้ถามพูดตอบ (เช่น ตอบผิด มิวราทัก) — ไม่มีผู้ถามก็ไม่ทำอะไร
+func asker_reply(text: String) -> void:
+	if _asker.is_empty() or text.is_empty():
+		return
+	_asker_talk(text)
+	var tween := create_tween()
+	tween.tween_property(_ask_row, "position:x", _ask_row.position.x + 8, 0.05)
+	tween.tween_property(_ask_row, "position:x", _ask_row.position.x - 8, 0.08)
+	tween.tween_property(_ask_row, "position:x", _ask_row.position.x, 0.05)
+
+
+func has_asker() -> bool:
+	return not _asker.is_empty()
+
+
+func _apply_asker() -> void:
+	var asking := not _asker.is_empty()
+	_ask_row.visible = asking
+	_speak_title.text = "✦ ตอบ%s" % str(_asker.get("name", "")) if asking else "✦ เอ่ยคำ"
+	_speak_button.text = "ตอบ" if asking else "เอ่ย"
+	_speak_input.placeholder_text = str(_asker.get("placeholder", "พิมพ์คำตอบ แล้วกด Enter")) if asking \
+		else "พิมพ์คำที่จะเอ่ยต่อหน้าวงเวท/ประตู แล้วกด Enter (เอ่ยผิดพลังจะสะท้อนกลับ)"
+	_ask_name.text = str(_asker.get("name", ""))
+
+
+func _asker_talk(text: String) -> void:
+	_ask_line.text = text
+	_ask_line.visible_ratio = 0.0
+	var tween := create_tween()
+	tween.tween_property(_ask_line, "visible_ratio", 1.0, clampf(text.length() * 0.025, 0.3, 1.6))
+	_ask_talk_left = clampf(text.length() * 0.04, 1.0, 2.6)
+
+
+func _process(delta: float) -> void:
+	if _ask_row == null or not _ask_row.is_visible_in_tree():
+		return
+	_ask_tick += delta
+	if _ask_tick < 0.16:
+		return
+	_ask_tick = 0.0
+	_ask_talk_left = maxf(0.0, _ask_talk_left - 0.16)
+	_ask_frame = (_ask_frame + 1) % MEWLA_FRAMES
+	var sheet: String = MEWLA_SHEETS["talk"] if _ask_talk_left > 0.0 else MEWLA_SHEETS["idle"]
+	if ResourceLoader.exists(sheet):
+		_ask_atlas.atlas = load(sheet)
+	_ask_atlas.region = Rect2(Vector2(MEWLA_FRAME.x * _ask_frame, 0), MEWLA_FRAME)
 
 
 func _submit_speech(text: String = "") -> void:
@@ -284,13 +359,18 @@ func _build_speak_bar(root: Control) -> void:
 	style.content_margin_bottom = 4
 	_speak_bar.add_theme_stylebox_override("panel", style)
 	root.add_child(_speak_bar)
+	var column := VBoxContainer.new()
+	column.add_theme_constant_override("separation", 2)
+	_speak_bar.add_child(column)
+	_build_ask_row(column)
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 10)
-	_speak_bar.add_child(row)
+	column.add_child(row)
 	var title := _label(18, Color("ffd36b"), true)
 	title.text = "✦ เอ่ยคำ"
 	title.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	row.add_child(title)
+	_speak_title = title
 	_speak_input = LineEdit.new()
 	_speak_input.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_speak_input.placeholder_text = "พิมพ์คำที่จะเอ่ยต่อหน้าวงเวท/ประตู แล้วกด Enter (เอ่ยผิดพลังจะสะท้อนกลับ)"
@@ -318,6 +398,52 @@ func _build_speak_bar(root: Control) -> void:
 		button.add_theme_stylebox_override(state, sb)
 	button.pressed.connect(func() -> void: _submit_speech())
 	row.add_child(button)
+	_speak_button = button
+
+
+## แถวผู้ถาม: รูปมิวรา (ขยับปากตอนพูด) + ชื่อ + คำถามในกรอบคำพูด
+func _build_ask_row(column: VBoxContainer) -> void:
+	_ask_row = HBoxContainer.new()
+	_ask_row.visible = false
+	_ask_row.add_theme_constant_override("separation", 12)
+	column.add_child(_ask_row)
+	_ask_atlas = AtlasTexture.new()
+	if ResourceLoader.exists(MEWLA_SHEETS["idle"]):
+		_ask_atlas.atlas = load(MEWLA_SHEETS["idle"])
+	_ask_atlas.region = Rect2(Vector2.ZERO, MEWLA_FRAME)
+	_ask_portrait = TextureRect.new()
+	_ask_portrait.texture = _ask_atlas
+	_ask_portrait.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	_ask_portrait.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	_ask_portrait.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	_ask_portrait.custom_minimum_size = Vector2(70, 122)
+	_ask_portrait.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_ask_row.add_child(_ask_portrait)
+	var bubble := PanelContainer.new()
+	bubble.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	bubble.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	bubble.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color("f6ead0")
+	style.border_color = Color("8a5a2b")
+	style.set_border_width_all(2)
+	style.set_corner_radius_all(14)
+	style.content_margin_left = 14
+	style.content_margin_right = 14
+	style.content_margin_top = 6
+	style.content_margin_bottom = 8
+	bubble.add_theme_stylebox_override("panel", style)
+	_ask_row.add_child(bubble)
+	var text_box := VBoxContainer.new()
+	text_box.add_theme_constant_override("separation", 0)
+	bubble.add_child(text_box)
+	_ask_name = _label(16, Color("b0532a"), true)
+	_ask_name.add_theme_constant_override("outline_size", 0)
+	text_box.add_child(_ask_name)
+	_ask_line = _label(18, Color("3a2614"), false)
+	_ask_line.add_theme_constant_override("outline_size", 0)
+	_ask_line.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	text_box.add_child(_ask_line)
 
 
 func _make_zone(zone: Dictionary) -> Control:
