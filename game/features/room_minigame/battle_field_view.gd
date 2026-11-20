@@ -18,6 +18,14 @@ var _max_distance := 4
 var _boss: Dictionary = {}
 var _boss_hp := 0
 var _boss_attack_in := -1
+## ผู้เฝ้าประตู (gate): ค่าที่จารึกแล้ว ประตูเปิด และคำถามที่กำลังถาม
+var _gate: Dictionary = {}
+var _engraved: Dictionary = {}
+var _gate_open := 0.0       # บานประตูเลื่อนเปิด 0..1
+var _gate_opening := false
+var _engrave_glow := {}     # key -> ความสว่างตอนเพิ่งจารึก
+var _guard_line := ""
+var _guard_line_shown := 0.0
 var _time := 0.0
 ## เอฟเฟกต์ชั่วคราว
 var _light := 0.0          # วงแสงจากวงเวท (banish) 0..1
@@ -48,7 +56,17 @@ func update_battle(game: RoomGame) -> void:
 	_boss = game.boss
 	_boss_hp = game.boss_hp
 	_boss_attack_in = game.turns_until_boss_attack()
+	_gate = game.gate
+	_engraved = game.engraved.duplicate()
+	if game.gate_open and _gate_open == 0.0:
+		_gate_opening = true
 	queue_redraw()
+
+
+func set_guard_line(text: String) -> void:
+	if text != _guard_line:
+		_guard_line = text
+		_guard_line_shown = 0.0
 
 
 func play(events: Array[Dictionary]) -> void:
@@ -66,6 +84,12 @@ func play(events: Array[Dictionary]) -> void:
 				_boss_flash = 1.0
 				_boss_shake = 1.0
 				_burst(_boss_center(), Color("ff9a6b"))
+			"engrave":
+				_engrave_glow[str(event.get("key", ""))] = 1.0
+				_burst(_plaque_center(), GOLD)
+			"gate_open":
+				_gate_opening = true
+				_burst(_plaque_center(), GOLD)
 			"boss_down":
 				_boss_flash = 1.0
 				_boss_fall = 0.001
@@ -85,6 +109,11 @@ func _process(delta: float) -> void:
 	_light = maxf(0.0, _light - delta * 1.4)
 	_boss_flash = maxf(0.0, _boss_flash - delta * 2.5)
 	_boss_shake = maxf(0.0, _boss_shake - delta * 3.0)
+	if _gate_opening:
+		_gate_open = minf(1.0, _gate_open + delta * 0.45)
+	for key in _engrave_glow.keys():
+		_engrave_glow[key] = maxf(0.0, float(_engrave_glow[key]) - delta * 0.8)
+	_guard_line_shown = minf(1.0, _guard_line_shown + delta * 1.2)
 	_vel_hurt = maxf(0.0, _vel_hurt - delta * 2.2)
 	if _boss_fall > 0.0 and _boss_fall < 1.0:
 		_boss_fall = minf(1.0, _boss_fall + delta * 0.9)
@@ -142,6 +171,8 @@ func _draw() -> void:
 	# ภูตโกลาหล
 	for index in _imps.size():
 		_draw_imp(Vector2(_lane_x(_imps[index]), ground), index)
+	if not _gate.is_empty():
+		_draw_gate()
 	# บอส
 	if not _boss.is_empty():
 		_draw_boss()
@@ -168,6 +199,130 @@ func _draw_imp(at: Vector2, index: int) -> void:
 	draw_circle(center + Vector2(-8, -3) * k, 3.5 * k, eye)
 	draw_circle(center + Vector2(2, -3) * k, 3.5 * k, eye)
 	draw_circle(at + Vector2(0, 2), 14.0 * k, Color(0, 0, 0, 0.35))
+
+
+func _gate_rect() -> Rect2:
+	var h := size.y * 0.74
+	var w := minf(size.x * 0.34, h * 0.95)
+	return Rect2(size.x * 0.66 - w * 0.5, _ground_y() - h, w, h)
+
+
+func _plaque_center() -> Vector2:
+	var r := _gate_rect()
+	return Vector2(r.get_center().x, r.position.y + r.size.y * 0.58)
+
+
+## ประตูหินโค้ง: ซุ้มก้อนหิน · หน้าผู้เฝ้าบนหินหัวซุ้ม (ตาเรืองแสง กะพริบ) · บานประตูคู่มีแผ่นจารึกนาม/ตราประทับ
+## ค่าที่ตั้งด้วย git config ปรากฏเป็นอักษรทองบนแผ่นจารึก · ประตูเปิด = บานเลื่อนออกและแสงสาดออกมา
+func _draw_gate() -> void:
+	var r := _gate_rect()
+	var arch_r := r.size.x * 0.5
+	var center_top := Vector2(r.get_center().x, r.position.y + arch_r)
+	var inner := r.grow_individual(-r.size.x * 0.12, -r.size.x * 0.12, -r.size.x * 0.12, 0)
+	var inner_r := inner.size.x * 0.5
+	var inner_top := Vector2(inner.get_center().x, inner.position.y + inner_r)
+	# ซุ้มหิน
+	draw_circle(center_top, arch_r, STONE)
+	draw_rect(Rect2(r.position.x, center_top.y, r.size.x, r.end.y - center_top.y), STONE)
+	# ก้อนหินรอบซุ้ม
+	for i in 9:
+		var a := PI + PI * i / 8.0
+		var p1 := center_top + Vector2(cos(a), sin(a)) * inner_r
+		var p2 := center_top + Vector2(cos(a), sin(a)) * arch_r
+		draw_line(p1, p2, STONE_DARK, 2.0)
+	for i in 5:
+		var y := center_top.y + (r.end.y - center_top.y) * (i + 1) / 6.0
+		draw_line(Vector2(r.position.x, y), Vector2(inner.position.x, y), STONE_DARK, 2.0)
+		draw_line(Vector2(inner.end.x, y), Vector2(r.end.x, y), STONE_DARK, 2.0)
+	# ช่องประตู: แสงข้างหลัง (เห็นเมื่อเปิด)
+	var light := Color(GOLD, 0.15 + 0.75 * _gate_open)
+	draw_circle(inner_top, inner_r, light)
+	draw_rect(Rect2(inner.position.x, inner_top.y, inner.size.x, inner.end.y - inner_top.y), light)
+	# บานประตูคู่ เลื่อนออกด้านข้างเมื่อเปิด
+	var leaf_w := inner.size.x * 0.5 * (1.0 - _gate_open)
+	var wood := Color("5a3a24")
+	var wood_dark := Color("3a2416")
+	if leaf_w > 1.0:
+		var leaf_top := inner_top.y
+		draw_rect(Rect2(inner.position.x, leaf_top, leaf_w, inner.end.y - leaf_top), wood)
+		draw_rect(Rect2(inner.end.x - leaf_w, leaf_top, leaf_w, inner.end.y - leaf_top), wood)
+		for i in 4:
+			var y := leaf_top + (inner.end.y - leaf_top) * (i + 1) / 5.0
+			draw_line(Vector2(inner.position.x, y), Vector2(inner.position.x + leaf_w, y), wood_dark, 3.0)
+			draw_line(Vector2(inner.end.x - leaf_w, y), Vector2(inner.end.x, y), wood_dark, 3.0)
+		# ส่วนโค้งของบาน
+		if _gate_open < 0.05:
+			draw_circle(inner_top, inner_r, wood)
+			draw_line(Vector2(inner_top.x, inner_top.y - inner_r), Vector2(inner_top.x, inner.end.y), wood_dark, 3.0)
+	# แผ่นจารึก นาม / ตราประทับ (บนบานประตู — เลือนไปเมื่อเปิด)
+	var plaque_alpha := 1.0 - _gate_open
+	if plaque_alpha > 0.0:
+		var pc := _plaque_center()
+		var pw := r.size.x * 1.15
+		var ph := 64.0
+		var plaque := Rect2(pc.x - pw * 0.5, pc.y - ph * 0.5, pw, ph)
+		draw_rect(plaque, Color(Color("2b2233"), 0.92 * plaque_alpha))
+		draw_rect(plaque, Color(GOLD, 0.6 * plaque_alpha), false, 2.0)
+		var rows := [["user.name", "นาม"], ["user.email", "ตรา"]]
+		for i in rows.size():
+			var key: String = rows[i][0]
+			var has := _engraved.has(key)
+			var value := str(_engraved.get(key, "· · · · ·"))
+			var glow := float(_engrave_glow.get(key, 0.0))
+			var color := GOLD.lerp(Color(1, 1, 1), glow) if has else Color(1, 1, 1, 0.3)
+			var y := plaque.position.y + 26 + i * 26
+			draw_string(_font, Vector2(plaque.position.x + 10, y), "%s:" % rows[i][1], HORIZONTAL_ALIGNMENT_LEFT, -1, 15, Color(1, 0.85, 0.7, 0.8 * plaque_alpha))
+			draw_string(_font, Vector2(plaque.position.x + 48, y), value, HORIZONTAL_ALIGNMENT_LEFT, pw - 54, 15, Color(color, color.a * plaque_alpha))
+	# หน้าผู้เฝ้าบนหินหัวซุ้ม
+	var face := Vector2(center_top.x, r.position.y + arch_r * 0.32)
+	draw_circle(face, arch_r * 0.24, STONE.lightened(0.12))
+	draw_arc(face, arch_r * 0.24, 0, TAU, 32, STONE_DARK, 2.0, true)
+	var blink := 1.0 if fmod(_time, 4.0) > 0.12 else 0.15
+	var eye_col := (GOLD if _gate_open > 0.0 else CHAOS.lightened(0.3))
+	for side in [-1.0, 1.0]:
+		var e: Vector2 = face + Vector2(side * arch_r * 0.09, -arch_r * 0.02)
+		draw_rect(Rect2(e - Vector2(5, 4 * blink), Vector2(10, 8 * blink)), eye_col)
+	draw_line(face + Vector2(-arch_r * 0.07, arch_r * 0.11), face + Vector2(arch_r * 0.07, arch_r * 0.11), STONE_DARK, 3.0)
+	# ชื่อ
+	var name := str(_gate.get("name", "ผู้เฝ้าประตู"))
+	draw_string(_font, Vector2(r.position.x - 40, r.position.y - 10), name, HORIZONTAL_ALIGNMENT_CENTER, r.size.x + 80, 17, Color(1, 0.9, 0.8))
+	# คำถามของผู้เฝ้า (กรอบคำพูดข้างหน้า ชี้ไปทางเวล)
+	if not _guard_line.is_empty() and _gate_open == 0.0:
+		_draw_guard_bubble(face + Vector2(-arch_r * 0.3, 0))
+
+
+func _draw_guard_bubble(anchor: Vector2) -> void:
+	var text := _guard_line.substr(0, int(ceil(_guard_line.length() * _guard_line_shown)))
+	var max_w := size.x * 0.36
+	var left := clampf(anchor.x - max_w - 24, size.x * 0.2, size.x)
+	var font_size := 15
+	var lines := _wrap(text, max_w - 20, font_size)
+	var line_h := 20.0
+	var box := Rect2(left, anchor.y - 18, max_w, 14 + lines.size() * line_h)
+	draw_rect(box, Color("f6ead0"))
+	draw_rect(box, Color("8a5a2b"), false, 2.0)
+	draw_colored_polygon(PackedVector2Array([Vector2(box.end.x - 2, anchor.y - 6), Vector2(anchor.x, anchor.y), Vector2(box.end.x - 2, anchor.y + 8)]), Color("f6ead0"))
+	for i in lines.size():
+		draw_string(_font, Vector2(box.position.x + 10, box.position.y + 20 + i * line_h), lines[i], HORIZONTAL_ALIGNMENT_LEFT, max_w - 20, font_size, Color("3a2614"))
+
+
+## ตัดบรรทัดตามความกว้าง (ภาษาไทยไม่มีช่องว่าง จึงตัดทีละตัวอักษรเมื่อจำเป็น)
+func _wrap(text: String, width: float, font_size: int) -> PackedStringArray:
+	var lines := PackedStringArray()
+	var current := ""
+	for ch in text:
+		if _font.get_string_size(current + ch, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x > width and not current.is_empty():
+			var cut := current.rfind(" ")
+			if cut > 0:
+				lines.append(current.substr(0, cut))
+				current = current.substr(cut + 1)
+			else:
+				lines.append(current)
+				current = ""
+		current += ch
+	if not current.is_empty():
+		lines.append(current)
+	return lines
 
 
 func _draw_boss() -> void:
