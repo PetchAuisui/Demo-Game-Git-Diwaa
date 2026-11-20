@@ -694,8 +694,12 @@ func _t_level1_step1() -> void:
 	_check(not mission.mistake_message("git -version").is_empty())
 	mission.on_command("git --version", false, "")
 	_check(not mission.is_complete(), "a failed command must not count")
-	mission.on_command("git   --version", true, "git version 2.0")
-	_check(mission.is_complete())
+	mission.on_command("git   --version", true, "git version 2.39.5 (Apple Git-154)")
+	_check(mission.done_count() == 1 and not mission.is_complete(), "the circle then asks for the power level")
+	mission.on_command("say 9.9.9", true, "")
+	_check(not mission.is_complete(), "a made-up version must not count")
+	mission.on_command("say 2.39.5", true, "")
+	_check(mission.is_complete(), "the version read from the real output opens the circle")
 
 
 func _t_level1_step2() -> void:
@@ -865,9 +869,16 @@ func _play_level(level: int, step: int, commands: Array[String]) -> Dictionary:
 			var result := await session.execute(executed)
 			success = result.success
 			output = result.standard_output
+		if command.contains("{answer}"):
+			# คำตอบที่อ่านได้จากผลจริงของคำสั่ง (เช่น เลขเวอร์ชันของ git ในเครื่องที่รันเทสต์)
+			var answers := mission.accepted_words(mission.current_objective())
+			command = command.replace("{answer}", str(answers.back()) if not answers.is_empty() else "?")
 		var expected_say := mission.expects_say()
 		var before := mission.done_count()
 		var done := mission.on_command(command, success, output, await session.inspect())
+		if room != null:
+			for done_id in done:
+				room.on_objective_done()
 		for done_id in done:
 			for action in mission.spawn_actions(done_id):
 				await _world_action(session, action, level)
@@ -894,6 +905,8 @@ func _world_action(session: GitGameSession, action: Dictionary, level: int) -> v
 
 ## เส้นทางที่ตั้งใจของแต่ละขั้น (ใช้ทั้งในเทสต์และเป็นเฉลยอ้างอิงของทีม)
 const SOLUTIONS := [
+	[1, 1, ["git --version", "say {answer}"]],
+	[1, 2, ["git config --global user.name \"Vel\"", "git config --global user.email \"vel@magic-tower.local\"", "git config --global user.name"]],
 	[2, 1, ["git init"]],
 	[3, 1, ["git status", "cat scroll-d.txt", "cat scroll-b.txt"]],
 	[4, 1, ["git add fragment-1a.txt", "git add fragment-1b.txt fragment-1c.txt"]],
@@ -941,6 +954,17 @@ func _t_levels_2_to_5() -> void:
 
 
 func _t_levels_wrong_spells() -> void:
+	# ด่าน 1 ขั้น 1: ร่ายผิดซ้ำ ภูตคลานถึงตัว / คาถาวัดพลังเผาภูตทั้งหมด
+	var level1 := await _play_level(1, 1, ["git -version", "git -version", "git -version"])
+	_check(level1["room"].hearts == 1, "level 1: imps reach Vel while the spell is miscast (hearts %d)" % level1["room"].hearts)
+	var level1b := await _play_level(1, 1, ["git -version", "git --version"])
+	_check(level1b["room"].banished_total == 2 and not level1b["room"].imps.has(1), "level 1: the light of git --version burns every imp")
+	_check(level1b["room"].hearts == 3, "level 1: banishing in time costs nothing")
+	# ด่าน 1 ขั้น 2: บอสตายเมื่อประกาศนามครบ / ลังเลจนบอสฟาด
+	var boss := await _play_level(1, 2, ["git config --global user.name \"Vel\"", "git config --global user.email \"vel@magic-tower.local\"", "git config --global user.name"])
+	_check(not boss["room"].boss_alive(), "level 1: three naming spells bring the gatekeeper down")
+	var stalled := await _play_level(1, 2, ["git status", "git status", "git status", "git status"])
+	_check(stalled["room"].boss_hp == 3 and stalled["room"].hearts < 3, "level 1: stalling lets the gatekeeper strike")
 	# ด่าน 2: พิมพ์ผิดจนคลื่นมาถึงก่อนมีคัมภีร์ = เสียหัวใจ
 	var level2 := await _play_level(2, 1, ["git inti", "git int", "git init"])
 	_check(level2["room"].hearts == 2 and level2["mission"].is_complete(), "level 2: the wave hits before the tome exists")
