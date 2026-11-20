@@ -291,6 +291,7 @@ func _setup_room() -> void:
 		add_child(_room_view)
 		_room_view.place_in_stage()
 		_room_view.item_pressed.connect(_read_scroll_action)
+		_room_view.spoken.connect(func(word: String) -> void: _handle_say_command("say " + word))
 		move_child(_room_view, _spell_overlay.get_index())
 
 
@@ -311,6 +312,13 @@ func _update_room_view() -> void:
 		return
 	var branch := str(snapshot.current_branch) if snapshot.is_initialized and snapshot.current_branch != null else ""
 	_room_view.update_room(_room, _room.describe(snapshot, paths), branch)
+	_sync_speak()
+
+
+## ช่องเอ่ยคำในห้องโผล่เฉพาะตอนที่โลกรอคำตอบ (เป้าหมายปัจจุบันเป็นการเอ่ยคำ)
+func _sync_speak() -> void:
+	if _room_view != null:
+		_room_view.set_speaking(_mission != null and not _mission.is_complete() and _mission.expects_say())
 
 
 ## ของตั้งต้นของห้อง (turn 0) และจดจำเนื้อหาเศษคัมภีร์ที่มีอยู่ เพื่อให้เศษที่สลายก่อตัวใหม่ได้
@@ -348,6 +356,7 @@ func _advance_room(command: String) -> void:
 		# โลกไม่เปลี่ยน: ใช้สถานะที่เพิ่งอ่านมาวาดห้องเลย ไม่ต้องตรวจ repo ซ้ำ (ห้องตอบสนองไวขึ้น)
 		var branch := str(snapshot.current_branch) if snapshot.is_initialized and snapshot.current_branch != null else ""
 		_room_view.update_room(_room, _room.describe(snapshot, paths), branch)
+		_sync_speak()
 	else:
 		await _apply_world_actions(actions)
 		await _refresh_state()
@@ -652,8 +661,9 @@ func _on_command_submitted(command: String) -> void:
 		_open_spellbook()
 		return
 
-	if lower.begins_with("say "):
-		await _handle_say_command(trimmed)
+	if lower == "say" or lower.begins_with("say "):
+		# วงร่ายเวทไว้สำหรับคาถา Git เท่านั้น — การเอ่ยคำทำในห้อง
+		_terminal_panel.append_info("✦ การเอ่ยคำทำในห้อง: พิมพ์ในช่อง \"✦ เอ่ยคำ\" ใต้ห้อง (โผล่ขึ้นมาเมื่อวงเวท/ประตูรอคำตอบ) — วงร่ายเวทนี้ไว้ร่ายคาถา Git เท่านั้น")
 		return
 
 	if lower == "sandbox-reset":
