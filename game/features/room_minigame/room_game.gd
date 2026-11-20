@@ -37,6 +37,8 @@ extends RefCounted
 ##                  "boss": {"name", "hp", "attack_every", "first_attack", "damage"}}
 ##                 imps: ภูตเดินเข้าหาทีละช่องทุกการกระทำ ถึงตัว = เสียหัวใจ · คาถาที่ตรง banish (เช่น git --version) เผาภูตทั้งหมด
 ##                 boss: โจมตีทุก attack_every การกระทำ · ทุกเป้าหมายที่สำเร็จ = ฟาดบอสหนึ่งครั้ง (on_objective_done)
+##                 gate: {"name"} ผู้เฝ้าประตูที่ไม่สู้ แต่ถามนาม/ตราประทับ — ค่าที่ตั้งด้วย git config ถูกจารึกบนบานประตู
+##                       เป้าหมายสุดท้ายสำเร็จ = ประตูเปิด
 ##   essential     [paths] ของที่ห้ามหาย — ถ้าหายไปจากพื้นที่ทำงาน (เช่น reset --hard) แพ้ทันที
 ## คำสาปบนแท่นเตรียมตอนคลื่นมา: โล่แท่นแตกและเสียหัวใจ (สอนให้เลือกของขึ้นแท่นเอง)
 
@@ -77,6 +79,10 @@ var imps: Array[int] = []
 var imp_config: Dictionary = {}
 var boss: Dictionary = {}
 var boss_hp := 0
+## ผู้เฝ้าประตู: ค่าที่จารึกบนประตูแล้ว {config key: value} และประตูเปิดหรือยัง
+var gate: Dictionary = {}
+var engraved: Dictionary = {}
+var gate_open := false
 var banished_total := 0
 var max_commits := 0
 var _seen_essential: Dictionary = {}
@@ -122,11 +128,12 @@ static func from_config(config: Dictionary) -> RoomGame:
 		game.imps.append(int(distance))
 	game.boss = battle.get("boss", {})
 	game.boss_hp = int(game.boss.get("hp", 0))
+	game.gate = battle.get("gate", {})
 	return game
 
 
 func has_battle() -> bool:
-	return not imp_config.is_empty() or not boss.is_empty()
+	return not imp_config.is_empty() or not boss.is_empty() or not gate.is_empty()
 
 
 func boss_alive() -> bool:
@@ -148,8 +155,10 @@ func turns_until_boss_attack() -> int:
 
 
 ## เป้าหมายสำเร็จ = คาถาฟาดบอสหนึ่งครั้ง
-func on_objective_done() -> Array[Dictionary]:
+func on_objective_done(objective: Dictionary = {}, command: String = "", final := false) -> Array[Dictionary]:
 	var events: Array[Dictionary] = []
+	if not gate.is_empty():
+		return _gate_objective_done(objective, command, final)
 	if not boss_alive():
 		return events
 	boss_hp -= 1
@@ -159,6 +168,22 @@ func on_objective_done() -> Array[Dictionary]:
 		events.append({"type": "boss_down", "text": "%s แตกสลายเป็นผุยผง! ภูตทั้งหมดหนีกลับไปในความมืด" % name})
 	else:
 		events.append({"type": "boss_hit", "text": "คาถาของนายฟาด %s! (เหลือพลัง %d/%d)" % [name, boss_hp, int(boss.get("hp", 1))]})
+	return events
+
+
+## ผู้เฝ้าประตู: คาถาตั้งค่า (git config <key> <value>) จารึกค่าลงบนประตู · เป้าหมายสุดท้าย = ประตูเปิด
+func _gate_objective_done(objective: Dictionary, command: String, final: bool) -> Array[Dictionary]:
+	var events: Array[Dictionary] = []
+	if str(objective.get("type", "")) == "config_set":
+		var tokens := LevelMission.tokenize(command)
+		var key := str(objective.get("key", ""))
+		var value := str(tokens[tokens.size() - 1]) if tokens.size() >= 4 else ""
+		engraved[key] = value
+		events.append({"type": "engrave", "key": key, "value": value,
+				"text": "%s จารึก \"%s\" ลงบนบานประตู" % [str(gate.get("name", "ผู้เฝ้าประตู")), value]})
+	if final and not gate_open:
+		gate_open = true
+		events.append({"type": "gate_open", "text": "บานประตูหินเลื่อนเปิดออก — แสงจากชั้นถัดไปสาดเข้ามา"})
 	return events
 
 

@@ -45,6 +45,7 @@ const MEWLA_SHEETS := {
 }
 const MEWLA_FRAME := Vector2(47, 83)
 const MEWLA_FRAMES := 6
+const GATE_HINT := "ตอบผู้เฝ้าประตูด้วยคาถาในวงร่ายเวท — ทุกค่าที่ตั้งจะถูกจารึกบนบานประตู"
 const BATTLE_HINT := "ร่ายคาถาให้ถูกก่อนศัตรูจะถึงตัว — ทุกการกระทำ ศัตรูขยับเข้ามาหนึ่งก้าว"
 
 static var _shard_cache: Array[Texture2D] = []
@@ -63,6 +64,7 @@ var _event_tween: Tween
 var _zones: HBoxContainer
 var _battle: BattleFieldView
 var _in_battle := false
+var _gate_mode := false
 var _speak_bar: PanelContainer
 var _speak_input: LineEdit
 var _speak_title: Label
@@ -115,6 +117,7 @@ func update_room(game: RoomGame, items: Array[Dictionary], branch: String) -> vo
 		# ด่านต่อสู้: ไม่มีของให้ปกป้อง แสดงสนามรบแทนโต๊ะ/แท่น/คัมภีร์
 		if not _in_battle:
 			_in_battle = true
+			_gate_mode = not game.gate.is_empty()
 			_show_idle_hint()
 		_zones.visible = false
 		_battle.visible = true
@@ -186,7 +189,7 @@ func play_events(events: Array[Dictionary]) -> void:
 
 
 func _show_idle_hint() -> void:
-	_event_label.text = BATTLE_HINT if _in_battle else IDLE_HINT
+	_event_label.text = (GATE_HINT if _gate_mode else BATTLE_HINT) if _in_battle else IDLE_HINT
 	_event_label.add_theme_color_override("font_color", Color("e8dcc0"))
 	_event_label.modulate.a = IDLE_ALPHA
 
@@ -290,6 +293,12 @@ func set_speaking(active: bool, asker: Dictionary = {}) -> void:
 
 
 ## ผู้ถามพูดตอบ (เช่น ตอบผิด มิวราทัก) — ไม่มีผู้ถามก็ไม่ทำอะไร
+## คำถามของผู้เฝ้าประตู (คำตอบคือคาถา Git ในวงร่ายเวท ไม่ใช่การพิมพ์ในห้อง)
+func set_guard_line(text: String) -> void:
+	if _battle != null:
+		_battle.set_guard_line(text)
+
+
 func asker_reply(text: String) -> void:
 	if _asker.is_empty() or text.is_empty():
 		return

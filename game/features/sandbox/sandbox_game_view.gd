@@ -320,6 +320,10 @@ func _sync_speak() -> void:
 	if _room_view != null:
 		var active := _mission != null and not _mission.is_complete() and _mission.expects_say()
 		_room_view.set_speaking(active, _mission.current_asker() if active else {})
+		var guard_line := ""
+		if _mission != null and not _mission.is_complete():
+			guard_line = str(_mission.current_objective().get("guard_asks", ""))
+		_room_view.set_guard_line(guard_line)
 
 
 ## ของตั้งต้นของห้อง (turn 0) และจดจำเนื้อหาเศษคัมภีร์ที่มีอยู่ เพื่อให้เศษที่สลายก่อตัวใหม่ได้
@@ -448,7 +452,7 @@ func _on_mission_progress(command: String, result: GitCommandResult, snapshot: G
 		# ทุกเป้าหมายที่สำเร็จ = คาถาฟาดบอส (ห้องวาดใหม่ตอนโลกเดินจังหวะนี้)
 		var hits: Array[Dictionary] = []
 		for done_id in newly_done:
-			hits.append_array(_room.on_objective_done())
+			hits.append_array(_room.on_objective_done(_mission.objective(done_id), command, _mission.is_complete()))
 		_room_view.play_events(hits)
 	_mission_panel.refresh()
 	_update_mission_prompt()

@@ -880,7 +880,7 @@ func _play_level(level: int, step: int, commands: Array[String]) -> Dictionary:
 		var done := mission.on_command(command, success, output, await session.inspect())
 		if room != null:
 			for done_id in done:
-				room.on_objective_done()
+				room.on_objective_done(mission.objective(done_id), command, mission.is_complete())
 		for done_id in done:
 			for action in mission.spawn_actions(done_id):
 				await _world_action(session, action, level)
@@ -962,11 +962,16 @@ func _t_levels_wrong_spells() -> void:
 	var level1b := await _play_level(1, 1, ["git -version", "git --version"])
 	_check(level1b["room"].banished_total == 2 and not level1b["room"].imps.has(1), "level 1: the light of git --version burns every imp")
 	_check(level1b["room"].hearts == 3, "level 1: banishing in time costs nothing")
-	# ด่าน 1 ขั้น 2: บอสตายเมื่อประกาศนามครบ / ลังเลจนบอสฟาด
-	var boss := await _play_level(1, 2, ["git config --global user.name \"Vel\"", "git config --global user.email \"vel@magic-tower.local\"", "git config --global user.name"])
-	_check(not boss["room"].boss_alive(), "level 1: three naming spells bring the gatekeeper down")
-	var stalled := await _play_level(1, 2, ["git status", "git status", "git status", "git status"])
-	_check(stalled["room"].boss_hp == 3 and stalled["room"].hearts < 3, "level 1: stalling lets the gatekeeper strike")
+	# ด่าน 1 ขั้น 2: ผู้เฝ้าประตูสลักนาม/ตราประทับที่ตั้งด้วย git config แล้วเปิดประตูเมื่อขานนามกลับ
+	var gate := await _play_level(1, 2, ["git config --global user.name \"Vel\"", "git config --global user.email \"vel@magic-tower.local\""])
+	_check(gate["room"].engraved.get("user.name") == "Vel" and gate["room"].engraved.get("user.email") == "vel@magic-tower.local",
+			"level 1: the gatekeeper engraves the name and seal that git config set")
+	_check(not gate["room"].gate_open, "level 1: the gate stays shut until the name is read back")
+	var opened := await _play_level(1, 2, ["git config --global user.name \"Vel\"", "git config --global user.email \"vel@magic-tower.local\"", "git config --global user.name"])
+	_check(opened["mission"].is_complete() and opened["room"].gate_open, "level 1: reading the name back opens the gate")
+	var idle := await _play_level(1, 2, ["git status", "git status", "git status", "git status"])
+	_check(idle["room"].engraved.is_empty() and not idle["room"].gate_open and idle["room"].hearts == 3,
+			"level 1: the gatekeeper only listens to naming spells and never attacks")
 	# ด่าน 2: พิมพ์ผิดจนคลื่นมาถึงก่อนมีคัมภีร์ = เสียหัวใจ
 	var level2 := await _play_level(2, 1, ["git inti", "git int", "git init"])
 	_check(level2["room"].hearts == 2 and level2["mission"].is_complete(), "level 2: the wave hits before the tome exists")
