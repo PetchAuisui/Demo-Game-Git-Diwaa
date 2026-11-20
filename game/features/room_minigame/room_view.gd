@@ -37,6 +37,7 @@ const STATE_TAG_COLORS := {
 const HEART_COLOR := Color("ff5a7a")
 const IDLE_HINT := "คลิกกระดาษในห้องเพื่อหยิบขึ้นมาอ่าน"
 const IDLE_ALPHA := 0.55
+const BATTLE_HINT := "ร่ายคาถาให้ถูกก่อนศัตรูจะถึงตัว — ทุกการกระทำ ศัตรูขยับเข้ามาหนึ่งก้าว"
 
 static var _shard_cache: Array[Texture2D] = []
 
@@ -51,6 +52,9 @@ var _zone_boxes: Dictionary = {}
 var _event_label: Label
 var _flash: ColorRect
 var _event_tween: Tween
+var _zones: HBoxContainer
+var _battle: BattleFieldView
+var _in_battle := false
 
 
 func _ready() -> void:
@@ -85,6 +89,16 @@ func update_room(game: RoomGame, items: Array[Dictionary], branch: String) -> vo
 		_chaos_label.visible = false
 		_chaos_bar.visible = false
 	_dimension_label.text = "มิติ: %s" % branch if not branch.is_empty() else "ยังไม่มีคัมภีร์"
+	if game.has_battle():
+		# ด่านต่อสู้: ไม่มีของให้ปกป้อง แสดงสนามรบแทนโต๊ะ/แท่น/คัมภีร์
+		if not _in_battle:
+			_in_battle = true
+			_show_idle_hint()
+		_zones.visible = false
+		_battle.visible = true
+		_dimension_label.visible = false
+		_battle.update_battle(game)
+		return
 
 	for zone in _zone_boxes.values():
 		for child in (zone as Container).get_children():
@@ -127,6 +141,8 @@ func play_events(events: Array[Dictionary]) -> void:
 		lines.append(str(event["text"]))
 		has_wave = has_wave or event["type"] == "wave"
 		has_damage = has_damage or event["type"] == "damage"
+	if _in_battle:
+		_battle.play(events)
 	_event_label.text = "\n".join(lines)
 	_event_label.add_theme_color_override("font_color", Color("ffb3c4") if has_damage else Color("d8f7ff"))
 	if _event_tween != null and _event_tween.is_valid():
@@ -148,7 +164,7 @@ func play_events(events: Array[Dictionary]) -> void:
 
 
 func _show_idle_hint() -> void:
-	_event_label.text = IDLE_HINT
+	_event_label.text = BATTLE_HINT if _in_battle else IDLE_HINT
 	_event_label.add_theme_color_override("font_color", Color("e8dcc0"))
 	_event_label.modulate.a = IDLE_ALPHA
 
@@ -204,13 +220,17 @@ func _build() -> void:
 	_chaos_bar.add_theme_stylebox_override("background", back)
 	chaos_box.add_child(_chaos_bar)
 
-	var zones := HBoxContainer.new()
-	zones.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	zones.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	zones.add_theme_constant_override("separation", 10)
-	root.add_child(zones)
+	_zones = HBoxContainer.new()
+	_zones.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_zones.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_zones.add_theme_constant_override("separation", 10)
+	root.add_child(_zones)
 	for zone in ZONES:
-		zones.add_child(_make_zone(zone))
+		_zones.add_child(_make_zone(zone))
+	_battle = BattleFieldView.new()
+	_battle.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_battle.visible = false
+	root.add_child(_battle)
 
 	_event_label = _label(19, Color("d8f7ff"), true)
 	_event_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART

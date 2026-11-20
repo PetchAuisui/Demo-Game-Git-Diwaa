@@ -9,6 +9,8 @@ extends RefCounted
 ##   config_set  key, validator        git config --global <key> "<ค่า>" (validator: non_empty | email)
 ##   config_get  key                   git config --global <key> แล้วมีค่าตอบกลับ
 ##   say         words: [..]           เอ่ยคำ (say <คำ>) ที่ต้องหาจากโลกเอง เช่น รหัสผนึกในประวัติ (ไม่สนตัวพิมพ์เล็ก/ใหญ่)
+##               answer_from: {"commands": [..], "pattern": regex}  หรือคำตอบมาจากผลจริงของคำสั่ง (group 1 ของ pattern)
+##                            เช่น เลขเวอร์ชันจาก git --version — เครื่องแต่ละเครื่องได้คำตอบต่างกัน ต้องอ่านผลเอง
 ##   read        path                  อ่านเศษคัมภีร์ด้วย cat <path> หรือเปิดไฟล์ในแผง Files (ตรวจตามลำดับเรื่องเหมือน state)
 ##   state       check, ...            ตรวจจาก "สถานะ Repository" หลังคำสั่ง ไม่ใช่ข้อความคำสั่ง (Game Design v2 §4.3)
 ##                                     ผู้เล่นใช้คาถารูปแบบไหนก็ได้ ขอแค่โลก (repo) เป็นไปตามเป้าหมาย
@@ -69,6 +71,8 @@ var room: Dictionary = {}
 var remote: Dictionary = {}
 
 var _done: Dictionary = {}
+## ผลลัพธ์ล่าสุดของคำสั่งที่สำเร็จ (คำสั่งที่ยุบช่องว่างแล้ว -> stdout) ใช้กับ say แบบ answer_from
+var _outputs: Dictionary = {}
 var _done_before: Dictionary = {}
 
 
@@ -177,6 +181,8 @@ func on_command(command: String, success: bool, output: String, snapshot: GitRep
 	# เป้าหมายตามลำดับเรื่อง (state / read / say) ดูเฉพาะเป้าหมายที่สำเร็จ "ก่อน" การกระทำนี้
 	# หนึ่งการกระทำจึงเดินเรื่องได้ทีละจังหวะ ไม่ไหลต่อไปยังเป้าหมายถัดไปที่โลกยังไม่พร้อม
 	_done_before = _done.duplicate()
+	if success and tokens.size() >= 2 and tokens[0] == "git":
+		_outputs[" ".join(tokens)] = output
 	for index in objectives.size():
 		var objective := objectives[index]
 		var objective_id := str(objective["id"])
@@ -187,9 +193,9 @@ func on_command(command: String, success: bool, output: String, snapshot: GitRep
 		if type == "state":
 			matched = _previous_done(index) and _matches_state(objective, tokens, success, snapshot)
 		elif type == "say":
+			var said := " ".join(tokens.slice(1)).to_lower()
 			matched = _previous_done(index) and tokens.size() >= 2 and tokens[0] == "say" \
-					and objective.get("words", []).any(func(word: Variant) -> bool:
-						return " ".join(tokens.slice(1)).to_lower() == str(word).to_lower())
+					and accepted_words(objective).any(func(word: Variant) -> bool: return said == str(word).to_lower())
 		elif type == "read":
 			# การอ่านเป็นการสังเกตตามลำดับเรื่อง: ต้องผ่านเป้าหมายก่อนหน้าก่อน (เช่น หยั่งสถานะก่อนรู้ว่าแผ่นไหนไร้ตรา)
 			matched = _previous_done(index) and _matches(objective, tokens, success, output)
@@ -202,6 +208,20 @@ func on_command(command: String, success: bool, output: String, snapshot: GitRep
 	if not newly_done.is_empty() and is_complete():
 		mission_completed.emit()
 	return newly_done
+
+
+## คำที่ยอมรับของเป้าหมายแบบ say (words คงที่ + คำตอบที่อ่านได้จากผลจริงของคำสั่ง)
+func accepted_words(objective: Dictionary) -> Array:
+	var words: Array = objective.get("words", []).duplicate()
+	var source: Dictionary = objective.get("answer_from", {})
+	if not source.is_empty():
+		var regex := _get_regex(str(source.get("pattern", "")))
+		for command in source.get("commands", []):
+			var output := str(_outputs.get(str(command), ""))
+			var found := regex.search(output) if regex != null else null
+			if found != null:
+				words.append(found.get_string(1))
+	return words
 
 
 ## ข้อความเตือนเมื่อพิมพ์ผิดแบบที่พบบ่อยของภารกิจปัจจุบัน ("" = ไม่เข้าเงื่อนไขใด)

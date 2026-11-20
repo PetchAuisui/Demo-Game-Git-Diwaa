@@ -32,6 +32,11 @@ extends RefCounted
 ##   forbidden     [{"pattern": regex, "text": ..., "damage": 1}] คาถาที่โลกลงโทษทันทีเมื่อร่าย
 ##                 (เช่น คลี่ม้วนประวัติทั้งม้วนแทนที่จะดูแค่ไม่กี่บันทึก) — สอนให้เลือกรูปแบบคาถาที่ใช่
 ##   max_commits   คัมภีร์รับการจารึกได้ไม่เกินจำนวนนี้ ถ้าเกิน คลื่นทุกครั้งดูดพลัง (สอน commit --amend / merge --abort)
+##   battle        ศัตรูในห้อง (ด่านแรก ๆ ที่ยังไม่มีไฟล์ให้ปกป้อง — ศัตรูคือสิ่งที่บีบให้ร่ายคาถาให้ถูก)
+##                 {"imps": {"name", "start": [ระยะ..], "every", "first", "distance", "banish": regex},
+##                  "boss": {"name", "hp", "attack_every", "first_attack", "damage"}}
+##                 imps: ภูตเดินเข้าหาทีละช่องทุกการกระทำ ถึงตัว = เสียหัวใจ · คาถาที่ตรง banish (เช่น git --version) เผาภูตทั้งหมด
+##                 boss: โจมตีทุก attack_every การกระทำ · ทุกเป้าหมายที่สำเร็จ = ฟาดบอสหนึ่งครั้ง (on_objective_done)
 ##   essential     [paths] ของที่ห้ามหาย — ถ้าหายไปจากพื้นที่ทำงาน (เช่น reset --hard) แพ้ทันที
 ## คำสาปบนแท่นเตรียมตอนคลื่นมา: โล่แท่นแตกและเสียหัวใจ (สอนให้เลือกของขึ้นแท่นเอง)
 
@@ -67,6 +72,12 @@ var needs_tome := false
 var sync_required := false
 var essential: Array[String] = []
 var forbidden: Array[Dictionary] = []
+## ศัตรู (battle): ระยะของภูตแต่ละตัว (1 = ประชิด) และบอส
+var imps: Array[int] = []
+var imp_config: Dictionary = {}
+var boss: Dictionary = {}
+var boss_hp := 0
+var banished_total := 0
 var max_commits := 0
 var _seen_essential: Dictionary = {}
 var items: Dictionary = {}
@@ -105,7 +116,87 @@ static func from_config(config: Dictionary) -> RoomGame:
 	for rule in config.get("forbidden", []):
 		game.forbidden.append(rule)
 	game.max_commits = int(config.get("max_commits", 0))
+	var battle: Dictionary = config.get("battle", {})
+	game.imp_config = battle.get("imps", {})
+	for distance in game.imp_config.get("start", []):
+		game.imps.append(int(distance))
+	game.boss = battle.get("boss", {})
+	game.boss_hp = int(game.boss.get("hp", 0))
 	return game
+
+
+func has_battle() -> bool:
+	return not imp_config.is_empty() or not boss.is_empty()
+
+
+func boss_alive() -> bool:
+	return not boss.is_empty() and boss_hp > 0
+
+
+## จำนวนการกระทำก่อนบอสโจมตีครั้งถัดไป (-1 = ไม่มีบอส/บอสล้มแล้ว)
+func turns_until_boss_attack() -> int:
+	if not boss_alive():
+		return -1
+	var every := int(boss.get("attack_every", 0))
+	var first := int(boss.get("first_attack", every))
+	if every <= 0:
+		return -1
+	if turn < first:
+		return first - turn
+	var since := (turn - first) % every
+	return every - since if since != 0 else every
+
+
+## เป้าหมายสำเร็จ = คาถาฟาดบอสหนึ่งครั้ง
+func on_objective_done() -> Array[Dictionary]:
+	var events: Array[Dictionary] = []
+	if not boss_alive():
+		return events
+	boss_hp -= 1
+	var name := str(boss.get("name", "บอส"))
+	if boss_hp <= 0:
+		imps.clear()
+		events.append({"type": "boss_down", "text": "%s แตกสลายเป็นผุยผง! ภูตทั้งหมดหนีกลับไปในความมืด" % name})
+	else:
+		events.append({"type": "boss_hit", "text": "คาถาของนายฟาด %s! (เหลือพลัง %d/%d)" % [name, boss_hp, int(boss.get("hp", 1))]})
+	return events
+
+
+## ศัตรูเดินหนึ่งจังหวะ (เรียกจาก on_turn)
+func _resolve_battle(command: String, events: Array[Dictionary]) -> void:
+	if imp_config.is_empty() and boss.is_empty():
+		return
+	var imp_name := str(imp_config.get("name", "ภูตโกลาหล"))
+	var banish := str(imp_config.get("banish", ""))
+	var regex := RegEx.create_from_string(banish) if not banish.is_empty() else null
+	if regex != null and regex.is_valid() and regex.search(command.strip_edges()) != null:
+		if imps.is_empty():
+			events.append({"type": "banish", "count": 0, "text": "แสงจากวงเวทสว่างวาบ… แต่ไม่มีภูตให้เผา"})
+		else:
+			events.append({"type": "banish", "count": imps.size(), "text": "แสงจากวงเวทเผา%s %d ตัวจนสิ้นซาก!" % [imp_name, imps.size()]})
+			banished_total += imps.size()
+			imps.clear()
+	else:
+		var survivors: Array[int] = []
+		for distance in imps:
+			if distance - 1 <= 0:
+				_damage(1, events, "%s กระโจนเข้าข่วนนาย!" % imp_name)
+			else:
+				survivors.append(distance - 1)
+		imps = survivors
+	if is_failed():
+		return
+	if not imp_config.is_empty() and (boss.is_empty() or boss_alive()):
+		var every := int(imp_config.get("every", 0))
+		var first := int(imp_config.get("first", every))
+		if every > 0 and turn >= first and (turn - first) % every == 0:
+			imps.append(int(imp_config.get("distance", 3)))
+			events.append({"type": "imp_spawn", "text": "%s คลานออกมาจากความมืด!" % imp_name})
+	if boss_alive():
+		var every_attack := int(boss.get("attack_every", 0))
+		var first_attack := int(boss.get("first_attack", every_attack))
+		if every_attack > 0 and turn >= first_attack and (turn - first_attack) % every_attack == 0:
+			_damage(int(boss.get("damage", 1)), events, "%s ฟาดกำปั้นหินลงมา!" % str(boss.get("name", "บอส")))
 
 
 func is_failed() -> bool:
@@ -143,6 +234,9 @@ func on_turn(snapshot: GitRepositorySnapshot, command: String = "") -> Dictionar
 	var tokens := LevelMission.tokenize(command)
 	if tokens.size() >= 2 and tokens[0] == "git" and tokens[1] == "status":
 		revealed = true
+	_resolve_battle(command, events)
+	if is_failed():
+		return {"actions": actions, "events": events, "wave": false}
 	for rule in forbidden:
 		var regex := RegEx.create_from_string(str(rule["pattern"]))
 		if regex != null and regex.is_valid() and regex.search(command.strip_edges()) != null:
