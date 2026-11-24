@@ -41,6 +41,10 @@ var _sparks: Array[Dictionary] = []
 ## ตัวละคร pixel art
 var _boss_sprite: PixelFx
 var _circle: PixelFx        # วงเวทใต้เท้าเวล
+## ชั้นการวาด (ตามลำดับ node ไม่ใช้ z_index ที่จะลอยทับ popup): วงเวท → บอส/ภูต → เวล → เอฟเฟกต์
+var _back_layer: Node2D
+var _actor_layer: Node2D
+var _fx_layer: Node2D
 var _imp_sprites: Array[PixelFx] = []
 var _boss_knock := 0.0      # บอสถูกกระแทกถอยหลัง (px, คืนตัวแบบสปริง)
 var _boss_knock_v := 0.0
@@ -59,8 +63,13 @@ func _ready() -> void:
 	_vel.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	_vel.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT
 	_vel.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_vel.z_index = 3
+	_back_layer = Node2D.new()
+	add_child(_back_layer)
+	_actor_layer = Node2D.new()
+	add_child(_actor_layer)
 	add_child(_vel)
+	_fx_layer = Node2D.new()
+	add_child(_fx_layer)
 
 
 func update_battle(game: RoomGame) -> void:
@@ -98,15 +107,15 @@ func play(events: Array[Dictionary]) -> void:
 			"engrave":
 				_engrave_glow[str(event.get("key", ""))] = 1.0
 				_burst(_plaque_center(), GOLD)
-				PixelFx.spawn(self, "commit_sparkle", _plaque_center() + Vector2(0, size.y * 0.05), _unit())
+				PixelFx.spawn(_fx_layer, "commit_sparkle", _plaque_center() + Vector2(0, size.y * 0.05), _unit())
 			"gate_open":
 				_gate_opening = true
 				_burst(_plaque_center(), GOLD)
 				var gate := _gate_rect()
-				PixelFx.spawn(self, "gate_open", Vector2(gate.get_center().x, gate.position.y + gate.size.y * 0.25), _unit())
+				PixelFx.spawn(_fx_layer, "gate_open", Vector2(gate.get_center().x, gate.position.y + gate.size.y * 0.25), _unit())
 				shake_requested.emit(6.0)
 			"imp_spawn":
-				PixelFx.spawn(self, "imp_spawn", Vector2(_lane_x(_max_distance), _ground_y()), _unit() * 0.8)
+				PixelFx.spawn(_fx_layer, "imp_spawn", Vector2(_lane_x(_max_distance), _ground_y()), _unit() * 0.8)
 
 
 ## ขนาดพิกเซลของเอฟเฟกต์/ตัวละคร (จำนวนเต็ม ให้ pixel art คมเท่ากันทุกจอ)
@@ -130,7 +139,7 @@ func _cast_banish() -> void:
 	var dying: Array[PixelFx] = _imp_sprites.duplicate()
 	_imp_sprites.clear()
 	_imps.clear()
-	PixelFx.spawn(self, "banish", _vel_feet(), _unit() * 0.85, 1.45)
+	PixelFx.spawn(_fx_layer, "banish", _vel_feet(), _unit() * 0.85, 1.45)
 	await get_tree().create_timer(0.12).timeout
 	_light = 1.0
 	for i in 40:
@@ -146,8 +155,8 @@ func _cast_banish() -> void:
 		await get_tree().create_timer(0.07).timeout
 		if not is_instance_valid(sprite):
 			continue
-		PixelFx.spawn(self, "imp_poof", sprite.position, _unit() * 0.9)
-		PixelFx.spawn(self, "damage", sprite.position, _unit() * 0.6)
+		PixelFx.spawn(_fx_layer, "imp_poof", sprite.position, _unit() * 0.9)
+		PixelFx.spawn(_fx_layer, "damage", sprite.position, _unit() * 0.6)
 		sprite.queue_free()
 
 
@@ -157,7 +166,7 @@ func _cast_bolt() -> void:
 	_vel_knock = -size.y * 0.03
 	var from := _vel_hand()
 	var to := _boss_center() + Vector2(-size.y * 0.06, size.y * 0.05)
-	var bolt := PixelFx.spawn(self, "spell_bolt", from, _unit() * 0.9)
+	var bolt := PixelFx.spawn(_fx_layer, "spell_bolt", from, _unit() * 0.9)
 	if bolt != null:
 		var tween := create_tween()
 		tween.tween_property(bolt, "position", to, 0.26).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
@@ -170,7 +179,7 @@ func _cast_bolt() -> void:
 	_boss_knock_v = size.y * 0.9
 	_burst(to, Color("ffd36b"))
 	# ข้ามช่วงพลังรวมตัว เริ่มที่จังหวะระเบิดออกพอดีกับตอนชน
-	PixelFx.spawn(self, "boss_hit", to + Vector2(0, size.y * 0.08), _unit(), 0.2)
+	PixelFx.spawn(_fx_layer, "boss_hit", to + Vector2(0, size.y * 0.08), _unit(), 0.2)
 	PixelFx.hit_stop(get_tree(), 0.1)
 	shake_requested.emit(10.0)
 
@@ -198,7 +207,7 @@ func _take_damage() -> void:
 		await get_tree().create_timer(0.12).timeout
 	_vel_hurt = 1.0
 	_vel_knock_v = -size.y * 1.1
-	PixelFx.spawn(self, "damage", _vel_feet() + Vector2(size.y * 0.08, -size.y * 0.1), _unit())
+	PixelFx.spawn(_fx_layer, "damage", _vel_feet() + Vector2(size.y * 0.08, -size.y * 0.1), _unit())
 	PixelFx.hit_stop(get_tree(), 0.12)
 	shake_requested.emit(14.0)
 
@@ -212,7 +221,7 @@ func _boss_collapse() -> void:
 		await get_tree().create_timer(0.2).timeout
 	_boss_fall = 0.001
 	_burst(_boss_center(), GOLD)
-	PixelFx.spawn(self, "boss_down", Vector2(_boss_center().x, _ground_y()), _unit())
+	PixelFx.spawn(_fx_layer, "boss_down", Vector2(_boss_center().x, _ground_y()), _unit())
 	PixelFx.hit_stop(get_tree(), 0.2)
 	shake_requested.emit(22.0)
 
@@ -267,9 +276,7 @@ func _sync_sprites() -> void:
 	var unit := _unit()
 	var ground := _ground_y()
 	if _circle == null:
-		_circle = PixelFx.spawn(self, "vel_circle", Vector2.ZERO, unit)
-		if _circle != null:
-			_circle.z_index = 1
+		_circle = PixelFx.spawn(_back_layer, "vel_circle", Vector2.ZERO, unit)
 	if _circle != null:
 		_circle.scale = Vector2.ONE * unit
 		_circle.position = _vel_feet() + Vector2(0, unit * 2)
@@ -277,13 +284,12 @@ func _sync_sprites() -> void:
 		_circle.modulate = Color(glow, glow, glow)
 	var show_boss := not _boss.is_empty() and _boss_fall < 1.0
 	if show_boss and _boss_sprite == null:
-		_boss_sprite = PixelFx.spawn(self, "boss_idle", Vector2.ZERO, _boss_scale())
+		_boss_sprite = PixelFx.spawn(_actor_layer, "boss_idle", Vector2.ZERO, _boss_scale())
 	elif not show_boss and _boss_sprite != null:
 		_boss_sprite.queue_free()
 		_boss_sprite = null
 	if _boss_sprite != null:
 		_boss_sprite.scale = Vector2.ONE * _boss_scale()
-		_boss_sprite.z_index = 1
 		_boss_sprite.position = Vector2(_boss_center().x + sin(_time * 70.0) * 10.0 * _boss_shake + _boss_knock,
 				ground + _boss_fall * size.y * 0.25)
 		var flash := Color(1, 1, 1).lerp(Color(2.4, 2.0, 2.0), _boss_flash)
@@ -295,10 +301,9 @@ func _sync_sprites() -> void:
 		if is_instance_valid(gone):
 			gone.queue_free()
 	while _imp_sprites.size() < _imps.size():
-		var imp := PixelFx.spawn(self, "imp_idle", Vector2(_lane_x(_imps[_imp_sprites.size()]), ground),
+		var imp := PixelFx.spawn(_actor_layer, "imp_idle", Vector2(_lane_x(_imps[_imp_sprites.size()]), ground),
 				unit * 0.9, randf() * 1.8)
 		if imp != null:
-			imp.z_index = 2
 			imp.modulate.a = 0.0
 			imp.create_tween().tween_property(imp, "modulate:a", 1.0, 0.35).set_delay(0.5)
 		_imp_sprites.append(imp)

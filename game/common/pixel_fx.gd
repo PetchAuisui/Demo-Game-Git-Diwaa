@@ -2,6 +2,7 @@ class_name PixelFx
 extends Sprite2D
 ## เอฟเฟกต์ pixel art แบบเล่นครั้งเดียว (sprite sheet ที่ทำจาก pixelfx) — เล่นจบแล้วลบตัวเองทิ้ง
 ## ใช้: PixelFx.spawn(parent, "banish", ตำแหน่งเท้า, สเกล)
+## ลำดับการวาดตามลำดับ node เท่านั้น — ห้ามตั้ง z_index เพราะจะลอยทับ UI อื่น (เช่น popup) ทั้งฉาก
 ## จุด pivot ของแต่ละเอฟเฟกต์ (เช่น พื้น/เท้า) จะวางตรงตำแหน่งที่ส่งมา
 ##
 ## ไฟล์ภาพอยู่ที่ res://assets/fx/<name>.png — ทำใหม่ได้ด้วย pixelfx:
@@ -71,7 +72,6 @@ static func spawn(parent: Node, effect: String, at: Vector2, scale_by: float = 2
 		fx.offset.x = pivot.x - float((spec["size"] as Vector2i).x)
 	fx.scale = Vector2.ONE * scale_by
 	fx.position = at
-	fx.z_index = 5
 	parent.add_child(fx)
 	return fx
 
