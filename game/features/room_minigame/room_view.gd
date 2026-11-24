@@ -79,6 +79,11 @@ var _ask_frame := 0
 var _ask_talk_left := 0.0
 var _ask_tick := 0.0
 var _asker: Dictionary = {}
+## เอฟเฟกต์ pixel art (PixelFx) ลอยเหนือห้อง: ของขึ้นแท่น/เข้าคัมภีร์ เกิดใหม่ โดนคลื่น ได้รับโล่
+var _fx_layer: Control
+var _rows: Dictionary = {}          # path -> แถวของในห้อง (หาตำแหน่งเอฟเฟกต์)
+var _last_states: Dictionary = {}   # path -> state ครั้งก่อน (รู้ว่าของเพิ่งขึ้นแท่น/เข้าคัมภีร์)
+var _pending_fx: Array[Dictionary] = []  # เอฟเฟกต์ที่รอแถวของถูกวาดใหม่ก่อนจะรู้ตำแหน่ง
 
 
 func _ready() -> void:
@@ -128,16 +133,31 @@ func update_room(game: RoomGame, items: Array[Dictionary], branch: String) -> vo
 	for zone in _zone_boxes.values():
 		for child in (zone as Container).get_children():
 			child.queue_free()
+	_rows.clear()
+	var states := {}
 	var index := 0
 	for item in items:
 		var state := str(item["state"])
+		var path := str(item["path"])
+		states[path] = state
 		var zone_state := state
 		if state == RoomGame.STATE_CURSED or state == RoomGame.STATE_CONFLICT:
 			zone_state = RoomGame.STATE_DESK
 		var box: Container = _zone_boxes.get(zone_state, null)
 		if box != null:
-			box.add_child(_make_item(item, index))
+			var row := _make_item(item, index)
+			box.add_child(row)
+			_rows[path] = row
+		# ของเพิ่งย้ายโซน: ขึ้นแท่นเตรียม (add) = ประกายฟ้า · เข้าคัมภีร์ (commit) = ประกายทอง
+		var before := str(_last_states.get(path, ""))
+		if not before.is_empty() and before != state:
+			if state == RoomGame.STATE_TOME:
+				_pending_fx.append({"effect": "commit_sparkle", "path": path})
+			elif state == RoomGame.STATE_ALTAR:
+				_pending_fx.append({"effect": "stage_sparkle", "path": path})
 		index += 1
+	_last_states = states
+	_flush_fx_next_frame()
 
 
 ## โน้ตของมิวรา (เช่น คำแปลผล git status) แสดงในห้องนานกว่าเหตุการณ์ปกติ — วงร่ายเวทเหลือไว้ให้ Git
@@ -168,6 +188,8 @@ func play_events(events: Array[Dictionary]) -> void:
 		has_damage = has_damage or event["type"] == "damage"
 	if _in_battle:
 		_battle.play(events)
+	else:
+		_queue_room_fx(events)
 	_event_label.text = "\n".join(lines)
 	_event_label.add_theme_color_override("font_color", Color("ffb3c4") if has_damage else Color("d8f7ff"))
 	if _event_tween != null and _event_tween.is_valid():
@@ -182,10 +204,64 @@ func play_events(events: Array[Dictionary]) -> void:
 		var flash := create_tween()
 		flash.tween_property(_flash, "color:a", 0.45, 0.12)
 		flash.tween_property(_flash, "color:a", 0.0, 0.7)
-		var shake := create_tween()
-		for i in 6:
-			shake.tween_property(_frame, "position:x", 8.0 * (1 if i % 2 == 0 else -1), 0.04)
-		shake.tween_property(_frame, "position:x", 0.0, 0.04)
+		if not _in_battle:
+			_shake_frame(8.0)
+
+
+## เหตุการณ์ในห้อง (ไม่ใช่ด่านต่อสู้) → เอฟเฟกต์ pixel art ตรงของชิ้นนั้น
+## ของที่เพิ่งเกิดยังไม่มีแถวในห้อง จึงรอจนห้องวาดใหม่ (หรือไม่เกินครึ่งวินาที) ค่อยหาตำแหน่ง
+func _queue_room_fx(events: Array[Dictionary]) -> void:
+	for event in events:
+		var path := str(event.get("path", ""))
+		match str(event["type"]):
+			"wave":
+				_pending_fx.append({"effect": "chaos_wave", "path": ""})
+			"damage":
+				_pending_fx.append({"effect": "damage", "path": path})
+			"shielded":
+				_pending_fx.append({"effect": "shield", "path": path})
+			"spawn", "respawn":
+				_pending_fx.append({"effect": "stage_sparkle", "path": path, "small": true})
+	if not _pending_fx.is_empty():
+		get_tree().create_timer(0.5).timeout.connect(_flush_fx)
+
+
+func _flush_fx_next_frame() -> void:
+	if _pending_fx.is_empty() or not is_inside_tree():
+		return
+	await get_tree().process_frame
+	_flush_fx()
+
+
+func _flush_fx() -> void:
+	if not is_inside_tree():
+		_pending_fx.clear()
+		return
+	var unit := maxf(1.0, round(size.y / 220.0))
+	for fx in _pending_fx:
+		var at := size * 0.5
+		var row: Control = _rows.get(str(fx["path"]), null)
+		if row != null and is_instance_valid(row) and row.is_inside_tree():
+			# ใต้ไอคอนของ (ซ้ายของแถว) — pivot ของเอฟเฟกต์ส่วนใหญ่คือพื้น
+			at = row.global_position - _fx_layer.global_position + Vector2(18, row.size.y)
+		var scale_by := unit * (0.6 if fx.get("small", false) else 1.0)
+		if fx["effect"] == "chaos_wave":
+			scale_by = unit * 1.6
+		PixelFx.spawn(_fx_layer, str(fx["effect"]), at, scale_by)
+	_pending_fx.clear()
+
+
+## สั่นกรอบห้องทั้งกรอบ แรงลดลงเรื่อย ๆ (สนามรบขอผ่าน shake_requested ตอนการโจมตีชนจริง)
+var _shake_tween: Tween
+func _shake_frame(strength: float) -> void:
+	if _shake_tween != null and _shake_tween.is_valid():
+		_shake_tween.kill()
+	_shake_tween = create_tween()
+	var steps := 7
+	for i in steps:
+		var k := strength * (1.0 - float(i) / steps)
+		_shake_tween.tween_property(_frame, "position", Vector2(randf_range(-k, k), randf_range(-k, k) * 0.6), 0.035)
+	_shake_tween.tween_property(_frame, "position", Vector2.ZERO, 0.04)
 
 
 func _show_idle_hint() -> void:
@@ -255,6 +331,7 @@ func _build() -> void:
 	_battle = BattleFieldView.new()
 	_battle.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_battle.visible = false
+	_battle.shake_requested.connect(_shake_frame)
 	root.add_child(_battle)
 
 	_build_speak_bar(root)
@@ -271,6 +348,11 @@ func _build() -> void:
 	_flash.color = Color(CHAOS_COLOR, 0.0)
 	_flash.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	add_child(_flash)
+
+	_fx_layer = Control.new()
+	_fx_layer.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_fx_layer.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	add_child(_fx_layer)
 
 
 ## แสดง/ซ่อนช่องเอ่ยคำ (แสดงเฉพาะตอนที่โลกรอคำตอบอยู่)
