@@ -12,6 +12,8 @@ const VEL_TEXTURE := "res://assets/cutscene/characters/vel/vel_Hblue_Sredyellow_
 const FONT_BOLD := "res://assets/fonts/ChakraPetch-Bold.ttf"
 const CHAOS := Color("b06bff")
 const GOLD := Color("ffd36b")
+## ครึ่งความกว้างของวงเวท (vel_circle) ในภาพต้นฉบับ หน่วยพิกเซลก่อนขยาย
+const CIRCLE_HALF_WIDTH := 62.0
 const STONE := Color("4a4458")
 const STONE_DARK := Color("2c2836")
 
@@ -56,6 +58,8 @@ var _vel_squash_v := 0.0
 
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
+	# ทุกอย่างในสนาม (ตัวละคร เอฟเฟกต์ ประกาย) ถูกตัดที่ขอบสนาม ไม่ล้นออกนอกกรอบห้อง
+	clip_contents = true
 	_font = load(FONT_BOLD) if ResourceLoader.exists(FONT_BOLD) else ThemeDB.fallback_font
 	_vel = TextureRect.new()
 	_vel.texture = load(VEL_TEXTURE) if ResourceLoader.exists(VEL_TEXTURE) else null
@@ -264,7 +268,7 @@ func _process(delta: float) -> void:
 	_vel.size = Vector2(vel_h * 48.0 / 83.0, vel_h)
 	# ย่อ/ยืดตัวโดยเท้ายังติดพื้น
 	_vel.size = Vector2(_vel.size.x * (1.0 + _vel_squash * 0.6), vel_h * (1.0 - _vel_squash))
-	_vel.position = Vector2(size.x * 0.1 - _vel.size.x * 0.5 + sin(_time * 60.0) * 6.0 * _vel_hurt + _vel_knock,
+	_vel.position = Vector2(_vel_x() - _vel.size.x * 0.5 + sin(_time * 60.0) * 6.0 * _vel_hurt + _vel_knock,
 			_ground_y() - _vel.size.y + sin(_time * 2.0) * 2.0)
 	_vel.modulate = Color(1, 1, 1).lerp(Color(1.6, 0.5, 0.5), _vel_hurt)
 	_sync_sprites()
@@ -329,12 +333,17 @@ func _ground_y() -> float:
 
 
 func _vel_feet() -> Vector2:
-	return Vector2(size.x * 0.1, _ground_y())
+	return Vector2(_vel_x(), _ground_y())
+
+
+## เวลยืนห่างขอบซ้ายพอให้วงเวทใต้เท้า (กว้าง ~124 px ในภาพ) อยู่ในกรอบห้องทั้งวง
+func _vel_x() -> float:
+	return maxf(size.x * 0.1, CIRCLE_HALF_WIDTH * _unit() + 6.0)
 
 
 func _lane_x(distance: float) -> float:
 	# ช่องที่ 1 ประชิดเวล ช่องไกลสุดอยู่หน้าบอส
-	var start := size.x * 0.2
+	var start := _vel_x() + size.x * 0.1
 	var end := size.x * (0.66 if not _boss.is_empty() else 0.9)
 	return start + (end - start) * (distance - 1.0) / maxf(1.0, _max_distance - 1.0)
 
