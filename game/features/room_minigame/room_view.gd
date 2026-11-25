@@ -57,6 +57,7 @@ var _hearts_label: Label
 var _chaos_label: Label
 var _chaos_bar: ProgressBar
 var _dimension_label: Label
+var _fragment_label: Label
 var _zone_boxes: Dictionary = {}
 var _event_label: Label
 var _flash: ColorRect
@@ -161,6 +162,17 @@ func update_room(game: RoomGame, items: Array[Dictionary], branch: String) -> vo
 		index += 1
 	_last_states = states
 	_flush_fx_next_frame()
+
+
+## ตัวนับเศษคัมภีร์ต้นกำเนิด (n/12) — แสดงเมื่อเรื่องดำเนินถึงการตามหาเศษแล้ว · gained = เพิ่งได้ชิ้นใหม่ (เด้ง)
+func set_fragments(count: int, show: bool, gained: bool = false) -> void:
+	_fragment_label.visible = show or count > 0
+	_fragment_label.text = "✦ เศษคัมภีร์ %d/%d" % [count, FragmentLedger.TOTAL]
+	if gained:
+		_fragment_label.pivot_offset = _fragment_label.size * 0.5
+		var tw := create_tween()
+		tw.tween_property(_fragment_label, "scale", Vector2.ONE * 1.5, 0.12).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+		tw.tween_property(_fragment_label, "scale", Vector2.ONE, 0.3)
 
 
 ## โน้ตของมิวรา (เช่น คำแปลผล git status) แสดงในห้องนานกว่าเหตุการณ์ปกติ — วงร่ายเวทเหลือไว้ให้ Git
@@ -314,6 +326,10 @@ func _build() -> void:
 	header.add_child(_hearts_label)
 	_dimension_label = _label(18, Color("c9b6ff"), false)
 	header.add_child(_dimension_label)
+	_fragment_label = _label(18, Color("ffd36b"), true)
+	_fragment_label.visible = false
+	_fragment_label.pivot_offset = Vector2(60, 12)
+	header.add_child(_fragment_label)
 	var spacer := Control.new()
 	spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	spacer.mouse_filter = Control.MOUSE_FILTER_IGNORE

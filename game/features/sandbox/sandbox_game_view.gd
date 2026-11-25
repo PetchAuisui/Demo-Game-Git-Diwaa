@@ -37,6 +37,9 @@ var _mission_panel: LevelMissionPanel
 var _spell_overlay: SpellEffectOverlay
 ## มินิเกมห้อง (null = ด่านนี้ไม่มีมินิเกม)
 var _room: RoomGame
+## เศษคัมภีร์ที่ผู้เล่นมี (ด่านก่อน ๆ + ที่เพิ่งได้ในด่านนี้) และเศษที่ฉลองไปแล้วในรอบนี้
+var _fragments_owned := 0
+var _celebrated: Dictionary = {}
 var _room_view: RoomView
 ## ม้วนคาถาใหม่ / สมุดคาถา (สอนคำสั่งตอนที่ต้องใช้จริง)
 var _spell_view: SpellScrollView
@@ -284,6 +287,8 @@ func _setup_room() -> void:
 	if _mission == null or _mission.room.is_empty():
 		return
 	_room = RoomGame.from_config(_mission.room)
+	_fragments_owned = FragmentLedger.collected_before(_mission.level_number)
+	_celebrated.clear()
 	_spell_overlay.compact = true
 	if _room_view == null:
 		_room_view = RoomView.new()
@@ -293,6 +298,7 @@ func _setup_room() -> void:
 		_room_view.item_pressed.connect(_read_scroll_action)
 		_room_view.spoken.connect(func(word: String) -> void: _handle_say_command("say " + word))
 		move_child(_room_view, _spell_overlay.get_index())
+	_room_view.set_fragments(_fragments_owned, FragmentLedger.for_level(_mission.level_number) > 0)
 
 
 func _workspace_paths() -> Array[String]:
@@ -456,9 +462,12 @@ func _on_mission_progress(command: String, result: GitCommandResult, snapshot: G
 		_room_view.play_events(hits)
 	_mission_panel.refresh()
 	_update_mission_prompt()
+	for done_id in newly_done:
+		_celebrate_fragment(_mission.world_text(done_id))
 	if _mission.is_complete():
 		_level_timer_active = false
 		_mission_panel.show_complete(_mission.success_text, _mission_continue_label())
+		_celebrate_fragment(_mission.success_text)
 		return
 	for done_id in newly_done:
 		_apply_world_actions(_mission.spawn_actions(done_id))
@@ -476,6 +485,18 @@ func _on_mission_progress(command: String, result: GitCommandResult, snapshot: G
 		return
 	if not mistake.is_empty():
 		_mission_panel.show_feedback(mistake, true)
+
+
+## เนื้อเรื่องประกาศว่าได้รับเศษคัมภีร์ → ฉากรับเศษ (ครั้งเดียวต่อชิ้น) และตัวนับในห้องเพิ่มขึ้น
+func _celebrate_fragment(text: String) -> void:
+	var number := FragmentLedger.announced(text)
+	if number <= 0 or _celebrated.has(number):
+		return
+	_celebrated[number] = true
+	_fragments_owned = maxi(_fragments_owned, number)
+	FragmentCeremony.play(self, number, _fragments_owned)
+	if _room_view != null:
+		_room_view.set_fragments(_fragments_owned, true, true)
 
 
 func _mission_continue_label() -> String:
