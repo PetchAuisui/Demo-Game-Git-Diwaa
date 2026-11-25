@@ -32,6 +32,7 @@ var _has_waves := false
 var _sync_text := ""
 var _bare := false            # ยังไม่มีคัมภีร์ (needs_tome) — เวลไม่มีอะไรคุ้มกัน
 var _caption := ""
+var _hidden := false          # ห้องมืด (blind) ยังไม่ได้หยั่งสถานะ — ไม่บอกว่าอะไรปลอดภัย
 var _time := 0.0
 var _vel_hurt := 0.0
 var _lunge := 0.0             # ภูตกระโจน (ตอนคลื่นมา)
@@ -86,7 +87,9 @@ func update_lane(game: RoomGame, described: Array[Dictionary]) -> void:
 	visible = _has_waves or not game.phantoms.is_empty() or game.sync_required
 	if not visible:
 		return
-	_threat = game.threat_count(described)
+	_hidden = game.blind and not game.revealed
+	# ห้องมืด: ไม่รู้ว่าอะไรเสี่ยง จึงแสดงภูตหนึ่งตัวที่ตื่นอยู่เสมอ (ไม่หลอกว่าปลอดภัย)
+	_threat = 1 if _hidden else game.threat_count(described)
 	_sync_text = game.sync_text
 	_bare = game.needs_tome and not game.has_tome
 	if _has_waves:
@@ -101,6 +104,8 @@ func update_lane(game: RoomGame, described: Array[Dictionary]) -> void:
 
 
 func _make_caption(game: RoomGame) -> String:
+	if _hidden:
+		return "ห้องมืดเกินกว่าจะเห็นว่าภูตจ้องอะไร — หยั่งสถานะก่อน"
 	if not game.active_phantoms.is_empty():
 		return "มิติผี %s ดูดพลังทุกคลื่น" % ", ".join(game.active_phantoms)
 	if _bare:
@@ -265,6 +270,6 @@ func _draw() -> void:
 		var a := 0.35 + 0.3 * sin(_time * 8.0)
 		draw_rect(Rect2(_vel_x() - 20, g - size.y * 0.9, 40, 2), Color(1, 0.4, 0.5, a))
 	if not _caption.is_empty():
-		var color := Color("ffb3c4") if _threat > 0 else Color("9fe8b8")
+		var color := Color("c9b6ff") if _hidden else (Color("ffb3c4") if _threat > 0 else Color("9fe8b8"))
 		draw_string_outline(_font, Vector2(size.x * 0.5 - 140, 16), _caption, HORIZONTAL_ALIGNMENT_CENTER, 280, 14, 4, Color(0, 0, 0, 0.85))
 		draw_string(_font, Vector2(size.x * 0.5 - 140, 16), _caption, HORIZONTAL_ALIGNMENT_CENTER, 280, 14, color)
