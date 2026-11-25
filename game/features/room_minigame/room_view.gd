@@ -63,6 +63,7 @@ var _flash: ColorRect
 var _event_tween: Tween
 var _zones: HBoxContainer
 var _battle: BattleFieldView
+var _lane: ChaosLaneView
 var _in_battle := false
 var _gate_mode := false
 var _speak_bar: PanelContainer
@@ -128,7 +129,9 @@ func update_room(game: RoomGame, items: Array[Dictionary], branch: String) -> vo
 		_battle.visible = true
 		_dimension_label.visible = false
 		_battle.update_battle(game)
+		_lane.visible = false
 		return
+	_lane.update_lane(game, items)
 
 	for zone in _zone_boxes.values():
 		for child in (zone as Container).get_children():
@@ -190,6 +193,9 @@ func play_events(events: Array[Dictionary]) -> void:
 		_battle.play(events)
 	else:
 		_queue_room_fx(events)
+		_lane.play(events)
+	if has_damage:
+		_break_heart()
 	_event_label.text = "\n".join(lines)
 	_event_label.add_theme_color_override("font_color", Color("ffb3c4") if has_damage else Color("d8f7ff"))
 	if _event_tween != null and _event_tween.is_valid():
@@ -224,6 +230,18 @@ func _queue_room_fx(events: Array[Dictionary]) -> void:
 				_pending_fx.append({"effect": "stage_sparkle", "path": path, "small": true})
 	if not _pending_fx.is_empty():
 		get_tree().create_timer(0.5).timeout.connect(_flush_fx)
+
+
+## หัวใจดวงสุดท้ายในแถบแตกกระจาย (pixel art) ตรงตำแหน่งหัวใจที่เพิ่งหายไป
+func _break_heart() -> void:
+	if _hearts_label == null or not is_inside_tree():
+		return
+	var lost := maxi(0, _hearts_label.text.count("♥") - 1) # ยังเป็นจำนวนก่อนโดน (ห้องวาดใหม่หลังเหตุการณ์)
+	await get_tree().process_frame
+	var char_w := _hearts_label.size.x / maxf(1.0, float(_hearts_label.text.length()))
+	var at := _hearts_label.global_position - _fx_layer.global_position \
+			+ Vector2(char_w * (lost * 2 + 0.5), _hearts_label.size.y * 0.5)
+	PixelFx.spawn(_fx_layer, "heart_lost", at, maxf(1.0, round(size.y / 300.0)))
 
 
 func _flush_fx_next_frame() -> void:
@@ -328,6 +346,9 @@ func _build() -> void:
 	root.add_child(_zones)
 	for zone in ZONES:
 		_zones.add_child(_make_zone(zone))
+	_lane = ChaosLaneView.new()
+	_lane.visible = false
+	root.add_child(_lane)
 	_battle = BattleFieldView.new()
 	_battle.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_battle.visible = false
