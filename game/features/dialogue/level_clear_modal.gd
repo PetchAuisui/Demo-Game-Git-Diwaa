@@ -68,6 +68,19 @@ func _ready() -> void:
 	if btn_next_level:
 		btn_next_level.focus_mode = Control.FOCUS_NONE
 		btn_next_level.pressed.connect(_on_next_level_pressed)
+	_celebrate.call_deferred()
+
+
+## ฉลองผ่านด่าน: พลุกระดาษจากสองมุมล่าง + ดอกไม้ไฟเหนือหน้าต่าง (เอฟเฟกต์ pixel art จาก PixelFx)
+func _celebrate() -> void:
+	var view := get_viewport_rect().size
+	var unit := maxf(2.0, round(view.y / 270.0))
+	PixelFx.spawn(self, "confetti", Vector2(view.x * 0.22, view.y * 0.98), unit)
+	PixelFx.spawn(self, "confetti", Vector2(view.x * 0.78, view.y * 0.98), unit, 0.0, true)
+	await get_tree().create_timer(0.35).timeout
+	if is_inside_tree():
+		PixelFx.spawn(self, "gate_open", Vector2(view.x * 0.15, view.y * 0.3), unit * 0.8)
+		PixelFx.spawn(self, "gate_open", Vector2(view.x * 0.85, view.y * 0.32), unit * 0.8, 0.15, true)
 
 ## ดึงข้อมูลด่านที่เพิ่งเล่นจบ (ด่านที่เลือกไว้) มาแสดงชื่อคำสั่งและคีย์เวิร์ดประจำด่าน
 func _apply_level_info() -> void:

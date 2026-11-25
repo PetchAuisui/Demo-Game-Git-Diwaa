@@ -3,11 +3,17 @@ extends Control
 ## สนามรบในห้อง (RoomGame.battle): เวลยืนในวงเวทฝั่งซ้าย ภูตโกลาหลคลานเข้ามาตามทาง บอสยืนขวางทางฝั่งขวา
 ## วาดด้วยโค้ดทั้งหมด (ยังไม่มีภาพศัตรูใน assets) — ข้อมูลมาจาก RoomGame เสมอ
 ## เหตุการณ์ (play): banish = แสงวงเวทระเบิดเผาภูต · damage = เวลสั่นแดง · boss_hit = บอสสั่น · boss_down = บอสถล่ม
+## บอสและภูตเป็น sprite pixel art (PixelFx) — ทุกการโจมตีมีต้นเหตุ จังหวะชน หยุดภาพ และแรงกระแทกที่ตัวละคร
+
+## ขอให้ห้องสั่นทั้งกรอบ (แรงเป็นพิกเซล)
+signal shake_requested(strength: float)
 
 const VEL_TEXTURE := "res://assets/cutscene/characters/vel/vel_Hblue_Sredyellow_idle.png"
 const FONT_BOLD := "res://assets/fonts/ChakraPetch-Bold.ttf"
 const CHAOS := Color("b06bff")
 const GOLD := Color("ffd36b")
+## ครึ่งความกว้างของวงเวท (vel_circle) ในภาพต้นฉบับ หน่วยพิกเซลก่อนขยาย
+const CIRCLE_HALF_WIDTH := 62.0
 const STONE := Color("4a4458")
 const STONE_DARK := Color("2c2836")
 
@@ -34,10 +40,26 @@ var _boss_shake := 0.0
 var _boss_fall := 0.0      # บอสถล่ม 0..1
 var _vel_hurt := 0.0
 var _sparks: Array[Dictionary] = []
+## ตัวละคร pixel art
+var _boss_sprite: PixelFx
+var _circle: PixelFx        # วงเวทใต้เท้าเวล
+## ชั้นการวาด (ตามลำดับ node ไม่ใช้ z_index ที่จะลอยทับ popup): วงเวท → บอส/ภูต → เวล → เอฟเฟกต์
+var _back_layer: Node2D
+var _actor_layer: Node2D
+var _fx_layer: Node2D
+var _imp_sprites: Array[PixelFx] = []
+var _boss_knock := 0.0      # บอสถูกกระแทกถอยหลัง (px, คืนตัวแบบสปริง)
+var _boss_knock_v := 0.0
+var _vel_knock := 0.0       # เวลถูกกระแทกถอยหลัง
+var _vel_knock_v := 0.0
+var _vel_squash := 0.0      # เวลย่อตัวตอนร่าย (+) / ยืดตัว (-)
+var _vel_squash_v := 0.0
 
 
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
+	# ทุกอย่างในสนาม (ตัวละคร เอฟเฟกต์ ประกาย) ถูกตัดที่ขอบสนาม ไม่ล้นออกนอกกรอบห้อง
+	clip_contents = true
 	_font = load(FONT_BOLD) if ResourceLoader.exists(FONT_BOLD) else ThemeDB.fallback_font
 	_vel = TextureRect.new()
 	_vel.texture = load(VEL_TEXTURE) if ResourceLoader.exists(VEL_TEXTURE) else null
@@ -45,7 +67,13 @@ func _ready() -> void:
 	_vel.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	_vel.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT
 	_vel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_back_layer = Node2D.new()
+	add_child(_back_layer)
+	_actor_layer = Node2D.new()
+	add_child(_actor_layer)
 	add_child(_vel)
+	_fx_layer = Node2D.new()
+	add_child(_fx_layer)
 
 
 func update_battle(game: RoomGame) -> void:
@@ -73,29 +101,133 @@ func play(events: Array[Dictionary]) -> void:
 	for event in events:
 		match str(event["type"]):
 			"banish":
-				_light = 1.0
-				for i in 40:
-					var a := randf() * TAU
-					_sparks.append({"p": _vel_feet(), "v": Vector2(cos(a), sin(a) * 0.45) * randf_range(120, 420),
-							"life": randf_range(0.4, 0.8), "c": GOLD})
+				_cast_banish()
 			"damage":
-				_vel_hurt = 1.0
+				_take_damage()
 			"boss_hit":
-				_boss_flash = 1.0
-				_boss_shake = 1.0
-				_burst(_boss_center(), Color("ff9a6b"))
+				_cast_bolt()
+			"boss_down":
+				_boss_collapse()
 			"engrave":
 				_engrave_glow[str(event.get("key", ""))] = 1.0
 				_burst(_plaque_center(), GOLD)
+				PixelFx.spawn(_fx_layer, "commit_sparkle", _plaque_center() + Vector2(0, size.y * 0.05), _unit())
 			"gate_open":
 				_gate_opening = true
 				_burst(_plaque_center(), GOLD)
-			"boss_down":
-				_boss_flash = 1.0
-				_boss_fall = 0.001
-				_burst(_boss_center(), GOLD)
+				var gate := _gate_rect()
+				PixelFx.spawn(_fx_layer, "gate_open", Vector2(gate.get_center().x, gate.position.y + gate.size.y * 0.25), _unit())
+				shake_requested.emit(6.0)
 			"imp_spawn":
-				pass
+				PixelFx.spawn(_fx_layer, "imp_spawn", Vector2(_lane_x(_max_distance), _ground_y()), _unit() * 0.8)
+
+
+## ขนาดพิกเซลของเอฟเฟกต์/ตัวละคร (จำนวนเต็ม ให้ pixel art คมเท่ากันทุกจอ)
+func _unit() -> float:
+	return maxf(2.0, round(size.y / 150.0))
+
+
+func _vel_hand() -> Vector2:
+	return _vel_feet() + Vector2(size.y * 0.12, -size.y * 0.32)
+
+
+## เวลย่อตัวเก็บแรงแล้วเหยียดตัวปล่อยคาถา (สปริง)
+func _vel_cast_pose() -> void:
+	_vel_squash = 0.18
+	_vel_squash_v = -6.0
+
+
+## ร่ายแสงวงเวท: เวลย่อตัว → ลำแสงทองพุ่งขึ้น → ภูตทุกตัวสว่างวาบแล้วระเบิดเป็นควันทีละตัว
+func _cast_banish() -> void:
+	_vel_cast_pose()
+	var dying: Array[PixelFx] = _imp_sprites.duplicate()
+	_imp_sprites.clear()
+	_imps.clear()
+	PixelFx.spawn(_fx_layer, "banish", _vel_feet(), _unit() * 0.85, 1.45)
+	await get_tree().create_timer(0.12).timeout
+	_light = 1.0
+	for i in 40:
+		var a := randf() * TAU
+		_sparks.append({"p": _vel_feet(), "v": Vector2(cos(a), sin(a) * 0.45) * randf_range(120, 420),
+				"life": randf_range(0.4, 0.8), "c": GOLD})
+	shake_requested.emit(8.0)
+	PixelFx.hit_stop(get_tree(), 0.07)
+	for sprite in dying:
+		if is_instance_valid(sprite):
+			sprite.modulate = Color(3, 2.6, 1.6)
+	for sprite in dying:
+		await get_tree().create_timer(0.07).timeout
+		if not is_instance_valid(sprite):
+			continue
+		PixelFx.spawn(_fx_layer, "imp_poof", sprite.position, _unit() * 0.9)
+		PixelFx.spawn(_fx_layer, "damage", sprite.position, _unit() * 0.6)
+		sprite.queue_free()
+
+
+## ยิงลูกพลังทองจากมือเวลไปชนบอส: เดินทางจริง ชนแล้วหยุดภาพ บอสวาบขาวและถูกกระแทกถอยหลัง
+func _cast_bolt() -> void:
+	_vel_cast_pose()
+	_vel_knock = -size.y * 0.03
+	var from := _vel_hand()
+	var to := _boss_center() + Vector2(-size.y * 0.06, size.y * 0.05)
+	var bolt := PixelFx.spawn(_fx_layer, "spell_bolt", from, _unit() * 0.9)
+	if bolt != null:
+		var tween := create_tween()
+		tween.tween_property(bolt, "position", to, 0.26).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+		await tween.finished
+		bolt.queue_free()
+	else:
+		await get_tree().create_timer(0.26).timeout
+	_boss_flash = 1.0
+	_boss_shake = 0.6
+	_boss_knock_v = size.y * 0.9
+	_burst(to, Color("ffd36b"))
+	# ข้ามช่วงพลังรวมตัว เริ่มที่จังหวะระเบิดออกพอดีกับตอนชน
+	PixelFx.spawn(_fx_layer, "boss_hit", to + Vector2(0, size.y * 0.08), _unit(), 0.2)
+	PixelFx.hit_stop(get_tree(), 0.1)
+	shake_requested.emit(10.0)
+
+
+## ศัตรูพุ่งเข้าใส่ (ภูตตัวหน้าสุด หรือหมัดบอส) → ชนเวล หยุดภาพ เวลกระเด็นถอยหลังเป็นสีแดง
+func _take_damage() -> void:
+	var attacker: PixelFx = null
+	var nearest := 1 << 30
+	for i in _imp_sprites.size():
+		if i < _imps.size() and _imps[i] < nearest and is_instance_valid(_imp_sprites[i]):
+			nearest = _imps[i]
+			attacker = _imp_sprites[i]
+	if attacker != null:
+		var home := Vector2(attacker.position.x, _ground_y())
+		attacker.set_meta("busy", true)
+		var lunge := create_tween()
+		lunge.tween_property(attacker, "position", _vel_feet() + Vector2(size.y * 0.16, 0), 0.14).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_IN)
+		lunge.tween_interval(0.12)
+		lunge.tween_property(attacker, "position", home, 0.3).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+		lunge.tween_callback(func() -> void: if is_instance_valid(attacker): attacker.remove_meta("busy"))
+		await get_tree().create_timer(0.14).timeout
+	elif not _boss.is_empty():
+		# บอสโน้มตัวเข้ามาฟาด
+		_boss_knock_v = -size.y * 1.6
+		await get_tree().create_timer(0.12).timeout
+	_vel_hurt = 1.0
+	_vel_knock_v = -size.y * 1.1
+	PixelFx.spawn(_fx_layer, "damage", _vel_feet() + Vector2(size.y * 0.08, -size.y * 0.1), _unit())
+	PixelFx.hit_stop(get_tree(), 0.12)
+	shake_requested.emit(14.0)
+
+
+## บอสถล่ม: สั่นรุนแรงวาบหลายครั้ง → ระเบิดมืด → จมลงและจางหาย
+func _boss_collapse() -> void:
+	for i in 3:
+		_boss_flash = 1.0
+		_boss_shake = 1.0
+		shake_requested.emit(4.0 + i * 3.0)
+		await get_tree().create_timer(0.2).timeout
+	_boss_fall = 0.001
+	_burst(_boss_center(), GOLD)
+	PixelFx.spawn(_fx_layer, "boss_down", Vector2(_boss_center().x, _ground_y()), _unit())
+	PixelFx.hit_stop(get_tree(), 0.2)
+	shake_requested.emit(22.0)
 
 
 func _burst(at: Vector2, color: Color) -> void:
@@ -115,6 +247,13 @@ func _process(delta: float) -> void:
 		_engrave_glow[key] = maxf(0.0, float(_engrave_glow[key]) - delta * 0.8)
 	_guard_line_shown = minf(1.0, _guard_line_shown + delta * 1.2)
 	_vel_hurt = maxf(0.0, _vel_hurt - delta * 2.2)
+	# สปริงของแรงกระแทก: พุ่งเร็ว คืนตัวช้า เด้งเล็กน้อย
+	_boss_knock_v += (-_boss_knock * 220.0 - _boss_knock_v * 18.0) * delta
+	_boss_knock += _boss_knock_v * delta
+	_vel_knock_v += (-_vel_knock * 220.0 - _vel_knock_v * 18.0) * delta
+	_vel_knock += _vel_knock_v * delta
+	_vel_squash_v += (-_vel_squash * 400.0 - _vel_squash_v * 16.0) * delta
+	_vel_squash += _vel_squash_v * delta
 	if _boss_fall > 0.0 and _boss_fall < 1.0:
 		_boss_fall = minf(1.0, _boss_fall + delta * 0.9)
 	for i in range(_sparks.size() - 1, -1, -1):
@@ -127,10 +266,66 @@ func _process(delta: float) -> void:
 	# เวลยืนบนวงเวท สั่นเมื่อโดนโจมตี
 	var vel_h := size.y * 0.62
 	_vel.size = Vector2(vel_h * 48.0 / 83.0, vel_h)
-	_vel.position = Vector2(size.x * 0.1 - _vel.size.x * 0.5 + sin(_time * 60.0) * 6.0 * _vel_hurt,
-			_ground_y() - vel_h + sin(_time * 2.0) * 2.0)
+	# ย่อ/ยืดตัวโดยเท้ายังติดพื้น
+	_vel.size = Vector2(_vel.size.x * (1.0 + _vel_squash * 0.6), vel_h * (1.0 - _vel_squash))
+	_vel.position = Vector2(_vel_x() - _vel.size.x * 0.5 + sin(_time * 60.0) * 6.0 * _vel_hurt + _vel_knock,
+			_ground_y() - _vel.size.y + sin(_time * 2.0) * 2.0)
 	_vel.modulate = Color(1, 1, 1).lerp(Color(1.6, 0.5, 0.5), _vel_hurt)
+	_sync_sprites()
 	queue_redraw()
+
+
+## บอส/ภูตเป็น sprite pixel art ที่ยืนบนพื้นจริง — ตำแหน่ง/สีตามสถานะทุกเฟรม
+func _sync_sprites() -> void:
+	var unit := _unit()
+	var ground := _ground_y()
+	if _circle == null:
+		_circle = PixelFx.spawn(_back_layer, "vel_circle", Vector2.ZERO, unit)
+	if _circle != null:
+		_circle.scale = Vector2.ONE * unit
+		_circle.position = _vel_feet() + Vector2(0, unit * 2)
+		var glow := 0.75 + 0.15 * sin(_time * 3.0) + _light * 1.5
+		_circle.modulate = Color(glow, glow, glow)
+	var show_boss := not _boss.is_empty() and _boss_fall < 1.0
+	if show_boss and _boss_sprite == null:
+		_boss_sprite = PixelFx.spawn(_actor_layer, "boss_idle", Vector2.ZERO, _boss_scale())
+	elif not show_boss and _boss_sprite != null:
+		_boss_sprite.queue_free()
+		_boss_sprite = null
+	if _boss_sprite != null:
+		_boss_sprite.scale = Vector2.ONE * _boss_scale()
+		_boss_sprite.position = Vector2(_boss_center().x + sin(_time * 70.0) * 10.0 * _boss_shake + _boss_knock,
+				ground + _boss_fall * size.y * 0.25)
+		var flash := Color(1, 1, 1).lerp(Color(2.4, 2.0, 2.0), _boss_flash)
+		var rage := 0.15 * (0.5 + 0.5 * sin(_time * 8.0)) if _boss_attack_in == 1 else 0.0
+		_boss_sprite.modulate = Color(flash.r + rage, flash.g, flash.b + rage, 1.0 - _boss_fall)
+	# ภูต: หนึ่ง sprite ต่อหนึ่งตัว ตัวใหม่ค่อย ๆ ก่อตัวขึ้น (หลังรอยแยกเปิด)
+	while _imp_sprites.size() > _imps.size():
+		var gone: PixelFx = _imp_sprites.pop_back()
+		if is_instance_valid(gone):
+			gone.queue_free()
+	while _imp_sprites.size() < _imps.size():
+		var imp := PixelFx.spawn(_actor_layer, "imp_idle", Vector2(_lane_x(_imps[_imp_sprites.size()]), ground),
+				unit * 0.9, randf() * 1.8)
+		if imp != null:
+			imp.modulate.a = 0.0
+			imp.create_tween().tween_property(imp, "modulate:a", 1.0, 0.35).set_delay(0.5)
+		_imp_sprites.append(imp)
+	for i in _imp_sprites.size():
+		var sprite := _imp_sprites[i]
+		if sprite == null or not is_instance_valid(sprite):
+			continue
+		sprite.scale = Vector2.ONE * unit * 0.9
+		var target_x := _lane_x(_imps[i])
+		# ภูตคืบเข้ามาทีละก้าวอย่างนุ่มนวล (ไม่วาร์ป) — ถ้ากำลังพุ่งโจมตี tween คุมตำแหน่งอยู่
+		if not sprite.has_meta("busy"):
+			sprite.position.x = lerpf(sprite.position.x, target_x, minf(1.0, get_process_delta_time() * 6.0))
+			sprite.position.y = ground
+
+
+func _boss_scale() -> float:
+	# ตัวบอสสูง ~86 px ในภาพ → ราว 60% ของความสูงสนาม
+	return maxf(2.0, round(size.y * 0.6 / 86.0))
 
 
 func _ground_y() -> float:
@@ -138,12 +333,17 @@ func _ground_y() -> float:
 
 
 func _vel_feet() -> Vector2:
-	return Vector2(size.x * 0.1, _ground_y())
+	return Vector2(_vel_x(), _ground_y())
+
+
+## เวลยืนห่างขอบซ้ายพอให้วงเวทใต้เท้า (กว้าง ~124 px ในภาพ) อยู่ในกรอบห้องทั้งวง
+func _vel_x() -> float:
+	return maxf(size.x * 0.1, CIRCLE_HALF_WIDTH * _unit() + 6.0)
 
 
 func _lane_x(distance: float) -> float:
 	# ช่องที่ 1 ประชิดเวล ช่องไกลสุดอยู่หน้าบอส
-	var start := size.x * 0.2
+	var start := _vel_x() + size.x * 0.1
 	var end := size.x * (0.66 if not _boss.is_empty() else 0.9)
 	return start + (end - start) * (distance - 1.0) / maxf(1.0, _max_distance - 1.0)
 
@@ -160,45 +360,19 @@ func _draw() -> void:
 	for d in range(1, _max_distance + 1):
 		var x := _lane_x(d)
 		draw_line(Vector2(x, ground + 4), Vector2(x, ground + 12), Color(1, 1, 1, 0.15), 2.0)
-	# วงเวทใต้เท้าเวล (สว่างจ้าเมื่อร่ายแสง)
-	var feet := _vel_feet()
-	var glow := 0.35 + 0.15 * sin(_time * 3.0) + _light * 0.65
-	for r in 3:
-		draw_arc(feet, 46.0 + r * 12.0, 0, TAU, 48, Color(GOLD, glow * (0.8 - r * 0.2)), 2.0, true)
-	if _light > 0.0:
-		var radius := (1.0 - _light) * size.x * 0.75
-		draw_arc(feet, radius, -PI * 0.5, PI * 0.5, 64, Color(GOLD, _light), 10.0 * _light + 2.0, true)
-	# ภูตโกลาหล
-	for index in _imps.size():
-		_draw_imp(Vector2(_lane_x(_imps[index]), ground), index)
+	# วงเวทใต้เท้าเวลเป็น sprite (_circle) — สว่างจ้าเมื่อร่ายแสง
 	if not _gate.is_empty():
 		_draw_gate()
 	# บอส
 	if not _boss.is_empty():
 		_draw_boss()
+	# ประกายเป็นพิกเซลสี่เหลี่ยมบนกริดเดียวกับ pixel art (ไม่ใช่วงกลมเวกเตอร์)
+	var px := _unit()
 	for s in _sparks:
 		var c: Color = s["c"]
-		draw_circle(s["p"], 3.0, Color(c, clampf(s["life"] * 1.5, 0.0, 1.0)))
-
-
-func _draw_imp(at: Vector2, index: int) -> void:
-	var k := clampf(size.y / 230.0, 1.0, 1.9)
-	var bob := sin(_time * 5.0 + index * 1.7) * 4.0
-	var center := at + Vector2(0, -26.0 * k + bob)
-	draw_circle(center, 32.0 * k, Color(CHAOS, 0.2))
-	# ตัวเป็นหยดมืดมีหนามด้านบน
-	var body := PackedVector2Array()
-	for i in 18:
-		var a := TAU * i / 18.0
-		var r := (20.0 + (7.0 if i % 3 == 0 and sin(a) < 0 else 0.0)) * k + sin(_time * 8.0 + i) * 1.5
-		body.append(center + Vector2(cos(a), sin(a) * 0.9) * r)
-	draw_colored_polygon(body, Color("1a0f24"))
-	draw_polyline(body + PackedVector2Array([body[0]]), Color(CHAOS, 0.9), 2.0, true)
-	# ตาเรืองแสง (มองไปทางเวล)
-	var eye := Color("ff5aa0")
-	draw_circle(center + Vector2(-8, -3) * k, 3.5 * k, eye)
-	draw_circle(center + Vector2(2, -3) * k, 3.5 * k, eye)
-	draw_circle(at + Vector2(0, 2), 14.0 * k, Color(0, 0, 0, 0.35))
+		var at: Vector2 = s["p"]
+		var snapped := Vector2(floorf(at.x / px) * px, floorf(at.y / px) * px)
+		draw_rect(Rect2(snapped, Vector2(px, px)), Color(c, clampf(s["life"] * 1.5, 0.0, 1.0)))
 
 
 func _gate_rect() -> Rect2:
@@ -326,34 +500,13 @@ func _wrap(text: String, width: float, font_size: int) -> PackedStringArray:
 
 
 func _draw_boss() -> void:
-	var c := _boss_center() + Vector2(sin(_time * 70.0) * 10.0 * _boss_shake, 0)
-	var h := size.y * 0.62
-	var w := size.x * 0.17
 	if _boss_fall >= 1.0:
 		return
-	var fall := _boss_fall
-	var alpha := 1.0 - fall
-	c.y += fall * h * 0.5
-	# ประตูหินมีชีวิต: บานประตูโค้ง + กำปั้น + ตาอักขระ
-	var top := c.y - h * 0.5
-	var rect := Rect2(c.x - w * 0.5, top + w * 0.5, w, h - w * 0.5)
-	var stone := STONE.lerp(Color("ff8a6b"), _boss_flash * 0.6)
-	draw_rect(rect, Color(stone, alpha))
-	draw_circle(Vector2(c.x, top + w * 0.5), w * 0.5, Color(stone, alpha))
-	draw_rect(Rect2(c.x - w * 0.32, top + w * 0.62, w * 0.64, h * 0.58), Color(STONE_DARK, alpha))
-	for i in 4:
-		var y := top + w * 0.7 + i * h * 0.13
-		draw_line(Vector2(c.x - w * 0.32, y), Vector2(c.x + w * 0.32, y), Color(0, 0, 0, 0.35 * alpha), 2.0)
-	# ตาเรืองแสงสีม่วง (แรงขึ้นเมื่อใกล้โจมตี)
-	var rage := 1.0 if _boss_attack_in == 1 else 0.55
-	var eye := Color(CHAOS.lightened(0.3), alpha)
-	draw_circle(Vector2(c.x - w * 0.18, top + w * 0.42), 7.0 + rage * 3.0 * (0.5 + 0.5 * sin(_time * 6.0)), eye)
-	draw_circle(Vector2(c.x + w * 0.18, top + w * 0.42), 7.0 + rage * 3.0 * (0.5 + 0.5 * sin(_time * 6.0)), eye)
-	# กำปั้นหิน
-	var fist_lift := (sin(_time * 3.0) * 6.0) + (24.0 if _boss_attack_in == 1 else 0.0)
-	draw_circle(Vector2(rect.position.x - 16, c.y + h * 0.12 - fist_lift), w * 0.16, Color(stone.darkened(0.15), alpha))
-	draw_circle(Vector2(rect.end.x + 16, c.y + h * 0.12 - fist_lift), w * 0.16, Color(stone.darkened(0.15), alpha))
-	# ชื่อ + แถบพลัง + จังหวะโจมตี
+	var alpha := 1.0 - _boss_fall
+	var c := _boss_center()
+	var w := size.x * 0.17
+	var top := _ground_y() - 112.0 * _boss_scale() + 14.0 * _boss_scale()
+	# ชื่อ + แถบพลัง + จังหวะโจมตี (ตัวบอสเป็น sprite pixel art ใน _sync_sprites)
 	var name := str(_boss.get("name", "บอส"))
 	var max_hp := maxi(1, int(_boss.get("hp", 1)))
 	var bar_w := w * 1.5
@@ -364,7 +517,7 @@ func _draw_boss() -> void:
 	for i in range(1, max_hp):
 		var x := bar.position.x + bar_w * i / max_hp
 		draw_line(Vector2(x, bar.position.y), Vector2(x, bar.end.y), Color(0, 0, 0, 0.8 * alpha), 2.0)
-	if _boss_attack_in > 0 and fall == 0.0:
+	if _boss_attack_in > 0 and _boss_fall == 0.0:
 		var warn := "โจมตีในอีก %d การกระทำ" % _boss_attack_in if _boss_attack_in > 1 else "กำลังจะฟาด!"
 		var warn_color := Color("ffb3c4") if _boss_attack_in == 1 else Color(1, 1, 1, 0.7)
 		draw_string(_font, Vector2(bar.position.x - 30, bar.position.y - 30), warn, HORIZONTAL_ALIGNMENT_CENTER, bar_w + 60, 15, warn_color)
