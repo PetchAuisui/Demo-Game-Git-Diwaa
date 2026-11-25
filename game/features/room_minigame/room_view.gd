@@ -181,6 +181,43 @@ func update_room(game: RoomGame, items: Array[Dictionary], branch: String) -> vo
 	_flush_fx_next_frame()
 
 
+## ป้ายลอยเมื่อทำเป้าหมายสำเร็จ: "สำเร็จ!" · ทำต่อเนื่องไม่โดนพลังกระแทก = คอมโบ · จบด่านหัวใจเต็ม = ไร้รอยแผล
+func celebrate_objective(streak: int, finished: bool, flawless: bool) -> void:
+	if not is_inside_tree():
+		return
+	var text := "สำเร็จ!"
+	var color := Color("9fe8b8")
+	if finished and flawless:
+		text = "ไร้รอยแผล!"
+		color = Color("ffd36b")
+	elif streak >= 2:
+		text = "คอมโบ x%d!" % streak
+		color = Color("ffd36b") if streak >= 3 else Color("8fd3ff")
+	var label := _label(34 if finished or streak >= 3 else 28, color, true)
+	label.add_theme_constant_override("outline_size", 8)
+	label.text = text
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	label.size = Vector2(size.x, 48)
+	label.position = Vector2(0, size.y * 0.34)
+	label.pivot_offset = label.size * 0.5
+	label.scale = Vector2.ONE * 0.4
+	_fx_layer.add_child(label)
+	var tw := label.create_tween()
+	tw.tween_property(label, "scale", Vector2.ONE * 1.15, 0.14).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	tw.tween_property(label, "scale", Vector2.ONE, 0.1)
+	tw.tween_interval(0.5 if not finished else 1.1)
+	tw.set_parallel(true)
+	tw.tween_property(label, "position:y", label.position.y - 46.0, 0.6).set_ease(Tween.EASE_IN)
+	tw.tween_property(label, "modulate:a", 0.0, 0.6).set_ease(Tween.EASE_IN)
+	tw.chain().tween_callback(label.queue_free)
+	var unit := maxf(1.0, round(size.y / 220.0))
+	var at := Vector2(size.x * 0.5, size.y * 0.34 + 96)
+	PixelFx.spawn(_fx_layer, "stage_sparkle" if streak < 3 and not finished else "commit_sparkle", at, unit * (1.4 if finished else 1.0))
+	if finished and flawless:
+		PixelFx.spawn(_fx_layer, "confetti", Vector2(size.x * 0.2, size.y), unit)
+		PixelFx.spawn(_fx_layer, "confetti", Vector2(size.x * 0.8, size.y), unit, 0.0, true)
+
+
 ## ตัวนับเศษคัมภีร์ต้นกำเนิด (n/12) — แสดงเมื่อเรื่องดำเนินถึงการตามหาเศษแล้ว · gained = เพิ่งได้ชิ้นใหม่ (เด้ง)
 func set_fragments(count: int, show: bool, gained: bool = false) -> void:
 	_fragment_label.visible = show or count > 0

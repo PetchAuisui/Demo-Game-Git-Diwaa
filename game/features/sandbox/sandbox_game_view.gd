@@ -40,6 +40,8 @@ var _room: RoomGame
 ## เศษคัมภีร์ที่ผู้เล่นมี (ด่านก่อน ๆ + ที่เพิ่งได้ในด่านนี้) และเศษที่ฉลองไปแล้วในรอบนี้
 var _fragments_owned := 0
 var _celebrated: Dictionary = {}
+## เป้าหมายที่สำเร็จติดกันโดยไม่โดนพลังกระแทก (คอมโบ)
+var _streak := 0
 var _room_view: RoomView
 ## ม้วนคาถาใหม่ / สมุดคาถา (สอนคำสั่งตอนที่ต้องใช้จริง)
 var _spell_view: SpellScrollView
@@ -289,6 +291,7 @@ func _setup_room() -> void:
 	_room = RoomGame.from_config(_mission.room)
 	_fragments_owned = FragmentLedger.collected_before(_mission.level_number)
 	_celebrated.clear()
+	_streak = 0
 	_spell_overlay.compact = true
 	if _room_view == null:
 		_room_view = RoomView.new()
@@ -361,6 +364,8 @@ func _advance_room(command: String) -> void:
 	var outcome := _room.on_turn(snapshot, command)
 	var actions: Array = outcome["actions"]
 	_room_view.play_events(outcome["events"])
+	if outcome["events"].any(func(e: Dictionary) -> bool: return e["type"] == "damage"):
+		_streak = 0
 	if outcome["events"].any(func(e: Dictionary) -> bool: return e["type"] == "damage") and not _room.is_failed():
 		_miura_hint("ระวัง! พลังลดลงแล้ว")
 	if actions.is_empty():
@@ -462,6 +467,10 @@ func _on_mission_progress(command: String, result: GitCommandResult, snapshot: G
 		_room_view.play_events(hits)
 	_mission_panel.refresh()
 	_update_mission_prompt()
+	if not newly_done.is_empty() and _room_view != null:
+		_streak += newly_done.size()
+		var flawless := _room != null and _room.hearts == _room.max_hearts
+		_room_view.celebrate_objective(_streak, _mission.is_complete(), flawless)
 	for done_id in newly_done:
 		_celebrate_fragment(_mission.world_text(done_id))
 	if _mission.is_complete():
