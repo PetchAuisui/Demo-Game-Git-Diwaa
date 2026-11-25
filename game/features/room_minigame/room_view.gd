@@ -191,6 +191,51 @@ func update_room(game: RoomGame, items: Array[Dictionary], branch: String) -> vo
 	_flush_fx_next_frame()
 
 
+## การ์ดเปิดขั้น: ป้ายชั้น + ชื่อขั้น + เป้าหมายแรก + ภัยของห้อง พุ่งลงมากลางห้องแล้วหายไปเอง
+## (ไม่รับเมาส์ ไม่บังวงร่ายเวท) — ผู้เล่นรู้ทันทีว่าต้องทำอะไรและอะไรกำลังไล่ล่า
+func show_intro(floor_text: String, title: String, goal: String, threat: String) -> void:
+	if not is_inside_tree():
+		return
+	var card := PanelContainer.new()
+	card.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color(0.08, 0.05, 0.14, 0.94)
+	style.border_color = Color("ffd36b")
+	style.set_border_width_all(3)
+	style.set_corner_radius_all(4)
+	style.set_content_margin_all(14)
+	card.add_theme_stylebox_override("panel", style)
+	var column := VBoxContainer.new()
+	column.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	column.add_theme_constant_override("separation", 2)
+	card.add_child(column)
+	var lines := [[floor_text, 15, Color("c9b6ff")], [title, 30, Color("ffd36b")],
+			["เป้าหมาย: " + goal, 18, Color("fff3d6")], [threat, 16, Color("ffb3c4")]]
+	for line in lines:
+		if str(line[0]).strip_edges().is_empty() or str(line[0]) == "เป้าหมาย: ":
+			continue
+		var label := _label(int(line[1]), line[2], true)
+		label.text = str(line[0])
+		label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+		label.clip_text = true
+		column.add_child(label)
+	_fx_layer.add_child(card)
+	card.custom_minimum_size = Vector2(size.x * 0.7, 0)
+	card.reset_size()
+	await get_tree().process_frame
+	if not is_instance_valid(card):
+		return
+	card.position = Vector2((size.x - card.size.x) * 0.5, -card.size.y)
+	var rest := Vector2(card.position.x, size.y * 0.22)
+	var tw := card.create_tween()
+	tw.tween_property(card, "position", rest, 0.35).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	tw.tween_callback(func() -> void: _shake_frame(4.0))
+	tw.tween_interval(2.6)
+	tw.tween_property(card, "modulate:a", 0.0, 0.4)
+	tw.tween_callback(card.queue_free)
+
+
 ## ป้ายลอยเมื่อทำเป้าหมายสำเร็จ: "สำเร็จ!" · ทำต่อเนื่องไม่โดนพลังกระแทก = คอมโบ · จบด่านหัวใจเต็ม = ไร้รอยแผล
 func celebrate_objective(streak: int, finished: bool, flawless: bool) -> void:
 	if not is_inside_tree():

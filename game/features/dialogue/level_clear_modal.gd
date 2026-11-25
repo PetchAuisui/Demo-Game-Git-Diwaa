@@ -82,6 +82,62 @@ func _celebrate() -> void:
 		PixelFx.spawn(self, "gate_open", Vector2(view.x * 0.15, view.y * 0.3), unit * 0.8)
 		PixelFx.spawn(self, "gate_open", Vector2(view.x * 0.85, view.y * 0.32), unit * 0.8, 0.15, true)
 
+## ตัวอย่างชั้นถัดไป (เหนือปุ่ม): ชื่อด่านถัดไป คาถาใหม่ และเศษคัมภีร์ที่รออยู่ — ชวนให้กด "ด่านต่อไป"
+## ด่านสุดท้ายขององก์ (ไม่มีด่านถัดไป) ใช้ถ้อยคำของเศษชิ้นสุดท้ายเป็นตะขอไปสู่หอคอยกลาง
+func _add_next_teaser() -> void:
+	var buttons := btn_next_level.get_parent() if btn_next_level != null else null
+	if buttons == null or buttons.get_parent() == null:
+		return
+	var next := level_number + 1
+	var lines: PackedStringArray = []
+	if LevelDataLoader.has_level(next):
+		var data := LevelDataLoader.load_data(next)
+		lines.append("ชั้นถัดไป ▸ %s" % str(data.get("title", "ด่านที่ %d" % next)))
+		var commands: Array = data.get("commands", [])
+		if not commands.is_empty():
+			lines.append("คาถาใหม่: %s" % " · ".join(PackedStringArray(commands.map(func(c): return str(c)))))
+		var fragment := FragmentLedger.for_level(next)
+		if fragment > 0:
+			lines.append("✦ เศษคัมภีร์ชิ้นที่ %d รออยู่ที่ชั้นนั้น" % fragment)
+		elif FragmentLedger.for_level(level_number) == 0:
+			lines.append("✦ เศษคัมภีร์ชิ้นแรกซ่อนอยู่ในหอคอยชั้นบน")
+	else:
+		lines.append("✦ เศษคัมภีร์ครบ %d ชิ้น — \"%s\"" % [FragmentLedger.TOTAL, FragmentLedger.text_of(FragmentLedger.TOTAL)])
+	var box := PanelContainer.new()
+	box.name = "NextTeaser"
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color("2b1a3f")
+	style.border_color = Color("8a5ad8")
+	style.set_border_width_all(2)
+	style.set_corner_radius_all(8)
+	style.set_content_margin_all(8)
+	box.add_theme_stylebox_override("panel", style)
+	var label := Label.new()
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	label.text = "\n".join(lines)
+	label.add_theme_color_override("font_color", Color("f3e6ff"))
+	var font := level_title_label.get_theme_font("font") if level_title_label != null else null
+	if font != null:
+		label.add_theme_font_override("font", font)
+	label.add_theme_font_size_override("font_size", 18)
+	box.add_child(label)
+	var parent := buttons.get_parent()
+	parent.add_child(box)
+	parent.move_child(box, buttons.get_index())
+	box.modulate.a = 0.0
+	var tw := box.create_tween()
+	tw.tween_interval(0.9)
+	tw.tween_property(box, "modulate:a", 1.0, 0.4)
+	if btn_next_level != null and btn_next_level.visible:
+		# ปุ่มด่านต่อไปเต้นเบา ๆ ชวนให้กด
+		var pulse := btn_next_level.create_tween().set_loops()
+		pulse.tween_interval(1.4)
+		pulse.tween_callback(func() -> void: btn_next_level.pivot_offset = btn_next_level.size * 0.5)
+		pulse.tween_property(btn_next_level, "scale", Vector2.ONE * 1.06, 0.18)
+		pulse.tween_property(btn_next_level, "scale", Vector2.ONE, 0.25)
+
+
 ## ด่านที่ให้เศษคัมภีร์ (4–15): บรรทัดทองใต้ชื่อด่าน บอกว่าได้เศษชิ้นไหน (n/12) และถ้อยคำของปรมาจารย์
 func _add_fragment_line() -> void:
 	var number := FragmentLedger.for_level(level_number)
@@ -116,6 +172,7 @@ func _apply_level_info() -> void:
 	if level_title_label:
 		level_title_label.text = "ด่านที่ %d : %s" % [level_number, level_command]
 	_add_fragment_line()
+	_add_next_teaser()
 	if keyword_header_label:
 		keyword_header_label.text = "บันทึกคัมภีร์เวทประจำด่านที่ %d" % level_number
 	if keyword_body_label:

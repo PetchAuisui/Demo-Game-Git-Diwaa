@@ -42,6 +42,9 @@ var _fragments_owned := 0
 var _celebrated: Dictionary = {}
 ## เป้าหมายที่สำเร็จติดกันโดยไม่โดนพลังกระแทก (คอมโบ)
 var _streak := 0
+## การ์ดเปิดขั้นยังไม่ได้แสดงในห้องรอบนี้ (แสดงหลังผู้เล่นรับม้วนคาถาใหม่ เพื่อไม่ให้ถูกบัง)
+var _intro_due := false
+var _spells_seen := false
 var _room_view: RoomView
 ## ม้วนคาถาใหม่ / สมุดคาถา (สอนคำสั่งตอนที่ต้องใช้จริง)
 var _spell_view: SpellScrollView
@@ -260,7 +263,11 @@ func _show_new_spells() -> void:
 	var ids := SpellCatalog.taught_in(_mission.level_number, _mission.step)
 	if ids.is_empty():
 		return
-	_ensure_spell_view().show_new_spells(ids, _mission.level_number)
+	_spells_seen = true
+	var view := _ensure_spell_view()
+	view.show_new_spells(ids, _mission.level_number)
+	if not view.closed.is_connected(_try_room_intro):
+		view.closed.connect(_try_room_intro, CONNECT_ONE_SHOT)
 
 
 func _open_spellbook() -> void:
@@ -292,6 +299,7 @@ func _setup_room() -> void:
 	_fragments_owned = FragmentLedger.collected_before(_mission.level_number)
 	_celebrated.clear()
 	_streak = 0
+	_intro_due = true
 	_spell_overlay.compact = true
 	if _room_view == null:
 		_room_view = RoomView.new()
@@ -357,6 +365,35 @@ func _start_room() -> void:
 		if read.ok and read.value != null:
 			_room.remember_content(str(path), str(read.value))
 	await _update_room_view()
+	_try_room_intro()
+
+
+## แสดงการ์ดเปิดขั้นเมื่อพร้อม: ถ้าขั้นนี้แจกม้วนคาถาใหม่ รอให้ผู้เล่นรับคาถาก่อน (ปิดม้วนแล้วค่อยแสดง)
+func _try_room_intro() -> void:
+	if not _intro_due or _room == null or _room_view == null or _mission == null:
+		return
+	if _spell_view != null and _spell_view.visible:
+		return
+	if not _spells_seen and not SpellCatalog.taught_in(_mission.level_number, _mission.step).is_empty():
+		return
+	_intro_due = false
+	_show_room_intro()
+
+
+## การ์ดเปิดขั้นในห้อง: ชั้นที่เท่าไร ชื่อขั้น เป้าหมายแรก และสิ่งที่ไล่ล่าอยู่ (คลื่น/ศัตรู)
+func _show_room_intro() -> void:
+	if _room == null or _room_view == null or _mission == null:
+		return
+	var floor_text := "ชั้นที่ %d" % _mission.level_number
+	if _mission.total_steps > 1:
+		floor_text += " · ขั้น %d/%d" % [_mission.step, _mission.total_steps]
+	var goal := str(_mission.current_objective().get("short", _mission.current_objective().get("text", "")))
+	var threat := ""
+	if _room.has_battle():
+		threat = "ร่ายให้ถูกก่อนศัตรูถึงตัว!"
+	elif _room.has_waves():
+		threat = "คลื่นโกลาหลมาในอีก %d การกระทำ!" % _room.turns_until_wave()
+	_room_view.show_intro(floor_text, _mission.title, goal, threat)
 
 
 ## หนึ่งการกระทำของผู้เล่นผ่านไป → โลกเดินหนึ่งจังหวะ (คลื่นโกลาหล, ของที่ปรากฏ)
