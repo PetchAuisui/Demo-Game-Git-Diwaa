@@ -59,6 +59,10 @@ var _chaos_bar: ProgressBar
 var _dimension_label: Label
 var _fragment_label: Label
 var _zone_boxes: Dictionary = {}
+var _furniture: Dictionary = {}     # state -> RoomFurniture (โต๊ะ / แท่นเตรียม / แท่นวางคัมภีร์)
+var _stage: RoomSpellStage
+var _fog: RoomFog
+var _essential: Array[String] = []
 var _event_label: Label
 var _flash: ColorRect
 var _event_tween: Tween
@@ -136,6 +140,8 @@ func update_room(game: RoomGame, items: Array[Dictionary], branch: String) -> vo
 		_lane.visible = false
 		return
 	_lane.update_lane(game, items)
+	_update_furniture(game, items)
+	_update_fog(game)
 
 	_urgent = game.has_waves() and game.turns_until_wave() <= 1
 	_safe_mode = game.safe_mode
@@ -145,6 +151,7 @@ func update_room(game: RoomGame, items: Array[Dictionary], branch: String) -> vo
 		if is_instance_valid(old_row) and old_row.is_inside_tree() and old_row.get_child_count() > 0:
 			var old_icon := old_row.get_child(0) as TextureRect
 			old_icons[path] = {"rect": old_icon.get_global_rect(), "texture": old_icon.texture, "modulate": old_icon.modulate}
+	_essential = game.essential
 	for zone in _zone_boxes.values():
 		for child in (zone as Container).get_children():
 			child.queue_free()
@@ -227,6 +234,90 @@ func set_fragments(count: int, show: bool, gained: bool = false) -> void:
 		var tw := create_tween()
 		tw.tween_property(_fragment_label, "scale", Vector2.ONE * 1.5, 0.12).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 		tw.tween_property(_fragment_label, "scale", Vector2.ONE, 0.3)
+
+
+## ห้องมืด (blind): หมอกคลุมโซนทั้งสามจนกว่าจะหยั่งสถานะ แล้วแสงตะเกียงกวาดหมอกหาย
+func _update_fog(game: RoomGame) -> void:
+	var dark := game.blind and not game.revealed
+	if dark and not _fog.visible:
+		_fog.cover()
+	elif not dark and _fog.visible:
+		_fog.reveal()
+	_place_fog.call_deferred()
+
+
+func _place_fog() -> void:
+	if _zones == null or not is_inside_tree():
+		return
+	_fog.position = _zones.global_position - global_position
+	_fog.size = _zones.size
+
+
+## ผนึกที่รอคำตอบในลาน (ประตูหินด่าน 6 · วงอักขระด่าน 7) — kind "" = ไม่มี
+func set_seal(kind: String, opened: bool) -> void:
+	if _lane != null:
+		_lane.set_seal(kind, opened)
+
+
+## ตำแหน่งไอคอนของในห้อง (พิกัดชั้นเอฟเฟกต์) — Vector2.INF ถ้าไม่มีแถวนั้น
+func row_point(path: String) -> Vector2:
+	var row: Control = _rows.get(path, null)
+	if row == null or not is_instance_valid(row) or not row.is_inside_tree() or row.get_child_count() == 0:
+		return Vector2.INF
+	var icon := row.get_child(0) as Control
+	return to_fx(icon.global_position + icon.size * 0.5)
+
+
+func _update_furniture(game: RoomGame, items: Array[Dictionary]) -> void:
+	var altar: RoomFurniture = _furniture[RoomGame.STATE_ALTAR]
+	altar.staged = items.filter(func(item: Dictionary) -> bool: return item["state"] == RoomGame.STATE_ALTAR).size()
+	altar.shield = game.safe_mode == "staged"
+	var pedestal: RoomFurniture = _furniture[RoomGame.STATE_TOME]
+	pedestal.has_tome = game.has_tome
+	pedestal.pages = game.page_count
+	pedestal.max_pages = game.max_commits
+
+
+## ผลของคาถาที่ร่ายสำเร็จ (จาก SpellEffectDetector) → ฉากในห้องตรงเฟอร์นิเจอร์/ลาน — ห้องต่อสู้ใช้สนามรบของตัวเอง
+func cast(effects: Array[Dictionary], command: String, snapshot: GitRepositorySnapshot = null) -> void:
+	if _in_battle or effects.is_empty() or not is_inside_tree():
+		return
+	if _stage == null:
+		_stage = RoomSpellStage.new(self)
+	_stage.play(effects, command, snapshot)
+
+
+func fx_layer() -> Control:
+	return _fx_layer
+
+
+func furniture(state: String) -> RoomFurniture:
+	return _furniture.get(state, null)
+
+
+func lane() -> ChaosLaneView:
+	return _lane
+
+
+func zone_rect(state: String) -> Rect2:
+	var furniture_node: RoomFurniture = _furniture.get(state, null)
+	if furniture_node == null:
+		return Rect2()
+	var panel := furniture_node.get_parent() as Control
+	return Rect2(panel.global_position - _fx_layer.global_position, panel.size)
+
+
+## พิกัด global → พิกัดในชั้นเอฟเฟกต์
+func to_fx(global_point: Vector2) -> Vector2:
+	return global_point - _fx_layer.global_position
+
+
+func fx_unit() -> float:
+	return maxf(1.0, round(size.y / 220.0))
+
+
+func shake(strength: float) -> void:
+	_shake_frame(strength)
 
 
 ## โน้ตของมิวรา (เช่น คำแปลผล git status) แสดงในห้องนานกว่าเหตุการณ์ปกติ — วงร่ายเวทเหลือไว้ให้ Git
@@ -488,6 +579,10 @@ func _build() -> void:
 	_flash.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	add_child(_flash)
 
+	_fog = RoomFog.new()
+	_fog.visible = false
+	add_child(_fog)
+
 	_fx_layer = Control.new()
 	_fx_layer.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_fx_layer.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -689,6 +784,12 @@ func _make_zone(zone: Dictionary) -> Control:
 	style.set_content_margin_all(8)
 	panel.add_theme_stylebox_override("panel", style)
 
+	# เฟอร์นิเจอร์อยู่ใต้รายการของ (ลูกตัวแรกของ PanelContainer วาดก่อน)
+	var furniture := RoomFurniture.new()
+	furniture.kind = {RoomGame.STATE_DESK: RoomFurniture.Kind.DESK, RoomGame.STATE_ALTAR: RoomFurniture.Kind.ALTAR,
+			RoomGame.STATE_TOME: RoomFurniture.Kind.PEDESTAL}[zone["state"]]
+	panel.add_child(furniture)
+	_furniture[zone["state"]] = furniture
 	var box := VBoxContainer.new()
 	box.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	box.add_theme_constant_override("separation", 4)
@@ -701,15 +802,6 @@ func _make_zone(zone: Dictionary) -> Control:
 	sub.text = zone["sub"]
 	sub.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	box.add_child(sub)
-	if is_tome and ResourceLoader.exists(TOME_TEXTURE):
-		var tome := TextureRect.new()
-		tome.texture = load(TOME_TEXTURE)
-		tome.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-		tome.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-		tome.custom_minimum_size = Vector2(0, 56)
-		tome.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-		tome.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		box.add_child(tome)
 	var items := VBoxContainer.new()
 	items.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	items.add_theme_constant_override("separation", 3)
@@ -780,6 +872,10 @@ func _make_item(item: Dictionary, index: int) -> Control:
 		label.text = "%s · ?" % item["path"]
 	else:
 		label.text = str(item["name"])
+		if _essential.has(path):
+			# ของที่ห้ามหาย (เช่น reset --hard จะลบทิ้ง) มีดาวทองกำกับ
+			label.text = "★ " + label.text
+			label.add_theme_color_override("font_color", Color("ffd36b"))
 		if kind == "curse":
 			label.add_theme_color_override("font_color", Color("d6a8ff"))
 		# ป้ายสถานะ: บอกว่าแผ่นนี้คืออะไรในภาษา Git (ตรงกับหมวดในผลของ git status)

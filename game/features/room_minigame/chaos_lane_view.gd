@@ -36,6 +36,14 @@ var _hidden := false          # ห้องมืด (blind) ยังไม่
 var _time := 0.0
 var _vel_hurt := 0.0
 var _lunge := 0.0             # ภูตกระโจน (ตอนคลื่นมา)
+var _cast := 0.0              # เวลย่อตัวร่ายคาถา
+var _scatter := 0.0           # ภูตกระเด็นถอยหนีแสงคาถา
+## ผนึกที่รอคำตอบ (เอ่ยคำในห้อง): "door" ประตูหินผนึก (ด่าน 6) · "runes" วงอักขระ (ด่าน 7) · "" ไม่มี
+var _seal_kind := ""
+var _seal_open := 0.0
+var _seal_target := 0.0
+var _seal_zap := 0.0
+var _seal_circle: PixelFx
 
 
 func _ready() -> void:
@@ -179,12 +187,89 @@ func play(events: Array[Dictionary]) -> void:
 			"damage":
 				_vel_hurt = 1.0
 				var text := str(event.get("text", ""))
-				if text.contains("มิติผี"):
+				if text.contains("ประตูผนึก"):
+					seal_zap()
+				elif text.contains("มิติผี"):
 					for ghost in _ghosts:
 						var tw := ghost.create_tween()
 						tw.tween_property(ghost, "position:x", _vel_x() - 20.0 * _unit(), 0.18).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_IN)
 				elif text.contains("คลัง") and _vault != null:
 					PixelFx.spawn(_fx, "damage", _vel.position + Vector2(10, size.y * 0.5), _unit() * 0.6)
+
+
+## เวลร่ายคาถา: ย่อตัวแล้วยืด มีประกายที่ปลายมือ
+func vel_cast() -> void:
+	if not visible:
+		return
+	_cast = 1.0
+	PixelFx.spawn(_fx, "stage_sparkle", vel_hand(), _unit() * 0.45)
+
+
+## แสงคาถาใหญ่ (เช่น คัมภีร์ถือกำเนิด) ทำให้ภูตกระเด็นถอยไปทางประตู
+func scatter_imps() -> void:
+	if not visible:
+		return
+	_scatter = 1.0
+
+
+## คาถาล้มเหลว: ควันสีเทาฟุ่บที่มือเวล
+func fizzle() -> void:
+	if not visible:
+		return
+	var poof := PixelFx.spawn(_fx, "imp_poof", vel_hand(), _unit() * 0.45)
+	if poof != null:
+		poof.modulate = Color(0.6, 0.6, 0.65)
+	_vel_hurt = 0.35
+
+
+## ตั้งผนึกที่รอคำตอบ: kind "" = ซ้อน · opened = ผนึกถูกเปิดแล้ว (ตอบถูกครบ)
+func set_seal(kind: String, opened: bool) -> void:
+	if kind != _seal_kind:
+		_seal_kind = kind
+		_seal_open = 1.0 if opened else 0.0
+		if _seal_circle != null:
+			_seal_circle.queue_free()
+			_seal_circle = null
+		if kind == "runes":
+			_seal_circle = PixelFx.spawn(_back, "vel_circle", _seal_point(), _unit() * 0.5)
+	var target := 1.0 if opened else 0.0
+	if target > _seal_target and _seal_kind != "":
+		_seal_burst()
+	_seal_target = target
+
+
+## เอ่ยผิด: ผนึกช็อตกลับใส่เวล
+func seal_zap() -> void:
+	if _seal_kind.is_empty():
+		return
+	_seal_zap = 1.0
+	_vel_hurt = 1.0
+	var from := _seal_point() + Vector2(0, -22.0 * _unit())
+	var bolt := PixelFx.spawn(_fx, "damage", vel_hand(), _unit() * 0.6)
+	if bolt != null:
+		bolt.modulate = Color(1.2, 0.6, 1.4)
+	PixelFx.spawn(_fx, "imp_poof", from, _unit() * 0.5)
+
+
+func _seal_point() -> Vector2:
+	return Vector2(size.x * 0.68, _ground())
+
+
+func _seal_burst() -> void:
+	var at := _seal_point()
+	if _seal_kind == "door":
+		PixelFx.spawn(_fx, "gate_open", at + Vector2(0, -26.0 * _unit()), _unit() * 0.5)
+	else:
+		PixelFx.spawn(_fx, "commit_sparkle", at, _unit() * 0.8)
+	PixelFx.spawn(_fx, "stage_sparkle", at, _unit() * 0.7)
+
+
+func vel_hand() -> Vector2:
+	return Vector2(_vel_x() - 14.0 * _unit(), _ground() - size.y * 0.45)
+
+
+func vault_point() -> Vector2:
+	return _vault.position + Vector2(0, -30.0 * _unit()) if _vault != null else Vector2(_vel_x() - 46.0 * _unit(), _ground() - 30.0)
 
 
 ## คลื่นมา: ภูตทุกตัวกระโจนเข้าหาโต๊ะแล้วระเบิดเป็นควัน ตัวใหม่คลานออกจากประตูอีกครั้ง
@@ -206,12 +291,57 @@ func _wave_pounce() -> void:
 		_sync_imps())
 
 
+## ประตูหินผนึก: กรอบหิน + บานที่เลื่อนขึ้นเมื่อรหัสถูก · รูนกลางบานเรืองม่วง ช็อตแดงเมื่อเอ่ยผิด
+func _draw_door() -> void:
+	var u := _unit()
+	var p := _seal_point()
+	var w := 26.0 * u
+	var h := 38.0 * u
+	var stone := [Color("2c2842"), Color("3e3a5a"), Color("565078"), Color("7a74a0")]
+	var left := p.x - w * 0.5
+	var top := p.y - h
+	draw_rect(Rect2(left - 4 * u, top - 4 * u, w + 8 * u, 4 * u), stone[2])
+	draw_rect(Rect2(left - 4 * u, top - 4 * u, w + 8 * u, u), stone[3])
+	draw_rect(Rect2(left - 4 * u, top, 4 * u, h), stone[1])
+	draw_rect(Rect2(left + w, top, 4 * u, h), stone[0])
+	draw_rect(Rect2(left, top, w, h), Color("0d0a18"))
+	if _seal_open > 0.0:
+		var light := Color(1.0, 0.85, 0.5, 0.25 * _seal_open)
+		draw_rect(Rect2(left, top, w, h), light)
+	var slab_h := h * (1.0 - _seal_open)
+	if slab_h > 0.5:
+		draw_rect(Rect2(left, top, w, slab_h), stone[1])
+		draw_rect(Rect2(left, top + slab_h - u, w, u), stone[0])
+		for row in range(1, 4):
+			var y := top + slab_h - row * 10.0 * u
+			if y > top:
+				draw_rect(Rect2(left, y, w, u), stone[0])
+		var rune_y := top + slab_h - h * 0.55
+		if rune_y > top:
+			var glow := Color("c48bff").lerp(Color("ff5f7a"), _seal_zap)
+			glow.a = 0.6 + 0.3 * sin(_time * 3.0) + _seal_zap * 0.4
+			var cx := p.x
+			draw_rect(Rect2(cx - u, rune_y - 6 * u, 2 * u, 12 * u), glow)
+			draw_rect(Rect2(cx - 5 * u, rune_y - u, 10 * u, 2 * u), glow)
+			draw_rect(Rect2(cx - 4 * u, rune_y - 5 * u, 2 * u, 2 * u), glow)
+			draw_rect(Rect2(cx + 2 * u, rune_y + 3 * u, 2 * u, 2 * u), glow)
+
+
 func _process(delta: float) -> void:
 	if not visible:
 		return
 	_time += delta
 	_vel_hurt = maxf(0.0, _vel_hurt - delta * 2.0)
 	_lunge = maxf(0.0, _lunge - delta * 3.0)
+	_cast = maxf(0.0, _cast - delta * 3.0)
+	_scatter = maxf(0.0, _scatter - delta * 0.9)
+	_seal_zap = maxf(0.0, _seal_zap - delta * 2.0)
+	_seal_open = move_toward(_seal_open, _seal_target, delta / 0.8)
+	if _seal_circle != null:
+		_seal_circle.position = _seal_point()
+		_seal_circle.scale = Vector2.ONE * _unit() * 0.5
+		var lit := Color(1.4, 1.25, 0.8) if _seal_target >= 1.0 else Color(0.55, 0.5, 0.7, 0.7)
+		_seal_circle.modulate = lit.lerp(Color(1.6, 0.4, 0.5), _seal_zap)
 	if _lunge <= 0.0:
 		_shown_progress = lerpf(_shown_progress, _progress, 1.0 - exp(-delta * 4.0))
 	var unit := _unit()
@@ -221,9 +351,12 @@ func _process(delta: float) -> void:
 		if not is_instance_valid(imp) or _lunge > 0.0:
 			continue
 		var base := lerpf(_portal_x() + 18.0 * unit, _target_x(), _shown_progress)
-		var x := base - i * 20.0 * unit
-		imp.position = Vector2(maxf(_portal_x(), x), _ground())
+		var x := base - i * 20.0 * unit - ease(_scatter, 0.4) * 60.0 * unit
+		var hop := -absf(sin(_scatter * PI * 3.0)) * 10.0 * unit * _scatter
+		imp.position = Vector2(maxf(_portal_x(), x), _ground() + hop)
 		imp.modulate = Color(0.6, 0.6, 0.75, 0.8) if sleepy else Color.WHITE
+		if _scatter > 0.6:
+			imp.modulate = Color(1.6, 1.5, 1.2)
 		imp.flip_h = false
 	for i in _ghosts.size():
 		var ghost := _ghosts[i]
@@ -239,7 +372,7 @@ func _process(delta: float) -> void:
 		_vel.texture = _vel_hurt_tex if _vel_hurt > 0.4 else _vel_idle
 		_vel.modulate = Color(1, 0.55, 0.6).lerp(Color.WHITE, 1.0 - _vel_hurt) if _vel_hurt > 0.0 else Color.WHITE
 		var bob := sin(_time * 2.4) * 1.0
-		_vel.offset = Vector2(sin(_time * 60.0) * 2.0 * _vel_hurt, bob)
+		_vel.offset = Vector2(sin(_time * 60.0) * 2.0 * _vel_hurt, bob - sin(_cast * PI) * 4.0)
 	queue_redraw()
 
 
@@ -263,6 +396,8 @@ func _draw() -> void:
 			var px := lerpf(from, to, float(i) / steps)
 			var lit := float(i) / steps <= _shown_progress + 0.001
 			draw_rect(Rect2(px - 2, g - 4, 4, 2), Color(CHAOS, 0.9) if lit else Color(1, 1, 1, 0.12))
+	if _seal_kind == "door":
+		_draw_door()
 	# เงาใต้เวล
 	draw_rect(Rect2(_vel_x() - 16, g - 1, 32, 3), Color(0, 0, 0, 0.45))
 	if _bare:
@@ -271,5 +406,6 @@ func _draw() -> void:
 		draw_rect(Rect2(_vel_x() - 20, g - size.y * 0.9, 40, 2), Color(1, 0.4, 0.5, a))
 	if not _caption.is_empty():
 		var color := Color("c9b6ff") if _hidden else (Color("ffb3c4") if _threat > 0 else Color("9fe8b8"))
-		draw_string_outline(_font, Vector2(size.x * 0.5 - 140, 16), _caption, HORIZONTAL_ALIGNMENT_CENTER, 280, 14, 4, Color(0, 0, 0, 0.85))
-		draw_string(_font, Vector2(size.x * 0.5 - 140, 16), _caption, HORIZONTAL_ALIGNMENT_CENTER, 280, 14, color)
+		var width := size.x * 0.8
+		draw_string_outline(_font, Vector2(size.x * 0.1, 16), _caption, HORIZONTAL_ALIGNMENT_CENTER, width, 14, 4, Color(0, 0, 0, 0.85))
+		draw_string(_font, Vector2(size.x * 0.1, 16), _caption, HORIZONTAL_ALIGNMENT_CENTER, width, 14, color)

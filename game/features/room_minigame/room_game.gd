@@ -97,6 +97,8 @@ var _corrupted: Dictionary = {}
 var active_phantoms: Array[String] = []
 var sync_text := ""
 var has_tome := false
+var page_count := 0
+var branch_names: Array[String] = []
 ## path ที่มีอยู่จริงในพื้นที่ทำงานล่าสุด (ผู้เรียกตั้งค่าก่อน on_turn ผ่าน set_present)
 var _present: Dictionary = {}
 
@@ -347,8 +349,14 @@ func _observe(snapshot: GitRepositorySnapshot) -> void:
 	active_phantoms.clear()
 	has_tome = snapshot != null and snapshot.is_initialized
 	sync_text = sync_drift(snapshot) if sync_required and has_tome else ""
+	page_count = 0
+	branch_names.clear()
 	if snapshot == null:
 		return
+	page_count = snapshot.commits.size()
+	for branch in snapshot.branches:
+		if not SpellEffectDetector._is_remote_branch(snapshot, branch.name):
+			branch_names.append(branch.name)
 	for phantom in phantoms:
 		if snapshot.branches.any(func(branch: GitBranchInfo) -> bool: return branch.name == phantom):
 			active_phantoms.append(phantom)

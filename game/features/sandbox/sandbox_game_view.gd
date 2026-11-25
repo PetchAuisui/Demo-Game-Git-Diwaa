@@ -333,6 +333,17 @@ func _sync_speak() -> void:
 		if _mission != null and not _mission.is_complete():
 			guard_line = str(_mission.current_objective().get("guard_asks", ""))
 		_room_view.set_guard_line(guard_line)
+		_room_view.set_seal(_seal_kind(), _mission != null and _mission.objectives.all(
+				func(o: Dictionary) -> bool: return str(o.get("type", "")) != "say" or _mission.is_done(str(o.get("id", "")))))
+
+
+## ผนึกที่รอคำตอบในห้อง: ขั้นที่มีเป้าหมาย "เอ่ยคำ" (นอกด่านต่อสู้) มีประตูหินผนึก — ด่าน 7 เป็นวงอักขระ
+func _seal_kind() -> String:
+	if _mission == null or _room == null or _room.has_battle():
+		return ""
+	if not _mission.objectives.any(func(o: Dictionary) -> bool: return str(o.get("type", "")) == "say"):
+		return ""
+	return "runes" if _mission.level_number == 7 else "door"
 
 
 ## ของตั้งต้นของห้อง (turn 0) และจดจำเนื้อหาเศษคัมภีร์ที่มีอยู่ เพื่อให้เศษที่สลายก่อตัวใหม่ได้
@@ -764,7 +775,10 @@ func _on_command_submitted(command: String) -> void:
 	var after := await _sandbox_service.inspect()
 	if _is_leaving or not is_inside_tree():
 		return
-	_spell_overlay.play_all(SpellEffectDetector.detect(before, after, trimmed, result.success))
+	var spell_effects := SpellEffectDetector.detect(before, after, trimmed, result.success)
+	_spell_overlay.play_all(spell_effects)
+	if _room_view != null:
+		_room_view.cast(spell_effects, trimmed, after)
 	if result.success and LevelMission.tokenize(trimmed).slice(0, 2) == PackedStringArray(["git", "status"]):
 		if _room_view != null:
 			_room_view.show_note(StatusTranslator.explain(after, _room.items if _room != null else {}, true))
