@@ -9,6 +9,10 @@ extends RefCounted
 ##   git diff      ลำแสงเทียบรอยระหว่างสองโซน (- แดง / + เขียว) ตามรูปแบบคาถา
 ##   git add       แท่นเตรียมเรืองวาบ · git commit  พลังจากแท่นพุ่งเข้าคัมภีร์ หน้าใหม่ถูกจารึก
 ##   git restore   ควันคำสาปหลุดลอย · git reset  นาฬิกาเวทหมุนย้อน
+##   git branch    รอยแยกมิติเปิด/ยุบในลาน · git switch  แสงมิติกวาดห้อง เวลหายวับไปอีกมิติ ห้องเปลี่ยนสี
+##   git merge     พลังสองมิติพุ่งมาปะทะรวมกันที่คัมภีร์ · ปะทะ (conflict) ไฟกับน้ำแข็งชนกันที่แท่นเตรียม
+##   git remote    สายเชื่อมทองระหว่างคัมภีร์กับคลังเวท (ตัดสาย = สายดำขาดสะบั้น)
+##   git push/pull หน้าคัมภีร์ไหลเข้า/ออกจากประตูคลังเวท
 ## ข้อมูลทั้งหมดมาจาก SpellEffectDetector (สิ่งที่ Git ทำจริง) ไม่ใช่การเดาจากข้อความคำสั่ง
 
 const DESK := RoomGame.STATE_DESK
@@ -25,6 +29,8 @@ func _init(view: RoomView) -> void:
 func play(effects: Array[Dictionary], command: String, snapshot: GitRepositorySnapshot) -> void:
 	var tokens := LevelMission.tokenize(command)
 	var spell := tokens[1] if tokens.size() >= 2 and tokens[0] == "git" else ""
+	if spell == "remote" and not effects.any(func(e: Dictionary) -> bool: return e["kind"] == SpellEffectDetector.Kind.FIZZLE):
+		_tether(tokens)
 	for effect in effects:
 		match int(effect["kind"]):
 			SpellEffectDetector.Kind.TOME_CREATED:
@@ -50,6 +56,18 @@ func play(effects: Array[Dictionary], command: String, snapshot: GitRepositorySn
 				_curse_lifted(str(effect.get("detail", "")))
 			SpellEffectDetector.Kind.TIME_REWIND:
 				_rewind()
+			SpellEffectDetector.Kind.DIMENSION_SPLIT, SpellEffectDetector.Kind.DIMENSION_CLOSED:
+				_view.lane().vel_cast()
+			SpellEffectDetector.Kind.DIMENSION_STEP:
+				_dimension_step(str(effect.get("detail", "")))
+			SpellEffectDetector.Kind.DIMENSIONS_MERGED:
+				_merge()
+			SpellEffectDetector.Kind.DIMENSION_CLASH:
+				_clash()
+			SpellEffectDetector.Kind.PORTAL_SEND:
+				_portal_send()
+			SpellEffectDetector.Kind.PORTAL_RECEIVE:
+				_portal_receive()
 			SpellEffectDetector.Kind.FIZZLE:
 				_view.lane().fizzle()
 
@@ -189,6 +207,117 @@ func _rewind() -> void:
 	_view.shake(3.0)
 
 
+# ---------------------------------------------------------------- มิติ
+
+## git switch: แสงสีของมิติปลายทางกวาดทั้งห้อง เวลหายวับแล้วปรากฏในอีกมิติ
+func _dimension_step(branch: String) -> void:
+	var sweep := LightSweep.new()
+	sweep.color = RoomView.dimension_color(branch)
+	var rect := _view.zone_rect(DESK).merge(_view.zone_rect(TOME))
+	sweep.position = rect.position
+	sweep.size = rect.size
+	_fx().add_child(sweep)
+	var tw := sweep.create_tween()
+	tw.tween_property(sweep, "progress", 1.0, 0.55).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	tw.tween_callback(sweep.queue_free)
+	_view.lane().vel_blink()
+
+
+## git merge: พลังสองสาย (ทองจากมิติหลัก ฟ้าจากอีกมิติ) พุ่งเข้าหากันเหนือคัมภีร์ → หลอมรวมระเบิดแสง
+func _merge() -> void:
+	var to := _tome_point()
+	var u := _u()
+	_view.lane().vel_cast()
+	_bolt(_top(DESK) + Vector2(0, -30 * u), to, Color(1.3, 1.1, 0.6), 0.4)
+	_bolt(_lane_point(_view.lane().rift_point("experiment")), to, Color(0.7, 1.0, 1.5), 0.4)
+	await _wait(0.4)
+	PixelFx.hit_stop(_view.get_tree(), 0.08)
+	PixelFx.spawn(_fx(), "gate_open", to, u * 0.6)
+	_view.furniture(TOME).page_written()
+	_view.shake(6.0)
+
+
+## การปะทะ (conflict): ไฟจากโต๊ะกับน้ำแข็งจากคัมภีร์ชนกันกลางแท่นเตรียม
+func _clash() -> void:
+	var at := _top(ALTAR) + Vector2(0, -16 * _u())
+	_bolt(_top(DESK) + Vector2(0, -20 * _u()), at, Color(1.6, 0.7, 0.4), 0.3)
+	_bolt(_tome_point(), at, Color(0.6, 0.9, 1.6), 0.3)
+	await _wait(0.3)
+	PixelFx.hit_stop(_view.get_tree(), 0.1)
+	var boom := PixelFx.spawn(_fx(), "chaos_wave", at, _u() * 0.8)
+	if boom != null:
+		boom.modulate = Color(1.5, 0.6, 0.6)
+	_view.furniture(ALTAR).altar_pulse()
+	_view.shake(9.0)
+
+
+# ---------------------------------------------------------------- คลังเวท
+
+## git push: หน้าคัมภีร์ไหลจากแท่นวางคัมภีร์เข้าประตูคลังเวท แล้วประตูเรืองรับ
+func _portal_send() -> void:
+	_view.lane().vel_cast()
+	var vault := _vault_point()
+	_stream(_tome_point(), vault, 6, Color("ffe07a"))
+	await _wait(0.7)
+	_view.lane().vault_flare()
+	_view.shake(3.0)
+
+
+## git pull / fetch: จารึกใหม่ไหลลงจากประตูคลังเวทเข้าสู่คัมภีร์
+func _portal_receive() -> void:
+	_view.lane().vel_cast()
+	_view.lane().vault_flare()
+	_stream(_vault_point(), _tome_point(), 6, Color("8ff0ff"))
+	await _wait(0.75)
+	_view.furniture(TOME).page_written()
+	PixelFx.spawn(_fx(), "commit_sparkle", _tome_point(), _u())
+
+
+## git remote: สายเชื่อมระหว่างคัมภีร์กับคลังเวท — ดู (-v) = สายทองเรือง · ผูก/ย้าย = สายใหม่ต่อเข้า · ลบ = สายดำขาด
+func _tether(tokens: PackedStringArray) -> void:
+	var verb := tokens[2] if tokens.size() >= 3 else "-v"
+	var cut := verb in ["remove", "rm"]
+	var line := Tether.new()
+	line.from = _tome_point()
+	line.to = _vault_point()
+	line.color = Color("5a3a7a") if cut else Color("ffd36b")
+	line.snap = cut
+	line.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_fx().add_child(line)
+	var tw := line.create_tween()
+	tw.tween_property(line, "progress", 1.0, 1.3)
+	tw.tween_callback(line.queue_free)
+	if cut:
+		await _wait(0.55)
+		PixelFx.spawn(_fx(), "imp_poof", line.from.lerp(line.to, 0.5), _u() * 0.7)
+	elif verb in ["add", "set-url"]:
+		await _wait(0.5)
+		PixelFx.spawn(_fx(), "stage_sparkle", line.to, _u() * 0.8)
+
+
+func _vault_point() -> Vector2:
+	var lane := _view.lane()
+	if lane != null and lane.visible:
+		return _lane_point(lane.vault_point())
+	return Vector2(_fx().size.x - 40.0, 40.0)
+
+
+func _lane_point(local: Vector2) -> Vector2:
+	return _view.to_fx(_view.lane().global_position + local)
+
+
+## ลูกพลังพุ่งจาก a ไป b (ย้อมสีได้)
+func _bolt(a: Vector2, b: Vector2, tint: Color, seconds: float) -> void:
+	var bolt := PixelFx.spawn(_fx(), "spell_bolt", a, _u() * 0.6)
+	if bolt == null:
+		return
+	bolt.modulate = tint
+	bolt.rotation = (b - a).angle()
+	var tw := bolt.create_tween()
+	tw.tween_property(bolt, "position", b, seconds).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	tw.tween_callback(bolt.queue_free)
+
+
 # ---------------------------------------------------------------- คาถาสำรวจ
 
 ## git status: ลำแสงตะเกียงกวาดจากซ้ายไปขวาทั่วทั้งสามโซน
@@ -289,6 +418,36 @@ class LightSweep extends Control:
 		var bands := [[0.0, 26.0, 0.3], [-10.0, 46.0, 0.14], [-24.0, 74.0, 0.07]]
 		for band in bands:
 			draw_rect(Rect2(x + band[0] - band[1] * 0.5, 0, band[1], size.y), Color(color, band[2]))
+
+
+## สายเชื่อม: เส้นพิกเซลโค้งจากคัมภีร์ไปคลังเวท ประกายวิ่งตามสาย · snap = ขาดกลางสายแล้วร่วง
+class Tether extends Control:
+	var from := Vector2.ZERO
+	var to := Vector2.ZERO
+	var color := Color.WHITE
+	var snap := false
+	var progress := 0.0:
+		set(value):
+			progress = value
+			queue_redraw()
+
+	func _ready() -> void:
+		mouse_filter = Control.MOUSE_FILTER_IGNORE
+
+	func _draw() -> void:
+		var fade := 1.0 - maxf(0.0, (progress - 0.7) / 0.3)
+		var grow := minf(1.0, progress / 0.3)
+		var steps := 40
+		var broken := snap and progress > 0.42
+		for i in int(steps * grow):
+			var t := float(i) / steps
+			var sag := sin(t * PI) * 26.0 * (1.0 + (progress - 0.42) * 3.0 if broken else 1.0)
+			var p := from.lerp(to, t) + Vector2(0, sag)
+			if broken and absf(t - 0.5) < 0.06:
+				continue
+			var bright := absf(t - fmod(progress * 1.5, 1.0)) < 0.06
+			var c := Color(color.lightened(0.5) if bright else color, fade)
+			draw_rect(Rect2(p.round() - Vector2(1, 1), Vector2(3, 3)), c)
 
 
 ## หน้าปัดนาฬิกาเวท: วงจุดพิกเซล 12 ขีด เข็มยาว/สั้นหมุนทวนเข็มสองรอบ แล้วจางหาย

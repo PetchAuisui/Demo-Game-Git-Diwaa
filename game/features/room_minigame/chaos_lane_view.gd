@@ -44,6 +44,11 @@ var _seal_open := 0.0
 var _seal_target := 0.0
 var _seal_zap := 0.0
 var _seal_circle: PixelFx
+## มิติอื่นที่มีอยู่ (branch ที่ไม่ได้ยืนอยู่) เป็นรอยแยกเล็ก ๆ บนพื้นลาน พร้อมชื่อ — name -> PixelFx
+var _rifts: Dictionary = {}
+var _rift_names: Array[String] = []
+var _blink := 0.0             # เวลหายวับ/ปรากฏตอนข้ามมิติ
+var _vault_flare := 0.0
 
 
 func _ready() -> void:
@@ -106,6 +111,7 @@ func update_lane(game: RoomGame, described: Array[Dictionary]) -> void:
 	_ensure_portals(game)
 	_sync_imps()
 	_sync_ghosts(game.active_phantoms)
+	_sync_rifts(game)
 	_caption = _make_caption(game)
 	_layout()
 	queue_redraw()
@@ -160,6 +166,54 @@ func _sync_ghosts(names: Array[String]) -> void:
 		ghost.queue_free()
 
 
+## รอยแยกมิติของทุก branch ที่ไม่ได้ยืนอยู่ — เปิดใหม่มีประกาย ปิดแล้วยุบหาย
+func _sync_rifts(game: RoomGame) -> void:
+	var wanted: Array[String] = []
+	if game.branch_names.size() > 1:
+		for name in game.branch_names:
+			if name != game.current_branch:
+				wanted.append(name)
+	var first := _rift_names.is_empty() and _rifts.is_empty()
+	for name in _rifts.keys():
+		if not wanted.has(name):
+			var rift: PixelFx = _rifts[name]
+			_rifts.erase(name)
+			var tw := rift.create_tween()
+			tw.tween_property(rift, "scale:x", 0.0, 0.3).set_ease(Tween.EASE_IN).set_trans(Tween.TRANS_BACK)
+			tw.tween_callback(func() -> void:
+				PixelFx.spawn(_fx, "imp_poof", rift.position, _unit() * 0.5)
+				rift.queue_free())
+	for name in wanted:
+		if _rifts.has(name):
+			continue
+		var rift := PixelFx.spawn(_back, "chaos_portal", Vector2.ZERO, _unit() * 0.3, randf() * 2.0)
+		if rift == null:
+			continue
+		rift.modulate = RoomView.dimension_color(name).lightened(0.2)
+		_rifts[name] = rift
+		if not first:
+			rift.scale = Vector2(0.0, rift.scale.y)
+			rift.create_tween().tween_property(rift, "scale:x", _unit() * 0.3, 0.35).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	_rift_names = wanted
+
+
+func rift_point(name: String) -> Vector2:
+	var rift: PixelFx = _rifts.get(name, null)
+	return rift.position + Vector2(0, -20.0 * _unit()) if rift != null else Vector2(size.x * 0.6, _ground() - 20.0 * _unit())
+
+
+## ข้ามมิติ: เวลหายวับแล้วปรากฏใหม่
+func vel_blink() -> void:
+	_blink = 1.0
+	PixelFx.spawn(_fx, "stage_sparkle", vel_hand(), _unit() * 0.7)
+
+
+## ประตูคลังเวทรับคัมภีร์: ขยายวาบและมีประกาย
+func vault_flare() -> void:
+	_vault_flare = 1.0
+	PixelFx.spawn(_fx, "commit_sparkle", vault_point() + Vector2(0, 20.0 * _unit()), _unit() * 0.8)
+
+
 func _layout() -> void:
 	var unit := _unit()
 	if _portal != null:
@@ -175,6 +229,10 @@ func _layout() -> void:
 		_vel.position = Vector2(_vel_x() - 24.0 * s, _ground() - 83.0 * s + 2)
 	for i in _ghosts.size():
 		_ghosts[i].scale = Vector2.ONE * unit * 0.55
+	var names := _rifts.keys()
+	for i in names.size():
+		var rift: PixelFx = _rifts[names[i]]
+		rift.position = Vector2(size.x * (0.52 + 0.1 * i), _ground() + 2)
 
 
 func play(events: Array[Dictionary]) -> void:
@@ -336,6 +394,8 @@ func _process(delta: float) -> void:
 	_cast = maxf(0.0, _cast - delta * 3.0)
 	_scatter = maxf(0.0, _scatter - delta * 0.9)
 	_seal_zap = maxf(0.0, _seal_zap - delta * 2.0)
+	_blink = maxf(0.0, _blink - delta * 1.8)
+	_vault_flare = maxf(0.0, _vault_flare - delta * 1.5)
 	_seal_open = move_toward(_seal_open, _seal_target, delta / 0.8)
 	if _seal_circle != null:
 		_seal_circle.position = _seal_point()
@@ -368,9 +428,12 @@ func _process(delta: float) -> void:
 	if _vault != null:
 		var synced := _sync_text.is_empty()
 		_vault.modulate = Color.WHITE if synced else Color(0.85, 0.45, 0.5, 0.65 + 0.25 * sin(_time * 6.0))
+		_vault.scale = Vector2.ONE * _unit() * 0.5 * (1.0 + 0.35 * sin(_vault_flare * PI))
 	if _vel.texture != null:
 		_vel.texture = _vel_hurt_tex if _vel_hurt > 0.4 else _vel_idle
 		_vel.modulate = Color(1, 0.55, 0.6).lerp(Color.WHITE, 1.0 - _vel_hurt) if _vel_hurt > 0.0 else Color.WHITE
+		if _blink > 0.0:
+			_vel.modulate.a = absf(_blink - 0.5) * 2.0
 		var bob := sin(_time * 2.4) * 1.0
 		_vel.offset = Vector2(sin(_time * 60.0) * 2.0 * _vel_hurt, bob - sin(_cast * PI) * 4.0)
 	queue_redraw()
@@ -398,6 +461,13 @@ func _draw() -> void:
 			draw_rect(Rect2(px - 2, g - 4, 4, 2), Color(CHAOS, 0.9) if lit else Color(1, 1, 1, 0.12))
 	if _seal_kind == "door":
 		_draw_door()
+	for name in _rifts:
+		var rift: PixelFx = _rifts[name]
+		var label := str(name)
+		# ชื่อมิติอยู่ข้างรอยแยก (ด้านบนของลานเป็นที่ของคำบรรยาย)
+		var p := rift.position + Vector2(10.0 * _unit(), -12.0 * _unit())
+		draw_string_outline(_font, p, label, HORIZONTAL_ALIGNMENT_LEFT, -1, 12, 3, Color(0, 0, 0, 0.85))
+		draw_string(_font, p, label, HORIZONTAL_ALIGNMENT_LEFT, -1, 12, RoomView.dimension_color(label))
 	# เงาใต้เวล
 	draw_rect(Rect2(_vel_x() - 16, g - 1, 32, 3), Color(0, 0, 0, 0.45))
 	if _bare:

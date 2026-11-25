@@ -99,6 +99,7 @@ var sync_text := ""
 var has_tome := false
 var page_count := 0
 var branch_names: Array[String] = []
+var current_branch := ""
 ## path ที่มีอยู่จริงในพื้นที่ทำงานล่าสุด (ผู้เรียกตั้งค่าก่อน on_turn ผ่าน set_present)
 var _present: Dictionary = {}
 
@@ -351,9 +352,11 @@ func _observe(snapshot: GitRepositorySnapshot) -> void:
 	sync_text = sync_drift(snapshot) if sync_required and has_tome else ""
 	page_count = 0
 	branch_names.clear()
+	current_branch = ""
 	if snapshot == null:
 		return
 	page_count = snapshot.commits.size()
+	current_branch = str(snapshot.current_branch) if snapshot.current_branch != null else ""
 	for branch in snapshot.branches:
 		if not SpellEffectDetector._is_remote_branch(snapshot, branch.name):
 			branch_names.append(branch.name)

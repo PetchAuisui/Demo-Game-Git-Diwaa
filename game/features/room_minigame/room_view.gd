@@ -63,6 +63,8 @@ var _furniture: Dictionary = {}     # state -> RoomFurniture (โต๊ะ / แ
 var _stage: RoomSpellStage
 var _fog: RoomFog
 var _essential: Array[String] = []
+var _frame_style: StyleBoxFlat
+var _dimension := ""
 var _event_label: Label
 var _flash: ColorRect
 var _event_tween: Tween
@@ -142,6 +144,7 @@ func update_room(game: RoomGame, items: Array[Dictionary], branch: String) -> vo
 	_lane.update_lane(game, items)
 	_update_furniture(game, items)
 	_update_fog(game)
+	_set_dimension(branch)
 
 	_urgent = game.has_waves() and game.turns_until_wave() <= 1
 	_safe_mode = game.safe_mode
@@ -236,6 +239,34 @@ func set_fragments(count: int, show: bool, gained: bool = false) -> void:
 		tw.tween_property(_fragment_label, "scale", Vector2.ONE, 0.3)
 
 
+## สีประจำมิติ: main ทองอุ่น · experiment ฟ้าจันทรา · trial เขียว · echo ม่วงเงา · อื่น ๆ ตามชื่อ
+static func dimension_color(branch: String) -> Color:
+	match branch:
+		"", "main", "master":
+			return Color("ebcb70")
+		"experiment":
+			return Color("8fd3ff")
+		"trial":
+			return Color("7ee8a8")
+		"echo", "phantom":
+			return Color("d6a8ff")
+	return Color.from_hsv(float(branch.hash() % 360) / 360.0, 0.45, 1.0)
+
+
+## มิติที่ยืนอยู่ย้อมกรอบห้องและแสงของคัมภีร์ — ข้ามมิติแล้วห้องเปลี่ยนสีให้เห็นทันที
+func _set_dimension(branch: String) -> void:
+	if branch == _dimension:
+		return
+	_dimension = branch
+	var color := dimension_color(branch)
+	if _frame_style != null:
+		_frame_style.border_color = Color(color, 0.9)
+	_dimension_label.add_theme_color_override("font_color", color.lightened(0.2))
+	var pedestal: RoomFurniture = _furniture.get(RoomGame.STATE_TOME, null)
+	if pedestal != null:
+		pedestal.tint = color
+
+
 ## ห้องมืด (blind): หมอกคลุมโซนทั้งสามจนกว่าจะหยั่งสถานะ แล้วแสงตะเกียงกวาดหมอกหาย
 func _update_fog(game: RoomGame) -> void:
 	var dark := game.blind and not game.revealed
@@ -280,7 +311,9 @@ func _update_furniture(game: RoomGame, items: Array[Dictionary]) -> void:
 
 ## ผลของคาถาที่ร่ายสำเร็จ (จาก SpellEffectDetector) → ฉากในห้องตรงเฟอร์นิเจอร์/ลาน — ห้องต่อสู้ใช้สนามรบของตัวเอง
 func cast(effects: Array[Dictionary], command: String, snapshot: GitRepositorySnapshot = null) -> void:
-	if _in_battle or effects.is_empty() or not is_inside_tree():
+	if _in_battle or not is_inside_tree():
+		return
+	if effects.is_empty() and not command.begins_with("git remote"):
 		return
 	if _stage == null:
 		_stage = RoomSpellStage.new(self)
@@ -500,6 +533,7 @@ func _build() -> void:
 	var style := StyleBoxFlat.new()
 	style.bg_color = Color(0.05, 0.04, 0.1, 0.78)
 	style.border_color = Color(0.75, 0.6, 0.3, 0.9)
+	_frame_style = style
 	style.set_border_width_all(3)
 	style.set_corner_radius_all(14)
 	style.set_content_margin_all(16)
