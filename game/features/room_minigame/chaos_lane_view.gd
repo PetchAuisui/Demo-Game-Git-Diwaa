@@ -49,6 +49,9 @@ var _rifts: Dictionary = {}
 var _rift_names: Array[String] = []
 var _blink := 0.0             # เวลหายวับ/ปรากฏตอนข้ามมิติ
 var _vault_flare := 0.0
+var _holy := 0.0              # แสงของคัมภีร์ที่เพิ่งถือกำเนิดกวาดลาน (1 → 0) เผาภูตที่มันผ่าน
+var _hold := 0.0              # ช่วงที่ภูตยังไม่หายไปเอง (รอแสงคัมภีร์มาเผา) — วินาที
+var _calm := 0.0              # ประตูโกลาหลสงบลง (หดและหม่น) เมื่อไม่มีอะไรให้ทำลาย — 0..1
 
 
 func _ready() -> void:
@@ -126,8 +129,10 @@ func _make_caption(game: RoomGame) -> String:
 		return "ยังไม่มีคัมภีร์ — คลื่นจะซัดใส่เวลตรง ๆ"
 	if not _sync_text.is_empty():
 		return "คลังเวทไม่ตรงกับคัมภีร์ของนาย"
+	if _holy > 0.0:
+		return "แสงของคัมภีร์เผาภูตจนสิ้นซาก!"
 	if _threat == 0:
-		return "ภูตหาเหยื่อไม่เจอ ทุกอย่างปลอดภัย"
+		return "ประตูโกลาหลสงบลง — ไม่มีอะไรให้ภูตทำลาย"
 	return "ภูต %d ตัวจ้องของที่ยังไม่ปลอดภัย" % mini(_threat, MAX_IMPS)
 
 
@@ -140,14 +145,15 @@ func _ensure_portals(game: RoomGame) -> void:
 
 ## ภูตหนึ่งตัวต่อของที่ตกอยู่ในอันตราย (อย่างน้อยหนึ่งตัวถ้าห้องมีคลื่น ให้เห็นจังหวะคลื่นเสมอ)
 func _sync_imps() -> void:
-	var want := clampi(_threat, 1 if _has_waves else 0, MAX_IMPS) if _has_waves else 0
+	# ไม่มีของให้ทำลาย = ไม่มีภูต (ประตูสงบ) — ผู้เล่นเห็นทันทีว่าทำถูกแล้ว
+	var want := clampi(_threat, 0, MAX_IMPS) if _has_waves else 0
 	while _imps.size() < want:
 		var imp := PixelFx.spawn(_actors, "imp_idle", Vector2(_portal_x(), _ground()), _unit() * 0.6, randf() * 1.5)
 		if imp == null:
 			break
 		_imps.append(imp)
 		PixelFx.spawn(_fx, "imp_poof", Vector2(_portal_x(), _ground()), _unit() * 0.5)
-	while _imps.size() > want:
+	while _imps.size() > want and _holy <= 0.0 and _hold <= 0.0: # ระหว่างรอ/แสงกวาด ปล่อยให้แสงเผาภูตเอง
 		var imp: PixelFx = _imps.pop_back()
 		PixelFx.spawn(_fx, "imp_poof", imp.position, _unit() * 0.5)
 		imp.queue_free()
@@ -218,7 +224,6 @@ func _layout() -> void:
 	var unit := _unit()
 	if _portal != null:
 		_portal.position = Vector2(_portal_x(), _ground() + 2)
-		_portal.scale = Vector2.ONE * unit * 0.55
 	if _vault != null:
 		_vault.position = Vector2(_vel_x() - 46.0 * unit, _ground() + 2)
 		_vault.scale = Vector2.ONE * unit * 0.5
@@ -264,6 +269,26 @@ func vel_cast() -> void:
 
 
 ## แสงคาถาใหญ่ (เช่น คัมภีร์ถือกำเนิด) ทำให้ภูตกระเด็นถอยไปทางประตู
+## คัมภีร์ถือกำเนิด (git init / clone): แสงทองของมันกวาดลานจากขวาไปซ้าย เผาภูตทุกตัวที่แสงผ่าน
+## แล้วประตูโกลาหลหดตัวลง — เวลไม่ต้องรับคลื่นด้วยตัวเองอีกต่อไป
+func holy_sweep() -> void:
+	if not visible:
+		return
+	_holy = 1.0
+	_bare = false
+	_caption = "แสงของคัมภีร์เผาภูตจนสิ้นซาก!"
+	PixelFx.spawn(_fx, "commit_sparkle", vel_hand(), _unit() * 0.8)
+
+
+## คาถาที่กำลังจะเผาภูต (เช่น คัมภีร์กำลังถือกำเนิด): ภูตยังอยู่จนกว่าแสงจะมาถึง ไม่หายไปก่อนเอง
+func hold_imps(seconds: float) -> void:
+	_hold = maxf(_hold, seconds)
+
+
+func _holy_x() -> float:
+	return lerpf(size.x - 30.0 * _unit(), -40.0, 1.0 - _holy)
+
+
 func scatter_imps() -> void:
 	if not visible:
 		return
@@ -396,6 +421,28 @@ func _process(delta: float) -> void:
 	_seal_zap = maxf(0.0, _seal_zap - delta * 2.0)
 	_blink = maxf(0.0, _blink - delta * 1.8)
 	_vault_flare = maxf(0.0, _vault_flare - delta * 1.5)
+	if _hold > 0.0:
+		_hold = maxf(0.0, _hold - delta)
+		if _hold <= 0.0 and _holy <= 0.0:
+			_sync_imps()
+	if _holy > 0.0:
+		_holy = maxf(0.0, _holy - delta / 0.8)
+		var hx := _holy_x()
+		for imp in _imps.duplicate():
+			if is_instance_valid(imp) and imp.position.x >= hx:
+				_imps.erase(imp)
+				var burn := PixelFx.spawn(_fx, "imp_poof", imp.position, _unit() * 0.7)
+				if burn != null:
+					burn.modulate = Color(1.6, 1.3, 0.6)
+				PixelFx.spawn(_fx, "damage", imp.position + Vector2(0, -8.0 * _unit()), _unit() * 0.5)
+				imp.queue_free()
+		if _holy <= 0.0:
+			_sync_imps()
+	_calm = move_toward(_calm, 1.0 if _has_waves and _threat == 0 else 0.0, delta * 1.5)
+	if _portal != null:
+		# ประตูสงบ: หดลงและหม่น · มีของให้ทำลาย: เต็มขนาดและสว่าง
+		_portal.scale = Vector2.ONE * _unit() * 0.55 * lerpf(1.0, 0.55, _calm)
+		_portal.modulate = Color.WHITE.lerp(Color(0.45, 0.4, 0.6, 0.6), _calm)
 	_seal_open = move_toward(_seal_open, _seal_target, delta / 0.8)
 	if _seal_circle != null:
 		_seal_circle.position = _seal_point()
@@ -468,6 +515,11 @@ func _draw() -> void:
 		var p := rift.position + Vector2(10.0 * _unit(), -12.0 * _unit())
 		draw_string_outline(_font, p, label, HORIZONTAL_ALIGNMENT_LEFT, -1, 12, 3, Color(0, 0, 0, 0.85))
 		draw_string(_font, p, label, HORIZONTAL_ALIGNMENT_LEFT, -1, 12, RoomView.dimension_color(label))
+	if _holy > 0.0:
+		var hx := _holy_x()
+		for band: Array in [[0.0, 10.0, 0.55], [-8.0, 26.0, 0.22], [-20.0, 52.0, 0.09]]:
+			var w: float = band[1] * _unit() * 0.5
+			draw_rect(Rect2(hx + band[0] - w * 0.5, 0, w, size.y), Color(1.0, 0.85, 0.4, band[2]))
 	# เงาใต้เวล
 	draw_rect(Rect2(_vel_x() - 16, g - 1, 32, 3), Color(0, 0, 0, 0.45))
 	if _bare:

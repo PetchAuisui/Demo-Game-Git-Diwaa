@@ -2,7 +2,7 @@ class_name RoomSpellStage
 extends RefCounted
 ## ฉากของคาถาในห้อง: ทุกคาถาหลักของแต่ละด่านมี "ช่วงเวลาเด่น" ของตัวเองบนเฟอร์นิเจอร์และลานโกลาหล
 ## เหตุ → การปะทะ → ผล เสมอ (เวลร่าย → พลังวิ่งไปที่เป้า → เป้าตอบสนอง) ไม่ใช่สติกเกอร์ลอย ๆ
-##   git init      แท่นวางคัมภีร์ว่างเปล่า → วงเวทกาง แสงทองฟาด → คัมภีร์ร่วงลงมาประทับ ภูตกระเจิง
+##   git init      แท่นวางคัมภีร์ว่างเปล่า → วงเวทกาง แสงทองฟาด → คัมภีร์ร่วงลงมาประทับ แสงของมันกวาดลานเผาภูต
 ##   git clone     ประตูคลังเวทเปิดเหนือแท่น → คัมภีร์ลอยออกจากประตูลงมาประทับ
 ##   git status    แสงตะเกียงกวาดทั้งห้อง (ห้องมืดถูกเปิดเผย)
 ##   git log       หน้าประวัติปลิวออกจากคัมภีร์
@@ -98,8 +98,9 @@ func _wait(seconds: float) -> void:
 
 # ---------------------------------------------------------------- คัมภีร์
 
-## git init: วงเวทกางใต้แท่น → แสงทองฟาดลงมา → คัมภีร์ร่วงลงมาประทับ (หยุดภาพตอนกระทบ) → ภูตกระเจิง
+## git init: วงเวทกางใต้แท่น → แสงทองฟาดลงมา → คัมภีร์ร่วงลงมาประทับ (หยุดภาพตอนกระทบ) → แสงของคัมภีร์กวาดลานเผาภูต
 func _tome_born() -> void:
+	_view.lane().hold_imps(1.4)
 	var at := _top(TOME)
 	var u := _u()
 	_view.lane().vel_cast()
@@ -113,11 +114,12 @@ func _tome_born() -> void:
 	PixelFx.hit_stop(_view.get_tree(), 0.08)
 	PixelFx.spawn(_fx(), "commit_sparkle", at, u * 1.2)
 	_view.shake(7.0)
-	_view.lane().scatter_imps()
+	_view.lane().holy_sweep()
 
 
 ## git clone: ประตูคลังเวทเปิดเหนือแท่น แล้วคัมภีร์ (พร้อมประวัติทั้งเล่ม) ลอยลงมาประทับ
 func _tome_from_vault() -> void:
+	_view.lane().hold_imps(1.4)
 	var at := _top(TOME)
 	var u := _u()
 	var portal := PixelFx.spawn(_fx(), "vault_portal", at + Vector2(0, -70 * u), u * 0.7)
@@ -128,7 +130,7 @@ func _tome_from_vault() -> void:
 	PixelFx.hit_stop(_view.get_tree(), 0.06)
 	PixelFx.spawn(_fx(), "commit_sparkle", at, u * 1.2)
 	_view.shake(5.0)
-	_view.lane().scatter_imps()
+	_view.lane().holy_sweep()
 	await _wait(0.6)
 	if is_instance_valid(portal):
 		var tw := portal.create_tween()
