@@ -21,6 +21,25 @@ const TOME := RoomGame.STATE_TOME
 
 var _view: RoomView
 
+## ชื่อคาถา (ป้ายในห้อง) ขึ้นตอนที่ผลกระทบเกิดจริง ไม่ใช่ตอนเริ่มร่าย — วินาทีหลังร่าย
+## (คัมภีร์ถือกำเนิดประกาศเองตอนคัมภีร์ลงแท่น · คาถาสำรวจ/ล้มเหลวไม่ประกาศ เพราะห้องแสดงผลอยู่แล้ว)
+const ANNOUNCE_AT := {
+	SpellEffectDetector.Kind.INSCRIBED: 0.28,
+	SpellEffectDetector.Kind.TO_ALTAR: 0.42,
+	SpellEffectDetector.Kind.FROM_ALTAR: 0.1,
+	SpellEffectDetector.Kind.CURSE_LIFTED: 0.25,
+	SpellEffectDetector.Kind.TIME_REWIND: 0.35,
+	SpellEffectDetector.Kind.DIMENSION_SPLIT: 0.25,
+	SpellEffectDetector.Kind.DIMENSION_CLOSED: 0.25,
+	SpellEffectDetector.Kind.DIMENSION_STEP: 0.4,
+	SpellEffectDetector.Kind.DIMENSIONS_MERGED: 0.4,
+	SpellEffectDetector.Kind.DIMENSION_CLASH: 0.3,
+	SpellEffectDetector.Kind.PORTAL_SEND: 0.7,
+	SpellEffectDetector.Kind.PORTAL_RECEIVE: 0.75,
+	SpellEffectDetector.Kind.NAME_BOUND: 0.0,
+	SpellEffectDetector.Kind.RUNE_GLOW: 0.0,
+}
+
 
 func _init(view: RoomView) -> void:
 	_view = view
@@ -32,12 +51,15 @@ func play(effects: Array[Dictionary], command: String, snapshot: GitRepositorySn
 	if spell == "remote" and not effects.any(func(e: Dictionary) -> bool: return e["kind"] == SpellEffectDetector.Kind.FIZZLE):
 		_tether(tokens)
 	for effect in effects:
-		match int(effect["kind"]):
+		var kind := int(effect["kind"])
+		if ANNOUNCE_AT.has(kind):
+			_announce_later(effect, float(ANNOUNCE_AT[kind]))
+		match kind:
 			SpellEffectDetector.Kind.TOME_CREATED:
 				if spell == "clone":
-					_tome_from_vault()
+					_tome_from_vault(effect)
 				else:
-					_tome_born()
+					_tome_born(effect)
 			SpellEffectDetector.Kind.INSCRIBED:
 				_inscribe()
 			SpellEffectDetector.Kind.TO_ALTAR:
@@ -74,6 +96,12 @@ func play(effects: Array[Dictionary], command: String, snapshot: GitRepositorySn
 
 # ---------------------------------------------------------------- จุดอ้างอิง
 
+func _announce_later(effect: Dictionary, seconds: float) -> void:
+	if seconds > 0.0:
+		await _wait(seconds)
+	_view.announce(effect)
+
+
 func _fx() -> Control:
 	return _view.fx_layer()
 
@@ -98,37 +126,61 @@ func _wait(seconds: float) -> void:
 
 # ---------------------------------------------------------------- คัมภีร์
 
-## git init: วงเวทกางใต้แท่น → แสงทองฟาดลงมา → คัมภีร์ร่วงลงมาประทับ (หยุดภาพตอนกระทบ) → แสงของคัมภีร์กวาดลานเผาภูต
-func _tome_born() -> void:
-	_view.hold_scene(2.8)
+## git init (storyboard "ห้องหลับใหลตื่นขึ้น", ~2.8 วินาที):
+##   0.0–0.3  เวลยกมือ ประกายทองพุ่งจากมือไปที่แท่นวางคัมภีร์ที่ว่าง (เล็งตำแหน่งบนจอขณะกล้องยังซูมอยู่)
+##   0.3–0.6  ประกายกระทบ วงเวททองกางบนแท่น (อยู่ใต้กล้อง ถูกซูมไปพร้อมห้อง)
+##   0.6–1.6  คลื่นแสงแผ่จากแท่นไปทั่วห้อง ของแต่ละชิ้นตื่นเมื่อแสงผ่าน กล้องถอยกลับขนาดจริง
+##   1.6–1.9  ลำแสงทองฟาดลงแท่น คัมภีร์ร่วงลงมาในลำแสง
+##   1.9      กระทบ: หยุดภาพชั่วครู่ ประกาย ห้องสั่น ชื่อคาถาขึ้น หัวห้องเปลี่ยนเป็นมิติ main
+##   1.9–2.7  แสงคัมภีร์กวาดลานเผาภูต แล้วประตูโกลาหลสงบ
+## ห้องที่ตื่นอยู่แล้ว (ไม่ใช่ห้องหลับ): วงเวทกางบนแท่น → ลำแสง → คัมภีร์ลงแท่น
+func _tome_born(effect: Dictionary) -> void:
+	_view.hold_scene(3.0)
 	_view.lane().hold_imps(2.8)
+	var dormant := _view.begin_wake()
 	_view.lane().vel_cast()
-	# ห้องว่างเปล่า (ด่าน git init): เฟอร์นิเจอร์งอกขึ้นมาก่อน แล้วคัมภีร์ค่อยถือกำเนิดบนแท่น
-	var setup := _view.reveal_room()
-	if setup > 0.0:
-		await _wait(setup)
-	var at := _top(TOME)
+	var pedestal := _view.furniture(TOME)
 	var u := _u()
-	PixelFx.spawn(_fx(), "banish", at + Vector2(0, 6 * u), u * 0.55, 1.2)
-	await _wait(0.35)
+	var circle: PixelFx = null
+	if dormant:
+		var hand := _lane_point(_view.lane().vel_hand())
+		_bolt(hand, _view.camera_point(pedestal.top_global()), Color(1.4, 1.2, 0.7), 0.3)
+		await _wait(0.3)
+		# วงเวทวงเดียว (วงอักขระไม่มีเสาแสงในตัว) — ลำแสงจริงมีครั้งเดียวตอนคัมภีร์ลงมา
+		circle = _view.spawn_under_camera("vel_circle", pedestal.top_global() + Vector2(0, 2 * u), u * 0.5)
+		if circle != null:
+			circle.modulate = Color(1.5, 1.25, 0.7)
+		PixelFx.spawn(_fx(), "stage_sparkle", _view.camera_point(pedestal.top_global()), u)
+		await _wait(0.3)
+		await _wait(_view.wake_room())
+	else:
+		PixelFx.spawn(_fx(), "banish", _top(TOME) + Vector2(0, 6 * u), u * 0.55, 1.2)
+		await _wait(0.35)
+	var at := _top(TOME)
 	var beam := PixelFx.spawn(_fx(), "fragment_beam", at, u * 0.8)
 	if beam != null:
-		_view.get_tree().create_timer(0.9).timeout.connect(beam.queue_free)
-	_view.furniture(TOME).tome_born()
-	await _wait(0.5)
+		_view.get_tree().create_timer(0.8).timeout.connect(beam.queue_free)
+	pedestal.tome_born()
+	await _wait(0.3)
 	PixelFx.hit_stop(_view.get_tree(), 0.08)
 	PixelFx.spawn(_fx(), "commit_sparkle", at, u * 1.2)
 	_view.shake(7.0)
+	_view.finish_wake()
+	_view.announce(effect)
 	_view.lane().holy_sweep()
+	if circle != null and is_instance_valid(circle):
+		var fade := circle.create_tween()
+		fade.tween_property(circle, "modulate:a", 0.0, 0.5)
+		fade.tween_callback(circle.queue_free)
 
 
 ## git clone: ประตูคลังเวทเปิดเหนือแท่น แล้วคัมภีร์ (พร้อมประวัติทั้งเล่ม) ลอยลงมาประทับ
-func _tome_from_vault() -> void:
-	_view.hold_scene(2.8)
-	_view.lane().hold_imps(2.8)
-	var setup := _view.reveal_room()
-	if setup > 0.0:
-		await _wait(setup)
+func _tome_from_vault(effect: Dictionary) -> void:
+	_view.hold_scene(3.4)
+	_view.lane().hold_imps(3.2)
+	if _view.begin_wake():
+		# ห้องหลับ: คลังเวทตอบรับคาถา แสงของมันปลุกห้องก่อน แล้วคัมภีร์ค่อยลอยลงมา
+		await _wait(_view.wake_room())
 	var at := _top(TOME)
 	var u := _u()
 	var portal := PixelFx.spawn(_fx(), "vault_portal", at + Vector2(0, -70 * u), u * 0.7)
@@ -139,6 +191,8 @@ func _tome_from_vault() -> void:
 	PixelFx.hit_stop(_view.get_tree(), 0.06)
 	PixelFx.spawn(_fx(), "commit_sparkle", at, u * 1.2)
 	_view.shake(5.0)
+	_view.finish_wake()
+	_view.announce(effect)
 	_view.lane().holy_sweep()
 	await _wait(0.6)
 	if is_instance_valid(portal):

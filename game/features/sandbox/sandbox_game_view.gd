@@ -523,8 +523,7 @@ func _on_mission_progress(command: String, result: GitCommandResult, snapshot: G
 		_celebrate_fragment(_mission.world_text(done_id))
 	if _mission.is_complete():
 		_level_timer_active = false
-		_mission_panel.show_complete(_mission.success_text, _mission_continue_label())
-		_celebrate_fragment(_mission.success_text)
+		_show_complete_after_scene()
 		return
 	for done_id in newly_done:
 		_apply_world_actions(_mission.spawn_actions(done_id))
@@ -542,6 +541,17 @@ func _on_mission_progress(command: String, result: GitCommandResult, snapshot: G
 		return
 	if not mistake.is_empty():
 		_mission_panel.show_feedback(mistake, true)
+
+
+## แผงภารกิจ "สำเร็จ" และฉากรับเศษคัมภีร์รอให้ฉากคาถาในห้องจบก่อน (ผลไม่มาก่อนเหตุ)
+func _show_complete_after_scene() -> void:
+	var wait := _room_view.scene_remaining() if _room_view != null else 0.0
+	if wait > 0.0:
+		await get_tree().create_timer(wait, true, false, true).timeout
+		if _is_leaving or not is_inside_tree():
+			return
+	_mission_panel.show_complete(_mission.success_text, _mission_continue_label())
+	_celebrate_fragment(_mission.success_text)
 
 
 ## เนื้อเรื่องประกาศว่าได้รับเศษคัมภีร์ → ฉากรับเศษ (ครั้งเดียวต่อชิ้น) และตัวนับในห้องเพิ่มขึ้น
@@ -813,9 +823,13 @@ func _on_command_submitted(command: String) -> void:
 	if _is_leaving or not is_inside_tree():
 		return
 	var spell_effects := SpellEffectDetector.detect(before, after, trimmed, result.success)
-	_spell_overlay.play_all(spell_effects)
-	if _room_view != null:
+	if _room_view != null and _room != null and not _room.has_battle():
+		# ห้องเล่นฉากของคาถาเองและขึ้นชื่อคาถาตอนผลเกิดจริง — วงเวทกลางจอจะซ้อนทับก่อนเวลา จึงเหลือแค่แผงเรืองแสง
+		for effect in spell_effects:
+			_on_spell_effect_started(effect)
 		_room_view.cast(spell_effects, trimmed, after)
+	else:
+		_spell_overlay.play_all(spell_effects)
 	if result.success and LevelMission.tokenize(trimmed).slice(0, 2) == PackedStringArray(["git", "status"]):
 		if _room_view != null:
 			_room_view.show_note(StatusTranslator.explain(after, _room.items if _room != null else {}, true))

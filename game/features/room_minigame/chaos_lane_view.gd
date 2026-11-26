@@ -51,6 +51,7 @@ var _blink := 0.0             # เวลหายวับ/ปรากฏต�
 var _vault_flare := 0.0
 var _holy := 0.0              # แสงของคัมภีร์ที่เพิ่งถือกำเนิดกวาดลาน (1 → 0) เผาภูตที่มันผ่าน
 var _hold := 0.0              # ช่วงที่ภูตยังไม่หายไปเอง (รอแสงคัมภีร์มาเผา) — วินาที
+var _deferred: Array = []     # [game, described] ที่มาระหว่างรอแสงเผา — ใช้เมื่อแสงกวาดจบ
 var _calm := 0.0              # ประตูโกลาหลสงบลง (หดและหม่น) เมื่อไม่มีอะไรให้ทำลาย — 0..1
 
 
@@ -99,6 +100,10 @@ func _vel_x() -> float:
 
 
 func update_lane(game: RoomGame, described: Array[Dictionary]) -> void:
+	if _hold > 0.0 or _holy > 0.0:
+		# ภูตยังรอแสงคัมภีร์มาเผา: ลานยังคงสภาพเดิม (ภูต ประตู คำบรรยาย) จนกว่าแสงกวาดจบ — เหตุมาก่อนผล
+		_deferred = [game, described]
+		return
 	_has_waves = game.has_waves()
 	visible = _has_waves or not game.phantoms.is_empty() or game.sync_required
 	if not visible:
@@ -280,6 +285,15 @@ func holy_sweep() -> void:
 	PixelFx.spawn(_fx, "commit_sparkle", vel_hand(), _unit() * 0.8)
 
 
+func _apply_deferred() -> void:
+	if _deferred.is_empty():
+		_sync_imps()
+		return
+	var pending := _deferred
+	_deferred = []
+	update_lane(pending[0], pending[1])
+
+
 ## คาถาที่กำลังจะเผาภูต (เช่น คัมภีร์กำลังถือกำเนิด): ภูตยังอยู่จนกว่าแสงจะมาถึง ไม่หายไปก่อนเอง
 func hold_imps(seconds: float) -> void:
 	_hold = maxf(_hold, seconds)
@@ -424,7 +438,7 @@ func _process(delta: float) -> void:
 	if _hold > 0.0:
 		_hold = maxf(0.0, _hold - delta)
 		if _hold <= 0.0 and _holy <= 0.0:
-			_sync_imps()
+			_apply_deferred()
 	if _holy > 0.0:
 		_holy = maxf(0.0, _holy - delta / 0.8)
 		var hx := _holy_x()
@@ -437,7 +451,7 @@ func _process(delta: float) -> void:
 				PixelFx.spawn(_fx, "damage", imp.position + Vector2(0, -8.0 * _unit()), _unit() * 0.5)
 				imp.queue_free()
 		if _holy <= 0.0:
-			_sync_imps()
+			_apply_deferred()
 	_calm = move_toward(_calm, 1.0 if _has_waves and _threat == 0 else 0.0, delta * 1.5)
 	if _portal != null:
 		# ประตูสงบ: หดลงและหม่น · มีของให้ทำลาย: เต็มขนาดและสว่าง

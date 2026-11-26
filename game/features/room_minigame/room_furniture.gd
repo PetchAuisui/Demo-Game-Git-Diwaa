@@ -4,6 +4,8 @@ extends Control
 ## ทำให้ห้องเป็น "สถานที่" แทนกล่องข้อความ และเป็นเวทีของคาถาหลักแต่ละด่าน:
 ##   แท่นวางคัมภีร์ว่างเปล่าจนกว่าจะมีคัมภีร์ (git init / clone) → คัมภีร์ร่วงลงมาประทับ · จำนวนหน้า = จำนวนการจารึก
 ##   แท่นเตรียมเรืองตามจำนวนของบนแท่น · มีโดมโล่ของมิวราเมื่อแท่นปกป้องของได้ (safe = staged)
+##   ห้องที่ยังไม่มีคัมภีร์ (ก่อน git init) หลับใหล: สีซีดเทา เทียนดับมีควัน ขนนกนิ่ง รูนดับ หยากไย่กับฝุ่นจับ
+##   แล้วตื่นขึ้นทีละชิ้นเมื่อคลื่นแสงของคาถาผ่าน (wake)
 ## วาดด้วยสี่เหลี่ยมพิกเซลขนาดเท่ากันทั้งหมด (หน่วย _u) — ไม่มีการไล่สี ไม่ใช้ z_index
 
 enum Kind { DESK, ALTAR, PEDESTAL }
@@ -30,20 +32,39 @@ var _born := 1.0            # 0 → 1 ระหว่างคัมภีร์
 var _flip := 0.0            # คัมภีร์เด้งตอนถูกจารึกหน้าใหม่
 var _pulse := 0.0           # แท่นเตรียมสว่างวาบตอนมีของขึ้นแท่น
 var _page_pop := 0.0
+var _material: ShaderMaterial
+var _wake_flash := 0.0
+const DORMANT_SHADER := """
+shader_type canvas_item;
+uniform float awake = 1.0;
+void fragment() {
+	vec4 c = COLOR;
+	float grey = dot(c.rgb, vec3(0.3, 0.59, 0.11));
+	vec3 dead = vec3(grey) * vec3(0.55, 0.53, 0.6);
+	COLOR = vec4(mix(dead, c.rgb, awake), c.a);
+}
+"""
 ## คลื่นลูกหน้ามาในการกระทำถัดไปและมีของเสี่ยงอยู่บนเฟอร์นิเจอร์นี้ → สั่นกึก ๆ
 var urgent := false
 ## ห้องเพิ่งปรากฏและคัมภีร์ยังไม่ร่วงลงมา — ไม่วาดคัมภีร์จนกว่า tome_born() จะเรียก
 var hold_tome := false
-## 0 = ยังไม่มี (ห้องก่อน git init) · 1 = ตั้งอยู่เต็มที่
-## 0 → 0.6 ร่วงลงมาจากด้านบน (เร่งตามแรงโน้มถ่วง) · 0.6 → 1 กระแทกพื้น ยุบตัวแล้วเด้งกลับ
-var rise := 1.0:
+## 0 = หลับใหล (ห้องก่อนมีคัมภีร์) · 1 = มีชีวิต — สีซีด/เทียน/ขนนก/รูน/หยากไย่ ไล่ตามค่านี้
+var awake := 1.0:
 	set(value):
-		rise = value
+		awake = value
+		if _material != null:
+			_material.set_shader_parameter("awake", awake)
 		queue_redraw()
 
 
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var shader := Shader.new()
+	shader.code = DORMANT_SHADER
+	_material = ShaderMaterial.new()
+	_material.shader = shader
+	_material.set_shader_parameter("awake", awake)
+	material = _material
 	_font = load(FONT_BOLD) if ResourceLoader.exists(FONT_BOLD) else ThemeDB.fallback_font
 	_tome = load(TOME_TEXTURE) if ResourceLoader.exists(TOME_TEXTURE) else null
 
@@ -81,6 +102,13 @@ func page_written() -> void:
 	_page_pop = 1.0
 
 
+## คลื่นแสงผ่าน: ฝุ่นกับหยากไย่ปลิวหาย สีกลับมา แล้วสิ่งที่มีชีวิตเริ่มขยับ (เทียนติด รูนเรือง ขนนกขยับ)
+func wake(seconds: float = 0.35) -> void:
+	_wake_flash = 1.0
+	var tw := create_tween()
+	tw.tween_property(self, "awake", 1.0, seconds).set_trans(Tween.TRANS_SINE)
+
+
 func altar_pulse() -> void:
 	_pulse = 1.0
 
@@ -88,10 +116,11 @@ func altar_pulse() -> void:
 func _process(delta: float) -> void:
 	_time += delta
 	if _born < 1.0:
-		_born = minf(1.0, _born + delta / 0.55)
+		_born = minf(1.0, _born + delta / 0.3)
 	_flip = maxf(0.0, _flip - delta * 2.5)
 	_pulse = maxf(0.0, _pulse - delta * 1.6)
 	_page_pop = maxf(0.0, _page_pop - delta * 1.2)
+	_wake_flash = maxf(0.0, _wake_flash - delta * 2.5)
 	queue_redraw()
 
 
@@ -102,27 +131,8 @@ func _px(x: float, y: float, w: float, h: float, c: Color) -> void:
 
 
 func _draw() -> void:
-	if rise <= 0.0:
-		return
-	var sx := 1.0
-	var sy := 1.0
-	var dy := 0.0
-	if rise < 0.6:
-		var t := rise / 0.6
-		dy = -(1.0 - t * t) * base().y # ตกอิสระจากขอบบน
-		sy = 1.1                       # ยืดตัวตอนตก
-		sx = 0.94
-	elif rise < 1.0:
-		var t := (rise - 0.6) / 0.4
-		var squash := sin(t * PI * 2.0) * (1.0 - t) * 0.3
-		sy = 1.0 - squash
-		sx = 1.0 + squash * 0.6
-	var dx := 0.0
-	if urgent and kind != Kind.PEDESTAL:
-		dx = (1.0 if fmod(_time * 24.0, 1.0) > 0.5 else -1.0) * _u()
-	if sx != 1.0 or sy != 1.0 or dy != 0.0 or dx != 0.0:
-		var b := base()
-		draw_set_transform(Vector2(b.x * (1.0 - sx) + dx, b.y * (1.0 - sy) + dy), 0.0, Vector2(sx, sy))
+	if urgent and kind != Kind.PEDESTAL and awake >= 1.0:
+		draw_set_transform(Vector2((1.0 if fmod(_time * 24.0, 1.0) > 0.5 else -1.0) * _u(), 0.0))
 	match kind:
 		Kind.DESK:
 			_draw_desk()
@@ -130,6 +140,26 @@ func _draw() -> void:
 			_draw_altar()
 		Kind.PEDESTAL:
 			_draw_pedestal()
+	draw_set_transform(Vector2.ZERO)
+	if awake < 1.0:
+		_draw_neglect(1.0 - awake)
+	if _wake_flash > 0.0:
+		_px(-36, -40, 72, 40, Color(1.0, 0.9, 0.6, 0.18 * _wake_flash))
+
+
+## ฝุ่นจับและหยากไย่ (ห้องที่หลับใหล) — จางหายเมื่อห้องตื่น
+func _draw_neglect(amount: float) -> void:
+	var web := Color(0.85, 0.85, 0.9, 0.35 * amount)
+	var top := -23.0 if kind == Kind.DESK else (-24.0 if kind == Kind.ALTAR else -34.0)
+	var half := 36.0 if kind == Kind.DESK else (28.0 if kind == Kind.ALTAR else 16.0)
+	for i in 6:
+		_px(half - 1 - i, top + i * 2 - 10, 1, 2, web) # เส้นใยเฉียงจากมุมขวาบน
+		_px(half - 1 - i * 2, top - 10, 2, 1, Color(web, web.a * 0.6))
+	for i in 5:
+		_px(-half + i * 2, top - 8 + i, 1, 1, web)
+	var dust := Color(0.75, 0.72, 0.7, 0.4 * amount)
+	for i in 7:
+		_px(-half + 4 + i * (half * 2 - 8) / 7.0, top, 2, 1, dust)
 
 
 func _draw_desk() -> void:
@@ -148,28 +178,37 @@ func _draw_desk() -> void:
 	# ขวดหมึกกับขนนก
 	# กระดาษบนโต๊ะ มุมพลิ้วตามลม
 	_px(-14, -24, 12, 1, Color("e8dcc0"))
-	var lift := 1.0 if fmod(_time * 1.7, 2.0) > 1.6 else 0.0
+	var lift := 1.0 if fmod(_time * 1.7, 2.0) > 1.6 and awake >= 1.0 else 0.0
 	_px(-3, -24 - lift, 2, 1, Color("fff6e0"))
 	_px(4, -24, 9, 1, Color("d8ccb0"))
 	_px(-29, -27, 6, 4, Color("1c1530"))
 	_px(-28, -28, 4, 1, Color("2e2648"))
 	# ขนนกขยับเหมือนกำลังเขียน (โยกไปมา จุ่มหมึกเป็นระยะ)
-	var nod := roundf(sin(_time * 5.0) * 1.2)
-	var dip := 1.0 if fmod(_time, 3.0) < 0.25 else 0.0
+	var nod := roundf(sin(_time * 5.0) * 1.2 * awake)
+	var dip := 1.0 if fmod(_time, 3.0) < 0.25 and awake >= 1.0 else 0.0
 	_px(-25 + nod, -34 + dip, 1, 7, Color("e8e8f0"))
 	_px(-24 + nod, -36 + dip, 1, 3, Color("cfd4ea"))
 	_px(-26 + nod, -33 + dip, 1, 2, Color("b8bed8"))
 	# เทียน: เปลวไฟสั่นไหวและแสงรอบ ๆ
 	_px(24, -31, 4, 8, Color("e8dcc0"))
 	_px(24, -31, 1, 8, Color("fff6e0"))
-	var flick := 1.0 if fmod(_time * 7.0, 1.0) > 0.5 else 0.0
-	_px(23, -40, 6, 6, Color(1.0, 0.75, 0.3, 0.12))
-	_px(25, -35 - flick, 2, 4 + flick, Color("ff8c3a"))
-	_px(25, -34, 2, 2, Color("ffe07a"))
+	_px(25, -32, 1, 1, Color("2a2018")) # ไส้เทียน
+	if awake >= 0.5:
+		var flick := 1.0 if fmod(_time * 7.0, 1.0) > 0.5 else 0.0
+		var flame := clampf((awake - 0.5) * 2.0, 0.0, 1.0)
+		_px(23, -40, 6, 6, Color(1.0, 0.75, 0.3, 0.12 * flame))
+		_px(25, -35 - flick, 2, 4 + flick, Color(Color("ff8c3a"), flame))
+		_px(25, -34, 2, 2, Color(Color("ffe07a"), flame))
+	else:
+		# เทียนดับ: ควันบาง ๆ ลอยขดขึ้นจากไส้
+		for i in 5:
+			var t := fmod(_time * 0.6 + i * 0.2, 1.0)
+			var sx := roundf(sin(t * 9.0 + i) * 1.5)
+			_px(25 + sx, -33 - t * 14.0, 1, 1, Color(0.7, 0.7, 0.75, 0.4 * (1.0 - t)))
 
 
 func _draw_altar() -> void:
-	var glow := clampf(staged / 3.0, 0.0, 1.0) * 0.8 + _pulse * 0.6
+	var glow := (clampf(staged / 3.0, 0.0, 1.0) * 0.8 + _pulse * 0.6) * awake
 	if glow > 0.02:
 		# แสงลอยขึ้นจากแผ่นแท่น (ยิ่งของบนแท่นมากยิ่งสว่าง)
 		for i in 5:
@@ -185,7 +224,7 @@ func _draw_altar() -> void:
 	_px(-28, -24, 56, 1, STONE[4])
 	# อักษรรูนสามตัวบนหน้าแท่น ติดตามจำนวนของบนแท่น
 	for i in 3:
-		var lit := i < staged or _pulse > 0.3
+		var lit := (i < staged or _pulse > 0.3) and awake >= 1.0
 		var c := Color(RUNE, 0.95) if lit else Color("2a3a48")
 		var x := -14 + i * 11
 		_px(x, -16, 2, 7, c)
@@ -237,17 +276,6 @@ func _draw_pedestal() -> void:
 	_px(-16, -34, 32, 1, STONE[4])
 	if has_tome and not hold_tome and _tome != null:
 		_draw_tome()
-	elif not has_tome:
-		# ยังไม่มีคัมภีร์: เงาโครงหนังสือกะพริบ รอให้ถูกสร้าง
-		var a := 0.18 + 0.14 * sin(_time * 3.0)
-		var c := Color(1, 1, 1, a)
-		for i in range(-10, 11, 3):
-			_px(i, -58, 2, 1, c)
-			_px(i, -36, 2, 1, c)
-		for j in range(-58, -35, 3):
-			_px(-11, j, 1, 2, c)
-			_px(10, j, 1, 2, c)
-		_text("?", Vector2(0, -44), 22, Color(1, 1, 1, a + 0.1))
 	if pages > 0 or max_pages > 0:
 		var label := "หน้า %d" % pages if max_pages <= 0 else "หน้า %d/%d" % [pages, max_pages]
 		var over := max_pages > 0 and pages > max_pages
