@@ -14,7 +14,7 @@ const DIR := "res://assets/fx/%s.png"
 ## boss_down = shadow/dark-explosion · imp_spawn = spawn/spawn-portal · chaos_wave = explosions/plasma-explosion
 ## shield = impacts/shield-block · damage = impacts/blunt-hit · gate_open = explosions/firework-burst
 ## commit_sparkle = pickups/collect-burst · stage_sparkle = pickups/collect-burst (สีฟ้า) · confetti = ui/confetti
-## imp_poof = spawn/poof (สีม่วง) · imp_idle = critters/slime (สีเงามืด, hop 10) · spell_bolt = projectiles/plasma-shot (สีทอง)
+## imp_poof = spawn/poof (สีม่วง) · dust_puff = spawn/poof (สีฝุ่นดิน) · imp_idle = critters/slime (สีเงามืด, hop 10) · spell_bolt = projectiles/plasma-shot (สีทอง)
 ## vel_circle = arcane/rune-circle (สีทอง)
 ## phantom = critters/ghost · chaos_portal = arcane/portal · vault_portal = arcane/portal (สีทอง)
 ## heart_lost = ui/heart-lost · fragment_beam = pickups/loot-beam (สีทอง) · fragment_icon = pickups/crystal-shard (สีทอง)
@@ -33,6 +33,7 @@ const EFFECTS := {
 	"shield": {"size": Vector2i(148, 104), "columns": 5, "frames": 34, "fps": 30, "pivot": Vector2(40, 88)},
 	"stage_sparkle": {"size": Vector2i(112, 108), "columns": 7, "frames": 42, "fps": 30, "pivot": Vector2(56, 94)},
 	"heart_lost": {"size": Vector2i(96, 88), "columns": 7, "frames": 46, "fps": 30, "pivot": Vector2(48, 34)},
+	"dust_puff": {"size": Vector2i(112, 92), "columns": 7, "frames": 49, "fps": 30, "pivot": Vector2(56, 80)},
 	"imp_poof": {"size": Vector2i(112, 92), "columns": 7, "frames": 49, "fps": 30, "pivot": Vector2(56, 80)},
 	# ตัวละครวนลูป (loop = true เล่นซ้ำไม่จบ ต้อง queue_free เอง)
 	"boss_idle": {"size": Vector2i(136, 120), "columns": 8, "frames": 72, "fps": 30, "pivot": Vector2(68, 112), "loop": true},

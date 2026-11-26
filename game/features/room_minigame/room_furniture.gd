@@ -30,6 +30,11 @@ var _born := 1.0            # 0 → 1 ระหว่างคัมภีร์
 var _flip := 0.0            # คัมภีร์เด้งตอนถูกจารึกหน้าใหม่
 var _pulse := 0.0           # แท่นเตรียมสว่างวาบตอนมีของขึ้นแท่น
 var _page_pop := 0.0
+## 0 = ยังไม่มี (ห้องก่อน git init) · 1 = ตั้งอยู่เต็มที่ — ระหว่างนั้นเฟอร์นิเจอร์งอกขึ้นจากพื้น
+var rise := 1.0:
+	set(value):
+		rise = value
+		queue_redraw()
 
 
 func _ready() -> void:
@@ -84,6 +89,12 @@ func _process(delta: float) -> void:
 	queue_redraw()
 
 
+static func _back_out(t: float) -> float:
+	var c := 1.70158
+	var x := t - 1.0
+	return 1.0 + (c + 1.0) * x * x * x + c * x * x
+
+
 func _px(x: float, y: float, w: float, h: float, c: Color) -> void:
 	var u := _u()
 	var b := base()
@@ -91,6 +102,12 @@ func _px(x: float, y: float, w: float, h: float, c: Color) -> void:
 
 
 func _draw() -> void:
+	if rise <= 0.0:
+		return
+	if rise < 1.0:
+		# งอกขึ้นจากพื้น: ยืดแนวตั้งรอบฐาน (ฐานอยู่กับที่) เด้งเกินนิดหนึ่งแล้วเข้าที่
+		var sy := maxf(0.05, _back_out(rise))
+		draw_set_transform(Vector2(0, base().y * (1.0 - sy)), 0.0, Vector2(1.0, sy))
 	match kind:
 		Kind.DESK:
 			_draw_desk()

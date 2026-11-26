@@ -64,6 +64,10 @@ var _stage: RoomSpellStage
 var _fog: RoomFog
 var _essential: Array[String] = []
 var _frame_style: StyleBoxFlat
+## ห้องก่อน git init: ว่างเปล่า (ไม่มีโต๊ะ แท่น หรือแท่นวางคัมภีร์) จนกว่าคัมภีร์จะถือกำเนิด
+var _room_empty := false
+var _room_seen := false
+var _scene_until := 0.0   # ฉากคาถาใหญ่ (เช่น คัมภีร์ถือกำเนิด) เล่นถึงเวลานี้ — ป้ายฉลองรอให้ฉากจบก่อน   # วาดห้องครั้งแรกแล้วหรือยัง (ครั้งแรกแสดงทันที ไม่เล่นท่างอก)
 var _dimension := ""
 var _event_label: Label
 var _flash: ColorRect
@@ -143,6 +147,7 @@ func update_room(game: RoomGame, items: Array[Dictionary], branch: String) -> vo
 		return
 	_lane.update_lane(game, items)
 	_update_furniture(game, items)
+	_update_emptiness(game, items)
 	_update_fog(game)
 	_set_dimension(branch)
 
@@ -240,6 +245,11 @@ func show_intro(floor_text: String, title: String, goal: String, threat: String)
 func celebrate_objective(streak: int, finished: bool, flawless: bool) -> void:
 	if not is_inside_tree():
 		return
+	var wait := _scene_until - Time.get_ticks_msec() / 1000.0
+	if wait > 0.0:
+		await get_tree().create_timer(wait).timeout
+		if not is_inside_tree():
+			return
 	var text := "สำเร็จ!"
 	var color := Color("9fe8b8")
 	if finished and flawless:
@@ -312,6 +322,48 @@ func _set_dimension(branch: String) -> void:
 		pedestal.tint = color
 
 
+## ยังไม่มีคัมภีร์และไม่มีของในห้อง (ด่าน git init / ก่อน clone): ซ่อนทั้งสามโซน — ห้องว่างเปล่า
+## พอมีคัมภีร์ (คาถาถือกำเนิดเรียก reveal_room เอง) หรือมีของโผล่มา ห้องจึงปรากฏ
+func _update_emptiness(game: RoomGame, items: Array[Dictionary]) -> void:
+	var empty := not game.has_tome and items.is_empty()
+	var first := not _room_seen
+	_room_seen = true
+	if first and not empty:
+		_room_empty = false
+		for state in _furniture:
+			var shown: RoomFurniture = _furniture[state]
+			shown.rise = 1.0
+			(shown.get_parent() as Control).modulate.a = 1.0
+		return
+	if empty and not _room_empty:
+		_room_empty = true
+		for state in _furniture:
+			var furniture_node: RoomFurniture = _furniture[state]
+			furniture_node.rise = 0.0
+			(furniture_node.get_parent() as Control).modulate.a = 0.0
+	elif not empty and _room_empty:
+		reveal_room()
+
+
+## โต๊ะ แท่นเตรียม และแท่นวางคัมภีร์งอกขึ้นจากพื้นทีละชิ้น (ฝุ่นฟุ้ง) — คืนเวลาที่ใช้ (0 = ห้องปรากฏอยู่แล้ว)
+func reveal_room() -> float:
+	if not _room_empty:
+		return 0.0
+	_room_empty = false
+	var order := [RoomGame.STATE_DESK, RoomGame.STATE_ALTAR, RoomGame.STATE_TOME]
+	for i in order.size():
+		var furniture_node: RoomFurniture = _furniture[order[i]]
+		var panel := furniture_node.get_parent() as Control
+		var tw := create_tween()
+		tw.tween_interval(i * 0.18)
+		tw.tween_property(panel, "modulate:a", 1.0, 0.15)
+		tw.tween_callback(func() -> void:
+			PixelFx.spawn(_fx_layer, "dust_puff", to_fx(furniture_node.global_position + furniture_node.base()), fx_unit() * 0.6)
+			_shake_frame(3.0))
+		tw.tween_property(furniture_node, "rise", 1.0, 0.4).set_trans(Tween.TRANS_LINEAR)
+	return 0.18 * (order.size() - 1) + 0.55
+
+
 ## ห้องมืด (blind): หมอกคลุมโซนทั้งสามจนกว่าจะหยั่งสถานะ แล้วแสงตะเกียงกวาดหมอกหาย
 func _update_fog(game: RoomGame) -> void:
 	var dark := game.blind and not game.revealed
@@ -363,6 +415,11 @@ func cast(effects: Array[Dictionary], command: String, snapshot: GitRepositorySn
 	if _stage == null:
 		_stage = RoomSpellStage.new(self)
 	_stage.play(effects, command, snapshot)
+
+
+## ฉากคาถาที่กำลังเล่นจะยาวอีกกี่วินาที (ป้ายฉลองเป้าหมายรอจนจบ ไม่ทับกัน)
+func hold_scene(seconds: float) -> void:
+	_scene_until = maxf(_scene_until, Time.get_ticks_msec() / 1000.0 + seconds)
 
 
 func fx_layer() -> Control:
@@ -634,6 +691,12 @@ func _build() -> void:
 	root.add_child(_zones)
 	for zone in ZONES:
 		_zones.add_child(_make_zone(zone))
+	# ยังไม่รู้ว่าห้องมีคัมภีร์หรือไม่ — ซ่อนไว้ก่อนจนกว่าจะวาดห้องครั้งแรก (ไม่ให้โต๊ะโผล่แวบในด่าน git init)
+	_room_empty = true
+	for state in _furniture:
+		var hidden_furniture: RoomFurniture = _furniture[state]
+		hidden_furniture.rise = 0.0
+		(hidden_furniture.get_parent() as Control).modulate.a = 0.0
 	_lane = ChaosLaneView.new()
 	_lane.visible = false
 	root.add_child(_lane)

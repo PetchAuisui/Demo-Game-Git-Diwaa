@@ -2,7 +2,7 @@ class_name RoomSpellStage
 extends RefCounted
 ## ฉากของคาถาในห้อง: ทุกคาถาหลักของแต่ละด่านมี "ช่วงเวลาเด่น" ของตัวเองบนเฟอร์นิเจอร์และลานโกลาหล
 ## เหตุ → การปะทะ → ผล เสมอ (เวลร่าย → พลังวิ่งไปที่เป้า → เป้าตอบสนอง) ไม่ใช่สติกเกอร์ลอย ๆ
-##   git init      แท่นวางคัมภีร์ว่างเปล่า → วงเวทกาง แสงทองฟาด → คัมภีร์ร่วงลงมาประทับ แสงของมันกวาดลานเผาภูต
+##   git init      ห้องว่างเปล่า → โต๊ะ แท่น แท่นวางคัมภีร์งอกขึ้นจากพื้น → วงเวทกาง แสงทองฟาด → คัมภีร์ร่วงลงมาประทับ แสงของมันกวาดลานเผาภูต
 ##   git clone     ประตูคลังเวทเปิดเหนือแท่น → คัมภีร์ลอยออกจากประตูลงมาประทับ
 ##   git status    แสงตะเกียงกวาดทั้งห้อง (ห้องมืดถูกเปิดเผย)
 ##   git log       หน้าประวัติปลิวออกจากคัมภีร์
@@ -100,10 +100,15 @@ func _wait(seconds: float) -> void:
 
 ## git init: วงเวทกางใต้แท่น → แสงทองฟาดลงมา → คัมภีร์ร่วงลงมาประทับ (หยุดภาพตอนกระทบ) → แสงของคัมภีร์กวาดลานเผาภูต
 func _tome_born() -> void:
-	_view.lane().hold_imps(1.4)
+	_view.hold_scene(2.0)
+	_view.lane().hold_imps(2.2)
+	_view.lane().vel_cast()
+	# ห้องว่างเปล่า (ด่าน git init): เฟอร์นิเจอร์งอกขึ้นมาก่อน แล้วคัมภีร์ค่อยถือกำเนิดบนแท่น
+	var setup := _view.reveal_room()
+	if setup > 0.0:
+		await _wait(setup)
 	var at := _top(TOME)
 	var u := _u()
-	_view.lane().vel_cast()
 	PixelFx.spawn(_fx(), "banish", at + Vector2(0, 6 * u), u * 0.55, 1.2)
 	await _wait(0.35)
 	var beam := PixelFx.spawn(_fx(), "fragment_beam", at, u * 0.8)
@@ -119,7 +124,11 @@ func _tome_born() -> void:
 
 ## git clone: ประตูคลังเวทเปิดเหนือแท่น แล้วคัมภีร์ (พร้อมประวัติทั้งเล่ม) ลอยลงมาประทับ
 func _tome_from_vault() -> void:
-	_view.lane().hold_imps(1.4)
+	_view.hold_scene(2.0)
+	_view.lane().hold_imps(2.2)
+	var setup := _view.reveal_room()
+	if setup > 0.0:
+		await _wait(setup)
 	var at := _top(TOME)
 	var u := _u()
 	var portal := PixelFx.spawn(_fx(), "vault_portal", at + Vector2(0, -70 * u), u * 0.7)
