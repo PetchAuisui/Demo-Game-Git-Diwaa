@@ -62,6 +62,7 @@ var _zone_boxes: Dictionary = {}
 var _furniture: Dictionary = {}     # state -> RoomFurniture (โต๊ะ / แท่นเตรียม / แท่นวางคัมภีร์)
 var _stage: RoomSpellStage
 var _fog: RoomFog
+var _genesis: RoomGenesis
 var _essential: Array[String] = []
 var _frame_style: StyleBoxFlat
 ## ห้องก่อน git init: ว่างเปล่า (ไม่มีโต๊ะ แท่น หรือแท่นวางคัมภีร์) จนกว่าคัมภีร์จะถือกำเนิด
@@ -145,14 +146,14 @@ func update_room(game: RoomGame, items: Array[Dictionary], branch: String) -> vo
 		_battle.update_battle(game)
 		_lane.visible = false
 		return
+	_urgent = game.has_waves() and game.turns_until_wave() <= 1
+	_safe_mode = game.safe_mode
 	_lane.update_lane(game, items)
 	_update_furniture(game, items)
 	_update_emptiness(game, items)
 	_update_fog(game)
 	_set_dimension(branch)
 
-	_urgent = game.has_waves() and game.turns_until_wave() <= 1
-	_safe_mode = game.safe_mode
 	var old_icons := {}
 	for path in _rows:
 		var old_row: Control = _rows[path]
@@ -335,6 +336,11 @@ func _update_emptiness(game: RoomGame, items: Array[Dictionary]) -> void:
 			shown.rise = 1.0
 			(shown.get_parent() as Control).modulate.a = 1.0
 		return
+	if empty:
+		_place_fog.call_deferred()
+		(_furniture[RoomGame.STATE_TOME] as RoomFurniture).hold_tome = true
+		if not _genesis.visible:
+			_genesis.show_empty()
 	if empty and not _room_empty:
 		_room_empty = true
 		for state in _furniture:
@@ -342,6 +348,8 @@ func _update_emptiness(game: RoomGame, items: Array[Dictionary]) -> void:
 			furniture_node.rise = 0.0
 			(furniture_node.get_parent() as Control).modulate.a = 0.0
 	elif not empty and _room_empty:
+		# ห้องปรากฏเพราะมีของโผล่มา (ไม่ใช่คาถาถือกำเนิด) — ไม่มีคัมภีร์ร่วงตามมา จึงไม่ต้องรอ
+		(_furniture[RoomGame.STATE_TOME] as RoomFurniture).hold_tome = false
 		reveal_room()
 
 
@@ -350,18 +358,21 @@ func reveal_room() -> float:
 	if not _room_empty:
 		return 0.0
 	_room_empty = false
+	# กล้องซูมออกจากภาพห้องโถงร้าง แล้วโต๊ะ แท่น แท่นวางคัมภีร์ร่วงลงมากระแทกพื้นทีละชิ้น
+	_genesis.zoom_out(1.0)
 	var order := [RoomGame.STATE_DESK, RoomGame.STATE_ALTAR, RoomGame.STATE_TOME]
 	for i in order.size():
 		var furniture_node: RoomFurniture = _furniture[order[i]]
 		var panel := furniture_node.get_parent() as Control
 		var tw := create_tween()
-		tw.tween_interval(i * 0.18)
-		tw.tween_property(panel, "modulate:a", 1.0, 0.15)
+		tw.tween_interval(0.45 + i * 0.2)
+		tw.tween_property(panel, "modulate:a", 1.0, 0.2)
+		tw.tween_property(furniture_node, "rise", 0.6, 0.28).set_trans(Tween.TRANS_LINEAR)
 		tw.tween_callback(func() -> void:
-			PixelFx.spawn(_fx_layer, "dust_puff", to_fx(furniture_node.global_position + furniture_node.base()), fx_unit() * 0.6)
-			_shake_frame(3.0))
-		tw.tween_property(furniture_node, "rise", 1.0, 0.4).set_trans(Tween.TRANS_LINEAR)
-	return 0.18 * (order.size() - 1) + 0.55
+			PixelFx.spawn(_fx_layer, "dust_puff", to_fx(furniture_node.global_position + furniture_node.base()), fx_unit() * 0.7)
+			_shake_frame(4.0))
+		tw.tween_property(furniture_node, "rise", 1.0, 0.32).set_trans(Tween.TRANS_LINEAR)
+	return 0.45 + 0.2 * (order.size() - 1) + 0.8
 
 
 ## ห้องมืด (blind): หมอกคลุมโซนทั้งสามจนกว่าจะหยั่งสถานะ แล้วแสงตะเกียงกวาดหมอกหาย
@@ -379,6 +390,11 @@ func _place_fog() -> void:
 		return
 	_fog.position = _zones.global_position - global_position
 	_fog.size = _zones.size
+	_genesis.position = _fog.position
+	_genesis.size = _zones.size
+	var pedestal: RoomFurniture = _furniture.get(RoomGame.STATE_TOME, null)
+	if pedestal != null:
+		_genesis.focus = pedestal.global_position + pedestal.base() - _zones.global_position
 
 
 ## ผนึกที่รอคำตอบในลาน (ประตูหินด่าน 6 · วงอักขระด่าน 7) — kind "" = ไม่มี
@@ -399,6 +415,17 @@ func row_point(path: String) -> Vector2:
 func _update_furniture(game: RoomGame, items: Array[Dictionary]) -> void:
 	var altar: RoomFurniture = _furniture[RoomGame.STATE_ALTAR]
 	altar.staged = items.filter(func(item: Dictionary) -> bool: return item["state"] == RoomGame.STATE_ALTAR).size()
+	# คลื่นมาในการกระทำถัดไป: โต๊ะ/แท่นที่มีของเสี่ยงสั่นกึก ๆ
+	var risky := func(item: Dictionary, zone: String) -> bool:
+		if not str(item.get("kind", "")) in ["fragment", "key"] or item.get("hidden", false):
+			return false
+		var state := str(item["state"])
+		if zone == RoomGame.STATE_DESK:
+			return state == RoomGame.STATE_DESK or state == RoomGame.STATE_CURSED
+		return state == RoomGame.STATE_ALTAR and game.safe_mode != "staged"
+	var desk: RoomFurniture = _furniture[RoomGame.STATE_DESK]
+	desk.urgent = _urgent and items.any(func(item: Dictionary) -> bool: return risky.call(item, RoomGame.STATE_DESK))
+	altar.urgent = _urgent and items.any(func(item: Dictionary) -> bool: return risky.call(item, RoomGame.STATE_ALTAR))
 	altar.shield = game.safe_mode == "staged"
 	var pedestal: RoomFurniture = _furniture[RoomGame.STATE_TOME]
 	pedestal.has_tome = game.has_tome
@@ -724,6 +751,9 @@ func _build() -> void:
 	_fog = RoomFog.new()
 	_fog.visible = false
 	add_child(_fog)
+	_genesis = RoomGenesis.new()
+	_genesis.visible = false
+	add_child(_genesis)
 
 	_fx_layer = Control.new()
 	_fx_layer.mouse_filter = Control.MOUSE_FILTER_IGNORE

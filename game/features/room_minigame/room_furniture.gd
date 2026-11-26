@@ -30,7 +30,12 @@ var _born := 1.0            # 0 → 1 ระหว่างคัมภีร์
 var _flip := 0.0            # คัมภีร์เด้งตอนถูกจารึกหน้าใหม่
 var _pulse := 0.0           # แท่นเตรียมสว่างวาบตอนมีของขึ้นแท่น
 var _page_pop := 0.0
-## 0 = ยังไม่มี (ห้องก่อน git init) · 1 = ตั้งอยู่เต็มที่ — ระหว่างนั้นเฟอร์นิเจอร์งอกขึ้นจากพื้น
+## คลื่นลูกหน้ามาในการกระทำถัดไปและมีของเสี่ยงอยู่บนเฟอร์นิเจอร์นี้ → สั่นกึก ๆ
+var urgent := false
+## ห้องเพิ่งปรากฏและคัมภีร์ยังไม่ร่วงลงมา — ไม่วาดคัมภีร์จนกว่า tome_born() จะเรียก
+var hold_tome := false
+## 0 = ยังไม่มี (ห้องก่อน git init) · 1 = ตั้งอยู่เต็มที่
+## 0 → 0.6 ร่วงลงมาจากด้านบน (เร่งตามแรงโน้มถ่วง) · 0.6 → 1 กระแทกพื้น ยุบตัวแล้วเด้งกลับ
 var rise := 1.0:
 	set(value):
 		rise = value
@@ -66,6 +71,7 @@ func tome_global() -> Vector2:
 ## git init / clone: คัมภีร์ร่วงจากฟ้าลงมาประทับบนแท่น
 func tome_born() -> void:
 	has_tome = true
+	hold_tome = false
 	_born = 0.0
 
 
@@ -89,12 +95,6 @@ func _process(delta: float) -> void:
 	queue_redraw()
 
 
-static func _back_out(t: float) -> float:
-	var c := 1.70158
-	var x := t - 1.0
-	return 1.0 + (c + 1.0) * x * x * x + c * x * x
-
-
 func _px(x: float, y: float, w: float, h: float, c: Color) -> void:
 	var u := _u()
 	var b := base()
@@ -104,10 +104,25 @@ func _px(x: float, y: float, w: float, h: float, c: Color) -> void:
 func _draw() -> void:
 	if rise <= 0.0:
 		return
-	if rise < 1.0:
-		# งอกขึ้นจากพื้น: ยืดแนวตั้งรอบฐาน (ฐานอยู่กับที่) เด้งเกินนิดหนึ่งแล้วเข้าที่
-		var sy := maxf(0.05, _back_out(rise))
-		draw_set_transform(Vector2(0, base().y * (1.0 - sy)), 0.0, Vector2(1.0, sy))
+	var sx := 1.0
+	var sy := 1.0
+	var dy := 0.0
+	if rise < 0.6:
+		var t := rise / 0.6
+		dy = -(1.0 - t * t) * base().y # ตกอิสระจากขอบบน
+		sy = 1.1                       # ยืดตัวตอนตก
+		sx = 0.94
+	elif rise < 1.0:
+		var t := (rise - 0.6) / 0.4
+		var squash := sin(t * PI * 2.0) * (1.0 - t) * 0.3
+		sy = 1.0 - squash
+		sx = 1.0 + squash * 0.6
+	var dx := 0.0
+	if urgent and kind != Kind.PEDESTAL:
+		dx = (1.0 if fmod(_time * 24.0, 1.0) > 0.5 else -1.0) * _u()
+	if sx != 1.0 or sy != 1.0 or dy != 0.0 or dx != 0.0:
+		var b := base()
+		draw_set_transform(Vector2(b.x * (1.0 - sx) + dx, b.y * (1.0 - sy) + dy), 0.0, Vector2(sx, sy))
 	match kind:
 		Kind.DESK:
 			_draw_desk()
@@ -131,10 +146,19 @@ func _draw_desk() -> void:
 	_px(-15, -17, 30, 1, WOOD[3])
 	_px(-1, -14, 3, 2, Color("d9a650"))
 	# ขวดหมึกกับขนนก
+	# กระดาษบนโต๊ะ มุมพลิ้วตามลม
+	_px(-14, -24, 12, 1, Color("e8dcc0"))
+	var lift := 1.0 if fmod(_time * 1.7, 2.0) > 1.6 else 0.0
+	_px(-3, -24 - lift, 2, 1, Color("fff6e0"))
+	_px(4, -24, 9, 1, Color("d8ccb0"))
 	_px(-29, -27, 6, 4, Color("1c1530"))
 	_px(-28, -28, 4, 1, Color("2e2648"))
-	_px(-25, -34, 1, 7, Color("e8e8f0"))
-	_px(-24, -36, 1, 3, Color("cfd4ea"))
+	# ขนนกขยับเหมือนกำลังเขียน (โยกไปมา จุ่มหมึกเป็นระยะ)
+	var nod := roundf(sin(_time * 5.0) * 1.2)
+	var dip := 1.0 if fmod(_time, 3.0) < 0.25 else 0.0
+	_px(-25 + nod, -34 + dip, 1, 7, Color("e8e8f0"))
+	_px(-24 + nod, -36 + dip, 1, 3, Color("cfd4ea"))
+	_px(-26 + nod, -33 + dip, 1, 2, Color("b8bed8"))
 	# เทียน: เปลวไฟสั่นไหวและแสงรอบ ๆ
 	_px(24, -31, 4, 8, Color("e8dcc0"))
 	_px(24, -31, 1, 8, Color("fff6e0"))
@@ -211,7 +235,7 @@ func _draw_pedestal() -> void:
 		_px(flute, -28, 1, 20, STONE[1])
 	_px(-16, -34, 32, 4, STONE[3])
 	_px(-16, -34, 32, 1, STONE[4])
-	if has_tome and _tome != null:
+	if has_tome and not hold_tome and _tome != null:
 		_draw_tome()
 	elif not has_tome:
 		# ยังไม่มีคัมภีร์: เงาโครงหนังสือกะพริบ รอให้ถูกสร้าง
