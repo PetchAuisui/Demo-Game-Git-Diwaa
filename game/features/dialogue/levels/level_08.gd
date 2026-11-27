@@ -77,7 +77,7 @@ static func get_data() -> Dictionary:
 						"paths": ["curse.txt"],
 						"max_count": 2,
 						"world": "ม้วนสีดำหล่นลงจากแท่น ไร้พลังเมื่อไม่มีใครวางมันขึ้นไป — ได้รับเศษคัมภีร์ชิ้นที่ 5",
-						"hint": "restore ทำได้มากกว่าฟื้นคืนโต๊ะ ใส่ตัวเลือกที่หมายถึงแท่นเตรียม: git restore --staged curse.txt"
+						"hint": "restore ทำได้มากกว่าฟื้นคืนของบนผ้าปู ใส่ตัวเลือกที่หมายถึงแท่นเตรียม: git restore --staged curse.txt"
 					}
 				],
 				"success_text": "ได้รับเศษคัมภีร์ชิ้นที่ 5: \"ความผิดพลาดแก้ไขได้เสมอ\""
@@ -85,7 +85,7 @@ static func get_data() -> Dictionary:
 		},
 
 		"outro_sequence": [
-			{"speaker": "มิวรา", "text": "restore ทิ้งการแก้ไขบนโต๊ะจริง ๆ นะ ใช้เมื่อแน่ใจว่าไม่ต้องการมันแล้ว", "mewla_anim": "talk"},
+			{"speaker": "มิวรา", "text": "restore ทิ้งการแก้ไขบนผ้าปูจริง ๆ นะ ใช้เมื่อแน่ใจว่าไม่ต้องการมันแล้ว", "mewla_anim": "talk"},
 			{"speaker": "เวล", "text": "\"ความผิดพลาดแก้ไขได้เสมอ\" … อาจารย์คงรู้ว่าฉันจะพลาดบ่อยแน่ ๆ", "mewla_anim": "idle"}
 		]
 	}

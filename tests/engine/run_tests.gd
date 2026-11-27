@@ -1007,7 +1007,7 @@ func _t_levels_wrong_spells() -> void:
 	var level3_swapped := await _play_level(3, 1, ["git status", "cat scroll-b.txt", "cat scroll-d.txt"])
 	_check(level3_swapped["mission"].is_complete(), "level 3: the two scrolls can be read in either order")
 	# ด่าน 4: git add . ลากม้วนคำสาปขึ้นแท่น → ไม่ผ่าน และระเบิดเมื่อคลื่นมา
-	# ด่าน 4 ขั้น 2: วางประกายทีละดวง ไม่ทันคลื่น — ต้องยกทั้งโต๊ะในคาถาเดียว
+	# ด่าน 4 ขั้น 2: วางประกายทีละดวง ไม่ทันคลื่น — ต้องยกทั้งผืนในคาถาเดียว
 	var level4_slow := await _play_level(4, 2, ["git add spark-1.txt", "git add spark-2.txt"])
 	_check(level4_slow["room"].is_failed(), "level 4 step 2: one spark at a time loses to the wave")
 	var level4 := await _play_level(4, 1, ["git add .", "git status", "git status"])

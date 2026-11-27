@@ -690,7 +690,7 @@ func _initialize_sandbox() -> void:
 	await _refresh_state()
 
 
-## สร้าง "ปัญหาในโลก" ตั้งต้นของขั้นนี้ (ไฟล์บนโต๊ะ, การจารึกก่อนหน้า) แบบเงียบ ก่อนผู้เล่นเริ่ม
+## สร้าง "ปัญหาในโลก" ตั้งต้นของขั้นนี้ (ไฟล์บนผ้าปู, การจารึกก่อนหน้า) แบบเงียบ ก่อนผู้เล่นเริ่ม
 func _apply_mission_setup() -> void:
 	if _mission == null or _mission.setup.is_empty():
 		return

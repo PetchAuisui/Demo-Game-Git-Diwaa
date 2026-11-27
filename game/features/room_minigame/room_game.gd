@@ -286,7 +286,7 @@ func on_turn(snapshot: GitRepositorySnapshot, command: String = "") -> Dictionar
 
 	for action in _spawn_actions(turn):
 		actions.append(action)
-		events.append({"type": "spawn", "path": action["write"], "text": "%s ร่วงลงมาบนโต๊ะ!" % _name(action["write"])})
+		events.append({"type": "spawn", "path": action["write"], "text": "%s ร่วงลงมาบนผ้าปู!" % _name(action["write"])})
 
 	for path in essential:
 		if _present.has(path):
@@ -404,7 +404,7 @@ static func classify(status: GitFileStatus) -> String:
 	if status.index_state == GitFileState.UNTRACKED:
 		return STATE_DESK
 	if status.working_tree_state == GitFileState.MODIFIED or status.working_tree_state == GitFileState.DELETED:
-		return STATE_DESK # จารึกแล้วแต่มีการแก้ค้างบนโต๊ะ
+		return STATE_DESK # จารึกแล้วแต่มีการแก้ค้างบนผ้าปู
 	return STATE_ALTAR
 
 

@@ -1,6 +1,6 @@
 class_name RoomView
 extends Control
-## ภาพห้องในหอคอยกลางฉาก Sandbox: โต๊ะ (working tree) · แท่นเตรียม (stage) · คัมภีร์ (commit)
+## ภาพห้องในหอคอยกลางฉาก Sandbox: ผ้าปูเวทของเวล (working tree) · แท่นเตรียม (stage) · คัมภีร์ (commit)
 ## พร้อมหัวใจ มาตรวัดคลื่นโกลาหล มิติที่ยืนอยู่ และข้อความเหตุการณ์ในโลก
 ## ข้อมูลทั้งหมดมาจาก RoomGame.describe() — ห้องสะท้อน repo จริงเสมอ
 ## คลิกของในห้อง = หยิบขึ้นมาอ่าน (การกระทำในโลก ไม่ต้องพิมพ์คำสั่ง) ส่วนอื่นของห้องไม่รับเมาส์
@@ -17,7 +17,7 @@ const FONT_BOLD := "res://assets/fonts/ChakraPetch-Bold.ttf"
 const FONT_REGULAR := "res://assets/fonts/ChakraPetch-Regular.ttf"
 
 const ZONES := [
-	{"state": RoomGame.STATE_DESK, "title": "โต๊ะเขียน", "sub": "ยังไม่ปลอดภัย"},
+	{"state": RoomGame.STATE_DESK, "title": "ผ้าปูเวท", "sub": "ยังไม่ปลอดภัย"},
 	{"state": RoomGame.STATE_ALTAR, "title": "แท่นเตรียม", "sub": "รอการจารึก"},
 	{"state": RoomGame.STATE_TOME, "title": "คัมภีร์", "sub": "จารึกแล้ว · ปลอดภัย"},
 ]
@@ -59,14 +59,14 @@ var _chaos_bar: ProgressBar
 var _dimension_label: Label
 var _fragment_label: Label
 var _zone_boxes: Dictionary = {}
-var _furniture: Dictionary = {}     # state -> RoomFurniture (โต๊ะ / แท่นเตรียม / แท่นวางคัมภีร์)
+var _furniture: Dictionary = {}     # state -> RoomFurniture (ผ้าปู / แท่นเตรียม / แท่นวางคัมภีร์)
 var _stage: RoomSpellStage
 var _fog: RoomFog
 var _camera: RoomCamera
 var _wake_layer: Control       # ใต้กล้อง: วงเวทบนแท่นและคลื่นแสงปลุกห้อง (ถูกซูมไปพร้อมห้อง)
 var _essential: Array[String] = []
 var _frame_style: StyleBoxFlat
-## ห้องก่อน git init: ว่างเปล่า (ไม่มีโต๊ะ แท่น หรือแท่นวางคัมภีร์) จนกว่าคัมภีร์จะถือกำเนิด
+## ห้องก่อน git init: หลับใหล (ผ้าปูยังม้วนอยู่ แท่นหินหม่น) จนกว่าคัมภีร์จะถือกำเนิด
 var _dormant := false     # ห้องหลับใหล (ยังไม่มีคัมภีร์)
 var _waking := false      # คาถาถือกำเนิดกำลังปลุกห้อง — หัวห้อง/มิติรอจนคัมภีร์ลงแท่น
 var _pending_branch := "" # มิติที่รอแสดงตอนคัมภีร์ลงแท่น
@@ -141,7 +141,7 @@ func update_room(game: RoomGame, items: Array[Dictionary], branch: String) -> vo
 	else:
 		_dimension_label.text = "มิติ: %s" % branch if not branch.is_empty() else "ยังไม่มีคัมภีร์"
 	if game.has_battle():
-		# ด่านต่อสู้: ไม่มีของให้ปกป้อง แสดงสนามรบแทนโต๊ะ/แท่น/คัมภีร์
+		# ด่านต่อสู้: ไม่มีของให้ปกป้อง แสดงสนามรบแทนผ้าปู/แท่น/คัมภีร์
 		if not _in_battle:
 			_in_battle = true
 			_gate_mode = not game.gate.is_empty()
@@ -485,7 +485,7 @@ func row_point(path: String) -> Vector2:
 func _update_furniture(game: RoomGame, items: Array[Dictionary]) -> void:
 	var altar: RoomFurniture = _furniture[RoomGame.STATE_ALTAR]
 	altar.staged = items.filter(func(item: Dictionary) -> bool: return item["state"] == RoomGame.STATE_ALTAR).size()
-	# คลื่นมาในการกระทำถัดไป: โต๊ะ/แท่นที่มีของเสี่ยงสั่นกึก ๆ
+	# คลื่นมาในการกระทำถัดไป: ผ้าปู/แท่นที่มีของเสี่ยงสั่นกึก ๆ
 	var risky := func(item: Dictionary, zone: String) -> bool:
 		if not str(item.get("kind", "")) in ["fragment", "key"] or item.get("hidden", false):
 			return false
@@ -1125,7 +1125,7 @@ func _make_item(item: Dictionary, index: int) -> Control:
 	var at_risk := kind in ["fragment", "key"] and (state == RoomGame.STATE_DESK or state == RoomGame.STATE_CURSED \
 			or (state == RoomGame.STATE_ALTAR and _safe_mode != "staged"))
 	if not hidden and at_risk:
-		# ของที่คลื่นลูกหน้าจะทำร้ายสั่นอยู่บนโต๊ะ — ยิ่งคลื่นใกล้ยิ่งสั่นถี่
+		# ของที่คลื่นลูกหน้าจะทำร้ายสั่นอยู่บนผ้าปู — ยิ่งคลื่นใกล้ยิ่งสั่นถี่
 		icon.pivot_offset = Vector2(15, 28)
 		var period := 0.07 if _urgent else 0.32
 		var swing := 0.22 if _urgent else 0.08

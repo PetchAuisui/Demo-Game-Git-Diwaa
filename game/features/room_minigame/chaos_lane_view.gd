@@ -1,7 +1,7 @@
 class_name ChaosLaneView
 extends Control
-## ลานโกลาหล: พื้นห้องใต้โต๊ะ/แท่น/คัมภีร์ ที่ทำให้กฎของห้อง "มองเห็นได้" แบบเกม
-##   • ประตูโกลาหล (ซ้าย) พ่นภูตออกมา ภูตคลานเข้าหาโต๊ะตามมาตรวัดคลื่น — ถึงโต๊ะเมื่อคลื่นมา
+## ลานโกลาหล: พื้นห้องใต้ผ้าปู/แท่น/คัมภีร์ ที่ทำให้กฎของห้อง "มองเห็นได้" แบบเกม
+##   • ประตูโกลาหล (ซ้าย) พ่นภูตออกมา ภูตคลานเข้าหาผ้าปูตามมาตรวัดคลื่น — ถึงผ้าปูเมื่อคลื่นมา
 ##   • จำนวนภูต = จำนวนของที่คลื่นลูกหน้าจะทำร้าย (ของยังไม่จารึก คำสาปบนแท่น/ในคัมภีร์ มิติผี ฯลฯ)
 ##     ไม่มีอะไรให้ทำร้าย ภูตจะง่วงซึม — ผู้เล่นเห็นทันทีว่าทำถูกแล้ว
 ##   • มิติผี (branch ที่ต้องลบ) ลอยวนเป็นผี · คลังเวท (sync_required) เป็นประตูทองที่หม่นลงเมื่อไม่ตรงกัน
@@ -13,8 +13,11 @@ const VEL_HURT_TEXTURE := "res://assets/cutscene/characters/vel/vel_shockpng.png
 const FONT_BOLD := "res://assets/fonts/ChakraPetch-Bold.ttf"
 const MAX_IMPS := 4
 const CHAOS := Color("b06bff")
+const FLOOR_UNITS := 6.0      # ความหนาของพื้นหิน (หน่วยพิกเซล)
+const FLOOR_MARGIN := 6.0     # ระยะพื้นจากขอบการ์ด
 
 var _font: Font
+var _panel: StyleBoxFlat
 var _back: Node2D
 var _actors: Node2D
 var _fx: Node2D
@@ -25,7 +28,7 @@ var _portal: PixelFx
 var _vault: PixelFx
 var _imps: Array[PixelFx] = []
 var _ghosts: Array[PixelFx] = []
-var _progress := 0.0          # 0 = เพิ่งออกจากประตู · 1 = ถึงโต๊ะ (คลื่นมา)
+var _progress := 0.0          # 0 = เพิ่งออกจากประตู · 1 = ถึงผ้าปู (คลื่นมา)
 var _shown_progress := 0.0
 var _threat := 0
 var _has_waves := false
@@ -58,8 +61,14 @@ var _calm := 0.0              # ประตูโกลาหลสงบลง
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	clip_contents = true
-	custom_minimum_size = Vector2(0, 100)
+	custom_minimum_size = Vector2(0, 110)
 	_font = load(FONT_BOLD) if ResourceLoader.exists(FONT_BOLD) else ThemeDB.fallback_font
+	# การ์ดเดียวกับโซนผ้าปู/แท่น/คัมภีร์ด้านบน — ลานเป็นส่วนหนึ่งของห้อง ไม่ใช่เส้นลอย ๆ
+	_panel = StyleBoxFlat.new()
+	_panel.bg_color = Color(1, 1, 1, 0.05)
+	_panel.border_color = Color(1, 1, 1, 0.15)
+	_panel.set_border_width_all(2)
+	_panel.set_corner_radius_all(10)
 	_back = Node2D.new()
 	add_child(_back)
 	_actors = Node2D.new()
@@ -82,15 +91,16 @@ func _unit() -> float:
 	return maxf(1.0, round(size.y / 50.0))
 
 
+## ระดับผิวพื้นหิน (ภูต ประตู และเวลยืนบนเส้นนี้)
 func _ground() -> float:
-	return size.y - 6.0
+	return size.y - FLOOR_MARGIN - FLOOR_UNITS * _unit()
 
 
 func _portal_x() -> float:
 	return 34.0 * _unit()
 
 
-## จุดที่ภูตไปถึงตอนคลื่นมา = กลางโซนโต๊ะ/แท่น (ครึ่งซ้ายของห้อง)
+## จุดที่ภูตไปถึงตอนคลื่นมา = กลางโซนผ้าปู/แท่น (ครึ่งซ้ายของห้อง)
 func _target_x() -> float:
 	return size.x * 0.42
 
@@ -369,7 +379,7 @@ func vault_point() -> Vector2:
 	return _vault.position + Vector2(0, -30.0 * _unit()) if _vault != null else Vector2(_vel_x() - 46.0 * _unit(), _ground() - 30.0)
 
 
-## คลื่นมา: ภูตทุกตัวกระโจนเข้าหาโต๊ะแล้วระเบิดเป็นควัน ตัวใหม่คลานออกจากประตูอีกครั้ง
+## คลื่นมา: ภูตทุกตัวกระโจนเข้าหาผ้าปูแล้วระเบิดเป็นควัน ตัวใหม่คลานออกจากประตูอีกครั้ง
 func _wave_pounce() -> void:
 	_lunge = 1.0
 	for imp in _imps:
@@ -501,47 +511,107 @@ func _process(delta: float) -> void:
 
 
 func _draw() -> void:
-	# พื้นหิน: แถบเข้มสองระดับ + รอยต่ออิฐ (พิกเซลแข็ง ไม่ไล่สี)
+	draw_style_box(_panel, Rect2(Vector2.ZERO, size))
+	var u := _unit()
 	var g := _ground()
-	draw_rect(Rect2(0, g, size.x, size.y - g), Color("1c1530"))
-	draw_rect(Rect2(0, g, size.x, 2), Color("3a2d5c"))
-	var brick := 26.0 * _unit()
-	var x := 0.0
-	while x < size.x:
-		draw_rect(Rect2(x, g + 2, 2, size.y - g), Color("120d22"))
-		x += brick
-	# เส้นทางของภูต: จุดประเท่าจำนวนจังหวะ ส่วนที่ภูตเดินผ่านแล้วเรืองม่วง
-	if _has_waves:
-		var from := _portal_x() + 18.0 * _unit()
-		var to := _target_x()
-		draw_rect(Rect2(to - 2, g - 18, 4, 18), Color(1, 0.4, 0.5, 0.35 + 0.35 * _shown_progress))
-		var steps := 10
-		for i in steps + 1:
-			var px := lerpf(from, to, float(i) / steps)
-			var lit := float(i) / steps <= _shown_progress + 0.001
-			draw_rect(Rect2(px - 2, g - 4, 4, 2), Color(CHAOS, 0.9) if lit else Color(1, 1, 1, 0.12))
+	_draw_floor(u, g)
 	if _seal_kind == "door":
 		_draw_door()
 	for name in _rifts:
 		var rift: PixelFx = _rifts[name]
 		var label := str(name)
 		# ชื่อมิติอยู่ข้างรอยแยก (ด้านบนของลานเป็นที่ของคำบรรยาย)
-		var p := rift.position + Vector2(10.0 * _unit(), -12.0 * _unit())
+		var p := rift.position + Vector2(10.0 * u, -12.0 * u)
 		draw_string_outline(_font, p, label, HORIZONTAL_ALIGNMENT_LEFT, -1, 12, 3, Color(0, 0, 0, 0.85))
 		draw_string(_font, p, label, HORIZONTAL_ALIGNMENT_LEFT, -1, 12, RoomView.dimension_color(label))
 	if _holy > 0.0:
-		var hx := _holy_x()
-		for band: Array in [[0.0, 10.0, 0.55], [-8.0, 26.0, 0.22], [-20.0, 52.0, 0.09]]:
-			var w: float = band[1] * _unit() * 0.5
-			draw_rect(Rect2(hx + band[0] - w * 0.5, 0, w, size.y), Color(1.0, 0.85, 0.4, band[2]))
-	# เงาใต้เวล
-	draw_rect(Rect2(_vel_x() - 16, g - 1, 32, 3), Color(0, 0, 0, 0.45))
+		_draw_holy_light(u, g)
+	# เงาใต้เท้าเวล (วงรีพิกเซลบนขอบพื้น)
+	var vx := _vel_x()
+	draw_rect(Rect2(vx - 9.0 * u, g, 18.0 * u, u), Color(0, 0, 0, 0.3))
+	draw_rect(Rect2(vx - 6.0 * u, g, 12.0 * u, u), Color(0, 0, 0, 0.25))
 	if _bare:
-		# ไม่มีคัมภีร์: ประกายเตือนรอบตัวเวล
-		var a := 0.35 + 0.3 * sin(_time * 8.0)
-		draw_rect(Rect2(_vel_x() - 20, g - size.y * 0.9, 40, 2), Color(1, 0.4, 0.5, a))
+		_draw_alarm(u)
 	if not _caption.is_empty():
 		var color := Color("c9b6ff") if _hidden else (Color("ffb3c4") if _threat > 0 else Color("9fe8b8"))
 		var width := size.x * 0.8
-		draw_string_outline(_font, Vector2(size.x * 0.1, 16), _caption, HORIZONTAL_ALIGNMENT_CENTER, width, 14, 4, Color(0, 0, 0, 0.85))
-		draw_string(_font, Vector2(size.x * 0.1, 16), _caption, HORIZONTAL_ALIGNMENT_CENTER, width, 14, color)
+		draw_string_outline(_font, Vector2(size.x * 0.1, 18), _caption, HORIZONTAL_ALIGNMENT_CENTER, width, 14, 4, Color(0, 0, 0, 0.85))
+		draw_string(_font, Vector2(size.x * 0.1, 18), _caption, HORIZONTAL_ALIGNMENT_CENTER, width, 14, color)
+
+
+## พื้นหินของลาน: แผ่นหินแถวเดียว สีเดียวกับแท่นเตรียม/แท่นวางคัมภีร์ (ขอบบนสว่าง รอยต่อเข้ม)
+## ทางที่ภูตคลานผ่านมาแล้ว (จากประตูถึงตัวหน้าสุด) มีรอยร้าวเรืองม่วงกัดกินพื้น — แทนมาตรวัดแบบจุดประ
+func _draw_floor(u: float, g: float) -> void:
+	var stone: Array = RoomFurniture.STONE
+	var left := FLOOR_MARGIN
+	var width := size.x - FLOOR_MARGIN * 2.0
+	var depth := FLOOR_UNITS * u
+	draw_rect(Rect2(left, g, width, depth), stone[2])
+	draw_rect(Rect2(left, g, width, u), stone[3])
+	draw_rect(Rect2(left, g + depth - 2.0 * u, width, u), stone[1])
+	draw_rect(Rect2(left, g + depth - u, width, u), stone[0])
+	var slab := 22.0 * u
+	var i := 0
+	var x := left + slab * 0.5
+	while x < left + width - u:
+		draw_rect(Rect2(x, g + u, u, depth - 2.0 * u), stone[1])
+		draw_rect(Rect2(x + u, g + u, u, depth - 3.0 * u), stone[3])
+		draw_rect(Rect2(x + u, g, u * 2.0, u), stone[4])
+		if i % 3 == 1:
+			draw_rect(Rect2(x + slab * 0.55, g + 2.0 * u, u, u), stone[1]) # รอยบิ่นบนแผ่นหิน
+		x += slab
+		i += 1
+	if not _has_waves:
+		return
+	var strength := 1.0 - _calm
+	if strength <= 0.01:
+		return
+	var from := _portal_x()
+	var to := lerpf(_portal_x() + 18.0 * u, _target_x(), _shown_progress)
+	if to <= from:
+		return
+	# ไอโกลาหลจาง ๆ ลอยเหนือทาง (ไล่เป็นขั้นพิกเซล ไม่ไล่สีเนียน)
+	draw_rect(Rect2(from, g - 3.0 * u, to - from, u), Color(CHAOS, 0.05 * strength))
+	draw_rect(Rect2(from, g - 2.0 * u, to - from, u), Color(CHAOS, 0.1 * strength))
+	draw_rect(Rect2(from, g - u, to - from, u), Color(CHAOS, 0.18 * strength))
+	draw_rect(Rect2(from, g, to - from, u), Color(CHAOS, 0.85 * strength))
+	draw_rect(Rect2(from, g + u, to - from, depth - 3.0 * u), Color(CHAOS.darkened(0.5), 0.35 * strength))
+	# รอยร้าวซิกแซกเรืองม่วงบนหน้าแผ่นหิน กะพริบไม่พร้อมกัน
+	var crack := from + 6.0 * u
+	var n := 0
+	while crack < to - 2.0 * u:
+		var flicker := 0.6 + 0.3 * sin(_time * 4.0 + n * 1.7)
+		var c := Color(CHAOS.lightened(0.35), flicker * strength)
+		var lean := 1.0 if n % 2 == 0 else -1.0
+		draw_rect(Rect2(crack, g + u, u, u), c)
+		draw_rect(Rect2(crack + lean * u, g + 2.0 * u, u, u), c)
+		draw_rect(Rect2(crack, g + 3.0 * u, u, u), c)
+		crack += 11.0 * u
+		n += 1
+
+
+## แสงทองของคัมภีร์ที่เพิ่งถือกำเนิด: ลำแสงที่จางลงเป็นขั้นไปทางเพดาน และส่องสว่างพื้นหินตรงที่มันผ่าน
+func _draw_holy_light(u: float, g: float) -> void:
+	var hx := _holy_x()
+	var gold := Color(1.0, 0.85, 0.4)
+	var steps := 4
+	for band: Array in [[0.0, 5.0, 0.5], [-4.0, 13.0, 0.2], [-10.0, 26.0, 0.08]]:
+		var w: float = band[1] * u
+		var bx: float = hx + band[0] * u - w * 0.5
+		for s in steps:
+			var top := g * float(s) / steps
+			draw_rect(Rect2(bx, top, w, g / steps), Color(gold, band[2] * float(s + 1) / steps))
+	draw_rect(Rect2(hx - 16.0 * u, g, 32.0 * u, u), Color(1.0, 0.92, 0.6, 0.85 * _holy))
+
+
+## ยังไม่มีคัมภีร์: เครื่องหมาย "!" กะพริบข้างหัวเวล — คลื่นจะซัดใส่เวลตรง ๆ
+func _draw_alarm(u: float) -> void:
+	if fmod(_time * 2.5, 1.0) > 0.7:
+		return
+	var at := _vel.position + Vector2(-4.0 * u, 4.0 * u)
+	var outline := Color(0, 0, 0, 0.8)
+	var red := Color("ff5f7a")
+	draw_rect(Rect2(at.x - u, at.y - u, 4.0 * u, 7.0 * u), outline)
+	draw_rect(Rect2(at.x - u, at.y + 7.0 * u, 4.0 * u, 4.0 * u), outline)
+	draw_rect(Rect2(at.x, at.y, 2.0 * u, 5.0 * u), red)
+	draw_rect(Rect2(at.x, at.y + 8.0 * u, 2.0 * u, 2.0 * u), red)

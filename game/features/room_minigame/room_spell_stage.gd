@@ -302,7 +302,7 @@ func _merge() -> void:
 	_view.shake(6.0)
 
 
-## การปะทะ (conflict): ไฟจากโต๊ะกับน้ำแข็งจากคัมภีร์ชนกันกลางแท่นเตรียม
+## การปะทะ (conflict): ไฟจากผ้าปูกับน้ำแข็งจากคัมภีร์ชนกันกลางแท่นเตรียม
 func _clash() -> void:
 	var at := _top(ALTAR) + Vector2(0, -16 * _u())
 	_bolt(_top(DESK) + Vector2(0, -20 * _u()), at, Color(1.6, 0.7, 0.4), 0.3)
@@ -410,7 +410,7 @@ func _history_pages(snapshot: GitRepositorySnapshot) -> void:
 
 
 ## git diff: ลำแสงเทียบรอยระหว่างสองโซน มีอักขระ - (แดง) และ + (เขียว) ไหลไปตามลำแสง
-##   diff = โต๊ะ ↔ แท่น · diff --staged = แท่น ↔ คัมภีร์ · diff HEAD = โต๊ะ ↔ คัมภีร์
+##   diff = ผ้าปู ↔ แท่น · diff --staged = แท่น ↔ คัมภีร์ · diff HEAD = ผ้าปู ↔ คัมภีร์
 func _compare_beam(tokens: PackedStringArray) -> void:
 	var a := DESK
 	var b := ALTAR
