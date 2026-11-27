@@ -75,6 +75,7 @@ func _run() -> void:
 	await _test("room v2: tome needed, cursed altar, essential scrolls and exclusion checks", _t_room_rules_v2)
 	await _test("room: waves never corrupt clue notes, and cursed text stays readable", _t_room_notes_safe)
 	await _test("status labels: room tags and Miura's translation match git status", _t_status_labels)
+	await _test("fragment ledger: levels 4-15 each still award their own scroll fragment", _t_fragment_ledger)
 
 	FsUtil.delete_recursive(_test_root)
 	if not _failures.is_empty():
@@ -85,6 +86,31 @@ func _run() -> void:
 		return
 	print("\n%d/%d real-Git integration tests passed" % [_passed, _total])
 	quit(0)
+
+
+func _t_fragment_ledger() -> void:
+	var seen := {}
+	for level in range(1, 16):
+		var data := LevelDataLoader.load_data(level)
+		var expected := FragmentLedger.for_level(level)
+		var announced := {}
+		for step in (data.get("gameplay", {}) as Dictionary).values():
+			var texts: Array[String] = [str(step.get("success_text", ""))]
+			for objective in step.get("objectives", []):
+				texts.append(str(objective.get("world", "")))
+			for text in texts:
+				var number := FragmentLedger.announced(text)
+				if number > 0:
+					announced[number] = true
+		if expected == 0:
+			_check(announced.is_empty(), "level %d should not award a fragment, got %s" % [level, announced.keys()])
+			continue
+		_check(announced.keys() == [expected], "level %d should award fragment %d, got %s" % [level, expected, announced.keys()])
+		_check(var_to_str(data).contains(FragmentLedger.text_of(expected)),
+				"level %d no longer contains fragment %d's words" % [level, expected])
+		seen[expected] = true
+		_equal(expected - 1, FragmentLedger.collected_before(level))
+	_equal(FragmentLedger.TOTAL, seen.size())
 
 
 func _test(test_name: String, body: Callable) -> void:
@@ -981,7 +1007,7 @@ func _t_levels_wrong_spells() -> void:
 	var level3_swapped := await _play_level(3, 1, ["git status", "cat scroll-b.txt", "cat scroll-d.txt"])
 	_check(level3_swapped["mission"].is_complete(), "level 3: the two scrolls can be read in either order")
 	# ด่าน 4: git add . ลากม้วนคำสาปขึ้นแท่น → ไม่ผ่าน และระเบิดเมื่อคลื่นมา
-	# ด่าน 4 ขั้น 2: วางประกายทีละดวง ไม่ทันคลื่น — ต้องยกทั้งโต๊ะในคาถาเดียว
+	# ด่าน 4 ขั้น 2: วางประกายทีละดวง ไม่ทันคลื่น — ต้องยกทั้งผืนในคาถาเดียว
 	var level4_slow := await _play_level(4, 2, ["git add spark-1.txt", "git add spark-2.txt"])
 	_check(level4_slow["room"].is_failed(), "level 4 step 2: one spark at a time loses to the wave")
 	var level4 := await _play_level(4, 1, ["git add .", "git status", "git status"])

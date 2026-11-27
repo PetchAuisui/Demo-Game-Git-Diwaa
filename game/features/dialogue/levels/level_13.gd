@@ -42,7 +42,7 @@ static func get_data() -> Dictionary:
 		"clear_keyword": "git clone <url> คัดลอกคัมภีร์ทั้งเล่มพร้อมประวัติ · git remote -v ดูสายเชื่อม · git remote set-url เปลี่ยนที่อยู่ · git remote remove ตัดสายทิ้ง",
 
 		"intro_sequence": [
-			{"speaker": "เวล", "text": "ชั้นนี้ไม่มีโต๊ะ ไม่มีคัมภีร์… แต่มองเห็นโดมแก้วของคลังเวทกลางอยู่ไกลลิบ", "mewla_anim": "idle"},
+			{"speaker": "เวล", "text": "ชั้นนี้ว่างเปล่า ไม่มีคัมภีร์… แต่มองเห็นโดมแก้วของคลังเวทกลางอยู่ไกลลิบ", "mewla_anim": "idle"},
 			{"speaker": "มิวรา", "text": "ไม่มีคัมภีร์ก็ไม่มีอะไรรองรับคลื่นโกลาหล — แต่ผู้พิทักษ์คลังทิ้งคัมภีร์แสงสว่างไว้ให้นาย", "mewla_anim": "talk"},
 			{"speaker": "มิวรา", "text": "มันอยู่ที่ " + URL + " — คัดลอกมาทั้งเล่มเลย ไม่ต้องเดินไปถึงที่นั่น", "mewla_anim": "success"},
 			{"type": "open_gameplay", "step": 1}

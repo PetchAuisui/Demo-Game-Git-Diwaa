@@ -93,6 +93,13 @@ var _pending_respawn: Array[Dictionary] = []
 var _contents: Dictionary = {}
 ## path ที่คลื่นสาปไว้และยังไม่ถูกฟื้นคืน
 var _corrupted: Dictionary = {}
+## สิ่งที่ห้องเห็นจาก snapshot ล่าสุด (อัปเดตใน describe) — ใช้วาดลานโกลาหลเท่านั้น ไม่มีผลต่อกฎ
+var active_phantoms: Array[String] = []
+var sync_text := ""
+var has_tome := false
+var page_count := 0
+var branch_names: Array[String] = []
+var current_branch := ""
 ## path ที่มีอยู่จริงในพื้นที่ทำงานล่าสุด (ผู้เรียกตั้งค่าก่อน on_turn ผ่าน set_present)
 var _present: Dictionary = {}
 
@@ -279,7 +286,7 @@ func on_turn(snapshot: GitRepositorySnapshot, command: String = "") -> Dictionar
 
 	for action in _spawn_actions(turn):
 		actions.append(action)
-		events.append({"type": "spawn", "path": action["write"], "text": "%s ร่วงลงมาบนโต๊ะ!" % _name(action["write"])})
+		events.append({"type": "spawn", "path": action["write"], "text": "%s ร่วงลงมาบนผ้าปู!" % _name(action["write"])})
 
 	for path in essential:
 		if _present.has(path):
@@ -313,6 +320,7 @@ func remember_content(path: String, content: String) -> void:
 func describe(snapshot: GitRepositorySnapshot, workspace_paths: Array[String]) -> Array[Dictionary]:
 	var result: Array[Dictionary] = []
 	var statuses := {}
+	_observe(snapshot)
 	if snapshot != null:
 		for file in snapshot.files:
 			statuses[file.path] = file
@@ -338,6 +346,45 @@ func describe(snapshot: GitRepositorySnapshot, workspace_paths: Array[String]) -
 	return result
 
 
+func _observe(snapshot: GitRepositorySnapshot) -> void:
+	active_phantoms.clear()
+	has_tome = snapshot != null and snapshot.is_initialized
+	sync_text = sync_drift(snapshot) if sync_required and has_tome else ""
+	page_count = 0
+	branch_names.clear()
+	current_branch = ""
+	if snapshot == null:
+		return
+	page_count = snapshot.commits.size()
+	current_branch = str(snapshot.current_branch) if snapshot.current_branch != null else ""
+	for branch in snapshot.branches:
+		if not SpellEffectDetector._is_remote_branch(snapshot, branch.name):
+			branch_names.append(branch.name)
+	for phantom in phantoms:
+		if snapshot.branches.any(func(branch: GitBranchInfo) -> bool: return branch.name == phantom):
+			active_phantoms.append(phantom)
+
+
+## จำนวนของที่คลื่นลูกหน้าจะทำร้าย (สำหรับบอกผู้เล่นว่าภูตกำลังเล็งอะไร) — items มาจาก describe()
+func threat_count(described: Array[Dictionary]) -> int:
+	var count := 0
+	for item in described:
+		var kind := str(item.get("kind", ""))
+		var state := str(item.get("state", ""))
+		if kind == "curse":
+			count += 1 if state == STATE_ALTAR or state == STATE_TOME else 0
+		elif kind in ["fragment", "key"]:
+			if state == STATE_DESK or state == STATE_CURSED:
+				count += 1
+			elif state == STATE_ALTAR and safe_mode != "staged":
+				count += 1
+	if needs_tome and not has_tome:
+		count += 1
+	if not sync_text.is_empty():
+		count += 1
+	return count + active_phantoms.size()
+
+
 ## สถานะ Git ของไฟล์แบบที่ git status ใช้ (untracked / modified / staged / staged_modified / conflict)
 static func git_state(status: GitFileStatus) -> String:
 	if status.index_state == GitFileState.UNMERGED or status.working_tree_state == GitFileState.UNMERGED:
@@ -357,7 +404,7 @@ static func classify(status: GitFileStatus) -> String:
 	if status.index_state == GitFileState.UNTRACKED:
 		return STATE_DESK
 	if status.working_tree_state == GitFileState.MODIFIED or status.working_tree_state == GitFileState.DELETED:
-		return STATE_DESK # จารึกแล้วแต่มีการแก้ค้างบนโต๊ะ
+		return STATE_DESK # จารึกแล้วแต่มีการแก้ค้างบนผ้าปู
 	return STATE_ALTAR
 
 

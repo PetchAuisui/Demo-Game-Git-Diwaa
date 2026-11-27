@@ -82,6 +82,30 @@ func _celebrate() -> void:
 		PixelFx.spawn(self, "gate_open", Vector2(view.x * 0.15, view.y * 0.3), unit * 0.8)
 		PixelFx.spawn(self, "gate_open", Vector2(view.x * 0.85, view.y * 0.32), unit * 0.8, 0.15, true)
 
+## ด่านที่ให้เศษคัมภีร์ (4–15): บรรทัดทองใต้ชื่อด่าน บอกว่าได้เศษชิ้นไหน (n/12) และถ้อยคำของปรมาจารย์
+func _add_fragment_line() -> void:
+	var number := FragmentLedger.for_level(level_number)
+	if number <= 0 or level_title_label == null or level_title_label.get_parent() == null:
+		return
+	var line := Label.new()
+	line.name = "FragmentLine"
+	line.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	line.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	line.text = "✦ ได้รับเศษคัมภีร์ชิ้นที่ %d/%d  \"%s\"" % [number, FragmentLedger.TOTAL, FragmentLedger.text_of(number)]
+	line.add_theme_color_override("font_color", Color("9a5a12")) # ทองเข้ม อ่านออกบนกระดาษสีอ่อนของหน้าต่าง
+	var font := level_title_label.get_theme_font("font")
+	if font != null:
+		line.add_theme_font_override("font", font)
+	line.add_theme_font_size_override("font_size", maxi(18, int(level_title_label.get_theme_font_size("font_size") * 0.6)))
+	var parent := level_title_label.get_parent()
+	parent.add_child(line)
+	parent.move_child(line, level_title_label.get_index() + 1)
+	line.modulate.a = 0.0
+	var tw := line.create_tween()
+	tw.tween_interval(0.5)
+	tw.tween_property(line, "modulate:a", 1.0, 0.4)
+
+
 ## ดึงข้อมูลด่านที่เพิ่งเล่นจบ (ด่านที่เลือกไว้) มาแสดงชื่อคำสั่งและคีย์เวิร์ดประจำด่าน
 func _apply_level_info() -> void:
 	level_number = GameProgressManager.get_selected_level_number()
@@ -91,6 +115,7 @@ func _apply_level_info() -> void:
 		level_keyword = str(data.get("clear_keyword", level_keyword))
 	if level_title_label:
 		level_title_label.text = "ด่านที่ %d : %s" % [level_number, level_command]
+	_add_fragment_line()
 	if keyword_header_label:
 		keyword_header_label.text = "บันทึกคัมภีร์เวทประจำด่านที่ %d" % level_number
 	if keyword_body_label:

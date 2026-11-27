@@ -52,7 +52,7 @@ static func get_data() -> Dictionary:
 						"type": "state",
 						"check": "in_sync",
 						"upstream": "origin/main",
-						"world": "ความรู้ไหลจากโดมแก้วลงสู่คัมภีร์ของนาย fragment-11.txt ปรากฏบนโต๊ะ",
+						"world": "ความรู้ไหลจากโดมแก้วลงสู่คัมภีร์ของนาย fragment-11.txt ปรากฏบนผ้าปู",
 						"hint": "คาถาเรียกความรู้คือ pull: git pull (fetch อย่างเดียวแค่ส่องดู ยังไม่รวมเข้ามา)"
 					},
 					{

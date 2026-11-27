@@ -48,7 +48,7 @@ static func get_data() -> Dictionary:
 						"type": "state",
 						"check": "current_branch",
 						"branch": "experiment",
-						"world": "โลกรอบตัวกระพริบเป็นสีฟ้า… ครึ่งกุญแจจันทราค่อย ๆ ก่อตัวบนโต๊ะ",
+						"world": "โลกรอบตัวกระพริบเป็นสีฟ้า… ครึ่งกุญแจจันทราค่อย ๆ ก่อตัวบนผ้าปู",
 						"hint": "คาถาประตูมิติคือ switch: git switch experiment",
 						"spawn": [{"write": "key-moon.txt", "content": "ครึ่งกุญแจจันทรา ☾\n"}]
 					},
@@ -69,7 +69,7 @@ static func get_data() -> Dictionary:
 						"type": "state",
 						"check": "current_branch",
 						"branch": "main",
-						"world": "ครึ่งกุญแจหายไปจากโต๊ะ! — ไม่ได้หายจริง มันอยู่ในมิติ experiment แต่ละมิติมีโลกของตัวเอง",
+						"world": "ครึ่งกุญแจหายไปจากผ้าปู! — ไม่ได้หายจริง มันอยู่ในมิติ experiment แต่ละมิติมีโลกของตัวเอง",
 						"hint": "git switch main"
 					},
 					{

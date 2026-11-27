@@ -1,6 +1,6 @@
 class_name RoomView
 extends Control
-## ภาพห้องในหอคอยกลางฉาก Sandbox: โต๊ะ (working tree) · แท่นเตรียม (stage) · คัมภีร์ (commit)
+## ภาพห้องในหอคอยกลางฉาก Sandbox: ผ้าปูเวทของเวล (working tree) · แท่นเตรียม (stage) · คัมภีร์ (commit)
 ## พร้อมหัวใจ มาตรวัดคลื่นโกลาหล มิติที่ยืนอยู่ และข้อความเหตุการณ์ในโลก
 ## ข้อมูลทั้งหมดมาจาก RoomGame.describe() — ห้องสะท้อน repo จริงเสมอ
 ## คลิกของในห้อง = หยิบขึ้นมาอ่าน (การกระทำในโลก ไม่ต้องพิมพ์คำสั่ง) ส่วนอื่นของห้องไม่รับเมาส์
@@ -17,7 +17,7 @@ const FONT_BOLD := "res://assets/fonts/ChakraPetch-Bold.ttf"
 const FONT_REGULAR := "res://assets/fonts/ChakraPetch-Regular.ttf"
 
 const ZONES := [
-	{"state": RoomGame.STATE_DESK, "title": "โต๊ะเขียน", "sub": "ยังไม่ปลอดภัย"},
+	{"state": RoomGame.STATE_DESK, "title": "ผ้าปูเวท", "sub": "ยังไม่ปลอดภัย"},
 	{"state": RoomGame.STATE_ALTAR, "title": "แท่นเตรียม", "sub": "รอการจารึก"},
 	{"state": RoomGame.STATE_TOME, "title": "คัมภีร์", "sub": "จารึกแล้ว · ปลอดภัย"},
 ]
@@ -57,12 +57,28 @@ var _hearts_label: Label
 var _chaos_label: Label
 var _chaos_bar: ProgressBar
 var _dimension_label: Label
+var _fragment_label: Label
 var _zone_boxes: Dictionary = {}
+var _furniture: Dictionary = {}     # state -> RoomFurniture (ผ้าปู / แท่นเตรียม / แท่นวางคัมภีร์)
+var _stage: RoomSpellStage
+var _fog: RoomFog
+var _camera: RoomCamera
+var _wake_layer: Control       # ใต้กล้อง: วงเวทบนแท่นและคลื่นแสงปลุกห้อง (ถูกซูมไปพร้อมห้อง)
+var _essential: Array[String] = []
+var _frame_style: StyleBoxFlat
+## ห้องก่อน git init: หลับใหล (ผ้าปูยังม้วนอยู่ แท่นหินหม่น) จนกว่าคัมภีร์จะถือกำเนิด
+var _dormant := false     # ห้องหลับใหล (ยังไม่มีคัมภีร์)
+var _waking := false      # คาถาถือกำเนิดกำลังปลุกห้อง — หัวห้อง/มิติรอจนคัมภีร์ลงแท่น
+var _pending_branch := "" # มิติที่รอแสดงตอนคัมภีร์ลงแท่น
+var _room_seen := false
+var _scene_until := 0.0   # ฉากคาถาใหญ่ (เช่น คัมภีร์ถือกำเนิด) เล่นถึงเวลานี้ — ป้ายฉลองรอให้ฉากจบก่อน   # วาดห้องครั้งแรกแล้วหรือยัง (ครั้งแรกแสดงทันที ไม่เล่นท่างอก)
+var _dimension := ""
 var _event_label: Label
 var _flash: ColorRect
 var _event_tween: Tween
 var _zones: HBoxContainer
 var _battle: BattleFieldView
+var _lane: ChaosLaneView
 var _in_battle := false
 var _gate_mode := false
 var _speak_bar: PanelContainer
@@ -84,6 +100,9 @@ var _fx_layer: Control
 var _rows: Dictionary = {}          # path -> แถวของในห้อง (หาตำแหน่งเอฟเฟกต์)
 var _last_states: Dictionary = {}   # path -> state ครั้งก่อน (รู้ว่าของเพิ่งขึ้นแท่น/เข้าคัมภีร์)
 var _pending_fx: Array[Dictionary] = []  # เอฟเฟกต์ที่รอแถวของถูกวาดใหม่ก่อนจะรู้ตำแหน่ง
+var _pending_flights: Array[Dictionary] = []  # ของที่ย้ายโซน: {path, from, effect} บินโค้งจากที่เดิมไปที่ใหม่
+var _urgent := false  # คลื่นลูกหน้ามาในการกระทำถัดไป — ของที่ยังไม่ปลอดภัยสั่นถี่ขึ้น
+var _safe_mode := "committed"
 
 
 func _ready() -> void:
@@ -117,9 +136,12 @@ func update_room(game: RoomGame, items: Array[Dictionary], branch: String) -> vo
 	else:
 		_chaos_label.visible = false
 		_chaos_bar.visible = false
-	_dimension_label.text = "มิติ: %s" % branch if not branch.is_empty() else "ยังไม่มีคัมภีร์"
+	if _waking:
+		_pending_branch = branch # หัวห้องเปลี่ยนตอนคัมภีร์ลงแท่น ไม่ใช่ก่อน (ผลไม่มาก่อนเหตุ)
+	else:
+		_dimension_label.text = "มิติ: %s" % branch if not branch.is_empty() else "ยังไม่มีคัมภีร์"
 	if game.has_battle():
-		# ด่านต่อสู้: ไม่มีของให้ปกป้อง แสดงสนามรบแทนโต๊ะ/แท่น/คัมภีร์
+		# ด่านต่อสู้: ไม่มีของให้ปกป้อง แสดงสนามรบแทนผ้าปู/แท่น/คัมภีร์
 		if not _in_battle:
 			_in_battle = true
 			_gate_mode = not game.gate.is_empty()
@@ -128,8 +150,24 @@ func update_room(game: RoomGame, items: Array[Dictionary], branch: String) -> vo
 		_battle.visible = true
 		_dimension_label.visible = false
 		_battle.update_battle(game)
+		_lane.visible = false
 		return
+	_urgent = game.has_waves() and game.turns_until_wave() <= 1
+	_safe_mode = game.safe_mode
+	_lane.update_lane(game, items)
+	_update_furniture(game, items)
+	_update_dormancy(game)
+	_update_fog(game)
+	if not _waking:
+		_set_dimension(branch)
 
+	var old_icons := {}
+	for path in _rows:
+		var old_row: Control = _rows[path]
+		if is_instance_valid(old_row) and old_row.is_inside_tree() and old_row.get_child_count() > 0:
+			var old_icon := old_row.get_child(0) as TextureRect
+			old_icons[path] = {"rect": old_icon.get_global_rect(), "texture": old_icon.texture, "modulate": old_icon.modulate}
+	_essential = game.essential
 	for zone in _zone_boxes.values():
 		for child in (zone as Container).get_children():
 			child.queue_free()
@@ -151,13 +189,405 @@ func update_room(game: RoomGame, items: Array[Dictionary], branch: String) -> vo
 		# ของเพิ่งย้ายโซน: ขึ้นแท่นเตรียม (add) = ประกายฟ้า · เข้าคัมภีร์ (commit) = ประกายทอง
 		var before := str(_last_states.get(path, ""))
 		if not before.is_empty() and before != state:
+			var effect := ""
 			if state == RoomGame.STATE_TOME:
-				_pending_fx.append({"effect": "commit_sparkle", "path": path})
+				effect = "commit_sparkle"
 			elif state == RoomGame.STATE_ALTAR:
-				_pending_fx.append({"effect": "stage_sparkle", "path": path})
+				effect = "stage_sparkle"
+			if old_icons.has(path) and box != null:
+				# ของลอยโค้งจากที่เดิมไปที่ใหม่ แล้วค่อยเกิดประกายตอนลงถึง (เหตุ → ผล)
+				_pending_flights.append({"path": path, "from": old_icons[path], "effect": effect})
+			elif not effect.is_empty():
+				_pending_fx.append({"effect": effect, "path": path})
 		index += 1
 	_last_states = states
 	_flush_fx_next_frame()
+
+
+## การ์ดเปิดขั้น: ป้ายชั้น + ชื่อขั้น + เป้าหมายแรก + ภัยของห้อง พุ่งลงมากลางห้องแล้วหายไปเอง
+## (ไม่รับเมาส์ ไม่บังวงร่ายเวท) — ผู้เล่นรู้ทันทีว่าต้องทำอะไรและอะไรกำลังไล่ล่า
+func show_intro(floor_text: String, title: String, goal: String, threat: String) -> void:
+	if not is_inside_tree():
+		return
+	var card := PanelContainer.new()
+	card.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color(0.08, 0.05, 0.14, 0.94)
+	style.border_color = Color("ffd36b")
+	style.set_border_width_all(3)
+	style.set_corner_radius_all(4)
+	style.set_content_margin_all(14)
+	card.add_theme_stylebox_override("panel", style)
+	var column := VBoxContainer.new()
+	column.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	column.add_theme_constant_override("separation", 2)
+	card.add_child(column)
+	var lines := [[floor_text, 15, Color("c9b6ff")], [title, 30, Color("ffd36b")],
+			["เป้าหมาย: " + goal, 18, Color("fff3d6")], [threat, 16, Color("ffb3c4")]]
+	for line in lines:
+		if str(line[0]).strip_edges().is_empty() or str(line[0]) == "เป้าหมาย: ":
+			continue
+		var label := _label(int(line[1]), line[2], true)
+		label.text = str(line[0])
+		label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+		label.clip_text = true
+		column.add_child(label)
+	_fx_layer.add_child(card)
+	card.custom_minimum_size = Vector2(size.x * 0.7, 0)
+	card.reset_size()
+	await get_tree().process_frame
+	if not is_instance_valid(card):
+		return
+	card.position = Vector2((size.x - card.size.x) * 0.5, -card.size.y)
+	var rest := Vector2(card.position.x, size.y * 0.22)
+	var tw := card.create_tween()
+	tw.tween_property(card, "position", rest, 0.35).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	tw.tween_callback(func() -> void: _shake_frame(4.0))
+	tw.tween_interval(2.6)
+	tw.tween_property(card, "modulate:a", 0.0, 0.4)
+	tw.tween_callback(card.queue_free)
+
+
+## ป้ายลอยเมื่อทำเป้าหมายสำเร็จ: "สำเร็จ!" · ทำต่อเนื่องไม่โดนพลังกระแทก = คอมโบ · จบด่านหัวใจเต็ม = ไร้รอยแผล
+func celebrate_objective(streak: int, finished: bool, flawless: bool) -> void:
+	if not is_inside_tree():
+		return
+	var wait := _scene_until - Time.get_ticks_msec() / 1000.0
+	if wait > 0.0:
+		await get_tree().create_timer(wait).timeout
+		if not is_inside_tree():
+			return
+	var text := "สำเร็จ!"
+	var color := Color("9fe8b8")
+	if finished and flawless:
+		text = "ไร้รอยแผล!"
+		color = Color("ffd36b")
+	elif streak >= 2:
+		text = "คอมโบ x%d!" % streak
+		color = Color("ffd36b") if streak >= 3 else Color("8fd3ff")
+	var label := _label(34 if finished or streak >= 3 else 28, color, true)
+	label.add_theme_constant_override("outline_size", 8)
+	label.text = text
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	label.size = Vector2(size.x, 48)
+	label.position = Vector2(0, size.y * 0.34)
+	label.pivot_offset = label.size * 0.5
+	label.scale = Vector2.ONE * 0.4
+	_fx_layer.add_child(label)
+	var tw := label.create_tween()
+	tw.tween_property(label, "scale", Vector2.ONE * 1.15, 0.14).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	tw.tween_property(label, "scale", Vector2.ONE, 0.1)
+	tw.tween_interval(0.5 if not finished else 1.1)
+	tw.set_parallel(true)
+	tw.tween_property(label, "position:y", label.position.y - 46.0, 0.6).set_ease(Tween.EASE_IN)
+	tw.tween_property(label, "modulate:a", 0.0, 0.6).set_ease(Tween.EASE_IN)
+	tw.chain().tween_callback(label.queue_free)
+	var unit := maxf(1.0, round(size.y / 220.0))
+	var at := Vector2(size.x * 0.5, size.y * 0.34 + 96)
+	PixelFx.spawn(_fx_layer, "stage_sparkle" if streak < 3 and not finished else "commit_sparkle", at, unit * (1.4 if finished else 1.0))
+	if finished and flawless:
+		PixelFx.spawn(_fx_layer, "confetti", Vector2(size.x * 0.2, size.y), unit)
+		PixelFx.spawn(_fx_layer, "confetti", Vector2(size.x * 0.8, size.y), unit, 0.0, true)
+
+
+## ตัวนับเศษคัมภีร์ต้นกำเนิด (n/12) — แสดงเมื่อเรื่องดำเนินถึงการตามหาเศษแล้ว · gained = เพิ่งได้ชิ้นใหม่ (เด้ง)
+func set_fragments(count: int, show: bool, gained: bool = false) -> void:
+	_fragment_label.visible = show or count > 0
+	_fragment_label.text = "✦ เศษคัมภีร์ %d/%d" % [count, FragmentLedger.TOTAL]
+	if gained:
+		_fragment_label.pivot_offset = _fragment_label.size * 0.5
+		var tw := create_tween()
+		tw.tween_property(_fragment_label, "scale", Vector2.ONE * 1.5, 0.12).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+		tw.tween_property(_fragment_label, "scale", Vector2.ONE, 0.3)
+
+
+## สีประจำมิติ: main ทองอุ่น · experiment ฟ้าจันทรา · trial เขียว · echo ม่วงเงา · อื่น ๆ ตามชื่อ
+static func dimension_color(branch: String) -> Color:
+	match branch:
+		"", "main", "master":
+			return Color("ebcb70")
+		"experiment":
+			return Color("8fd3ff")
+		"trial":
+			return Color("7ee8a8")
+		"echo", "phantom":
+			return Color("d6a8ff")
+	return Color.from_hsv(float(branch.hash() % 360) / 360.0, 0.45, 1.0)
+
+
+## มิติที่ยืนอยู่ย้อมกรอบห้องและแสงของคัมภีร์ — ข้ามมิติแล้วห้องเปลี่ยนสีให้เห็นทันที
+func _set_dimension(branch: String) -> void:
+	if branch == _dimension:
+		return
+	_dimension = branch
+	var color := dimension_color(branch)
+	if _frame_style != null:
+		_frame_style.border_color = Color(color, 0.9)
+	_dimension_label.add_theme_color_override("font_color", color.lightened(0.2))
+	var pedestal: RoomFurniture = _furniture.get(RoomGame.STATE_TOME, null)
+	if pedestal != null:
+		pedestal.tint = color
+
+
+## ห้องที่ยังไม่มีคัมภีร์ (ด่าน git init / ก่อน clone) หลับใหล: เฟอร์นิเจอร์ซีดเทา เทียนดับ หยากไย่ฝุ่นจับ
+## กล้องซูมใกล้ที่แท่นวางคัมภีร์ที่ว่างเปล่า — ห้องตื่นเมื่อคาถาถือกำเนิดปลุก (begin_wake → wake_room → finish_wake)
+func _update_dormancy(game: RoomGame) -> void:
+	var dormant := not game.has_tome
+	if not _room_seen:
+		_room_seen = true
+		_set_dormant(dormant)
+		for state in _furniture:
+			((_furniture[state] as RoomFurniture).get_parent() as Control).modulate.a = 1.0
+	elif dormant and not _dormant:
+		_set_dormant(true)
+	elif not dormant and _dormant and not _waking:
+		_set_dormant(false) # มีคัมภีร์โดยไม่มีฉากปลุก (เช่น เริ่มใหม่) — ตื่นทันที
+	if _dormant:
+		_place_fog.call_deferred()
+		if not _camera.visible and not _waking:
+			_camera.close_up()
+
+
+func _set_dormant(on: bool) -> void:
+	_dormant = on
+	for state in _furniture:
+		var furniture_node: RoomFurniture = _furniture[state]
+		furniture_node.awake = 0.0 if on else 1.0
+		var panel := furniture_node.get_parent() as Control
+		panel.modulate = Color(0.78, 0.76, 0.85, panel.modulate.a) if on else Color(1, 1, 1, panel.modulate.a)
+	(_furniture[RoomGame.STATE_TOME] as RoomFurniture).hold_tome = on
+	if not on:
+		_camera.visible = false
+
+
+## คาถาถือกำเนิดเริ่มแล้ว: ห้องค้างสภาพหลับไว้ (หัวห้อง มิติ) จนกว่าคัมภีร์จะลงแท่น — คืน true ถ้าห้องหลับอยู่
+func begin_wake() -> bool:
+	if not _dormant:
+		return false
+	_waking = true
+	return true
+
+
+## คลื่นแสงแผ่จากแท่นวางคัมภีร์ไปทั่วห้อง ของแต่ละชิ้นตื่นเมื่อแสงผ่าน กล้องถอยกลับขนาดจริงในช่วงเดียวกัน
+## คืนเวลาที่ใช้ (วินาที)
+func wake_room() -> float:
+	if not _dormant:
+		return 0.0
+	var seconds := 1.0
+	_camera.pull_back(seconds)
+	var pedestal: RoomFurniture = _furniture[RoomGame.STATE_TOME]
+	var origin := pedestal.top_global()
+	var farthest := 0.0
+	for state in _furniture:
+		var node: RoomFurniture = _furniture[state]
+		farthest = maxf(farthest, origin.distance_to(node.global_position + node.size * 0.5))
+	var ring := WakeRing.new()
+	ring.center = origin - _wake_layer.global_position
+	ring.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_wake_layer.add_child(ring)
+	var reach := farthest + 60.0
+	var tw := ring.create_tween()
+	tw.tween_property(ring, "radius", reach, seconds).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	tw.tween_callback(ring.queue_free)
+	for state in _furniture:
+		var node: RoomFurniture = _furniture[state]
+		var at := node.global_position + node.size * 0.5
+		var delay := clampf(origin.distance_to(at) / reach, 0.0, 1.0)
+		# เวลาที่แสงไปถึง (ประมาณการ ease-out ของวงแสง)
+		var when := seconds * (1.0 - sqrt(1.0 - delay))
+		var panel := node.get_parent() as Control
+		get_tree().create_timer(when).timeout.connect(func() -> void:
+			node.wake(0.35)
+			create_tween().tween_property(panel, "modulate", Color(1, 1, 1, panel.modulate.a), 0.35)
+			spawn_under_camera("dust_puff", node.top_global() + Vector2(0, -4), fx_unit() * 0.6))
+	return seconds
+
+
+## คัมภีร์ลงแท่นแล้ว: ห้องตื่นเต็มที่ หัวห้องและสีมิติเปลี่ยนตอนนี้
+func finish_wake() -> void:
+	if not _waking:
+		return
+	_waking = false
+	_dormant = false
+	_camera.visible = false
+	_dimension_label.text = "มิติ: %s" % _pending_branch if not _pending_branch.is_empty() else "ยังไม่มีคัมภีร์"
+	_set_dimension(_pending_branch)
+
+
+## วางเอฟเฟกต์ใต้กล้อง (ถูกซูมไปพร้อมห้อง) ที่ตำแหน่ง global
+func spawn_under_camera(effect: String, global_point: Vector2, scale_by: float, start_seconds: float = 0.0) -> PixelFx:
+	return PixelFx.spawn(_wake_layer, effect, global_point - _wake_layer.global_position, scale_by, start_seconds)
+
+
+## จุด global ในห้องปรากฏตรงไหนบนจอตอนนี้ (ถ้ากล้องซูมอยู่) — พิกัดชั้นเอฟเฟกต์ สำหรับเล็งสิ่งที่วาดทับกล้อง
+func camera_point(global_point: Vector2) -> Vector2:
+	if _camera == null or not _camera.visible:
+		return to_fx(global_point)
+	return to_fx(_zones.global_position + _camera.to_view(global_point - _zones.global_position))
+
+
+## ฉากคาถาใหญ่ยังเล่นอยู่อีกกี่วินาที (แผงภารกิจ "สำเร็จ" รอให้จบก่อน)
+func scene_remaining() -> float:
+	return maxf(0.0, _scene_until - Time.get_ticks_msec() / 1000.0)
+
+
+## คลิกในห้องระหว่างฉากใหญ่ = เร่งให้จบเร็วขึ้น (สำหรับคนเล่นซ้ำ)
+func _input(event: InputEvent) -> void:
+	if not (event is InputEventMouseButton and event.pressed) or scene_remaining() <= 0.0 or not is_visible_in_tree():
+		return
+	if not get_global_rect().has_point((event as InputEventMouseButton).global_position):
+		return
+	var left := scene_remaining()
+	Engine.time_scale = 3.0
+	_scene_until = Time.get_ticks_msec() / 1000.0 + left / 3.0
+	get_tree().create_timer(left / 3.0, true, false, true).timeout.connect(func() -> void: Engine.time_scale = 1.0)
+
+
+## ห้องมืด (blind): หมอกคลุมโซนทั้งสามจนกว่าจะหยั่งสถานะ แล้วแสงตะเกียงกวาดหมอกหาย
+func _update_fog(game: RoomGame) -> void:
+	var dark := game.blind and not game.revealed
+	if dark and not _fog.visible:
+		_fog.cover()
+	elif not dark and _fog.visible:
+		_fog.reveal()
+	_place_fog.call_deferred()
+
+
+func _place_fog() -> void:
+	if _zones == null or not is_inside_tree():
+		return
+	_fog.position = _zones.global_position - global_position
+	_fog.size = _zones.size
+	_camera.position = _fog.position
+	_camera.size = _zones.size
+	_wake_layer.size = size
+	var pedestal: RoomFurniture = _furniture.get(RoomGame.STATE_TOME, null)
+	if pedestal != null:
+		_camera.focus = pedestal.top_global() - _zones.global_position
+
+
+## ผนึกที่รอคำตอบในลาน (ประตูหินด่าน 6 · วงอักขระด่าน 7) — kind "" = ไม่มี
+func set_seal(kind: String, opened: bool) -> void:
+	if _lane != null:
+		_lane.set_seal(kind, opened)
+
+
+## ตำแหน่งไอคอนของในห้อง (พิกัดชั้นเอฟเฟกต์) — Vector2.INF ถ้าไม่มีแถวนั้น
+func row_point(path: String) -> Vector2:
+	var row: Control = _rows.get(path, null)
+	if row == null or not is_instance_valid(row) or not row.is_inside_tree() or row.get_child_count() == 0:
+		return Vector2.INF
+	var icon := row.get_child(0) as Control
+	return to_fx(icon.global_position + icon.size * 0.5)
+
+
+func _update_furniture(game: RoomGame, items: Array[Dictionary]) -> void:
+	var altar: RoomFurniture = _furniture[RoomGame.STATE_ALTAR]
+	altar.staged = items.filter(func(item: Dictionary) -> bool: return item["state"] == RoomGame.STATE_ALTAR).size()
+	# คลื่นมาในการกระทำถัดไป: ผ้าปู/แท่นที่มีของเสี่ยงสั่นกึก ๆ
+	var risky := func(item: Dictionary, zone: String) -> bool:
+		if not str(item.get("kind", "")) in ["fragment", "key"] or item.get("hidden", false):
+			return false
+		var state := str(item["state"])
+		if zone == RoomGame.STATE_DESK:
+			return state == RoomGame.STATE_DESK or state == RoomGame.STATE_CURSED
+		return state == RoomGame.STATE_ALTAR and game.safe_mode != "staged"
+	var desk: RoomFurniture = _furniture[RoomGame.STATE_DESK]
+	desk.urgent = _urgent and items.any(func(item: Dictionary) -> bool: return risky.call(item, RoomGame.STATE_DESK))
+	altar.urgent = _urgent and items.any(func(item: Dictionary) -> bool: return risky.call(item, RoomGame.STATE_ALTAR))
+	altar.shield = game.safe_mode == "staged"
+	var pedestal: RoomFurniture = _furniture[RoomGame.STATE_TOME]
+	pedestal.has_tome = game.has_tome
+	pedestal.pages = game.page_count
+	pedestal.max_pages = game.max_commits
+
+
+## ผลของคาถาที่ร่ายสำเร็จ (จาก SpellEffectDetector) → ฉากในห้องตรงเฟอร์นิเจอร์/ลาน — ห้องต่อสู้ใช้สนามรบของตัวเอง
+func cast(effects: Array[Dictionary], command: String, snapshot: GitRepositorySnapshot = null) -> void:
+	if _in_battle or not is_inside_tree():
+		return
+	if effects.is_empty() and not command.begins_with("git remote"):
+		return
+	if _stage == null:
+		_stage = RoomSpellStage.new(self)
+	_stage.play(effects, command, snapshot)
+
+
+## ฉากคาถาที่กำลังเล่นจะยาวอีกกี่วินาที (ป้ายฉลองเป้าหมายรอจนจบ ไม่ทับกัน)
+func hold_scene(seconds: float) -> void:
+	_scene_until = maxf(_scene_until, Time.get_ticks_msec() / 1000.0 + seconds)
+
+
+## ป้ายชื่อคาถาในห้อง (ชื่อในโลกเวท + ความหมาย Git) — ขึ้นตอนที่ผลเกิดจริง ซ้อนลงมาถ้ามีหลายป้าย
+var _announced := 0
+func announce(effect: Dictionary) -> void:
+	if not is_inside_tree() or _in_battle:
+		return
+	var kind := int(effect.get("kind", -1))
+	var color: Color = SpellEffectOverlay.COLORS.get(kind, Color.WHITE)
+	var box := VBoxContainer.new()
+	box.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	box.add_theme_constant_override("separation", -2)
+	var title := _label(26, color, true)
+	title.text = str(effect.get("title", ""))
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.add_theme_constant_override("outline_size", 6)
+	box.add_child(title)
+	var meaning := _label(14, Color(1, 1, 1, 0.85), false)
+	var detail := str(effect.get("detail", ""))
+	meaning.text = str(effect.get("meaning", "")) + ("" if detail.is_empty() else " · " + detail.left(40))
+	meaning.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	box.add_child(meaning)
+	_fx_layer.add_child(box)
+	var top := zone_rect(RoomGame.STATE_DESK).position.y + 34.0 + _announced * 52.0
+	box.size = Vector2(size.x, 0)
+	box.position = Vector2(0, top)
+	box.pivot_offset = Vector2(size.x * 0.5, 20)
+	box.scale = Vector2.ONE * 0.6
+	_announced += 1
+	var tw := box.create_tween()
+	tw.tween_property(box, "scale", Vector2.ONE, 0.2).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	tw.tween_interval(1.4)
+	tw.set_parallel(true)
+	tw.tween_property(box, "modulate:a", 0.0, 0.45)
+	tw.tween_property(box, "position:y", top - 14.0, 0.45)
+	tw.chain().tween_callback(func() -> void:
+		_announced = maxi(0, _announced - 1)
+		box.queue_free())
+
+
+func fx_layer() -> Control:
+	return _fx_layer
+
+
+func furniture(state: String) -> RoomFurniture:
+	return _furniture.get(state, null)
+
+
+func lane() -> ChaosLaneView:
+	return _lane
+
+
+func zone_rect(state: String) -> Rect2:
+	var furniture_node: RoomFurniture = _furniture.get(state, null)
+	if furniture_node == null:
+		return Rect2()
+	var panel := furniture_node.get_parent() as Control
+	return Rect2(panel.global_position - _fx_layer.global_position, panel.size)
+
+
+## พิกัด global → พิกัดในชั้นเอฟเฟกต์
+func to_fx(global_point: Vector2) -> Vector2:
+	return global_point - _fx_layer.global_position
+
+
+func fx_unit() -> float:
+	return maxf(1.0, round(size.y / 220.0))
+
+
+func shake(strength: float) -> void:
+	_shake_frame(strength)
 
 
 ## โน้ตของมิวรา (เช่น คำแปลผล git status) แสดงในห้องนานกว่าเหตุการณ์ปกติ — วงร่ายเวทเหลือไว้ให้ Git
@@ -190,6 +620,9 @@ func play_events(events: Array[Dictionary]) -> void:
 		_battle.play(events)
 	else:
 		_queue_room_fx(events)
+		_lane.play(events)
+	if has_damage:
+		_break_heart()
 	_event_label.text = "\n".join(lines)
 	_event_label.add_theme_color_override("font_color", Color("ffb3c4") if has_damage else Color("d8f7ff"))
 	if _event_tween != null and _event_tween.is_valid():
@@ -226,11 +659,71 @@ func _queue_room_fx(events: Array[Dictionary]) -> void:
 		get_tree().create_timer(0.5).timeout.connect(_flush_fx)
 
 
+## หัวใจดวงสุดท้ายในแถบแตกกระจาย (pixel art) ตรงตำแหน่งหัวใจที่เพิ่งหายไป
+func _break_heart() -> void:
+	if _hearts_label == null or not is_inside_tree():
+		return
+	var lost := maxi(0, _hearts_label.text.count("♥") - 1) # ยังเป็นจำนวนก่อนโดน (ห้องวาดใหม่หลังเหตุการณ์)
+	await get_tree().process_frame
+	var char_w := _hearts_label.size.x / maxf(1.0, float(_hearts_label.text.length()))
+	var at := _hearts_label.global_position - _fx_layer.global_position \
+			+ Vector2(char_w * (lost * 2 + 0.5), _hearts_label.size.y * 0.5)
+	PixelFx.spawn(_fx_layer, "heart_lost", at, maxf(1.0, round(size.y / 300.0)))
+
+
 func _flush_fx_next_frame() -> void:
-	if _pending_fx.is_empty() or not is_inside_tree():
+	if (_pending_fx.is_empty() and _pending_flights.is_empty()) or not is_inside_tree():
 		return
 	await get_tree().process_frame
 	_flush_fx()
+	_fly_items()
+
+
+## ของที่ย้ายโซน (add / commit / restore --staged / reset) บินโค้งข้ามห้อง — ตัวจริงซ่อนไว้จนสำเนาลงถึง
+func _fly_items() -> void:
+	var unit := maxf(1.0, round(size.y / 220.0))
+	for flight in _pending_flights:
+		var row: Control = _rows.get(str(flight["path"]), null)
+		if row == null or not is_instance_valid(row) or not row.is_inside_tree():
+			continue
+		var icon := row.get_child(0) as TextureRect
+		var from: Dictionary = flight["from"]
+		var start: Rect2 = from["rect"]
+		var origin := _fx_layer.global_position
+		var ghost := TextureRect.new()
+		ghost.texture = icon.texture
+		ghost.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+		ghost.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		ghost.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		ghost.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		ghost.size = start.size
+		ghost.pivot_offset = start.size * 0.5
+		ghost.modulate = icon.modulate
+		_fx_layer.add_child(ghost)
+		var a := start.position - origin
+		var b := icon.global_position - origin
+		# โค้งขึ้นแต่ไม่ล้นขอบบนของห้อง
+		var lift := -minf(absf(b.x - a.x) * 0.3, maxf(12.0, minf(a.y, b.y) - 8.0))
+		icon.modulate.a = 0.0
+		var effect := str(flight["effect"])
+		var land := func() -> void:
+			if is_instance_valid(icon):
+				icon.modulate.a = 1.0
+				var pop := icon.create_tween()
+				icon.pivot_offset = icon.size * 0.5
+				pop.tween_property(icon, "scale", Vector2(1.35, 0.75), 0.06)
+				pop.tween_property(icon, "scale", Vector2.ONE, 0.18).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+			if not effect.is_empty():
+				PixelFx.spawn(_fx_layer, effect, b + Vector2(icon.size.x * 0.5, icon.size.y), unit)
+			ghost.queue_free()
+		var tw := ghost.create_tween()
+		tw.tween_method(func(t: float) -> void:
+			var k := ease(t, 0.6)
+			ghost.position = a.lerp(b, k) + Vector2(0, lift * 4.0 * t * (1.0 - t))
+			ghost.rotation = sin(t * PI) * 0.5
+			ghost.scale = Vector2.ONE * (1.0 + 0.6 * sin(t * PI)), 0.0, 1.0, 0.42)
+		tw.tween_callback(land)
+	_pending_flights.clear()
 
 
 func _flush_fx() -> void:
@@ -277,6 +770,7 @@ func _build() -> void:
 	var style := StyleBoxFlat.new()
 	style.bg_color = Color(0.05, 0.04, 0.1, 0.78)
 	style.border_color = Color(0.75, 0.6, 0.3, 0.9)
+	_frame_style = style
 	style.set_border_width_all(3)
 	style.set_corner_radius_all(14)
 	style.set_content_margin_all(16)
@@ -296,6 +790,10 @@ func _build() -> void:
 	header.add_child(_hearts_label)
 	_dimension_label = _label(18, Color("c9b6ff"), false)
 	header.add_child(_dimension_label)
+	_fragment_label = _label(18, Color("ffd36b"), true)
+	_fragment_label.visible = false
+	_fragment_label.pivot_offset = Vector2(60, 12)
+	header.add_child(_fragment_label)
 	var spacer := Control.new()
 	spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	spacer.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -328,6 +826,12 @@ func _build() -> void:
 	root.add_child(_zones)
 	for zone in ZONES:
 		_zones.add_child(_make_zone(zone))
+	# ยังไม่รู้ว่าห้องหลับหรือตื่น — ซ่อนโซนไว้ก่อนจนกว่าจะวาดห้องครั้งแรก (ไม่ให้สภาพผิดโผล่แวบ)
+	for state in _furniture:
+		((_furniture[state] as RoomFurniture).get_parent() as Control).modulate.a = 0.0
+	_lane = ChaosLaneView.new()
+	_lane.visible = false
+	root.add_child(_lane)
 	_battle = BattleFieldView.new()
 	_battle.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_battle.visible = false
@@ -348,6 +852,16 @@ func _build() -> void:
 	_flash.color = Color(CHAOS_COLOR, 0.0)
 	_flash.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	add_child(_flash)
+
+	_fog = RoomFog.new()
+	_fog.visible = false
+	add_child(_fog)
+	_wake_layer = Control.new()
+	_wake_layer.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(_wake_layer)
+	_camera = RoomCamera.new()
+	_camera.visible = false
+	add_child(_camera)
 
 	_fx_layer = Control.new()
 	_fx_layer.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -550,6 +1064,12 @@ func _make_zone(zone: Dictionary) -> Control:
 	style.set_content_margin_all(8)
 	panel.add_theme_stylebox_override("panel", style)
 
+	# เฟอร์นิเจอร์อยู่ใต้รายการของ (ลูกตัวแรกของ PanelContainer วาดก่อน)
+	var furniture := RoomFurniture.new()
+	furniture.kind = {RoomGame.STATE_DESK: RoomFurniture.Kind.DESK, RoomGame.STATE_ALTAR: RoomFurniture.Kind.ALTAR,
+			RoomGame.STATE_TOME: RoomFurniture.Kind.PEDESTAL}[zone["state"]]
+	panel.add_child(furniture)
+	_furniture[zone["state"]] = furniture
 	var box := VBoxContainer.new()
 	box.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	box.add_theme_constant_override("separation", 4)
@@ -562,15 +1082,6 @@ func _make_zone(zone: Dictionary) -> Control:
 	sub.text = zone["sub"]
 	sub.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	box.add_child(sub)
-	if is_tome and ResourceLoader.exists(TOME_TEXTURE):
-		var tome := TextureRect.new()
-		tome.texture = load(TOME_TEXTURE)
-		tome.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-		tome.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-		tome.custom_minimum_size = Vector2(0, 56)
-		tome.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-		tome.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		box.add_child(tome)
 	var items := VBoxContainer.new()
 	items.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	items.add_theme_constant_override("separation", 3)
@@ -608,6 +1119,24 @@ func _make_item(item: Dictionary, index: int) -> Control:
 	elif state == RoomGame.STATE_CONFLICT:
 		icon.modulate = Color(1.0, 0.4, 0.4)
 	row.add_child(icon)
+	if not hidden and kind == "curse":
+		# หมอกคำสาปวนรอบม้วน — ดูก็รู้ว่าห้ามแตะ
+		PixelFx.spawn(icon, "curse_aura", Vector2(15, 30), 0.42, randf() * 2.0)
+	var at_risk := kind in ["fragment", "key"] and (state == RoomGame.STATE_DESK or state == RoomGame.STATE_CURSED \
+			or (state == RoomGame.STATE_ALTAR and _safe_mode != "staged"))
+	if not hidden and at_risk:
+		# ของที่คลื่นลูกหน้าจะทำร้ายสั่นอยู่บนผ้าปู — ยิ่งคลื่นใกล้ยิ่งสั่นถี่
+		icon.pivot_offset = Vector2(15, 28)
+		var period := 0.07 if _urgent else 0.32
+		var swing := 0.22 if _urgent else 0.08
+		var wobble := icon.create_tween().set_loops()
+		wobble.tween_property(icon, "rotation", swing, period)
+		wobble.tween_property(icon, "rotation", -swing, period * 2.0)
+		wobble.tween_property(icon, "rotation", 0.0, period)
+	elif not hidden and state == RoomGame.STATE_TOME and kind in ["fragment", "key"]:
+		var glow := icon.create_tween().set_loops()
+		glow.tween_property(icon, "self_modulate", Color(1.35, 1.25, 0.9), 0.9).set_trans(Tween.TRANS_SINE)
+		glow.tween_property(icon, "self_modulate", Color.WHITE, 0.9).set_trans(Tween.TRANS_SINE)
 
 	var text_box := VBoxContainer.new()
 	text_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -623,6 +1152,10 @@ func _make_item(item: Dictionary, index: int) -> Control:
 		label.text = "%s · ?" % item["path"]
 	else:
 		label.text = str(item["name"])
+		if _essential.has(path):
+			# ของที่ห้ามหาย (เช่น reset --hard จะลบทิ้ง) มีดาวทองกำกับ
+			label.text = "★ " + label.text
+			label.add_theme_color_override("font_color", Color("ffd36b"))
 		if kind == "curse":
 			label.add_theme_color_override("font_color", Color("d6a8ff"))
 		# ป้ายสถานะ: บอกว่าแผ่นนี้คืออะไรในภาษา Git (ตรงกับหมวดในผลของ git status)
@@ -677,3 +1210,28 @@ func _label(font_size: int, color: Color, bold: bool) -> Label:
 	if font != null:
 		label.add_theme_font_override("font", font)
 	return label
+
+
+## คลื่นแสงปลุกห้อง: วงแหวนพิกเซลสีทองแผ่ออกจากแท่นวางคัมภีร์ ด้านในเรืองจาง ๆ
+class WakeRing extends Control:
+	var center := Vector2.ZERO
+	var radius := 0.0:
+		set(value):
+			radius = value
+			queue_redraw()
+
+	func _ready() -> void:
+		mouse_filter = Control.MOUSE_FILTER_IGNORE
+
+	func _draw() -> void:
+		var steps := maxi(24, int(radius * 0.25))
+		for i in steps:
+			var a := TAU * i / steps
+			var p := (center + Vector2(cos(a), sin(a) * 0.55) * radius).round()
+			draw_rect(Rect2(p - Vector2(2, 2), Vector2(4, 4)), Color(1.0, 0.85, 0.45, 0.8))
+			draw_rect(Rect2(p - Vector2(5, 1), Vector2(10, 2)), Color(1.0, 0.85, 0.45, 0.25))
+		var inner := radius * 0.8
+		for i in steps:
+			var a := TAU * (i + 0.5) / steps
+			var p := (center + Vector2(cos(a), sin(a) * 0.55) * inner).round()
+			draw_rect(Rect2(p - Vector2(1, 1), Vector2(2, 2)), Color(1.0, 0.9, 0.6, 0.3))

@@ -37,6 +37,14 @@ var _mission_panel: LevelMissionPanel
 var _spell_overlay: SpellEffectOverlay
 ## มินิเกมห้อง (null = ด่านนี้ไม่มีมินิเกม)
 var _room: RoomGame
+## เศษคัมภีร์ที่ผู้เล่นมี (ด่านก่อน ๆ + ที่เพิ่งได้ในด่านนี้) และเศษที่ฉลองไปแล้วในรอบนี้
+var _fragments_owned := 0
+var _celebrated: Dictionary = {}
+## เป้าหมายที่สำเร็จติดกันโดยไม่โดนพลังกระแทก (คอมโบ)
+var _streak := 0
+## การ์ดเปิดขั้นยังไม่ได้แสดงในห้องรอบนี้ (แสดงหลังผู้เล่นรับม้วนคาถาใหม่ เพื่อไม่ให้ถูกบัง)
+var _intro_due := false
+var _spells_seen := false
 var _room_view: RoomView
 ## ม้วนคาถาใหม่ / สมุดคาถา (สอนคำสั่งตอนที่ต้องใช้จริง)
 var _spell_view: SpellScrollView
@@ -255,7 +263,11 @@ func _show_new_spells() -> void:
 	var ids := SpellCatalog.taught_in(_mission.level_number, _mission.step)
 	if ids.is_empty():
 		return
-	_ensure_spell_view().show_new_spells(ids, _mission.level_number)
+	_spells_seen = true
+	var view := _ensure_spell_view()
+	view.show_new_spells(ids, _mission.level_number)
+	if not view.closed.is_connected(_try_room_intro):
+		view.closed.connect(_try_room_intro, CONNECT_ONE_SHOT)
 
 
 func _open_spellbook() -> void:
@@ -284,6 +296,10 @@ func _setup_room() -> void:
 	if _mission == null or _mission.room.is_empty():
 		return
 	_room = RoomGame.from_config(_mission.room)
+	_fragments_owned = FragmentLedger.collected_before(_mission.level_number)
+	_celebrated.clear()
+	_streak = 0
+	_intro_due = true
 	_spell_overlay.compact = true
 	if _room_view == null:
 		_room_view = RoomView.new()
@@ -293,6 +309,7 @@ func _setup_room() -> void:
 		_room_view.item_pressed.connect(_read_scroll_action)
 		_room_view.spoken.connect(func(word: String) -> void: _handle_say_command("say " + word))
 		move_child(_room_view, _spell_overlay.get_index())
+	_room_view.set_fragments(_fragments_owned, FragmentLedger.for_level(_mission.level_number) > 0)
 
 
 func _workspace_paths() -> Array[String]:
@@ -324,6 +341,17 @@ func _sync_speak() -> void:
 		if _mission != null and not _mission.is_complete():
 			guard_line = str(_mission.current_objective().get("guard_asks", ""))
 		_room_view.set_guard_line(guard_line)
+		_room_view.set_seal(_seal_kind(), _mission != null and _mission.objectives.all(
+				func(o: Dictionary) -> bool: return str(o.get("type", "")) != "say" or _mission.is_done(str(o.get("id", "")))))
+
+
+## ผนึกที่รอคำตอบในห้อง: ขั้นที่มีเป้าหมาย "เอ่ยคำ" (นอกด่านต่อสู้) มีประตูหินผนึก — ด่าน 7 เป็นวงอักขระ
+func _seal_kind() -> String:
+	if _mission == null or _room == null or _room.has_battle():
+		return ""
+	if not _mission.objectives.any(func(o: Dictionary) -> bool: return str(o.get("type", "")) == "say"):
+		return ""
+	return "runes" if _mission.level_number == 7 else "door"
 
 
 ## ของตั้งต้นของห้อง (turn 0) และจดจำเนื้อหาเศษคัมภีร์ที่มีอยู่ เพื่อให้เศษที่สลายก่อตัวใหม่ได้
@@ -337,6 +365,35 @@ func _start_room() -> void:
 		if read.ok and read.value != null:
 			_room.remember_content(str(path), str(read.value))
 	await _update_room_view()
+	_try_room_intro()
+
+
+## แสดงการ์ดเปิดขั้นเมื่อพร้อม: ถ้าขั้นนี้แจกม้วนคาถาใหม่ รอให้ผู้เล่นรับคาถาก่อน (ปิดม้วนแล้วค่อยแสดง)
+func _try_room_intro() -> void:
+	if not _intro_due or _room == null or _room_view == null or _mission == null:
+		return
+	if _spell_view != null and _spell_view.visible:
+		return
+	if not _spells_seen and not SpellCatalog.taught_in(_mission.level_number, _mission.step).is_empty():
+		return
+	_intro_due = false
+	_show_room_intro()
+
+
+## การ์ดเปิดขั้นในห้อง: ชั้นที่เท่าไร ชื่อขั้น เป้าหมายแรก และสิ่งที่ไล่ล่าอยู่ (คลื่น/ศัตรู)
+func _show_room_intro() -> void:
+	if _room == null or _room_view == null or _mission == null:
+		return
+	var floor_text := "ชั้นที่ %d" % _mission.level_number
+	if _mission.total_steps > 1:
+		floor_text += " · ขั้น %d/%d" % [_mission.step, _mission.total_steps]
+	var goal := str(_mission.current_objective().get("short", _mission.current_objective().get("text", "")))
+	var threat := ""
+	if _room.has_battle():
+		threat = "ร่ายให้ถูกก่อนศัตรูถึงตัว!"
+	elif _room.has_waves():
+		threat = "คลื่นโกลาหลมาในอีก %d การกระทำ!" % _room.turns_until_wave()
+	_room_view.show_intro(floor_text, _mission.title, goal, threat)
 
 
 ## หนึ่งการกระทำของผู้เล่นผ่านไป → โลกเดินหนึ่งจังหวะ (คลื่นโกลาหล, ของที่ปรากฏ)
@@ -355,6 +412,8 @@ func _advance_room(command: String) -> void:
 	var outcome := _room.on_turn(snapshot, command)
 	var actions: Array = outcome["actions"]
 	_room_view.play_events(outcome["events"])
+	if outcome["events"].any(func(e: Dictionary) -> bool: return e["type"] == "damage"):
+		_streak = 0
 	if outcome["events"].any(func(e: Dictionary) -> bool: return e["type"] == "damage") and not _room.is_failed():
 		_miura_hint("ระวัง! พลังลดลงแล้ว")
 	if actions.is_empty():
@@ -456,9 +515,15 @@ func _on_mission_progress(command: String, result: GitCommandResult, snapshot: G
 		_room_view.play_events(hits)
 	_mission_panel.refresh()
 	_update_mission_prompt()
+	if not newly_done.is_empty() and _room_view != null:
+		_streak += newly_done.size()
+		var flawless := _room != null and _room.hearts == _room.max_hearts
+		_room_view.celebrate_objective(_streak, _mission.is_complete(), flawless)
+	for done_id in newly_done:
+		_celebrate_fragment(_mission.world_text(done_id))
 	if _mission.is_complete():
 		_level_timer_active = false
-		_mission_panel.show_complete(_mission.success_text, _mission_continue_label())
+		_show_complete_after_scene()
 		return
 	for done_id in newly_done:
 		_apply_world_actions(_mission.spawn_actions(done_id))
@@ -476,6 +541,29 @@ func _on_mission_progress(command: String, result: GitCommandResult, snapshot: G
 		return
 	if not mistake.is_empty():
 		_mission_panel.show_feedback(mistake, true)
+
+
+## แผงภารกิจ "สำเร็จ" และฉากรับเศษคัมภีร์รอให้ฉากคาถาในห้องจบก่อน (ผลไม่มาก่อนเหตุ)
+func _show_complete_after_scene() -> void:
+	var wait := _room_view.scene_remaining() if _room_view != null else 0.0
+	if wait > 0.0:
+		await get_tree().create_timer(wait, true, false, true).timeout
+		if _is_leaving or not is_inside_tree():
+			return
+	_mission_panel.show_complete(_mission.success_text, _mission_continue_label())
+	_celebrate_fragment(_mission.success_text)
+
+
+## เนื้อเรื่องประกาศว่าได้รับเศษคัมภีร์ → ฉากรับเศษ (ครั้งเดียวต่อชิ้น) และตัวนับในห้องเพิ่มขึ้น
+func _celebrate_fragment(text: String) -> void:
+	var number := FragmentLedger.announced(text)
+	if number <= 0 or _celebrated.has(number):
+		return
+	_celebrated[number] = true
+	_fragments_owned = maxi(_fragments_owned, number)
+	FragmentCeremony.play(self, number, _fragments_owned)
+	if _room_view != null:
+		_room_view.set_fragments(_fragments_owned, true, true)
 
 
 func _mission_continue_label() -> String:
@@ -602,7 +690,7 @@ func _initialize_sandbox() -> void:
 	await _refresh_state()
 
 
-## สร้าง "ปัญหาในโลก" ตั้งต้นของขั้นนี้ (ไฟล์บนโต๊ะ, การจารึกก่อนหน้า) แบบเงียบ ก่อนผู้เล่นเริ่ม
+## สร้าง "ปัญหาในโลก" ตั้งต้นของขั้นนี้ (ไฟล์บนผ้าปู, การจารึกก่อนหน้า) แบบเงียบ ก่อนผู้เล่นเริ่ม
 func _apply_mission_setup() -> void:
 	if _mission == null or _mission.setup.is_empty():
 		return
@@ -734,7 +822,14 @@ func _on_command_submitted(command: String) -> void:
 	var after := await _sandbox_service.inspect()
 	if _is_leaving or not is_inside_tree():
 		return
-	_spell_overlay.play_all(SpellEffectDetector.detect(before, after, trimmed, result.success))
+	var spell_effects := SpellEffectDetector.detect(before, after, trimmed, result.success)
+	if _room_view != null and _room != null and not _room.has_battle():
+		# ห้องเล่นฉากของคาถาเองและขึ้นชื่อคาถาตอนผลเกิดจริง — วงเวทกลางจอจะซ้อนทับก่อนเวลา จึงเหลือแค่แผงเรืองแสง
+		for effect in spell_effects:
+			_on_spell_effect_started(effect)
+		_room_view.cast(spell_effects, trimmed, after)
+	else:
+		_spell_overlay.play_all(spell_effects)
 	if result.success and LevelMission.tokenize(trimmed).slice(0, 2) == PackedStringArray(["git", "status"]):
 		if _room_view != null:
 			_room_view.show_note(StatusTranslator.explain(after, _room.items if _room != null else {}, true))
